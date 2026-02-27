@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ui/app_radius.dart';
 import '../ui/app_text_styles.dart';
 import 'app_colors.dart';
 
@@ -26,6 +27,23 @@ class AppTheme {
         centerTitle: false,
       ),
       iconTheme: const IconThemeData(color: Colors.white),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: AppColors.slate.withValues(alpha: 0.9),
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        elevation: 8,
+      ),
     );
   }
 }
