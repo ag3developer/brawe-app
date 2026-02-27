@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
@@ -9,7 +10,6 @@ import '../view_models/login_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
 import 'common/auth_input_field.dart';
-import 'signup_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -87,6 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) {
       if (success) {
         AppSnackBar.showSuccess(context, 'Login successful!');
+        context.go('/feed');
       } else {
         final error = ref.read(loginViewModelProvider).errorMessage;
         if (error != null) {
@@ -244,9 +245,7 @@ class _LoginCard extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const SignupScreen()),
-                  );
+                  context.push('/signup');
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.coolCyan,

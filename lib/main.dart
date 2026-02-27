@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'routing/router.dart';
 import 'ui/core/themes/app_theme.dart';
-import 'ui/auth/widgets/login_screen.dart';
 
 void main() {
   runApp(const ProviderScope(child: BraweApp()));
 }
 
-class BraweApp extends StatelessWidget {
+class BraweApp extends ConsumerWidget {
   const BraweApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+
+    return MaterialApp.router(
       title: 'Brawe',
       theme: AppTheme.dark(),
-      home: const LoginScreen(),
+      routerConfig: router,
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
@@ -98,7 +99,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (mounted) {
       if (success) {
         AppSnackBar.showSuccess(context, 'Account created successfully!');
-        // In a real app, you might navigate to the feed here
+        context.go('/feed');
       } else {
         final error = ref.read(signupViewModelProvider).errorMessage;
         if (error != null) {
