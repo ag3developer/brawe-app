@@ -52,6 +52,48 @@ class AuthRepository {
     }
   }
 
+  Future<User> registerAffiliate({
+    required String email,
+    required String password,
+    required String name,
+    String? sponsorCode,
+  }) async {
+    try {
+      final data = await _authService.registerAffiliate(
+        email: email,
+        password: password,
+        name: name,
+        sponsorCode: sponsorCode,
+      );
+
+      final userData = data['user'] as Map<String, dynamic>;
+      final user = User.fromJson(userData);
+
+      final token = data['access_token'] as String?;
+      if (token != null) {
+        await _storageService.saveToken(token);
+        await _storageService.saveUser(user);
+      }
+
+      return user;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422) {
+        final details = e.response?.data?['detail'] as List?;
+        final message = details?.isNotEmpty == true
+            ? details!.first['msg']?.toString()
+            : 'Validation error';
+        throw Failure.validation(message);
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw const Failure.network();
+      }
+      throw const Failure.server();
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<User?> getSession() async {
     return await _storageService.getUser();
   }

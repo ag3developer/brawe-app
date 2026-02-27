@@ -24,4 +24,22 @@ class AuthService {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> registerAffiliate({
+    required String email,
+    required String password,
+    required String name,
+    String? sponsorCode,
+  }) async {
+    final response = await _dio.post(
+      '/auth/register/affiliate',
+      data: {
+        'email': email,
+        'password': password,
+        'name': name,
+        if (sponsorCode != null && sponsorCode.isNotEmpty) 'sponsor_code': sponsorCode,
+      },
+    );
+    return response.data as Map<String, dynamic>;
+  }
 }
