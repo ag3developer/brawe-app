@@ -6,6 +6,10 @@ import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/ui/app_spacing.dart';
 import '../view_models/login_view_model.dart';
+import 'common/auth_action_button.dart';
+import 'common/auth_background.dart';
+import 'common/auth_input_field.dart';
+import 'signup_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -41,7 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          const _LoginBackground(),
+          const AuthBackground(),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -90,230 +94,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       }
     }
-  }
-}
-
-class _LoginBackground extends StatelessWidget {
-  const _LoginBackground();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.nearBlack,
-        gradient: RadialGradient(
-          center: Alignment(0.7, -0.6),
-          radius: 1.5,
-          colors: [
-            Color(0xFF1E2A5E),
-            AppColors.nearBlack,
-          ],
-          stops: [0.0, 0.7],
-        ),
-      ),
-      child: Stack(
-        children: [
-          CustomPaint(
-            painter: _LoginBackgroundPainter(),
-            child: const SizedBox.expand(),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.1),
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.4),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LoginBackgroundPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
-      ..strokeWidth = 0.5;
-
-    const gridSpacing = 32.0;
-    for (double y = 0; y <= size.height; y += gridSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-    for (double x = 0; x <= size.width; x += gridSpacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-
-    final accentPaint = Paint()
-      ..color = AppColors.electricPurple.withValues(alpha: 0.05)
-      ..strokeWidth = 1.0;
-
-    for (double i = 0; i < size.width + size.height; i += 128) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i - size.height, size.height),
-        accentPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _LoginInputField extends StatelessWidget {
-  const _LoginInputField({
-    required this.controller,
-    required this.label,
-    required this.hintText,
-    required this.onChanged,
-    this.keyboardType,
-    this.obscureText = false,
-    this.prefixIcon,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String hintText;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-  final ValueChanged<String> onChanged;
-  final IconData? prefixIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: textTheme.labelLarge?.copyWith(
-            color: AppColors.coolGray,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          obscureText: obscureText,
-          onChanged: onChanged,
-          style: textTheme.bodyLarge?.copyWith(color: Colors.white),
-          cursorColor: AppColors.electricPurple,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: textTheme.bodyMedium?.copyWith(
-              color: AppColors.coolGray.withValues(alpha: 0.5),
-            ),
-            prefixIcon:
-                prefixIcon != null
-                    ? Icon(
-                      prefixIcon,
-                      color: AppColors.coolGray.withValues(alpha: 0.7),
-                      size: 20,
-                    )
-                    : null,
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: AppSpacing.md,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(
-                color: AppColors.electricPurple,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PrimaryActionButton extends StatelessWidget {
-  const _PrimaryActionButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDisabled = onPressed == null;
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient:
-              !isDisabled
-                  ? const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.softViolet],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  )
-                  : null,
-          color: isDisabled ? Colors.white.withValues(alpha: 0.1) : null,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow:
-              !isDisabled
-                  ? [
-                    BoxShadow(
-                      color: AppColors.electricPurple.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                  : null,
-        ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            elevation: 0,
-            padding: EdgeInsets.zero,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 
@@ -409,7 +189,7 @@ class _LoginCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.xl),
-          _LoginInputField(
+          AuthInputField(
             controller: emailController,
             label: 'Email',
             hintText: 'you@brawe.app',
@@ -418,7 +198,7 @@ class _LoginCard extends StatelessWidget {
             prefixIcon: Icons.email_outlined,
           ),
           const SizedBox(height: AppSpacing.lg),
-          _LoginInputField(
+          AuthInputField(
             controller: passwordController,
             label: 'Password',
             hintText: '••••••••',
@@ -448,7 +228,7 @@ class _LoginCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSpacing.xl),
-          _PrimaryActionButton(
+          AuthActionButton(
             label: state.status.isLoading ? 'Signing in...' : 'Sign in',
             onPressed: state.canSubmit ? onSubmit : null,
           ),
@@ -463,7 +243,11 @@ class _LoginCard extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SignupScreen()),
+                  );
+                },
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.coolCyan,
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
