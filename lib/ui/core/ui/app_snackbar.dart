@@ -9,7 +9,11 @@ class AppSnackBar {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_outline, color: AppColors.coolCyan, size: 20),
+            const Icon(
+              Icons.check_circle_outline,
+              color: AppColors.coolCyan,
+              size: 20,
+            ),
             const SizedBox(width: 12),
             Expanded(child: Text(message)),
           ],
@@ -26,7 +30,9 @@ class AppSnackBar {
           children: [
             const Icon(Icons.error_outline, color: Colors.white, size: 20),
             const SizedBox(width: 12),
-            Expanded(child: Text(message, style: const TextStyle(color: Colors.white))),
+            Expanded(
+              child: Text(message, style: const TextStyle(color: Colors.white)),
+            ),
           ],
         ),
       ),

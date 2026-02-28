@@ -24,7 +24,7 @@ void main() {
     test('updateEmail updates state', () {
       final notifier = container.read(loginViewModelProvider.notifier);
       notifier.updateEmail('test@example.com');
-      
+
       final state = container.read(loginViewModelProvider);
       expect(state.email, 'test@example.com');
     });
@@ -32,19 +32,19 @@ void main() {
     test('updatePassword updates state', () {
       final notifier = container.read(loginViewModelProvider.notifier);
       notifier.updatePassword('password123');
-      
+
       final state = container.read(loginViewModelProvider);
       expect(state.password, 'password123');
     });
 
     test('canSubmit is true only when email and password are not empty', () {
       final notifier = container.read(loginViewModelProvider.notifier);
-      
+
       expect(container.read(loginViewModelProvider).canSubmit, false);
-      
+
       notifier.updateEmail('test@example.com');
       expect(container.read(loginViewModelProvider).canSubmit, false);
-      
+
       notifier.updatePassword('password123');
       expect(container.read(loginViewModelProvider).canSubmit, true);
     });

@@ -50,14 +50,13 @@ class AuthInputField extends StatelessWidget {
             hintStyle: textTheme.bodyMedium?.copyWith(
               color: AppColors.coolGray.withValues(alpha: 0.5),
             ),
-            prefixIcon:
-                prefixIcon != null
-                    ? Icon(
-                      prefixIcon,
-                      color: AppColors.coolGray.withValues(alpha: 0.7),
-                      size: 20,
-                    )
-                    : null,
+            prefixIcon: prefixIcon != null
+                ? Icon(
+                    prefixIcon,
+                    color: AppColors.coolGray.withValues(alpha: 0.7),
+                    size: 20,
+                  )
+                : null,
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
             contentPadding: const EdgeInsets.symmetric(

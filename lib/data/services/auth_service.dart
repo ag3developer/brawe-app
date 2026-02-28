@@ -17,10 +17,7 @@ class AuthService {
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await _dio.post(
       '/auth/login',
-      data: {
-        'email': email,
-        'password': password,
-      },
+      data: {'email': email, 'password': password},
     );
     return response.data as Map<String, dynamic>;
   }
@@ -37,7 +34,8 @@ class AuthService {
         'email': email,
         'password': password,
         'name': name,
-        if (sponsorCode != null && sponsorCode.isNotEmpty) 'sponsor_code': sponsorCode,
+        if (sponsorCode != null && sponsorCode.isNotEmpty)
+          'sponsor_code': sponsorCode,
       },
     );
     return response.data as Map<String, dynamic>;

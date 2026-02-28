@@ -24,16 +24,16 @@ class AuthRepository {
   Future<User> login(String email, String password) async {
     try {
       final data = await _authService.login(email, password);
-      
+
       final userData = data['user'] as Map<String, dynamic>;
       final user = User.fromJson(userData);
-      
+
       final token = data['access_token'] as String?;
       if (token != null) {
         await _storageService.saveToken(token);
         await _storageService.saveUser(user);
       }
-      
+
       return user;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {

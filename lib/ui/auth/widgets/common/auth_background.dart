@@ -12,10 +12,7 @@ class AuthBackground extends StatelessWidget {
         gradient: RadialGradient(
           center: Alignment(0.7, -0.6),
           radius: 1.5,
-          colors: [
-            Color(0xFF1E2A5E),
-            AppColors.nearBlack,
-          ],
+          colors: [Color(0xFF1E2A5E), AppColors.nearBlack],
           stops: [0.0, 0.7],
         ),
       ),

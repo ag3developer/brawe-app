@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -62,7 +63,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.go('/welcome'),
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -132,123 +133,133 @@ class _SignupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.xl,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.slate.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xl,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Create Account',
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+          decoration: BoxDecoration(
+            color: AppColors.slate.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 40,
+                offset: const Offset(0, 20),
+              ),
+            ],
           ),
-          Text(
-            'Join the Brawe community',
-            style: textTheme.bodyMedium?.copyWith(
-              color: AppColors.coolGray,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          AuthInputField(
-            controller: nameController,
-            label: 'Full Name',
-            hintText: 'John Doe',
-            onChanged: notifier.updateName,
-            prefixIcon: Icons.person_outline,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AuthInputField(
-            controller: emailController,
-            label: 'Email',
-            hintText: 'you@brawe.app',
-            keyboardType: TextInputType.emailAddress,
-            onChanged: notifier.updateEmail,
-            prefixIcon: Icons.email_outlined,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AuthInputField(
-            controller: passwordController,
-            label: 'Password',
-            hintText: '••••••••',
-            obscureText: true,
-            onChanged: notifier.updatePassword,
-            prefixIcon: Icons.lock_outline,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          AuthInputField(
-            controller: sponsorController,
-            label: 'Sponsor Code (Optional)',
-            hintText: 'CODE123',
-            onChanged: notifier.updateSponsorCode,
-            prefixIcon: Icons.card_giftcard,
-          ),
-          if (state.errorMessage != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: AppColors.mutedRed,
-                  size: 16,
-                ),
-                const SizedBox(width: AppSpacing.xs),
-                Expanded(
-                  child: Text(
-                    state.errorMessage!,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.mutedRed,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: AppSpacing.xl),
-          AuthActionButton(
-            label: state.status.isLoading ? 'Creating account...' : 'Sign up',
-            onPressed: state.canSubmit ? onSubmit : null,
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Already have an account?',
+                'Create Account',
+                style: textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                'Join the Brawe community',
                 style: textTheme.bodyMedium?.copyWith(
                   color: AppColors.coolGray,
                 ),
               ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.coolCyan,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.xl),
+              AuthInputField(
+                controller: nameController,
+                label: 'Full Name',
+                hintText: 'John Doe',
+                onChanged: notifier.updateName,
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AuthInputField(
+                controller: emailController,
+                label: 'Email',
+                hintText: 'you@brawe.app',
+                keyboardType: TextInputType.emailAddress,
+                onChanged: notifier.updateEmail,
+                prefixIcon: Icons.email_outlined,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AuthInputField(
+                controller: passwordController,
+                label: 'Password',
+                hintText: '••••••••',
+                obscureText: true,
+                onChanged: notifier.updatePassword,
+                prefixIcon: Icons.lock_outline,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AuthInputField(
+                controller: sponsorController,
+                label: 'Sponsor Code (Optional)',
+                hintText: 'CODE123',
+                onChanged: notifier.updateSponsorCode,
+                prefixIcon: Icons.card_giftcard,
+              ),
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: AppColors.mutedRed,
+                      size: 16,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        state.errorMessage!,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: AppColors.mutedRed,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  'Sign in',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
+              ],
+              const SizedBox(height: AppSpacing.xl),
+              AuthActionButton(
+                label: state.status.isLoading
+                    ? 'Creating account...'
+                    : 'Sign up',
+                onPressed: state.canSubmit ? onSubmit : null,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Already have an account?',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: AppColors.coolGray,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.push('/login'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.coolCyan,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
+                    ),
+                    child: const Text(
+                      'Sign in',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

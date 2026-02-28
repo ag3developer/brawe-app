@@ -20,7 +20,8 @@ sealed class LoginState with _$LoginState {
   bool get canSubmit =>
       email.isNotEmpty && password.isNotEmpty && !status.isLoading;
 
-  String? get errorMessage => status.whenOrNull(error: (e, _) => (e as Failure).toDisplayMessage());
+  String? get errorMessage =>
+      status.whenOrNull(error: (e, _) => (e as Failure).toDisplayMessage());
 }
 
 @riverpod
@@ -68,10 +69,9 @@ class LoginViewModel extends _$LoginViewModel {
     state = state.copyWith(status: const AsyncValue.loading());
 
     try {
-      final user = await ref.read(authRepositoryProvider).login(
-        state.email,
-        state.password,
-      );
+      final user = await ref
+          .read(authRepositoryProvider)
+          .login(state.email, state.password);
       state = state.copyWith(status: AsyncValue.data(user));
       return true;
     } on Failure catch (e, st) {

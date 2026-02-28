@@ -7,7 +7,7 @@ part 'dio_provider.g.dart';
 @riverpod
 Dio dio(Ref ref) {
   final storageService = ref.watch(storageServiceProvider);
-  
+
   final dio = Dio(
     BaseOptions(
       baseUrl: 'https://app.brawe.io/api/v1',
@@ -33,12 +33,7 @@ Dio dio(Ref ref) {
   );
 
   // Add logging interceptor for development
-  dio.interceptors.add(
-    LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-    ),
-  );
+  dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
 
   return dio;
 }
