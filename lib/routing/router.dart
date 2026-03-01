@@ -8,6 +8,7 @@ import '../ui/auth/widgets/signup_screen.dart';
 import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
+import '../ui/live/widgets/live_feed_screen.dart';
 
 part 'router.g.dart';
 
@@ -21,7 +22,8 @@ GoRouter router(Ref ref) {
     redirect: (context, state) {
       final isLoading = authState.isLoading;
       final isAuth = authState.asData?.value != null;
-      final isLoggingIn = state.matchedLocation == '/login' ||
+      final isLoggingIn =
+          state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
           state.matchedLocation == '/welcome';
 
@@ -48,6 +50,10 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
+      GoRoute(
+        path: '/live',
+        builder: (context, state) => const LiveFeedScreen(),
+      ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],
   );

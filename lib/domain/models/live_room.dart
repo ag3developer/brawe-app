@@ -1,0 +1,22 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'live_room.freezed.dart';
+
+@freezed
+sealed class LiveRoom with _$LiveRoom {
+  const factory LiveRoom({
+    required String id,
+    required String title,
+    String? description,
+    String? category,
+    required String liveType,
+    required bool isPrivate,
+    required String status,
+    required int viewerCount,
+    String? streamUrl,
+    String? thumbnailUrl,
+    required String streamerId,
+    required String streamerName,
+    String? streamerAvatarUrl,
+  }) = _LiveRoom;
+}

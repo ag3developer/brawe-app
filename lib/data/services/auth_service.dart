@@ -40,4 +40,9 @@ class AuthService {
     );
     return response.data as Map<String, dynamic>;
   }
+
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    final response = await _dio.get('/auth/me');
+    return response.data as Map<String, dynamic>;
+  }
 }

@@ -95,7 +95,35 @@ class AuthRepository {
   }
 
   Future<User?> getSession() async {
-    return await _storageService.getUser();
+    final user = await _storageService.getUser();
+    final token = await _storageService.getToken();
+
+    if (token != null) {
+      // If we have a token, we should try to refresh the user from the API
+      try {
+        final apiUser = await getCurrentUser();
+        await _storageService.saveUser(apiUser);
+        return apiUser;
+      } catch (_) {
+        // If API call fails, fallback to local storage
+        return user;
+      }
+    }
+    return user;
+  }
+
+  Future<User> getCurrentUser() async {
+    try {
+      final userData = await _authService.getCurrentUser();
+      return User.fromJson(userData);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        throw const Failure.unauthorized();
+      }
+      throw const Failure.server();
+    } catch (e) {
+      throw const Failure.unknown();
+    }
   }
 
   Future<void> logout() async {

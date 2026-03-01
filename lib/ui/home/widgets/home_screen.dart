@@ -7,6 +7,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../domain/models/user.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -55,57 +56,111 @@ class HomeScreen extends StatelessWidget {
 class _HomeTopBar extends ConsumerWidget {
   const _HomeTopBar();
 
+  void _showProfileSheet(BuildContext context, WidgetRef ref, User? user) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.nearBlack,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.slate,
+                backgroundImage: user?.avatarUrl != null
+                    ? NetworkImage(user!.avatarUrl!)
+                    : null,
+                child: user?.avatarUrl == null
+                    ? const Icon(Icons.person, color: Colors.white, size: 40)
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                user?.name ?? 'Anonymous',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                user?.email ?? '',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.electricPurple.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  border: Border.all(
+                    color: AppColors.electricPurple.withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Text(
+                  user?.userType.toUpperCase() ?? 'USER',
+                  style: const TextStyle(
+                    color: AppColors.electricPurple,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              ListTile(
+                leading: const Icon(Icons.logout, color: Colors.redAccent),
+                title: const Text(
+                  'Sign Out',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  ref.read(authStateProvider.notifier).logout();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authStateProvider).value;
+
     return Row(
       children: [
         GestureDetector(
-          onTap: () => ref.read(authStateProvider.notifier).logout(),
-          child: const CircleAvatar(
+          onTap: () => _showProfileSheet(context, ref, user),
+          child: CircleAvatar(
             radius: 20,
             backgroundColor: AppColors.slate,
-            child: Icon(Icons.person_outline, color: Colors.white),
+            backgroundImage: user?.avatarUrl != null
+                ? NetworkImage(user!.avatarUrl!)
+                : null,
+            child: user?.avatarUrl == null
+                ? const Icon(Icons.person_outline, color: Colors.white)
+                : null,
           ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Alex R.',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.green,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Status',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white70,
-                      ),
-                ),
-              ],
-            ),
-          ],
         ),
         const Spacer(),
         Text(
           'BRAWE',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-                color: Colors.white,
-              ),
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: Colors.white,
+          ),
         ),
         const Spacer(),
         IconButton(
@@ -132,77 +187,84 @@ class _LiveBattlesSection extends StatelessWidget {
         Text(
           'LIVE STREAM BATTLES',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.white70,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Container(
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.deepBlue.withValues(alpha: 0.8),
-                AppColors.electricPurple.withValues(alpha: 0.3),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        GestureDetector(
+          onTap: () => context.push('/live'),
+          child: Container(
+            height: 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.deepBlue.withValues(alpha: 0.8),
+                  AppColors.electricPurple.withValues(alpha: 0.3),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: Colors.white10),
             ),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        const _BattleProfile(name: 'AlexvsVS.', isLeft: true),
-                        Text(
-                          'Vs',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontStyle: FontStyle.italic,
-                              ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          const _BattleProfile(name: 'AlexvsVS.', isLeft: true),
+                          Text(
+                            'Vs',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                          ),
+                          const _BattleProfile(name: 'SarahK', isLeft: false),
+                        ],
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
-                        const _BattleProfile(name: 'SarahK', isLeft: false),
-                      ],
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.coolCyan, AppColors.electricPurple],
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.coolCyan,
+                              AppColors.electricPurple,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: const Text(
+                          'WATCH & BET',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                      child: const Text(
-                        'WATCH & BET',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: _LiveIndicator(count: '24K'),
-              ),
-              Positioned(
-                bottom: 12,
-                right: 12,
-                child: _BattleInfo(label: 'PK battle', time: '08:52'),
-              ),
-            ],
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: _LiveIndicator(count: '24K'),
+                ),
+                Positioned(
+                  bottom: 12,
+                  right: 12,
+                  child: _BattleInfo(label: 'PK battle', time: '08:52'),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -314,10 +376,10 @@ class _TopStreamersSection extends StatelessWidget {
         Text(
           'TOP STREAMERS',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.white70,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
@@ -325,46 +387,62 @@ class _TopStreamersSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: 5,
-            separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.md),
+            separatorBuilder: (context, index) =>
+                const SizedBox(width: AppSpacing.md),
             itemBuilder: (context, index) {
               final names = ['AlexvsVS.', 'SarahK', 'ValonNor', 'Kira', 'Nova'];
-              return Column(
-                children: [
-                  Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [AppColors.electricPurple, AppColors.coolCyan],
+              return GestureDetector(
+                onTap: () => context.push('/live'),
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.bottomCenter,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.electricPurple,
+                                AppColors.coolCyan,
+                              ],
+                            ),
+                          ),
+                          child: const CircleAvatar(
+                            radius: 28,
+                            backgroundColor: AppColors.slate,
                           ),
                         ),
-                        child: const CircleAvatar(
-                          radius: 28,
-                          backgroundColor: AppColors.slate,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.mutedRed,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'LIVE',
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      names[index],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: AppColors.mutedRed,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'LIVE',
-                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    names[index],
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -385,10 +463,10 @@ class _CategoriesSection extends StatelessWidget {
         Text(
           'CATEGORIES',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.white70,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         SizedBox(
@@ -396,10 +474,16 @@ class _CategoriesSection extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: 4,
-            separatorBuilder: (context, index) => const SizedBox(width: AppSpacing.md),
+            separatorBuilder: (context, index) =>
+                const SizedBox(width: AppSpacing.md),
             itemBuilder: (context, index) {
               final categories = ['FPS', 'Shoppers', 'RPG', 'Tech'];
-              final icons = [Icons.videogame_asset, Icons.shopping_bag, Icons.sports_esports, Icons.laptop];
+              final icons = [
+                Icons.videogame_asset,
+                Icons.shopping_bag,
+                Icons.sports_esports,
+                Icons.laptop,
+              ];
               return Column(
                 children: [
                   Container(
@@ -438,14 +522,14 @@ class _StreamCard extends StatelessWidget {
         Text(
           'STREAM CARD',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.white70,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
         GestureDetector(
-          onTap: () => context.push('/feed'),
+          onTap: () => context.push('/live'),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Container(
@@ -457,11 +541,6 @@ class _StreamCard extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [AppColors.slate, AppColors.nearBlack],
                 ),
-                /* image: const DecorationImage(
-                  image: NetworkImage('https://placeholder.com/400x220'),
-                  fit: BoxFit.cover,
-                  opacity: 0.6,
-                ), */
               ),
               child: Stack(
                 children: [
@@ -473,14 +552,20 @@ class _StreamCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.mutedRed,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
                                 'LIVE',
-                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -504,7 +589,10 @@ class _StreamCard extends StatelessWidget {
                         const Spacer(),
                         Row(
                           children: [
-                            const CircleAvatar(radius: 12, backgroundColor: Colors.white24),
+                            const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.white24,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -521,7 +609,10 @@ class _StreamCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const CircleAvatar(radius: 12, backgroundColor: Colors.white24),
+                            const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.white24,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -542,7 +633,10 @@ class _StreamCard extends StatelessWidget {
                     right: 12,
                     bottom: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -555,7 +649,13 @@ class _StreamCard extends StatelessWidget {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Text('Keyboard', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              Text(
+                                'Keyboard',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               Text('\$149.99', style: TextStyle(fontSize: 10)),
                             ],
                           ),
@@ -586,91 +686,96 @@ class _LiveCommerceSection extends StatelessWidget {
         Text(
           'LIVE COMMERCE SHOW',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.1,
-                color: Colors.white70,
-              ),
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Container(
-          height: 160,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            gradient: LinearGradient(
-              colors: [
-                AppColors.deepBlue.withValues(alpha: 0.6),
-                AppColors.electricPurple.withValues(alpha: 0.4),
-              ],
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 100,
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(AppRadius.md),
-                    bottomLeft: Radius.circular(AppRadius.md),
-                  ),
-                  color: AppColors.slate,
-                  /* image: DecorationImage(
-                    image: NetworkImage('https://placeholder.com/100x160'),
-                    fit: BoxFit.cover,
-                  ), */
-                ),
-                alignment: Alignment.bottomCenter,
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  children: const [
-                    CircleAvatar(radius: 10, backgroundColor: Colors.white24),
-                    SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        '@TechTori',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+        GestureDetector(
+          onTap: () => context.push('/live'),
+          child: Container(
+            height: 160,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.deepBlue.withValues(alpha: 0.6),
+                  AppColors.electricPurple.withValues(alpha: 0.4),
+                ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: const [
-                          _ProductItem(icon: Icons.keyboard, price: '149.99'),
-                          _ProductItem(icon: Icons.headset, price: '239.99'),
-                          _ProductItem(icon: Icons.mouse, price: '249.99'),
-                        ],
-                      ),
-                      const Spacer(),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.electricPurple, AppColors.softViolet],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 100,
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.md),
+                      bottomLeft: Radius.circular(AppRadius.md),
+                    ),
+                    color: AppColors.slate,
+                  ),
+                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: const [
+                      CircleAvatar(radius: 10, backgroundColor: Colors.white24),
+                      SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '@TechTori',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'LIVE CHAT/BUY',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: const [
+                            _ProductItem(icon: Icons.keyboard, price: '149.99'),
+                            _ProductItem(icon: Icons.headset, price: '239.99'),
+                            _ProductItem(icon: Icons.mouse, price: '249.99'),
+                          ],
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                AppColors.electricPurple,
+                                AppColors.softViolet,
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'LIVE CHAT/BUY',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -697,7 +802,10 @@ class _ProductItem extends StatelessWidget {
           child: Icon(icon, size: 20, color: Colors.white70),
         ),
         const SizedBox(height: 4),
-        Text('\$$price', style: const TextStyle(fontSize: 10, color: Colors.white70)),
+        Text(
+          '\$$price',
+          style: const TextStyle(fontSize: 10, color: Colors.white70),
+        ),
       ],
     );
   }
@@ -726,7 +834,10 @@ class _HomeBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               const _NavBarItem(icon: Icons.home_filled, isActive: true),
-              const _NavBarItem(icon: Icons.search),
+              _NavBarItem(
+                icon: Icons.sensors,
+                onTap: () => context.push('/live'),
+              ),
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
@@ -748,15 +859,16 @@ class _HomeBottomNav extends StatelessWidget {
 }
 
 class _NavBarItem extends StatelessWidget {
-  const _NavBarItem({required this.icon, this.isActive = false});
+  const _NavBarItem({required this.icon, this.isActive = false, this.onTap});
   final IconData icon;
   final bool isActive;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Icon(
-      icon,
-      color: isActive ? AppColors.coolCyan : Colors.white60,
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(icon, color: isActive ? AppColors.coolCyan : Colors.white60),
     );
   }
 }
