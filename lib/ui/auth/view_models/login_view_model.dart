@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/user.dart';
 
@@ -73,6 +74,7 @@ class LoginViewModel extends _$LoginViewModel {
           .read(authRepositoryProvider)
           .login(state.email, state.password);
       state = state.copyWith(status: AsyncValue.data(user));
+      ref.read(authStateProvider.notifier).updateSession(user);
       return true;
     } on Failure catch (e, st) {
       state = state.copyWith(status: AsyncValue.error(e, st));

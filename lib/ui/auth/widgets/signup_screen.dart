@@ -100,7 +100,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     if (mounted) {
       if (success) {
         AppSnackBar.showSuccess(context, 'Account created successfully!');
-        context.go('/feed');
       } else {
         final error = ref.read(signupViewModelProvider).errorMessage;
         if (error != null) {

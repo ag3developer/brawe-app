@@ -287,5 +287,15 @@ Ask the user these the first time they matter:
 
 If user does not answer, choose a minimal default, document it in an ADR, and proceed.
 
+## 18) API endpoints
+
+In api_docs/ folder we have the endpoints for app.brawe.io/api/v1/ and connect.brawe.io/api/v1 used for lives
+
+The live documentation can be seen at:
+
+https://app.brawe.io/docs#/
+https://connect.brawe.io/docs#/
+
+
 ---
 End of agents.md

@@ -90,7 +90,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (mounted) {
       if (success) {
         AppSnackBar.showSuccess(context, 'Login successful!');
-        context.go('/feed');
       } else {
         final error = ref.read(loginViewModelProvider).errorMessage;
         if (error != null) {
