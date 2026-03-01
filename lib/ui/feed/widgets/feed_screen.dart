@@ -1,255 +1,228 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../view_models/feed_view_model.dart';
+import '../../../domain/models/post.dart';
 
-import '../../core/themes/app_colors.dart';
-import '../../core/ui/app_radius.dart';
-import '../../core/ui/app_spacing.dart';
-
-class FeedScreen extends StatelessWidget {
+class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
 
-  static const List<_FeedPost> _mockPosts = [
-    _FeedPost(
-      username: 'ari.wave',
-      caption: 'Próximo projeto bilionário!',
-      audio: 'Original • Neon Drift',
-      tags: ['#brawe', '#midnight', '#sketch'],
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [AppColors.midnightBlue, AppColors.deepBlue],
-      ),
-    ),
-    _FeedPost(
-      username: 'nova.lines',
-      caption: 'City glow, soft focus, slow scroll.',
-      audio: 'Original • Glass Echo',
-      tags: ['#citylight', '#vibes'],
-      gradient: LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [AppColors.nearBlack, AppColors.slate],
-      ),
-    ),
-    _FeedPost(
-      username: 'kira.mono',
-      caption: 'Finding calm in motion.',
-      audio: 'Original • Pulse Fade',
-      tags: ['#motion', '#minimal'],
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        colors: [AppColors.deepBlue, AppColors.electricPurple],
-      ),
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feedState = ref.watch(feedViewModelProvider);
+
     return Scaffold(
-      body: PageView.builder(
-        scrollDirection: Axis.vertical,
-        itemCount: _mockPosts.length,
-        itemBuilder: (context, index) {
-          final post = _mockPosts[index];
-          return _FeedPostView(post: post);
+      backgroundColor: const Color(0xFF0B0F1A),
+      body: feedState.when(
+        data: (posts) {
+          if (posts.isEmpty) {
+            return const Center(
+              child: Text(
+                'No posts available.',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
+          }
+
+          return PageView.builder(
+            scrollDirection: Axis.vertical,
+            itemCount: posts.length,
+            onPageChanged: (index) {
+              ref
+                  .read(feedViewModelProvider.notifier)
+                  .onPostViewed(posts[index].id);
+            },
+            itemBuilder: (context, index) {
+              return _PostItem(post: posts[index]);
+            },
+          );
         },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Failed to load feed.',
+                style: TextStyle(color: Colors.red),
+              ),
+              ElevatedButton(
+                onPressed: () =>
+                    ref.read(feedViewModelProvider.notifier).refresh(),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _FeedPostView extends StatelessWidget {
-  const _FeedPostView({required this.post});
+class _PostItem extends ConsumerWidget {
+  final Post post;
 
-  final _FeedPost post;
+  const _PostItem({required this.post});
 
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Container(decoration: BoxDecoration(gradient: post.gradient)),
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.25),
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.65),
-                ],
-              ),
+        // Content (Image or Placeholder)
+        if (post.imageUrl != null)
+          Image.network(
+            post.imageUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+          )
+        else
+          _buildPlaceholder(),
+
+        // Gradient overlay
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.transparent, Colors.black87],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.7, 1.0],
             ),
           ),
         ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _FeedTopBar(),
-                const Spacer(),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: _PostDetails(post: post, textTheme: textTheme),
+
+        // Post Info (Bottom)
+        Positioned(
+          bottom: 24,
+          left: 16,
+          right: 80,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: post.author.avatarUrl != null
+                        ? NetworkImage(post.author.avatarUrl!)
+                        : null,
+                    child: post.author.avatarUrl == null
+                        ? const Icon(Icons.person)
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '@${post.author.username}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const _FeedActions(),
+                  ),
+                  if (post.author.isVerified) ...[
+                    const SizedBox(width: 4),
+                    const Icon(Icons.verified, color: Colors.blue, size: 16),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.lg),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                post.content,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+
+        // Interaction Buttons (Right side)
+        Positioned(
+          bottom: 24,
+          right: 16,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _InteractionButton(
+                icon: post.userLiked ? Icons.favorite : Icons.favorite_border,
+                label: post.likesCount.toString(),
+                color: post.userLiked ? Colors.red : Colors.white,
+                onTap: () => ref
+                    .read(feedViewModelProvider.notifier)
+                    .toggleLike(post.id),
+              ),
+              const SizedBox(height: 16),
+              _InteractionButton(
+                icon: Icons.chat_bubble_outline,
+                label: post.commentsCount.toString(),
+                onTap: () {}, // TODO: Open comments
+              ),
+              const SizedBox(height: 16),
+              _InteractionButton(
+                icon: Icons.repeat,
+                label: post.repostsCount.toString(),
+                onTap: () {}, // TODO: Repost
+              ),
+              const SizedBox(height: 16),
+              _InteractionButton(
+                icon: Icons.share,
+                label: 'Share',
+                onTap: () {}, // TODO: Share
+              ),
+            ],
           ),
         ),
       ],
     );
   }
-}
 
-class _FeedTopBar extends StatelessWidget {
-  const _FeedTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.sm),
-      child: Row(
-        children: [
-          Text(
-            'Brawe',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const Spacer(),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-          ),
-        ],
+  Widget _buildPlaceholder() {
+    return Container(
+      color: const Color(0xFF1F2737),
+      child: const Center(
+        child: Icon(Icons.image, color: Colors.white10, size: 64),
       ),
     );
   }
 }
 
-class _PostDetails extends StatelessWidget {
-  const _PostDetails({required this.post, required this.textTheme});
-
-  final _FeedPost post;
-  final TextTheme textTheme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '@${post.username}',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(post.caption, style: textTheme.bodyLarge),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.xs,
-          children: post.tags
-              .map(
-                (tag) => Chip(
-                  label: Text(tag),
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
-                  labelStyle: textTheme.labelLarge?.copyWith(
-                    color: Colors.white,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            const Icon(Icons.graphic_eq, size: 18),
-            const SizedBox(width: AppSpacing.xs),
-            Text(
-              post.audio,
-              style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _FeedActions extends StatelessWidget {
-  const _FeedActions();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: const [
-        _ActionButton(icon: Icons.favorite_border, label: '12.4k'),
-        SizedBox(height: AppSpacing.md),
-        _ActionButton(icon: Icons.chat_bubble_outline, label: '642'),
-        SizedBox(height: AppSpacing.md),
-        _ActionButton(icon: Icons.share, label: 'Share'),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({required this.icon, required this.label});
-
+class _InteractionButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _InteractionButton({
+    required this.icon,
+    required this.label,
+    this.color = Colors.white,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.white.withValues(alpha: 0.15),
-          child: Icon(icon, color: Colors.white),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: Colors.black45,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
         ),
-        const SizedBox(height: AppSpacing.xs),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(color: Colors.white),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
   }
-}
-
-class _FeedPost {
-  const _FeedPost({
-    required this.username,
-    required this.caption,
-    required this.audio,
-    required this.tags,
-    required this.gradient,
-  });
-
-  final String username;
-  final String caption;
-  final String audio;
-  final List<String> tags;
-  final LinearGradient gradient;
 }

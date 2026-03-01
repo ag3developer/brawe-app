@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:brawe_app/data/model/live_room_dto.dart';
-import 'package:brawe_app/domain/models/live_room.dart';
 
 void main() {
   group('LiveRoomDto to Domain Mapping', () {
