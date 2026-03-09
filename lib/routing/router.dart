@@ -9,6 +9,7 @@ import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/live/widgets/live_feed_screen.dart';
+import '../ui/live/widgets/start_live_screen.dart';
 
 part 'router.g.dart';
 
@@ -53,6 +54,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/live',
         builder: (context, state) => const LiveFeedScreen(),
+      ),
+      GoRoute(
+        path: '/live/start',
+        builder: (context, state) => const StartLiveScreen(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],

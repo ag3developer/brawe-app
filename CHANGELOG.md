@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+- Move live initiation entrypoint to Home bottom navigation and remove `Go Live` button from Live feed screen.
+- Add a Live feed category switch (`For You` and `All Lives`) in the live view.
+- Wire `For You` category to `GET /api/v1/live/feed` and `All Lives` to `GET /api/v1/live/rooms`.
+- Add a full "Go Live" initiation flow with a dedicated `StartLiveScreen` and `StartLiveViewModel`.
+- Implement live room creation and start actions in `LiveService` and `LiveRepository` using `POST /live/rooms` and `POST /live/rooms/{room_id}/start`.
+- Add resilient live-response parsing to handle multiple backend payload shapes when creating/starting a live.
+- Add route `/live/start` and a `Go Live` CTA in the live feed.
+- Add unit tests for live initiation repository logic and start-live view model success/failure transitions.
 - Implement Regular Social Feed (TikTok-style) using vertical `PageView` for immersive browsing.
 - Introduce `Post` and `PostAuthor` domain models with corresponding `PostResponseDto` and `PostFeedResponseDto` mapping.
 - Implement `PostService` and `PostRepository` to handle social feed fetching, post liking, and view tracking.

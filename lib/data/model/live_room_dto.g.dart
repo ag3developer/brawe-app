@@ -8,16 +8,16 @@ part of 'live_room_dto.dart';
 
 _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   id: json['id'] as String,
-  title: json['title'] as String,
+  title: json['title'] as String? ?? 'Untitled Live',
   description: json['description'] as String?,
   category: json['category'] as String?,
   liveType: json['live_type'] as String? ?? 'solo',
   isPrivate: json['is_private'] as bool? ?? false,
-  status: json['status'] as String,
+  status: json['status'] as String? ?? 'live',
   viewerCount: (json['viewer_count'] as num?)?.toInt() ?? 0,
   streamUrl: json['stream_url'] as String?,
   thumbnailUrl: json['thumbnail_url'] as String?,
-  streamerId: json['streamer_id'] as String,
+  streamerId: json['streamer_id'] as String?,
   streamerName: json['streamer_name'] as String? ?? 'Unknown Streamer',
   streamerAvatarUrl: json['streamer_avatar_url'] as String?,
 );

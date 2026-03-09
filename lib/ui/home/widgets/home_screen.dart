@@ -838,15 +838,18 @@ class _HomeBottomNav extends StatelessWidget {
                 icon: Icons.sensors,
                 onTap: () => context.push('/live'),
               ),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [AppColors.coolCyan, AppColors.electricPurple],
+              GestureDetector(
+                onTap: () => context.push('/live/start'),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [AppColors.coolCyan, AppColors.electricPurple],
+                    ),
                   ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 28),
               ),
               const _NavBarItem(icon: Icons.shopping_bag_outlined),
               const _NavBarItem(icon: Icons.person_outline),

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
+import '../model/create_live_room_request_dto.dart';
 import '../model/live_room_dto.dart';
 
 part 'live_service.g.dart';
@@ -27,19 +28,83 @@ class LiveService {
     final response = await _dio.get('/live/feed', queryParameters: queryParams);
 
     // The API might return an object like { "rooms": [...] } or a list directly.
-    // Assuming standard pagination structure based on JSON schema
-    if (response.data is Map<String, dynamic> &&
-        response.data.containsKey('rooms')) {
-      final feedResponse = LiveFeedResponseDto.fromJson(response.data);
-      return feedResponse.rooms;
-    } else if (response.data is List) {
-      final list = response.data as List;
-      return list
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      // Check for common collection keys
+      final List<dynamic>? list =
+          (data['rooms'] ?? data['items'] ?? data['data'] ?? data['lives'])
+              as List<dynamic>?;
+
+      if (list != null) {
+        return list
+            .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } else if (data is List) {
+      return data
           .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
           .toList();
     }
 
-    // Fallback if data structure is unexpected
     return [];
+  }
+
+  Future<List<LiveRoomDto>> getRooms({
+    String? status,
+    String? category,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final queryParams = <String, dynamic>{'page': page, 'limit': limit};
+    if (status != null) queryParams['status'] = status;
+    if (category != null) queryParams['category'] = category;
+
+    final response = await _dio.get(
+      '/live/rooms',
+      queryParameters: queryParams,
+    );
+
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      final List<dynamic>? list =
+          (data['rooms'] ?? data['items'] ?? data['data'] ?? data['lives'])
+              as List<dynamic>?;
+
+      if (list != null) {
+        return list
+            .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } else if (data is List) {
+      return data
+          .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+
+    return [];
+  }
+
+  Future<Map<String, dynamic>> createLiveRoom(
+    CreateLiveRoomRequestDto request,
+  ) async {
+    final response = await _dio.post('/live/rooms', data: request.toJson());
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> startLive(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/start');
+    return _toMap(response.data);
+  }
+
+  Map<String, dynamic> _toMap(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    return {};
   }
 }

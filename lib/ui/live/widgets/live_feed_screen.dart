@@ -2,55 +2,192 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
+import '../../core/themes/app_colors.dart';
 
-class LiveFeedScreen extends ConsumerWidget {
+class LiveFeedScreen extends ConsumerStatefulWidget {
   const LiveFeedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LiveFeedScreen> createState() => _LiveFeedScreenState();
+}
+
+class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
+  LiveFeedCategory _selectedCategory = LiveFeedCategory.forYou;
+
+  @override
+  Widget build(BuildContext context) {
     final liveFeedState = ref.watch(liveFeedViewModelProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1A), // Near-black background
-      body: liveFeedState.when(
-        data: (rooms) {
-          if (rooms.isEmpty) {
-            return const Center(
-              child: Text(
-                'No live rooms available.',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+      body: Stack(
+        children: [
+          liveFeedState.when(
+            data: (rooms) {
+              if (rooms.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.videocam_off_outlined,
+                        color: Colors.white24,
+                        size: 64,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _selectedCategory == LiveFeedCategory.forYou
+                            ? 'No lives in For You right now.'
+                            : 'No active lives at the moment.',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Check back later or try refreshing.',
+                        style: TextStyle(color: Colors.white38, fontSize: 14),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => ref
+                            .read(liveFeedViewModelProvider.notifier)
+                            .refresh(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Refresh'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6E4DFF),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(liveFeedViewModelProvider.notifier).refresh(),
-            child: PageView.builder(
-              scrollDirection: Axis.vertical,
-              itemCount: rooms.length,
-              itemBuilder: (context, index) {
-                final room = rooms[index];
-                return _LiveRoomItem(room: room);
-              },
-            ),
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Failed to load live feed.',
-                style: TextStyle(color: Colors.red),
-              ),
-              ElevatedButton(
-                onPressed: () =>
+              return RefreshIndicator(
+                onRefresh: () =>
                     ref.read(liveFeedViewModelProvider.notifier).refresh(),
-                child: const Text('Retry'),
+                child: PageView.builder(
+                  scrollDirection: Axis.vertical,
+                  itemCount: rooms.length,
+                  itemBuilder: (context, index) {
+                    final room = rooms[index];
+                    return _LiveRoomItem(room: room);
+                  },
+                ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error: ${error.toString()}',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () =>
+                        ref.read(liveFeedViewModelProvider.notifier).refresh(),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-            ],
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: _LiveFeedCategorySelector(
+                  selected: _selectedCategory,
+                  onSelected: _onCategorySelected,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onCategorySelected(LiveFeedCategory category) async {
+    setState(() {
+      _selectedCategory = category;
+    });
+    await ref.read(liveFeedViewModelProvider.notifier).selectCategory(category);
+  }
+}
+
+class _LiveFeedCategorySelector extends StatelessWidget {
+  const _LiveFeedCategorySelector({
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final LiveFeedCategory selected;
+  final ValueChanged<LiveFeedCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _CategoryButton(
+            label: 'For You',
+            isSelected: selected == LiveFeedCategory.forYou,
+            onTap: () => onSelected(LiveFeedCategory.forYou),
+          ),
+          _CategoryButton(
+            label: 'All Lives',
+            isSelected: selected == LiveFeedCategory.allLives,
+            onTap: () => onSelected(LiveFeedCategory.allLives),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryButton extends StatelessWidget {
+  const _CategoryButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.electricPurple : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ),

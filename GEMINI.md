@@ -296,6 +296,8 @@ The live documentation can be seen at:
 https://app.brawe.io/docs#/
 https://connect.brawe.io/docs#/
 
+If in doubt of the params/schema, just look it up on online documentation
+
 
 ---
 End of agents.md

@@ -8,16 +8,16 @@ part 'live_room_dto.g.dart';
 sealed class LiveRoomDto with _$LiveRoomDto {
   const factory LiveRoomDto({
     required String id,
-    required String title,
+    @Default('Untitled Live') String title,
     String? description,
     String? category,
     @JsonKey(name: 'live_type') @Default('solo') String liveType,
     @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
-    required String status,
+    @Default('live') String status,
     @JsonKey(name: 'viewer_count') @Default(0) int viewerCount,
     @JsonKey(name: 'stream_url') String? streamUrl,
     @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
-    @JsonKey(name: 'streamer_id') required String streamerId,
+    @JsonKey(name: 'streamer_id') String? streamerId,
     @JsonKey(name: 'streamer_name')
     @Default('Unknown Streamer')
     String streamerName,
@@ -41,7 +41,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       viewerCount: viewerCount,
       streamUrl: streamUrl,
       thumbnailUrl: thumbnailUrl,
-      streamerId: streamerId,
+      streamerId: streamerId ?? 'unknown',
       streamerName: streamerName,
       streamerAvatarUrl: streamerAvatarUrl,
     );
