@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('LiveRepository initiateLive', () {
-    test('creates and starts live room from nested room payload', () async {
+    test('creates live room from nested room payload', () async {
       final repository = LiveRepository(_SuccessLiveService());
 
       final room = await repository.initiateLive(
@@ -19,8 +19,10 @@ void main() {
 
       expect(room.id, 'room-123');
       expect(room.title, 'Night Chill Session');
-      expect(room.status, 'live');
+      expect(room.status, 'waiting');
       expect(room.streamUrl, 'https://cdn.example.com/live/room-123.m3u8');
+      expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
+      expect(room.streamKey, 'sk_live_room_123');
     });
 
     test('uses fallback id when API returns room_id only', () async {
@@ -32,9 +34,29 @@ void main() {
 
       expect(room.id, 'room-fallback');
       expect(room.title, 'Q&A');
-      expect(room.status, 'live');
+      expect(room.status, 'waiting');
       expect(room.streamUrl, 'https://cdn.example.com/fallback.m3u8');
+      expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
+      expect(room.streamKey, 'sk_live_fallback');
     });
+
+    test(
+      'merges top-level stream credentials into nested room payload',
+      () async {
+        final repository = LiveRepository(_SplitCredentialsLiveService());
+
+        final room = await repository.initiateLive(
+          const CreateLiveRoomRequestDto(title: 'Split payload live'),
+        );
+
+        expect(room.id, 'room-split');
+        expect(room.title, 'Split payload live');
+        expect(room.status, 'waiting');
+        expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
+        expect(room.streamKey, 'sk_live_split');
+        expect(room.streamUrl, 'https://cdn.example.com/live/split.m3u8');
+      },
+    );
 
     test('maps 422 response to validation failure', () async {
       final repository = LiveRepository(_ValidationErrorLiveService());
@@ -44,6 +66,17 @@ void main() {
           const CreateLiveRoomRequestDto(title: 'ab'),
         ),
         throwsA(isA<ValidationFailure>()),
+      );
+    });
+
+    test('maps create request timeout to network failure', () async {
+      final repository = LiveRepository(_TimeoutLiveService());
+
+      await expectLater(
+        () => repository.initiateLive(
+          const CreateLiveRoomRequestDto(title: 'Long request'),
+        ),
+        throwsA(isA<NetworkFailure>()),
       );
     });
   });
@@ -60,25 +93,15 @@ class _SuccessLiveService extends LiveService {
       'room': {
         'id': 'room-123',
         'title': request.title,
-        'status': 'scheduled',
+        'status': 'waiting',
         'live_type': 'solo',
         'is_private': false,
         'streamer_name': 'Streamer',
-      },
-    };
-  }
-
-  @override
-  Future<Map<String, dynamic>> startLive(String roomId) async {
-    return {
-      'live': {
-        'id': roomId,
-        'title': 'Night Chill Session',
-        'status': 'live',
-        'stream_url': 'https://cdn.example.com/live/$roomId.m3u8',
-        'live_type': 'solo',
-        'is_private': false,
-        'streamer_name': 'Streamer',
+        'stream_config': {
+          'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
+          'stream_key': 'sk_live_room_123',
+          'playback_url': 'https://cdn.example.com/live/room-123.m3u8',
+        },
       },
     };
   }
@@ -91,14 +114,14 @@ class _FallbackIdLiveService extends LiveService {
   Future<Map<String, dynamic>> createLiveRoom(
     CreateLiveRoomRequestDto request,
   ) async {
-    return {'room_id': 'room-fallback', 'status': 'scheduled'};
-  }
-
-  @override
-  Future<Map<String, dynamic>> startLive(String roomId) async {
     return {
-      'status': 'live',
-      'playback_url': 'https://cdn.example.com/fallback.m3u8',
+      'room_id': 'room-fallback',
+      'status': 'waiting',
+      'stream_config': {
+        'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
+        'stream_key': 'sk_live_fallback',
+        'playback_url': 'https://cdn.example.com/fallback.m3u8',
+      },
     };
   }
 }
@@ -118,5 +141,34 @@ class _ValidationErrorLiveService extends LiveService {
       ),
       type: DioExceptionType.badResponse,
     );
+  }
+}
+
+class _SplitCredentialsLiveService extends LiveService {
+  _SplitCredentialsLiveService() : super(Dio());
+
+  @override
+  Future<Map<String, dynamic>> createLiveRoom(
+    CreateLiveRoomRequestDto request,
+  ) async {
+    return {
+      'room': {'id': 'room-split', 'title': request.title},
+      'status': 'waiting',
+      'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
+      'stream_key': 'sk_live_split',
+      'playback_url': 'https://cdn.example.com/live/split.m3u8',
+    };
+  }
+}
+
+class _TimeoutLiveService extends LiveService {
+  _TimeoutLiveService() : super(Dio());
+
+  @override
+  Future<Map<String, dynamic>> createLiveRoom(
+    CreateLiveRoomRequestDto request,
+  ) async {
+    await Future<void>.delayed(const Duration(seconds: 21));
+    return {'id': 'late-room', 'title': request.title, 'status': 'waiting'};
   }
 }

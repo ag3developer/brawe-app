@@ -8,8 +8,10 @@ import '../ui/auth/widgets/signup_screen.dart';
 import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
-import '../ui/live/widgets/live_feed_screen.dart';
-import '../ui/live/widgets/start_live_screen.dart';
+import '../ui/live_feed/widgets/live_feed_screen.dart';
+import '../ui/broadcaster/widgets/start_live_screen.dart';
+import '../ui/broadcaster/widgets/broadcaster_screen.dart';
+import '../domain/models/live_room.dart';
 
 part 'router.g.dart';
 
@@ -58,6 +60,13 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/live/start',
         builder: (context, state) => const StartLiveScreen(),
+      ),
+      GoRoute(
+        path: '/live/broadcast',
+        builder: (context, state) {
+          final room = state.extra as LiveRoom;
+          return BroadcasterScreen(room: room);
+        },
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],

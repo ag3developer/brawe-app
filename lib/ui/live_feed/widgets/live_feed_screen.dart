@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../../core/constants/app_constants.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
+import '../../../data/services/socket_service.dart';
 import '../../core/themes/app_colors.dart';
 
 class LiveFeedScreen extends ConsumerStatefulWidget {
@@ -74,7 +78,7 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                   itemCount: rooms.length,
                   itemBuilder: (context, index) {
                     final room = rooms[index];
-                    return _LiveRoomItem(room: room);
+                    return LiveRoomItem(room: room);
                   },
                 ),
               );
@@ -195,10 +199,75 @@ class _CategoryButton extends StatelessWidget {
   }
 }
 
-class _LiveRoomItem extends StatelessWidget {
+class LiveRoomItem extends ConsumerStatefulWidget {
   final LiveRoom room;
 
-  const _LiveRoomItem({required this.room});
+  const LiveRoomItem({super.key, required this.room});
+
+  @override
+  ConsumerState<LiveRoomItem> createState() => _LiveRoomItemState();
+}
+
+class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
+  VideoPlayerController? _controller;
+  bool _isInitialized = false;
+  late final SocketService _socketService;
+
+  @override
+  void initState() {
+    super.initState();
+    _socketService = ref.read(socketServiceProvider);
+    _initializePlayer();
+    _connectSocket();
+  }
+
+  Future<void> _initializePlayer() async {
+    final streamUrl = widget.room.streamUrl;
+    if (streamUrl == null || streamUrl.isEmpty) return;
+
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(streamUrl),
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
+    try {
+      await _controller!.initialize();
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+        _controller!.play();
+        _controller!.setLooping(true);
+        _controller!.setVolume(1.0);
+        WakelockPlus.enable();
+      }
+    } catch (e) {
+      debugPrint('Error initializing video player: $e');
+    }
+  }
+
+  void _connectSocket() {
+    _socketService.connect().then((_) {
+      _socketService.joinRoom(widget.room.id);
+
+      _socketService.on(AppConstants.eventNewMessage, (data) {
+        // Handle new message (e.g., show in chat overlay)
+        debugPrint('New message in room ${widget.room.id}: $data');
+      });
+
+      _socketService.on(AppConstants.eventViewerCount, (data) {
+        // Update viewer count
+        debugPrint('Viewer count updated for ${widget.room.id}: $data');
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    WakelockPlus.disable();
+    _socketService.leaveRoom(widget.room.id);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,9 +275,20 @@ class _LiveRoomItem extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Background - Stream or Thumbnail placeholder
-        if (room.thumbnailUrl != null)
+        if (_isInitialized && _controller != null)
+          SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox(
+                width: _controller!.value.size.width,
+                height: _controller!.value.size.height,
+                child: VideoPlayer(_controller!),
+              ),
+            ),
+          )
+        else if (widget.room.thumbnailUrl != null)
           Image.network(
-            room.thumbnailUrl!,
+            widget.room.thumbnailUrl!,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
           )
@@ -242,7 +322,7 @@ class _LiveRoomItem extends StatelessWidget {
                 const Icon(Icons.sensors, color: Colors.white, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  'LIVE ${room.viewerCount}',
+                  'LIVE ${widget.room.viewerCount}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -266,16 +346,16 @@ class _LiveRoomItem extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundImage: room.streamerAvatarUrl != null
-                        ? NetworkImage(room.streamerAvatarUrl!)
+                    backgroundImage: widget.room.streamerAvatarUrl != null
+                        ? NetworkImage(widget.room.streamerAvatarUrl!)
                         : null,
-                    child: room.streamerAvatarUrl == null
+                    child: widget.room.streamerAvatarUrl == null
                         ? const Icon(Icons.person)
                         : null,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    room.streamerName,
+                    widget.room.streamerName,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -286,7 +366,7 @@ class _LiveRoomItem extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                room.title,
+                widget.room.title,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -340,3 +420,4 @@ class _LiveRoomItem extends StatelessWidget {
     );
   }
 }
+

@@ -28,7 +28,7 @@ class AuthRepository {
       final userData = data['user'] as Map<String, dynamic>;
       final user = User.fromJson(userData);
 
-      final token = data['access_token'] as String?;
+      final token = _extractToken(data);
       if (token != null) {
         await _storageService.saveToken(token);
         await _storageService.saveUser(user);
@@ -69,7 +69,7 @@ class AuthRepository {
       final userData = data['user'] as Map<String, dynamic>;
       final user = User.fromJson(userData);
 
-      final token = data['access_token'] as String?;
+      final token = _extractToken(data);
       if (token != null) {
         await _storageService.saveToken(token);
         await _storageService.saveUser(user);
@@ -128,5 +128,22 @@ class AuthRepository {
 
   Future<void> logout() async {
     await _storageService.clearAll();
+  }
+
+  String? _extractToken(Map<String, dynamic> payload) {
+    final directToken = payload['access_token'] ?? payload['token'];
+    if (directToken is String && directToken.trim().isNotEmpty) {
+      return directToken;
+    }
+
+    final nestedData = payload['data'];
+    if (nestedData is Map) {
+      final nestedToken = nestedData['access_token'] ?? nestedData['token'];
+      if (nestedToken is String && nestedToken.trim().isNotEmpty) {
+        return nestedToken;
+      }
+    }
+
+    return null;
   }
 }

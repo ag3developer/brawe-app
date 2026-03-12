@@ -21,7 +21,10 @@ class StartLiveState {
   final bool isPrivate;
   final AsyncValue<LiveRoom?> status;
 
-  bool get canSubmit => title.trim().length >= 3 && !status.isLoading;
+  bool get canSubmit =>
+      title.trim().length >= 3 &&
+      category.isNotEmpty &&
+      !status.isLoading;
 
   String? get errorMessage => status.whenOrNull(
     error: (error, _) => (error as Failure).toDisplayMessage(),
@@ -81,6 +84,11 @@ class StartLiveViewModel extends _$StartLiveViewModel {
 
     if (state.title.trim().length < 3) {
       _setError('Live title must be at least 3 characters.');
+      return false;
+    }
+
+    if (state.category.isEmpty) {
+      _setError('Please select a category for your live.');
       return false;
     }
 

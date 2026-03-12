@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../data/repositories/live_repository.dart';
 
@@ -22,9 +23,9 @@ class LiveFeedViewModel extends _$LiveFeedViewModel {
 
     switch (_selectedCategory) {
       case LiveFeedCategory.forYou:
-        return repository.getLiveFeed(limit: 10);
+        return repository.getLiveFeed(limit: AppConstants.feedLimit);
       case LiveFeedCategory.allLives:
-        return repository.getRooms(limit: 10);
+        return repository.getRooms(limit: AppConstants.roomsLimit);
     }
   }
 

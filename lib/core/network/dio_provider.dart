@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../constants/app_constants.dart';
 import '../../data/services/storage_service.dart';
 
 part 'dio_provider.g.dart';
@@ -10,9 +12,9 @@ Dio dio(Ref ref) {
 
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'https://app.brawe.io/api/v1',
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      baseUrl: AppConstants.appApiV1Url,
+      connectTimeout: AppConstants.defaultTimeout,
+      receiveTimeout: AppConstants.defaultTimeout,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -27,6 +29,9 @@ Dio dio(Ref ref) {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        debugPrint(
+          'AppDio request ${options.method} ${options.path} auth=${token != null ? 'yes' : 'no'}',
+        );
         return handler.next(options);
       },
     ),

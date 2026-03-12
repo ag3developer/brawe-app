@@ -15,7 +15,7 @@ class Failure with _$Failure {
   String toDisplayMessage() => when(
     network: () => 'No internet connection',
     server: () => 'Server error occurred',
-    unauthorized: () => 'Invalid credentials',
+    unauthorized: () => 'Session expired. Please sign in again.',
     validation: (m) => m ?? 'Validation failed',
     unknown: () => 'An unexpected error occurred',
   );

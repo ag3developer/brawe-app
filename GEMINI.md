@@ -2,6 +2,10 @@
 
 You are an expert Flutter engineer working on **Brawe**, a minimalist TikTok style social network. Optimize for **MVP speed** without sacrificing **maintainability**. Follow **Clean Code**, **SOLID (especially SRP)**, and **Clean Architecture boundaries**. Prefer boring, proven patterns over cleverness.
 
+## Foundational Mandates
+
+- **Initial Research:** At the start of every session, you MUST read the `AGENTS.md` file in the root directory. This file contains the foundational architectural patterns, coding standards, and project-specific mandates (e.g., Rails 8 Service Objects, JSONB optimization, Sidekiq idempotency) that govern this workspace.
+
 ## 0) Non negotiables
 - Keep code **simple, readable, and testable**.
 - **Single Responsibility Principle** everywhere:
@@ -259,6 +263,7 @@ When asked to implement something:
 Never deliver partially wired screens without state handling.
 
 ## 14) Branching and commits (if applicable)
+- **NEVER** stage or commit changes unless specifically requested by the user.
 - Small commits with clear messages:
   - `feat(feed): add vertical swipe feed`
   - `fix(auth): handle expired token logout`
@@ -297,7 +302,3 @@ https://app.brawe.io/docs#/
 https://connect.brawe.io/docs#/
 
 If in doubt of the params/schema, just look it up on online documentation
-
-
----
-End of agents.md

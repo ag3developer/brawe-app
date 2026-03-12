@@ -84,6 +84,19 @@ class LiveService {
     return [];
   }
 
+  Future<LiveRoomDto?> getRoom(String idOrSlug) async {
+    final response = await _dio.get('/live/rooms/$idOrSlug');
+    final data = response.data;
+    if (data is Map<String, dynamic>) {
+      // The API returns { "success": true, "data": { ...room... } }
+      final roomData = data['data'] ?? data;
+      if (roomData is Map<String, dynamic>) {
+        return LiveRoomDto.fromJson(roomData);
+      }
+    }
+    return null;
+  }
+
   Future<Map<String, dynamic>> createLiveRoom(
     CreateLiveRoomRequestDto request,
   ) async {

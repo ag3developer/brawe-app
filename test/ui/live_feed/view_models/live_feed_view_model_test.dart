@@ -1,7 +1,7 @@
 import 'package:brawe_app/data/repositories/live_repository.dart';
 import 'package:brawe_app/data/services/live_service.dart';
 import 'package:brawe_app/domain/models/live_room.dart';
-import 'package:brawe_app/ui/live/view_models/live_feed_view_model.dart';
+import 'package:brawe_app/ui/live_feed/view_models/live_feed_view_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

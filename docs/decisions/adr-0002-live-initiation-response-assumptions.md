@@ -1,27 +1,31 @@
-# ADR-0002: Live Initiation Response Parsing Assumptions
+# ADR-0002: Live Room Creation Contract for Broadcast Start
 
 ## Context
-The Connect API documents `POST /api/v1/live/rooms` and
-`POST /api/v1/live/rooms/{room_id}/start` but both responses are defined as a
-generic object without a concrete schema. The mobile MVP needs a reliable
-"initiate live" flow now.
+The Connect integration docs were updated on March 8, 2026. The broadcaster
+flow now starts by creating a room with `POST /api/v1/live/rooms`, receiving
+`stream_config` credentials, and then going live when RTMP publishing starts.
+The `/live/rooms/{room_id}/start` step is no longer part of the documented
+contract. The mobile MVP needs a reliable room creation flow aligned with this
+backend behavior.
 
 ## Decision
-Implement defensive parsing in `LiveRepository.initiateLive` for multiple
-response shapes:
+`LiveRepository.initiateLive` now performs a single create-room call and does
+not invoke `/start`. Parsing remains defensive for the create response:
 - direct room object (`id`, `title`, etc.)
-- nested room object (`room`, `live`, `data`, `result`, `payload`)
+- nested object (`room`, `live`, `data`, `result`, `payload`)
 - fallback identifiers (`room_id`, `live_id`)
 
-If start response does not return a full room payload, keep the created room and
-force status to `live`, optionally extracting stream URL from known keys
-(`stream_url`, `hls_url`, `playback_url`).
+Stream playback URL is extracted from either top-level keys
+(`stream_url`, `hls_url`, `playback_url`) or `stream_config.playback_url`.
+Broadcast setup credentials are extracted from `stream_config.rtmp_url` and
+`stream_config.stream_key`.
+Default room status for inferred payloads is `waiting`.
 
 ## Consequences
-- The app can start lives even while backend response contracts are still loose.
-- Parsing complexity is isolated to the repository (data layer boundary).
-- If backend finalizes a strict schema, this fallback logic should be simplified.
+- The app behavior matches the new backend room-first contract.
+- Mobile can surface room readiness before RTMP publish starts.
+- Parsing complexity stays isolated in the repository (data layer boundary).
 
 ## Alternatives considered
-- Blocking feature implementation until strict response schemas are available.
-- Hard-failing on unknown payload shape (would reduce robustness for MVP).
+- Keep calling `/live/rooms/{room_id}/start` (would fail with updated backend).
+- Hard-fail on non-strict payload shape (would reduce MVP robustness).

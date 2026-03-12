@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_room.dart';
 import '../services/live_service.dart';
 import '../model/create_live_room_request_dto.dart';
@@ -20,7 +23,10 @@ class LiveRepository {
 
   LiveRepository(this._liveService);
 
-  Future<List<LiveRoom>> getLiveFeed({String? cursor, int limit = 10}) async {
+  Future<List<LiveRoom>> getLiveFeed({
+    String? cursor,
+    int limit = AppConstants.feedLimit,
+  }) async {
     try {
       final dtos = await _liveService.getLiveFeed(cursor: cursor, limit: limit);
       debugPrint('LiveRepository: getLiveFeed returned ${dtos.length} items');
@@ -38,7 +44,7 @@ class LiveRepository {
     String? status,
     String? category,
     int page = 1,
-    int limit = 20,
+    int limit = AppConstants.roomsLimit,
   }) async {
     try {
       final dtos = await _liveService.getRooms(
@@ -58,10 +64,25 @@ class LiveRepository {
     }
   }
 
+  Future<LiveRoom?> getRoom(String idOrSlug) async {
+    try {
+      final dto = await _liveService.getRoom(idOrSlug);
+      return dto?.toDomain();
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: getRoom DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: getRoom Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
   Future<LiveRoom> initiateLive(CreateLiveRoomRequestDto request) async {
     try {
-      final createResponse = await _liveService.createLiveRoom(request);
-      final createdRoom = _extractLiveRoom(
+      final createResponse = await _liveService
+          .createLiveRoom(request)
+          .timeout(AppConstants.liveInitiationTimeout);
+      final createdRoom = _extractLiveRoomFromCreateResponse(
         createResponse,
         fallbackTitle: request.title,
       );
@@ -70,28 +91,28 @@ class LiveRepository {
         throw const Failure.server();
       }
 
-      final startResponse = await _liveService.startLive(createdRoom.id);
-      final startedRoom =
-          _extractLiveRoom(startResponse, fallbackTitle: createdRoom.title) ??
-          createdRoom.copyWith(
-            status: 'live',
-            streamUrl:
-                _readString(
-                  startResponse['stream_url'] ??
-                      startResponse['hls_url'] ??
-                      startResponse['playback_url'],
-                ) ??
-                createdRoom.streamUrl,
-          );
-
-      return startedRoom.toDomain();
+      return createdRoom.toDomain();
     } on Failure {
       rethrow;
+    } on TimeoutException {
+      throw const Failure.network();
     } on DioException catch (e) {
       debugPrint('LiveRepository: initiateLive DioException: ${e.message}');
       throw _mapFailure(e);
     } catch (e) {
       debugPrint('LiveRepository: initiateLive Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> startLive(String roomId) async {
+    try {
+      await _liveService.startLive(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: startLive DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: startLive Error: $e');
       throw const Failure.unknown();
     }
   }
@@ -115,83 +136,141 @@ class LiveRepository {
     return const Failure.network();
   }
 
-  LiveRoomDto? _extractLiveRoom(
+  LiveRoomDto? _extractLiveRoomFromCreateResponse(
     Map<String, dynamic> payload, {
     String? fallbackTitle,
   }) {
-    final candidates = <dynamic>[
-      payload,
-      payload['room'],
-      payload['live'],
-      payload['data'],
-      payload['result'],
-      payload['payload'],
+    final root = Map<String, dynamic>.from(payload);
+    final candidates = <Map<String, dynamic>>[
+      root,
+      ..._extractChildCandidates(root),
     ];
 
     for (final candidate in candidates) {
-      if (candidate is! Map) {
+      try {
+        final normalized = _normalizeCreateRoomPayload(
+          candidate,
+          rootPayload: root,
+          fallbackTitle: fallbackTitle,
+        );
+        if (normalized == null) {
+          continue;
+        }
+
+        return LiveRoomDto.fromJson(normalized);
+      } catch (e) {
+        debugPrint(
+          'LiveRepository: Error parsing candidate as LiveRoomDto: $e',
+        );
+      }
+    }
+
+    return null;
+  }
+
+  List<Map<String, dynamic>> _extractChildCandidates(
+    Map<String, dynamic> payload,
+  ) {
+    final candidates = <Map<String, dynamic>>[];
+    final possibleContainers = <dynamic>[
+      payload['room'],
+      payload['live'],
+      payload['data'],
+    ];
+
+    for (final container in possibleContainers) {
+      if (container is! Map) {
         continue;
       }
 
-      final room = _toLiveRoomDto(
-        Map<String, dynamic>.from(candidate),
-        fallbackTitle: fallbackTitle,
-      );
-      if (room != null) {
-        return room;
+      final map = Map<String, dynamic>.from(container);
+      candidates.add(map);
+
+      final nestedChildren = <dynamic>[map['room'], map['live'], map['data']];
+      for (final child in nestedChildren) {
+        if (child is Map) {
+          candidates.add(Map<String, dynamic>.from(child));
+        }
       }
     }
 
-    final fallbackId = _readString(
-      payload['room_id'] ?? payload['live_id'] ?? payload['id'],
-    );
-    if (fallbackId == null) {
-      return null;
-    }
-
-    return LiveRoomDto(
-      id: fallbackId,
-      title: fallbackTitle ?? 'Untitled Live',
-      status: _readString(payload['status']) ?? 'scheduled',
-      liveType: 'solo',
-      isPrivate: false,
-      streamerName: 'You',
-      streamUrl: _readString(
-        payload['stream_url'] ?? payload['hls_url'] ?? payload['playback_url'],
-      ),
-    );
+    return candidates;
   }
 
-  LiveRoomDto? _toLiveRoomDto(
-    Map<String, dynamic> source, {
+  Map<String, dynamic>? _normalizeCreateRoomPayload(
+    Map<String, dynamic> candidate, {
+    required Map<String, dynamic> rootPayload,
     String? fallbackTitle,
   }) {
-    final id = _readString(
-      source['id'] ?? source['room_id'] ?? source['live_id'] ?? source['slug'],
+    final normalized = Map<String, dynamic>.from(candidate);
+
+    normalized['id'] ??=
+        normalized['room_id'] ?? rootPayload['id'] ?? rootPayload['room_id'];
+    normalized['title'] ??=
+        fallbackTitle ?? rootPayload['title'] ?? rootPayload['name'];
+    normalized['status'] ??= rootPayload['status'] ?? AppConstants.statusWaiting;
+    normalized['playback_url'] ??= rootPayload['playback_url'];
+    normalized['thumbnail_url'] ??= rootPayload['thumbnail_url'];
+    normalized['host'] ??= rootPayload['host'];
+
+    normalized['stream_config'] ??= _mergeStreamConfig(
+      primary: normalized['stream_config'],
+      secondary: rootPayload['stream_config'],
+      tertiary: _buildStreamConfigFromPayload(rootPayload),
+      quaternary: _buildStreamConfigFromPayload(normalized),
     );
-    if (id == null) {
-      return null;
-    }
 
-    final payload = Map<String, dynamic>.from(source);
-    payload['id'] = id;
-    payload['title'] = _readString(payload['title']) ?? fallbackTitle;
-    payload['streamer_name'] = _readString(payload['streamer_name']) ?? 'You';
-    payload['status'] = _readString(payload['status']) ?? 'scheduled';
-
-    return LiveRoomDto.fromJson(payload);
-  }
-
-  String? _readString(dynamic value) {
-    if (value == null) {
-      return null;
-    }
-
-    final normalized = value.toString().trim();
-    if (normalized.isEmpty) {
+    if (normalized['id'] == null) {
       return null;
     }
 
     return normalized;
+  }
+
+  Map<String, dynamic>? _buildStreamConfigFromPayload(
+    Map<String, dynamic> payload,
+  ) {
+    final rtmpUrl = payload['rtmp_url'] ?? payload['ingest_url'];
+    final streamKey = payload['stream_key'];
+    final playbackId = payload['playback_id'];
+    final playbackUrl = payload['playback_url'] ?? payload['stream_url'];
+
+    if (rtmpUrl == null &&
+        streamKey == null &&
+        playbackId == null &&
+        playbackUrl == null) {
+      return null;
+    }
+
+    final streamConfig = <String, dynamic>{
+      'rtmp_url': rtmpUrl,
+      'stream_key': streamKey,
+      'playback_id': playbackId,
+      'playback_url': playbackUrl,
+    };
+    streamConfig.removeWhere((key, value) => value == null);
+    return streamConfig;
+  }
+
+  Map<String, dynamic>? _mergeStreamConfig({
+    dynamic primary,
+    dynamic secondary,
+    Map<String, dynamic>? tertiary,
+    Map<String, dynamic>? quaternary,
+  }) {
+    final merged = <String, dynamic>{};
+
+    void addConfig(dynamic config) {
+      if (config is Map) {
+        merged.addAll(Map<String, dynamic>.from(config));
+      }
+    }
+
+    addConfig(primary);
+    addConfig(secondary);
+    addConfig(tertiary);
+    addConfig(quaternary);
+
+    return merged.isEmpty ? null : merged;
   }
 }

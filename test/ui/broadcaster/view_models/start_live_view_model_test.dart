@@ -1,7 +1,7 @@
 import 'package:brawe_app/data/model/create_live_room_request_dto.dart';
 import 'package:brawe_app/data/repositories/live_repository.dart';
 import 'package:brawe_app/data/services/live_service.dart';
-import 'package:brawe_app/ui/live/view_models/start_live_view_model.dart';
+import 'package:brawe_app/ui/broadcaster/view_models/start_live_view_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,7 +27,12 @@ void main() {
 
       expect(success, true);
       expect(state.status.value?.id, 'room-42');
-      expect(state.status.value?.status, 'live');
+      expect(state.status.value?.status, 'waiting');
+      expect(
+        state.status.value?.rtmpUrl,
+        'rtmp://global-live.mux.com:5222/app',
+      );
+      expect(state.status.value?.streamKey, 'sk_live_room_42');
     });
 
     test('submit failure exposes validation message', () async {
@@ -41,9 +46,11 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(startLiveViewModelProvider.notifier);
-      notifier.updateTitle('Valid title');
+      notifier.updateTitle('Stream with me');
+      notifier.updateCategory('Gaming');
 
       final success = await notifier.submit();
+
       final state = container.read(startLiveViewModelProvider);
 
       expect(success, false);
@@ -63,22 +70,15 @@ class _SuccessLiveService extends LiveService {
     return {
       'id': 'room-42',
       'title': request.title,
-      'status': 'scheduled',
+      'status': 'waiting',
       'live_type': 'solo',
       'is_private': false,
       'streamer_name': 'You',
-    };
-  }
-
-  @override
-  Future<Map<String, dynamic>> startLive(String roomId) async {
-    return {
-      'id': roomId,
-      'title': 'Stream with me',
-      'status': 'live',
-      'streamer_name': 'You',
-      'live_type': 'solo',
-      'is_private': false,
+      'stream_config': {
+        'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
+        'stream_key': 'sk_live_room_42',
+        'playback_url': 'https://cdn.example.com/live/room-42.m3u8',
+      },
     };
   }
 }
