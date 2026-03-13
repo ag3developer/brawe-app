@@ -31,13 +31,13 @@ void main() {
       );
 
       final subscription = container.listen(
-        liveRoomCommentsViewModelProvider(room),
+        liveRoomCommentsViewModelProvider(room.id),
         (_, _) {},
         fireImmediately: true,
       );
       addTearDown(subscription.close);
 
-      container.read(liveRoomCommentsViewModelProvider(room).notifier);
+      container.read(liveRoomCommentsViewModelProvider(room.id).notifier);
       await Future<void>.delayed(Duration.zero);
       repository.pushComment(
         LiveComment(
@@ -52,7 +52,7 @@ void main() {
 
       await Future<void>.delayed(Duration.zero);
 
-      final state = container.read(liveRoomCommentsViewModelProvider(room));
+      final state = container.read(liveRoomCommentsViewModelProvider(room.id));
       expect(repository.connectedRooms, contains('room-7'));
       expect(state.comments, hasLength(1));
       expect(state.comments.first.message, 'Lets go');
@@ -80,11 +80,11 @@ void main() {
       );
 
       final notifier = container.read(
-        liveRoomCommentsViewModelProvider(room).notifier,
+        liveRoomCommentsViewModelProvider(room.id).notifier,
       );
       await notifier.sendComment('Hello');
 
-      final state = container.read(liveRoomCommentsViewModelProvider(room));
+      final state = container.read(liveRoomCommentsViewModelProvider(room.id));
       expect(state.isSending, false);
       expect(state.errorMessage, 'No internet connection');
     });

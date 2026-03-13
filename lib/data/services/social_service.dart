@@ -1,0 +1,56 @@
+import 'package:dio/dio.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../core/network/live_dio_provider.dart';
+
+part 'social_service.g.dart';
+
+@riverpod
+SocialService socialService(Ref ref) {
+  return SocialService(ref.watch(liveDioProvider));
+}
+
+class SocialService {
+  final Dio _dio;
+
+  SocialService(this._dio);
+
+  Future<void> followUser(String userId) async {
+    await _dio.post('/social/follow/$userId');
+  }
+
+  Future<void> unfollowUser(String userId) async {
+    await _dio.delete('/social/follow/$userId');
+  }
+
+  Future<bool> isFollowing(String userId) async {
+    final response = await _dio.get('/social/is-following/$userId');
+    return response.data['is_following'] ?? false;
+  }
+
+  Future<Map<String, dynamic>> getSocialStats(String userId) async {
+    final response = await _dio.get('/social/stats/$userId');
+    return response.data['data'] ?? response.data;
+  }
+
+  Future<List<Map<String, dynamic>>> getFollowers({int page = 1, int limit = 20}) async {
+    final response = await _dio.get(
+      '/social/followers',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final data = response.data['data'] ?? response.data;
+    if (data is List) return List<Map<String, dynamic>>.from(data);
+    if (data is Map && data['items'] != null) return List<Map<String, dynamic>>.from(data['items']);
+    return [];
+  }
+
+  Future<List<Map<String, dynamic>>> getFollowing({int page = 1, int limit = 20}) async {
+    final response = await _dio.get(
+      '/social/following',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final data = response.data['data'] ?? response.data;
+    if (data is List) return List<Map<String, dynamic>>.from(data);
+    if (data is Map && data['items'] != null) return List<Map<String, dynamic>>.from(data['items']);
+    return [];
+  }
+}

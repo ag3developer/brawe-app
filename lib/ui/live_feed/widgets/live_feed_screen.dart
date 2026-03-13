@@ -6,6 +6,7 @@ import '../view_models/live_feed_view_model.dart';
 import '../view_models/live_room_comments_view_model.dart';
 import '../../../domain/models/live_room.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/ui/follow_button.dart';
 import 'live_comments_overlay.dart';
 
 class LiveFeedScreen extends ConsumerStatefulWidget {
@@ -398,6 +399,10 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  if (widget.isActive) ...[
+                    const SizedBox(width: 12),
+                    FollowButton(userId: widget.room.streamerId, compact: true),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),

@@ -13,7 +13,7 @@ _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   category: json['category'] as String?,
   liveType: json['live_type'] as String? ?? 'solo',
   isPrivate: json['is_private'] as bool? ?? false,
-  status: json['status'] as String? ?? 'live',
+  status: json['status'] as String? ?? AppConstants.statusLive,
   viewerCount: (json['viewer_count'] as num?)?.toInt() ?? 0,
   playbackUrl: json['playback_url'] as String?,
   thumbnailUrl: json['thumbnail_url'] as String?,

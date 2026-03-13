@@ -48,4 +48,4 @@ final class LiveRepositoryProvider
   }
 }
 
-String _$liveRepositoryHash() => r'c205c2dc0d680321a997898ce8bb2931f1d90a12';
+String _$liveRepositoryHash() => r'789a7d7293c9f5964a3fd136310b2cabbff3b825';

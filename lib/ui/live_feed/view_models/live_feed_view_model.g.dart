@@ -33,7 +33,7 @@ final class LiveFeedViewModelProvider
   LiveFeedViewModel create() => LiveFeedViewModel();
 }
 
-String _$liveFeedViewModelHash() => r'a8af80cd4bb4ca70238c19b8dd338fd45c6e6a2c';
+String _$liveFeedViewModelHash() => r'3375ce28db9a33aee188ee535367f555bc544171';
 
 abstract class _$LiveFeedViewModel extends $AsyncNotifier<List<LiveRoom>> {
   FutureOr<List<LiveRoom>> build();

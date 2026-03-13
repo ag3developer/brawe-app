@@ -5,7 +5,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_comment.dart';
-import '../../../domain/models/live_room.dart';
 
 part 'live_room_comments_view_model.g.dart';
 

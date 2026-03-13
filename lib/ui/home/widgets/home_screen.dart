@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_spacing.dart';
+import '../../core/view_models/profile_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/user.dart';
+import '../view_models/top_streamers_view_model.dart';
 import 'home_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -57,77 +59,225 @@ class _HomeTopBar extends ConsumerWidget {
   const _HomeTopBar();
 
   void _showProfileSheet(BuildContext context, WidgetRef ref, User? user) {
+    if (user == null) return;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.nearBlack,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundColor: AppColors.slate,
-                backgroundImage: user?.avatarUrl != null
-                    ? NetworkImage(user!.avatarUrl!)
-                    : null,
-                child: user?.avatarUrl == null
-                    ? const Icon(Icons.person, color: Colors.white, size: 40)
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                user?.name ?? 'Anonymous',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final profileState = ref.watch(profileViewModelProvider(user.id));
+
+              return Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.slate,
+                      backgroundImage: user.avatarUrl != null
+                          ? NetworkImage(user.avatarUrl!)
+                          : null,
+                      child: user.avatarUrl == null
+                          ? const Icon(Icons.person, color: Colors.white, size: 40)
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      user.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '@${user.displayId}',
+                      style: const TextStyle(
+                        color: AppColors.coolGray,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+
+                    // Social Stats
+                    profileState.stats.when(
+                      data: (stats) => Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _StatItem(
+                            label: 'Followers',
+                            value: '${stats.followersCount}',
+                          ),
+                          _StatItem(
+                            label: 'Following',
+                            value: '${stats.followingCount}',
+                          ),
+                          _StatItem(
+                            label: 'Lives',
+                            value: '${stats.livesCount}',
+                          ),
+                        ],
+                      ),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (_, _) => const Text(
+                        'Error loading stats',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricPurple.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(
+                          color: AppColors.electricPurple.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Text(
+                        user.userType.toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.electricPurple,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+                    
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Recent Lives',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    profileState.lives.when(
+                      data: (lives) {
+                        if (lives.isEmpty) {
+                          return const Text(
+                            'No past lives found',
+                            style: TextStyle(color: AppColors.coolGray),
+                          );
+                        }
+                        return SizedBox(
+                          height: 120,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: lives.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: AppSpacing.md),
+                            itemBuilder: (context, index) {
+                              final live = lives[index];
+                              return Container(
+                                width: 90,
+                                decoration: BoxDecoration(
+                                  color: AppColors.slate,
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: live.thumbnailUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(live.thumbnailUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                ),
+                                child: Stack(
+                                  children: [
+                                    if (live.thumbnailUrl == null)
+                                      const Center(
+                                        child: Icon(
+                                          Icons.play_circle_outline,
+                                          color: Colors.white24,
+                                          size: 32,
+                                        ),
+                                      ),
+                                    Positioned(
+                                      bottom: 4,
+                                      left: 4,
+                                      right: 4,
+                                      child: Text(
+                                        live.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: [
+                                            Shadow(
+                                              blurRadius: 4,
+                                              color: Colors.black,
+                                            ),
+                                          ],
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (_, _) => const Text(
+                        'Error loading lives',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+                    ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.redAccent),
+                      title: const Text(
+                        'Sign Out',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ref.read(authStateProvider.notifier).logout();
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              Text(
-                user?.email ?? '',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.electricPurple.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(
-                    color: AppColors.electricPurple.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Text(
-                  user?.userType.toUpperCase() ?? 'USER',
-                  style: const TextStyle(
-                    color: AppColors.electricPurple,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              ListTile(
-                leading: const Icon(Icons.logout, color: Colors.redAccent),
-                title: const Text(
-                  'Sign Out',
-                  style: TextStyle(color: Colors.redAccent),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  ref.read(authStateProvider.notifier).logout();
-                },
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -365,11 +515,13 @@ class _BattleInfo extends StatelessWidget {
   }
 }
 
-class _TopStreamersSection extends StatelessWidget {
+class _TopStreamersSection extends ConsumerWidget {
   const _TopStreamersSection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final topStreamersState = ref.watch(topStreamersViewModelProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -384,67 +536,104 @@ class _TopStreamersSection extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 100,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: 5,
-            separatorBuilder: (context, index) =>
-                const SizedBox(width: AppSpacing.md),
-            itemBuilder: (context, index) {
-              final names = ['AlexvsVS.', 'SarahK', 'ValonNor', 'Kira', 'Nova'];
-              return GestureDetector(
-                onTap: () => context.push('/live'),
-                child: Column(
-                  children: [
-                    Stack(
-                      alignment: Alignment.bottomCenter,
+          child: topStreamersState.when(
+            data: (streamers) {
+              if (streamers.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No streamers yet',
+                    style: TextStyle(color: Colors.white60),
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: streamers.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(width: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final profile = streamers[index];
+                  return GestureDetector(
+                    onTap: () {
+                      // Navigate to profile or specific live
+                      context.push('/live');
+                    },
+                    child: Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.electricPurple,
-                                AppColors.coolCyan,
-                              ],
+                        Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.electricPurple,
+                                    AppColors.coolCyan,
+                                  ],
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 28,
+                                backgroundColor: AppColors.slate,
+                                backgroundImage: profile.avatarUrl != null
+                                    ? NetworkImage(profile.avatarUrl!)
+                                    : null,
+                                child: profile.avatarUrl == null
+                                    ? const Icon(Icons.person, color: Colors.white)
+                                    : null,
+                              ),
                             ),
-                          ),
-                          child: const CircleAvatar(
-                            radius: 28,
-                            backgroundColor: AppColors.slate,
-                          ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.mutedRed,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'LIVE',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.mutedRed,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'LIVE',
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 60,
+                          child: Text(
+                            profile.displayName ?? profile.username ?? 'User',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white70,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      names[index],
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(
+              child: Text(
+                'Error',
+                style: TextStyle(color: Colors.red.withValues(alpha: 0.5)),
+              ),
+            ),
           ),
         ),
       ],
@@ -805,6 +994,36 @@ class _ProductItem extends StatelessWidget {
         Text(
           '\$$price',
           style: const TextStyle(fontSize: 10, color: Colors.white70),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.coolGray,
+            fontSize: 12,
+          ),
         ),
       ],
     );
