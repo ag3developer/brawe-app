@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- Update `AGENTS.md` to explicitly require extracting reusable elements instead of leaving reusable UI or logic inline.
+- Restyle the Home bottom navigation to match the reference with labeled tabs and a raised central action.
+- Refactor Home bottom navigation into a dedicated widget file for clearer UI composition.
 - Separate Live streaming into two distinct modules: `live_feed` (watching) and `broadcaster` (going live).
 - Switch broadcasting implementation to `rtmp_broadcaster` (Mux-recommended) to ensure stable camera preview and immersive TikTok-style aspect ratio via 'Scale & Crop' logic.
 - Implement explicit permission handling (Camera/Microphone) in the broadcaster flow.

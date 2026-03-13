@@ -8,6 +8,7 @@ import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/user.dart';
+import 'home_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -42,10 +43,10 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const Positioned(
-            left: AppSpacing.md,
-            right: AppSpacing.md,
-            bottom: AppSpacing.md,
-            child: _HomeBottomNav(),
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: HomeBottomNav(),
           ),
         ],
       ),
@@ -811,67 +812,3 @@ class _ProductItem extends StatelessWidget {
   }
 }
 
-class _HomeBottomNav extends StatelessWidget {
-  const _HomeBottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          height: 70,
-          decoration: BoxDecoration(
-            color: AppColors.slate.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              const _NavBarItem(icon: Icons.home_filled, isActive: true),
-              _NavBarItem(
-                icon: Icons.sensors,
-                onTap: () => context.push('/live'),
-              ),
-              GestureDetector(
-                onTap: () => context.push('/live/start'),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [AppColors.coolCyan, AppColors.electricPurple],
-                    ),
-                  ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 28),
-                ),
-              ),
-              const _NavBarItem(icon: Icons.shopping_bag_outlined),
-              const _NavBarItem(icon: Icons.person_outline),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavBarItem extends StatelessWidget {
-  const _NavBarItem({required this.icon, this.isActive = false, this.onTap});
-  final IconData icon;
-  final bool isActive;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Icon(icon, color: isActive ? AppColors.coolCyan : Colors.white60),
-    );
-  }
-}
