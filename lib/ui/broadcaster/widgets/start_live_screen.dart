@@ -175,14 +175,12 @@ class _StartLiveTextField extends StatelessWidget {
   const _StartLiveTextField({
     required this.label,
     required this.hintText,
-    this.maxLines = 1,
     required this.onChanged,
     this.enabled = true,
   });
 
   final String label;
   final String hintText;
-  final int maxLines;
   final ValueChanged<String> onChanged;
   final bool enabled;
 
@@ -203,7 +201,6 @@ class _StartLiveTextField extends StatelessWidget {
         TextField(
           onChanged: onChanged,
           enabled: enabled,
-          maxLines: maxLines,
           style: textTheme.bodyLarge?.copyWith(color: Colors.white),
           cursorColor: AppColors.electricPurple,
           decoration: InputDecoration(

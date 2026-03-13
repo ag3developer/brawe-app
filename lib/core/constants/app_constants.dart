@@ -38,7 +38,7 @@ class AppConstants {
   // Video Configuration
   static const int videoFps = 30;
   static const int videoBitrate = 800 * 1024; // 800 kbps
-  
+
   // Audio Configuration
   static const int audioBitrate = 32 * 1024; // 32 kbps
 

@@ -2,26 +2,36 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
+import '../../domain/models/live_comment.dart';
 import '../../domain/models/live_room.dart';
 import '../services/live_service.dart';
 import '../model/create_live_room_request_dto.dart';
 import '../model/live_room_dto.dart';
 import '../../domain/models/failure.dart';
 import 'package:dio/dio.dart';
-
 import 'package:flutter/foundation.dart';
+import '../services/socket_service.dart';
 
 part 'live_repository.g.dart';
 
 @riverpod
 LiveRepository liveRepository(Ref ref) {
-  return LiveRepository(ref.watch(liveServiceProvider));
+  return LiveRepository(
+    ref.watch(liveServiceProvider),
+    ref.watch(socketServiceProvider),
+  );
 }
 
 class LiveRepository {
   final LiveService _liveService;
+  final SocketService? _socketService;
+  final Map<String, StreamController<LiveComment>> _commentControllers = {};
+  final Map<String, StreamController<int>> _viewerCountControllers = {};
+  final Set<String> _connectedRooms = {};
+  bool _socketHandlersRegistered = false;
 
-  LiveRepository(this._liveService);
+  LiveRepository(this._liveService, [SocketService? socketService])
+    : _socketService = socketService;
 
   Future<List<LiveRoom>> getLiveFeed({
     String? cursor,
@@ -117,6 +127,78 @@ class LiveRepository {
     }
   }
 
+  Future<void> connectToRoom(String roomId) async {
+    final socketService = _socketService;
+    if (socketService == null) {
+      throw const Failure.network();
+    }
+
+    try {
+      await socketService.connect();
+      if (!socketService.isConnected) {
+        throw const Failure.network();
+      }
+
+      _registerSocketHandlers();
+      if (_connectedRooms.add(roomId)) {
+        socketService.joinRoom(roomId);
+      }
+    } on Failure {
+      rethrow;
+    } catch (e) {
+      debugPrint('LiveRepository: connectToRoom Error: $e');
+      throw const Failure.network();
+    }
+  }
+
+  void disconnectFromRoom(String roomId) {
+    if (!_connectedRooms.remove(roomId)) {
+      return;
+    }
+
+    _socketService?.leaveRoom(roomId);
+
+    final commentsController = _commentControllers.remove(roomId);
+    commentsController?.close();
+
+    final viewerCountController = _viewerCountControllers.remove(roomId);
+    viewerCountController?.close();
+  }
+
+  Stream<LiveComment> watchComments(String roomId) {
+    final controller = _commentControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveComment>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Stream<int> watchViewerCount(String roomId) {
+    final controller = _viewerCountControllers.putIfAbsent(
+      roomId,
+      () => StreamController<int>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Future<void> sendComment({
+    required String roomId,
+    required String message,
+  }) async {
+    final trimmedMessage = message.trim();
+    if (trimmedMessage.isEmpty) {
+      throw const Failure.validation('Comment cannot be empty.');
+    }
+
+    final socketService = _socketService;
+    if (socketService == null) {
+      throw const Failure.network();
+    }
+
+    await connectToRoom(roomId);
+    socketService.sendChatMessage(roomId: roomId, message: trimmedMessage);
+  }
+
   Failure _mapFailure(DioException exception) {
     final statusCode = exception.response?.statusCode;
     if (statusCode == 401 || statusCode == 403) {
@@ -134,6 +216,115 @@ class LiveRepository {
     }
 
     return const Failure.network();
+  }
+
+  void _registerSocketHandlers() {
+    if (_socketHandlersRegistered || _socketService == null) {
+      return;
+    }
+
+    _socketHandlersRegistered = true;
+    debugPrint('LiveRepository: Registering socket handlers');
+
+    _socketService.on(AppConstants.eventNewMessage, (data) {
+      debugPrint('LiveRepository: Received event ${AppConstants.eventNewMessage}: $data');
+      final comment = _parseLiveComment(data);
+      if (comment == null) {
+        debugPrint('LiveRepository: Failed to parse comment from $data');
+        return;
+      }
+
+      // If the message has a room_id, we should only add it to that room's controller
+      final payload = _asMap(data);
+      final msgRoomId = payload?['room_id']?.toString();
+
+      if (msgRoomId != null) {
+        _commentControllers[msgRoomId]?.add(comment);
+      } else {
+        // Fallback: send to all connected rooms if no room_id in payload
+        for (final roomId in _connectedRooms) {
+          _commentControllers[roomId]?.add(comment);
+        }
+      }
+    });
+
+    _socketService.on(AppConstants.eventViewerCount, (data) {
+      debugPrint('LiveRepository: Received event ${AppConstants.eventViewerCount}: $data');
+      final count = _parseViewerCount(data);
+      if (count == null) return;
+
+      final payload = _asMap(data);
+      final msgRoomId = payload?['room_id']?.toString();
+
+      if (msgRoomId != null) {
+        _viewerCountControllers[msgRoomId]?.add(count);
+      } else {
+        for (final roomId in _connectedRooms) {
+          _viewerCountControllers[roomId]?.add(count);
+        }
+      }
+    });
+  }
+
+  LiveComment? _parseLiveComment(dynamic data) {
+    final payload = _asMap(data);
+    if (payload == null) return null;
+
+    final message = payload['message']?.toString().trim();
+    if (message == null || message.isEmpty) return null;
+
+    final timestampValue = payload['timestamp']?.toString();
+    final timestamp =
+        DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
+
+    // Map fields from both app and connect APIs
+    return LiveComment(
+      id: payload['id']?.toString() ??
+          payload['_id']?.toString() ??
+          timestamp.microsecondsSinceEpoch.toString(),
+      userId: payload['user_id']?.toString() ?? payload['user']?['_id']?.toString() ?? '',
+      userName: payload['name']?.toString() ??
+          payload['user']?['name']?.toString() ??
+          payload['username']?.toString() ??
+          'Viewer',
+      avatarUrl: payload['avatar_url']?.toString() ?? payload['user']?['avatar']?.toString(),
+      message: message,
+      timestamp: timestamp,
+    );
+  }
+
+  int? _parseViewerCount(dynamic data) {
+    final payload = _asMap(data);
+    if (payload == null) {
+      return null;
+    }
+
+    final rawCount = payload['count'];
+    if (rawCount is int) {
+      return rawCount;
+    }
+
+    if (rawCount is num) {
+      return rawCount.toInt();
+    }
+
+    return int.tryParse(rawCount?.toString() ?? '');
+  }
+
+  Map<String, dynamic>? _asMap(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    if (data is List && data.isNotEmpty) {
+      return _asMap(data.first);
+    }
+
+    return null;
   }
 
   LiveRoomDto? _extractLiveRoomFromCreateResponse(
@@ -208,7 +399,8 @@ class LiveRepository {
         normalized['room_id'] ?? rootPayload['id'] ?? rootPayload['room_id'];
     normalized['title'] ??=
         fallbackTitle ?? rootPayload['title'] ?? rootPayload['name'];
-    normalized['status'] ??= rootPayload['status'] ?? AppConstants.statusWaiting;
+    normalized['status'] ??=
+        rootPayload['status'] ?? AppConstants.statusWaiting;
     normalized['playback_url'] ??= rootPayload['playback_url'];
     normalized['thumbnail_url'] ??= rootPayload['thumbnail_url'];
     normalized['host'] ??= rootPayload['host'];

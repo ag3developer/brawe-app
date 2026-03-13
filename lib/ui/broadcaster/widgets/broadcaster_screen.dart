@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -10,6 +9,8 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
+import '../../live_feed/view_models/live_room_comments_view_model.dart';
+import '../../live_feed/widgets/live_comments_overlay.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 
@@ -33,7 +34,6 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   bool _isInitialized = false;
   bool _isResolvingRoom = false;
   bool _isTogglingStream = false;
-  String? _streamDebugMessage;
 
   // Countdown state
   int _countdownSeconds = 5;
@@ -173,7 +173,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final CameraController? cameraController = _controller;
 
     // App state changed before we got the chance to initialize.
-    if (cameraController == null || cameraController.value.isInitialized != true) {
+    if (cameraController == null ||
+        cameraController.value.isInitialized != true) {
       return;
     }
 
@@ -200,7 +201,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     });
 
     try {
-      final freshRoom = await ref.read(liveRepositoryProvider).getRoom(_room.id);
+      final freshRoom = await ref
+          .read(liveRepositoryProvider)
+          .getRoom(_room.id);
       if (!mounted || freshRoom == null) {
         return;
       }
@@ -258,7 +261,6 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     setState(() {
       _isTogglingStream = true;
-      _streamDebugMessage = null;
     });
 
     try {
@@ -281,7 +283,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final rtmpUrl = _room.rtmpUrl?.trim();
       final streamKey = _room.streamKey?.trim();
 
-      if (rtmpUrl == null || rtmpUrl.isEmpty || streamKey == null || streamKey.isEmpty) {
+      if (rtmpUrl == null ||
+          rtmpUrl.isEmpty ||
+          streamKey == null ||
+          streamKey.isEmpty) {
         setState(() {
           _isTogglingStream = false;
         });
@@ -295,7 +300,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       }
 
       final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
-      
+
       // Start RTMP Streaming
       await _controller?.startVideoStreaming(fullUrl);
 
@@ -311,7 +316,6 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         setState(() {
           _isStreaming = false;
           _isTogglingStream = false;
-          _streamDebugMessage = '$error';
         });
         AppSnackBar.showError(context, 'Error starting stream: $error');
       }
@@ -320,10 +324,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   Future<void> _switchCamera() async {
     if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
-    
+
     // Increment index and wrap around
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
-    
+
     // Stop streaming if active before switching (rtmp_broadcaster limitation)
     final wasStreaming = _isStreaming;
     if (_isStreaming) {
@@ -374,7 +378,30 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized || _controller == null || _controller!.value.isInitialized != true) {
+    final commentsState = ref.watch(
+      liveRoomCommentsViewModelProvider(widget.room.id),
+    );
+
+    ref.listen<LiveRoomCommentsState>(
+      liveRoomCommentsViewModelProvider(widget.room.id),
+      (previous, next) {
+        final errorMessage = next.errorMessage;
+        if (errorMessage == null || errorMessage == previous?.errorMessage) {
+          return;
+        }
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(errorMessage)));
+        ref
+            .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+            .clearError();
+      },
+    );
+
+    if (!_isInitialized ||
+        _controller == null ||
+        _controller!.value.isInitialized != true) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
@@ -391,124 +418,171 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // we need to scale based on height so width overflows.
     double scale = 1.0;
     if (screenRatio < cameraRatio) {
-       scale = cameraRatio / screenRatio;
+      scale = cameraRatio / screenRatio;
     } else {
-       scale = screenRatio / cameraRatio;
+      scale = screenRatio / cameraRatio;
     }
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Camera Preview: Immersive Scale & Crop
-          Center(
-            child: Transform.scale(
-              scale: scale,
-              child: AspectRatio(
-                aspectRatio: cameraRatio,
-                child: CameraPreview(_controller!),
-              ),
-            ),
-          ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black54, Colors.transparent, Colors.black87],
-                stops: [0.0, 0.35, 1.0],
-              ),
-            ),
-          ),
-          if (_showCountdown)
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Camera Preview: Immersive Scale & Crop
             Center(
-              child: Container(
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 2),
+              child: Transform.scale(
+                scale: scale,
+                child: AspectRatio(
+                  aspectRatio: cameraRatio,
+                  child: CameraPreview(_controller!),
                 ),
-                child: Text(
-                  '$_countdownSeconds',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 100,
-                    fontWeight: FontWeight.bold,
+              ),
+            ),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black54, Colors.transparent, Colors.black87],
+                  stops: [0.0, 0.35, 1.0],
+                ),
+              ),
+            ),
+            if (_showCountdown)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white24, width: 2),
+                  ),
+                  child: Text(
+                    '$_countdownSeconds',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 100,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: _closeBroadcaster,
-                        icon: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 30,
+            SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: _closeBroadcaster,
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 30,
+                          ),
                         ),
-                      ),
-                      Row(
-                        children: [
-                          if (_isStreaming)
-                            Container(
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'LIVE',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                        Row(
+                          children: [
+                            if (!_showCountdown)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: _BroadcasterControlButton(
+                                  isStreaming: _isStreaming,
+                                  isToggling: _isTogglingStream,
+                                  onPressed: _toggleStreaming,
+                                ),                              ),
+                            if (_isStreaming)
+                              Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                          if (_cameras.length > 1)
-                            IconButton(
-                              onPressed: _switchCamera,
-                              icon: const Icon(
-                                Icons.flip_camera_ios,
-                                color: Colors.white,
-                                size: 30,
+                            if (_isStreaming)
+                              Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black45,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: Text(
+                                  '${commentsState.viewerCount} watching',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
+                            if (_cameras.length > 1)
+                              IconButton(
+                                onPressed: _switchCamera,
+                                icon: const Icon(
+                                  Icons.flip_camera_ios,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_isStreaming || commentsState.comments.isNotEmpty)
+                            LiveCommentsOverlay(
+                              comments: commentsState.comments,
+                              isSending: commentsState.isSending,
+                              onSendComment: (message) => ref
+                                  .read(
+                                    liveRoomCommentsViewModelProvider(
+                                      widget.room.id,
+                                    ).notifier,
+                                  )
+                                  .sendComment(message),
                             ),
+                          const SizedBox(height: 12),
                         ],
                       ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Minimalist Control Button
-                  if (!_showCountdown)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: _BroadcasterControlButton(
-                          isStreaming: _isStreaming,
-                          isToggling: _isTogglingStream,
-                          onPressed: _toggleStreaming,
-                        ),
-                      ),
                     ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -527,45 +601,35 @@ class _BroadcasterControlButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 72,
-      height: 72,
-      child: IconButton(
-        onPressed: isToggling ? null : onPressed,
-        padding: EdgeInsets.zero,
-        icon: Container(
-          decoration: BoxDecoration(
-            color: isStreaming ? Colors.red : AppColors.electricPurple,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: (isStreaming ? Colors.red : AppColors.electricPurple)
-                    .withValues(alpha: 0.4),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Center(
-            child: isToggling
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: Colors.white,
-                    ),
-                  )
-                : Icon(
-                    isStreaming ? Icons.stop_rounded : Icons.sensors_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-          ),
+    return GestureDetector(
+      onTap: isToggling ? null : onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 6,
         ),
+        decoration: BoxDecoration(
+          color: isStreaming ? Colors.red : AppColors.electricPurple,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: isToggling
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                isStreaming ? 'END' : 'GO LIVE',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
       ),
     );
   }
 }
-
-

@@ -71,12 +71,16 @@ class SocketService {
     _socket?.on(event, handler);
   }
 
-  void off(String event) {
-    _socket?.off(event);
+  void off(String event, [Function(dynamic)? handler]) {
+    _socket?.off(event, handler);
   }
 
   void emit(String event, dynamic data) {
     _socket?.emit(event, data);
+  }
+
+  void sendChatMessage({required String roomId, required String message}) {
+    emit('chat_message', {'room_id': roomId, 'message': message});
   }
 
   bool get isConnected => _socket?.connected ?? false;

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import '../../../core/constants/app_constants.dart';
 import '../view_models/live_feed_view_model.dart';
+import '../view_models/live_room_comments_view_model.dart';
 import '../../../domain/models/live_room.dart';
-import '../../../data/services/socket_service.dart';
 import '../../core/themes/app_colors.dart';
+import 'live_comments_overlay.dart';
 
 class LiveFeedScreen extends ConsumerStatefulWidget {
   const LiveFeedScreen({super.key});
@@ -17,6 +17,7 @@ class LiveFeedScreen extends ConsumerStatefulWidget {
 
 class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
   LiveFeedCategory _selectedCategory = LiveFeedCategory.forYou;
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -76,9 +77,17 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                 child: PageView.builder(
                   scrollDirection: Axis.vertical,
                   itemCount: rooms.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
                   itemBuilder: (context, index) {
                     final room = rooms[index];
-                    return LiveRoomItem(room: room);
+                    return LiveRoomItem(
+                      room: room,
+                      isActive: index == _currentIndex,
+                    );
                   },
                 ),
               );
@@ -201,8 +210,9 @@ class _CategoryButton extends StatelessWidget {
 
 class LiveRoomItem extends ConsumerStatefulWidget {
   final LiveRoom room;
+  final bool isActive;
 
-  const LiveRoomItem({super.key, required this.room});
+  const LiveRoomItem({super.key, required this.room, required this.isActive});
 
   @override
   ConsumerState<LiveRoomItem> createState() => _LiveRoomItemState();
@@ -211,17 +221,20 @@ class LiveRoomItem extends ConsumerStatefulWidget {
 class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
-  late final SocketService _socketService;
 
   @override
   void initState() {
     super.initState();
-    _socketService = ref.read(socketServiceProvider);
-    _initializePlayer();
-    _connectSocket();
+    if (widget.isActive) {
+      _initializePlayer();
+    }
   }
 
   Future<void> _initializePlayer() async {
+    if (!widget.isActive || _controller != null) {
+      return;
+    }
+
     final streamUrl = widget.room.streamUrl;
     if (streamUrl == null || streamUrl.isEmpty) return;
 
@@ -245,32 +258,55 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
     }
   }
 
-  void _connectSocket() {
-    _socketService.connect().then((_) {
-      _socketService.joinRoom(widget.room.id);
+  @override
+  void didUpdateWidget(covariant LiveRoomItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
 
-      _socketService.on(AppConstants.eventNewMessage, (data) {
-        // Handle new message (e.g., show in chat overlay)
-        debugPrint('New message in room ${widget.room.id}: $data');
-      });
+    if (widget.isActive && !oldWidget.isActive) {
+      _initializePlayer();
+      _controller?.play();
+      WakelockPlus.enable();
+      return;
+    }
 
-      _socketService.on(AppConstants.eventViewerCount, (data) {
-        // Update viewer count
-        debugPrint('Viewer count updated for ${widget.room.id}: $data');
-      });
-    });
+    if (!widget.isActive && oldWidget.isActive) {
+      _controller?.pause();
+      WakelockPlus.disable();
+    }
   }
 
   @override
   void dispose() {
     _controller?.dispose();
     WakelockPlus.disable();
-    _socketService.leaveRoom(widget.room.id);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final commentsState = widget.isActive
+        ? ref.watch(liveRoomCommentsViewModelProvider(widget.room.id))
+        : null;
+
+    if (widget.isActive) {
+      ref.listen<LiveRoomCommentsState>(
+        liveRoomCommentsViewModelProvider(widget.room.id),
+        (previous, next) {
+          final errorMessage = next.errorMessage;
+          if (errorMessage == null || errorMessage == previous?.errorMessage) {
+            return;
+          }
+
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(errorMessage)));
+          ref
+              .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+              .clearError();
+        },
+      );
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -322,7 +358,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 const Icon(Icons.sensors, color: Colors.white, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  'LIVE ${widget.room.viewerCount}',
+                  'LIVE ${commentsState?.viewerCount ?? widget.room.viewerCount}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -336,9 +372,9 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
 
         // Stream Info (Bottom)
         Positioned(
-          bottom: 24,
+          bottom: 116,
           left: 16,
-          right: 80, // Space for right-side interaction buttons
+          right: 96,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -371,6 +407,18 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (widget.isActive) ...[
+                const SizedBox(height: 16),
+                LiveCommentsOverlay(
+                  comments: commentsState?.comments ?? const [],
+                  isSending: commentsState?.isSending ?? false,
+                  onSendComment: (message) => ref
+                      .read(
+                        liveRoomCommentsViewModelProvider(widget.room.id).notifier,
+                      )
+                      .sendComment(message),
+                ),
+              ],
             ],
           ),
         ),
@@ -420,4 +468,3 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
     );
   }
 }
-

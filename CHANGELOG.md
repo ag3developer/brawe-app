@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-- Update `AGENTS.md` to explicitly require extracting reusable elements instead of leaving reusable UI or logic inline.
+- Dismiss keyboard when tapping outside the comment box in `BroadcasterScreen`.
+- Fix `invalid_override` error in `LiveRoomCommentsViewModel` by aligning the `build` method signature with the generated code and UI calls.
+- Clean up unused parameters and unnecessary imports in `StartLiveScreen` and `HomeScreen`.
+- Add Socket.IO-backed live chat overlays so viewers and broadcasters can read and send comments during active lives.
 - Restyle the Home bottom navigation to match the reference with labeled tabs and a raised central action.
 - Refactor Home bottom navigation into a dedicated widget file for clearer UI composition.
 - Separate Live streaming into two distinct modules: `live_feed` (watching) and `broadcaster` (going live).

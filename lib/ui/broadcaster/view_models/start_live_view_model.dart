@@ -22,9 +22,7 @@ class StartLiveState {
   final AsyncValue<LiveRoom?> status;
 
   bool get canSubmit =>
-      title.trim().length >= 3 &&
-      category.isNotEmpty &&
-      !status.isLoading;
+      title.trim().length >= 3 && category.isNotEmpty && !status.isLoading;
 
   String? get errorMessage => status.whenOrNull(
     error: (error, _) => (error as Failure).toDisplayMessage(),

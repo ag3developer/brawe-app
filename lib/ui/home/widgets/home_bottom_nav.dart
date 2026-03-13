@@ -14,8 +14,9 @@ class HomeBottomNav extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).padding.bottom,
+          ),
           decoration: BoxDecoration(
             color: AppColors.slate.withValues(alpha: 0.35),
           ),
@@ -45,11 +46,7 @@ class HomeBottomNav extends StatelessWidget {
 }
 
 class NavBarItem extends StatelessWidget {
-  const NavBarItem({
-    super.key,
-    required this.icon,
-    this.onTap,
-  });
+  const NavBarItem({super.key, required this.icon, this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;
@@ -59,11 +56,7 @@ class NavBarItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Icon(
-        icon,
-        color: Colors.white,
-        size: 28,
-      ),
+      child: Icon(icon, color: Colors.white, size: 28),
     );
   }
 }

@@ -63,7 +63,7 @@ void main() {
       await tester.tap(find.text('Gaming').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Start live'));
+      await tester.tap(find.text('Create live'));
       await tester.pumpAndSettle();
 
       expect(find.text('broadcaster-screen'), findsOneWidget);

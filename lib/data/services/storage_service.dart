@@ -31,7 +31,10 @@ class StorageService {
   }
 
   Future<void> saveUser(User user) async {
-    await _storage.write(key: AppConstants.userKey, value: jsonEncode(user.toJson()));
+    await _storage.write(
+      key: AppConstants.userKey,
+      value: jsonEncode(user.toJson()),
+    );
   }
 
   Future<User?> getUser() async {
