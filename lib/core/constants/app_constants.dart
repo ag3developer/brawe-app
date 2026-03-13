@@ -37,10 +37,10 @@ class AppConstants {
 
   // Video Configuration
   static const int videoFps = 30;
-  static const int videoBitrate = 1 * 1024 * 1024; // 1 Mbps
+  static const int videoBitrate = 800 * 1024; // 800 kbps
   
   // Audio Configuration
-  static const int audioBitrate = 64 * 1024; // 64 kbps
+  static const int audioBitrate = 32 * 1024; // 32 kbps
 
   static const List<String> categories = [
     'Shopping',

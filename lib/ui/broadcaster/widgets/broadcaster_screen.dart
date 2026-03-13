@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:apivideo_live_stream/apivideo_live_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:rtmp_broadcaster/camera.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
@@ -24,8 +23,11 @@ class BroadcasterScreen extends ConsumerStatefulWidget {
 }
 
 class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
-    with WidgetsBindingObserver {
-  ApiVideoLiveStreamController? _controller;
+    with WidgetsBindingObserver, TickerProviderStateMixin {
+  CameraController? _controller;
+  List<CameraDescription> _cameras = [];
+  int _currentCameraIndex = 0;
+
   late LiveRoom _room;
   bool _isStreaming = false;
   bool _isInitialized = false;
@@ -70,58 +72,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       // Small delay to ensure OS has registered permission grant before session activation
       await Future<void>.delayed(const Duration(milliseconds: 500));
 
-      final controller = ApiVideoLiveStreamController(
-        initialVideoConfig: VideoConfig(
-          resolution: Resolution.RESOLUTION_480,
-          fps: AppConstants.videoFps,
-          bitrate: AppConstants.videoBitrate,
-        ),
-        initialAudioConfig: AudioConfig(
-          bitrate: AppConstants.audioBitrate,
-        ),
-        onConnectionSuccess: () {
-          debugPrint('Connection Success');
-          if (mounted) {
-            setState(() {
-              _isStreaming = true;
-              _isTogglingStream = false;
-            });
-            AppSnackBar.showSuccess(context, 'Connected to RTMP. You are live.');
-          }
-        },
-        onConnectionFailed: (error) {
-          debugPrint('Connection Failed: $error');
-          if (mounted) {
-            setState(() {
-              _isStreaming = false;
-              _isTogglingStream = false;
-              _streamDebugMessage = error;
-            });
-            AppSnackBar.showError(context, 'Connection Failed: $error');
-          }
-        },
-        onDisconnection: () {
-          debugPrint('Disconnected');
-          if (mounted) {
-            setState(() {
-              _isStreaming = false;
-              _isTogglingStream = false;
-            });
-          }
-        },
-      );
-
-      await controller.initialize();
-      controller.setIsMuted(false);
-      if (!mounted) {
-        controller.dispose();
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
+        if (mounted) {
+          AppSnackBar.showError(context, 'No cameras found on this device.');
+          _closeBroadcaster();
+        }
         return;
       }
 
-      setState(() {
-        _controller = controller;
-        _isInitialized = true;
-      });
+      await _setupCameraController(_cameras[_currentCameraIndex]);
 
       await _refreshRoomCredentialsIfNeeded();
 
@@ -135,6 +95,35 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       if (mounted) {
         AppSnackBar.showError(context, 'Error initializing camera: $e');
         _closeBroadcaster();
+      }
+    }
+  }
+
+  Future<void> _setupCameraController(CameraDescription description) async {
+    if (_controller != null) {
+      await _controller!.dispose();
+    }
+
+    // Set enableAudio to true for streaming
+    final controller = CameraController(
+      description,
+      ResolutionPreset.medium,
+      enableAudio: true,
+    );
+
+    _controller = controller;
+
+    try {
+      await controller.initialize();
+      if (!mounted) return;
+
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      debugPrint('Failed to initialize camera controller: $e');
+      if (mounted) {
+        AppSnackBar.showError(context, 'Failed to initialize camera.');
       }
     }
   }
@@ -180,9 +169,24 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state == AppLifecycleState.inactive && _isStreaming) {
-      await _controller?.stopStreaming();
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = _controller;
+
+    // App state changed before we got the chance to initialize.
+    if (cameraController == null || cameraController.value.isInitialized != true) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      cameraController.dispose();
+      if (_isStreaming) {
+        // Broadcaster package handles streaming state within the controller
+        setState(() {
+          _isStreaming = false;
+        });
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      _setupCameraController(cameraController.description);
     }
   }
 
@@ -196,9 +200,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     });
 
     try {
-      final freshRoom = await ref
-          .read(liveRepositoryProvider)
-          .getRoom(_room.id);
+      final freshRoom = await ref.read(liveRepositoryProvider).getRoom(_room.id);
       if (!mounted || freshRoom == null) {
         return;
       }
@@ -256,12 +258,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     setState(() {
       _isTogglingStream = true;
+      _streamDebugMessage = null;
     });
 
     try {
       if (_isStreaming) {
-        await _controller?.stopStreaming();
-        // UI updated in callbacks
+        await _controller?.stopVideoStreaming();
+        if (mounted) {
+          setState(() {
+            _isStreaming = false;
+            _isTogglingStream = false;
+          });
+        }
         return;
       }
 
@@ -273,10 +281,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final rtmpUrl = _room.rtmpUrl?.trim();
       final streamKey = _room.streamKey?.trim();
 
-      if (rtmpUrl == null ||
-          rtmpUrl.isEmpty ||
-          streamKey == null ||
-          streamKey.isEmpty) {
+      if (rtmpUrl == null || rtmpUrl.isEmpty || streamKey == null || streamKey.isEmpty) {
         setState(() {
           _isTogglingStream = false;
         });
@@ -289,11 +294,22 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         return;
       }
 
-      await _controller?.startStreaming(url: rtmpUrl, streamKey: streamKey);
-      // callbacks handle success/fail
+      final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
+      
+      // Start RTMP Streaming
+      await _controller?.startVideoStreaming(fullUrl);
+
+      if (mounted) {
+        setState(() {
+          _isStreaming = true;
+          _isTogglingStream = false;
+        });
+        AppSnackBar.showSuccess(context, 'Connected to RTMP. You are live.');
+      }
     } catch (error) {
       if (mounted) {
         setState(() {
+          _isStreaming = false;
           _isTogglingStream = false;
           _streamDebugMessage = '$error';
         });
@@ -302,32 +318,33 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
   }
 
-  void _copyStreamUrl() {
-    final rtmpUrl = _room.rtmpUrl;
-    final streamKey = _room.streamKey;
-    if (rtmpUrl == null || streamKey == null) {
-      return;
+  Future<void> _switchCamera() async {
+    if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
+    
+    // Increment index and wrap around
+    _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
+    
+    // Stop streaming if active before switching (rtmp_broadcaster limitation)
+    final wasStreaming = _isStreaming;
+    if (_isStreaming) {
+      await _controller?.stopVideoStreaming();
+      setState(() {
+        _isStreaming = false;
+      });
     }
 
-    Clipboard.setData(ClipboardData(text: _buildStreamUrl(rtmpUrl, streamKey)));
-    AppSnackBar.showSuccess(context, 'RTMP URL copied.');
-  }
+    await _setupCameraController(_cameras[_currentCameraIndex]);
 
-  Future<void> _switchCamera() async {
-    if (_controller == null || !_isInitialized) return;
-    try {
-      await _controller?.switchCamera();
-    } catch (e) {
-      if (mounted) {
-        AppSnackBar.showError(context, 'Failed to switch camera: $e');
-      }
+    // Restart stream if it was active
+    if (wasStreaming && mounted) {
+      await _toggleStreaming();
     }
   }
 
   Future<void> _closeBroadcaster() async {
     if (_isStreaming) {
       try {
-        await _controller?.stopStreaming();
+        await _controller?.stopVideoStreaming();
       } catch (_) {}
     }
 
@@ -348,7 +365,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     if (_isStreaming) {
-      _controller?.stopStreaming();
+      _controller?.stopVideoStreaming();
     }
     _controller?.dispose();
     WakelockPlus.disable();
@@ -357,11 +374,26 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   @override
   Widget build(BuildContext context) {
-    if (!_isInitialized || _controller == null) {
+    if (!_isInitialized || _controller == null || _controller!.value.isInitialized != true) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
       );
+    }
+
+    // Scale and Crop logic to ensure full screen
+    final size = MediaQuery.of(context).size;
+    final screenRatio = size.aspectRatio;
+    final cameraRatio = _controller!.value.aspectRatio;
+
+    // We want the preview to COVER the screen, so we scale it up.
+    // If the device is narrower than the camera frame (typical portrait),
+    // we need to scale based on height so width overflows.
+    double scale = 1.0;
+    if (screenRatio < cameraRatio) {
+       scale = cameraRatio / screenRatio;
+    } else {
+       scale = screenRatio / cameraRatio;
     }
 
     return Scaffold(
@@ -369,7 +401,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          ApiVideoCameraPreview(controller: _controller!),
+          // Camera Preview: Immersive Scale & Crop
+          Center(
+            child: Transform.scale(
+              scale: scale,
+              child: AspectRatio(
+                aspectRatio: cameraRatio,
+                child: CameraPreview(_controller!),
+              ),
+            ),
+          ),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -437,14 +478,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                                 ),
                               ),
                             ),
-                          IconButton(
-                            onPressed: _switchCamera,
-                            icon: const Icon(
-                              Icons.flip_camera_ios,
-                              color: Colors.white,
-                              size: 30,
+                          if (_cameras.length > 1)
+                            IconButton(
+                              onPressed: _switchCamera,
+                              icon: const Icon(
+                                Icons.flip_camera_ios,
+                                color: Colors.white,
+                                size: 30,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ],

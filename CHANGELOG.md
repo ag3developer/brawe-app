@@ -1,26 +1,15 @@
 # Changelog
 
 ## Unreleased
-- Automate live initiation by adding a 5-second countdown in `BroadcasterScreen` that triggers `POST /live/rooms/{id}/start` and starts RTMP streaming.
-- Change 'Start live' button label to 'Create live' in `StartLiveScreen` to clarify the multi-step initiation flow.
-- Add `startLive` method to `LiveService` and `LiveRepository` to support manual stream activation.
-- Improve `BroadcasterScreen` stability by making the stream controller nullable and adding defensive null checks.
-- Add detailed RTMP diagnostic logging and refined `VideoConfig` defaults (480p, 1 Mbps) to improve session activation and camera initialization.
-- Make live category selection mandatory during initiation and replace the manual text field with a dropdown picker using centralized `liveCategories`.
-
-- Switch broadcasting implementation back to `apivideo_live_stream` to prioritize simplified RTMP lifecycle management and built-in connection callbacks.
-- Fix compilation error in `StartLiveScreen` by implementing missing `_StartLiveHeader` and `_StartLiveTextField` widgets.
-- Disable `androidUseOpenGL` in the broadcaster to improve compatibility with hardware encoders on Android devices.
-- Improve RTMP connection diagnostics with better error messages and RTMPS detection warnings.
-- Fix broadcaster close action so exiting the camera no longer throws when the broadcast route is the current root route and now returns to the dashboard.
-- Refresh room credentials in the broadcaster before starting RTMP streaming and surface explicit start/stop loading and errors in the camera UI.
-- Fix live-room creation parsing so broadcaster RTMP credentials are preserved when the backend returns room metadata and stream credentials in separate fields.
-- Fix Start Live navigation so creating a room no longer redirects broadcasters back to the current lives feed after opening the broadcast flow.
 - Separate Live streaming into two distinct modules: `live_feed` (watching) and `broadcaster` (going live).
-- Switch broadcasting implementation to `rtmp_broadcaster` (Mux-recommended) to ensure stable camera preview and RTMP streaming.
+- Switch broadcasting implementation to `rtmp_broadcaster` (Mux-recommended) to ensure stable camera preview and immersive TikTok-style aspect ratio via 'Scale & Crop' logic.
 - Implement explicit permission handling (Camera/Microphone) in the broadcaster flow.
 - Relocate unit tests to match the new module-based directory structure.
 - Add `BroadcasterScreen` with camera preview, live status indicators, and front/back camera switching.
+- Automate live initiation by adding a 5-second countdown in `BroadcasterScreen` that triggers `POST /live/rooms/{id}/start` and starts RTMP streaming.
+- Change 'Start live' button label to 'Create live' in `StartLiveScreen` to clarify the multi-step initiation flow.
+- Add `startLive` method to `LiveService` and `LiveRepository` to support manual stream activation.
+- Improve `BroadcasterScreen` stability by adding defensive null checks and handling camera initialization gracefully.
 - Enhance live streaming playback by integrating `video_player` with optimized `VideoPlayerOptions` for Mux HLS.
 - Improve stream URL resilience by constructing fallback URLs from `playbackId` if `playbackUrl` is missing from the API.
 - Add `WakelockPlus` to prevent screen dimming during live viewing and broadcasting.

@@ -11,7 +11,7 @@ We have decided to:
 1. **Separate Modules**: Split the live functionality into `live_feed` (watching) and `broadcaster` (going live) to avoid dependency conflicts and improve maintainability.
 2. **Playback**: Use `video_player` for HLS playback with optimized `VideoPlayerOptions` (mixWithOthers).
 3. **Resilient URL**: Construct the Mux HLS URL (`stream.mux.com`) from `playbackId` as a fallback.
-4. **Broadcasting**: Use `apivideo_live_stream` for in-app RTMP broadcasting. While `rtmp_broadcaster` was initially considered for its Mux alignment, `apivideo_live_stream` provides better built-in connection callbacks and simpler lifecycle management.
+4. **Broadcasting**: Use `rtmp_broadcaster` for in-app RTMP broadcasting. While `apivideo_live_stream` was initially considered, `rtmp_broadcaster` provides better control over the camera preview aspect ratio (Scale & Crop) and alignment with the standard Flutter `camera` plugin API, which is essential for the TikTok-style immersive UI.
 5. **Real-time**: Use `socket_io_client` (^3.1.4) and a centralized `SocketService`.
 6. **Device State**: Use `wakelock_plus` to prevent screen timeout.
 7. **Permissions**: Use `permission_handler` to explicitly manage camera and microphone access.
