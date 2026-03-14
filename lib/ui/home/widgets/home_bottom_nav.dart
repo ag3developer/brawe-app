@@ -1,15 +1,19 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 
-class HomeBottomNav extends StatelessWidget {
+class HomeBottomNav extends ConsumerWidget {
   const HomeBottomNav({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authStateProvider).value;
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
@@ -25,7 +29,10 @@ class HomeBottomNav extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                const NavBarItem(icon: Icons.home_filled),
+                NavBarItem(
+                  icon: Icons.home_filled,
+                  onTap: () => context.go('/home'),
+                ),
                 NavBarItem(
                   icon: Icons.sensors,
                   onTap: () => context.push('/live'),
@@ -35,7 +42,14 @@ class HomeBottomNav extends StatelessWidget {
                   onTap: () => context.push('/live/start'),
                 ),
                 const NavBarItem(icon: Icons.shopping_bag_outlined),
-                const NavBarItem(icon: Icons.person_outline),
+                NavBarItem(
+                  icon: Icons.person_outline,
+                  onTap: () {
+                    if (user != null) {
+                      context.push('/profile/${user.id}');
+                    }
+                  },
+                ),
               ],
             ),
           ),
