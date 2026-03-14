@@ -34,4 +34,16 @@ class PostService {
   Future<void> incrementView(String postId) async {
     await _dio.post('/posts/$postId/view');
   }
+
+  Future<PostFeedResponseDto> getUserPosts(
+    String userId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final response = await _dio.get(
+      '/posts/user/$userId',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
+  }
 }

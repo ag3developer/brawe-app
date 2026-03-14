@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../../data/repositories/social_repository.dart';
+import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/profile_state.dart';
 
 part 'profile_view_model.g.dart';
@@ -12,10 +13,12 @@ class ProfileViewModel extends _$ProfileViewModel {
     _loadProfile();
     _loadStats();
     _loadLives();
+    _loadPosts();
     return ProfileState(
       profile: const AsyncValue.loading(),
       stats: const AsyncValue.loading(),
       lives: const AsyncValue.loading(),
+      posts: const AsyncValue.loading(),
     );
   }
 
@@ -46,7 +49,16 @@ class ProfileViewModel extends _$ProfileViewModel {
     }
   }
 
+  Future<void> _loadPosts() async {
+    try {
+      final posts = await ref.read(postRepositoryProvider).getUserPosts(userId);
+      state = state.copyWith(posts: AsyncValue.data(posts));
+    } catch (e, st) {
+      state = state.copyWith(posts: AsyncValue.error(e, st));
+    }
+  }
+
   Future<void> refresh() async {
-    await Future.wait([_loadProfile(), _loadStats(), _loadLives()]);
+    await Future.wait([_loadProfile(), _loadStats(), _loadLives(), _loadPosts()]);
   }
 }

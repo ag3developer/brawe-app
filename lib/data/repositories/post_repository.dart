@@ -50,4 +50,23 @@ class PostRepository {
       // Silently fail view increments or log it
     }
   }
+
+  Future<List<Post>> getUserPosts(
+    String userId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final responseDto = await _postService.getUserPosts(
+        userId,
+        limit: limit,
+        offset: offset,
+      );
+      return responseDto.posts.map((dto) => dto.toDomain()).toList();
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
 }

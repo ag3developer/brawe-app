@@ -11,6 +11,7 @@ import '../ui/home/widgets/home_screen.dart';
 import '../ui/live_feed/widgets/live_feed_screen.dart';
 import '../ui/broadcaster/widgets/start_live_screen.dart';
 import '../ui/broadcaster/widgets/broadcaster_screen.dart';
+import '../ui/profile/widgets/profile_screen.dart';
 import '../domain/models/live_room.dart';
 
 part 'router.g.dart';
@@ -69,6 +70,13 @@ GoRouter router(Ref ref) {
         },
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/profile/:userId',
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return ProfileScreen(userId: userId);
+        },
+      ),
     ],
   );
 }

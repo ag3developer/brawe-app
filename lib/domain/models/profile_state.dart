@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'profile.dart';
 import 'social_stats.dart';
 import 'live_room.dart';
+import 'post.dart';
 
 part 'profile_state.freezed.dart';
 
@@ -12,5 +13,6 @@ sealed class ProfileState with _$ProfileState {
     required AsyncValue<Profile> profile,
     required AsyncValue<SocialStats> stats,
     required AsyncValue<List<LiveRoom>> lives,
+    required AsyncValue<List<Post>> posts,
   }) = _ProfileState;
 }

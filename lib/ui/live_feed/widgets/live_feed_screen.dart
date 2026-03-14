@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../view_models/live_feed_view_model.dart';
@@ -379,31 +380,34 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: widget.room.streamerAvatarUrl != null
-                        ? NetworkImage(widget.room.streamerAvatarUrl!)
-                        : null,
-                    child: widget.room.streamerAvatarUrl == null
-                        ? const Icon(Icons.person)
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.room.streamerName,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () => context.push('/profile/${widget.room.streamerId}'),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundImage: widget.room.streamerAvatarUrl != null
+                          ? NetworkImage(widget.room.streamerAvatarUrl!)
+                          : null,
+                      child: widget.room.streamerAvatarUrl == null
+                          ? const Icon(Icons.person)
+                          : null,
                     ),
-                  ),
-                  if (widget.isActive) ...[
-                    const SizedBox(width: 12),
-                    FollowButton(userId: widget.room.streamerId, compact: true),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.room.streamerName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (widget.isActive) ...[
+                      const SizedBox(width: 12),
+                      FollowButton(userId: widget.room.streamerId, compact: true),
+                    ],
                   ],
-                ],
+                ),
               ),
               const SizedBox(height: 8),
               Text(

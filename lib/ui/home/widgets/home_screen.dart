@@ -173,7 +173,20 @@ class _HomeTopBar extends ConsumerWidget {
                     ),
 
                     const SizedBox(height: AppSpacing.xl),
-                    
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        context.push('/profile/${user.id}');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white24),
+                        minimumSize: const Size(double.infinity, 44),
+                      ),
+                      child: const Text('View Full Profile', style: TextStyle(color: Colors.white)),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -556,8 +569,7 @@ class _TopStreamersSection extends ConsumerWidget {
                   final profile = streamers[index];
                   return GestureDetector(
                     onTap: () {
-                      // Navigate to profile or specific live
-                      context.push('/live');
+                      context.push('/profile/${profile.id}');
                     },
                     child: Column(
                       children: [
