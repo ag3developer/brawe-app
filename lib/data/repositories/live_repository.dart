@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_comment.dart';
 import '../../domain/models/live_room.dart';
+import '../../domain/models/live_gift.dart';
 import '../services/live_service.dart';
 import '../model/create_live_room_request_dto.dart';
 import '../model/live_room_dto.dart';
@@ -27,6 +28,7 @@ class LiveRepository {
   final SocketService? _socketService;
   final Map<String, StreamController<LiveComment>> _commentControllers = {};
   final Map<String, StreamController<int>> _viewerCountControllers = {};
+  final Map<String, StreamController<LiveGift>> _giftControllers = {};
   final Set<String> _connectedRooms = {};
   bool _socketHandlersRegistered = false;
 
@@ -163,6 +165,9 @@ class LiveRepository {
 
     final viewerCountController = _viewerCountControllers.remove(roomId);
     viewerCountController?.close();
+
+    final giftController = _giftControllers.remove(roomId);
+    giftController?.close();
   }
 
   Stream<LiveComment> watchComments(String roomId) {
@@ -177,6 +182,14 @@ class LiveRepository {
     final controller = _viewerCountControllers.putIfAbsent(
       roomId,
       () => StreamController<int>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Stream<LiveGift> watchGifts(String roomId) {
+    final controller = _giftControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveGift>.broadcast(),
     );
     return controller.stream;
   }
@@ -264,6 +277,23 @@ class LiveRepository {
         }
       }
     });
+
+    _socketService.on(AppConstants.eventNewGift, (data) {
+      debugPrint('LiveRepository: Received event ${AppConstants.eventNewGift}: $data');
+      final gift = _parseLiveGift(data);
+      if (gift == null) return;
+
+      final payload = _asMap(data);
+      final msgRoomId = payload?['room_id']?.toString();
+
+      if (msgRoomId != null) {
+        _giftControllers[msgRoomId]?.add(gift);
+      } else {
+        for (final roomId in _connectedRooms) {
+          _giftControllers[roomId]?.add(gift);
+        }
+      }
+    });
   }
 
   LiveComment? _parseLiveComment(dynamic data) {
@@ -309,6 +339,29 @@ class LiveRepository {
     }
 
     return int.tryParse(rawCount?.toString() ?? '');
+  }
+
+  LiveGift? _parseLiveGift(dynamic data) {
+    final payload = _asMap(data);
+    if (payload == null) return null;
+
+    final giftId = payload['gift_id']?.toString() ?? payload['gift']?['id']?.toString();
+    if (giftId == null) return null;
+
+    final timestampValue = payload['timestamp']?.toString();
+    final timestamp = DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
+
+    return LiveGift(
+      id: payload['id']?.toString() ?? timestamp.microsecondsSinceEpoch.toString(),
+      senderId: payload['sender_id']?.toString() ?? payload['user']?['id']?.toString() ?? '',
+      senderName: payload['sender_name']?.toString() ?? payload['user']?['name']?.toString() ?? 'Viewer',
+      senderAvatarUrl: payload['sender_avatar']?.toString() ?? payload['user']?['avatar']?.toString(),
+      giftId: giftId,
+      giftName: payload['gift_name']?.toString() ?? payload['gift']?['name']?.toString() ?? 'Gift',
+      giftIconUrl: payload['gift_icon']?.toString() ?? payload['gift']?['icon']?.toString(),
+      quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
+      timestamp: timestamp,
+    );
   }
 
   Map<String, dynamic>? _asMap(dynamic data) {

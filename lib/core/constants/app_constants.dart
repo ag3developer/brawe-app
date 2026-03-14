@@ -29,6 +29,7 @@ class AppConstants {
   static const String eventLeaveRoom = 'leave_room';
   static const String eventNewMessage = 'new_message';
   static const String eventViewerCount = 'viewer_count';
+  static const String eventNewGift = 'new_gift';
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';

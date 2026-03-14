@@ -5,9 +5,12 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../view_models/live_room_comments_view_model.dart';
+import '../view_models/top_gifters_view_model.dart';
 import '../../../domain/models/live_room.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/follow_button.dart';
+import 'gifts_overlay.dart';
+import 'gift_animation_overlay.dart';
 import 'live_comments_overlay.dart';
 
 class LiveFeedScreen extends ConsumerStatefulWidget {
@@ -372,6 +375,35 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
           ),
         ),
 
+        // Top Gifters
+        Positioned(
+          top: 50,
+          right: 16,
+          child: Consumer(
+            builder: (context, ref, child) {
+              final giftersState = ref.watch(topGiftersViewModelProvider(widget.room.id));
+              return giftersState.when(
+                data: (gifters) => Row(
+                  children: gifters.take(3).map((gifter) => Padding(
+                    padding: const EdgeInsets.only(left: 4),
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: gifter.avatarUrl != null ? NetworkImage(gifter.avatarUrl!) : null,
+                      child: gifter.avatarUrl == null ? const Icon(Icons.person, size: 12, color: Colors.white) : null,
+                    ),
+                  )).toList(),
+                ),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              );
+            },
+          ),
+        ),
+
+        // Gift Animation Overlay
+        GiftAnimationOverlay(roomId: widget.room.id),
+
         // Stream Info (Bottom)
         Positioned(
           bottom: 116,
@@ -439,11 +471,19 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildIconButton(Icons.favorite, 'Like'),
+              _buildIconButton(Icons.favorite, 'Like', onTap: () {}),
               const SizedBox(height: 16),
-              _buildIconButton(Icons.card_giftcard, 'Gift'),
+              _buildIconButton(
+                Icons.card_giftcard,
+                'Gift',
+                onTap: () => GiftsOverlay.show(
+                  context,
+                  widget.room.id,
+                  widget.room.streamerId,
+                ),
+              ),
               const SizedBox(height: 16),
-              _buildIconButton(Icons.share, 'Share'),
+              _buildIconButton(Icons.share, 'Share', onTap: () {}),
             ],
           ),
         ),
@@ -460,20 +500,23 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
     );
   }
 
-  Widget _buildIconButton(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: const BoxDecoration(
-            color: Colors.black45,
-            shape: BoxShape.circle,
+  Widget _buildIconButton(IconData icon, String label, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: const BoxDecoration(
+              color: Colors.black45,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
-          child: Icon(icon, color: Colors.white, size: 28),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      ],
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
     );
   }
 }
