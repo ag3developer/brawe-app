@@ -17,7 +17,7 @@ class GiftAnimationOverlay extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final stackHeight = _stackHeight(activeGifts.length);
+    final visibleGifts = activeGifts.reversed.toList(growable: false);
 
     return Positioned(
       top: 100,
@@ -28,64 +28,23 @@ class GiftAnimationOverlay extends ConsumerWidget {
           alignment: Alignment.topLeft,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 320, maxWidth: 280),
-            child: SingleChildScrollView(
-              key: const ValueKey('gift-toast-stack-scroll'),
+            child: ListView.separated(
+              key: const ValueKey('gift-toast-list'),
+              shrinkWrap: true,
               padding: EdgeInsets.zero,
               physics: const BouncingScrollPhysics(),
-              child: SizedBox(
-                key: const ValueKey('gift-toast-stack'),
-                width: 280,
-                height: stackHeight,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    for (var index = 0; index < activeGifts.length; index++)
-                      _StackedGiftToast(
-                        gift: activeGifts[index],
-                        visualIndex: activeGifts.length - 1 - index,
-                      ),
-                  ],
-                ),
-              ),
+              itemCount: visibleGifts.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final gift = visibleGifts[index];
+                return _GiftToast(
+                  key: ValueKey('gift-toast-${gift.id}'),
+                  gift: gift,
+                  isHighlighted: index == 0,
+                );
+              },
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  double _stackHeight(int itemCount) {
-    const cardHeight = 74.0;
-    const verticalOffset = 18.0;
-    if (itemCount <= 1) {
-      return cardHeight;
-    }
-
-    return cardHeight + ((itemCount - 1) * verticalOffset);
-  }
-}
-
-class _StackedGiftToast extends StatelessWidget {
-  final LiveGift gift;
-  final int visualIndex;
-
-  const _StackedGiftToast({required this.gift, required this.visualIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = 1 - (visualIndex * 0.06);
-    final opacity = 1 - (visualIndex * 0.14);
-
-    return Positioned(
-      top: visualIndex * 18,
-      left: visualIndex * 6,
-      right: 0,
-      child: Opacity(
-        opacity: opacity.clamp(0.45, 1),
-        child: Transform.scale(
-          alignment: Alignment.topLeft,
-          scale: scale.clamp(0.78, 1),
-          child: _GiftToast(key: ValueKey('gift-toast-${gift.id}'), gift: gift),
         ),
       ),
     );
@@ -94,8 +53,13 @@ class _StackedGiftToast extends StatelessWidget {
 
 class _GiftToast extends StatelessWidget {
   final LiveGift gift;
+  final bool isHighlighted;
 
-  const _GiftToast({super.key, required this.gift});
+  const _GiftToast({
+    super.key,
+    required this.gift,
+    required this.isHighlighted,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,17 +68,23 @@ class _GiftToast extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          colors: [Color(0xE61B2B6B), Color(0xE62E1248)],
+        gradient: LinearGradient(
+          colors: isHighlighted
+              ? const [Color(0xD91B2B6B), Color(0xD92E1248)]
+              : const [Color(0xB31B2B6B), Color(0xB32E1248)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
-        border: Border.all(color: Colors.white24),
-        boxShadow: const [
+        border: Border.all(
+          color: isHighlighted ? AppColors.coolCyan : Colors.white24,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x55000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            color: isHighlighted
+                ? const Color(0x663BB8FF)
+                : const Color(0x33000000),
+            blurRadius: isHighlighted ? 20 : 12,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -150,18 +120,20 @@ class _GiftToast extends StatelessWidget {
                   gift.senderName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: isHighlighted ? 13 : 12,
+                    fontWeight: isHighlighted
+                        ? FontWeight.w800
+                        : FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 2),
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white70,
-                      fontSize: 12,
+                      fontSize: isHighlighted ? 12 : 11,
                       fontWeight: FontWeight.w500,
                     ),
                     children: [

@@ -6,6 +6,7 @@
 - Present live gifts as a single animated toast notification instead of a stacked corner list so gift callouts feel closer to TikTok live interactions.
 - Anchor the live gift toast back to the top-left overlay position while keeping the timed auto-dismiss behavior.
 - Fix shared live room subscriptions so comments and gifts can coexist without one provider disconnecting the socket room or closing controllers needed by the other.
+- Render live gifts as a translucent, scrollable top-left list capped at 5 items, with the newest gift emphasized at the top.
 - Revert live Socket.IO runtime contract to the backend native integration settings: `/socket.io/` path with `chat_message`, `new_message`, `viewer_count`, `new_gift`, and `stream_ended`.
 - Re-align the live feature with the latest `api_docs/api_mobile.md`: restore gift routes under `/live/gifts/*`, add thumbnail/regenerate-key room methods, allow Socket.IO polling fallback, and default new rooms to `scheduled`.
 - Show live chat messages immediately in the live overlays with optimistic local echo, failure rollback, and socket-echo deduplication so sent and received messages behave like a real live stream chat.
