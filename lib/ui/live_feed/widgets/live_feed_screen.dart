@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:share_plus/share_plus.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../view_models/live_room_comments_view_model.dart';
 import '../view_models/top_gifters_view_model.dart';
+import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/live_room.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/follow_button.dart';
@@ -226,13 +228,44 @@ class LiveRoomItem extends ConsumerStatefulWidget {
 class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
   VideoPlayerController? _controller;
   bool _isInitialized = false;
+  bool _isLiked = false;
+  int _likesCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _likesCount = widget.room.totalLikes;
     if (widget.isActive) {
       _initializePlayer();
     }
+  }
+
+  Future<void> _handleLike() async {
+    final newIsLiked = !_isLiked;
+    setState(() {
+      _isLiked = newIsLiked;
+      _likesCount += newIsLiked ? 1 : -1;
+    });
+
+    try {
+      await ref
+          .read(liveRepositoryProvider)
+          .toggleLike(widget.room.id, !newIsLiked); // pass old state to repo logic
+    } catch (e) {
+      // Revert on error
+      if (mounted) {
+        setState(() {
+          _isLiked = !newIsLiked;
+          _likesCount += !newIsLiked ? 1 : -1;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleShare() async {
+    final url = 'https://brawe.io/live/${widget.room.slug}';
+    final message = 'Check out this live on Brawe: ${widget.room.title}\n$url';
+    await SharePlus.instance.share(ShareParams(text: message));
   }
 
   Future<void> _initializePlayer() async {
@@ -471,7 +504,11 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildIconButton(Icons.favorite, 'Like', onTap: () {}),
+              _buildIconButton(
+                Icons.favorite,
+                _likesCount.toString(),
+                onTap: _handleLike,
+              ),
               const SizedBox(height: 16),
               _buildIconButton(
                 Icons.card_giftcard,
@@ -483,7 +520,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildIconButton(Icons.share, 'Share', onTap: () {}),
+              _buildIconButton(Icons.share, 'Share', onTap: _handleShare),
             ],
           ),
         ),

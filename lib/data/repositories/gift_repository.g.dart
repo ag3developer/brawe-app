@@ -48,4 +48,4 @@ final class GiftRepositoryProvider
   }
 }
 
-String _$giftRepositoryHash() => r'50a028021a7bad9b510ff175df797a29b81fa9de';
+String _$giftRepositoryHash() => r'39aa018373d3914d344a3875e71e4684db77a29e';

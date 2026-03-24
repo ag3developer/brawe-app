@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- Prevent duplicate live socket event handling by keeping `LiveRepository` alive for the app session and unregistering `live_chat`, viewer count, and gift listeners on disposal.
+- Request the current live viewer count immediately after joining a room so watcher totals refresh without waiting for a later socket push or heartbeat.
+- Present live gifts as a single animated toast notification instead of a stacked corner list so gift callouts feel closer to TikTok live interactions.
+- Anchor the live gift toast back to the top-left overlay position while keeping the timed auto-dismiss behavior.
+- Fix shared live room subscriptions so comments and gifts can coexist without one provider disconnecting the socket room or closing controllers needed by the other.
+- Revert live Socket.IO runtime contract to the backend native integration settings: `/socket.io/` path with `chat_message`, `new_message`, `viewer_count`, `new_gift`, and `stream_ended`.
+- Re-align the live feature with the latest `api_docs/api_mobile.md`: restore gift routes under `/live/gifts/*`, add thumbnail/regenerate-key room methods, allow Socket.IO polling fallback, and default new rooms to `scheduled`.
+- Show live chat messages immediately in the live overlays with optimistic local echo, failure rollback, and socket-echo deduplication so sent and received messages behave like a real live stream chat.
+- Align live mobile Socket.IO integration with `NATIVE_APP_INTEGRATION.md` and `ADR-0004`: switch path to `/socket.io/`, use standard event names (`chat_message`, `new_message`, `viewer_count`, `stream_ended`), and simplify payloads by removing redundant client-side user profile data.
+- Update `api_docs/api_mobile.md` to correctly reflect the `NATIVE_APP_INTEGRATION.md` Socket.IO contract.
+- Synchronize live viewer count in `BroadcasterScreen` and viewer overlays by implementing a 30-second heartbeat mechanism and listening for `viewer_joined`/`viewer_left` WebSocket events.
+- Add `updateViewerCount` to `LiveRepository` to allow manual state synchronization from REST responses.
+- Initialize `LiveRoomCommentsViewModel` with the current room's viewer count upon entry.
 - Dismiss keyboard when tapping outside the comment box in `BroadcasterScreen`.
 - Fix `invalid_override` error in `LiveRoomCommentsViewModel` by aligning the `build` method signature with the generated code and UI calls.
 - Clean up unused parameters and unnecessary imports in `StartLiveScreen` and `HomeScreen`.

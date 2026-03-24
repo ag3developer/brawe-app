@@ -10,6 +10,8 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
+import '../../live_feed/view_models/live_room_gifts_view_model.dart';
+import '../../live_feed/widgets/gift_animation_overlay.dart';
 import '../../live_feed/widgets/live_comments_overlay.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -31,19 +33,23 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   late LiveRoom _room;
   bool _isStreaming = false;
+  bool _isPaused = false;
   bool _isInitialized = false;
   bool _isResolvingRoom = false;
   bool _isTogglingStream = false;
+  bool _isTogglingPause = false;
 
   // Countdown state
   int _countdownSeconds = 5;
   bool _showCountdown = false;
   Timer? _countdownTimer;
+  Timer? _heartbeatTimer;
 
   @override
   void initState() {
     super.initState();
     _room = widget.room;
+    _isPaused = widget.room.isPaused;
     WidgetsBinding.instance.addObserver(this);
     _initializeController();
     WakelockPlus.enable();
@@ -168,6 +174,37 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
   }
 
+  void _startHeartbeat() {
+    _stopHeartbeat();
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+      if (!mounted || !_isStreaming) {
+        _stopHeartbeat();
+        return;
+      }
+
+      try {
+        final response =
+            await ref.read(liveRepositoryProvider).sendHeartbeat(_room.id);
+
+        // Update viewer count from heartbeat response
+        final data = response['data'];
+        if (data is Map<String, dynamic>) {
+          final count = data['viewer_count'];
+          if (count is int && mounted) {
+            ref.read(liveRepositoryProvider).updateViewerCount(_room.id, count);
+          }
+        }
+      } catch (e) {
+        debugPrint('Heartbeat failed: $e');
+      }
+    });
+  }
+
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final CameraController? cameraController = _controller;
@@ -265,11 +302,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     try {
       if (_isStreaming) {
+        _stopHeartbeat();
         await _controller?.stopVideoStreaming();
         if (mounted) {
           setState(() {
             _isStreaming = false;
             _isTogglingStream = false;
+            _isPaused = false; // Reset pause state when stopping
           });
         }
         return;
@@ -309,6 +348,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           _isStreaming = true;
           _isTogglingStream = false;
         });
+        _startHeartbeat();
         AppSnackBar.showSuccess(context, 'Connected to RTMP. You are live.');
       }
     } catch (error) {
@@ -322,6 +362,46 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
   }
 
+  Future<void> _togglePause() async {
+    if (!_isStreaming || _isTogglingPause) {
+      return;
+    }
+
+    setState(() {
+      _isTogglingPause = true;
+    });
+
+    try {
+      if (_isPaused) {
+        await ref.read(liveRepositoryProvider).resumeLive(_room.id);
+        if (mounted) {
+          setState(() {
+            _isPaused = false;
+          });
+          AppSnackBar.showSuccess(context, 'Live resumed.');
+        }
+      } else {
+        await ref.read(liveRepositoryProvider).pauseLive(_room.id);
+        if (mounted) {
+          setState(() {
+            _isPaused = true;
+          });
+          AppSnackBar.showSuccess(context, 'Live paused (BRB).');
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        AppSnackBar.showError(context, 'Error toggling pause: $error');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingPause = false;
+        });
+      }
+    }
+  }
+
   Future<void> _switchCamera() async {
     if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
 
@@ -331,6 +411,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // Stop streaming if active before switching (rtmp_broadcaster limitation)
     final wasStreaming = _isStreaming;
     if (_isStreaming) {
+      _stopHeartbeat();
       await _controller?.stopVideoStreaming();
       setState(() {
         _isStreaming = false;
@@ -346,6 +427,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   Future<void> _closeBroadcaster() async {
+    _stopHeartbeat();
     if (_isStreaming) {
       try {
         await _controller?.stopVideoStreaming();
@@ -368,6 +450,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
+    _stopHeartbeat();
     if (_isStreaming) {
       _controller?.stopVideoStreaming();
     }
@@ -381,6 +464,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final commentsState = ref.watch(
       liveRoomCommentsViewModelProvider(widget.room.id),
     );
+
+    // Watch gifts for animation overlay
+    ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
 
     ref.listen<LiveRoomCommentsState>(
       liveRoomCommentsViewModelProvider(widget.room.id),
@@ -471,6 +557,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ),
               ),
+            GiftAnimationOverlay(roomId: widget.room.id),
             SafeArea(
               child: Padding(
                 padding: EdgeInsets.only(
@@ -495,34 +582,64 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ),
                         Row(
                           children: [
-                            if (!_showCountdown)
+                            if (!_showCountdown) ...[
+                              if (_isStreaming)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: _PauseButton(
+                                    isPaused: _isPaused,
+                                    isLoading: _isTogglingPause,
+                                    onPressed: _togglePause,
+                                  ),
+                                ),
                               Padding(
                                 padding: const EdgeInsets.only(right: 12),
                                 child: _BroadcasterControlButton(
                                   isStreaming: _isStreaming,
                                   isToggling: _isTogglingStream,
                                   onPressed: _toggleStreaming,
-                                ),                              ),
-                            if (_isStreaming)
-                              Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'LIVE',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
                                 ),
                               ),
-                            if (_isStreaming)
+                            ],
+                            if (_isStreaming) ...[
+                              if (!_isPaused)
+                                Container(
+                                  margin: const EdgeInsets.only(right: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'LIVE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  margin: const EdgeInsets.only(right: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'PAUSED',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               Container(
                                 margin: const EdgeInsets.only(right: 12),
                                 padding: const EdgeInsets.symmetric(
@@ -542,6 +659,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                                   ),
                                 ),
                               ),
+                            ],
                             if (_cameras.length > 1)
                               IconButton(
                                 onPressed: _switchCamera,
@@ -583,6 +701,52 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PauseButton extends StatelessWidget {
+  const _PauseButton({
+    required this.isPaused,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final bool isPaused;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white24,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Text(
+                isPaused ? 'RESUME' : 'PAUSE',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
       ),
     );
   }

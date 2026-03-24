@@ -149,7 +149,7 @@ class _LiveCommentBubble extends StatelessWidget {
           Expanded(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.black45,
+                color: comment.isPending ? Colors.black38 : Colors.black45,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Padding(
@@ -171,10 +171,21 @@ class _LiveCommentBubble extends StatelessWidget {
                       TextSpan(
                         text: comment.message,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.88),
+                          color: Colors.white.withValues(
+                            alpha: comment.isPending ? 0.72 : 0.88,
+                          ),
                           fontSize: 12,
                         ),
                       ),
+                      if (comment.isPending)
+                        TextSpan(
+                          text: '  Sending...',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.45),
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
                     ],
                   ),
                 ),

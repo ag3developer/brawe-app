@@ -19,26 +19,10 @@ class GiftService {
     return response.data['data'] ?? response.data;
   }
 
-  Future<void> sendGift({
-    required String roomId,
-    required String giftId,
-    required String receiverId,
-    int quantity = 1,
-    String? battleId,
+  Future<List<Map<String, dynamic>>> getTopGifters(
+    String roomId, {
+    int limit = 10,
   }) async {
-    await _dio.post(
-      '/live/gifts/send-gift',
-      data: {
-        'room_id': roomId,
-        'gift_id': giftId,
-        'receiver_id': receiverId,
-        'quantity': quantity,
-        'battle_id': battleId,
-      },
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> getTopGifters(String roomId, {int limit = 10}) async {
     final response = await _dio.get(
       '/live/gifts/top-gifters/$roomId',
       queryParameters: {'limit': limit},

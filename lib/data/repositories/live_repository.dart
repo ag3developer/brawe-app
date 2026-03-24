@@ -15,12 +15,14 @@ import '../services/socket_service.dart';
 
 part 'live_repository.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 LiveRepository liveRepository(Ref ref) {
-  return LiveRepository(
+  final repository = LiveRepository(
     ref.watch(liveServiceProvider),
     ref.watch(socketServiceProvider),
   );
+  ref.onDispose(repository.dispose);
+  return repository;
 }
 
 class LiveRepository {
@@ -30,7 +32,13 @@ class LiveRepository {
   final Map<String, StreamController<int>> _viewerCountControllers = {};
   final Map<String, StreamController<LiveGift>> _giftControllers = {};
   final Set<String> _connectedRooms = {};
+  final Map<String, int> _roomConnectionLeases = {};
   bool _socketHandlersRegistered = false;
+  void Function(dynamic)? _onNewMessage;
+  void Function(dynamic)? _onViewerCount;
+  void Function(dynamic)? _onViewerJoined;
+  void Function(dynamic)? _onViewerLeft;
+  void Function(dynamic)? _onNewGift;
 
   LiveRepository(this._liveService, [SocketService? socketService])
     : _socketService = socketService;
@@ -129,7 +137,106 @@ class LiveRepository {
     }
   }
 
+  Future<void> endLive(String roomId) async {
+    try {
+      await _liveService.endLive(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: endLive DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: endLive Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> pauseLive(String roomId) async {
+    try {
+      await _liveService.pauseLive(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: pauseLive DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: pauseLive Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> resumeLive(String roomId) async {
+    try {
+      await _liveService.resumeLive(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: resumeLive DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: resumeLive Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<Map<String, dynamic>> sendHeartbeat(String roomId) async {
+    try {
+      return await _liveService.sendHeartbeat(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: sendHeartbeat DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: sendHeartbeat Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<Map<String, dynamic>> getStreamStatus(String roomId) async {
+    try {
+      return await _liveService.getStreamStatus(roomId);
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: getStreamStatus DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: getStreamStatus Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<Map<String, dynamic>> updateThumbnail({
+    required String roomId,
+    required String thumbnailUrl,
+  }) async {
+    try {
+      return await _liveService.updateThumbnail(
+        roomId: roomId,
+        thumbnailUrl: thumbnailUrl,
+      );
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: updateThumbnail DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: updateThumbnail Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<Map<String, dynamic>> regenerateStreamKey(String roomId) async {
+    try {
+      return await _liveService.regenerateStreamKey(roomId);
+    } on DioException catch (e) {
+      debugPrint(
+        'LiveRepository: regenerateStreamKey DioException: ${e.message}',
+      );
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: regenerateStreamKey Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
   Future<void> connectToRoom(String roomId) async {
+    await _ensureConnectedToRoom(roomId, trackLease: true);
+  }
+
+  Future<void> _ensureConnectedToRoom(
+    String roomId, {
+    required bool trackLease,
+  }) async {
     final socketService = _socketService;
     if (socketService == null) {
       throw const Failure.network();
@@ -145,6 +252,14 @@ class LiveRepository {
       if (_connectedRooms.add(roomId)) {
         socketService.joinRoom(roomId);
       }
+      if (trackLease) {
+        _roomConnectionLeases.update(
+          roomId,
+          (count) => count + 1,
+          ifAbsent: () => 1,
+        );
+      }
+      getLiveViewers(roomId);
     } on Failure {
       rethrow;
     } catch (e) {
@@ -153,7 +268,39 @@ class LiveRepository {
     }
   }
 
+  void dispose() {
+    _socketService?.off(AppConstants.eventNewMessage, _onNewMessage);
+    _socketService?.off(AppConstants.eventViewerCount, _onViewerCount);
+    _socketService?.off('viewer_joined', _onViewerJoined);
+    _socketService?.off('viewer_left', _onViewerLeft);
+    _socketService?.off(AppConstants.eventNewGift, _onNewGift);
+
+    for (final controller in _commentControllers.values) {
+      controller.close();
+    }
+    for (final controller in _viewerCountControllers.values) {
+      controller.close();
+    }
+    for (final controller in _giftControllers.values) {
+      controller.close();
+    }
+
+    _commentControllers.clear();
+    _viewerCountControllers.clear();
+    _giftControllers.clear();
+    _connectedRooms.clear();
+    _roomConnectionLeases.clear();
+    _socketHandlersRegistered = false;
+  }
+
   void disconnectFromRoom(String roomId) {
+    final remainingLeases = (_roomConnectionLeases[roomId] ?? 0) - 1;
+    if (remainingLeases > 0) {
+      _roomConnectionLeases[roomId] = remainingLeases;
+      return;
+    }
+
+    _roomConnectionLeases.remove(roomId);
     if (!_connectedRooms.remove(roomId)) {
       return;
     }
@@ -186,6 +333,28 @@ class LiveRepository {
     return controller.stream;
   }
 
+  Future<void> toggleLike(String roomId, bool isLiked) async {
+    try {
+      if (isLiked) {
+        await _liveService.unlikeLive(roomId);
+      } else {
+        await _liveService.likeLive(roomId);
+      }
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  void getLiveViewers(String roomId) {
+    _socketService?.emit(AppConstants.eventRequestViewers, {'room_id': roomId});
+  }
+
+  void updateViewerCount(String roomId, int count) {
+    _dispatchToIntControllers(_viewerCountControllers, count, roomId: roomId);
+  }
+
   Stream<LiveGift> watchGifts(String roomId) {
     final controller = _giftControllers.putIfAbsent(
       roomId,
@@ -208,7 +377,7 @@ class LiveRepository {
       throw const Failure.network();
     }
 
-    await connectToRoom(roomId);
+    await _ensureConnectedToRoom(roomId, trackLease: false);
     socketService.sendChatMessage(roomId: roomId, message: trimmedMessage);
   }
 
@@ -239,8 +408,10 @@ class LiveRepository {
     _socketHandlersRegistered = true;
     debugPrint('LiveRepository: Registering socket handlers');
 
-    _socketService.on(AppConstants.eventNewMessage, (data) {
-      debugPrint('LiveRepository: Received event ${AppConstants.eventNewMessage}: $data');
+    _onNewMessage = (data) {
+      debugPrint(
+        'LiveRepository: Received event ${AppConstants.eventNewMessage}: $data',
+      );
       final comment = _parseLiveComment(data);
       if (comment == null) {
         debugPrint('LiveRepository: Failed to parse comment from $data');
@@ -251,49 +422,122 @@ class LiveRepository {
       final payload = _asMap(data);
       final msgRoomId = payload?['room_id']?.toString();
 
-      if (msgRoomId != null) {
-        _commentControllers[msgRoomId]?.add(comment);
-      } else {
-        // Fallback: send to all connected rooms if no room_id in payload
-        for (final roomId in _connectedRooms) {
-          _commentControllers[roomId]?.add(comment);
-        }
-      }
-    });
+      _dispatchToCommentControllers(comment, roomId: msgRoomId);
+    };
+    _socketService.on(AppConstants.eventNewMessage, _onNewMessage!);
 
-    _socketService.on(AppConstants.eventViewerCount, (data) {
-      debugPrint('LiveRepository: Received event ${AppConstants.eventViewerCount}: $data');
+    _onViewerCount = (data) {
+      debugPrint(
+        'LiveRepository: Received event ${AppConstants.eventViewerCount}: $data',
+      );
       final count = _parseViewerCount(data);
       if (count == null) return;
 
       final payload = _asMap(data);
       final msgRoomId = payload?['room_id']?.toString();
 
-      if (msgRoomId != null) {
-        _viewerCountControllers[msgRoomId]?.add(count);
-      } else {
-        for (final roomId in _connectedRooms) {
-          _viewerCountControllers[roomId]?.add(count);
-        }
-      }
-    });
+      _dispatchToIntControllers(
+        _viewerCountControllers,
+        count,
+        roomId: msgRoomId,
+      );
+    };
+    _socketService.on(AppConstants.eventViewerCount, _onViewerCount!);
 
-    _socketService.on(AppConstants.eventNewGift, (data) {
-      debugPrint('LiveRepository: Received event ${AppConstants.eventNewGift}: $data');
+    _onViewerJoined = (data) {
+      debugPrint('LiveRepository: Received event viewer_joined: $data');
+      final count = _parseViewerCount(data);
+      if (count == null) return;
+
+      final payload = _asMap(data);
+      final msgRoomId = payload?['room_id']?.toString();
+
+      _dispatchToIntControllers(
+        _viewerCountControllers,
+        count,
+        roomId: msgRoomId,
+      );
+    };
+    _socketService.on('viewer_joined', _onViewerJoined!);
+
+    _onViewerLeft = (data) {
+      debugPrint('LiveRepository: Received event viewer_left: $data');
+      final count = _parseViewerCount(data);
+      if (count == null) return;
+
+      final payload = _asMap(data);
+      final msgRoomId = payload?['room_id']?.toString();
+
+      _dispatchToIntControllers(
+        _viewerCountControllers,
+        count,
+        roomId: msgRoomId,
+      );
+    };
+    _socketService.on('viewer_left', _onViewerLeft!);
+
+    _onNewGift = (data) {
+      debugPrint(
+        'LiveRepository: Received event ${AppConstants.eventNewGift}: $data',
+      );
       final gift = _parseLiveGift(data);
       if (gift == null) return;
 
       final payload = _asMap(data);
       final msgRoomId = payload?['room_id']?.toString();
 
-      if (msgRoomId != null) {
-        _giftControllers[msgRoomId]?.add(gift);
-      } else {
-        for (final roomId in _connectedRooms) {
-          _giftControllers[roomId]?.add(gift);
-        }
+      _dispatchToGiftControllers(gift, roomId: msgRoomId);
+    };
+    _socketService.on(AppConstants.eventNewGift, _onNewGift!);
+  }
+
+  void _dispatchToCommentControllers(LiveComment comment, {String? roomId}) {
+    _dispatchToControllers(_commentControllers, comment, roomId: roomId);
+  }
+
+  void _dispatchToGiftControllers(LiveGift gift, {String? roomId}) {
+    _dispatchToControllers(_giftControllers, gift, roomId: roomId);
+  }
+
+  void _dispatchToIntControllers(
+    Map<String, StreamController<int>> controllers,
+    int value, {
+    String? roomId,
+  }) {
+    _dispatchToControllers(controllers, value, roomId: roomId);
+  }
+
+  void _dispatchToControllers<T>(
+    Map<String, StreamController<T>> controllers,
+    T value, {
+    String? roomId,
+  }) {
+    final targetRoomId = roomId?.trim();
+    if (targetRoomId != null && targetRoomId.isNotEmpty) {
+      final targetController = controllers[targetRoomId];
+      if (targetController != null && !targetController.isClosed) {
+        targetController.add(value);
+        return;
       }
-    });
+    }
+
+    final activeControllers = controllers.entries
+        .where((entry) => !entry.value.isClosed)
+        .toList(growable: false);
+    if (activeControllers.isNotEmpty) {
+      for (final entry in activeControllers) {
+        entry.value.add(value);
+      }
+      return;
+    }
+
+    for (final connectedRoomId in _connectedRooms) {
+      final controller = controllers[connectedRoomId];
+      if (controller == null || controller.isClosed) {
+        continue;
+      }
+      controller.add(value);
+    }
   }
 
   LiveComment? _parseLiveComment(dynamic data) {
@@ -307,17 +551,18 @@ class LiveRepository {
     final timestamp =
         DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
 
-    // Map fields from both app and connect APIs
     return LiveComment(
-      id: payload['id']?.toString() ??
-          payload['_id']?.toString() ??
+      id:
+          payload['id']?.toString() ??
           timestamp.microsecondsSinceEpoch.toString(),
-      userId: payload['user_id']?.toString() ?? payload['user']?['_id']?.toString() ?? '',
-      userName: payload['name']?.toString() ??
-          payload['user']?['name']?.toString() ??
-          payload['username']?.toString() ??
+      userId: payload['user_id']?.toString() ?? '',
+      userName:
+          payload['sender_name']?.toString() ??
+          payload['name']?.toString() ??
           'Viewer',
-      avatarUrl: payload['avatar_url']?.toString() ?? payload['user']?['avatar']?.toString(),
+      avatarUrl:
+          payload['sender_avatar']?.toString() ??
+          payload['avatar_url']?.toString(),
       message: message,
       timestamp: timestamp,
     );
@@ -329,7 +574,7 @@ class LiveRepository {
       return null;
     }
 
-    final rawCount = payload['count'];
+    final rawCount = payload['count'] ?? payload['viewer_count'];
     if (rawCount is int) {
       return rawCount;
     }
@@ -345,20 +590,24 @@ class LiveRepository {
     final payload = _asMap(data);
     if (payload == null) return null;
 
-    final giftId = payload['gift_id']?.toString() ?? payload['gift']?['id']?.toString();
+    final giftId = payload['gift_id']?.toString();
     if (giftId == null) return null;
 
     final timestampValue = payload['timestamp']?.toString();
-    final timestamp = DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
+    final timestamp =
+        DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
 
     return LiveGift(
-      id: payload['id']?.toString() ?? timestamp.microsecondsSinceEpoch.toString(),
-      senderId: payload['sender_id']?.toString() ?? payload['user']?['id']?.toString() ?? '',
-      senderName: payload['sender_name']?.toString() ?? payload['user']?['name']?.toString() ?? 'Viewer',
-      senderAvatarUrl: payload['sender_avatar']?.toString() ?? payload['user']?['avatar']?.toString(),
+      id:
+          payload['transaction_id']?.toString() ??
+          payload['id']?.toString() ??
+          timestamp.microsecondsSinceEpoch.toString(),
+      senderId: payload['user_id']?.toString() ?? '',
+      senderName: payload['sender_name']?.toString() ?? 'Viewer',
+      senderAvatarUrl: payload['sender_avatar']?.toString(),
       giftId: giftId,
-      giftName: payload['gift_name']?.toString() ?? payload['gift']?['name']?.toString() ?? 'Gift',
-      giftIconUrl: payload['gift_icon']?.toString() ?? payload['gift']?['icon']?.toString(),
+      giftName: payload['gift_name']?.toString() ?? 'Gift',
+      giftIconUrl: payload['animation_url']?.toString(),
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
       timestamp: timestamp,
     );
@@ -453,7 +702,7 @@ class LiveRepository {
     normalized['title'] ??=
         fallbackTitle ?? rootPayload['title'] ?? rootPayload['name'];
     normalized['status'] ??=
-        rootPayload['status'] ?? AppConstants.statusWaiting;
+        rootPayload['status'] ?? AppConstants.statusScheduled;
     normalized['playback_url'] ??= rootPayload['playback_url'];
     normalized['thumbnail_url'] ??= rootPayload['thumbnail_url'];
     normalized['host'] ??= rootPayload['host'];

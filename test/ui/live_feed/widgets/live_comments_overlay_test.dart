@@ -41,7 +41,7 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField), 'Host reply');
-    await tester.tap(find.byIcon(Icons.send));
+    await tester.tap(find.byIcon(Icons.send_rounded));
     await tester.pump();
 
     expect(submittedMessage, 'Host reply');

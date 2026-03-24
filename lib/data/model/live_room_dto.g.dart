@@ -8,6 +8,7 @@ part of 'live_room_dto.dart';
 
 _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   id: json['id'] as String?,
+  slug: json['slug'] as String?,
   title: json['title'] as String? ?? 'Untitled Live',
   description: json['description'] as String?,
   category: json['category'] as String?,
@@ -15,6 +16,9 @@ _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   isPrivate: json['is_private'] as bool? ?? false,
   status: json['status'] as String? ?? AppConstants.statusLive,
   viewerCount: (json['viewer_count'] as num?)?.toInt() ?? 0,
+  totalLikes: (json['total_likes'] as num?)?.toInt() ?? 0,
+  isPaused: json['is_paused'] as bool? ?? false,
+  pausedAt: json['paused_at'] as String?,
   playbackUrl: json['playback_url'] as String?,
   thumbnailUrl: json['thumbnail_url'] as String?,
   streamConfig: json['stream_config'] == null
@@ -34,6 +38,7 @@ _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
 Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
     <String, dynamic>{
       'id': instance.id,
+      'slug': instance.slug,
       'title': instance.title,
       'description': instance.description,
       'category': instance.category,
@@ -41,6 +46,9 @@ Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
       'is_private': instance.isPrivate,
       'status': instance.status,
       'viewer_count': instance.viewerCount,
+      'total_likes': instance.totalLikes,
+      'is_paused': instance.isPaused,
+      'paused_at': instance.pausedAt,
       'playback_url': instance.playbackUrl,
       'thumbnail_url': instance.thumbnailUrl,
       'stream_config': instance.streamConfig,

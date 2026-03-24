@@ -48,12 +48,13 @@ class _FakeLiveRepository extends LiveRepository {
   @override
   Future<List<LiveRoom>> getLiveFeed({String? cursor, int limit = 10}) async {
     feedCalls++;
-    return [
-      const LiveRoom(
-        id: 'f1',
-        title: 'For You Live',
-        liveType: 'solo',
-        isPrivate: false,
+      return [
+        const LiveRoom(
+          id: 'f1',
+          slug: 'for-you-live',
+          title: 'For You Live',
+          liveType: 'solo',
+          isPrivate: false,
         status: 'live',
         viewerCount: 120,
         streamerId: 'u1',
@@ -70,12 +71,13 @@ class _FakeLiveRepository extends LiveRepository {
     int limit = 20,
   }) async {
     roomsCalls++;
-    return [
-      const LiveRoom(
-        id: 'r1',
-        title: 'All Lives Room',
-        liveType: 'solo',
-        isPrivate: false,
+      return [
+        const LiveRoom(
+          id: 'r1',
+          slug: 'all-lives-room',
+          title: 'All Lives Room',
+          liveType: 'solo',
+          isPrivate: false,
         status: 'live',
         viewerCount: 80,
         streamerId: 'u2',

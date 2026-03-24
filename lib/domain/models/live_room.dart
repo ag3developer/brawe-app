@@ -6,6 +6,7 @@ part 'live_room.freezed.dart';
 sealed class LiveRoom with _$LiveRoom {
   const factory LiveRoom({
     required String id,
+    required String slug,
     required String title,
     String? description,
     String? category,
@@ -13,6 +14,9 @@ sealed class LiveRoom with _$LiveRoom {
     required bool isPrivate,
     required String status,
     required int viewerCount,
+    @Default(0) int totalLikes,
+    @Default(false) bool isPaused,
+    DateTime? pausedAt,
     String? playbackId,
     String? streamUrl,
     String? rtmpUrl,

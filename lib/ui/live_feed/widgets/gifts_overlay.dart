@@ -52,7 +52,6 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with SingleTickerPr
     final success = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
       roomId: widget.roomId,
       giftId: _selectedGift!.id,
-      receiverId: widget.streamerId,
     );
 
     if (success && mounted) {

@@ -109,6 +109,73 @@ class LiveService {
     return _toMap(response.data);
   }
 
+  Future<Map<String, dynamic>> endLive(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/end');
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> pauseLive(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/pause');
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> resumeLive(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/resume');
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> sendHeartbeat(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/heartbeat');
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> getStreamStatus(String roomId) async {
+    final response = await _dio.get('/live/rooms/$roomId/stream-status');
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> updateThumbnail({
+    required String roomId,
+    required String thumbnailUrl,
+  }) async {
+    final response = await _dio.put(
+      '/live/rooms/$roomId/thumbnail',
+      queryParameters: {'thumbnail_url': thumbnailUrl},
+    );
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> regenerateStreamKey(String roomId) async {
+    final response = await _dio.post('/live/rooms/$roomId/regenerate-key');
+    return _toMap(response.data);
+  }
+
+  Future<void> likeLive(String roomId) async {
+    await _dio.post('/media/$roomId/like', data: {'reaction_type': 'like'});
+  }
+
+  Future<void> unlikeLive(String roomId) async {
+    await _dio.delete('/media/$roomId/like');
+  }
+
+  Future<Map<String, dynamic>> sendGift({
+    required String roomId,
+    required String giftId,
+    int quantity = 1,
+    String? battleId,
+  }) async {
+    final response = await _dio.post(
+      '/live/gifts/send-gift',
+      data: {
+        'room_id': roomId,
+        'gift_id': giftId,
+        'quantity': quantity,
+        'battle_id': battleId,
+      },
+    );
+    return _toMap(response.data);
+  }
+
   Map<String, dynamic> _toMap(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data;

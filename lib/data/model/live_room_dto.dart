@@ -9,6 +9,7 @@ part 'live_room_dto.g.dart';
 sealed class LiveRoomDto with _$LiveRoomDto {
   const factory LiveRoomDto({
     String? id,
+    String? slug,
     @Default('Untitled Live') String title,
     String? description,
     String? category,
@@ -16,6 +17,9 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'is_private') @Default(false) bool isPrivate,
     @Default(AppConstants.statusLive) String status,
     @JsonKey(name: 'viewer_count') @Default(0) int viewerCount,
+    @JsonKey(name: 'total_likes') @Default(0) int totalLikes,
+    @JsonKey(name: 'is_paused') @Default(false) bool isPaused,
+    @JsonKey(name: 'paused_at') String? pausedAt,
     @JsonKey(name: 'playback_url') String? playbackUrl,
     @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
     @JsonKey(name: 'stream_config') StreamConfigDto? streamConfig,
@@ -67,6 +71,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
 
     return LiveRoom(
       id: id ?? 'missing_id',
+      slug: slug ?? id ?? 'missing-id',
       title: title,
       description: description,
       category: category,
@@ -74,6 +79,9 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       isPrivate: isPrivate,
       status: status,
       viewerCount: viewerCount,
+      totalLikes: totalLikes,
+      isPaused: isPaused,
+      pausedAt: pausedAt == null ? null : DateTime.tryParse(pausedAt!)?.toLocal(),
       playbackId: effectivePlaybackId,
       streamUrl: playbackUrl ?? streamConfig?.playbackUrl ?? fallbackStreamUrl,
       rtmpUrl: streamConfig?.rtmpUrl ?? streamConfig?.ingestUrl ?? ingestUrl,

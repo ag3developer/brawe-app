@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LiveRoomDto {
 
- String? get id; String get title; String? get description; String? get category;@JsonKey(name: 'live_type') String get liveType;@JsonKey(name: 'is_private') bool get isPrivate; String get status;@JsonKey(name: 'viewer_count') int get viewerCount;@JsonKey(name: 'playback_url') String? get playbackUrl;@JsonKey(name: 'thumbnail_url') String? get thumbnailUrl;@JsonKey(name: 'stream_config') StreamConfigDto? get streamConfig;@JsonKey(name: 'host') HostDto? get host;@JsonKey(name: 'streamer_id') String? get streamerId;@JsonKey(name: 'streamer_name') String? get streamerName;@JsonKey(name: 'streamer_avatar') String? get streamerAvatar;@JsonKey(name: 'ingest_url') String? get ingestUrl;@JsonKey(name: 'started_at') String? get startedAt;@JsonKey(name: 'created_at') String? get createdAt;
+ String? get id; String? get slug; String get title; String? get description; String? get category;@JsonKey(name: 'live_type') String get liveType;@JsonKey(name: 'is_private') bool get isPrivate; String get status;@JsonKey(name: 'viewer_count') int get viewerCount;@JsonKey(name: 'total_likes') int get totalLikes;@JsonKey(name: 'is_paused') bool get isPaused;@JsonKey(name: 'paused_at') String? get pausedAt;@JsonKey(name: 'playback_url') String? get playbackUrl;@JsonKey(name: 'thumbnail_url') String? get thumbnailUrl;@JsonKey(name: 'stream_config') StreamConfigDto? get streamConfig;@JsonKey(name: 'host') HostDto? get host;@JsonKey(name: 'streamer_id') String? get streamerId;@JsonKey(name: 'streamer_name') String? get streamerName;@JsonKey(name: 'streamer_avatar') String? get streamerAvatar;@JsonKey(name: 'ingest_url') String? get ingestUrl;@JsonKey(name: 'started_at') String? get startedAt;@JsonKey(name: 'created_at') String? get createdAt;
 /// Create a copy of LiveRoomDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $LiveRoomDtoCopyWith<LiveRoomDto> get copyWith => _$LiveRoomDtoCopyWithImpl<Live
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveRoomDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.playbackUrl, playbackUrl) || other.playbackUrl == playbackUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamConfig, streamConfig) || other.streamConfig == streamConfig)&&(identical(other.host, host) || other.host == host)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatar, streamerAvatar) || other.streamerAvatar == streamerAvatar)&&(identical(other.ingestUrl, ingestUrl) || other.ingestUrl == ingestUrl)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveRoomDto&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackUrl, playbackUrl) || other.playbackUrl == playbackUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamConfig, streamConfig) || other.streamConfig == streamConfig)&&(identical(other.host, host) || other.host == host)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatar, streamerAvatar) || other.streamerAvatar == streamerAvatar)&&(identical(other.ingestUrl, ingestUrl) || other.ingestUrl == ingestUrl)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,category,liveType,isPrivate,status,viewerCount,playbackUrl,thumbnailUrl,streamConfig,host,streamerId,streamerName,streamerAvatar,ingestUrl,startedAt,createdAt);
+int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,isPaused,pausedAt,playbackUrl,thumbnailUrl,streamConfig,host,streamerId,streamerName,streamerAvatar,ingestUrl,startedAt,createdAt]);
 
 @override
 String toString() {
-  return 'LiveRoomDto(id: $id, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, playbackUrl: $playbackUrl, thumbnailUrl: $thumbnailUrl, streamConfig: $streamConfig, host: $host, streamerId: $streamerId, streamerName: $streamerName, streamerAvatar: $streamerAvatar, ingestUrl: $ingestUrl, startedAt: $startedAt, createdAt: $createdAt)';
+  return 'LiveRoomDto(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, isPaused: $isPaused, pausedAt: $pausedAt, playbackUrl: $playbackUrl, thumbnailUrl: $thumbnailUrl, streamConfig: $streamConfig, host: $host, streamerId: $streamerId, streamerName: $streamerName, streamerAvatar: $streamerAvatar, ingestUrl: $ingestUrl, startedAt: $startedAt, createdAt: $createdAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $LiveRoomDtoCopyWith<$Res>  {
   factory $LiveRoomDtoCopyWith(LiveRoomDto value, $Res Function(LiveRoomDto) _then) = _$LiveRoomDtoCopyWithImpl;
 @useResult
 $Res call({
- String? id, String title, String? description, String? category,@JsonKey(name: 'live_type') String liveType,@JsonKey(name: 'is_private') bool isPrivate, String status,@JsonKey(name: 'viewer_count') int viewerCount,@JsonKey(name: 'playback_url') String? playbackUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'stream_config') StreamConfigDto? streamConfig,@JsonKey(name: 'host') HostDto? host,@JsonKey(name: 'streamer_id') String? streamerId,@JsonKey(name: 'streamer_name') String? streamerName,@JsonKey(name: 'streamer_avatar') String? streamerAvatar,@JsonKey(name: 'ingest_url') String? ingestUrl,@JsonKey(name: 'started_at') String? startedAt,@JsonKey(name: 'created_at') String? createdAt
+ String? id, String? slug, String title, String? description, String? category,@JsonKey(name: 'live_type') String liveType,@JsonKey(name: 'is_private') bool isPrivate, String status,@JsonKey(name: 'viewer_count') int viewerCount,@JsonKey(name: 'total_likes') int totalLikes,@JsonKey(name: 'is_paused') bool isPaused,@JsonKey(name: 'paused_at') String? pausedAt,@JsonKey(name: 'playback_url') String? playbackUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'stream_config') StreamConfigDto? streamConfig,@JsonKey(name: 'host') HostDto? host,@JsonKey(name: 'streamer_id') String? streamerId,@JsonKey(name: 'streamer_name') String? streamerName,@JsonKey(name: 'streamer_avatar') String? streamerAvatar,@JsonKey(name: 'ingest_url') String? ingestUrl,@JsonKey(name: 'started_at') String? startedAt,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -65,9 +65,10 @@ class _$LiveRoomDtoCopyWithImpl<$Res>
 
 /// Create a copy of LiveRoomDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? playbackUrl = freezed,Object? thumbnailUrl = freezed,Object? streamConfig = freezed,Object? host = freezed,Object? streamerId = freezed,Object? streamerName = freezed,Object? streamerAvatar = freezed,Object? ingestUrl = freezed,Object? startedAt = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? slug = freezed,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackUrl = freezed,Object? thumbnailUrl = freezed,Object? streamConfig = freezed,Object? host = freezed,Object? streamerId = freezed,Object? streamerName = freezed,Object? streamerAvatar = freezed,Object? ingestUrl = freezed,Object? startedAt = freezed,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -75,7 +76,10 @@ as String?,liveType: null == liveType ? _self.liveType : liveType // ignore: cas
 as String,isPrivate: null == isPrivate ? _self.isPrivate : isPrivate // ignore: cast_nullable_to_non_nullable
 as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
-as int,playbackUrl: freezed == playbackUrl ? _self.playbackUrl : playbackUrl // ignore: cast_nullable_to_non_nullable
+as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
+as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
+as String?,playbackUrl: freezed == playbackUrl ? _self.playbackUrl : playbackUrl // ignore: cast_nullable_to_non_nullable
 as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,streamConfig: freezed == streamConfig ? _self.streamConfig : streamConfig // ignore: cast_nullable_to_non_nullable
 as StreamConfigDto?,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable
@@ -191,10 +195,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String? slug,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_paused')  bool isPaused, @JsonKey(name: 'paused_at')  String? pausedAt, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveRoomDto() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);case _:
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);case _:
   return orElse();
 
 }
@@ -212,10 +216,10 @@ return $default(_that.id,_that.title,_that.description,_that.category,_that.live
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String? slug,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_paused')  bool isPaused, @JsonKey(name: 'paused_at')  String? pausedAt, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _LiveRoomDto():
-return $default(_that.id,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);}
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -229,10 +233,10 @@ return $default(_that.id,_that.title,_that.description,_that.category,_that.live
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String? slug,  String title,  String? description,  String? category, @JsonKey(name: 'live_type')  String liveType, @JsonKey(name: 'is_private')  bool isPrivate,  String status, @JsonKey(name: 'viewer_count')  int viewerCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_paused')  bool isPaused, @JsonKey(name: 'paused_at')  String? pausedAt, @JsonKey(name: 'playback_url')  String? playbackUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'stream_config')  StreamConfigDto? streamConfig, @JsonKey(name: 'host')  HostDto? host, @JsonKey(name: 'streamer_id')  String? streamerId, @JsonKey(name: 'streamer_name')  String? streamerName, @JsonKey(name: 'streamer_avatar')  String? streamerAvatar, @JsonKey(name: 'ingest_url')  String? ingestUrl, @JsonKey(name: 'started_at')  String? startedAt, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveRoomDto() when $default != null:
-return $default(_that.id,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);case _:
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackUrl,_that.thumbnailUrl,_that.streamConfig,_that.host,_that.streamerId,_that.streamerName,_that.streamerAvatar,_that.ingestUrl,_that.startedAt,_that.createdAt);case _:
   return null;
 
 }
@@ -244,10 +248,11 @@ return $default(_that.id,_that.title,_that.description,_that.category,_that.live
 @JsonSerializable()
 
 class _LiveRoomDto implements LiveRoomDto {
-  const _LiveRoomDto({this.id, this.title = 'Untitled Live', this.description, this.category, @JsonKey(name: 'live_type') this.liveType = 'solo', @JsonKey(name: 'is_private') this.isPrivate = false, this.status = AppConstants.statusLive, @JsonKey(name: 'viewer_count') this.viewerCount = 0, @JsonKey(name: 'playback_url') this.playbackUrl, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'stream_config') this.streamConfig, @JsonKey(name: 'host') this.host, @JsonKey(name: 'streamer_id') this.streamerId, @JsonKey(name: 'streamer_name') this.streamerName, @JsonKey(name: 'streamer_avatar') this.streamerAvatar, @JsonKey(name: 'ingest_url') this.ingestUrl, @JsonKey(name: 'started_at') this.startedAt, @JsonKey(name: 'created_at') this.createdAt});
+  const _LiveRoomDto({this.id, this.slug, this.title = 'Untitled Live', this.description, this.category, @JsonKey(name: 'live_type') this.liveType = 'solo', @JsonKey(name: 'is_private') this.isPrivate = false, this.status = AppConstants.statusLive, @JsonKey(name: 'viewer_count') this.viewerCount = 0, @JsonKey(name: 'total_likes') this.totalLikes = 0, @JsonKey(name: 'is_paused') this.isPaused = false, @JsonKey(name: 'paused_at') this.pausedAt, @JsonKey(name: 'playback_url') this.playbackUrl, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'stream_config') this.streamConfig, @JsonKey(name: 'host') this.host, @JsonKey(name: 'streamer_id') this.streamerId, @JsonKey(name: 'streamer_name') this.streamerName, @JsonKey(name: 'streamer_avatar') this.streamerAvatar, @JsonKey(name: 'ingest_url') this.ingestUrl, @JsonKey(name: 'started_at') this.startedAt, @JsonKey(name: 'created_at') this.createdAt});
   factory _LiveRoomDto.fromJson(Map<String, dynamic> json) => _$LiveRoomDtoFromJson(json);
 
 @override final  String? id;
+@override final  String? slug;
 @override@JsonKey() final  String title;
 @override final  String? description;
 @override final  String? category;
@@ -255,6 +260,9 @@ class _LiveRoomDto implements LiveRoomDto {
 @override@JsonKey(name: 'is_private') final  bool isPrivate;
 @override@JsonKey() final  String status;
 @override@JsonKey(name: 'viewer_count') final  int viewerCount;
+@override@JsonKey(name: 'total_likes') final  int totalLikes;
+@override@JsonKey(name: 'is_paused') final  bool isPaused;
+@override@JsonKey(name: 'paused_at') final  String? pausedAt;
 @override@JsonKey(name: 'playback_url') final  String? playbackUrl;
 @override@JsonKey(name: 'thumbnail_url') final  String? thumbnailUrl;
 @override@JsonKey(name: 'stream_config') final  StreamConfigDto? streamConfig;
@@ -279,16 +287,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveRoomDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.playbackUrl, playbackUrl) || other.playbackUrl == playbackUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamConfig, streamConfig) || other.streamConfig == streamConfig)&&(identical(other.host, host) || other.host == host)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatar, streamerAvatar) || other.streamerAvatar == streamerAvatar)&&(identical(other.ingestUrl, ingestUrl) || other.ingestUrl == ingestUrl)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveRoomDto&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackUrl, playbackUrl) || other.playbackUrl == playbackUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamConfig, streamConfig) || other.streamConfig == streamConfig)&&(identical(other.host, host) || other.host == host)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatar, streamerAvatar) || other.streamerAvatar == streamerAvatar)&&(identical(other.ingestUrl, ingestUrl) || other.ingestUrl == ingestUrl)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,description,category,liveType,isPrivate,status,viewerCount,playbackUrl,thumbnailUrl,streamConfig,host,streamerId,streamerName,streamerAvatar,ingestUrl,startedAt,createdAt);
+int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,isPaused,pausedAt,playbackUrl,thumbnailUrl,streamConfig,host,streamerId,streamerName,streamerAvatar,ingestUrl,startedAt,createdAt]);
 
 @override
 String toString() {
-  return 'LiveRoomDto(id: $id, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, playbackUrl: $playbackUrl, thumbnailUrl: $thumbnailUrl, streamConfig: $streamConfig, host: $host, streamerId: $streamerId, streamerName: $streamerName, streamerAvatar: $streamerAvatar, ingestUrl: $ingestUrl, startedAt: $startedAt, createdAt: $createdAt)';
+  return 'LiveRoomDto(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, isPaused: $isPaused, pausedAt: $pausedAt, playbackUrl: $playbackUrl, thumbnailUrl: $thumbnailUrl, streamConfig: $streamConfig, host: $host, streamerId: $streamerId, streamerName: $streamerName, streamerAvatar: $streamerAvatar, ingestUrl: $ingestUrl, startedAt: $startedAt, createdAt: $createdAt)';
 }
 
 
@@ -299,7 +307,7 @@ abstract mixin class _$LiveRoomDtoCopyWith<$Res> implements $LiveRoomDtoCopyWith
   factory _$LiveRoomDtoCopyWith(_LiveRoomDto value, $Res Function(_LiveRoomDto) _then) = __$LiveRoomDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String? id, String title, String? description, String? category,@JsonKey(name: 'live_type') String liveType,@JsonKey(name: 'is_private') bool isPrivate, String status,@JsonKey(name: 'viewer_count') int viewerCount,@JsonKey(name: 'playback_url') String? playbackUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'stream_config') StreamConfigDto? streamConfig,@JsonKey(name: 'host') HostDto? host,@JsonKey(name: 'streamer_id') String? streamerId,@JsonKey(name: 'streamer_name') String? streamerName,@JsonKey(name: 'streamer_avatar') String? streamerAvatar,@JsonKey(name: 'ingest_url') String? ingestUrl,@JsonKey(name: 'started_at') String? startedAt,@JsonKey(name: 'created_at') String? createdAt
+ String? id, String? slug, String title, String? description, String? category,@JsonKey(name: 'live_type') String liveType,@JsonKey(name: 'is_private') bool isPrivate, String status,@JsonKey(name: 'viewer_count') int viewerCount,@JsonKey(name: 'total_likes') int totalLikes,@JsonKey(name: 'is_paused') bool isPaused,@JsonKey(name: 'paused_at') String? pausedAt,@JsonKey(name: 'playback_url') String? playbackUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'stream_config') StreamConfigDto? streamConfig,@JsonKey(name: 'host') HostDto? host,@JsonKey(name: 'streamer_id') String? streamerId,@JsonKey(name: 'streamer_name') String? streamerName,@JsonKey(name: 'streamer_avatar') String? streamerAvatar,@JsonKey(name: 'ingest_url') String? ingestUrl,@JsonKey(name: 'started_at') String? startedAt,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -316,9 +324,10 @@ class __$LiveRoomDtoCopyWithImpl<$Res>
 
 /// Create a copy of LiveRoomDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? playbackUrl = freezed,Object? thumbnailUrl = freezed,Object? streamConfig = freezed,Object? host = freezed,Object? streamerId = freezed,Object? streamerName = freezed,Object? streamerAvatar = freezed,Object? ingestUrl = freezed,Object? startedAt = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? slug = freezed,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackUrl = freezed,Object? thumbnailUrl = freezed,Object? streamConfig = freezed,Object? host = freezed,Object? streamerId = freezed,Object? streamerName = freezed,Object? streamerAvatar = freezed,Object? ingestUrl = freezed,Object? startedAt = freezed,Object? createdAt = freezed,}) {
   return _then(_LiveRoomDto(
 id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,slug: freezed == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String?,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -326,7 +335,10 @@ as String?,liveType: null == liveType ? _self.liveType : liveType // ignore: cas
 as String,isPrivate: null == isPrivate ? _self.isPrivate : isPrivate // ignore: cast_nullable_to_non_nullable
 as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
-as int,playbackUrl: freezed == playbackUrl ? _self.playbackUrl : playbackUrl // ignore: cast_nullable_to_non_nullable
+as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
+as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
+as String?,playbackUrl: freezed == playbackUrl ? _self.playbackUrl : playbackUrl // ignore: cast_nullable_to_non_nullable
 as String?,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,streamConfig: freezed == streamConfig ? _self.streamConfig : streamConfig // ignore: cast_nullable_to_non_nullable
 as StreamConfigDto?,host: freezed == host ? _self.host : host // ignore: cast_nullable_to_non_nullable

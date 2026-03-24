@@ -19,7 +19,7 @@ void main() {
 
       expect(room.id, 'room-123');
       expect(room.title, 'Night Chill Session');
-      expect(room.status, 'waiting');
+      expect(room.status, 'scheduled');
       expect(room.streamUrl, 'https://cdn.example.com/live/room-123.m3u8');
       expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
       expect(room.streamKey, 'sk_live_room_123');
@@ -34,7 +34,7 @@ void main() {
 
       expect(room.id, 'room-fallback');
       expect(room.title, 'Q&A');
-      expect(room.status, 'waiting');
+      expect(room.status, 'scheduled');
       expect(room.streamUrl, 'https://cdn.example.com/fallback.m3u8');
       expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
       expect(room.streamKey, 'sk_live_fallback');
@@ -51,7 +51,7 @@ void main() {
 
         expect(room.id, 'room-split');
         expect(room.title, 'Split payload live');
-        expect(room.status, 'waiting');
+        expect(room.status, 'scheduled');
         expect(room.rtmpUrl, 'rtmp://global-live.mux.com:5222/app');
         expect(room.streamKey, 'sk_live_split');
         expect(room.streamUrl, 'https://cdn.example.com/live/split.m3u8');
@@ -93,7 +93,7 @@ class _SuccessLiveService extends LiveService {
       'room': {
         'id': 'room-123',
         'title': request.title,
-        'status': 'waiting',
+        'status': 'scheduled',
         'live_type': 'solo',
         'is_private': false,
         'streamer_name': 'Streamer',
@@ -116,7 +116,7 @@ class _FallbackIdLiveService extends LiveService {
   ) async {
     return {
       'room_id': 'room-fallback',
-      'status': 'waiting',
+      'status': 'scheduled',
       'stream_config': {
         'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
         'stream_key': 'sk_live_fallback',
@@ -153,7 +153,7 @@ class _SplitCredentialsLiveService extends LiveService {
   ) async {
     return {
       'room': {'id': 'room-split', 'title': request.title},
-      'status': 'waiting',
+      'status': 'scheduled',
       'rtmp_url': 'rtmp://global-live.mux.com:5222/app',
       'stream_key': 'sk_live_split',
       'playback_url': 'https://cdn.example.com/live/split.m3u8',
@@ -169,6 +169,6 @@ class _TimeoutLiveService extends LiveService {
     CreateLiveRoomRequestDto request,
   ) async {
     await Future<void>.delayed(const Duration(seconds: 21));
-    return {'id': 'late-room', 'title': request.title, 'status': 'waiting'};
+    return {'id': 'late-room', 'title': request.title, 'status': 'scheduled'};
   }
 }

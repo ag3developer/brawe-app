@@ -11,23 +11,35 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
 
   @override
   List<LiveGift> build(String roomId) {
+    final repository = ref.read(liveRepositoryProvider);
     _subscribe();
-    ref.onDispose(() => _subscription?.cancel());
+    unawaited(repository.connectToRoom(roomId));
+    ref.onDispose(() {
+      _subscription?.cancel();
+      repository.disconnectFromRoom(roomId);
+    });
     return [];
   }
 
   void _subscribe() {
     _subscription?.cancel();
-    _subscription = ref.read(liveRepositoryProvider).watchGifts(roomId).listen((gift) {
-      // Add to list and keep only last 5 for animation queue
-      final currentGifts = state;
-      state = [...currentGifts, gift];
-      
+    _subscription = ref.read(liveRepositoryProvider).watchGifts(roomId).listen((
+      gift,
+    ) {
+      final nextState = [...state, gift];
+      if (nextState.length > 5) {
+        state = nextState.sublist(nextState.length - 5);
+      } else {
+        state = nextState;
+      }
+
       // Auto-remove after 5 seconds
       Future.delayed(const Duration(seconds: 5), () {
-        if (ref.exists(liveRoomGiftsViewModelProvider(roomId))) {
-          state = state.where((g) => g.id != gift.id).toList();
+        if (!ref.mounted) {
+          return;
         }
+
+        state = state.where((g) => g.id != gift.id).toList();
       });
     });
   }

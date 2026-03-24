@@ -21,18 +21,24 @@ class AppConstants {
   static const int roomsLimit = 20;
 
   // Socket.IO
-  static const String socketPath = '/socket.io/';
-  static const List<String> socketTransports = ['websocket'];
+  static const String socketPath = '/ws/socket.io';
+  static const List<String> socketTransports = ['websocket', 'polling'];
 
   // Socket Events
-  static const String eventJoinRoom = 'join_room';
-  static const String eventLeaveRoom = 'leave_room';
-  static const String eventNewMessage = 'new_message';
-  static const String eventViewerCount = 'viewer_count';
-  static const String eventNewGift = 'new_gift';
+  static const String eventAuthenticate = 'authenticate';
+  static const String eventAuthenticated = 'authenticated';
+  static const String eventJoinRoom = 'join_live';
+  static const String eventLeaveRoom = 'leave_live';
+  static const String eventSendMessage = 'live_chat_message';
+  static const String eventNewMessage = 'live_chat';
+  static const String eventViewerCount = 'viewer_count_update';
+  static const String eventRequestViewers = 'get_live_viewers';
+  static const String eventNewGift = 'gift_received';
+  static const String eventLiveEnded = 'live_ended';
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';
+  static const String statusScheduled = 'scheduled';
   static const String statusLive = 'live';
   static const String statusEnded = 'ended';
 

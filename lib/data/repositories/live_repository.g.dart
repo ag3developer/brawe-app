@@ -21,7 +21,7 @@ final class LiveRepositoryProvider
         argument: null,
         retry: null,
         name: r'liveRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -48,4 +48,4 @@ final class LiveRepositoryProvider
   }
 }
 
-String _$liveRepositoryHash() => r'789a7d7293c9f5964a3fd136310b2cabbff3b825';
+String _$liveRepositoryHash() => r'557e5a47ac65cdc11923880d5a71e5bd09fd0846';

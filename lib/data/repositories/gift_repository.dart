@@ -4,39 +4,40 @@ import '../../domain/models/failure.dart';
 import '../../domain/models/gift.dart';
 import '../../domain/models/gifter.dart';
 import '../services/gift_service.dart';
+import '../services/live_service.dart';
 
 part 'gift_repository.g.dart';
 
 @riverpod
 GiftRepository giftRepository(Ref ref) {
-  return GiftRepository(ref.watch(giftServiceProvider));
+  return GiftRepository(
+    ref.watch(giftServiceProvider),
+    ref.watch(liveServiceProvider),
+  );
 }
 
 class GiftRepository {
   final GiftService _giftService;
+  final LiveService _liveService;
 
-  GiftRepository(this._giftService);
+  GiftRepository(this._giftService, this._liveService);
 
   Future<List<GiftTier>> getGiftCatalog() async {
     try {
       final data = await _giftService.getGiftCatalog();
-      // Expecting { "tiers": [ { "name": "Tier 1", "gifts": [...] } ] }
-      // Or { "Low": [...], "Medium": [...] }
-      if (data['tiers'] != null) {
-        final List tiers = data['tiers'];
-        return tiers.map((t) => GiftTier.fromJson(t)).toList();
-      }
-      
-      // Fallback: if grouped by key
+      // Expecting { "basic": [...], "premium": [...], "exclusive": [...] }
       final List<GiftTier> tiers = [];
+      
       data.forEach((key, value) {
         if (value is List) {
           tiers.add(GiftTier(
             name: key,
-            gifts: value.map((g) => Gift.fromJson(g)).toList(),
+            gifts: value.map((g) => Gift.fromJson(g as Map<String, dynamic>)).toList(),
           ));
         }
       });
+      
+      // Sort by some order if needed, but for now just return as is
       return tiers;
     } on DioException catch (e) {
       throw _mapFailure(e);
@@ -48,15 +49,13 @@ class GiftRepository {
   Future<void> sendGift({
     required String roomId,
     required String giftId,
-    required String receiverId,
     int quantity = 1,
     String? battleId,
   }) async {
     try {
-      await _giftService.sendGift(
+      await _liveService.sendGift(
         roomId: roomId,
         giftId: giftId,
-        receiverId: receiverId,
         quantity: quantity,
         battleId: battleId,
       );

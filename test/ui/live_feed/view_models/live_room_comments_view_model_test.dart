@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:brawe_app/data/repositories/live_repository.dart';
+import 'package:brawe_app/data/repositories/auth_state_provider.dart';
 import 'package:brawe_app/data/services/live_service.dart';
 import 'package:brawe_app/domain/models/failure.dart';
 import 'package:brawe_app/domain/models/live_comment.dart';
 import 'package:brawe_app/domain/models/live_room.dart';
+import 'package:brawe_app/domain/models/user.dart';
 import 'package:brawe_app/ui/live_feed/view_models/live_room_comments_view_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,12 +17,16 @@ void main() {
     test('adds incoming comments and updates viewer count', () async {
       final repository = _FakeCommentsRepository();
       final container = ProviderContainer(
-        overrides: [liveRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          liveRepositoryProvider.overrideWithValue(repository),
+          authStateProvider.overrideWith(() => _FakeAuthStateNotifier()),
+        ],
       );
       addTearDown(container.dispose);
 
       const room = LiveRoom(
         id: 'room-7',
+        slug: 'room-7',
         title: 'Room',
         liveType: 'solo',
         isPrivate: false,
@@ -64,12 +70,16 @@ void main() {
         sendFailure: const Failure.network(),
       );
       final container = ProviderContainer(
-        overrides: [liveRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          liveRepositoryProvider.overrideWithValue(repository),
+          authStateProvider.overrideWith(() => _FakeAuthStateNotifier()),
+        ],
       );
       addTearDown(container.dispose);
 
       const room = LiveRoom(
         id: 'room-8',
+        slug: 'room-8',
         title: 'Room',
         liveType: 'solo',
         isPrivate: false,
@@ -86,7 +96,43 @@ void main() {
 
       final state = container.read(liveRoomCommentsViewModelProvider(room.id));
       expect(state.isSending, false);
+      expect(state.comments, isEmpty);
       expect(state.errorMessage, 'No internet connection');
+    });
+
+    test('send success adds optimistic comment immediately', () async {
+      final repository = _FakeCommentsRepository();
+      final container = ProviderContainer(
+        overrides: [
+          liveRepositoryProvider.overrideWithValue(repository),
+          authStateProvider.overrideWith(() => _FakeAuthStateNotifier()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      const room = LiveRoom(
+        id: 'room-9',
+        slug: 'room-9',
+        title: 'Room',
+        liveType: 'solo',
+        isPrivate: false,
+        status: 'live',
+        viewerCount: 5,
+        streamerId: 'host-3',
+        streamerName: 'Host',
+      );
+
+      final notifier = container.read(
+        liveRoomCommentsViewModelProvider(room.id).notifier,
+      );
+      await notifier.sendComment('Hello chat');
+
+      final state = container.read(liveRoomCommentsViewModelProvider(room.id));
+      expect(state.isSending, false);
+      expect(state.comments, hasLength(1));
+      expect(state.comments.single.message, 'Hello chat');
+      expect(state.comments.single.userName, 'Brawe User');
+      expect(state.comments.single.isPending, false);
     });
   });
 }
@@ -132,5 +178,21 @@ class _FakeCommentsRepository extends LiveRepository {
 
   void pushViewerCount(int count) {
     _viewerCountController.add(count);
+  }
+}
+
+class _FakeAuthStateNotifier extends AuthState {
+  @override
+  FutureOr<User?> build() {
+    return User(
+      id: 'user-current',
+      email: 'user@brawe.io',
+      name: 'Brawe User',
+      userType: 'consumer',
+      displayId: 'BRAWE001',
+      firstName: 'Brawe',
+      lastName: 'User',
+      createdAt: '2026-03-12T12:00:00Z',
+    );
   }
 }
