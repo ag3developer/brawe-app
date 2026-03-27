@@ -10,6 +10,8 @@ import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/live_feed/widgets/for_you_live_list_screen.dart';
 import '../ui/live_feed/widgets/live_player_screen.dart';
+import '../ui/chat/widgets/chat_list_screen.dart';
+import '../ui/chat/widgets/chat_detail_screen.dart';
 import '../ui/broadcaster/widgets/start_live_screen.dart';
 import '../ui/broadcaster/widgets/broadcaster_screen.dart';
 import '../ui/profile/widgets/profile_screen.dart';
@@ -78,6 +80,22 @@ GoRouter router(Ref ref) {
         },
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/chat',
+        builder: (context, state) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/chat/:conversationId',
+        builder: (context, state) {
+          final conversationId = state.pathParameters['conversationId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChatDetailScreen(
+            conversationId: conversationId,
+            participantName: extra?['participantName'] as String? ?? 'Chat',
+            participantAvatarUrl: extra?['participantAvatarUrl'] as String?,
+          );
+        },
+      ),
       GoRoute(
         path: '/profile/:userId',
         builder: (context, state) {

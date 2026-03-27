@@ -36,6 +36,15 @@ class AppConstants {
   static const String eventNewGift = 'gift_received';
   static const String eventLiveEnded = 'live_ended';
 
+  // Direct Message Events
+  static const String eventDmMessage = 'dm_message';
+  static const String eventDmReceived = 'dm_received';
+  static const String eventTypingStart = 'typing_start';
+  static const String eventTypingStop = 'typing_stop';
+  static const String eventUserTyping = 'user_typing';
+  static const String eventMarkRead = 'mark_read';
+  static const String eventConversationUpdated = 'conversation_updated';
+
   // Live Room Statuses
   static const String statusWaiting = 'waiting';
   static const String statusScheduled = 'scheduled';

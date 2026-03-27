@@ -117,6 +117,35 @@ class SocketService {
     });
   }
 
+  // Direct Message methods
+  void sendDm({required String conversationId, required String message}) {
+    _emitWithUserProfile(AppConstants.eventDmMessage, {
+      'conversation_id': conversationId,
+      'message': message,
+    });
+    debugPrint('Socket.IO: Sending DM to conversation $conversationId');
+  }
+
+  void startConversation({required String participantId}) {
+    _emitWithUserProfile(AppConstants.eventDmMessage, {
+      'action': 'start_conversation',
+      'participant_id': participantId,
+    });
+    debugPrint('Socket.IO: Starting conversation with $participantId');
+  }
+
+  void sendTypingStart({required String conversationId}) {
+    emit(AppConstants.eventTypingStart, {'conversation_id': conversationId});
+  }
+
+  void sendTypingStop({required String conversationId}) {
+    emit(AppConstants.eventTypingStop, {'conversation_id': conversationId});
+  }
+
+  void markMessagesRead({required String conversationId}) {
+    emit(AppConstants.eventMarkRead, {'conversation_id': conversationId});
+  }
+
   bool get isConnected => _socket?.connected ?? false;
 
   void _authenticate(String token) {
