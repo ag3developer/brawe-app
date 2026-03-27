@@ -60,7 +60,7 @@ final class LiveRoomGiftsViewModelProvider
 }
 
 String _$liveRoomGiftsViewModelHash() =>
-    r'9708fc9f49d50f466ea19c6222f80425dd4d7e63';
+    r'27c35fc428782fd606b6b9e06b7068c55084aa7e';
 
 final class LiveRoomGiftsViewModelFamily extends $Family
     with

@@ -41,7 +41,10 @@ class HomeBottomNav extends ConsumerWidget {
                   icon: Icons.add_circle_outline,
                   onTap: () => context.push('/live/start'),
                 ),
-                const NavBarItem(icon: Icons.shopping_bag_outlined),
+                NavBarItem(
+                  icon: Icons.chat_bubble_outline,
+                  onTap: () => context.push('/chat'),
+                ),
                 NavBarItem(
                   icon: Icons.person_outline,
                   onTap: () {
