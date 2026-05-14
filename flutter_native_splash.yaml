@@ -1,0 +1,15 @@
+# Splash nativo iOS + Android (gera com `dart run flutter_native_splash:create`)
+# Logo "B" oficial sobre fundo preto (mesmo tom do app dark).
+
+flutter_native_splash:
+  color: "#000000"
+  image: assets/images/brawe-icon-1024.png
+
+  android_12:
+    color: "#000000"
+    image: assets/images/brawe-icon-1024.png
+    icon_background_color: "#000000"
+
+  android: true
+  ios: true
+  web: false
