@@ -1,10 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
-import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/ui/app_spacing.dart';
 import '../view_models/login_view_model.dart';
@@ -19,64 +17,286 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  late final AnimationController _entryController;
+  late final Animation<double> _fadeIn;
+  late final Animation<Offset> _slideUp;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeIn = CurvedAnimation(parent: _entryController, curve: Curves.easeOut);
+    _slideUp = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(
+        CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic));
+    _entryController.forward();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _entryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onSubmit() async {
+    final success = await ref.read(loginViewModelProvider.notifier).submit();
+    if (mounted) {
+      if (success) {
+        AppSnackBar.showSuccess(context, 'Bem-vindo de volta.');
+      } else {
+        final error = ref.read(loginViewModelProvider).errorMessage;
+        if (error != null) AppSnackBar.showError(context, error);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(loginViewModelProvider);
-    final textTheme = Theme.of(context).textTheme;
+    final notifier = ref.read(loginViewModelProvider.notifier);
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const AuthBackground(),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    onPressed: () => context.go('/welcome'),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
-                  const Spacer(),
-                  _LoginCard(
-                    state: state,
-                    notifier: ref.read(loginViewModelProvider.notifier),
-                    emailController: _emailController,
-                    passwordController: _passwordController,
-                    onSubmit: _onSubmit,
-                  ),
-                  const Spacer(),
-                  Center(
-                    child: Text(
-                      'By continuing you agree to Brawe Terms.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.coolGray.withValues(alpha: 0.6),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: FadeTransition(
+                opacity: _fadeIn,
+                child: SlideTransition(
+                  position: _slideUp,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+
+                      // ── Voltar ──────────────────────────────────────────
+                      GestureDetector(
+                        onTap: () => context.go('/welcome'),
+                        child: const Icon(Icons.arrow_back,
+                            color: Color(0xFF5A5A6A), size: 22),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
+
+                      const SizedBox(height: 52),
+
+                      // ── Logo + Título ────────────────────────────────────
+                      Image.asset(
+                        'assets/images/brawe_logo.png',
+                        width: 36,
+                        height: 36,
+                        color: AppColors.electricPurple,
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Bem-vindo\nde volta.',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Entre na sua conta para continuar.',
+                        style: TextStyle(
+                          color: Color(0xFF5A5A6A),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+
+                      const SizedBox(height: 48),
+
+                      // ── Campos ───────────────────────────────────────────
+                      AuthInputField(
+                        controller: _emailController,
+                        label: 'E-MAIL',
+                        hintText: 'voce@brawe.app',
+                        keyboardType: TextInputType.emailAddress,
+                        onChanged: notifier.updateEmail,
+                      ),
+                      const SizedBox(height: 16),
+                      AuthInputField(
+                        controller: _passwordController,
+                        label: 'SENHA',
+                        hintText: '••••••••',
+                        obscureText: true,
+                        onChanged: notifier.updatePassword,
+                      ),
+
+                      // ── Esqueci senha ─────────────────────────────────────
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {},
+                          child: const Text(
+                            'Esqueci minha senha',
+                            style: TextStyle(
+                              color: Color(0xFF6B6B8A),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // ── Erro ──────────────────────────────────────────────
+                      if (state.errorMessage != null) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.mutedRed.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.mutedRed.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline,
+                                  color: AppColors.mutedRed, size: 15),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  state.errorMessage!,
+                                  style: const TextStyle(
+                                    color: AppColors.mutedRed,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 32),
+
+                      // ── Botão Entrar ──────────────────────────────────────
+                      AuthActionButton(
+                        label: state.status.isLoading ? 'Entrando…' : 'Entrar',
+                        onPressed: state.canSubmit ? _onSubmit : null,
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // ── Divisor ──────────────────────────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                                height: 1,
+                                color: const Color(0xFF1A1A2A)),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'ou',
+                              style: TextStyle(
+                                color: Color(0xFF3A3A4A),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                                height: 1,
+                                color: const Color(0xFF1A1A2A)),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ── Social ────────────────────────────────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SocialBtn(
+                              label: 'Google',
+                              icon: Icons.g_mobiledata_rounded,
+                              onTap: () {},
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SocialBtn(
+                              label: 'Apple',
+                              icon: Icons.apple,
+                              onTap: () {},
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // ── Criar conta ────────────────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Não tem conta?',
+                            style: TextStyle(
+                              color: Color(0xFF5A5A6A),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () => context.push('/signup'),
+                            child: const Text(
+                              'Criar agora',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Termos ─────────────────────────────────────────────
+                      const Center(
+                        child: Text(
+                          'Ao continuar você aceita os Termos de Uso\ne a Política de Privacidade.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF2E2E3E),
+                            fontSize: 11,
+                            height: 1.6,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.lg),
-                ],
+                ),
               ),
             ),
           ),
@@ -84,185 +304,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-
-  Future<void> _onSubmit() async {
-    final success = await ref.read(loginViewModelProvider.notifier).submit();
-    if (mounted) {
-      if (success) {
-        AppSnackBar.showSuccess(context, 'Login successful!');
-      } else {
-        final error = ref.read(loginViewModelProvider).errorMessage;
-        if (error != null) {
-          AppSnackBar.showError(context, error);
-        }
-      }
-    }
-  }
 }
 
-class _LoginCard extends StatelessWidget {
-  const _LoginCard({
-    required this.state,
-    required this.notifier,
-    required this.emailController,
-    required this.passwordController,
-    required this.onSubmit,
+// ── Social Button ─────────────────────────────────────────────────────────────
+class _SocialBtn extends StatelessWidget {
+  const _SocialBtn({
+    required this.label,
+    required this.icon,
+    required this.onTap,
   });
-
-  final LoginState state;
-  final LoginViewModel notifier;
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final Future<void> Function() onSubmit;
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xl,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.slate.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 40,
-                offset: const Offset(0, 20),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F0F1C),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF1E1E2E)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFF6B6B8A), size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF8A8A9A),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    height: 52,
-                    width: 52,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.electricPurple,
-                          AppColors.softViolet,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Image.asset(
-                        'assets/images/brawe_logo.png',
-                        fit: BoxFit.contain,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.lg),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Brawe',
-                          style: textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        Text(
-                          'Sign in to your account',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: AppColors.coolGray,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              AuthInputField(
-                controller: emailController,
-                label: 'Email',
-                hintText: 'you@brawe.app',
-                keyboardType: TextInputType.emailAddress,
-                onChanged: notifier.updateEmail,
-                prefixIcon: Icons.email_outlined,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              AuthInputField(
-                controller: passwordController,
-                label: 'Password',
-                hintText: '••••••••',
-                obscureText: true,
-                onChanged: notifier.updatePassword,
-                prefixIcon: Icons.lock_outline,
-              ),
-              if (state.errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: AppColors.mutedRed,
-                      size: 16,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        state.errorMessage!,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedRed,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: AppSpacing.xl),
-              AuthActionButton(
-                label: state.status.isLoading ? 'Signing in...' : 'Sign in',
-                onPressed: state.canSubmit ? onSubmit : null,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'No account yet?',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.coolGray,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      context.push('/signup');
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.coolCyan,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                      ),
-                    ),
-                    child: const Text(
-                      'Create one',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

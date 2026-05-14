@@ -269,7 +269,7 @@ class LiveRepository {
   }
 
   void dispose() {
-    _socketService?.off(AppConstants.eventNewMessage, _onNewMessage);
+    _socketService?.off(AppConstants.eventLiveChat, _onNewMessage);
     _socketService?.off(AppConstants.eventViewerCount, _onViewerCount);
     _socketService?.off('viewer_joined', _onViewerJoined);
     _socketService?.off('viewer_left', _onViewerLeft);
@@ -410,7 +410,7 @@ class LiveRepository {
 
     _onNewMessage = (data) {
       debugPrint(
-        'LiveRepository: Received event ${AppConstants.eventNewMessage}: $data',
+        'LiveRepository: Received event ${AppConstants.eventLiveChat}: $data',
       );
       final comment = _parseLiveComment(data);
       if (comment == null) {
@@ -424,7 +424,7 @@ class LiveRepository {
 
       _dispatchToCommentControllers(comment, roomId: msgRoomId);
     };
-    _socketService.on(AppConstants.eventNewMessage, _onNewMessage!);
+    _socketService.on(AppConstants.eventLiveChat, _onNewMessage!);
 
     _onViewerCount = (data) {
       debugPrint(

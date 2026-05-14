@@ -19,31 +19,38 @@ class AppConstants {
   // Other constants
   static const int feedLimit = 10;
   static const int roomsLimit = 20;
+  static const int chatPageLimit = 50;
+  static const int conversationsPageLimit = 20;
 
   // Socket.IO
   static const String socketPath = '/ws/socket.io';
   static const List<String> socketTransports = ['websocket', 'polling'];
 
-  // Socket Events
+  // Socket Events — Auth
   static const String eventAuthenticate = 'authenticate';
   static const String eventAuthenticated = 'authenticated';
+
+  // Socket Events — Live rooms
   static const String eventJoinRoom = 'join_live';
   static const String eventLeaveRoom = 'leave_live';
   static const String eventSendMessage = 'live_chat_message';
-  static const String eventNewMessage = 'live_chat';
+  static const String eventLiveChat = 'live_chat';
   static const String eventViewerCount = 'viewer_count_update';
   static const String eventRequestViewers = 'get_live_viewers';
   static const String eventNewGift = 'gift_received';
   static const String eventLiveEnded = 'live_ended';
 
-  // Direct Message Events
-  static const String eventDmMessage = 'dm_message';
-  static const String eventDmReceived = 'dm_received';
-  static const String eventTypingStart = 'typing_start';
-  static const String eventTypingStop = 'typing_stop';
-  static const String eventUserTyping = 'user_typing';
-  static const String eventMarkRead = 'mark_read';
-  static const String eventConversationUpdated = 'conversation_updated';
+  // Socket Events — Direct Messages (alinhados ao backend)
+  // Backend emite/escuta estes nomes em app/services/socket_manager.py
+  static const String eventJoinConversation = 'join_conversation';
+  static const String eventLeaveConversation = 'leave_conversation';
+  static const String eventNewMessage = 'new_message'; // backend -> client
+  static const String eventMessageNotification = 'message_notification'; // backend -> client
+  static const String eventTyping = 'typing'; // client -> backend
+  static const String eventStopTyping = 'stop_typing'; // client -> backend
+  static const String eventUserTyping = 'user_typing'; // backend -> client
+  static const String eventUserStopTyping = 'user_stop_typing'; // backend -> client
+  static const String eventPresenceUpdate = 'presence_update'; // backend -> client
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';

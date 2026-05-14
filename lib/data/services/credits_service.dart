@@ -18,4 +18,12 @@ class CreditsService {
     final response = await _dio.get('/credits/balance');
     return response.data['data'] ?? response.data;
   }
+
+  Future<Map<String, dynamic>> getTransactions({int page = 1, int limit = 20}) async {
+    final response = await _dio.get(
+      '/credits/transactions',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    return response.data['data'] ?? response.data;
+  }
 }

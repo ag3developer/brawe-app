@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/themes/app_colors.dart';
-import '../../../core/ui/app_radius.dart';
 
 class AuthActionButton extends StatelessWidget {
   const AuthActionButton({
@@ -14,49 +13,31 @@ class AuthActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDisabled = onPressed == null;
+    final enabled = onPressed != null;
     return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: DecoratedBox(
+      height: 52,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          gradient: !isDisabled
-              ? const LinearGradient(
-                  colors: [AppColors.electricPurple, AppColors.softViolet],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                )
-              : null,
-          color: isDisabled ? Colors.white.withValues(alpha: 0.1) : null,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: !isDisabled
-              ? [
-                  BoxShadow(
-                    color: AppColors.electricPurple.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
+          color: enabled ? AppColors.electricPurple : const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: ElevatedButton(
-          onPressed: onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            elevation: 0,
-            padding: EdgeInsets.zero,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(12),
+            splashColor: Colors.white.withValues(alpha: 0.06),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: enabled ? Colors.white : const Color(0xFF3A3A4A),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                ),
+              ),
             ),
           ),
         ),

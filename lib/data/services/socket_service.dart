@@ -117,33 +117,31 @@ class SocketService {
     });
   }
 
-  // Direct Message methods
-  void sendDm({required String conversationId, required String message}) {
-    _emitWithUserProfile(AppConstants.eventDmMessage, {
+  // ────────────────────── Direct Messages ──────────────────────
+  //
+  // O envio/marcação como lida são feitos via REST (MessagesService).
+  // O socket serve apenas para join/leave da sala e indicadores de digitação.
+
+  void joinConversation(String conversationId) {
+    emit(AppConstants.eventJoinConversation, {
       'conversation_id': conversationId,
-      'message': message,
     });
-    debugPrint('Socket.IO: Sending DM to conversation $conversationId');
+    debugPrint('Socket.IO: Joining conversation $conversationId');
   }
 
-  void startConversation({required String participantId}) {
-    _emitWithUserProfile(AppConstants.eventDmMessage, {
-      'action': 'start_conversation',
-      'participant_id': participantId,
+  void leaveConversation(String conversationId) {
+    emit(AppConstants.eventLeaveConversation, {
+      'conversation_id': conversationId,
     });
-    debugPrint('Socket.IO: Starting conversation with $participantId');
+    debugPrint('Socket.IO: Leaving conversation $conversationId');
   }
 
   void sendTypingStart({required String conversationId}) {
-    emit(AppConstants.eventTypingStart, {'conversation_id': conversationId});
+    emit(AppConstants.eventTyping, {'conversation_id': conversationId});
   }
 
   void sendTypingStop({required String conversationId}) {
-    emit(AppConstants.eventTypingStop, {'conversation_id': conversationId});
-  }
-
-  void markMessagesRead({required String conversationId}) {
-    emit(AppConstants.eventMarkRead, {'conversation_id': conversationId});
+    emit(AppConstants.eventStopTyping, {'conversation_id': conversationId});
   }
 
   bool get isConnected => _socket?.connected ?? false;

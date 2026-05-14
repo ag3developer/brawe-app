@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/failure.dart';
 import '../../domain/models/social_stats.dart';
 import '../../domain/models/profile.dart';
+import '../../domain/models/follow_user.dart';
 import '../services/social_service.dart';
 
 part 'social_repository.g.dart';
@@ -73,6 +74,43 @@ class SocialRepository {
     try {
       final list = await _socialService.getFollowing(page: page, limit: limit);
       return list.map((json) => Profile.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  
+  Future<({List<FollowUser> items, int total})> getUserFollowers(
+    String userId, {
+    int page = 1,
+    int limit = 30,
+  }) async {
+    try {
+      final res = await _socialService.getUserFollowers(userId, page: page, limit: limit);
+      return (
+        items: res.items.map(FollowUser.fromJson).toList(),
+        total: res.total,
+      );
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<({List<FollowUser> items, int total})> getUserFollowing(
+    String userId, {
+    int page = 1,
+    int limit = 30,
+  }) async {
+    try {
+      final res = await _socialService.getUserFollowing(userId, page: page, limit: limit);
+      return (
+        items: res.items.map(FollowUser.fromJson).toList(),
+        total: res.total,
+      );
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {

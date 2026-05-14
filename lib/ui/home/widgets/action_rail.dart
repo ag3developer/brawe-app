@@ -1,0 +1,330 @@
+import 'package:flutter/material.dart';
+import '../../../domain/models/feed_item.dart';
+import '../../core/themes/app_colors.dart';
+
+/// Right-side rail with social actions, shared by every For You view.
+class ActionRail extends StatelessWidget {
+  const ActionRail({
+    super.key,
+    required this.item,
+    required this.onLike,
+    required this.onComment,
+    required this.onShare,
+    required this.onFollow,
+    required this.onGift,
+    required this.onProfile,
+  });
+
+  final FeedItem item;
+  final VoidCallback onLike;
+  final VoidCallback onComment;
+  final VoidCallback onShare;
+  final VoidCallback onFollow;
+  final VoidCallback onGift;
+  final VoidCallback onProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Avatar with follow (+)
+        _AvatarFollow(
+          author: item.author,
+          isFollowing: item.userFollowingAuthor,
+          onProfile: onProfile,
+          onFollow: onFollow,
+        ),
+        const SizedBox(height: 22),
+        _RailButton(
+          icon: item.userLiked ? Icons.favorite : Icons.favorite_border,
+          label: _format(item.likesCount + (item.userLiked ? 1 : 0)),
+          color: item.userLiked ? Colors.red : Colors.white,
+          onTap: onLike,
+        ),
+        const SizedBox(height: 18),
+        _RailButton(
+          icon: Icons.mode_comment_outlined,
+          label: _format(item.commentsCount),
+          onTap: onComment,
+        ),
+        const SizedBox(height: 18),
+        // Mystery Gift — animated, signature button
+        _MysteryGiftButton(onTap: onGift),
+        const SizedBox(height: 18),
+        _RailButton(
+          icon: Icons.send_rounded,
+          label: _format(item.sharesCount),
+          onTap: onShare,
+        ),
+        const SizedBox(height: 18),
+        // Animated audio disc (signature)
+        _SpinningDisc(avatarUrl: item.author.avatarUrl),
+      ],
+    );
+  }
+
+  static String _format(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
+  }
+}
+
+class _AvatarFollow extends StatelessWidget {
+  const _AvatarFollow({
+    required this.author,
+    required this.isFollowing,
+    required this.onProfile,
+    required this.onFollow,
+  });
+  final FeedAuthor author;
+  final bool isFollowing;
+  final VoidCallback onProfile;
+  final VoidCallback onFollow;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 56,
+      height: 64,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          GestureDetector(
+            onTap: onProfile,
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: ClipOval(
+                child: author.avatarUrl != null
+                    ? Image.network(author.avatarUrl!, fit: BoxFit.cover)
+                    : Container(
+                        color: AppColors.slate,
+                        child: Center(
+                          child: Text(
+                            author.name[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          if (!isFollowing)
+            Positioned(
+              bottom: 0,
+              child: GestureDetector(
+                onTap: onFollow,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(
+                    color: AppColors.electricPurple,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.add, color: Colors.white, size: 14),
+                ),
+              ),
+            )
+          else
+            Positioned(
+              bottom: 0,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 14),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RailButton extends StatelessWidget {
+  const _RailButton({
+    required this.icon,
+    required this.label,
+    this.color = Colors.white,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            color: color,
+            size: 32,
+            shadows: const [
+              Shadow(color: Colors.black54, blurRadius: 6),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MysteryGiftButton extends StatefulWidget {
+  const _MysteryGiftButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  State<_MysteryGiftButton> createState() => _MysteryGiftButtonState();
+}
+
+class _MysteryGiftButtonState extends State<_MysteryGiftButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Column(
+        children: [
+          AnimatedBuilder(
+            animation: _ctrl,
+            builder: (_, __) {
+              final scale = 1.0 + _ctrl.value * 0.12;
+              return Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFFFFD54F),
+                        Color(0xFFFF6F61),
+                        AppColors.electricPurple,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6F61)
+                            .withValues(alpha: 0.5 + _ctrl.value * 0.3),
+                        blurRadius: 14,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.card_giftcard,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Mistério',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpinningDisc extends StatefulWidget {
+  const _SpinningDisc({this.avatarUrl});
+  final String? avatarUrl;
+
+  @override
+  State<_SpinningDisc> createState() => _SpinningDiscState();
+}
+
+class _SpinningDiscState extends State<_SpinningDisc>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _ctrl,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white24, width: 5),
+          color: Colors.black,
+        ),
+        child: ClipOval(
+          child: widget.avatarUrl != null
+              ? Image.network(widget.avatarUrl!, fit: BoxFit.cover)
+              : Container(color: AppColors.slate),
+        ),
+      ),
+    );
+  }
+}

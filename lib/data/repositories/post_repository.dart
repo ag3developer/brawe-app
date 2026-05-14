@@ -51,6 +51,28 @@ class PostRepository {
     }
   }
 
+  Future<void> createPost({
+    required String content,
+    String? imageLocalPath,
+    String? audience,
+  }) async {
+    try {
+      String? imageUrl;
+      if (imageLocalPath != null) {
+        imageUrl = await _postService.uploadMedia(imageLocalPath);
+      }
+      await _postService.createPost(
+        content: content,
+        imageUrl: imageUrl,
+        audience: audience,
+      );
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<List<Post>> getUserPosts(
     String userId, {
     int limit = 20,

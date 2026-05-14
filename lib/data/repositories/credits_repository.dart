@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../domain/models/failure.dart';
+import '../../domain/models/wallet.dart';
 import '../services/credits_service.dart';
 
 part 'credits_repository.g.dart';
@@ -18,15 +20,37 @@ class CreditsRepository {
   Future<double> getBalance() async {
     try {
       final data = await _creditsService.getBalance();
-      // Expecting { "balance": 100.0, "currency": "USD", ... }
       final balance = data['balance'];
-      if (balance is num) {
-        return balance.toDouble();
-      }
+      if (balance is num) return balance.toDouble();
       return 0.0;
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<Wallet> getWallet() async {
+    try {
+      final data = await _creditsService.getBalance();
+      return Wallet.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<List<WalletTransaction>> getTransactions({int page = 1, int limit = 20}) async {
+    try {
+      final data = await _creditsService.getTransactions(page: page, limit: limit);
+      final items = (data['items'] as List? ?? const [])
+          .map((e) => WalletTransaction.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return items;
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (_) {
       throw const Failure.unknown();
     }
   }

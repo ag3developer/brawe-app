@@ -57,6 +57,8 @@ class AuthRepository {
     required String password,
     required String name,
     String? sponsorCode,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
   }) async {
     try {
       final data = await _authService.registerAffiliate(
@@ -64,6 +66,8 @@ class AuthRepository {
         password: password,
         name: name,
         sponsorCode: sponsorCode,
+        termsAccepted: termsAccepted,
+        privacyAccepted: privacyAccepted,
       );
 
       final userData = data['user'] as Map<String, dynamic>;

@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/models/conversation.dart';
+import '../../../domain/models/failure.dart';
 
 part 'chat_list_view_model.g.dart';
 
@@ -36,66 +38,72 @@ class ChatListState {
 
 @riverpod
 class ChatListViewModel extends _$ChatListViewModel {
-  StreamSubscription<List<Conversation>>? _conversationsSubscription;
+  StreamSubscription<ChatMessage>? _notificationsSubscription;
 
   @override
   ChatListState build() {
     ref.onDispose(() {
-      _conversationsSubscription?.cancel();
+      _notificationsSubscription?.cancel();
     });
 
     _initialize();
-
-    return const ChatListState();
+    return const ChatListState(isLoading: true);
   }
 
   Future<void> _initialize() async {
-    state = state.copyWith(isLoading: true);
-
+    final repo = ref.read(chatRepositoryProvider);
     try {
-      await ref.read(chatRepositoryProvider).connect();
+      await repo.connect();
+    } catch (e) {
+      debugPrint('ChatListViewModel: socket connect failed: $e');
+    }
 
-      _conversationsSubscription = ref
+    await _loadConversations();
+
+    // Quando chega notificação de nova mensagem em outra conversa, recarrega lista
+    _notificationsSubscription =
+        repo.watchNotifications().listen((_) => _loadConversations(silent: true));
+  }
+
+  Future<void> _loadConversations({bool silent = false}) async {
+    if (!silent) state = state.copyWith(isLoading: true, clearErrorMessage: true);
+    try {
+      final items =
+          await ref.read(chatRepositoryProvider).listConversations();
+      state = state.copyWith(
+        conversations: items,
+        isLoading: false,
+        clearErrorMessage: true,
+      );
+    } on Failure catch (failure) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: failure.toDisplayMessage(),
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Erro ao carregar conversas',
+      );
+    }
+  }
+
+  Future<void> refresh() => _loadConversations();
+
+  /// Inicia (ou reaproveita) conversa e retorna o id, para navegação.
+  Future<String?> startConversation({required String participantId}) async {
+    try {
+      final id = await ref
           .read(chatRepositoryProvider)
-          .watchConversations()
-          .listen(_handleConversationsUpdate);
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to connect to chat',
-      );
-    }
-  }
-
-  void _handleConversationsUpdate(List<Conversation> conversations) {
-    state = state.copyWith(
-      conversations: conversations,
-      isLoading: false,
-      clearErrorMessage: true,
-    );
-  }
-
-  Future<void> refresh() async {
-    state = state.copyWith(isLoading: true);
-    try {
-      await ref.read(chatRepositoryProvider).connect();
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Failed to refresh conversations',
-      );
-    }
-  }
-
-  Future<void> startConversation({required String participantId}) async {
-    try {
-      await ref.read(chatRepositoryProvider).startConversation(
-        participantId: participantId,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        errorMessage: 'Failed to start conversation',
-      );
+          .startConversation(participantId: participantId);
+      await _loadConversations(silent: true);
+      return id;
+    } on Failure catch (failure) {
+      state = state.copyWith(errorMessage: failure.toDisplayMessage());
+      return null;
+    } catch (_) {
+      state = state.copyWith(errorMessage: 'Não foi possível iniciar a conversa');
+      return null;
     }
   }
 }

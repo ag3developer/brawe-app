@@ -21,7 +21,7 @@ class ProfileRepository {
   Future<Profile> getMyProfile() async {
     try {
       final data = await _profileService.getMyProfile();
-      return Profile.fromJson(data);
+      return Profile.fromJson(_normalize(data));
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {
@@ -32,12 +32,29 @@ class ProfileRepository {
   Future<Profile> getUserProfile(String userId) async {
     try {
       final data = await _profileService.getUserProfile(userId);
-      return Profile.fromJson(data);
+      return Profile.fromJson(_normalize(data));
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {
       throw const Failure.unknown();
     }
+  }
+
+  /// Normaliza o payload do backend, aceitando aliases comuns para banner/avatar
+  /// (banner, cover, cover_url, profile_banner, header_url, etc.) e mapeando
+  /// `user_id` -> `id` (o endpoint /profile/me devolve `user_id`).
+  Map<String, dynamic> _normalize(Map<String, dynamic> data) {
+    final out = Map<String, dynamic>.from(data);
+    // /profile/me devolve `user_id` em vez de `id` -> Profile.fromJson exige `id`.
+    out['id'] ??= data['id'] ?? data['user_id'] ?? data['uid'];
+    out['banner_url'] ??= data['banner'] ??
+        data['cover'] ??
+        data['cover_url'] ??
+        data['header_url'] ??
+        data['profile_banner'] ??
+        data['profile_banner_url'];
+    out['avatar_url'] ??= data['avatar'] ?? data['photo_url'] ?? data['picture'];
+    return out;
   }
 
   Future<List<Profile>> getTopStreamers({int limit = 20}) async {
@@ -63,6 +80,66 @@ class ProfileRepository {
         limit: limit,
       );
       return list.map((json) => LiveRoomDto.fromJson(json).toDomain()).toList();
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  
+  Future<Profile> updateMyProfile({
+    String? displayName,
+    String? bio,
+    Map<String, String>? socialLinks,
+  }) async {
+    try {
+      final data = await _profileService.updateMyProfile(
+        displayName: displayName,
+        bio: bio,
+        socialLinks: socialLinks,
+      );
+      return Profile.fromJson(_normalize(data));
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<String> uploadAvatar(String filePath) async {
+    try {
+      return await _profileService.uploadAvatar(filePath);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> deleteAvatar() async {
+    try {
+      await _profileService.deleteAvatar();
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<String> uploadBanner(String filePath) async {
+    try {
+      return await _profileService.uploadBanner(filePath);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> deleteBanner() async {
+    try {
+      await _profileService.deleteBanner();
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {

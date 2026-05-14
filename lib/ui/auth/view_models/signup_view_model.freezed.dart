@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SignupState {
 
- String get name; String get email; String get password; String get sponsorCode; AsyncValue<User?> get status;
+ String get name; String get email; String get password; String get sponsorCode; bool get termsAccepted; AsyncValue<User?> get status;
 /// Create a copy of SignupState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $SignupStateCopyWith<SignupState> get copyWith => _$SignupStateCopyWithImpl<Sign
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SignupState&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.sponsorCode, sponsorCode) || other.sponsorCode == sponsorCode)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SignupState&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.sponsorCode, sponsorCode) || other.sponsorCode == sponsorCode)&&(identical(other.termsAccepted, termsAccepted) || other.termsAccepted == termsAccepted)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,email,password,sponsorCode,status);
+int get hashCode => Object.hash(runtimeType,name,email,password,sponsorCode,termsAccepted,status);
 
 @override
 String toString() {
-  return 'SignupState(name: $name, email: $email, password: $password, sponsorCode: $sponsorCode, status: $status)';
+  return 'SignupState(name: $name, email: $email, password: $password, sponsorCode: $sponsorCode, termsAccepted: $termsAccepted, status: $status)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $SignupStateCopyWith<$Res>  {
   factory $SignupStateCopyWith(SignupState value, $Res Function(SignupState) _then) = _$SignupStateCopyWithImpl;
 @useResult
 $Res call({
- String name, String email, String password, String sponsorCode, AsyncValue<User?> status
+ String name, String email, String password, String sponsorCode, bool termsAccepted, AsyncValue<User?> status
 });
 
 
@@ -62,13 +62,14 @@ class _$SignupStateCopyWithImpl<$Res>
 
 /// Create a copy of SignupState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? email = null,Object? password = null,Object? sponsorCode = null,Object? status = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? email = null,Object? password = null,Object? sponsorCode = null,Object? termsAccepted = null,Object? status = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as String,sponsorCode: null == sponsorCode ? _self.sponsorCode : sponsorCode // ignore: cast_nullable_to_non_nullable
-as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,termsAccepted: null == termsAccepted ? _self.termsAccepted : termsAccepted // ignore: cast_nullable_to_non_nullable
+as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AsyncValue<User?>,
   ));
 }
@@ -151,10 +152,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String email,  String password,  String sponsorCode,  AsyncValue<User?> status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  String email,  String password,  String sponsorCode,  bool termsAccepted,  AsyncValue<User?> status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SignupState() when $default != null:
-return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.status);case _:
+return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.termsAccepted,_that.status);case _:
   return orElse();
 
 }
@@ -172,10 +173,10 @@ return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String email,  String password,  String sponsorCode,  AsyncValue<User?> status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  String email,  String password,  String sponsorCode,  bool termsAccepted,  AsyncValue<User?> status)  $default,) {final _that = this;
 switch (_that) {
 case _SignupState():
-return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.status);}
+return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.termsAccepted,_that.status);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -189,10 +190,10 @@ return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.st
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String email,  String password,  String sponsorCode,  AsyncValue<User?> status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  String email,  String password,  String sponsorCode,  bool termsAccepted,  AsyncValue<User?> status)?  $default,) {final _that = this;
 switch (_that) {
 case _SignupState() when $default != null:
-return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.status);case _:
+return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.termsAccepted,_that.status);case _:
   return null;
 
 }
@@ -204,13 +205,14 @@ return $default(_that.name,_that.email,_that.password,_that.sponsorCode,_that.st
 
 
 class _SignupState extends SignupState {
-  const _SignupState({this.name = '', this.email = '', this.password = '', this.sponsorCode = '', this.status = const AsyncValue<User?>.data(null)}): super._();
+  const _SignupState({this.name = '', this.email = '', this.password = '', this.sponsorCode = '', this.termsAccepted = false, this.status = const AsyncValue<User?>.data(null)}): super._();
   
 
 @override@JsonKey() final  String name;
 @override@JsonKey() final  String email;
 @override@JsonKey() final  String password;
 @override@JsonKey() final  String sponsorCode;
+@override@JsonKey() final  bool termsAccepted;
 @override@JsonKey() final  AsyncValue<User?> status;
 
 /// Create a copy of SignupState
@@ -223,16 +225,16 @@ _$SignupStateCopyWith<_SignupState> get copyWith => __$SignupStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SignupState&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.sponsorCode, sponsorCode) || other.sponsorCode == sponsorCode)&&(identical(other.status, status) || other.status == status));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SignupState&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.password, password) || other.password == password)&&(identical(other.sponsorCode, sponsorCode) || other.sponsorCode == sponsorCode)&&(identical(other.termsAccepted, termsAccepted) || other.termsAccepted == termsAccepted)&&(identical(other.status, status) || other.status == status));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,name,email,password,sponsorCode,status);
+int get hashCode => Object.hash(runtimeType,name,email,password,sponsorCode,termsAccepted,status);
 
 @override
 String toString() {
-  return 'SignupState(name: $name, email: $email, password: $password, sponsorCode: $sponsorCode, status: $status)';
+  return 'SignupState(name: $name, email: $email, password: $password, sponsorCode: $sponsorCode, termsAccepted: $termsAccepted, status: $status)';
 }
 
 
@@ -243,7 +245,7 @@ abstract mixin class _$SignupStateCopyWith<$Res> implements $SignupStateCopyWith
   factory _$SignupStateCopyWith(_SignupState value, $Res Function(_SignupState) _then) = __$SignupStateCopyWithImpl;
 @override @useResult
 $Res call({
- String name, String email, String password, String sponsorCode, AsyncValue<User?> status
+ String name, String email, String password, String sponsorCode, bool termsAccepted, AsyncValue<User?> status
 });
 
 
@@ -260,13 +262,14 @@ class __$SignupStateCopyWithImpl<$Res>
 
 /// Create a copy of SignupState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? email = null,Object? password = null,Object? sponsorCode = null,Object? status = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? email = null,Object? password = null,Object? sponsorCode = null,Object? termsAccepted = null,Object? status = null,}) {
   return _then(_SignupState(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
 as String,password: null == password ? _self.password : password // ignore: cast_nullable_to_non_nullable
 as String,sponsorCode: null == sponsorCode ? _self.sponsorCode : sponsorCode // ignore: cast_nullable_to_non_nullable
-as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as String,termsAccepted: null == termsAccepted ? _self.termsAccepted : termsAccepted // ignore: cast_nullable_to_non_nullable
+as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as AsyncValue<User?>,
   ));
 }

@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
@@ -19,11 +20,15 @@ class SignupScreen extends ConsumerStatefulWidget {
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen>
+    with TickerProviderStateMixin {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _sponsorController;
+  late final AnimationController _entry;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
 
   @override
   void initState() {
@@ -32,6 +37,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _sponsorController = TextEditingController();
+
+    _entry = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _fade = CurvedAnimation(parent: _entry, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.08),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _entry, curve: Curves.easeOutCubic));
+    _entry.forward();
   }
 
   @override
@@ -40,51 +56,63 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _sponsorController.dispose();
+    _entry.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(signupViewModelProvider);
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const AuthBackground(),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.xl,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.xs,
+                AppSpacing.lg,
+                AppSpacing.lg,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: () => context.go('/welcome'),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  ),
+                  _TopBar(onBack: () => context.go('/welcome')),
                   const SizedBox(height: AppSpacing.lg),
-                  _SignupCard(
-                    state: state,
-                    notifier: ref.read(signupViewModelProvider.notifier),
-                    nameController: _nameController,
-                    emailController: _emailController,
-                    passwordController: _passwordController,
-                    sponsorController: _sponsorController,
-                    onSubmit: _onSubmit,
+                  FadeTransition(
+                    opacity: _fade,
+                    child: SlideTransition(
+                      position: _slide,
+                      child: const _Hero(),
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  Center(
-                    child: Text(
-                      'By signing up you agree to Brawe Terms.',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: AppColors.coolGray.withValues(alpha: 0.6),
+                  FadeTransition(
+                    opacity: _fade,
+                    child: SlideTransition(
+                      position: _slide,
+                      child: _SignupCard(
+                        state: state,
+                        notifier: ref.read(signupViewModelProvider.notifier),
+                        nameController: _nameController,
+                        emailController: _emailController,
+                        passwordController: _passwordController,
+                        sponsorController: _sponsorController,
+                        onSubmit: _onSubmit,
                       ),
-                      textAlign: TextAlign.center,
                     ),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _TermsCheckbox(
+                    accepted: state.termsAccepted,
+                    onChanged: (v) => ref
+                        .read(signupViewModelProvider.notifier)
+                        .updateTermsAccepted(v),
                   ),
                 ],
               ),
@@ -99,18 +127,144 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final success = await ref.read(signupViewModelProvider.notifier).submit();
     if (mounted) {
       if (success) {
-        AppSnackBar.showSuccess(context, 'Account created successfully!');
+        AppSnackBar.showSuccess(context, 'Conta criada com sucesso.');
       } else {
         final error = ref.read(signupViewModelProvider).errorMessage;
-        if (error != null) {
-          AppSnackBar.showError(context, error);
-        }
+        if (error != null) AppSnackBar.showError(context, error);
       }
     }
   }
 }
 
-class _SignupCard extends StatelessWidget {
+// ── Top bar ─────────────────────────────────────────────────────────────────
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onBack});
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Material(
+          color: Colors.white.withValues(alpha: 0.06),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onBack,
+            child: Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: const Icon(LucideIcons.arrowLeft,
+                  color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: () {},
+          icon: const Icon(LucideIcons.helpCircle,
+              color: AppColors.coolGray, size: 16),
+          label: const Text(
+            'Ajuda',
+            style: TextStyle(color: AppColors.coolGray, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Hero (mesma linguagem do login) ─────────────────────────────────────────
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.electricPurple.withValues(alpha: 0.6),
+                    AppColors.electricPurple.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.electricPurple,
+                    AppColors.softViolet,
+                    AppColors.coolCyan,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.electricPurple.withValues(alpha: 0.55),
+                    blurRadius: 22,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Image.asset(
+                  'assets/images/brawe_logo.png',
+                  fit: BoxFit.contain,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        const Text(
+          'Crie sua conta.',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            height: 1.05,
+            letterSpacing: -1.2,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Leva menos de um minuto para começar.',
+          style: TextStyle(
+            color: AppColors.coolGray.withValues(alpha: 0.85),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Card de cadastro ────────────────────────────────────────────────────────
+class _SignupCard extends StatefulWidget {
   const _SignupCard({
     required this.state,
     required this.notifier,
@@ -130,113 +284,143 @@ class _SignupCard extends StatelessWidget {
   final Future<void> Function() onSubmit;
 
   @override
+  State<_SignupCard> createState() => _SignupCardState();
+}
+
+class _SignupCardState extends State<_SignupCard> {
+  bool _showSponsor = false;
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final textTheme = Theme.of(context).textTheme;
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.xl,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.slate.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.08),
+                Colors.white.withValues(alpha: 0.02),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 40,
                 offset: const Offset(0, 20),
               ),
             ],
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Create Account',
-                style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              Text(
-                'Join the Brawe community',
-                style: textTheme.bodyMedium?.copyWith(
-                  color: AppColors.coolGray,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
               AuthInputField(
-                controller: nameController,
-                label: 'Full Name',
-                hintText: 'John Doe',
-                onChanged: notifier.updateName,
-                prefixIcon: Icons.person_outline,
+                controller: widget.nameController,
+                label: 'Nome completo',
+                hintText: 'Como devemos te chamar?',
+                onChanged: widget.notifier.updateName,
+                prefixIcon: LucideIcons.user,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               AuthInputField(
-                controller: emailController,
-                label: 'Email',
-                hintText: 'you@brawe.app',
+                controller: widget.emailController,
+                label: 'E-mail',
+                hintText: 'voce@brawe.app',
                 keyboardType: TextInputType.emailAddress,
-                onChanged: notifier.updateEmail,
-                prefixIcon: Icons.email_outlined,
+                onChanged: widget.notifier.updateEmail,
+                prefixIcon: LucideIcons.atSign,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               AuthInputField(
-                controller: passwordController,
-                label: 'Password',
-                hintText: '••••••••',
+                controller: widget.passwordController,
+                label: 'Senha',
+                hintText: 'mínimo 8 caracteres',
                 obscureText: true,
-                onChanged: notifier.updatePassword,
-                prefixIcon: Icons.lock_outline,
+                onChanged: widget.notifier.updatePassword,
+                prefixIcon: LucideIcons.lock,
               ),
-              const SizedBox(height: AppSpacing.lg),
-              AuthInputField(
-                controller: sponsorController,
-                label: 'Sponsor Code (Optional)',
-                hintText: 'CODE123',
-                onChanged: notifier.updateSponsorCode,
-                prefixIcon: Icons.card_giftcard,
-              ),
-              if (state.errorMessage != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: AppColors.mutedRed,
-                      size: 16,
+              const SizedBox(height: AppSpacing.sm),
+              _PasswordStrength(password: state.password),
+              const SizedBox(height: AppSpacing.sm),
+              if (_showSponsor) ...[
+                AuthInputField(
+                  controller: widget.sponsorController,
+                  label: 'Código do patrocinador',
+                  hintText: 'BRAWE-XXXX',
+                  onChanged: widget.notifier.updateSponsorCode,
+                  prefixIcon: LucideIcons.tag,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ] else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => setState(() => _showSponsor = true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.coolCyan,
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        state.errorMessage!,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: AppColors.mutedRed,
+                    icon: const Icon(LucideIcons.plus, size: 14),
+                    label: const Text(
+                      'Tenho um código de indicação',
+                      style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              if (state.errorMessage != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: AppColors.mutedRed.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(
+                      color: AppColors.mutedRed.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.alertCircle,
+                          color: AppColors.mutedRed, size: 16),
+                      const SizedBox(width: AppSpacing.xs),
+                      Expanded(
+                        child: Text(
+                          state.errorMessage!,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: AppColors.mutedRed,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
-              const SizedBox(height: AppSpacing.xl),
+              const SizedBox(height: AppSpacing.lg),
               AuthActionButton(
                 label: state.status.isLoading
-                    ? 'Creating account...'
-                    : 'Sign up',
-                onPressed: state.canSubmit ? onSubmit : null,
+                    ? 'Criando conta…'
+                    : 'Criar conta',
+                onPressed: state.canSubmit ? widget.onSubmit : null,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account?',
+                    'Já tem conta?',
                     style: textTheme.bodyMedium?.copyWith(
                       color: AppColors.coolGray,
                     ),
@@ -245,19 +429,133 @@ class _SignupCard extends StatelessWidget {
                     onPressed: () => context.push('/login'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.coolCyan,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                      ),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      minimumSize: const Size(0, 32),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
-                      'Sign in',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      'Entrar',
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Indicador de força de senha ─────────────────────────────────────────────
+class _PasswordStrength extends StatelessWidget {
+  const _PasswordStrength({required this.password});
+  final String password;
+
+  int get _score {
+    int s = 0;
+    if (password.length >= 8) s++;
+    if (password.length >= 12) s++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) s++;
+    if (RegExp(r'[0-9]').hasMatch(password)) s++;
+    if (RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]').hasMatch(password)) s++;
+    return s.clamp(0, 4);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (password.isEmpty) return const SizedBox(height: 8);
+    final score = _score;
+    final colors = [
+      AppColors.mutedRed,
+      Colors.orange,
+      Colors.amber,
+      AppColors.coolCyan,
+      Colors.greenAccent,
+    ];
+    final labels = ['Fraca', 'Fraca', 'Média', 'Boa', 'Forte'];
+    final color = colors[score];
+
+    return Row(
+      children: [
+        for (int i = 0; i < 4; i++) ...[
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 4,
+              decoration: BoxDecoration(
+                color: i < score
+                    ? color
+                    : Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          if (i < 3) const SizedBox(width: 4),
+        ],
+        const SizedBox(width: 8),
+        Text(
+          labels[score],
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Terms checkbox ──────────────────────────────────────────────────────────
+class _TermsCheckbox extends StatelessWidget {
+  const _TermsCheckbox({required this.accepted, required this.onChanged});
+  final bool accepted;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onChanged(!accepted),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: Checkbox(
+                value: accepted,
+                onChanged: (v) => onChanged(v ?? false),
+                activeColor: AppColors.electricPurple,
+                checkColor: Colors.white,
+                side: BorderSide(
+                  color: AppColors.coolGray.withValues(alpha: 0.55),
+                  width: 1.4,
+                ),
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Li e aceito os Termos de Uso e a Política de Privacidade do Brawe.',
+                style: TextStyle(
+                  color: AppColors.coolGray.withValues(alpha: 0.85),
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,10 +1,13 @@
 import 'dart:async';
 
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../core/constants/app_constants.dart';
 import '../../domain/models/conversation.dart';
 import '../../domain/models/failure.dart';
+import '../services/messages_service.dart';
 import '../services/socket_service.dart';
 import '../services/storage_service.dart';
 
@@ -13,25 +16,42 @@ part 'chat_repository.g.dart';
 @Riverpod(keepAlive: true)
 ChatRepository chatRepository(Ref ref) {
   final socketService = ref.watch(socketServiceProvider);
+  final messagesService = ref.watch(messagesServiceProvider);
   final storageService = ref.watch(storageServiceProvider);
-  final repository = ChatRepository(socketService, storageService);
+  final repository = ChatRepository(
+    socketService: socketService,
+    messagesService: messagesService,
+    storageService: storageService,
+  );
   ref.onDispose(repository.dispose);
   return repository;
 }
 
 class ChatRepository {
+  ChatRepository({
+    required SocketService socketService,
+    required MessagesService messagesService,
+    required StorageService storageService,
+  })  : _socketService = socketService,
+        _messagesService = messagesService,
+        _storageService = storageService;
+
   final SocketService _socketService;
+  final MessagesService _messagesService;
   final StorageService _storageService;
+
   final Map<String, StreamController<ChatMessage>> _messageControllers = {};
   final Map<String, StreamController<bool>> _typingControllers = {};
-  final StreamController<List<Conversation>> _conversationsController =
-      StreamController<List<Conversation>>.broadcast();
-  bool _handlersRegistered = false;
-  void Function(dynamic)? _onDmReceived;
-  void Function(dynamic)? _onUserTyping;
-  void Function(dynamic)? _onConversationUpdated;
+  final StreamController<ChatMessage> _notificationController =
+      StreamController<ChatMessage>.broadcast();
 
-  ChatRepository(this._socketService, this._storageService);
+  bool _handlersRegistered = false;
+  void Function(dynamic)? _onNewMessage;
+  void Function(dynamic)? _onUserTyping;
+  void Function(dynamic)? _onUserStopTyping;
+  void Function(dynamic)? _onMessageNotification;
+
+  // ────────────────────── lifecycle ──────────────────────
 
   Future<void> connect() async {
     await _socketService.connect();
@@ -42,61 +62,76 @@ class ChatRepository {
     if (_handlersRegistered) return;
     _handlersRegistered = true;
 
-    _onDmReceived = (data) {
-      debugPrint('ChatRepository: Received dm_received: $data');
-      final message = _parseDmMessage(data);
-      if (message == null) return;
-
+    _onNewMessage = (data) {
       final payload = _asMap(data);
-      final conversationId = payload?['conversation_id']?.toString();
-
-      if (conversationId != null) {
-        final controller = _messageControllers[conversationId];
-        if (controller != null && !controller.isClosed) {
-          controller.add(message);
-        }
+      if (payload == null) return;
+      final conversationId = payload['conversation_id']?.toString();
+      if (conversationId == null || conversationId.isEmpty) return;
+      final message =
+          ChatMessage.fromApi(payload, fallbackConversationId: conversationId);
+      final controller = _messageControllers[conversationId];
+      if (controller != null && !controller.isClosed) {
+        controller.add(message);
       }
     };
-    _socketService.on(AppConstants.eventDmReceived, _onDmReceived!);
+    _socketService.on(AppConstants.eventNewMessage, _onNewMessage!);
 
     _onUserTyping = (data) {
-      debugPrint('ChatRepository: Received user_typing: $data');
-      final payload = _asMap(data);
-      final conversationId = payload?['conversation_id']?.toString();
+      final conversationId = _asMap(data)?['conversation_id']?.toString();
       if (conversationId == null) return;
-
-      final controller = _typingControllers[conversationId];
-      if (controller != null && !controller.isClosed) {
-        controller.add(true);
-      }
+      _typingControllers[conversationId]?.add(true);
     };
     _socketService.on(AppConstants.eventUserTyping, _onUserTyping!);
 
-    _onConversationUpdated = (data) {
-      debugPrint('ChatRepository: Received conversation_updated: $data');
-      final conversation = _parseConversation(data);
-      if (conversation == null) return;
-
-      _conversationsController.add(_updateConversationInList(conversation));
+    _onUserStopTyping = (data) {
+      final conversationId = _asMap(data)?['conversation_id']?.toString();
+      if (conversationId == null) return;
+      _typingControllers[conversationId]?.add(false);
     };
-    _socketService.on(AppConstants.eventConversationUpdated, _onConversationUpdated!);
+    _socketService.on(AppConstants.eventUserStopTyping, _onUserStopTyping!);
+
+    _onMessageNotification = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final conversationId = payload['conversation_id']?.toString() ?? '';
+      _notificationController.add(
+        ChatMessage(
+          id: 'notif-${DateTime.now().microsecondsSinceEpoch}',
+          conversationId: conversationId,
+          senderId: payload['sender_id']?.toString() ?? '',
+          content: payload['preview']?.toString() ?? '',
+          timestamp: DateTime.now(),
+        ),
+      );
+    };
+    _socketService.on(
+      AppConstants.eventMessageNotification,
+      _onMessageNotification!,
+    );
   }
 
   void dispose() {
-    _socketService.off(AppConstants.eventDmReceived, _onDmReceived);
+    _socketService.off(AppConstants.eventNewMessage, _onNewMessage);
     _socketService.off(AppConstants.eventUserTyping, _onUserTyping);
-    _socketService.off(AppConstants.eventConversationUpdated, _onConversationUpdated);
+    _socketService.off(AppConstants.eventUserStopTyping, _onUserStopTyping);
+    _socketService.off(
+      AppConstants.eventMessageNotification,
+      _onMessageNotification,
+    );
 
-    for (final controller in _messageControllers.values) {
-      controller.close();
+    for (final c in _messageControllers.values) {
+      c.close();
     }
-    for (final controller in _typingControllers.values) {
-      controller.close();
+    for (final c in _typingControllers.values) {
+      c.close();
     }
     _messageControllers.clear();
     _typingControllers.clear();
+    _notificationController.close();
     _handlersRegistered = false;
   }
+
+  // ────────────────────── streams ──────────────────────
 
   Stream<ChatMessage> watchMessages(String conversationId) {
     final controller = _messageControllers.putIfAbsent(
@@ -114,36 +149,115 @@ class ChatRepository {
     return controller.stream;
   }
 
-  Stream<List<Conversation>> watchConversations() {
-    return _conversationsController.stream;
+  /// Notificações de novas mensagens em outras conversas (para refresh da lista).
+  Stream<ChatMessage> watchNotifications() => _notificationController.stream;
+
+  // ────────────────────── room ──────────────────────
+
+  void joinConversation(String conversationId) {
+    _socketService.joinConversation(conversationId);
   }
 
-  Future<void> sendMessage({
+  void leaveConversation(String conversationId) {
+    _socketService.leaveConversation(conversationId);
+  }
+
+  // ────────────────────── REST ──────────────────────
+
+  Future<List<Conversation>> listConversations({
+    int page = 1,
+    int limit = AppConstants.conversationsPageLimit,
+    bool archived = false,
+  }) async {
+    try {
+      return await _messagesService.listConversations(
+        page: page,
+        limit: limit,
+        archived: archived,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<List<ChatMessage>> fetchMessages(
+    String conversationId, {
+    int page = 1,
+    int limit = AppConstants.chatPageLimit,
+  }) async {
+    try {
+      return await _messagesService.getMessages(
+        conversationId,
+        page: page,
+        limit: limit,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<ChatMessage> sendMessage({
     required String conversationId,
     required String message,
   }) async {
-    final trimmedMessage = message.trim();
-    if (trimmedMessage.isEmpty) {
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) {
       throw const Failure.validation('Message cannot be empty.');
     }
-
-    if (!_socketService.isConnected) {
-      throw const Failure.network();
+    try {
+      return await _messagesService.sendMessage(
+        conversationId: conversationId,
+        content: trimmed,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
     }
-
-    _socketService.sendDm(
-      conversationId: conversationId,
-      message: trimmedMessage,
-    );
   }
 
-  Future<void> startConversation({required String participantId}) async {
-    if (!_socketService.isConnected) {
-      throw const Failure.network();
+  Future<void> markMessagesRead({required String conversationId}) async {
+    try {
+      await _messagesService.markAsRead(conversationId);
+    } on DioException catch (e) {
+      debugPrint('markMessagesRead failed: $e');
+      throw _toFailure(e);
     }
-
-    _socketService.startConversation(participantId: participantId);
   }
+
+  Future<int> getUnreadCount() async {
+    try {
+      return await _messagesService.getUnreadCount();
+    } on DioException catch (e) {
+      debugPrint('getUnreadCount failed: $e');
+      return 0;
+    }
+  }
+
+  Future<String> startConversation({required String participantId}) async {
+    try {
+      return await _messagesService.startConversation(participantId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<({String conversationId, String otherUserId})>
+      getOrCreateConversationByUser(String slug) async {
+    try {
+      return await _messagesService.getOrCreateByUser(slug);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<Map<String, UserPresence>> getPresence(List<String> userIds) async {
+    try {
+      return await _messagesService.getPresence(userIds);
+    } on DioException catch (_) {
+      return const {};
+    }
+  }
+
+  // ────────────────────── socket-only ──────────────────────
 
   void sendTypingStart({required String conversationId}) {
     _socketService.sendTypingStart(conversationId: conversationId);
@@ -153,81 +267,32 @@ class ChatRepository {
     _socketService.sendTypingStop(conversationId: conversationId);
   }
 
-  void markMessagesRead({required String conversationId}) {
-    _socketService.markMessagesRead(conversationId: conversationId);
-  }
-
   Future<String?> getCurrentUserId() async {
     final user = await _storageService.getUser();
     return user?.id;
   }
 
-  ChatMessage? _parseDmMessage(dynamic data) {
-    final payload = _asMap(data);
-    if (payload == null) return null;
-
-    final message = payload['message']?.toString().trim();
-    if (message == null || message.isEmpty) return null;
-
-    final timestampValue = payload['timestamp']?.toString();
-    final timestamp =
-        DateTime.tryParse(timestampValue ?? '')?.toLocal() ?? DateTime.now();
-
-    return ChatMessage(
-      id: payload['id']?.toString() ??
-          timestamp.microsecondsSinceEpoch.toString(),
-      conversationId: payload['conversation_id']?.toString() ?? '',
-      senderId: payload['sender_id']?.toString() ??
-                payload['user_id']?.toString() ?? '',
-      content: message,
-      timestamp: timestamp,
-      isRead: payload['is_read'] == true,
-    );
-  }
-
-  Conversation? _parseConversation(dynamic data) {
-    final payload = _asMap(data);
-    if (payload == null) return null;
-
-    final id = payload['id']?.toString() ?? payload['conversation_id']?.toString();
-    if (id == null) return null;
-
-    final participantId = payload['participant_id']?.toString() ?? '';
-    final participantName = payload['participant_name']?.toString() ??
-                           payload['sender_name']?.toString() ?? 'User';
-    final participantAvatar = payload['participant_avatar']?.toString() ??
-                              payload['sender_avatar']?.toString();
-
-    ChatMessage? lastMessage;
-    if (payload['last_message'] != null) {
-      lastMessage = _parseDmMessage(payload['last_message']);
-    }
-
-    final updatedAtValue = payload['updated_at']?.toString();
-    final updatedAt = DateTime.tryParse(updatedAtValue ?? '')?.toLocal() ?? DateTime.now();
-
-    return Conversation(
-      id: id,
-      participantId: participantId,
-      participantName: participantName,
-      participantAvatarUrl: participantAvatar,
-      lastMessage: lastMessage,
-      unreadCount: int.tryParse(payload['unread_count']?.toString() ?? '0') ?? 0,
-      updatedAt: updatedAt,
-    );
-  }
-
-  List<Conversation> _updateConversationInList(Conversation updated) {
-    return [updated];
-  }
+  // ────────────────────── helpers ──────────────────────
 
   Map<String, dynamic>? _asMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      return data;
-    }
-    if (data is Map) {
-      return Map<String, dynamic>.from(data);
-    }
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
     return null;
+  }
+
+  Failure _toFailure(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == null) return const Failure.network();
+    if (status == 401 || status == 403) {
+      return const Failure.unauthorized();
+    }
+    if (status >= 400 && status < 500) {
+      final detail = e.response?.data is Map
+          ? e.response?.data['detail']?.toString()
+          : null;
+      return Failure.validation(detail);
+    }
+    if (status >= 500) return const Failure.server();
+    return const Failure.unknown();
   }
 }

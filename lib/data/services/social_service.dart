@@ -53,4 +53,41 @@ class SocialService {
     if (data is Map && data['items'] != null) return List<Map<String, dynamic>>.from(data['items']);
     return [];
   }
+
+  Future<({List<Map<String, dynamic>> items, int total})> getUserFollowers(
+    String userId, {
+    int page = 1,
+    int limit = 30,
+  }) async {
+    final response = await _dio.get(
+      '/social/followers/$userId',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final data = response.data;
+    final list = data['data'];
+    final items = (list is List)
+        ? List<Map<String, dynamic>>.from(list)
+        : <Map<String, dynamic>>[];
+    final total = (data['total'] as num?)?.toInt() ?? items.length;
+    return (items: items, total: total);
+  }
+
+  Future<({List<Map<String, dynamic>> items, int total})> getUserFollowing(
+    String userId, {
+    int page = 1,
+    int limit = 30,
+  }) async {
+    final response = await _dio.get(
+      '/social/following/$userId',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final data = response.data;
+    final list = data['data'];
+    final items = (list is List)
+        ? List<Map<String, dynamic>>.from(list)
+        : <Map<String, dynamic>>[];
+    final total = (data['total'] as num?)?.toInt() ?? items.length;
+    return (items: items, total: total);
+  }
+
 }

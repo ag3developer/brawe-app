@@ -15,6 +15,7 @@ sealed class SignupState with _$SignupState {
     @Default('') String email,
     @Default('') String password,
     @Default('') String sponsorCode,
+    @Default(false) bool termsAccepted,
     @Default(AsyncValue<User?>.data(null)) AsyncValue<User?> status,
   }) = _SignupState;
 
@@ -24,6 +25,7 @@ sealed class SignupState with _$SignupState {
       name.isNotEmpty &&
       email.isNotEmpty &&
       password.isNotEmpty &&
+      termsAccepted &&
       !status.isLoading;
 
   String? get errorMessage =>
@@ -63,6 +65,13 @@ class SignupViewModel extends _$SignupViewModel {
     );
   }
 
+  void updateTermsAccepted(bool value) {
+    state = state.copyWith(
+      termsAccepted: value,
+      status: const AsyncValue.data(null),
+    );
+  }
+
   Future<bool> submit() async {
     if (state.status.isLoading) return false;
 
@@ -81,6 +90,11 @@ class SignupViewModel extends _$SignupViewModel {
       return false;
     }
 
+    if (!state.termsAccepted) {
+      _setError('Você precisa aceitar os Termos e a Política de Privacidade.');
+      return false;
+    }
+
     state = state.copyWith(status: const AsyncValue.loading());
 
     try {
@@ -91,6 +105,8 @@ class SignupViewModel extends _$SignupViewModel {
             password: state.password,
             name: state.name,
             sponsorCode: state.sponsorCode,
+            termsAccepted: state.termsAccepted,
+            privacyAccepted: state.termsAccepted,
           );
       state = state.copyWith(status: AsyncValue.data(user));
       ref.read(authStateProvider.notifier).updateSession(user);

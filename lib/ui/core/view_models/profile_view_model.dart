@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/profile_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/repositories/post_repository.dart';
@@ -24,7 +25,13 @@ class ProfileViewModel extends _$ProfileViewModel {
 
   Future<void> _loadProfile() async {
     try {
-      final profile = await ref.read(profileRepositoryProvider).getUserProfile(userId);
+      final repo = ref.read(profileRepositoryProvider);
+      final currentUserId = ref.read(authStateProvider).value?.id;
+      // Para o próprio usuário, usa /profile/me que retorna dados completos
+      // (banner_url, username personalizado, bio, social_links, etc.)
+      final profile = (currentUserId != null && currentUserId == userId)
+          ? await repo.getMyProfile()
+          : await repo.getUserProfile(userId);
       state = state.copyWith(profile: AsyncValue.data(profile));
     } catch (e, st) {
       state = state.copyWith(profile: AsyncValue.error(e, st));

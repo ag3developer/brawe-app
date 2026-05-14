@@ -1,165 +1,345 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/themes/app_colors.dart';
 import '../../../domain/models/conversation.dart';
 import '../view_models/chat_list_view_model.dart';
+import '../view_models/presence_provider.dart';
 
-class ChatListScreen extends ConsumerWidget {
+class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(chatListViewModelProvider);
+  ConsumerState<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends ConsumerState<ChatListScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chatState = ref.watch(chatListViewModelProvider);
+    final conversations = chatState.conversations;
+
+    // Registra presença para todos os participantes da lista.
+    ref.listen<int>(
+      chatListViewModelProvider.select((s) => s.conversations.length),
+      (_, __) {
+        final convs = ref.read(chatListViewModelProvider).conversations;
+        ref
+            .read(presenceCacheProvider.notifier)
+            .watchAll(convs.map((c) => c.participantId));
+      },
+    );
+    // Garante watch inicial em cada rebuild com conversas presentes.
+    if (conversations.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref
+            .read(presenceCacheProvider.notifier)
+            .watchAll(conversations.map((c) => c.participantId));
+      });
+    }
+
+    final filtered = _searchQuery.isEmpty
+        ? conversations
+        : conversations
+            .where((c) => c.participantName
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F1A),
+      backgroundColor: AppColors.nearBlack,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F1A),
+        backgroundColor: AppColors.nearBlack,
+        elevation: 0,
+        centerTitle: false,
         title: const Text(
-          'Messages',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: state.isLoading && state.conversations.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : state.conversations.isEmpty
-              ? _buildEmptyState()
-              : _buildConversationList(context, ref, state.conversations),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.chat_bubble_outline,
-            color: Colors.white24,
-            size: 64,
+          'Mensagens',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'No messages yet',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Start a conversation with someone!',
-            style: TextStyle(color: Colors.white38, fontSize: 14),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Colors.white),
+            onPressed: () {},
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(100),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Pesquisar mensagens...',
+                    hintStyle: TextStyle(color: AppColors.coolGray.withValues(alpha: 0.6)),
+                    prefixIcon: const Icon(Icons.search, color: AppColors.coolGray, size: 20),
+                    filled: true,
+                    fillColor: AppColors.slate,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                labelColor: AppColors.electricPurple,
+                unselectedLabelColor: AppColors.coolGray,
+                indicatorColor: AppColors.electricPurple,
+                indicatorSize: TabBarIndicatorSize.label,
+                tabs: const [
+                  Tab(text: 'Todas'),
+                  Tab(text: 'Não lidas'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: chatState.isLoading && conversations.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.electricPurple),
+            )
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                _ConversationList(
+                  conversations: filtered,
+                  onRefresh: () async =>
+                      ref.read(chatListViewModelProvider.notifier).refresh(),
+                ),
+                _ConversationList(
+                  conversations: filtered.where((c) => c.unreadCount > 0).toList(),
+                  onRefresh: () async =>
+                      ref.read(chatListViewModelProvider.notifier).refresh(),
+                ),
+              ],
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: AppColors.electricPurple,
+        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
+}
 
-  Widget _buildConversationList(
-    BuildContext context,
-    WidgetRef ref,
-    List<Conversation> conversations,
-  ) {
+class _ConversationList extends StatelessWidget {
+  const _ConversationList({
+    required this.conversations,
+    required this.onRefresh,
+  });
+
+  final List<Conversation> conversations;
+  final Future<void> Function() onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    if (conversations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.chat_bubble_outline,
+                size: 56, color: AppColors.coolGray.withValues(alpha: 0.4)),
+            const SizedBox(height: 12),
+            const Text(
+              'Sem conversas',
+              style: TextStyle(color: AppColors.coolGray, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
     return RefreshIndicator(
-      onRefresh: () => ref.read(chatListViewModelProvider.notifier).refresh(),
-      child: ListView.builder(
+      onRefresh: onRefresh,
+      color: AppColors.electricPurple,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(top: 8, bottom: 80),
         itemCount: conversations.length,
+        separatorBuilder: (_, __) => Divider(
+          color: AppColors.slate.withValues(alpha: 0.5),
+          height: 1,
+          indent: 80,
+        ),
         itemBuilder: (context, index) {
-          final conversation = conversations[index];
-          return _ConversationTile(
-            conversation: conversation,
-            onTap: () => context.push('/chat/${conversation.id}'),
-          );
+          return _ConversationTile(conversation: conversations[index]);
         },
       ),
     );
   }
 }
 
-class _ConversationTile extends StatelessWidget {
-  final Conversation conversation;
-  final VoidCallback onTap;
+class _ConversationTile extends ConsumerWidget {
+  const _ConversationTile({required this.conversation});
 
-  const _ConversationTile({
-    required this.conversation,
-    required this.onTap,
-  });
+  final Conversation conversation;
+
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'agora';
+    if (diff.inHours < 1) return '${diff.inMinutes}m';
+    if (diff.inDays < 1) return '${diff.inHours}h';
+    if (diff.inDays < 7) return '${diff.inDays}d';
+    return '${dt.day}/${dt.month}';
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      leading: CircleAvatar(
-        radius: 24,
-        backgroundColor: Colors.white24,
-        backgroundImage: conversation.participantAvatarUrl != null
-            ? NetworkImage(conversation.participantAvatarUrl!)
-            : null,
-        child: conversation.participantAvatarUrl == null
-            ? const Icon(Icons.person, color: Colors.white)
-            : null,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presence = ref.watch(presenceCacheProvider);
+    final isOnline = presence[conversation.participantId]?.isOnline ??
+        conversation.isOnline;
+
+    return InkWell(
+      onTap: () => context.push(
+        '/chat/${conversation.id}',
+        extra: {
+          'participantName': conversation.participantName,
+          'participantAvatarUrl': conversation.participantAvatarUrl,
+          'participantId': conversation.participantId,
+        },
       ),
-      title: Text(
-        conversation.participantName,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: conversation.lastMessage != null
-          ? Text(
-              conversation.lastMessage!.content,
-              style: const TextStyle(color: Colors.white54),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            )
-          : null,
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            _formatTime(conversation.updatedAt),
-            style: const TextStyle(color: Colors.white38, fontSize: 12),
-          ),
-          if (conversation.unreadCount > 0) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6E4DFF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                conversation.unreadCount.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundImage: conversation.participantAvatarUrl != null
+                      ? NetworkImage(conversation.participantAvatarUrl!)
+                      : null,
+                  backgroundColor: AppColors.slate,
+                  child: conversation.participantAvatarUrl == null
+                      ? Text(
+                          conversation.participantName[0].toUpperCase(),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        )
+                      : null,
                 ),
+                if (isOnline)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.shade400,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.nearBlack, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.participantName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: conversation.unreadCount > 0
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        _formatTime(conversation.updatedAt),
+                        style: TextStyle(
+                          color: conversation.unreadCount > 0
+                              ? AppColors.electricPurple
+                              : AppColors.coolGray,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.lastMessage?.content ?? 'Iniciar conversa',
+                          style: TextStyle(
+                            color: conversation.unreadCount > 0
+                                ? Colors.white70
+                                : AppColors.coolGray,
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (conversation.unreadCount > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.electricPurple,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${conversation.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
-  }
-
-  String _formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-
-    if (diff.inDays > 0) {
-      return '${diff.inDays}d';
-    } else if (diff.inHours > 0) {
-      return '${diff.inHours}h';
-    } else if (diff.inMinutes > 0) {
-      return '${diff.inMinutes}m';
-    } else {
-      return 'now';
-    }
   }
 }

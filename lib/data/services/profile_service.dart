@@ -54,4 +54,50 @@ class ProfileService {
     }
     return [];
   }
+
+  Future<Map<String, dynamic>> updateMyProfile({
+    String? displayName,
+    String? bio,
+    Map<String, String>? socialLinks,
+  }) async {
+    final body = <String, dynamic>{};
+    if (displayName != null) body['display_name'] = displayName;
+    if (bio != null) body['bio'] = bio;
+    if (socialLinks != null) body['social_links'] = socialLinks;
+    final response = await _dio.put('/profile/me', data: body);
+    return response.data['data'] ?? response.data;
+  }
+
+  Future<String> uploadAvatar(String filePath) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post(
+      '/profile/me/avatar',
+      data: form,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    return response.data['avatar_url'] as String;
+  }
+
+  Future<void> deleteAvatar() async {
+    await _dio.delete('/profile/me/avatar');
+  }
+
+  Future<String> uploadBanner(String filePath) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post(
+      '/profile/me/banner',
+      data: form,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+    return response.data['banner_url'] as String;
+  }
+
+  Future<void> deleteBanner() async {
+    await _dio.delete('/profile/me/banner');
+  }
+
 }

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/push_notification_service.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/user.dart';
@@ -75,6 +77,8 @@ class LoginViewModel extends _$LoginViewModel {
           .login(state.email, state.password);
       state = state.copyWith(status: AsyncValue.data(user));
       ref.read(authStateProvider.notifier).updateSession(user);
+      // Register FCM device token (best-effort, fails silently).
+      unawaited(ref.read(pushNotificationServiceProvider).registerWithBackend());
       return true;
     } on Failure catch (e, st) {
       state = state.copyWith(status: AsyncValue.error(e, st));

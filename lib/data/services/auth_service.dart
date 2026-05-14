@@ -27,6 +27,8 @@ class AuthService {
     required String password,
     required String name,
     String? sponsorCode,
+    bool termsAccepted = false,
+    bool privacyAccepted = false,
   }) async {
     final response = await _dio.post(
       '/auth/register/affiliate',
@@ -36,6 +38,8 @@ class AuthService {
         'name': name,
         if (sponsorCode != null && sponsorCode.isNotEmpty)
           'sponsor_code': sponsorCode,
+        'terms_accepted': termsAccepted,
+        'privacy_accepted': privacyAccepted,
       },
     );
     return response.data as Map<String, dynamic>;

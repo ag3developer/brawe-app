@@ -1,0 +1,91 @@
+class Story {
+  const Story({
+    required this.id,
+    required this.authorId,
+    required this.authorName,
+    required this.authorUsername,
+    this.authorAvatarUrl,
+    required this.mediaUrl,
+    this.mediaType = 'image',
+    this.thumbnailUrl,
+    this.caption,
+    this.durationSeconds,
+    this.viewsCount = 0,
+    this.reactionsCount = 0,
+    required this.createdAt,
+    this.expiresAt,
+    this.isSeen = false,
+    this.isVerified = false,
+  });
+
+  final String id;
+  final String authorId;
+  final String authorName;
+  final String authorUsername;
+  final String? authorAvatarUrl;
+  final String mediaUrl;
+  final String mediaType; // 'image' | 'video'
+  final String? thumbnailUrl;
+  final String? caption;
+  final int? durationSeconds;
+  final int viewsCount;
+  final int reactionsCount;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final bool isSeen;
+  final bool isVerified;
+
+  bool get isVideo => mediaType == 'video';
+
+  bool get isExpired {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  String get timeAgo {
+    final diff = DateTime.now().difference(createdAt);
+    if (diff.inHours < 1) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
+  }
+
+  Story copyWith({bool? isSeen}) => Story(
+        id: id,
+        authorId: authorId,
+        authorName: authorName,
+        authorUsername: authorUsername,
+        authorAvatarUrl: authorAvatarUrl,
+        mediaUrl: mediaUrl,
+        mediaType: mediaType,
+        thumbnailUrl: thumbnailUrl,
+        caption: caption,
+        durationSeconds: durationSeconds,
+        viewsCount: viewsCount,
+        reactionsCount: reactionsCount,
+        createdAt: createdAt,
+        expiresAt: expiresAt,
+        isSeen: isSeen ?? this.isSeen,
+        isVerified: isVerified,
+      );
+}
+
+/// Agrupamento de stories por usuário (formato do backend /stories/feed).
+class UserStoriesGroup {
+  const UserStoriesGroup({
+    required this.userId,
+    this.displayName,
+    this.username,
+    this.avatarUrl,
+    this.isVerified = false,
+    this.hasUnviewed = false,
+    required this.stories,
+  });
+
+  final String userId;
+  final String? displayName;
+  final String? username;
+  final String? avatarUrl;
+  final bool isVerified;
+  final bool hasUnviewed;
+  final List<Story> stories;
+}

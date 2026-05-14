@@ -222,7 +222,7 @@ class _GiftsGrid extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                '${gift.price.toInt()} 💎',
+                '${gift.price.toInt()} pts',
                 style: const TextStyle(color: AppColors.coolCyan, fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
