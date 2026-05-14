@@ -1,6 +1,19 @@
 # Changelog
 
+## 1.0.0 — 2025-01-01 (V1 — first public release)
+- 🚀 First public release: bundle id `app.brawe.connect`, display name "Brawe".
+- Branding: in-app `BraweLogo`, launcher icons (iOS + Android), splash screen.
+- Push notifications wired (Firebase Messaging + APNs production/development entitlements).
+- Universal Links (iOS) and App Links (Android) for `brawe.app` and `www.brawe.app`.
+- Terms & Privacy acceptance flow integrated with backend (`users.terms_*`, `users.privacy_*`).
+- Wallet, block/report and logout flows polished.
+- Privacy Manifest (`PrivacyInfo.xcprivacy`) declaring no cross-app tracking.
+- iOS Info.plist: 8 usage descriptions (Camera, Microphone, PhotoLibrary, PhotoLibraryAdd, UserTracking, LocationWhenInUse, Contacts, FaceID), ATS HTTPS enforced, locales pt-BR/en/es, background modes for push + audio.
+- Android: 10 runtime permissions declared, App Links autoVerify, `usesCleartextTraffic=false`.
+- Firebase Crashlytics wired with `runZonedGuarded` to capture Flutter + platform errors.
+
 ## Unreleased
+
 - Prevent duplicate live socket event handling by keeping `LiveRepository` alive for the app session and unregistering `live_chat`, viewer count, and gift listeners on disposal.
 - Request the current live viewer count immediately after joining a room so watcher totals refresh without waiting for a later socket push or heartbeat.
 - Present live gifts as a single animated toast notification instead of a stacked corner list so gift callouts feel closer to TikTok live interactions.
