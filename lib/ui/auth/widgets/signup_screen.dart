@@ -1,5 +1,7 @@
 import 'dart:ui';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -11,6 +13,7 @@ import '../../core/ui/app_spacing.dart';
 import '../view_models/signup_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
+import '../../../core/constants/app_constants.dart';
 import 'common/auth_input_field.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
@@ -546,17 +549,72 @@ class _TermsCheckbox extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-              child: Text(
-                'Li e aceito os Termos de Uso e a Política de Privacidade do Brawe.',
-                style: TextStyle(
-                  color: AppColors.coolGray.withValues(alpha: 0.85),
-                  fontSize: 12,
-                  height: 1.4,
-                ),
-              ),
+              child: _TermsRichText(),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Tappable legal text ─────────────────────────────────────────────────────
+class _TermsRichText extends StatefulWidget {
+  @override
+  State<_TermsRichText> createState() => _TermsRichTextState();
+}
+
+class _TermsRichTextState extends State<_TermsRichText> {
+  late final TapGestureRecognizer _termsTap;
+  late final TapGestureRecognizer _privacyTap;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsTap = TapGestureRecognizer()..onTap = () => _open(AppConstants.termsUrl);
+    _privacyTap = TapGestureRecognizer()..onTap = () => _open(AppConstants.privacyUrl);
+  }
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível abrir $url')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _termsTap.dispose();
+    _privacyTap.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = TextStyle(
+      color: AppColors.coolGray.withValues(alpha: 0.85),
+      fontSize: 12,
+      height: 1.4,
+    );
+    final link = base.copyWith(
+      color: AppColors.electricPurple,
+      decoration: TextDecoration.underline,
+      fontWeight: FontWeight.w600,
+    );
+    return RichText(
+      text: TextSpan(
+        style: base,
+        children: [
+          const TextSpan(text: 'Li e aceito os '),
+          TextSpan(text: 'Termos de Uso', style: link, recognizer: _termsTap),
+          const TextSpan(text: ' e a '),
+          TextSpan(text: 'Política de Privacidade', style: link, recognizer: _privacyTap),
+          const TextSpan(text: ' do Brawe.'),
+        ],
       ),
     );
   }

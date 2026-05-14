@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/constants/app_constants.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/push_notification_service.dart';
@@ -120,6 +123,34 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             _SectionHeader(
+              icon: Icons.info_outline,
+              title: 'Sobre & Legal',
+            ),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: const Text('Termos de Uso'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openExternal(context, AppConstants.termsUrl),
+            ),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Política de Privacidade'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openExternal(context, AppConstants.privacyUrl),
+            ),
+            ListTile(
+              leading: const Icon(Icons.support_agent_outlined),
+              title: const Text('Suporte'),
+              trailing: const Icon(Icons.open_in_new, size: 18),
+              onTap: () => _openExternal(context, AppConstants.supportUrl),
+            ),
+            const ListTile(
+              leading: Icon(Icons.tag_outlined),
+              title: Text('Versão'),
+              trailing: Text('1.0.0'),
+            ),
+            const SizedBox(height: 24),
+            _SectionHeader(
               icon: Icons.logout,
               title: 'Conta',
             ),
@@ -138,7 +169,18 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  Future<void> _openExternal(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível abrir $url')),
+        );
+      }
+    }
+  }
+
+    Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

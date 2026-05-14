@@ -57,6 +57,7 @@ dependencies:
   firebase_core: ^4.8.0
   firebase_messaging: ^16.2.1
   firebase_crashlytics: ^5.0.0
+  url_launcher: ^6.3.1
   flutter_local_notifications: ^21.0.0
 
 dev_dependencies:

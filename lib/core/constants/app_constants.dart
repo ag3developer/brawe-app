@@ -8,6 +8,17 @@ class AppConstants {
   static const String connectApiV1Url = '$connectApiBaseUrl/api/v1';
   static const String appApiV1Url = '$appApiBaseUrl/api/v1';
 
+  // Public legal pages (hosted at brawe.app)
+  static const String legalBaseUrl = 'https://brawe.app';
+  static const String termsUrl = '$legalBaseUrl/terms';
+  static const String privacyUrl = '$legalBaseUrl/privacy';
+  static const String supportUrl = '$legalBaseUrl/support';
+  static const String supportEmail = 'support@brawe.app';
+
+  // Legal versions (must match backend TERMS_VERSION / PRIVACY_VERSION)
+  static const String termsVersion = '2025-01-01';
+  static const String privacyVersion = '2025-01-01';
+
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'auth_user';
