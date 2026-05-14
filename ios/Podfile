@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -37,7 +37,50 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # Patch: Xcode 16+ rejeita #import "Header.h" em umbrella headers de framework.
+  # Reescrevemos para o formato angle-bracket APENAS nos pods que sabemos que
+  # precisam (Logboard, HaishinKit). NÃO mexer em pods do Firebase/Google
+  # (PromisesObjC tem module name != pod name e quebra com esse patch).
+  pods_to_patch = %w[Logboard HaishinKit]
+  pods_to_patch.each do |pod_name|
+    Dir.glob(File.expand_path("Pods/Target Support Files/#{pod_name}/*-umbrella.h", __dir__)).each do |umbrella|
+      content = File.read(umbrella)
+      patched = content.gsub(/#import\s+"([^"]+\.h)"/) do |_match|
+        header = Regexp.last_match(1)
+        "#import <#{pod_name}/#{header}>"
+      end
+      if patched != content
+        File.write(umbrella, patched)
+        puts "✓ Patched umbrella header: #{pod_name}"
+      end
+    end
+  end
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    target.build_configurations.each do |config|
+      # Force minimum deployment target on every pod (alguns vêm com 9.0 e quebram no Xcode 16+).
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+
+      # Silencia warnings de código de terceiros (HaishinKit, rtmp_broadcaster, etc.)
+      # — não conseguimos consertar libs de fora, e ruído polui o build do app.
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+
+      # Logboard (dep do HaishinKit) usa #include "Logboard.h" no umbrella header,
+      # o que o Xcode trata como erro em frameworks. Desligamos só essa flag.
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+
+      # Permissões necessárias por permission_handler + silencia OpenGLES deprecation
+      # do HaishinKit (GLKView).
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_PHOTOS=1',
+        'GLES_SILENCE_DEPRECATION=1',
+      ]
+    end
   end
 end
