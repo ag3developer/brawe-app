@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import 'common/auth_action_button.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -68,9 +68,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF080810),
+      backgroundColor: colors.background,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -102,7 +103,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       child: Icon(
                         data.icon,
                         size: data.size.toDouble(),
-                        color: AppColors.electricPurple,
+                        color: colors.accentPrimary,
                       ),
                     ),
                   );
@@ -122,8 +123,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.electricPurple.withValues(alpha: 0.12),
-                    AppColors.electricPurple.withValues(alpha: 0.0),
+                    colors.accentPrimary.withValues(alpha: 0.12),
+                    colors.accentPrimary.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -150,13 +151,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               'assets/images/brawe_logo.png',
                               width: 140,
                               height: 140,
-                              color: Colors.white,
+                              color: colors.textPrimary,
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Conecte. Transmita. Cresça.',
                               style: TextStyle(
-                                color: Color(0xFF5A5A6A),
+                                color: colors.textSecondary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: 0.2,
@@ -180,11 +181,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             onTap: () => context.push('/login'),
                           ),
                           const SizedBox(height: 28),
-                          const Center(
+                          Center(
                             child: Text(
                               'Ao continuar você aceita os Termos de Uso.',
                               style: TextStyle(
-                                color: Color(0xFF2A2A3A),
+                                color: colors.textTertiary,
                                 fontSize: 11,
                               ),
                             ),
@@ -212,20 +213,21 @@ class _OutlineBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: const Color(0xFF0F0F1C),
+          color: colors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF1E1E2E)),
+          border: Border.all(color: colors.border),
         ),
-        child: const Center(
+        child: Center(
           child: Text(
-            'Já tenho uma conta',
+            label,
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),

@@ -15,6 +15,7 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   giftName: json['giftName'] as String,
   giftIconUrl: json['giftIconUrl'] as String?,
   quantity: (json['quantity'] as num).toInt(),
+  value: (json['value'] as num?)?.toInt() ?? 0,
   timestamp: DateTime.parse(json['timestamp'] as String),
 );
 
@@ -27,5 +28,6 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'giftName': instance.giftName,
   'giftIconUrl': instance.giftIconUrl,
   'quantity': instance.quantity,
+  'value': instance.value,
   'timestamp': instance.timestamp.toIso8601String(),
 };

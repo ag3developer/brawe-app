@@ -100,6 +100,9 @@ class ChatMessage {
     this.isViewOnce = false,
     this.isBurned = false,
     this.viewedAt,
+    this.replyToMessageId,
+    this.replyTo,
+    this.reactions = const {},
   });
 
   final String id;
@@ -114,6 +117,15 @@ class ChatMessage {
   final bool isBurned;
   final DateTime? viewedAt;
 
+  /// ID da mensagem citada (reply) — null se a mensagem não é resposta.
+  final String? replyToMessageId;
+
+  /// Preview denormalizado da mensagem citada (sender_id, content truncado, type).
+  final ReplyPreview? replyTo;
+
+  /// Reações por emoji: { "❤️": ["userId1", "userId2"], "🔥": ["userId3"] }
+  final Map<String, List<String>> reactions;
+
   ChatMessage copyWith({
     String? id,
     String? conversationId,
@@ -126,6 +138,9 @@ class ChatMessage {
     bool? isViewOnce,
     bool? isBurned,
     DateTime? viewedAt,
+    String? replyToMessageId,
+    ReplyPreview? replyTo,
+    Map<String, List<String>>? reactions,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -139,6 +154,9 @@ class ChatMessage {
       isViewOnce: isViewOnce ?? this.isViewOnce,
       isBurned: isBurned ?? this.isBurned,
       viewedAt: viewedAt ?? this.viewedAt,
+      replyToMessageId: replyToMessageId ?? this.replyToMessageId,
+      replyTo: replyTo ?? this.replyTo,
+      reactions: reactions ?? this.reactions,
     );
   }
 
@@ -147,6 +165,25 @@ class ChatMessage {
     Map<String, dynamic> json, {
     String? fallbackConversationId,
   }) {
+    // reactions: backend retorna {"❤️": ["uid1", "uid2"], ...}
+    final rawReactions = json['reactions'];
+    final reactions = <String, List<String>>{};
+    if (rawReactions is Map) {
+      rawReactions.forEach((k, v) {
+        if (v is List) {
+          reactions[k.toString()] =
+              v.map((e) => e.toString()).toList(growable: false);
+        }
+      });
+    }
+
+    // replyTo preview (opcional)
+    ReplyPreview? replyTo;
+    final rawReply = json['reply_to'];
+    if (rawReply is Map) {
+      replyTo = ReplyPreview.fromApi(Map<String, dynamic>.from(rawReply));
+    }
+
     return ChatMessage(
       id: json['id']?.toString() ??
           DateTime.now().microsecondsSinceEpoch.toString(),
@@ -162,6 +199,36 @@ class ChatMessage {
       isViewOnce: json['is_view_once'] == true,
       isBurned: json['is_burned'] == true,
       viewedAt: _parseDateTime(json['viewed_at']),
+      replyToMessageId: json['reply_to_message_id']?.toString(),
+      replyTo: replyTo,
+      reactions: reactions,
+    );
+  }
+}
+
+/// Preview denormalizado da mensagem citada (retornada pelo backend).
+class ReplyPreview {
+  const ReplyPreview({
+    required this.id,
+    required this.senderId,
+    required this.content,
+    required this.messageType,
+    this.isBurned = false,
+  });
+
+  final String id;
+  final String senderId;
+  final String content;
+  final String messageType;
+  final bool isBurned;
+
+  factory ReplyPreview.fromApi(Map<String, dynamic> json) {
+    return ReplyPreview(
+      id: json['id']?.toString() ?? '',
+      senderId: json['sender_id']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
+      messageType: json['message_type']?.toString() ?? 'text',
+      isBurned: json['is_burned'] == true,
     );
   }
 }

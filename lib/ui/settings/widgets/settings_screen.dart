@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -7,7 +8,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/push_notification_service.dart';
 
-import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../view_models/settings_view_model.dart';
 import '../view_models/theme_view_model.dart';
@@ -22,7 +23,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const BraweLogo(iconSize: 32),
+        title: const BraweLogo(iconSize: 40),
         centerTitle: true,
         leading: const BackButton(),
       ),
@@ -155,12 +156,28 @@ class SettingsScreen extends ConsumerWidget {
               title: 'Conta',
             ),
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.redAccent),
-              title: const Text(
+              leading: const Icon(Icons.lock_reset_outlined),
+              title: const Text('Alterar senha'),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => context.push('/settings/change-password'),
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: context.colors.danger),
+              title: Text(
                 'Sair',
-                style: TextStyle(color: Colors.redAccent),
+                style: TextStyle(color: context.colors.danger),
               ),
               onTap: () => _confirmLogout(context, ref),
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_forever_outlined,
+                  color: context.colors.danger),
+              title: Text(
+                'Excluir conta',
+                style: TextStyle(color: context.colors.danger),
+              ),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => context.push('/settings/delete-account'),
             ),
             const SizedBox(height: 32),
           ],
@@ -192,7 +209,7 @@ class SettingsScreen extends ConsumerWidget {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Sair'),
           ),
@@ -252,7 +269,7 @@ class _SwitchTile extends StatelessWidget {
       subtitle: subtitle == null ? null : Text(subtitle!),
       value: value,
       onChanged: onChanged,
-      activeThumbColor: AppColors.electricPurple,
+      activeThumbColor: context.colors.accentPrimary,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20),
     );
   }
@@ -328,7 +345,7 @@ class _ThemeOption extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: selected ? Colors.white : scheme.onSurface,
+                color: selected ? context.colors.textOnAccent : scheme.onSurface,
                 size: 22,
               ),
               const SizedBox(height: 6),
@@ -336,7 +353,7 @@ class _ThemeOption extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : scheme.onSurface,
+                  color: selected ? context.colors.textOnAccent : scheme.onSurface,
                 ),
               ),
             ],

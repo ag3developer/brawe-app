@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_colors.dart';
+import '../../../core/themes/brawe_colors.dart';
 
 class AuthBackground extends StatefulWidget {
   const AuthBackground({super.key});
@@ -30,17 +30,19 @@ class _AuthBackgroundState extends State<AuthBackground>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Fundo sólido escuro — sem gradiente colorido
-        const ColoredBox(color: Color(0xFF080810)),
-        // Um único orb sutil no topo — não polui
+        ColoredBox(color: colors.background),
         AnimatedBuilder(
           animation: _controller,
           builder: (context, _) {
             return CustomPaint(
-              painter: _SingleOrbPainter(_controller.value),
+              painter: _SingleOrbPainter(
+                t: _controller.value,
+                accent: colors.accentPrimary,
+              ),
             );
           },
         ),
@@ -50,8 +52,9 @@ class _AuthBackgroundState extends State<AuthBackground>
 }
 
 class _SingleOrbPainter extends CustomPainter {
-  _SingleOrbPainter(this.t);
+  _SingleOrbPainter({required this.t, required this.accent});
   final double t;
+  final Color accent;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -61,8 +64,8 @@ class _SingleOrbPainter extends CustomPainter {
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
-          AppColors.electricPurple.withValues(alpha: 0.18),
-          AppColors.electricPurple.withValues(alpha: 0.0),
+          accent.withValues(alpha: 0.18),
+          accent.withValues(alpha: 0.0),
         ],
       ).createShader(
           Rect.fromCircle(center: Offset(cx, cy), radius: radius));
@@ -70,5 +73,6 @@ class _SingleOrbPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SingleOrbPainter old) => old.t != t;
+  bool shouldRepaint(covariant _SingleOrbPainter old) =>
+      old.t != t || old.accent != accent;
 }

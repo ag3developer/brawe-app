@@ -1,12 +1,20 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_player/video_player.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/stories_view_model.dart';
 
 class CreateStorySheet extends ConsumerStatefulWidget {
-  const CreateStorySheet({super.key});
+  /// Se [initialRemoteUrl] for fornecido, a sheet abre já com essa imagem
+  /// pré-carregada (baixada para um arquivo temporário). Usado pelo
+  /// "Compartilhar como Story" no feed.
+  const CreateStorySheet({super.key, this.initialRemoteUrl});
+
+  final String? initialRemoteUrl;
 
   @override
   ConsumerState<CreateStorySheet> createState() => _CreateStorySheetState();
@@ -17,37 +25,107 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
   File? _selectedFile;
   String _mediaType = 'image';
   bool _isPublishing = false;
+  bool _isPrefetching = false;
+  VideoPlayerController? _videoPreviewController;
+
+  @override
+  void initState() {
+    super.initState();
+    final url = widget.initialRemoteUrl;
+    if (url != null && url.isNotEmpty) {
+      _prefetchRemote(url);
+    }
+  }
+
+  Future<void> _prefetchRemote(String url) async {
+    setState(() => _isPrefetching = true);
+    try {
+      final dir = await getTemporaryDirectory();
+      final isVideo = url.endsWith('.mp4') ||
+          url.endsWith('.mov') ||
+          url.endsWith('.webm');
+      final ext = isVideo ? 'mp4' : 'jpg';
+      final tmpPath =
+          '${dir.path}/story_share_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final dio = Dio();
+      await dio.download(url, tmpPath);
+      if (!mounted) return;
+      await _setSelected(XFile(tmpPath), isVideo: isVideo);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Falha ao carregar imagem do post.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isPrefetching = false);
+    }
+  }
 
   @override
   void dispose() {
     _captionController.dispose();
+    _videoPreviewController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _setSelected(XFile picked, {required bool isVideo}) async {
+    await _videoPreviewController?.dispose();
+    _videoPreviewController = null;
+
+    final file = File(picked.path);
+    if (isVideo) {
+      final ctrl = VideoPlayerController.file(file);
+      try {
+        await ctrl.initialize();
+        ctrl
+          ..setLooping(true)
+          ..setVolume(0)
+          ..play();
+        _videoPreviewController = ctrl;
+      } catch (_) {
+        // ignore — fallback: vai mostrar spinner
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _selectedFile = file;
+      _mediaType = isVideo ? 'video' : 'image';
+    });
   }
 
   Future<void> _pickFromGallery({required bool isVideo}) async {
     final picker = ImagePicker();
     final XFile? picked = isVideo
-        ? await picker.pickVideo(source: ImageSource.gallery)
-        : await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+        ? await picker.pickVideo(
+            source: ImageSource.gallery,
+            maxDuration: const Duration(seconds: 60),
+          )
+        : await picker.pickImage(
+            source: ImageSource.gallery, imageQuality: 85);
     if (picked != null) {
-      setState(() {
-        _selectedFile = File(picked.path);
-        _mediaType = isVideo ? 'video' : 'image';
-      });
+      await _setSelected(picked, isVideo: isVideo);
     }
   }
 
   Future<void> _pickFromCamera({required bool isVideo}) async {
     final picker = ImagePicker();
     final XFile? picked = isVideo
-        ? await picker.pickVideo(source: ImageSource.camera)
-        : await picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+        ? await picker.pickVideo(
+            source: ImageSource.camera,
+            maxDuration: const Duration(seconds: 60),
+          )
+        : await picker.pickImage(
+            source: ImageSource.camera, imageQuality: 85);
     if (picked != null) {
-      setState(() {
-        _selectedFile = File(picked.path);
-        _mediaType = isVideo ? 'video' : 'image';
-      });
+      await _setSelected(picked, isVideo: isVideo);
     }
+  }
+
+  Future<void> _resetSelection() async {
+    await _videoPreviewController?.dispose();
+    _videoPreviewController = null;
+    if (!mounted) return;
+    setState(() => _selectedFile = null);
   }
 
   Future<void> _publish() async {
@@ -134,8 +212,9 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                     ),
                   ),
                   TextButton(
-                    onPressed:
-                        (_selectedFile != null && !_isPublishing) ? _publish : null,
+                    onPressed: (_selectedFile != null && !_isPublishing)
+                        ? _publish
+                        : null,
                     child: _isPublishing
                         ? const SizedBox(
                             width: 18,
@@ -169,7 +248,23 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                     border: Border.all(color: Colors.white12),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _selectedFile == null
+                  child: _isPrefetching
+                      ? const Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(
+                                color: AppColors.electricPurple,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'Carregando imagem do post...',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _selectedFile == null
                       ? _PickerPlaceholder(
                           onGalleryImage: () =>
                               _pickFromGallery(isVideo: false),
@@ -177,25 +272,32 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                               _pickFromGallery(isVideo: true),
                           onCameraImage: () =>
                               _pickFromCamera(isVideo: false),
+                          onCameraVideo: () =>
+                              _pickFromCamera(isVideo: true),
                         )
                       : _mediaType == 'image'
                           ? Image.file(_selectedFile!, fit: BoxFit.cover)
-                          : Container(
-                              color: Colors.black54,
-                              alignment: Alignment.center,
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.videocam,
-                                      color: Colors.white, size: 48),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Vídeo selecionado',
-                                    style: TextStyle(color: Colors.white),
+                          : (_videoPreviewController != null &&
+                                  _videoPreviewController!
+                                      .value.isInitialized)
+                              ? FittedBox(
+                                  fit: BoxFit.cover,
+                                  child: SizedBox(
+                                    width: _videoPreviewController!
+                                        .value.size.width,
+                                    height: _videoPreviewController!
+                                        .value.size.height,
+                                    child: VideoPlayer(
+                                        _videoPreviewController!),
                                   ),
-                                ],
-                              ),
-                            ),
+                                )
+                              : Container(
+                                  color: Colors.black54,
+                                  alignment: Alignment.center,
+                                  child: const CircularProgressIndicator(
+                                    color: AppColors.electricPurple,
+                                  ),
+                                ),
                 ),
               ),
             ),
@@ -228,7 +330,7 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                 child: Row(
                   children: [
                     TextButton.icon(
-                      onPressed: () => setState(() => _selectedFile = null),
+                      onPressed: _resetSelection,
                       icon: const Icon(Icons.refresh, color: Colors.white70),
                       label: const Text(
                         'Trocar mídia',
@@ -250,49 +352,92 @@ class _PickerPlaceholder extends StatelessWidget {
     required this.onGalleryImage,
     required this.onGalleryVideo,
     required this.onCameraImage,
+    required this.onCameraVideo,
   });
 
   final VoidCallback onGalleryImage;
   final VoidCallback onGalleryVideo;
   final VoidCallback onCameraImage;
+  final VoidCallback onCameraVideo;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       color: const Color(0xFF0F1320),
       alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.add_a_photo_outlined,
-              color: Colors.white54, size: 56),
-          const SizedBox(height: 12),
-          const Text(
-            'Selecione uma mídia',
-            style: TextStyle(color: Colors.white70, fontSize: 15),
-          ),
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 12,
-            children: [
-              _PickerChip(
-                icon: Icons.photo_library,
-                label: 'Foto',
-                onTap: onGalleryImage,
-              ),
-              _PickerChip(
-                icon: Icons.video_library,
-                label: 'Vídeo',
-                onTap: onGalleryVideo,
-              ),
-              _PickerChip(
-                icon: Icons.photo_camera,
-                label: 'Câmera',
-                onTap: onCameraImage,
-              ),
-            ],
-          ),
-        ],
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.add_a_photo_outlined,
+                color: Colors.white54, size: 56),
+            const SizedBox(height: 12),
+            const Text(
+              'Selecione ou grave uma mídia',
+              style: TextStyle(color: Colors.white70, fontSize: 15),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Foto ou vídeo (até 60s)',
+              style: TextStyle(color: Colors.white38, fontSize: 12),
+            ),
+            const SizedBox(height: 20),
+            const _SectionLabel(label: 'Galeria'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                _PickerChip(
+                    icon: Icons.photo_library,
+                    label: 'Foto',
+                    onTap: onGalleryImage),
+                _PickerChip(
+                    icon: Icons.video_library,
+                    label: 'Vídeo',
+                    onTap: onGalleryVideo),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const _SectionLabel(label: 'Câmera'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                _PickerChip(
+                    icon: Icons.photo_camera,
+                    label: 'Foto',
+                    onTap: onCameraImage),
+                _PickerChip(
+                    icon: Icons.videocam,
+                    label: 'Gravar vídeo',
+                    onTap: onCameraVideo),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: Colors.white54,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.2,
       ),
     );
   }

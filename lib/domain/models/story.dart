@@ -78,6 +78,8 @@ class UserStoriesGroup {
     this.avatarUrl,
     this.isVerified = false,
     this.hasUnviewed = false,
+    this.isLive = false,
+    this.liveRoomId,
     required this.stories,
   });
 
@@ -87,5 +89,41 @@ class UserStoriesGroup {
   final String? avatarUrl;
   final bool isVerified;
   final bool hasUnviewed;
+  final bool isLive;
+  final String? liveRoomId;
   final List<Story> stories;
+}
+
+/// Item retornado por GET /stories/{id}/viewers
+class StoryViewerInfo {
+  const StoryViewerInfo({
+    required this.userId,
+    required this.name,
+    required this.username,
+    this.avatarUrl,
+    this.isVerified = false,
+    required this.viewedAt,
+    this.reaction,
+  });
+
+  final String userId;
+  final String name;
+  final String username;
+  final String? avatarUrl;
+  final bool isVerified;
+  final DateTime viewedAt;
+  final String? reaction;
+
+  factory StoryViewerInfo.fromJson(Map<String, dynamic> json) {
+    return StoryViewerInfo(
+      userId: (json['user_id'] ?? '') as String,
+      name: (json['name'] ?? '') as String,
+      username: (json['username'] ?? '') as String,
+      avatarUrl: json['avatar_url'] as String?,
+      isVerified: (json['is_verified'] ?? false) as bool,
+      viewedAt: DateTime.tryParse((json['viewed_at'] ?? '') as String) ??
+          DateTime.now(),
+      reaction: json['reaction'] as String?,
+    );
+  }
 }

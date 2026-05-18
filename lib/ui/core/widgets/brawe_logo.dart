@@ -10,7 +10,7 @@ class BraweLogo extends StatelessWidget {
 
   const BraweLogo({
     super.key,
-    this.iconSize = 36,
+    this.iconSize = 44,
     this.showTagline = true,
     this.taglineColor,
     this.alignment = MainAxisAlignment.center,
@@ -37,7 +37,7 @@ class BraweLogo extends StatelessWidget {
           Text(
             'Live your way',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 13,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
               color: tagColor,

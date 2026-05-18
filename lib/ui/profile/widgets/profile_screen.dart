@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../../config/feature_flags.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/follow_button.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
@@ -19,6 +23,11 @@ import '../../../domain/models/profile_state.dart';
 import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
+import 'profile_gallery_grid.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import '../../../data/repositories/stories_repository.dart';
+import '../../../domain/models/story.dart';
+import '../../feed/widgets/story_viewer.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
 /// Filtra valores vazios, IDs internos (ex.: BF-10006, AF-2023) e UUIDs.
@@ -31,6 +40,41 @@ String? _realHandle(String? raw) {
   // UUID
   if (RegExp(r'^[0-9a-fA-F]{8}-').hasMatch(v)) return null;
   return v;
+}
+
+/// Stories ativos de um usuário (vazio se não houver / 404).
+final userStoriesProvider =
+    FutureProvider.autoDispose.family<List<Story>, String>((ref, userId) async {
+  final repo = ref.watch(storiesRepositoryProvider);
+  try {
+    return await repo.getUserStories(userId);
+  } catch (_) {
+    return const <Story>[];
+  }
+});
+
+void _openStoryViewer(BuildContext context, WidgetRef ref, List<Story> stories) {
+  if (stories.isEmpty) return;
+  // Abre no primeiro story não-visto, ou no primeiro caso todos vistos.
+  final firstUnseen = stories.indexWhere((s) => !s.isSeen);
+  final initial = firstUnseen >= 0 ? firstUnseen : 0;
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => ForceDarkTheme(
+        child: StoryViewer(
+          stories: stories,
+          initialIndex: initial,
+          onStoryViewed: (storyId) {
+            // Invalida o cache de stories desse usuário ao terminar.
+            if (stories.isNotEmpty) {
+              ref.invalidate(userStoriesProvider(stories.first.authorId));
+            }
+          },
+        ),
+      ),
+    ),
+  );
 }
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -58,6 +102,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _loadProducts() async {
+    // Loja desativada na v1.0 enquanto IAP não estiver implementado.
+    if (!kEnableMonetization) return;
     try {
       final products = await ref
           .read(productRepositoryProvider)
@@ -186,7 +232,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     );
                   },
                 ),
-              if (isMe)
+              if (isMe && kEnableMonetization)
                 IconButton(
                   icon: const Icon(
                     Icons.account_balance_wallet_outlined,
@@ -241,11 +287,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             controller: _tabController,
             children: [
               _PostsGrid(postsState: profileState.posts),
-              _GalleryGrid(
-                postsState: profileState.posts,
-                isMe: isMe,
-                onCreate: () => _openCreatePostSheet(context),
-              ),
+              ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
               _LivesGrid(livesState: profileState.lives),
               if (_isSeller) _ProductsGrid(products: products),
             ],
@@ -272,7 +314,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
     final handle = _realHandle(profile?.username) ?? widget.userId;
     final name = profile?.displayName ?? handle;
-    final url = 'https://brawe.io/connect/u/$handle';
+    final url = 'https://brawe.app/connect/u/$handle';
     final text = 'Confira $name no Brawe Connect: $url';
     try {
       // ignore: deprecated_member_use
@@ -283,6 +325,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         const SnackBar(content: Text('Não foi possível compartilhar.')),
       );
     }
+  }
+
+  Future<void> _copyProfileLink(BuildContext context) async {
+    final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
+    final handle = _realHandle(profile?.username) ?? widget.userId;
+    final url = 'https://brawe.app/connect/u/$handle';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Link copiado para a área de transferência')),
+    );
   }
 
   Future<void> _confirmBlock(BuildContext context) async {
@@ -422,6 +475,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 },
               ),
               ListTile(
+                leading: const Icon(Icons.link, color: Colors.white),
+                title: const Text('Copiar link',
+                    style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _copyProfileLink(context);
+                },
+              ),
+              ListTile(
                 leading: const Icon(Icons.block, color: Colors.white),
                 title: const Text('Bloquear',
                     style: TextStyle(color: Colors.white)),
@@ -451,17 +513,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 },
               ),
               const Divider(color: Colors.white12, height: 1),
-              ListTile(
-                leading: const Icon(Icons.account_balance_wallet_outlined,
-                    color: Colors.white),
-                title: const Text('Carteira',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.push('/wallet');
-                },
-              ),
-              const Divider(color: Colors.white12, height: 1),
+              if (kEnableMonetization) ...[
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined,
+                      color: Colors.white),
+                  title: const Text('Carteira',
+                      style: TextStyle(color: Colors.white)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/wallet');
+                  },
+                ),
+                const Divider(color: Colors.white12, height: 1),
+              ],
               ListTile(
                 leading: const Icon(Icons.notifications_outlined,
                     color: Colors.white),
@@ -606,14 +670,25 @@ class _ProfileHeader extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Banner / Capa ──────────────────────────────────────────────
-        _BannerSection(
-          bannerUrl: profile.bannerUrl,
-          avatarUrl: profile.avatarUrl,
-          initials: _initialsFor(profile),
-          isMe: isMe,
-          onEditProfile: () {},
-          onSettings: () => context.push('/settings'),
-        ),
+        Builder(builder: (context) {
+          final storiesAsync = ref.watch(userStoriesProvider(userId));
+          final stories = storiesAsync.asData?.value ?? const <Story>[];
+          final hasStories = stories.isNotEmpty;
+          final hasUnviewed = stories.any((s) => !s.isSeen);
+          return _BannerSection(
+            bannerUrl: profile.bannerUrl,
+            avatarUrl: profile.avatarUrl,
+            initials: _initialsFor(profile),
+            isMe: isMe,
+            onEditProfile: () => context.push('/edit-profile'),
+            onSettings: () => context.push('/settings'),
+            hasStories: hasStories,
+            hasUnviewedStories: hasUnviewed,
+            onAvatarTap: hasStories
+                ? () => _openStoryViewer(context, ref, stories)
+                : null,
+          );
+        }),
 
         // Espaço reservado para o avatar sobreposto (Positioned bottom: -48)
         // + espaçamento até o nome, evitando que o nome se sobreponha à foto.
@@ -715,7 +790,7 @@ class _ProfileHeader extends ConsumerWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap: () => context.push('/edit-profile'),
               child: Container(
                 height: 40,
                 decoration: BoxDecoration(
@@ -829,6 +904,9 @@ class _BannerSection extends StatelessWidget {
     required this.isMe,
     required this.onEditProfile,
     required this.onSettings,
+    this.hasStories = false,
+    this.hasUnviewedStories = false,
+    this.onAvatarTap,
   });
   final String? bannerUrl;
   final String? avatarUrl;
@@ -836,6 +914,9 @@ class _BannerSection extends StatelessWidget {
   final bool isMe;
   final VoidCallback onEditProfile;
   final VoidCallback onSettings;
+  final bool hasStories;
+  final bool hasUnviewedStories;
+  final VoidCallback? onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -860,38 +941,49 @@ class _BannerSection extends StatelessWidget {
               : null,
         ),
 
-        // Avatar com anel gradiente, sobreposto no banner
+        // Avatar com anel (gradiente quando há stories não vistos,
+        // cinza quando já foram vistos, neutro quando não há stories)
         Positioned(
           left: 16,
           bottom: -48,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFE040FB),
-                      Color(0xFFFF6B35),
-                      Color(0xFF7C4DFF),
-                    ],
-                  ),
-                ),
+              GestureDetector(
+                onTap: onAvatarTap,
                 child: Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: const BoxDecoration(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.nearBlack,
+                    gradient: hasUnviewedStories
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFE040FB),
+                              Color(0xFFFF6B35),
+                              Color(0xFF7C4DFF),
+                            ],
+                          )
+                        : null,
+                    color: hasUnviewedStories
+                        ? null
+                        : hasStories
+                            ? Colors.white24
+                            : Colors.transparent,
                   ),
-                  child: ClipOval(
-                    child: SizedBox(
-                      width: 86,
-                      height: 86,
-                      child: _Avatar(url: avatarUrl, initials: initials),
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.nearBlack,
+                    ),
+                    child: ClipOval(
+                      child: SizedBox(
+                        width: 86,
+                        height: 86,
+                        child: _Avatar(url: avatarUrl, initials: initials),
+                      ),
                     ),
                   ),
                 ),
@@ -1018,31 +1110,72 @@ class _SocialLinks extends StatelessWidget {
   const _SocialLinks({required this.links});
   final Map<String, String> links;
 
-  static final _config = {
-    'tiktok':    _SocialLinkStyle(color: const Color(0xFF1A1A1A), border: const Color(0xFFFFFFFF), label: 'TikTok',    icon: FontAwesomeIcons.tiktok),
-    'whatsapp':  _SocialLinkStyle(color: const Color(0xFF0A3A1A), border: const Color(0xFF25D366), label: 'WhatsApp',  icon: FontAwesomeIcons.whatsapp),
+  // Paleta nativa: usamos `Icons.public` (globo Material) para website e
+  // `Icons.mail_outline` para email — ambos nativos do sistema, sem FA.
+  // Para as marcas (Instagram, X, YouTube, etc.) usamos FontAwesomeIcons
+  // que entrega o logotipo oficial mais reconhecível.
+  static final Map<String, _SocialLinkStyle> _config = {
+    'website':   _SocialLinkStyle(color: const Color(0xFF1A1428), border: const Color(0xFFB39DDB), label: 'Website',   icon: Icons.public,                 isNative: true),
+    'site':      _SocialLinkStyle(color: const Color(0xFF1A1428), border: const Color(0xFFB39DDB), label: 'Site',      icon: Icons.public,                 isNative: true),
+    'email':     _SocialLinkStyle(color: const Color(0xFF2A2010), border: const Color(0xFFFFB74D), label: 'Email',     icon: Icons.mail_outline,           isNative: true),
     'instagram': _SocialLinkStyle(color: const Color(0xFF2A1020), border: const Color(0xFFE1306C), label: 'Instagram', icon: FontAwesomeIcons.instagram),
+    'twitter':   _SocialLinkStyle(color: const Color(0xFF0E0E0E), border: const Color(0xFFFFFFFF), label: 'X',         icon: FontAwesomeIcons.xTwitter),
+    'x':         _SocialLinkStyle(color: const Color(0xFF0E0E0E), border: const Color(0xFFFFFFFF), label: 'X',         icon: FontAwesomeIcons.xTwitter),
     'youtube':   _SocialLinkStyle(color: const Color(0xFF2A0A0A), border: const Color(0xFFFF0000), label: 'YouTube',   icon: FontAwesomeIcons.youtube),
-    'twitter':   _SocialLinkStyle(color: const Color(0xFF0A1A2A), border: const Color(0xFF1DA1F2), label: 'Twitter',   icon: FontAwesomeIcons.xTwitter),
+    'tiktok':    _SocialLinkStyle(color: const Color(0xFF1A1A1A), border: const Color(0xFFFFFFFF), label: 'TikTok',    icon: FontAwesomeIcons.tiktok),
+    'telegram':  _SocialLinkStyle(color: const Color(0xFF0A1A2A), border: const Color(0xFF2AABEE), label: 'Telegram',  icon: FontAwesomeIcons.telegram),
+    'whatsapp':  _SocialLinkStyle(color: const Color(0xFF0A3A1A), border: const Color(0xFF25D366), label: 'WhatsApp',  icon: FontAwesomeIcons.whatsapp),
     'twitch':    _SocialLinkStyle(color: const Color(0xFF1A0A2A), border: const Color(0xFF9146FF), label: 'Twitch',    icon: FontAwesomeIcons.twitch),
+    'kick':      _SocialLinkStyle(color: const Color(0xFF0A2A14), border: const Color(0xFF53FC18), label: 'Kick',      icon: Icons.sports_esports,         isNative: true),
+    'spotify':   _SocialLinkStyle(color: const Color(0xFF0A1F0E), border: const Color(0xFF1DB954), label: 'Spotify',   icon: FontAwesomeIcons.spotify),
+    'linkedin':  _SocialLinkStyle(color: const Color(0xFF0A1F2A), border: const Color(0xFF0A66C2), label: 'LinkedIn',  icon: FontAwesomeIcons.linkedinIn),
+    'github':    _SocialLinkStyle(color: const Color(0xFF14141A), border: const Color(0xFFCCCCCC), label: 'GitHub',    icon: FontAwesomeIcons.github),
+    'threads':   _SocialLinkStyle(color: const Color(0xFF14141A), border: const Color(0xFFFFFFFF), label: 'Threads',   icon: FontAwesomeIcons.threads),
+    'snapchat':  _SocialLinkStyle(color: const Color(0xFF2A2A0A), border: const Color(0xFFFFFC00), label: 'Snapchat',  icon: FontAwesomeIcons.snapchat),
+    'discord':   _SocialLinkStyle(color: const Color(0xFF14142A), border: const Color(0xFF5865F2), label: 'Discord',   icon: FontAwesomeIcons.discord),
+    'facebook':  _SocialLinkStyle(color: const Color(0xFF0A1A3A), border: const Color(0xFF1877F2), label: 'Facebook',  icon: FontAwesomeIcons.facebook),
   };
+
+  /// Estilo neutro para chaves desconhecidas ou links customizados sem ícone:
+  /// usa globo Material (Icons.public) — comportamento de link de site externo.
+  static _SocialLinkStyle _fallbackStyle(String label) => _SocialLinkStyle(
+        color: const Color(0xFF1A1A2E),
+        border: const Color(0xFFB39DDB),
+        label: label,
+        icon: Icons.public,
+        isNative: true,
+      );
 
   @override
   Widget build(BuildContext context) {
+    // Filtra a chave especial "_custom" (lista JSON de links customizados)
+    final socials = links.entries
+        .where((e) => e.key != '_custom' && e.value.trim().isNotEmpty)
+        .toList();
+    final custom = _parseCustomLinks(links['_custom']);
+
+    if (socials.isEmpty && custom.isEmpty) return const SizedBox.shrink();
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: links.entries.map((e) {
-        final key = e.key.toLowerCase();
-        final style = _config[key] ??
-            _SocialLinkStyle(
-              color: const Color(0xFF1A1A2E),
-              border: Colors.white24,
-              label: e.key,
-              icon: Icons.link_rounded,
-            );
-        return _SocialPill(style: style, url: e.value);
-      }).toList(),
+      children: [
+        ...socials.map((e) {
+          final key = e.key.toLowerCase();
+          final style = _config[key] ?? _fallbackStyle(e.key);
+          return _SocialPill(network: key, style: style, url: e.value);
+        }),
+        ...custom.map((c) {
+          final style = _SocialLinkStyle(
+            color: const Color(0xFF1A1A2E),
+            border: const Color(0xFFB39DDB),
+            label: c.title,
+            icon: _customIconFor(c.icon),
+            isNative: true,
+          );
+          return _SocialPill(network: 'website', style: style, url: c.url);
+        }),
+      ],
     );
   }
 }
@@ -1052,23 +1185,167 @@ class _SocialLinkStyle {
   final Color border;
   final String label;
   final IconData icon;
+  /// `true` → renderiza com `Icon()` (Material); `false` → renderiza com `FaIcon()`.
+  final bool isNative;
   const _SocialLinkStyle({
     required this.color,
     required this.border,
     required this.label,
     required this.icon,
+    this.isNative = false,
   });
 }
 
+class _CustomLink {
+  final String title;
+  final String url;
+  final String icon;
+  const _CustomLink({required this.title, required this.url, required this.icon});
+}
+
+List<_CustomLink> _parseCustomLinks(String? raw) {
+  if (raw == null || raw.trim().isEmpty) return const [];
+  try {
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) return const [];
+    return decoded
+        .whereType<Map>()
+        .map((m) => _CustomLink(
+              title: (m['title'] ?? '').toString().trim(),
+              url: (m['url'] ?? '').toString().trim(),
+              icon: (m['icon'] ?? 'Globe').toString(),
+            ))
+        .where((c) => c.url.isNotEmpty)
+        .toList();
+  } catch (_) {
+    return const [];
+  }
+}
+
+/// Paleta de ícones para custom links — espelha a paleta do web
+/// (`CUSTOM_ICON_PALETTE`). Usa Material Icons (nativos).
+IconData _customIconFor(String name) {
+  switch (name) {
+    case 'ShoppingBag':    return Icons.shopping_bag_outlined;
+    case 'Briefcase':      return Icons.work_outline;
+    case 'Heart':          return Icons.favorite_border;
+    case 'Star':           return Icons.star_outline;
+    case 'Music':          return Icons.music_note_outlined;
+    case 'Book':           return Icons.menu_book_outlined;
+    case 'Coffee':         return Icons.local_cafe_outlined;
+    case 'Award':          return Icons.emoji_events_outlined;
+    case 'Zap':            return Icons.flash_on_outlined;
+    case 'Mic':            return Icons.mic_none_outlined;
+    case 'Tv':             return Icons.tv_outlined;
+    case 'Calendar':       return Icons.calendar_today_outlined;
+    case 'Mail':           return Icons.mail_outline;
+    case 'Phone':          return Icons.phone_outlined;
+    case 'MessageSquare':  return Icons.chat_bubble_outline;
+    case 'MessageCircle':  return Icons.chat_outlined;
+    case 'DollarSign':     return Icons.attach_money_outlined;
+    case 'CreditCard':     return Icons.credit_card_outlined;
+    case 'LinkIcon':       return Icons.link_rounded;
+    case 'Globe':
+    default:               return Icons.public;
+  }
+}
+
+
+/// Resolve o valor salvo no perfil (handle/@user/URL) em uma URL utilizável
+/// para a rede social informada e abre no app nativo.
+Future<void> _launchSocial(String network, String raw) async {
+  final value = raw.trim();
+  if (value.isEmpty) return;
+
+  final lower = value.toLowerCase();
+  final isUrl = lower.startsWith('http://') || lower.startsWith('https://');
+  final handle = value.startsWith('@') ? value.substring(1) : value;
+
+  String url;
+  if (isUrl) {
+    url = value;
+  } else if (lower.startsWith('mailto:')) {
+    url = value;
+  } else {
+    switch (network.toLowerCase()) {
+      case 'instagram':
+        url = 'https://instagram.com/$handle';
+        break;
+      case 'tiktok':
+        url = 'https://www.tiktok.com/@$handle';
+        break;
+      case 'twitter':
+      case 'x':
+        url = 'https://x.com/$handle';
+        break;
+      case 'youtube':
+        url = 'https://youtube.com/@$handle';
+        break;
+      case 'twitch':
+        url = 'https://twitch.tv/$handle';
+        break;
+      case 'telegram':
+        final clean = handle.replaceFirst(RegExp(r'^t\.me/'), '');
+        url = 'https://t.me/$clean';
+        break;
+      case 'whatsapp':
+        final digits = handle.replaceAll(RegExp(r'[^0-9]'), '');
+        final msg = Uri.encodeComponent('Oi, vim pelo Brawe!');
+        url = 'https://wa.me/$digits?text=$msg';
+        break;
+      case 'email':
+        url = 'mailto:$handle';
+        break;
+      case 'facebook':
+        url = 'https://facebook.com/$handle';
+        break;
+      case 'kick':
+        url = 'https://kick.com/$handle';
+        break;
+      case 'spotify':
+        url = 'https://open.spotify.com/user/$handle';
+        break;
+      case 'linkedin':
+        url = 'https://linkedin.com/in/$handle';
+        break;
+      case 'github':
+        url = 'https://github.com/$handle';
+        break;
+      case 'threads':
+        url = 'https://www.threads.net/@$handle';
+        break;
+      case 'snapchat':
+        url = 'https://snapchat.com/add/$handle';
+        break;
+      case 'discord':
+        url = handle.startsWith('discord.gg/') || handle.startsWith('discord.com/')
+            ? 'https://$handle'
+            : 'https://discord.com/users/$handle';
+        break;
+      case 'website':
+      case 'site':
+      default:
+        url = handle.contains('.') ? 'https://$handle' : 'https://$handle';
+    }
+  }
+
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
 class _SocialPill extends StatelessWidget {
-  const _SocialPill({required this.style, required this.url});
+  const _SocialPill({required this.network, required this.style, required this.url});
+  final String network;
   final _SocialLinkStyle style;
   final String url;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {}, // TODO: launch url
+      onTap: () => _launchSocial(network, url),
       child: Container(
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1080,7 +1357,10 @@ class _SocialPill extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FaIcon(style.icon, color: style.border, size: 14),
+            if (style.isNative)
+              Icon(style.icon, color: style.border, size: 14)
+            else
+              FaIcon(style.icon, color: style.border, size: 14),
             const SizedBox(width: 6),
             Text(
               style.label,
@@ -1112,6 +1392,8 @@ class _Avatar extends StatelessWidget {
       imageUrl: url!,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 250),
+      // Cache por 7 dias, mas sempre revalida se a URL mudou
+      cacheKey: url,
       placeholder: (_, __) => Container(
         color: AppColors.slate,
         child: const Center(
@@ -1125,7 +1407,12 @@ class _Avatar extends StatelessWidget {
           ),
         ),
       ),
-      errorWidget: (_, __, ___) => _AvatarFallback(initials: initials),
+      errorWidget: (context, url, error) {
+        // Força remoção do cache corrompido para que a próxima tentativa
+        // faça download fresco.
+        CachedNetworkImage.evictFromCache(url);
+        return _AvatarFallback(initials: initials);
+      },
     );
   }
 }
@@ -1338,18 +1625,24 @@ class _PostsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return postsState.when(
       data: (posts) {
-        if (posts.isEmpty) {
+        // Aba "Posts" mostra apenas publicações textuais (sem mídia).
+        // Posts com foto/vídeo ficam na aba "Galeria".
+        final textual = posts
+            .where((p) => (p.imageUrl == null || p.imageUrl!.isEmpty))
+            .toList();
+
+        if (textual.isEmpty) {
           return const _EmptyState(
             icon: Icons.article_outlined,
-            message: 'Nenhum post ainda',
+            message: 'Nenhum post de texto ainda',
           );
         }
         return ListView.separated(
           padding: const EdgeInsets.only(top: 4, bottom: 80),
-          itemCount: posts.length,
+          itemCount: textual.length,
           separatorBuilder: (_, __) =>
               const Divider(color: Colors.white10, height: 1),
-          itemBuilder: (context, index) => PostCard(post: posts[index]),
+          itemBuilder: (context, index) => PostCard(post: textual[index]),
         );
       },
       loading: () => const Center(
@@ -1888,255 +2181,6 @@ class _ProductDetailSheet extends StatelessWidget {
 }
 
 // ── GALERIA (grid estilo Instagram com fotos/vídeos publicados) ─────────────
-class _GalleryGrid extends StatelessWidget {
-  final AsyncValue<List<Post>> postsState;
-  final bool isMe;
-  final VoidCallback onCreate;
-  const _GalleryGrid({
-    required this.postsState,
-    required this.isMe,
-    required this.onCreate,
-  });
-
-  static bool _isVideo(String url) {
-    final u = url.toLowerCase().split('?').first;
-    return u.endsWith('.mp4') ||
-        u.endsWith('.mov') ||
-        u.endsWith('.webm') ||
-        u.endsWith('.m4v') ||
-        u.endsWith('.mkv');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return postsState.when(
-      data: (posts) {
-        // Apenas posts com mídia entram na galeria.
-        final media = posts
-            .where((p) => p.imageUrl != null && p.imageUrl!.isNotEmpty)
-            .toList();
-
-        if (media.isEmpty && !isMe) {
-          return const _EmptyState(
-            icon: Icons.photo_library_outlined,
-            message: 'Nenhuma foto ou vídeo ainda',
-          );
-        }
-
-        // Para "me", o primeiro tile é o "+" para publicar.
-        final itemCount = media.length + (isMe ? 1 : 0);
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(2),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-            childAspectRatio: 1,
-          ),
-          itemCount: itemCount,
-          itemBuilder: (context, index) {
-            if (isMe && index == 0) {
-              return _GalleryAddTile(onTap: onCreate);
-            }
-            final post = media[index - (isMe ? 1 : 0)];
-            return _GalleryTile(
-              post: post,
-              isVideo: _isVideo(post.imageUrl!),
-              onTap: () => _openPostSheet(context, post),
-            );
-          },
-        );
-      },
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
-      ),
-      error: (_, __) => const _EmptyState(
-        icon: Icons.error_outline,
-        message: 'Erro ao carregar galeria',
-      ),
-    );
-  }
-
-  void _openPostSheet(BuildContext context, Post post) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.nearBlack,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: controller,
-                  child: PostCard(post: post),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GalleryAddTile extends StatelessWidget {
-  const _GalleryAddTile({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.electricPurple.withValues(alpha: 0.25),
-              AppColors.softViolet.withValues(alpha: 0.18),
-            ],
-          ),
-          border: Border.all(
-            color: AppColors.electricPurple.withValues(alpha: 0.55),
-            width: 1.2,
-          ),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo_outlined,
-                color: Colors.white, size: 28),
-            SizedBox(height: 6),
-            Text(
-              'Publicar',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GalleryTile extends StatelessWidget {
-  const _GalleryTile({
-    required this.post,
-    required this.isVideo,
-    required this.onTap,
-  });
-  final Post post;
-  final bool isVideo;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          CachedNetworkImage(
-            imageUrl: post.imageUrl!,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: AppColors.slate),
-            errorWidget: (_, __, ___) => Container(
-              color: AppColors.slate,
-              child: const Icon(Icons.broken_image_outlined,
-                  color: AppColors.coolGray),
-            ),
-          ),
-          if (isVideo)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(Icons.play_arrow_rounded,
-                    color: Colors.white, size: 14),
-              ),
-            ),
-          // Contador de likes/views no canto inferior, estilo IG/Reels.
-          if (post.likesCount > 0 || post.viewsCount > 0)
-            Positioned(
-              left: 6,
-              bottom: 6,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (isVideo && post.viewsCount > 0) ...[
-                    const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 14),
-                    const SizedBox(width: 2),
-                    Text(
-                      _fmt(post.viewsCount),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(blurRadius: 2, color: Colors.black54),
-                        ],
-                      ),
-                    ),
-                  ] else if (post.likesCount > 0) ...[
-                    const Icon(Icons.favorite,
-                        color: Colors.white, size: 12),
-                    const SizedBox(width: 2),
-                    Text(
-                      _fmt(post.likesCount),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(blurRadius: 2, color: Colors.black54),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  static String _fmt(int v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return '$v';
-  }
-}
-
-// ── EMPTY STATE ─────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String message;

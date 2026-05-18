@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
+// go_router used transitively via _live_peek.openLiveRoom
 import '../../../../domain/models/product.dart';
 import '../../../core/themes/app_colors.dart';
-import '../action_rail.dart';
-import 'shared/_live_overlay.dart';
-import 'shared/_caption_block.dart';
+import 'shared/_live_peek.dart';
 import 'products_drawer.dart';
 
 /// 🛍️ View para LiveCommerceItem — thumbnail + produto em destaque + botão de carrinho.
 class LiveCommerceView extends StatelessWidget {
-  const LiveCommerceView({super.key, required this.item});
+  const LiveCommerceView({super.key, required this.item, this.isActive = true});
   final LiveCommerceItem item;
+  final bool isActive;
 
   Product get _featured => item.products.firstWhere(
         (p) => p.id == item.featuredProductId,
@@ -29,41 +29,92 @@ class LiveCommerceView extends StatelessWidget {
     );
   }
 
+  void _enter(BuildContext context) => openLiveRoom(context, item.id);
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // BG: thumbnail da live
-        _Thumbnail(url: item.thumbnailUrl),
-        // Gradient overlay para contraste
-        const _BottomGradient(),
-        // LIVE badge + viewers
-        Positioned(
-          top: 60,
-          left: 16,
-          child: LiveBadge(viewerCount: item.viewerCount, label: 'AO VIVO • SHOP'),
-        ),
-        // Action rail
-        Positioned(
-          right: 8,
-          bottom: 220,
-          child: ActionRail(
-            item: item,
-            onLike: () {},
-            onComment: () {},
-            onShare: () {},
-            onFollow: () {},
-            onGift: () {},
-            onProfile: () {},
+        // Tap em qualquer lugar do fundo entra na live (com som).
+        // Controles interativos (CTA, action rail, produto) ficam por cima.
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _enter(context),
+          child: LivePeekBackground(
+            roomId: item.id,
+            thumbnailUrl: item.thumbnailUrl,
+            streamUrl: item.streamUrl,
+            isActive: isActive,
           ),
         ),
-        // Caption
+        // ── CTA "Assistir ao Vivo" — centro da tela ──
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: false,
+            child: Align(
+              alignment: const Alignment(0, 0.55),
+              child: WatchLiveButton(onTap: () => _enter(context)),
+            ),
+          ),
+        ),
+        // Comentários reais
         Positioned(
           left: 16,
-          right: 90,
+          right: 16,
+          bottom: 280,
+          child: IgnorePointer(
+            child: RealCommentsTicker(roomId: item.id, isActive: isActive),
+          ),
+        ),
+        // Bloco inferior esquerdo: identidade + badges + caption
+        Positioned(
+          left: 16,
+          right: 16,
           bottom: 200,
-          child: CaptionBlock(author: item.author, caption: item.caption),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => _enter(context),
+                child: StreamerIdentity(
+                  userId: item.author.id,
+                  name: item.author.name,
+                  username: item.author.username,
+                  avatarUrl: item.author.avatarUrl,
+                  isVerified: item.author.isVerified,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const LiveDotPulse(label: 'AO VIVO • SHOP'),
+                  const SizedBox(width: 6),
+                  ViewerCountChip(count: item.viewerCount),
+                ],
+              ),
+              if (item.caption.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  item.caption,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    height: 1.3,
+                    shadows: [
+                      Shadow(color: Colors.black87, blurRadius: 4),
+                    ],
+                  ),
+                ),
+              ],
+
+            ],
+          ),
         ),
         // Featured product card + cart button
         Positioned(
@@ -81,40 +132,7 @@ class LiveCommerceView extends StatelessWidget {
   }
 }
 
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({required this.url});
-  final String url;
 
-  @override
-  Widget build(BuildContext context) {
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(color: AppColors.slate),
-    );
-  }
-}
-
-class _BottomGradient extends StatelessWidget {
-  const _BottomGradient();
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withValues(alpha: 0.35),
-            Colors.transparent,
-            Colors.black.withValues(alpha: 0.6),
-          ],
-          stops: const [0.0, 0.4, 1.0],
-        ),
-      ),
-    );
-  }
-}
 
 class _FeaturedProductCard extends StatelessWidget {
   const _FeaturedProductCard({

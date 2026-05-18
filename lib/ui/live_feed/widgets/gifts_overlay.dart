@@ -30,7 +30,7 @@ class GiftsOverlay extends ConsumerStatefulWidget {
   ConsumerState<GiftsOverlay> createState() => _GiftsOverlayState();
 }
 
-class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with SingleTickerProviderStateMixin {
+class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProviderStateMixin {
   late TabController _tabController;
   Gift? _selectedGift;
 

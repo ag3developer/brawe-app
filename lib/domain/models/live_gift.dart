@@ -14,6 +14,7 @@ sealed class LiveGift with _$LiveGift {
     required String giftName,
     String? giftIconUrl,
     required int quantity,
+    @Default(0) int value,
     required DateTime timestamp,
   }) = _LiveGift;
 

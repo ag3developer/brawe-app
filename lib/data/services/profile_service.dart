@@ -16,12 +16,22 @@ class ProfileService {
 
   Future<Map<String, dynamic>> getMyProfile() async {
     final response = await _dio.get('/profile/me');
-    return response.data['data'] ?? response.data;
+    return _unwrap(response.data);
   }
 
   Future<Map<String, dynamic>> getUserProfile(String userId) async {
     final response = await _dio.get('/profile/$userId');
-    return response.data['data'] ?? response.data;
+    return _unwrap(response.data);
+  }
+
+  /// Unwraps common backend envelope structures:
+  ///   { "data": {...} }  /  { "profile": {...} }  /  { "user": {...} }
+  /// Falls back to the raw body when none of those keys exist.
+  static Map<String, dynamic> _unwrap(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return {};
+    final inner = raw['data'] ?? raw['profile'] ?? raw['user'];
+    if (inner is Map<String, dynamic>) return inner;
+    return raw;
   }
 
   Future<List<Map<String, dynamic>>> getTopStreamers({int limit = 20}) async {

@@ -44,12 +44,16 @@ class ChatRepository {
   final Map<String, StreamController<bool>> _typingControllers = {};
   final StreamController<ChatMessage> _notificationController =
       StreamController<ChatMessage>.broadcast();
+  final Map<String, StreamController<String>> _burnControllers = {};
+  final Map<String, StreamController<MessageReactionUpdate>> _reactionControllers = {};
 
   bool _handlersRegistered = false;
   void Function(dynamic)? _onNewMessage;
   void Function(dynamic)? _onUserTyping;
   void Function(dynamic)? _onUserStopTyping;
   void Function(dynamic)? _onMessageNotification;
+  void Function(dynamic)? _onMessageBurned;
+  void Function(dynamic)? _onMessageReaction;
 
   // ────────────────────── lifecycle ──────────────────────
 
@@ -108,6 +112,45 @@ class ChatRepository {
       AppConstants.eventMessageNotification,
       _onMessageNotification!,
     );
+
+    _onMessageBurned = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final conversationId = payload['conversation_id']?.toString();
+      final messageId = payload['message_id']?.toString();
+      if (conversationId == null || messageId == null) return;
+      final controller = _burnControllers[conversationId];
+      if (controller != null && !controller.isClosed) {
+        controller.add(messageId);
+      }
+    };
+    _socketService.on(AppConstants.eventMessageBurned, _onMessageBurned!);
+
+    _onMessageReaction = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final conversationId = payload['conversation_id']?.toString();
+      final messageId = payload['id']?.toString();
+      if (conversationId == null || messageId == null) return;
+      final rawReactions = payload['reactions'];
+      final reactions = <String, List<String>>{};
+      if (rawReactions is Map) {
+        rawReactions.forEach((k, v) {
+          if (v is List) {
+            reactions[k.toString()] =
+                v.map((e) => e.toString()).toList(growable: false);
+          }
+        });
+      }
+      final controller = _reactionControllers[conversationId];
+      if (controller != null && !controller.isClosed) {
+        controller.add(MessageReactionUpdate(
+          messageId: messageId,
+          reactions: reactions,
+        ));
+      }
+    };
+    _socketService.on(AppConstants.eventMessageReaction, _onMessageReaction!);
   }
 
   void dispose() {
@@ -118,6 +161,8 @@ class ChatRepository {
       AppConstants.eventMessageNotification,
       _onMessageNotification,
     );
+    _socketService.off(AppConstants.eventMessageBurned, _onMessageBurned);
+    _socketService.off(AppConstants.eventMessageReaction, _onMessageReaction);
 
     for (final c in _messageControllers.values) {
       c.close();
@@ -125,8 +170,15 @@ class ChatRepository {
     for (final c in _typingControllers.values) {
       c.close();
     }
+    for (final c in _burnControllers.values) {
+      c.close();
+    }
+    for (final c in _reactionControllers.values) {
+      c.close();
+    }
     _messageControllers.clear();
     _typingControllers.clear();
+    _burnControllers.clear();
     _notificationController.close();
     _handlersRegistered = false;
   }
@@ -145,6 +197,14 @@ class ChatRepository {
     final controller = _typingControllers.putIfAbsent(
       conversationId,
       () => StreamController<bool>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Stream<String> watchBurns(String conversationId) {
+    final controller = _burnControllers.putIfAbsent(
+      conversationId,
+      () => StreamController<String>.broadcast(),
     );
     return controller.stream;
   }
@@ -199,6 +259,7 @@ class ChatRepository {
   Future<ChatMessage> sendMessage({
     required String conversationId,
     required String message,
+    String? replyToMessageId,
   }) async {
     final trimmed = message.trim();
     if (trimmed.isEmpty) {
@@ -208,6 +269,21 @@ class ChatRepository {
       return await _messagesService.sendMessage(
         conversationId: conversationId,
         content: trimmed,
+        replyToMessageId: replyToMessageId,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<Map<String, List<String>>> reactToMessage({
+    required String messageId,
+    required String emoji,
+  }) async {
+    try {
+      return await _messagesService.reactMessage(
+        messageId: messageId,
+        emoji: emoji,
       );
     } on DioException catch (e) {
       throw _toFailure(e);
@@ -257,6 +333,70 @@ class ChatRepository {
     }
   }
 
+  Future<ChatMessage> uploadImage({
+    required String conversationId,
+    required String filePath,
+    bool viewOnce = false,
+  }) async {
+    try {
+      return await _messagesService.uploadImage(
+        conversationId: conversationId,
+        filePath: filePath,
+        viewOnce: viewOnce,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<void> burnMessage(String messageId) async {
+    try {
+      await _messagesService.burnMessage(messageId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    try {
+      await _messagesService.deleteMessage(messageId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Stream<MessageReactionUpdate> reactionStream(String conversationId) {
+    final controller = _reactionControllers.putIfAbsent(
+      conversationId,
+      () => StreamController<MessageReactionUpdate>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Future<void> archiveConversation(String conversationId) async {
+    try {
+      await _messagesService.archiveConversation(conversationId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<void> unarchiveConversation(String conversationId) async {
+    try {
+      await _messagesService.unarchiveConversation(conversationId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    try {
+      await _messagesService.deleteConversation(conversationId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
   // ────────────────────── socket-only ──────────────────────
 
   void sendTypingStart({required String conversationId}) {
@@ -295,4 +435,13 @@ class ChatRepository {
     if (status >= 500) return const Failure.server();
     return const Failure.unknown();
   }
+}
+
+class MessageReactionUpdate {
+  const MessageReactionUpdate({
+    required this.messageId,
+    required this.reactions,
+  });
+  final String messageId;
+  final Map<String, List<String>> reactions;
 }

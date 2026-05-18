@@ -27,6 +27,8 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'streamer_id') String? streamerId,
     @JsonKey(name: 'streamer_name') String? streamerName,
     @JsonKey(name: 'streamer_avatar') String? streamerAvatar,
+    @JsonKey(name: 'streamer_username') String? streamerUsername,
+    @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
     @JsonKey(name: 'ingest_url') String? ingestUrl,
     @JsonKey(name: 'started_at') String? startedAt,
     @JsonKey(name: 'created_at') String? createdAt,
@@ -90,6 +92,8 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       streamerId: host?.id ?? streamerId ?? 'unknown',
       streamerName: host?.name ?? streamerName ?? 'Unknown Streamer',
       streamerAvatarUrl: host?.avatarUrl ?? streamerAvatar,
+      streamerUsername: streamerUsername,
+      streamerVerified: isVerified,
     );
   }
 }

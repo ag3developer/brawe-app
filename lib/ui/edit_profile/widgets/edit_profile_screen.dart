@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../view_models/edit_profile_view_model.dart';
+import 'image_position_editor.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -216,6 +217,27 @@ class _BannerEditor extends ConsumerWidget {
   final EditProfileState state;
   const _BannerEditor({required this.state});
 
+  Future<void> _pickAndPositionBanner(
+      BuildContext context, WidgetRef ref) async {
+    final vm = ref.read(editProfileViewModelProvider.notifier);
+    final picked = await vm.pickImageFromGallery(imageQuality: 95);
+    if (picked == null || !context.mounted) return;
+    final cropped = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ImagePositionEditor(
+          sourcePath: picked,
+          aspectRatio: 3.0,
+          circle: false,
+          title: 'Posicionar banner',
+          outputWidth: 1500,
+        ),
+      ),
+    );
+    if (cropped == null) return;
+    await vm.uploadBannerFromPath(cropped);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final url = state.profile?.bannerUrl;
@@ -223,9 +245,7 @@ class _BannerEditor extends ConsumerWidget {
       clipBehavior: Clip.none,
       children: [
         GestureDetector(
-          onTap: () => ref
-              .read(editProfileViewModelProvider.notifier)
-              .pickAndUploadBanner(),
+          onTap: () => _pickAndPositionBanner(context, ref),
           child: Container(
             height: 160,
             width: double.infinity,
@@ -270,9 +290,7 @@ class _BannerEditor extends ConsumerWidget {
               const SizedBox(width: 8),
               _RoundIconBtn(
                 icon: Icons.camera_alt,
-                onTap: () => ref
-                    .read(editProfileViewModelProvider.notifier)
-                    .pickAndUploadBanner(),
+                onTap: () => _pickAndPositionBanner(context, ref),
               ),
             ],
           ),
@@ -286,6 +304,27 @@ class _AvatarEditor extends ConsumerWidget {
   final EditProfileState state;
   const _AvatarEditor({required this.state});
 
+  Future<void> _pickAndPositionAvatar(
+      BuildContext context, WidgetRef ref) async {
+    final vm = ref.read(editProfileViewModelProvider.notifier);
+    final picked = await vm.pickImageFromGallery(imageQuality: 95);
+    if (picked == null || !context.mounted) return;
+    final cropped = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ImagePositionEditor(
+          sourcePath: picked,
+          aspectRatio: 1.0,
+          circle: true,
+          title: 'Posicionar foto',
+          outputWidth: 1024,
+        ),
+      ),
+    );
+    if (cropped == null) return;
+    await vm.uploadAvatarFromPath(cropped);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final url = state.profile?.avatarUrl;
@@ -296,9 +335,7 @@ class _AvatarEditor extends ConsumerWidget {
           alignment: Alignment.bottomRight,
           children: [
             GestureDetector(
-              onTap: () => ref
-                  .read(editProfileViewModelProvider.notifier)
-                  .pickAndUploadAvatar(),
+              onTap: () => _pickAndPositionAvatar(context, ref),
               child: Container(
                 width: 120,
                 height: 120,
@@ -309,7 +346,8 @@ class _AvatarEditor extends ConsumerWidget {
                 ),
                 child: ClipOval(
                   child: url == null || url.isEmpty
-                      ? const Icon(Icons.person, size: 64, color: Colors.white54)
+                      ? const Icon(Icons.person,
+                          size: 64, color: Colors.white54)
                       : CachedNetworkImage(
                           imageUrl: url,
                           fit: BoxFit.cover,
@@ -334,9 +372,7 @@ class _AvatarEditor extends ConsumerWidget {
             else
               _RoundIconBtn(
                 icon: Icons.camera_alt,
-                onTap: () => ref
-                    .read(editProfileViewModelProvider.notifier)
-                    .pickAndUploadAvatar(),
+                onTap: () => _pickAndPositionAvatar(context, ref),
               ),
           ],
         ),

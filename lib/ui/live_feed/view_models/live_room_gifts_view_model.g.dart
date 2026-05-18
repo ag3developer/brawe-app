@@ -8,12 +8,36 @@ part of 'live_room_gifts_view_model.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// 🎁 ViewModel das animações de presente em tempo real.
+///
+/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+/// recebidos numa janela de 4s viram um único item com `quantity` somado
+/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+///
+/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+/// ~5s após a última atualização — combos prorrogam o timer.
 
 @ProviderFor(LiveRoomGiftsViewModel)
 final liveRoomGiftsViewModelProvider = LiveRoomGiftsViewModelFamily._();
 
+/// 🎁 ViewModel das animações de presente em tempo real.
+///
+/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+/// recebidos numa janela de 4s viram um único item com `quantity` somado
+/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+///
+/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+/// ~5s após a última atualização — combos prorrogam o timer.
 final class LiveRoomGiftsViewModelProvider
     extends $NotifierProvider<LiveRoomGiftsViewModel, List<LiveGift>> {
+  /// 🎁 ViewModel das animações de presente em tempo real.
+  ///
+  /// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+  /// recebidos numa janela de 4s viram um único item com `quantity` somado
+  /// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+  ///
+  /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+  /// ~5s após a última atualização — combos prorrogam o timer.
   LiveRoomGiftsViewModelProvider._({
     required LiveRoomGiftsViewModelFamily super.from,
     required String super.argument,
@@ -60,7 +84,16 @@ final class LiveRoomGiftsViewModelProvider
 }
 
 String _$liveRoomGiftsViewModelHash() =>
-    r'27c35fc428782fd606b6b9e06b7068c55084aa7e';
+    r'eff035141e98b5366c64fda284fe564a9f1a078d';
+
+/// 🎁 ViewModel das animações de presente em tempo real.
+///
+/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+/// recebidos numa janela de 4s viram um único item com `quantity` somado
+/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+///
+/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+/// ~5s após a última atualização — combos prorrogam o timer.
 
 final class LiveRoomGiftsViewModelFamily extends $Family
     with
@@ -80,12 +113,30 @@ final class LiveRoomGiftsViewModelFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 🎁 ViewModel das animações de presente em tempo real.
+  ///
+  /// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+  /// recebidos numa janela de 4s viram um único item com `quantity` somado
+  /// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+  ///
+  /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+  /// ~5s após a última atualização — combos prorrogam o timer.
+
   LiveRoomGiftsViewModelProvider call(String roomId) =>
       LiveRoomGiftsViewModelProvider._(argument: roomId, from: this);
 
   @override
   String toString() => r'liveRoomGiftsViewModelProvider';
 }
+
+/// 🎁 ViewModel das animações de presente em tempo real.
+///
+/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
+/// recebidos numa janela de 4s viram um único item com `quantity` somado
+/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+///
+/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
+/// ~5s após a última atualização — combos prorrogam o timer.
 
 abstract class _$LiveRoomGiftsViewModel extends $Notifier<List<LiveGift>> {
   late final _$args = ref.$arg as String;

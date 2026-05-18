@@ -1,100 +1,138 @@
 import 'package:flutter/material.dart';
-import '../../../../domain/models/feed_item.dart';
-import '../../../core/themes/app_colors.dart';
-import '../action_rail.dart';
-import 'shared/_live_overlay.dart';
-import 'shared/_caption_block.dart';
+import 'package:go_router/go_router.dart';
 
-/// 💬 View para LiveChatItem — fullscreen + tópico.
+import '../../../../domain/models/feed_item.dart';
+import 'shared/_live_peek.dart';
+
+/// 💬 Card de [LiveChatItem] no For You — "Live Peek".
+///
+/// Layout reorganizado (sem sobreposições):
+/// - Preview do stream ocupa o fundo inteiro; tap em qualquer área entra na live.
+/// - Bloco inferior esquerdo coeso, hierarquia de baixo pra cima:
+///   1. Comentários reais (fade no topo, max 4 linhas, largura limitada)
+///   2. Caption (título da live)
+///   3. Identidade compacta: avatar + nome + @username + AO VIVO + viewers
+///   4. CTA "Assistir ao Vivo" (pílula, alinhada à esquerda)
+/// - Margem direita preservada (~76px) para não colidir com o ActionRail.
 class LiveChatView extends StatelessWidget {
-  const LiveChatView({super.key, required this.item});
+  const LiveChatView({super.key, required this.item, this.isActive = true});
   final LiveChatItem item;
+  final bool isActive;
+
+  void _enter(BuildContext context) => openLiveRoom(context, item.id);
+  void _openProfile(BuildContext context) {
+    if (item.author.id.isEmpty) return;
+    context.push('/profile/${item.author.id}');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(
-          item.thumbnailUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(color: AppColors.slate),
-        ),
-        // Bottom gradient
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.35),
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.7),
-              ],
-              stops: const [0.0, 0.4, 1.0],
-            ),
+        // ── Fundo: tap entra na live ──
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _enter(context),
+          child: LivePeekBackground(
+            roomId: item.id,
+            thumbnailUrl: item.thumbnailUrl,
+            streamUrl: item.streamUrl,
+            isActive: isActive,
           ),
         ),
+
+        // ── Bloco único inferior esquerdo (sem sobreposições) ──
+        // Margem direita generosa para o ActionRail (76px) + bottom acima
+        // da tab bar do app (~96px).
         Positioned(
-          top: 60,
           left: 16,
-          child: LiveBadge(viewerCount: item.viewerCount),
-        ),
-        // Topic chip
-        Positioned(
-          top: 110,
-          left: 16,
-          right: 90,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.electricPurple.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.tag, color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      item.topic,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
+          right: 88,
+          bottom: 96,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Comentários reais (faixa estreita, fade no topo)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 140),
+                child: IgnorePointer(
+                  child: RealCommentsTicker(
+                    roomId: item.id,
+                    isActive: isActive,
+                    maxLines: 3,
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 12),
+
+              // 2. Caption
+              if (item.caption.isNotEmpty) ...[
+                Text(
+                  item.caption,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.25,
+                    shadows: [
+                      Shadow(color: Colors.black87, blurRadius: 8),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // 3. Identidade compacta: avatar + nome + AO VIVO + viewers
+              _StreamerHeader(
+                item: item,
+                onProfile: () => _openProfile(context),
+              ),
+              const SizedBox(height: 12),
+
+              // 4. CTA "Assistir ao Vivo" — alinhado à esquerda, não centralizado
+              Align(
+                alignment: Alignment.centerLeft,
+                child: WatchLiveButton(onTap: () => _enter(context)),
+              ),
+            ],
           ),
         ),
-        Positioned(
-          right: 8,
-          bottom: 140,
-          child: ActionRail(
-            item: item,
-            onLike: () {},
-            onComment: () {},
-            onShare: () {},
-            onFollow: () {},
-            onGift: () {},
-            onProfile: () {},
+      ],
+    );
+  }
+}
+
+/// Linha condensada com identidade do streamer + AO VIVO + viewers numa
+/// só altura, para não empilhar verticalmente e roubar espaço.
+class _StreamerHeader extends StatelessWidget {
+  const _StreamerHeader({required this.item, required this.onProfile});
+  final LiveChatItem item;
+  final VoidCallback onProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Avatar + nome/@username (clicável → perfil)
+        Flexible(
+          child: StreamerIdentity(
+            userId: item.author.id,
+            name: item.author.name,
+            username: item.author.username,
+            avatarUrl: item.author.avatarUrl,
+            isVerified: item.author.isVerified,
+            onTap: onProfile,
           ),
         ),
-        Positioned(
-          left: 16,
-          right: 90,
-          bottom: 100,
-          child: CaptionBlock(author: item.author, caption: item.caption),
-        ),
+        const SizedBox(width: 8),
+        // AO VIVO + viewers num único cluster compacto à direita
+        const LiveDotPulse(),
+        const SizedBox(width: 6),
+        ViewerCountChip(count: item.viewerCount),
       ],
     );
   }

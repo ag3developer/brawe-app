@@ -11,35 +11,44 @@ class StartLiveState {
     this.title = '',
     this.description = '',
     this.category = '',
-    this.isPrivate = false,
+    this.visibility = LiveVisibility.public,
+    this.notifyFollowers = true,
+    this.thumbnailUrl,
     this.status = const AsyncValue<LiveRoom?>.data(null),
   });
 
   final String title;
   final String description;
   final String category;
-  final bool isPrivate;
+  final LiveVisibility visibility;
+  final bool notifyFollowers;
+  final String? thumbnailUrl;
   final AsyncValue<LiveRoom?> status;
 
   bool get canSubmit =>
       title.trim().length >= 3 && category.isNotEmpty && !status.isLoading;
 
   String? get errorMessage => status.whenOrNull(
-    error: (error, _) => (error as Failure).toDisplayMessage(),
-  );
+        error: (error, _) => (error as Failure).toDisplayMessage(),
+      );
 
   StartLiveState copyWith({
     String? title,
     String? description,
     String? category,
-    bool? isPrivate,
+    LiveVisibility? visibility,
+    bool? notifyFollowers,
+    String? thumbnailUrl,
+    bool clearThumbnail = false,
     AsyncValue<LiveRoom?>? status,
   }) {
     return StartLiveState(
       title: title ?? this.title,
       description: description ?? this.description,
       category: category ?? this.category,
-      isPrivate: isPrivate ?? this.isPrivate,
+      visibility: visibility ?? this.visibility,
+      notifyFollowers: notifyFollowers ?? this.notifyFollowers,
+      thumbnailUrl: clearThumbnail ? null : (thumbnailUrl ?? this.thumbnailUrl),
       status: status ?? this.status,
     );
   }
@@ -68,9 +77,24 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     );
   }
 
-  void togglePrivacy(bool value) {
+  void updateVisibility(LiveVisibility value) {
     state = state.copyWith(
-      isPrivate: value,
+      visibility: value,
+      status: const AsyncValue.data(null),
+    );
+  }
+
+  void toggleNotifyFollowers(bool value) {
+    state = state.copyWith(
+      notifyFollowers: value,
+      status: const AsyncValue.data(null),
+    );
+  }
+
+  void setThumbnail(String? url) {
+    state = state.copyWith(
+      thumbnailUrl: url,
+      clearThumbnail: url == null,
       status: const AsyncValue.data(null),
     );
   }
@@ -81,12 +105,12 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     }
 
     if (state.title.trim().length < 3) {
-      _setError('Live title must be at least 3 characters.');
+      _setError('O título precisa ter pelo menos 3 caracteres.');
       return false;
     }
 
     if (state.category.isEmpty) {
-      _setError('Please select a category for your live.');
+      _setError('Selecione uma categoria para sua live.');
       return false;
     }
 
@@ -96,17 +120,27 @@ class StartLiveViewModel extends _$StartLiveViewModel {
       title: state.title.trim(),
       description: _normalizeText(state.description),
       category: _normalizeText(state.category),
-      isPrivate: state.isPrivate,
+      visibility: state.visibility,
+      notifyFollowers: state.notifyFollowers,
+      thumbnailUrl: state.thumbnailUrl,
     );
 
     try {
+      // ignore: avoid_print
+      print('[StartLive] �� Sending POST /rooms — title="${request.title}" category="${request.category}"');
       final room = await ref.read(liveRepositoryProvider).initiateLive(request);
+      // ignore: avoid_print
+      print('[StartLive] ✅ Room created — id=${room.id} streamKey=${room.streamKey != null ? "<set>" : "<null>"} rtmp=${room.rtmpUrl != null ? "<set>" : "<null>"}');
       state = state.copyWith(status: AsyncValue.data(room));
       return true;
     } on Failure catch (error, stackTrace) {
+      // ignore: avoid_print
+      print('[StartLive] ❌ Failure: $error');
       state = state.copyWith(status: AsyncValue.error(error, stackTrace));
       return false;
     } catch (error, stackTrace) {
+      // ignore: avoid_print
+      print('[StartLive] ❌ Unknown error: $error');
       state = state.copyWith(
         status: AsyncValue.error(const Failure.unknown(), stackTrace),
       );
@@ -119,7 +153,6 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     if (trimmed.isEmpty) {
       return null;
     }
-
     return trimmed;
   }
 

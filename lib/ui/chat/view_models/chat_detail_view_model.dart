@@ -60,6 +60,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   late final String _conversationId;
   StreamSubscription<ChatMessage>? _messagesSubscription;
   StreamSubscription<bool>? _typingSubscription;
+  StreamSubscription<String>? _burnSubscription;
+  StreamSubscription<MessageReactionUpdate>? _reactionSubscription;
   Timer? _typingStopTimer;
   int _currentPage = 1;
 
@@ -70,6 +72,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     ref.onDispose(() {
       _messagesSubscription?.cancel();
       _typingSubscription?.cancel();
+      _burnSubscription?.cancel();
+      _reactionSubscription?.cancel();
       _typingStopTimer?.cancel();
       try {
         ref.read(chatRepositoryProvider).leaveConversation(conversationId);
@@ -95,6 +99,10 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         repo.watchMessages(conversationId).listen(_handleIncomingMessage);
     _typingSubscription =
         repo.watchTyping(conversationId).listen(_handleTypingIndicator);
+    _burnSubscription =
+        repo.watchBurns(conversationId).listen(_handleBurnEvent);
+    _reactionSubscription =
+        repo.reactionStream(conversationId).listen(_handleReactionUpdate);
 
     await _loadInitial();
 
@@ -202,11 +210,14 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     }
   }
 
-  Future<void> sendMessage(String content) async {
+  Future<void> sendMessage(String content, {ChatMessage? replyTo}) async {
     final trimmed = content.trim();
     if (trimmed.isEmpty) return;
 
-    final optimisticMessage = await _buildOptimisticMessage(trimmed);
+    final optimisticMessage = await _buildOptimisticMessage(
+      trimmed,
+      replyTo: replyTo,
+    );
     _appendMessage(optimisticMessage);
     state = state.copyWith(isSending: true, clearErrorMessage: true);
 
@@ -214,8 +225,15 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       final sent = await ref.read(chatRepositoryProvider).sendMessage(
             conversationId: _conversationId,
             message: trimmed,
+            replyToMessageId: replyTo?.id,
           );
-      _replaceMessage(optimisticMessage.id, sent);
+      // O backend não devolve o replyTo preview no POST → preservar do otimista.
+      final merged = sent.copyWith(
+        replyTo: sent.replyTo ?? optimisticMessage.replyTo,
+        replyToMessageId:
+            sent.replyToMessageId ?? optimisticMessage.replyToMessageId,
+      );
+      _replaceMessage(optimisticMessage.id, merged);
       state = state.copyWith(isSending: false);
     } on Failure catch (failure) {
       _removeMessage(optimisticMessage.id);
@@ -230,6 +248,74 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         errorMessage: 'Não foi possível enviar a mensagem.',
       );
     }
+  }
+
+  /// Toggle de reação numa mensagem. Aplica otimista local e sincroniza com backend.
+  Future<void> reactToMessage(String messageId, String emoji) async {
+    if (messageId.startsWith('local-')) return;
+
+    final authState = ref.read(authStateProvider);
+    final myId = authState is AsyncData<User?> ? authState.value?.id : null;
+    if (myId == null) return;
+
+    final current = state.messages.firstWhere(
+      (m) => m.id == messageId,
+      orElse: () => ChatMessage(
+        id: messageId,
+        conversationId: _conversationId,
+        senderId: '',
+        content: '',
+        timestamp: DateTime.now(),
+      ),
+    );
+    final snapshot = current.reactions;
+
+    // Optimistic toggle local
+    final next = <String, List<String>>{};
+    snapshot.forEach((k, v) => next[k] = List<String>.from(v));
+    final users = List<String>.from(next[emoji] ?? const []);
+    if (users.contains(myId)) {
+      users.remove(myId);
+    } else {
+      users.add(myId);
+    }
+    if (users.isEmpty) {
+      next.remove(emoji);
+    } else {
+      next[emoji] = users;
+    }
+    _patchMessage(messageId, (m) => m.copyWith(reactions: next));
+
+    try {
+      final serverReactions = await ref
+          .read(chatRepositoryProvider)
+          .reactToMessage(messageId: messageId, emoji: emoji);
+      _patchMessage(messageId, (m) => m.copyWith(reactions: serverReactions));
+    } catch (e) {
+      // Reverter em caso de falha
+      _patchMessage(messageId, (m) => m.copyWith(reactions: snapshot));
+      state = state.copyWith(
+        errorMessage: 'Não foi possível reagir à mensagem.',
+      );
+    }
+  }
+
+  void _handleReactionUpdate(MessageReactionUpdate update) {
+    _patchMessage(
+      update.messageId,
+      (m) => m.copyWith(reactions: update.reactions),
+    );
+  }
+
+  void _patchMessage(
+    String messageId,
+    ChatMessage Function(ChatMessage) transform,
+  ) {
+    state = state.copyWith(
+      messages: state.messages
+          .map((m) => m.id == messageId ? transform(m) : m)
+          .toList(growable: false),
+    );
   }
 
   void onTyping() {
@@ -252,10 +338,27 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     } catch (_) {}
   }
 
-  Future<ChatMessage> _buildOptimisticMessage(String content) async {
+  Future<ChatMessage> _buildOptimisticMessage(
+    String content, {
+    ChatMessage? replyTo,
+  }) async {
     final authState = ref.read(authStateProvider);
     final currentUser = authState is AsyncData<User?> ? authState.value : null;
     final timestamp = DateTime.now();
+    ReplyPreview? preview;
+    if (replyTo != null) {
+      preview = ReplyPreview(
+        id: replyTo.id,
+        senderId: replyTo.senderId,
+        content: replyTo.messageType == 'image'
+            ? ''
+            : (replyTo.content.length > 120
+                ? replyTo.content.substring(0, 120)
+                : replyTo.content),
+        messageType: replyTo.messageType,
+        isBurned: replyTo.isBurned,
+      );
+    }
     return ChatMessage(
       id: 'local-${timestamp.microsecondsSinceEpoch}',
       conversationId: _conversationId,
@@ -263,6 +366,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       content: content,
       timestamp: timestamp,
       isPending: true,
+      replyToMessageId: replyTo?.id,
+      replyTo: preview,
     );
   }
 
@@ -286,5 +391,90 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       messages:
           state.messages.where((m) => m.id != messageId).toList(growable: false),
     );
+  }
+
+  void _handleBurnEvent(String messageId) {
+    state = state.copyWith(
+      messages: state.messages
+          .map((m) => m.id == messageId
+              ? m.copyWith(isBurned: true, content: '')
+              : m)
+          .toList(growable: false),
+    );
+  }
+
+  /// Envia uma imagem (com opção de view-once).
+  Future<void> sendImage({
+    required String filePath,
+    bool viewOnce = false,
+  }) async {
+    final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final authState = ref.read(authStateProvider);
+    final currentUser = authState is AsyncData<User?> ? authState.value : null;
+    final optimistic = ChatMessage(
+      id: optimisticId,
+      conversationId: _conversationId,
+      senderId: currentUser?.id ?? 'current-user',
+      content: filePath, // local path; bubble detecta via messageType
+      timestamp: DateTime.now(),
+      isPending: true,
+      messageType: 'image',
+      isViewOnce: viewOnce,
+    );
+    _appendMessage(optimistic);
+    state = state.copyWith(isSending: true, clearErrorMessage: true);
+
+    try {
+      final sent = await ref.read(chatRepositoryProvider).uploadImage(
+            conversationId: _conversationId,
+            filePath: filePath,
+            viewOnce: viewOnce,
+          );
+      _replaceMessage(optimisticId, sent);
+      state = state.copyWith(isSending: false);
+    } on Failure catch (failure) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(
+        isSending: false,
+        errorMessage: failure.toDisplayMessage(),
+      );
+    } catch (_) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(
+        isSending: false,
+        errorMessage: 'Não foi possível enviar a imagem.',
+      );
+    }
+  }
+
+  /// Marca uma view-once como visualizada/queimada (chamado quando o
+  /// destinatário abre a imagem).
+  Future<void> burnMessage(String messageId) async {
+    // Update local imediato.
+    _handleBurnEvent(messageId);
+    try {
+      await ref.read(chatRepositoryProvider).burnMessage(messageId);
+    } catch (e) {
+      debugPrint('burnMessage failed: $e');
+    }
+  }
+
+  /// Apaga a mensagem (soft delete por participante).
+  Future<void> deleteMessage(String messageId) async {
+    final snapshot = state.messages;
+    _removeMessage(messageId);
+    try {
+      await ref.read(chatRepositoryProvider).deleteMessage(messageId);
+    } on Failure catch (failure) {
+      state = state.copyWith(
+        messages: snapshot,
+        errorMessage: failure.toDisplayMessage(),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        messages: snapshot,
+        errorMessage: 'Não foi possível apagar a mensagem.',
+      );
+    }
   }
 }

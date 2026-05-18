@@ -66,6 +66,26 @@ class GiftRepository {
     }
   }
 
+  /// Envia um gift no contexto de um **story**.
+  /// Retorna o payload raw da API (inclui `transaction_id`, `animation_url`).
+  Future<Map<String, dynamic>> sendStoryGift({
+    required String storyId,
+    required String giftId,
+    int quantity = 1,
+  }) async {
+    try {
+      return await _giftService.sendStoryGift(
+        storyId: storyId,
+        giftId: giftId,
+        quantity: quantity,
+      );
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<List<Gifter>> getTopGifters(String roomId, {int limit = 10}) async {
     try {
       final list = await _giftService.getTopGifters(roomId, limit: limit);

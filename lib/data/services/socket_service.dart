@@ -117,6 +117,15 @@ class SocketService {
     });
   }
 
+  /// ❤️ Reaction batch (corações flutuantes).
+  /// O caller agrega N toques em [count] (ex.: 200ms debounce) para evitar flood.
+  void sendLiveReaction({required String roomId, int count = 1}) {
+    _emitWithUserProfile(AppConstants.eventSendReaction, {
+      'room_id': roomId,
+      'count': count,
+    });
+  }
+
   // ────────────────────── Direct Messages ──────────────────────
   //
   // O envio/marcação como lida são feitos via REST (MessagesService).

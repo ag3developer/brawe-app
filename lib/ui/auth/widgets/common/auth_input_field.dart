@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_colors.dart';
+import '../../../core/themes/brawe_colors.dart';
 import '../../../core/ui/app_radius.dart';
 import '../../../core/ui/app_spacing.dart';
 
@@ -38,13 +38,14 @@ class _AuthInputFieldState extends State<AuthInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.label,
-          style: const TextStyle(
-            color: Color(0xFF8A8A9A),
+          style: TextStyle(
+            color: colors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.6,
@@ -56,48 +57,49 @@ class _AuthInputFieldState extends State<AuthInputField> {
           keyboardType: widget.keyboardType,
           obscureText: widget.obscureText ? _obscure : false,
           onChanged: widget.onChanged,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
-          cursorColor: AppColors.electricPurple,
+          cursorColor: colors.accentPrimary,
           cursorWidth: 1.5,
           decoration: InputDecoration(
             hintText: widget.hintText,
-            hintStyle: const TextStyle(
-              color: Color(0xFF3A3A4A),
+            hintStyle: TextStyle(
+              color: colors.textTertiary,
               fontSize: 15,
             ),
-            // Sem ícone prefixo — mais limpo
             suffixIcon: widget.obscureText
                 ? GestureDetector(
                     onTap: () => setState(() => _obscure = !_obscure),
                     child: Icon(
-                      _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: const Color(0xFF555565),
+                      _obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: colors.textTertiary,
                       size: 18,
                     ),
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFF0F0F1C),
+            fillColor: colors.surface,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
               vertical: 16,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: Color(0xFF1E1E2E)),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(color: Color(0xFF1E1E2E)),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: const BorderSide(
-                color: AppColors.electricPurple,
+              borderSide: BorderSide(
+                color: colors.accentPrimary,
                 width: 1.5,
               ),
             ),

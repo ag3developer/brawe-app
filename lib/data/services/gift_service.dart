@@ -19,6 +19,31 @@ class GiftService {
     return response.data['data'] ?? response.data;
   }
 
+  /// Envia um gift no contexto de um story (não de uma live).
+  ///
+  /// Endpoint: `POST /stories/{storyId}/gift`
+  /// Retorna o payload de sucesso (transaction_id, animation_url, etc.).
+  Future<Map<String, dynamic>> sendStoryGift({
+    required String storyId,
+    required String giftId,
+    int quantity = 1,
+  }) async {
+    final response = await _dio.post(
+      '/stories/$storyId/gift',
+      data: {
+        'gift_id': giftId,
+        'quantity': quantity,
+      },
+    );
+    final raw = response.data;
+    if (raw is Map<String, dynamic>) {
+      final data = raw['data'];
+      if (data is Map<String, dynamic>) return data;
+      return raw;
+    }
+    return <String, dynamic>{};
+  }
+
   Future<List<Map<String, dynamic>>> getTopGifters(
     String roomId, {
     int limit = 10,

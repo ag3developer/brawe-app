@@ -2,181 +2,252 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/live_gift.dart';
-import '../../core/themes/app_colors.dart';
 import '../view_models/live_room_gifts_view_model.dart';
 
-class GiftAnimationOverlay extends ConsumerWidget {
+/// Limiar (em créditos) acima do qual o presente vira "premium" —
+/// dispara animação fullscreen com efeito de luz/blur.
+const int _kPremiumThreshold = 100;
+
+/// 🎁 Overlay de animações de presente — apenas premium burst fullscreen.
+///
+/// Os combos comuns agora são renderizados inline no ticker de chat
+/// (estilo TikTok), no [_ChatTicker] de `live_player_screen.dart`.
+/// Aqui só permanece o efeito fullscreen disparado quando chega um
+/// presente premium (`value >= 100`).
+class GiftAnimationOverlay extends ConsumerStatefulWidget {
   final String roomId;
 
   const GiftAnimationOverlay({super.key, required this.roomId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final activeGifts = ref.watch(liveRoomGiftsViewModelProvider(roomId));
-    if (activeGifts.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    final visibleGifts = activeGifts.reversed.toList(growable: false);
-
-    return Positioned(
-      top: 100,
-      left: 16,
-      right: 80,
-      child: IgnorePointer(
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 320, maxWidth: 280),
-            child: ListView.separated(
-              key: const ValueKey('gift-toast-list'),
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              physics: const BouncingScrollPhysics(),
-              itemCount: visibleGifts.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final gift = visibleGifts[index];
-                return _GiftToast(
-                  key: ValueKey('gift-toast-${gift.id}'),
-                  gift: gift,
-                  isHighlighted: index == 0,
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  ConsumerState<GiftAnimationOverlay> createState() => _GiftAnimationOverlayState();
 }
 
-class _GiftToast extends StatelessWidget {
-  final LiveGift gift;
-  final bool isHighlighted;
-
-  const _GiftToast({
-    super.key,
-    required this.gift,
-    required this.isHighlighted,
-  });
+class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
+  final Set<String> _shownPremium = {};
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 280),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: isHighlighted
-              ? const [Color(0xD91B2B6B), Color(0xD92E1248)]
-              : const [Color(0xB31B2B6B), Color(0xB32E1248)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        border: Border.all(
-          color: isHighlighted ? AppColors.coolCyan : Colors.white24,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isHighlighted
-                ? const Color(0x663BB8FF)
-                : const Color(0x33000000),
-            blurRadius: isHighlighted ? 20 : 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    ref.listen<List<LiveGift>>(
+      liveRoomGiftsViewModelProvider(widget.roomId),
+      (prev, next) {
+        // Detecta novos combos premium (cruzaram o threshold após combo).
+        for (final g in next) {
+          if (g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
+              g.value >= _kPremiumThreshold) {
+            final key = '${g.senderId}::${g.giftId}::${g.quantity}';
+            if (_shownPremium.contains(key)) continue;
+            _shownPremium.add(key);
+            _showPremiumBurst(g);
+          }
+        }
+      },
+    );
+
+    final gifts = ref.watch(liveRoomGiftsViewModelProvider(widget.roomId));
+    if (gifts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Combos comuns são renderizados no chat ticker (estilo TikTok).
+    // Aqui só observamos a lista para disparar o premium burst quando aplicável.
+    return const SizedBox.shrink();
+  }
+
+  void _showPremiumBurst(LiveGift gift) {
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _PremiumGiftBurst(
+        gift: gift,
+        onDone: () {
+          try {
+            entry.remove();
+          } catch (_) {}
+        },
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.coolCyan.withValues(alpha: 0.65),
+    );
+    overlay.insert(entry);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// Premium burst (fullscreen, ~2.5s)
+// ────────────────────────────────────────────────────────────────────────
+
+class _PremiumGiftBurst extends StatefulWidget {
+  const _PremiumGiftBurst({required this.gift, required this.onDone});
+  final LiveGift gift;
+  final VoidCallback onDone;
+
+  @override
+  State<_PremiumGiftBurst> createState() => _PremiumGiftBurstState();
+}
+
+class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..forward().then((_) => widget.onDone());
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, _) {
+          final t = _ctrl.value;
+          // Phase 1 (0..0.5) — light beam expands + icon scales up
+          // Phase 2 (0.5..0.85) — hold
+          // Phase 3 (0.85..1) — fade out
+          final opacity = t < 0.15
+              ? (t / 0.15)
+              : t > 0.85
+                  ? ((1 - t) / 0.15).clamp(0.0, 1.0)
+                  : 1.0;
+          final scale = t < 0.4
+              ? Curves.elasticOut.transform((t / 0.4).clamp(0.0, 1.0))
+              : 1.0;
+          final beam = (t < 0.7 ? (t / 0.7) : 1.0);
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // Backdrop dimmer (subtle)
+              Opacity(
+                opacity: opacity * 0.45,
+                child: Container(color: Colors.black),
               ),
-            ),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.nearBlack,
-              backgroundImage: gift.senderAvatarUrl != null
-                  ? NetworkImage(gift.senderAvatarUrl!)
-                  : null,
-              child: gift.senderAvatarUrl == null
-                  ? const Icon(Icons.person, size: 18, color: Colors.white70)
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  gift.senderName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isHighlighted ? 13 : 12,
-                    fontWeight: isHighlighted
-                        ? FontWeight.w800
-                        : FontWeight.w700,
+              // Radial light beam
+              Center(
+                child: Opacity(
+                  opacity: opacity * 0.85,
+                  child: Container(
+                    width: 600 * beam,
+                    height: 600 * beam,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Color(0xFFFFE08A),
+                          Color(0x66FF4D8B),
+                          Color(0x00000000),
+                        ],
+                        stops: [0.0, 0.5, 1.0],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: isHighlighted ? 12 : 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    children: [
-                      const TextSpan(text: 'sent '),
-                      TextSpan(
-                        text: gift.giftName,
-                        style: const TextStyle(
-                          color: AppColors.coolCyan,
-                          fontWeight: FontWeight.w700,
+              ),
+              // Center icon + label
+              Center(
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform.scale(
+                    scale: scale,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD166), Color(0xFFFF4D8B)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                blurRadius: 60,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(20),
+                          child: widget.gift.giftIconUrl != null
+                              ? Image.network(
+                                  widget.gift.giftIconUrl!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) => const Icon(
+                                    Icons.workspace_premium,
+                                    size: 100,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.workspace_premium,
+                                  size: 100,
+                                  color: Colors.white,
+                                ),
                         ),
-                      ),
-                      if (gift.quantity > 1)
-                        TextSpan(
-                          text: ' x${gift.quantity}',
-                          style: const TextStyle(
-                            color: AppColors.electricPurple,
-                            fontWeight: FontWeight.w900,
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                                color: const Color(0xFFFFD166), width: 1.5),
+                          ),
+                          child: RichText(
+                            text: TextSpan(
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text: widget.gift.senderName,
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFD166),
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const TextSpan(text: ' enviou '),
+                                TextSpan(
+                                  text: widget.gift.giftName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                if (widget.gift.quantity > 1)
+                                  TextSpan(
+                                    text: ' x${widget.gift.quantity}',
+                                    style: const TextStyle(
+                                      color: Color(0xFFFFD166),
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: gift.giftIconUrl != null
-                ? Image.network(gift.giftIconUrl!, fit: BoxFit.cover)
-                : const Icon(
-                    Icons.card_giftcard,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }

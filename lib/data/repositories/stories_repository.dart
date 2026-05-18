@@ -64,6 +64,29 @@ class StoriesRepository {
     }
   }
 
+  /// Lista de visualizadores de um story (apenas o dono).
+  Future<({List<StoryViewerInfo> viewers, int total})> getViewers(
+    String storyId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      final raw = await _service.getViewers(storyId, limit: limit, offset: offset);
+      final list = (raw['viewers'] as List<dynamic>? ?? [])
+          .map((e) => StoryViewerInfo.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final total = (raw['total'] ?? list.length) as int;
+      return (viewers: list, total: total);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 403) {
+        throw const Failure.unauthorized();
+      }
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<void> deleteStory(String storyId) async {
     try {
       await _service.deleteStory(storyId);
@@ -96,6 +119,36 @@ class StoriesRepository {
     }
   }
 
+  /// Stories de um usuário específico (GET /stories/user/{user_id}).
+  /// Retorna lista vazia se o usuário não tiver stories ativos.
+  Future<List<Story>> getUserStories(String userId) async {
+    try {
+      final raw = await _service.getUserStories(userId);
+      final author = (raw['author'] as Map<String, dynamic>?) ?? const {};
+      final authorName =
+          (author['name'] ?? author['username'] ?? 'Usuário') as String;
+      final authorUsername = (author['username'] ?? userId) as String;
+      final authorAvatarUrl = author['avatar_url'] as String?;
+      final isVerified = (author['is_verified'] ?? false) as bool;
+      final list = (raw['stories'] as List<dynamic>? ?? []);
+      return list
+          .map((s) => _storyFromJson(
+                s as Map<String, dynamic>,
+                authorId: userId,
+                authorName: authorName,
+                authorUsername: authorUsername,
+                authorAvatarUrl: authorAvatarUrl,
+                isVerified: isVerified,
+              ))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return const [];
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   // ───── Helpers (parsing) ───────────────────────────────────
   /// Backend StoryGroupResponse:
   /// { user_id, author: {id,name,username,avatar_url,is_verified},
@@ -108,6 +161,8 @@ class StoriesRepository {
     final avatarUrl = author['avatar_url'] as String?;
     final isVerified = (author['is_verified'] ?? false) as bool;
     final hasUnviewed = (json['has_unviewed'] ?? false) as bool;
+    final isLive = (json['is_live'] ?? false) as bool;
+    final liveRoomId = json['live_room_id'] as String?;
     final stories = ((json['stories'] as List<dynamic>?) ?? [])
         .map((s) => _storyFromJson(
               s as Map<String, dynamic>,
@@ -125,6 +180,8 @@ class StoriesRepository {
       avatarUrl: avatarUrl,
       isVerified: isVerified,
       hasUnviewed: hasUnviewed,
+      isLive: isLive,
+      liveRoomId: liveRoomId,
       stories: stories,
     );
   }

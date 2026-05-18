@@ -56,12 +56,59 @@ post_install do |installer|
     end
   end
 
+  # Suprime warning "Ignoring duplicate libraries: '-lc++'" do linker do Xcode 15+
+  # no target Runner (vários pods referenciam -lc++ ao mesmo tempo).
+  installer.aggregate_targets.each do |agg|
+    agg.user_project.native_targets.each do |t|
+      t.build_configurations.each do |config|
+        ldflags = config.build_settings['OTHER_LDFLAGS'] || ['$(inherited)']
+        ldflags = [ldflags] unless ldflags.is_a?(Array)
+        unless ldflags.include?('-Wl,-no_warn_duplicate_libraries')
+          ldflags << '-Wl,-no_warn_duplicate_libraries'
+        end
+        config.build_settings['OTHER_LDFLAGS'] = ldflags
+      end
+
+      # Adiciona Build Phase que strippa slices de simulador (x86_64) de
+      # frameworks embedados. Necessário porque pacotes Dart como `objective_c`
+      # distribuem .framework pre-build com slice de simulador, e o Xcode
+      # não remove no archive — App Store rejeita com "Unsupported Architectures".
+      phase_name = 'Strip Simulator Architectures'
+      existing = t.shell_script_build_phases.find { |p| p.name == phase_name }
+      script_body = '"${SRCROOT}/scripts/strip_simulator_archs.sh"'
+      if existing.nil?
+        phase = t.new_shell_script_build_phase(phase_name)
+        phase.shell_script = script_body
+        phase.show_env_vars_in_log = '0'
+        phase.always_out_of_date = '1'
+        puts "✓ Added '#{phase_name}' build phase to #{t.name}"
+      else
+        existing.shell_script = script_body
+      end
+    end
+    agg.user_project.save
+  end
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
     target.build_configurations.each do |config|
       # Force minimum deployment target on every pod (alguns vêm com 9.0 e quebram no Xcode 16+).
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+
+      # Garante geração de dSYMs para todos os pods em Release/Profile,
+      # evitando o aviso do Crashlytics sobre frameworks sem dSYM.
+      if config.name != 'Debug'
+        config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf-with-dsym'
+      end
+
+      # Exclui slice de simulador (x86_64) em builds de device (iphoneos).
+      # Sem isso, pods que distribuem .xcframework com slice x86_64 (ex.: objective_c
+      # via path_provider_foundation) acabam embedando esse slice no .app de
+      # produção e a App Store rejeita com 'Unsupported Architectures' / 'Missing
+      # 64-bit support' / 'unsupported platform in the x86_64 slice'.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphoneos*]'] = 'x86_64 i386 armv7'
+      config.build_settings['VALID_ARCHS[sdk=iphoneos*]'] = 'arm64'
 
       # Silencia warnings de código de terceiros (HaishinKit, rtmp_broadcaster, etc.)
       # — não conseguimos consertar libs de fora, e ruído polui o build do app.
@@ -74,11 +121,30 @@ post_install do |installer|
 
       # Permissões necessárias por permission_handler + silencia OpenGLES deprecation
       # do HaishinKit (GLKView).
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+      # permission_handler: por padrão habilita TODAS as permissões (inclusive
+      # AppTrackingTransparency, que injeta NSUserTrackingUsageDescription e
+      # quebra a submissão se a App Privacy não declarar tracking).
+      # Aqui ligamos só o que usamos e desligamos explicitamente o resto.
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = [
         '$(inherited)',
         'PERMISSION_CAMERA=1',
         'PERMISSION_MICROPHONE=1',
         'PERMISSION_PHOTOS=1',
+        'PERMISSION_PHOTOS_ADD_ONLY=1',
+        'PERMISSION_CONTACTS=1',
+        'PERMISSION_APP_TRACKING_TRANSPARENCY=0',
+        'PERMISSION_EVENTS=0',
+        'PERMISSION_EVENTS_FULL_ACCESS=0',
+        'PERMISSION_REMINDERS=0',
+        'PERMISSION_LOCATION=0',
+        'PERMISSION_LOCATION_WHENINUSE=0',
+        'PERMISSION_NOTIFICATIONS=0',
+        'PERMISSION_MEDIA_LIBRARY=0',
+        'PERMISSION_SENSORS=0',
+        'PERMISSION_BLUETOOTH=0',
+        'PERMISSION_SPEECH_RECOGNIZER=0',
+        'PERMISSION_CRITICAL_ALERTS=0',
+        'PERMISSION_ASSISTANT=0',
         'GLES_SILENCE_DEPRECATION=1',
       ]
     end

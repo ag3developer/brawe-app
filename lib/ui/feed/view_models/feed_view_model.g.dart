@@ -33,7 +33,7 @@ final class FeedViewModelProvider
   FeedViewModel create() => FeedViewModel();
 }
 
-String _$feedViewModelHash() => r'8c47ce0a30f453dc41c0eb168b07cc281b9cfdc9';
+String _$feedViewModelHash() => r'448f70fdf89c6bfa20c71eab24f1577d3f6bfa09';
 
 abstract class _$FeedViewModel extends $AsyncNotifier<List<Post>> {
   FutureOr<List<Post>> build();

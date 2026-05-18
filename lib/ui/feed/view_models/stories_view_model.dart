@@ -37,6 +37,8 @@ class StoriesViewModel extends _$StoriesViewModel {
         avatarUrl: g.avatarUrl,
         isVerified: g.isVerified,
         hasUnviewed: stillUnviewed,
+        isLive: g.isLive,
+        liveRoomId: g.liveRoomId,
         stories: newStories,
       );
     }).toList();
@@ -44,6 +46,15 @@ class StoriesViewModel extends _$StoriesViewModel {
 
     // Fire-and-forget no servidor
     await ref.read(storiesRepositoryProvider).markAsViewed(storyId);
+  }
+
+  /// Exclui um story (próprio) e recarrega o feed.
+  Future<void> deleteStory(String storyId) async {
+    await ref.read(storiesRepositoryProvider).deleteStory(storyId);
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref.read(storiesRepositoryProvider).getFeed(),
+    );
   }
 
   /// Cria um novo story (upload multipart) e recarrega o feed.

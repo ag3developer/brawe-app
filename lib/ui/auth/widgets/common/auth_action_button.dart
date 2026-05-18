@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_colors.dart';
+import '../../../core/themes/brawe_colors.dart';
 
 class AuthActionButton extends StatelessWidget {
   const AuthActionButton({
@@ -13,13 +13,14 @@ class AuthActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final enabled = onPressed != null;
     return SizedBox(
       height: 52,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: enabled ? AppColors.electricPurple : const Color(0xFF1A1A2E),
+          color: enabled ? colors.accentPrimary : colors.surfaceHighest,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Material(
@@ -32,7 +33,7 @@ class AuthActionButton extends StatelessWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: enabled ? Colors.white : const Color(0xFF3A3A4A),
+                  color: enabled ? colors.textOnAccent : colors.textTertiary,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/ui/app_spacing.dart';
@@ -146,11 +147,12 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Material(
-          color: Colors.white.withValues(alpha: 0.06),
+          color: colors.surface.withValues(alpha: 0.6),
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
@@ -161,20 +163,20 @@ class _TopBar extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                border: Border.all(color: colors.border),
               ),
-              child: const Icon(LucideIcons.arrowLeft,
-                  color: Colors.white, size: 20),
+              child: Icon(LucideIcons.arrowLeft,
+                  color: colors.textPrimary, size: 20),
             ),
           ),
         ),
         TextButton.icon(
           onPressed: () {},
-          icon: const Icon(LucideIcons.helpCircle,
-              color: AppColors.coolGray, size: 16),
-          label: const Text(
+          icon: Icon(LucideIcons.helpCircle,
+              color: colors.textTertiary, size: 16),
+          label: Text(
             'Ajuda',
-            style: TextStyle(color: AppColors.coolGray, fontSize: 13),
+            style: TextStyle(color: colors.textTertiary, fontSize: 13),
           ),
         ),
       ],
@@ -188,6 +190,7 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -201,8 +204,8 @@ class _Hero extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.electricPurple.withValues(alpha: 0.6),
-                    AppColors.electricPurple.withValues(alpha: 0),
+                    colors.accentPrimary.withValues(alpha: 0.6),
+                    colors.accentPrimary.withValues(alpha: 0),
                   ],
                 ),
               ),
@@ -211,19 +214,19 @@ class _Hero extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.electricPurple,
+                    colors.accentPrimary,
                     AppColors.softViolet,
-                    AppColors.coolCyan,
+                    colors.accentSecondary,
                   ],
                 ),
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.electricPurple.withValues(alpha: 0.55),
+                    color: colors.accentPrimary.withValues(alpha: 0.55),
                     blurRadius: 22,
                     offset: const Offset(0, 8),
                   ),
@@ -234,17 +237,17 @@ class _Hero extends StatelessWidget {
                 child: Image.asset(
                   'assets/images/brawe_logo.png',
                   fit: BoxFit.contain,
-                  color: Colors.white,
+                  color: colors.textOnAccent,
                 ),
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
-        const Text(
+        Text(
           'Crie sua conta.',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 36,
             fontWeight: FontWeight.w800,
             height: 1.05,
@@ -255,7 +258,7 @@ class _Hero extends StatelessWidget {
         Text(
           'Leva menos de um minuto para começar.',
           style: TextStyle(
-            color: AppColors.coolGray.withValues(alpha: 0.85),
+            color: colors.textSecondary,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             height: 1.4,
@@ -297,6 +300,7 @@ class _SignupCardState extends State<_SignupCard> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final textTheme = Theme.of(context).textTheme;
+    final colors = context.colors;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -309,15 +313,15 @@ class _SignupCardState extends State<_SignupCard> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.08),
-                Colors.white.withValues(alpha: 0.02),
+                colors.surface.withValues(alpha: 0.8),
+                colors.surfaceElevated.withValues(alpha: 0.4),
               ],
             ),
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: colors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: colors.overlay.withValues(alpha: 0.3),
                 blurRadius: 40,
                 offset: const Offset(0, 20),
               ),
@@ -369,7 +373,7 @@ class _SignupCardState extends State<_SignupCard> {
                   child: TextButton.icon(
                     onPressed: () => setState(() => _showSponsor = true),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.coolCyan,
+                      foregroundColor: colors.accentSecondary,
                       padding:
                           const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                       minimumSize: const Size(0, 32),
@@ -388,22 +392,22 @@ class _SignupCardState extends State<_SignupCard> {
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.mutedRed.withValues(alpha: 0.12),
+                    color: colors.danger.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(
-                      color: AppColors.mutedRed.withValues(alpha: 0.3),
+                      color: colors.danger.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.alertCircle,
-                          color: AppColors.mutedRed, size: 16),
+                      Icon(LucideIcons.alertCircle,
+                          color: colors.danger, size: 16),
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
                           state.errorMessage!,
                           style: textTheme.bodySmall?.copyWith(
-                            color: AppColors.mutedRed,
+                            color: colors.danger,
                           ),
                         ),
                       ),
@@ -425,13 +429,13 @@ class _SignupCardState extends State<_SignupCard> {
                   Text(
                     'Já tem conta?',
                     style: textTheme.bodyMedium?.copyWith(
-                      color: AppColors.coolGray,
+                      color: colors.textSecondary,
                     ),
                   ),
                   TextButton(
                     onPressed: () => context.push('/login'),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.coolCyan,
+                      foregroundColor: colors.accentSecondary,
                       padding:
                           const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                       minimumSize: const Size(0, 32),
@@ -471,12 +475,13 @@ class _PasswordStrength extends StatelessWidget {
   Widget build(BuildContext context) {
     if (password.isEmpty) return const SizedBox(height: 8);
     final score = _score;
+    final tokens = context.colors;
     final colors = [
-      AppColors.mutedRed,
+      tokens.danger,
       Colors.orange,
       Colors.amber,
-      AppColors.coolCyan,
-      Colors.greenAccent,
+      tokens.accentSecondary,
+      tokens.success,
     ];
     final labels = ['Fraca', 'Fraca', 'Média', 'Boa', 'Forte'];
     final color = colors[score];
@@ -491,7 +496,7 @@ class _PasswordStrength extends StatelessWidget {
               decoration: BoxDecoration(
                 color: i < score
                     ? color
-                    : Colors.white.withValues(alpha: 0.08),
+                    : tokens.surfaceHighest,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -520,6 +525,7 @@ class _TermsCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return InkWell(
       onTap: () => onChanged(!accepted),
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -537,10 +543,10 @@ class _TermsCheckbox extends StatelessWidget {
               child: Checkbox(
                 value: accepted,
                 onChanged: (v) => onChanged(v ?? false),
-                activeColor: AppColors.electricPurple,
-                checkColor: Colors.white,
+                activeColor: colors.accentPrimary,
+                checkColor: colors.textOnAccent,
                 side: BorderSide(
-                  color: AppColors.coolGray.withValues(alpha: 0.55),
+                  color: colors.textTertiary,
                   width: 1.4,
                 ),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -595,13 +601,14 @@ class _TermsRichTextState extends State<_TermsRichText> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final base = TextStyle(
-      color: AppColors.coolGray.withValues(alpha: 0.85),
+      color: colors.textSecondary,
       fontSize: 12,
       height: 1.4,
     );
     final link = base.copyWith(
-      color: AppColors.electricPurple,
+      color: colors.accentPrimary,
       decoration: TextDecoration.underline,
       fontWeight: FontWeight.w600,
     );

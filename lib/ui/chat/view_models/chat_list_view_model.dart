@@ -13,22 +13,26 @@ class ChatListState {
   const ChatListState({
     this.conversations = const <Conversation>[],
     this.isLoading = false,
+    this.showArchived = false,
     this.errorMessage,
   });
 
   final List<Conversation> conversations;
   final bool isLoading;
+  final bool showArchived;
   final String? errorMessage;
 
   ChatListState copyWith({
     List<Conversation>? conversations,
     bool? isLoading,
+    bool? showArchived,
     String? errorMessage,
     bool clearErrorMessage = false,
   }) {
     return ChatListState(
       conversations: conversations ?? this.conversations,
       isLoading: isLoading ?? this.isLoading,
+      showArchived: showArchived ?? this.showArchived,
       errorMessage: clearErrorMessage
           ? null
           : errorMessage ?? this.errorMessage,
@@ -68,8 +72,9 @@ class ChatListViewModel extends _$ChatListViewModel {
   Future<void> _loadConversations({bool silent = false}) async {
     if (!silent) state = state.copyWith(isLoading: true, clearErrorMessage: true);
     try {
-      final items =
-          await ref.read(chatRepositoryProvider).listConversations();
+      final items = await ref
+          .read(chatRepositoryProvider)
+          .listConversations(archived: state.showArchived);
       state = state.copyWith(
         conversations: items,
         isLoading: false,
@@ -89,6 +94,70 @@ class ChatListViewModel extends _$ChatListViewModel {
   }
 
   Future<void> refresh() => _loadConversations();
+
+  /// Alterna entre visualizar conversas ativas e arquivadas.
+  Future<void> toggleArchived(bool value) async {
+    state = state.copyWith(showArchived: value);
+    await _loadConversations();
+  }
+
+  /// Arquiva uma conversa (otimista).
+  Future<void> archive(String conversationId) async {
+    final snapshot = state.conversations;
+    state = state.copyWith(
+      conversations:
+          snapshot.where((c) => c.id != conversationId).toList(growable: false),
+    );
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .archiveConversation(conversationId);
+    } catch (e) {
+      debugPrint('archive failed: $e');
+      state = state.copyWith(
+        conversations: snapshot,
+        errorMessage: 'Não foi possível arquivar a conversa',
+      );
+    }
+  }
+
+  Future<void> unarchive(String conversationId) async {
+    final snapshot = state.conversations;
+    state = state.copyWith(
+      conversations:
+          snapshot.where((c) => c.id != conversationId).toList(growable: false),
+    );
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .unarchiveConversation(conversationId);
+    } catch (e) {
+      debugPrint('unarchive failed: $e');
+      state = state.copyWith(
+        conversations: snapshot,
+        errorMessage: 'Não foi possível desarquivar a conversa',
+      );
+    }
+  }
+
+  Future<void> deleteConversation(String conversationId) async {
+    final snapshot = state.conversations;
+    state = state.copyWith(
+      conversations:
+          snapshot.where((c) => c.id != conversationId).toList(growable: false),
+    );
+    try {
+      await ref
+          .read(chatRepositoryProvider)
+          .deleteConversation(conversationId);
+    } catch (e) {
+      debugPrint('deleteConversation failed: $e');
+      state = state.copyWith(
+        conversations: snapshot,
+        errorMessage: 'Não foi possível apagar a conversa',
+      );
+    }
+  }
 
   /// Inicia (ou reaproveita) conversa e retorna o id, para navegação.
   Future<String?> startConversation({required String participantId}) async {

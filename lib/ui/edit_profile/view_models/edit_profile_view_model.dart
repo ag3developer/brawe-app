@@ -83,22 +83,32 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     }
   }
 
-  Future<void> pickAndUploadAvatar() async {
+  /// Abre a galeria e retorna o `path` do arquivo escolhido, ou `null`.
+  /// Não faz upload — usado para pré-posicionamento.
+  Future<String?> pickImageFromGallery({
+    int imageQuality = 90,
+    double? maxWidth,
+    double? maxHeight,
+  }) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: imageQuality,
+      maxWidth: maxWidth,
+      maxHeight: maxHeight,
+    );
+    return picked?.path;
+  }
+
+  /// Faz upload de um arquivo de avatar já preparado (recortado).
+  Future<void> uploadAvatarFromPath(String path) async {
     final current = state.value;
     if (current == null) return;
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1024,
-        maxHeight: 1024,
-      );
-      if (picked == null) return;
-
-      state = AsyncValue.data(current.copyWith(isUploadingAvatar: true, clearError: true));
+      state = AsyncValue.data(
+          current.copyWith(isUploadingAvatar: true, clearError: true));
       final repo = ref.read(profileRepositoryProvider);
-      final url = await repo.uploadAvatar(picked.path);
+      final url = await repo.uploadAvatar(path);
       final updated = current.profile?.copyWith(avatarUrl: url);
       state = AsyncValue.data(current.copyWith(
         profile: updated,
@@ -112,21 +122,15 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     }
   }
 
-  Future<void> pickAndUploadBanner() async {
+  /// Faz upload de um arquivo de banner já preparado (recortado).
+  Future<void> uploadBannerFromPath(String path) async {
     final current = state.value;
     if (current == null) return;
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 88,
-        maxWidth: 2048,
-      );
-      if (picked == null) return;
-
-      state = AsyncValue.data(current.copyWith(isUploadingBanner: true, clearError: true));
+      state = AsyncValue.data(
+          current.copyWith(isUploadingBanner: true, clearError: true));
       final repo = ref.read(profileRepositoryProvider);
-      final url = await repo.uploadBanner(picked.path);
+      final url = await repo.uploadBanner(path);
       final updated = current.profile?.copyWith(bannerUrl: url);
       state = AsyncValue.data(current.copyWith(
         profile: updated,

@@ -51,6 +51,19 @@ class StoriesService {
     );
   }
 
+  /// GET /stories/{id}/viewers — apenas o dono.
+  Future<Map<String, dynamic>> getViewers(
+    String storyId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final response = await _dio.get(
+      '/stories/$storyId/viewers',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   /// DELETE /stories/{id}
   Future<void> deleteStory(String storyId) async {
     await _dio.delete('/stories/$storyId');

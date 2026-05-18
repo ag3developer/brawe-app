@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../config/feature_flags.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../view_models/live_room_comments_view_model.dart';
 import '../view_models/top_gifters_view_model.dart';
@@ -263,7 +264,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
   }
 
   Future<void> _handleShare() async {
-    final url = 'https://brawe.io/live/${widget.room.slug}';
+    final url = 'https://brawe.app/live/${widget.room.slug}';
     final message = 'Check out this live on Brawe: ${widget.room.title}\n$url';
     await SharePlus.instance.share(ShareParams(text: message));
   }
@@ -510,16 +511,18 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 onTap: _handleLike,
               ),
               const SizedBox(height: 16),
-              _buildIconButton(
-                Icons.card_giftcard,
-                'Gift',
-                onTap: () => GiftsOverlay.show(
-                  context,
-                  widget.room.id,
-                  widget.room.streamerId,
+              if (kEnableMonetization) ...[
+                _buildIconButton(
+                  Icons.card_giftcard,
+                  'Gift',
+                  onTap: () => GiftsOverlay.show(
+                    context,
+                    widget.room.id,
+                    widget.room.streamerId,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
               _buildIconButton(Icons.share, 'Share', onTap: _handleShare),
             ],
           ),

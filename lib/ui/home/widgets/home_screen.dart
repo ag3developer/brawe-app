@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/feature_flags.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../core/view_models/profile_view_model.dart';
@@ -17,7 +19,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.nearBlack,
+      backgroundColor: context.colors.background,
       body: Stack(
         children: [
           SafeArea(
@@ -36,7 +38,9 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   _StreamCard(),
                   const SizedBox(height: AppSpacing.lg),
-                  _LiveCommerceSection(),
+                  if (kEnableMonetization) ...[
+                    _LiveCommerceSection(),
+                  ],
                   // Extra space for the floating bottom navigation
                   const SizedBox(height: 100),
                 ],

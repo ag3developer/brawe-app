@@ -66,15 +66,46 @@ class MessagesService {
     required String conversationId,
     required String content,
     String messageType = 'text',
+    String? replyToMessageId,
   }) async {
+    final body = <String, dynamic>{
+      'content': content,
+      'message_type': messageType,
+    };
+    if (replyToMessageId != null && replyToMessageId.isNotEmpty) {
+      body['reply_to_message_id'] = replyToMessageId;
+    }
     final response = await _dio.post(
       '/messages/conversations/$conversationId',
-      data: {'content': content, 'message_type': messageType},
+      data: body,
     );
     final data = response.data['data'];
     final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
     map['conversation_id'] ??= conversationId;
     return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
+  }
+
+  /// `POST /messages/messages/{message_id}/react` — toggle reaction (emoji).
+  /// Retorna o mapa completo de reações pós-toggle.
+  Future<Map<String, List<String>>> reactMessage({
+    required String messageId,
+    required String emoji,
+  }) async {
+    final response = await _dio.post(
+      '/messages/messages/$messageId/react',
+      data: {'emoji': emoji},
+    );
+    final data = response.data['data'];
+    final raw = data is Map ? data['reactions'] : null;
+    final out = <String, List<String>>{};
+    if (raw is Map) {
+      raw.forEach((k, v) {
+        if (v is List) {
+          out[k.toString()] = v.map((e) => e.toString()).toList(growable: false);
+        }
+      });
+    }
+    return out;
   }
 
   /// `PUT /messages/conversations/{conversation_id}/read`
@@ -143,6 +174,51 @@ class MessagesService {
       );
     });
     return out;
+  }
+
+  /// `POST /messages/conversations/{conversation_id}/upload` (multipart `file`).
+  Future<ChatMessage> uploadImage({
+    required String conversationId,
+    required String filePath,
+    bool viewOnce = false,
+  }) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post(
+      '/messages/conversations/$conversationId/upload',
+      data: form,
+      queryParameters: {'view_once': viewOnce},
+    );
+    final data = response.data['data'];
+    final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    map['conversation_id'] ??= conversationId;
+    return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
+  }
+
+  /// `POST /messages/messages/{message_id}/burn`
+  Future<void> burnMessage(String messageId) async {
+    await _dio.post('/messages/messages/$messageId/burn');
+  }
+
+  /// `DELETE /messages/messages/{message_id}`
+  Future<void> deleteMessage(String messageId) async {
+    await _dio.delete('/messages/messages/$messageId');
+  }
+
+  /// `POST /messages/conversations/{conversation_id}/archive`
+  Future<void> archiveConversation(String conversationId) async {
+    await _dio.post('/messages/conversations/$conversationId/archive');
+  }
+
+  /// `POST /messages/conversations/{conversation_id}/unarchive`
+  Future<void> unarchiveConversation(String conversationId) async {
+    await _dio.post('/messages/conversations/$conversationId/unarchive');
+  }
+
+  /// `DELETE /messages/conversations/{conversation_id}`
+  Future<void> deleteConversation(String conversationId) async {
+    await _dio.delete('/messages/conversations/$conversationId');
   }
 }
 

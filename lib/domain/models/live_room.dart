@@ -25,5 +25,7 @@ sealed class LiveRoom with _$LiveRoom {
     required String streamerId,
     required String streamerName,
     String? streamerAvatarUrl,
+    String? streamerUsername,
+    @Default(false) bool streamerVerified,
   }) = _LiveRoom;
 }

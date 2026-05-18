@@ -5,6 +5,8 @@ import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_comment.dart';
 import '../../domain/models/live_room.dart';
 import '../../domain/models/live_gift.dart';
+import '../../domain/models/live_viewer_event.dart';
+import '../../domain/models/live_reaction_event.dart';
 import '../services/live_service.dart';
 import '../model/create_live_room_request_dto.dart';
 import '../model/live_room_dto.dart';
@@ -30,7 +32,10 @@ class LiveRepository {
   final SocketService? _socketService;
   final Map<String, StreamController<LiveComment>> _commentControllers = {};
   final Map<String, StreamController<int>> _viewerCountControllers = {};
+  final Map<String, StreamController<int>> _likeCountControllers = {};
   final Map<String, StreamController<LiveGift>> _giftControllers = {};
+  final Map<String, StreamController<LiveViewerEvent>> _viewerEventControllers = {};
+  final Map<String, StreamController<LiveReactionEvent>> _reactionControllers = {};
   final Set<String> _connectedRooms = {};
   final Map<String, int> _roomConnectionLeases = {};
   bool _socketHandlersRegistered = false;
@@ -39,6 +44,8 @@ class LiveRepository {
   void Function(dynamic)? _onViewerJoined;
   void Function(dynamic)? _onViewerLeft;
   void Function(dynamic)? _onNewGift;
+  void Function(dynamic)? _onLiveReaction;
+  void Function(dynamic)? _onLikeCount;
 
   LiveRepository(this._liveService, [SocketService? socketService])
     : _socketService = socketService;
@@ -85,14 +92,16 @@ class LiveRepository {
   }
 
   Future<LiveRoom?> getRoom(String idOrSlug) async {
+    debugPrint('LiveRepository: 🔍 getRoom("$idOrSlug") — stack: ${StackTrace.current.toString().split("\n").take(5).join(" | ")}');
     try {
       final dto = await _liveService.getRoom(idOrSlug);
+      debugPrint('LiveRepository: ✅ getRoom("$idOrSlug") → ${dto != null ? "found" : "null"}');
       return dto?.toDomain();
     } on DioException catch (e) {
-      debugPrint('LiveRepository: getRoom DioException: ${e.message}');
+      debugPrint('LiveRepository: ❌ getRoom("$idOrSlug") DioException status=${e.response?.statusCode} msg=${e.message}');
       throw _mapFailure(e);
     } catch (e) {
-      debugPrint('LiveRepository: getRoom Error: $e');
+      debugPrint('LiveRepository: ❌ getRoom("$idOrSlug") Error: $e');
       throw const Failure.unknown();
     }
   }
@@ -170,6 +179,45 @@ class LiveRepository {
     } catch (e) {
       debugPrint('LiveRepository: resumeLive Error: $e');
       throw const Failure.unknown();
+    }
+  }
+
+  /// Compartilha a live com seguidores via DM. Retorna `sent` (quantos chegaram).
+  Future<int> shareLiveToUsers(
+    String roomId, {
+    required List<String> userIds,
+    String? note,
+  }) async {
+    try {
+      final data = await _liveService.shareLive(
+        roomId,
+        userIds: userIds,
+        note: note,
+      );
+      final payload = data['data'] as Map?;
+      return (payload?['sent'] as int?) ?? 0;
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: shareLiveToUsers DioException: ${e.message}');
+      throw _mapFailure(e);
+    } catch (e) {
+      debugPrint('LiveRepository: shareLiveToUsers Error: $e');
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Aviso de "esquentando" a live. Backend dispara push aos seguidores.
+  /// Se o endpoint nao existir ainda no servidor, falha silenciosamente
+  /// (warm-up vira no-op para nao bloquear o fluxo).
+  Future<bool> announceLive(String roomId, {int? secondsUntilLive}) async {
+    try {
+      await _liveService.announceLive(roomId, secondsUntilLive: secondsUntilLive);
+      return true;
+    } on DioException catch (e) {
+      debugPrint('LiveRepository: announceLive DioException: ${e.message}');
+      return false;
+    } catch (e) {
+      debugPrint('LiveRepository: announceLive Error: $e');
+      return false;
     }
   }
 
@@ -274,11 +322,16 @@ class LiveRepository {
     _socketService?.off('viewer_joined', _onViewerJoined);
     _socketService?.off('viewer_left', _onViewerLeft);
     _socketService?.off(AppConstants.eventNewGift, _onNewGift);
+    _socketService?.off(AppConstants.eventLiveReaction, _onLiveReaction);
+    _socketService?.off(AppConstants.eventLikeCountUpdate, _onLikeCount);
 
     for (final controller in _commentControllers.values) {
       controller.close();
     }
     for (final controller in _viewerCountControllers.values) {
+      controller.close();
+    }
+    for (final controller in _likeCountControllers.values) {
       controller.close();
     }
     for (final controller in _giftControllers.values) {
@@ -288,6 +341,10 @@ class LiveRepository {
     _commentControllers.clear();
     _viewerCountControllers.clear();
     _giftControllers.clear();
+    for (final controller in _reactionControllers.values) {
+      controller.close();
+    }
+    _reactionControllers.clear();
     _connectedRooms.clear();
     _roomConnectionLeases.clear();
     _socketHandlersRegistered = false;
@@ -313,8 +370,17 @@ class LiveRepository {
     final viewerCountController = _viewerCountControllers.remove(roomId);
     viewerCountController?.close();
 
+    final likeCountController = _likeCountControllers.remove(roomId);
+    likeCountController?.close();
+
     final giftController = _giftControllers.remove(roomId);
     giftController?.close();
+
+    final viewerEventController = _viewerEventControllers.remove(roomId);
+    viewerEventController?.close();
+
+    final reactionController = _reactionControllers.remove(roomId);
+    reactionController?.close();
   }
 
   Stream<LiveComment> watchComments(String roomId) {
@@ -327,6 +393,14 @@ class LiveRepository {
 
   Stream<int> watchViewerCount(String roomId) {
     final controller = _viewerCountControllers.putIfAbsent(
+      roomId,
+      () => StreamController<int>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Stream<int> watchLikeCount(String roomId) {
+    final controller = _likeCountControllers.putIfAbsent(
       roomId,
       () => StreamController<int>.broadcast(),
     );
@@ -347,6 +421,17 @@ class LiveRepository {
     }
   }
 
+  /// 👀 Sinaliza que o usuário ficou tempo suficiente na *preview* da live
+  /// no For You (≥5s). Hook fire-and-forget que o backend usa como sinal
+  /// fraco de interesse para o ranking. Falhas são silenciosas.
+  Future<void> signalPreviewInterest(String roomId) async {
+    try {
+      await _liveService.sendHeartbeat(roomId);
+    } catch (_) {
+      // Sem efeito colateral visível ao usuário.
+    }
+  }
+
   void getLiveViewers(String roomId) {
     _socketService?.emit(AppConstants.eventRequestViewers, {'room_id': roomId});
   }
@@ -359,6 +444,35 @@ class LiveRepository {
     final controller = _giftControllers.putIfAbsent(
       roomId,
       () => StreamController<LiveGift>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  /// ❤️ Stream de reações (corações flutuantes) recebidas via socket.
+  Stream<LiveReactionEvent> watchReactions(String roomId) {
+    final controller = _reactionControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveReactionEvent>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  /// ❤️ Envia um batch de corações (com debounce/agregação no caller).
+  Future<void> sendReaction(String roomId, {int count = 1}) async {
+    final socketService = _socketService;
+    if (socketService == null) return;
+    try {
+      await _ensureConnectedToRoom(roomId, trackLease: false);
+      socketService.sendLiveReaction(roomId: roomId, count: count);
+    } catch (e) {
+      debugPrint('LiveRepository: sendReaction Error: $e');
+    }
+  }
+
+  Stream<LiveViewerEvent> watchViewerEvents(String roomId) {
+    final controller = _viewerEventControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveViewerEvent>.broadcast(),
     );
     return controller.stream;
   }
@@ -383,8 +497,19 @@ class LiveRepository {
 
   Failure _mapFailure(DioException exception) {
     final statusCode = exception.response?.statusCode;
+    final path = exception.requestOptions.path;
+    final method = exception.requestOptions.method;
+    debugPrint(
+      'LiveRepository: _mapFailure → $method $path → status=$statusCode body=${exception.response?.data}',
+    );
+
     if (statusCode == 401 || statusCode == 403) {
       return const Failure.unauthorized();
+    }
+
+    if (statusCode == 404) {
+      // Mapeado para validation (sem regenerar freezed) com mensagem clara.
+      return const Failure.validation('Live room not found');
     }
 
     if (statusCode == 422) {
@@ -407,7 +532,17 @@ class LiveRepository {
 
     _socketHandlersRegistered = true;
     debugPrint('LiveRepository: Registering socket handlers');
-
+    _onLikeCount = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final msgRoomId = payload['room_id']?.toString();
+      final raw = payload['total_likes'] ?? payload['like_count'] ?? payload['count'];
+      final count = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+      if (count == null) return;
+      debugPrint('LiveRepository: like_count_update → room=$msgRoomId count=$count');
+      _dispatchToIntControllers(_likeCountControllers, count, roomId: msgRoomId);
+    };
+    _socketService.on(AppConstants.eventLikeCountUpdate, _onLikeCount!);
     _onNewMessage = (data) {
       debugPrint(
         'LiveRepository: Received event ${AppConstants.eventLiveChat}: $data',
@@ -446,33 +581,49 @@ class LiveRepository {
 
     _onViewerJoined = (data) {
       debugPrint('LiveRepository: Received event viewer_joined: $data');
-      final count = _parseViewerCount(data);
-      if (count == null) return;
-
       final payload = _asMap(data);
       final msgRoomId = payload?['room_id']?.toString();
 
-      _dispatchToIntControllers(
-        _viewerCountControllers,
-        count,
-        roomId: msgRoomId,
-      );
+      final count = _parseViewerCount(data);
+      if (count != null) {
+        _dispatchToIntControllers(
+          _viewerCountControllers,
+          count,
+          roomId: msgRoomId,
+        );
+      }
+
+      if (payload != null && (payload['user_id']?.toString().isNotEmpty ?? false)) {
+        final event = LiveViewerEvent.fromSocket(
+          Map<String, dynamic>.from(payload),
+          joined: true,
+        );
+        _dispatchToControllers(_viewerEventControllers, event, roomId: msgRoomId);
+      }
     };
     _socketService.on('viewer_joined', _onViewerJoined!);
 
     _onViewerLeft = (data) {
       debugPrint('LiveRepository: Received event viewer_left: $data');
-      final count = _parseViewerCount(data);
-      if (count == null) return;
-
       final payload = _asMap(data);
       final msgRoomId = payload?['room_id']?.toString();
 
-      _dispatchToIntControllers(
-        _viewerCountControllers,
-        count,
-        roomId: msgRoomId,
-      );
+      final count = _parseViewerCount(data);
+      if (count != null) {
+        _dispatchToIntControllers(
+          _viewerCountControllers,
+          count,
+          roomId: msgRoomId,
+        );
+      }
+
+      if (payload != null && (payload['user_id']?.toString().isNotEmpty ?? false)) {
+        final event = LiveViewerEvent.fromSocket(
+          Map<String, dynamic>.from(payload),
+          joined: false,
+        );
+        _dispatchToControllers(_viewerEventControllers, event, roomId: msgRoomId);
+      }
     };
     _socketService.on('viewer_left', _onViewerLeft!);
 
@@ -489,7 +640,24 @@ class LiveRepository {
       _dispatchToGiftControllers(gift, roomId: msgRoomId);
     };
     _socketService.on(AppConstants.eventNewGift, _onNewGift!);
+
+    _onLiveReaction = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final msgRoomId = payload['room_id']?.toString();
+      final count = int.tryParse(payload['count']?.toString() ?? '1') ?? 1;
+      if (count <= 0) return;
+      final event = LiveReactionEvent(
+        userId: payload['user_id']?.toString() ?? '',
+        count: count,
+        color: payload['color']?.toString(),
+        timestamp: DateTime.tryParse(payload['timestamp']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+      );
+      _dispatchToControllers(_reactionControllers, event, roomId: msgRoomId);
+    };
+    _socketService.on(AppConstants.eventLiveReaction, _onLiveReaction!);
   }
+
 
   void _dispatchToCommentControllers(LiveComment comment, {String? roomId}) {
     _dispatchToControllers(_commentControllers, comment, roomId: roomId);
@@ -609,6 +777,7 @@ class LiveRepository {
       giftName: payload['gift_name']?.toString() ?? 'Gift',
       giftIconUrl: payload['animation_url']?.toString(),
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
+      value: int.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0,
       timestamp: timestamp,
     );
   }

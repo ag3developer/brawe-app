@@ -25,29 +25,51 @@ class AuthRepository {
     try {
       final data = await _authService.login(email, password);
 
-      final userData = data['user'] as Map<String, dynamic>;
-      final user = User.fromJson(userData);
-
+      // Persist the token first so the follow-up /auth/me (fallback) call is
+      // authenticated even when the inline user payload can't be parsed.
       final token = _extractToken(data);
       if (token != null) {
         await _storageService.saveToken(token);
-        await _storageService.saveUser(user);
       }
 
+      User user;
+      try {
+        final userData = data['user'] as Map<String, dynamic>;
+        user = User.fromJson(userData);
+      } catch (_) {
+        user = await getCurrentUser();
+      }
+
+      await _storageService.saveUser(user);
       return user;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw const Failure.unauthorized();
+      // 401 during login attempt means invalid credentials (not an expired
+      // session). Surface a clear message to the user instead of the generic
+      // "Session expired" wording used for already-authenticated requests.
+      if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+        throw const Failure.validation('E-mail ou senha incorretos.');
       }
-      if (e.response?.statusCode == 422) {
-        throw Failure.validation(e.response?.data?['message']?.toString());
+      if (e.response?.statusCode == 422 || e.response?.statusCode == 400) {
+        throw Failure.validation(_extractServerMessage(e.response?.data) ??
+            'Dados inválidos. Confira e tente novamente.');
+      }
+      if (e.response?.statusCode == 404) {
+        throw const Failure.validation('Conta não encontrada.');
+      }
+      if (e.response?.statusCode == 429) {
+        throw const Failure.validation(
+            'Muitas tentativas. Tente novamente em instantes.');
       }
       if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
         throw const Failure.network();
       }
       throw const Failure.server();
-    } catch (e) {
+    } on Failure {
+      rethrow;
+    } catch (_) {
       throw const Failure.unknown();
     }
   }
@@ -70,30 +92,56 @@ class AuthRepository {
         privacyAccepted: privacyAccepted,
       );
 
-      final userData = data['user'] as Map<String, dynamic>;
-      final user = User.fromJson(userData);
-
+      // Persist the token first so any follow-up calls are authenticated even
+      // if parsing the inline user object fails.
       final token = _extractToken(data);
       if (token != null) {
         await _storageService.saveToken(token);
-        await _storageService.saveUser(user);
       }
 
+      User user;
+      try {
+        final userData = data['user'] as Map<String, dynamic>;
+        user = User.fromJson(userData);
+      } catch (_) {
+        // Backend may return a minimal user payload that doesn't match our
+        // strict schema. Fall back to /auth/me to get the canonical profile.
+        user = await getCurrentUser();
+      }
+
+      await _storageService.saveUser(user);
       return user;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 422) {
-        final details = e.response?.data?['detail'] as List?;
-        final message = details?.isNotEmpty == true
-            ? details!.first['msg']?.toString()
-            : 'Validation error';
-        throw Failure.validation(message);
+      final status = e.response?.statusCode;
+      final serverMsg = _extractServerMessage(e.response?.data);
+      if (status == 409) {
+        throw const Failure.validation(
+            'Este e-mail já está cadastrado. Tente entrar.');
+      }
+      if (status == 422 || status == 400) {
+        throw Failure.validation(
+            serverMsg ?? 'Dados inválidos. Confira e tente novamente.');
+      }
+      if (status == 401 || status == 403) {
+        throw Failure.validation(
+            serverMsg ?? 'Não foi possível criar a conta.');
+      }
+      if (status == 429) {
+        throw const Failure.validation(
+            'Muitas tentativas. Tente novamente em instantes.');
       }
       if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout) {
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
         throw const Failure.network();
       }
-      throw const Failure.server();
-    } catch (e) {
+      // Any other server-side error: surface backend message when available.
+      throw Failure.validation(
+          serverMsg ?? 'Não foi possível criar a conta. Tente novamente.');
+    } on Failure {
+      rethrow;
+    } catch (_) {
       throw const Failure.unknown();
     }
   }
@@ -148,6 +196,28 @@ class AuthRepository {
       }
     }
 
+    return null;
+  }
+
+  /// Attempts to extract a human-friendly error message from a FastAPI/Dio
+  /// response body. Supports {detail: "msg"}, {detail: [{msg: ...}]} and
+  /// {message: ...} shapes returned by our backend.
+  String? _extractServerMessage(dynamic data) {
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is String && detail.trim().isNotEmpty) return detail;
+      if (detail is List && detail.isNotEmpty) {
+        final first = detail.first;
+        if (first is Map) {
+          final msg = first['msg'];
+          if (msg is String && msg.trim().isNotEmpty) return msg;
+        }
+      }
+      final message = data['message'];
+      if (message is String && message.trim().isNotEmpty) return message;
+      final error = data['error'];
+      if (error is String && error.trim().isNotEmpty) return error;
+    }
     return null;
   }
 }

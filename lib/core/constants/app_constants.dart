@@ -8,12 +8,19 @@ class AppConstants {
   static const String connectApiV1Url = '$connectApiBaseUrl/api/v1';
   static const String appApiV1Url = '$appApiBaseUrl/api/v1';
 
-  // Public legal pages (hosted at brawe.app)
-  static const String legalBaseUrl = 'https://brawe.app';
-  static const String termsUrl = '$legalBaseUrl/terms';
-  static const String privacyUrl = '$legalBaseUrl/privacy';
-  static const String supportUrl = '$legalBaseUrl/support';
+  // Public site (deeplinks / share / legal pages) — hosted at brawe.app
+  static const String publicBaseUrl = 'https://brawe.app';
+  static const String legalBaseUrl = publicBaseUrl;
+  static const String termsUrl = '\$legalBaseUrl/terms';
+  static const String privacyUrl = '\$legalBaseUrl/privacy';
+  static const String supportUrl = '\$legalBaseUrl/support';
   static const String supportEmail = 'support@brawe.app';
+
+  // Public deeplinks (compartilhamento)
+  static String profileUrl(String handleOrId) =>
+      '\$publicBaseUrl/connect/u/\$handleOrId';
+  static String postUrl(String postId) => '\$publicBaseUrl/connect/p/\$postId';
+  static String liveUrl(String slug) => '\$publicBaseUrl/live/\$slug';
 
   // Legal versions (must match backend TERMS_VERSION / PRIVACY_VERSION)
   static const String termsVersion = '2025-01-01';
@@ -49,7 +56,10 @@ class AppConstants {
   static const String eventViewerCount = 'viewer_count_update';
   static const String eventRequestViewers = 'get_live_viewers';
   static const String eventNewGift = 'gift_received';
+  static const String eventLiveReaction = 'live_reaction';
+  static const String eventSendReaction = 'live_reaction';
   static const String eventLiveEnded = 'live_ended';
+  static const String eventLikeCountUpdate = 'like_count_update';
 
   // Socket Events — Direct Messages (alinhados ao backend)
   // Backend emite/escuta estes nomes em app/services/socket_manager.py
@@ -62,6 +72,8 @@ class AppConstants {
   static const String eventUserTyping = 'user_typing'; // backend -> client
   static const String eventUserStopTyping = 'user_stop_typing'; // backend -> client
   static const String eventPresenceUpdate = 'presence_update'; // backend -> client
+  static const String eventMessageBurned = 'message_burned'; // backend -> client
+  static const String eventMessageReaction = 'message_reaction'; // backend -> client
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';

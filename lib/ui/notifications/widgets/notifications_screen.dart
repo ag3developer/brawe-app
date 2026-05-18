@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/app_notification.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/notifications_view_model.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -57,10 +58,11 @@ class NotificationsScreen extends ConsumerWidget {
                       key: ValueKey(n.id),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        color: AppColors.mutedRed,
+                        color: context.colors.danger,
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
+                        child: Icon(Icons.delete,
+                            color: context.colors.textOnAccent),
                       ),
                       onDismissed: (_) => ref
                           .read(notificationsViewModelProvider.notifier)
@@ -100,7 +102,7 @@ class _NotificationTile extends StatelessWidget {
 
     return Material(
       color: unread
-          ? AppColors.electricPurple.withValues(alpha: 0.08)
+          ? context.colors.accentPrimary.withValues(alpha: 0.08)
           : Colors.transparent,
       child: InkWell(
         onTap: onTap,
@@ -131,7 +133,7 @@ class _NotificationTile extends StatelessWidget {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: AppColors.electricPurple,
+                          color: context.colors.accentPrimary,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Theme.of(context).scaffoldBackgroundColor,

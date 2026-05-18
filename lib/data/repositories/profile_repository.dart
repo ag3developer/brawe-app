@@ -53,7 +53,16 @@ class ProfileRepository {
         data['header_url'] ??
         data['profile_banner'] ??
         data['profile_banner_url'];
-    out['avatar_url'] ??= data['avatar'] ?? data['photo_url'] ?? data['picture'];
+    out['avatar_url'] ??= data['avatar'] ??
+        data['photo_url'] ??
+        data['picture'] ??
+        data['profile_picture'] ??
+        data['profile_picture_url'] ??
+        data['profile_photo'] ??
+        data['profile_image'] ??
+        data['image_url'] ??
+        data['thumbnail_url'] ??
+        data['photo'];
     return out;
   }
 

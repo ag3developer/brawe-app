@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
-import '../../../core/themes/app_colors.dart';
-import '../action_rail.dart';
 import 'shared/_caption_block.dart';
+import 'shared/_feed_actions_rail.dart';
 
 /// 📸 View para PhotoPostFeedItem.
+/// ⚠️ DEPRECATED — não é mais usado no For You.
+/// O For You agora exibe apenas vídeos e lives. Posts de foto/texto
+/// são renderizados no `feed_screen.dart` (feed dedicado estilo Instagram).
+/// Mantido aqui apenas para satisfazer o switch exaustivo em
+/// `for_you_screen.dart` enquanto não removemos `PhotoPostFeedItem` de vez.
 class PhotoPostView extends StatelessWidget {
   const PhotoPostView({super.key, required this.item});
   final PhotoPostFeedItem item;
@@ -42,15 +46,7 @@ class PhotoPostView extends StatelessWidget {
         Positioned(
           right: 8,
           bottom: 140,
-          child: ActionRail(
-            item: item,
-            onLike: () {},
-            onComment: () {},
-            onShare: () {},
-            onFollow: () {},
-            onGift: () {},
-            onProfile: () {},
-          ),
+          child: FeedActionsRail(item: item),
         ),
         if (item.imageUrl != null)
           Positioned(

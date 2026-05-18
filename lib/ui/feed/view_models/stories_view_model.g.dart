@@ -33,7 +33,7 @@ final class StoriesViewModelProvider
   StoriesViewModel create() => StoriesViewModel();
 }
 
-String _$storiesViewModelHash() => r'ae65a3019b305276f98afb9aa157c977ab5a028a';
+String _$storiesViewModelHash() => r'b9ff700fe44d41124a5c8f1bce8f557e6615114b';
 
 abstract class _$StoriesViewModel
     extends $AsyncNotifier<List<UserStoriesGroup>> {

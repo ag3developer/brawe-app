@@ -69,9 +69,18 @@ class ForYouFeedRepository {
   Future<List<FeedItem>> _safePosts({int limit = 10}) async {
     try {
       final posts = await _postRepo.getFeed(limit: limit);
-      // Apenas posts com mídia (foto ou vídeo) entram no For You feed
+      // For You é vertical fullscreen estilo TikTok: somente VÍDEOS entram aqui.
+      // Posts de foto/texto vivem no /feed dedicado (estilo Instagram), onde o
+      // aspect ratio e o lightbox são respeitados. Ver feed_screen.dart.
       return posts
-          .where((p) => p.imageUrl != null && p.imageUrl!.isNotEmpty)
+          .where((p) {
+            final url = p.imageUrl ?? '';
+            if (url.isEmpty) return false;
+            return url.endsWith('.mp4') ||
+                url.endsWith('.mov') ||
+                url.endsWith('.webm') ||
+                url.contains('/video');
+          })
           .map(_mapPost)
           .toList();
     } catch (_) {
@@ -94,12 +103,18 @@ class ForYouFeedRepository {
   // ───── Mappers ───────────────────────────────────────────────
 
   FeedItem _mapLive(LiveRoom room) {
+    // Username vem do backend (wallet_bridge.user_info). Se ausente,
+    // derivamos um fallback legível do nome do streamer para não quebrar a UI.
+    final fallbackUsername =
+        room.streamerName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
     final author = FeedAuthor(
       id: room.streamerId,
       name: room.streamerName,
-      username: room.streamerName.toLowerCase().replaceAll(' ', ''),
+      username: (room.streamerUsername?.isNotEmpty ?? false)
+          ? room.streamerUsername!
+          : fallbackUsername,
       avatarUrl: room.streamerAvatarUrl,
-      isVerified: false,
+      isVerified: room.streamerVerified,
     );
 
     final isCommerce = (room.liveType).toLowerCase() == 'commerce' ||
@@ -120,6 +135,8 @@ class ForYouFeedRepository {
         viewerCount: room.viewerCount,
         products: const <Product>[],
         featuredProductId: '',
+        slug: room.slug,
+        streamUrl: room.streamUrl,
       );
     }
 
@@ -135,6 +152,8 @@ class ForYouFeedRepository {
       thumbnailUrl: room.thumbnailUrl ?? '',
       viewerCount: room.viewerCount,
       topic: room.category ?? 'Chat',
+      slug: room.slug,
+      streamUrl: room.streamUrl,
     );
   }
 
@@ -167,7 +186,10 @@ class ForYouFeedRepository {
       );
     }
 
-    return PhotoPostFeedItem(
+    // Foto não deveria chegar aqui: For You é só vídeo+live agora.
+    // Se chegar (defensivo), tratamos como vídeo silenciosamente — o filtro
+    // upstream em _safePosts já exclui o caso normal.
+    return VideoFeedItem(
       id: post.id,
       author: author,
       likesCount: post.likesCount,
@@ -176,8 +198,9 @@ class ForYouFeedRepository {
       userLiked: post.userLiked,
       userFollowingAuthor: false,
       caption: post.content,
-      imageUrl: url.isEmpty ? null : url,
-      createdAt: post.createdAt,
+      videoUrl: url,
+      thumbnailUrl: url,
+      duration: Duration.zero,
     );
   }
 }

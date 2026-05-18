@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
-import '../../core/ui/app_spacing.dart';
 import '../view_models/login_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
@@ -67,6 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(loginViewModelProvider);
     final notifier = ref.read(loginViewModelProvider.notifier);
+    final colors = context.colors;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -90,8 +90,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Voltar ──────────────────────────────────────────
                       GestureDetector(
                         onTap: () => context.go('/welcome'),
-                        child: const Icon(Icons.arrow_back,
-                            color: Color(0xFF5A5A6A), size: 22),
+                        child: Icon(Icons.arrow_back,
+                            color: colors.textSecondary, size: 22),
                       ),
 
                       const SizedBox(height: 52),
@@ -101,13 +101,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         'assets/images/brawe_logo.png',
                         width: 36,
                         height: 36,
-                        color: AppColors.electricPurple,
+                        color: colors.accentPrimary,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
+                      Text(
                         'Bem-vindo\nde volta.',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colors.textPrimary,
                           fontSize: 34,
                           fontWeight: FontWeight.w700,
                           height: 1.1,
@@ -115,10 +115,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Entre na sua conta para continuar.',
                         style: TextStyle(
-                          color: Color(0xFF5A5A6A),
+                          color: colors.textSecondary,
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
                         ),
@@ -148,11 +148,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       Align(
                         alignment: Alignment.centerRight,
                         child: GestureDetector(
-                          onTap: () {},
-                          child: const Text(
+                          onTap: () => context.push('/forgot-password'),
+                          child: Text(
                             'Esqueci minha senha',
                             style: TextStyle(
-                              color: Color(0xFF6B6B8A),
+                              color: colors.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             ),
@@ -167,22 +167,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppColors.mutedRed.withValues(alpha: 0.08),
+                            color: colors.danger.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: AppColors.mutedRed.withValues(alpha: 0.2),
+                              color: colors.danger.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline,
-                                  color: AppColors.mutedRed, size: 15),
+                              Icon(Icons.error_outline,
+                                  color: colors.danger, size: 15),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   state.errorMessage!,
-                                  style: const TextStyle(
-                                    color: AppColors.mutedRed,
+                                  style: TextStyle(
+                                    color: colors.danger,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -202,75 +202,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                       const SizedBox(height: 32),
 
-                      // ── Divisor ──────────────────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                                height: 1,
-                                color: const Color(0xFF1A1A2A)),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'ou',
-                              style: TextStyle(
-                                color: Color(0xFF3A3A4A),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Container(
-                                height: 1,
-                                color: const Color(0xFF1A1A2A)),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // ── Social ────────────────────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SocialBtn(
-                              label: 'Google',
-                              icon: Icons.g_mobiledata_rounded,
-                              onTap: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _SocialBtn(
-                              label: 'Apple',
-                              icon: Icons.apple,
-                              onTap: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: AppSpacing.xl),
-
                       // ── Criar conta ────────────────────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Não tem conta?',
                             style: TextStyle(
-                              color: Color(0xFF5A5A6A),
+                              color: colors.textSecondary,
                               fontSize: 14,
                             ),
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(
                             onTap: () => context.push('/signup'),
-                            child: const Text(
+                            child: Text(
                               'Criar agora',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: colors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -282,12 +231,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       const SizedBox(height: 24),
 
                       // ── Termos ─────────────────────────────────────────────
-                      const Center(
+                      Center(
                         child: Text(
                           'Ao continuar você aceita os Termos de Uso\ne a Política de Privacidade.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF2E2E3E),
+                            color: colors.textTertiary,
                             fontSize: 11,
                             height: 1.6,
                           ),
@@ -307,43 +256,5 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 }
 
 // ── Social Button ─────────────────────────────────────────────────────────────
-class _SocialBtn extends StatelessWidget {
-  const _SocialBtn({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F0F1C),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF1E1E2E)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: const Color(0xFF6B6B8A), size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF8A8A9A),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Social sign-in (Google/Apple) is not yet implemented; the dead UI was
+// removed to comply with App Review (Guideline 2.1).

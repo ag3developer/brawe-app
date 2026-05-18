@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
 import '../../../core/themes/app_colors.dart';
-import '../action_rail.dart';
 import 'shared/_caption_block.dart';
+import 'shared/_feed_actions_rail.dart';
 
 /// 🎥 View para VideoFeedItem.
 class VideoView extends StatelessWidget {
@@ -79,15 +79,7 @@ class VideoView extends StatelessWidget {
         Positioned(
           right: 8,
           bottom: 140,
-          child: ActionRail(
-            item: item,
-            onLike: () {},
-            onComment: () {},
-            onShare: () {},
-            onFollow: () {},
-            onGift: () {},
-            onProfile: () {},
-          ),
+          child: FeedActionsRail(item: item),
         ),
         Positioned(
           left: 16,

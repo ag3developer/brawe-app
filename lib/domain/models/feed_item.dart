@@ -57,12 +57,16 @@ class LiveCommerceItem extends FeedItem {
     required this.viewerCount,
     required this.products,
     required this.featuredProductId,
+    this.slug,
+    this.streamUrl,
   });
 
   final String thumbnailUrl;
   final int viewerCount;
   final List<Product> products;
   final String featuredProductId; // produto em destaque agora
+  final String? slug;
+  final String? streamUrl;
 }
 
 /// ⚔️ Live de batalha entre dois streamers.
@@ -104,11 +108,15 @@ class LiveChatItem extends FeedItem {
     required this.thumbnailUrl,
     required this.viewerCount,
     required this.topic,
+    this.slug,
+    this.streamUrl,
   });
 
   final String thumbnailUrl;
   final int viewerCount;
   final String topic;
+  final String? slug;
+  final String? streamUrl;
 }
 
 /// 🎥 Post de vídeo (não-ao-vivo).
@@ -133,6 +141,14 @@ class VideoFeedItem extends FeedItem {
 }
 
 /// 📸 Post de foto/texto.
+///
+/// ⚠️ DEPRECATED no For You — desde o redesign de UX, posts de foto não
+/// entram mais no feed vertical fullscreen (que é só vídeo + live).
+/// Fotos vivem no /feed dedicado, renderizadas pelo `feed_screen.dart`
+/// com aspect ratio respeitado + lightbox. Classe mantida para
+/// compatibilidade com `for_you_screen.dart` que ainda faz exhaustive
+/// switch sobre os subtipos de FeedItem.
+@Deprecated('For You agora é só vídeo+live; fotos vão para o /feed dedicado.')
 class PhotoPostFeedItem extends FeedItem {
   const PhotoPostFeedItem({
     required super.id,

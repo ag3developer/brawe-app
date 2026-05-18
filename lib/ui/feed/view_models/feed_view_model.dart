@@ -50,4 +50,22 @@ class FeedViewModel extends _$FeedViewModel {
   void onPostViewed(String postId) {
     ref.read(postRepositoryProvider).incrementView(postId);
   }
+
+  /// Remove o post otimisticamente; em caso de falha, restaura a lista.
+  Future<bool> deletePost(String postId) async {
+    final posts = state.value;
+    if (posts == null) return false;
+
+    final previous = List<Post>.from(posts);
+    final filtered = posts.where((p) => p.id != postId).toList();
+    state = AsyncData(filtered);
+
+    try {
+      await ref.read(postRepositoryProvider).deletePost(postId);
+      return true;
+    } catch (_) {
+      state = AsyncData(previous);
+      return false;
+    }
+  }
 }

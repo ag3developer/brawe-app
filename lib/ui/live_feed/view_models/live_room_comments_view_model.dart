@@ -14,18 +14,24 @@ class LiveRoomCommentsState {
   const LiveRoomCommentsState({
     this.comments = const <LiveComment>[],
     this.viewerCount = 0,
+    this.likeCount = 0,
+    this.totalComments = 0,
     this.isSending = false,
     this.errorMessage,
   });
 
   final List<LiveComment> comments;
   final int viewerCount;
+  final int likeCount;
+  final int totalComments;
   final bool isSending;
   final String? errorMessage;
 
   LiveRoomCommentsState copyWith({
     List<LiveComment>? comments,
     int? viewerCount,
+    int? likeCount,
+    int? totalComments,
     bool? isSending,
     String? errorMessage,
     bool clearErrorMessage = false,
@@ -33,6 +39,8 @@ class LiveRoomCommentsState {
     return LiveRoomCommentsState(
       comments: comments ?? this.comments,
       viewerCount: viewerCount ?? this.viewerCount,
+      likeCount: likeCount ?? this.likeCount,
+      totalComments: totalComments ?? this.totalComments,
       isSending: isSending ?? this.isSending,
       errorMessage: clearErrorMessage
           ? null
@@ -46,6 +54,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   late final String _roomId;
   StreamSubscription<LiveComment>? _commentsSubscription;
   StreamSubscription<int>? _viewerCountSubscription;
+  StreamSubscription<int>? _likeCountSubscription;
 
   @override
   LiveRoomCommentsState build(String roomId) {
@@ -55,6 +64,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     ref.onDispose(() {
       _commentsSubscription?.cancel();
       _viewerCountSubscription?.cancel();
+      _likeCountSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
 
@@ -81,19 +91,25 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         return;
       }
 
-      // Fetch initial room data to get initial viewer count
-      final room = await repository.getRoom(roomId);
+      // Fetch initial room data to get initial viewer count.
+      // Retry once on 404 (room may have just been created — DB visibility race).
+      final room = await _fetchRoomWithRetry(repository, roomId);
       if (!ref.mounted) {
         return;
       }
 
       if (room != null) {
-        state = state.copyWith(viewerCount: room.viewerCount);
+        state = state.copyWith(
+          viewerCount: room.viewerCount,
+          likeCount: room.totalLikes,
+        );
       }
     } on Failure catch (failure) {
       if (!ref.mounted) {
         return;
       }
+      // Sala recém-criada pode não estar visível ainda (caso de uso: broadcaster).
+      // Não polui a UI com erro — viewerCount fica 0 e é atualizado via socket.
       state = state.copyWith(errorMessage: failure.toDisplayMessage());
     } catch (_) {
       if (!ref.mounted) {
@@ -102,6 +118,24 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       state = state.copyWith(
         errorMessage: const Failure.unknown().toDisplayMessage(),
       );
+    }
+  }
+
+  Future<dynamic> _fetchRoomWithRetry(
+    dynamic repository,
+    String roomId,
+  ) async {
+    try {
+      return await repository.getRoom(roomId);
+    } on Failure catch (failure) {
+      // Em caso de "not found"/network bem cedo no ciclo, esperar 600ms e tentar 1x.
+      final isNotFound =
+          failure.toDisplayMessage().toLowerCase().contains('not found') ||
+              failure.toDisplayMessage().toLowerCase().contains('internet');
+      if (!isNotFound) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (!ref.mounted) return null;
+      return await repository.getRoom(roomId);
     }
   }
 
@@ -153,10 +187,10 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
 
     if (optimisticIndex >= 0) {
       comments[optimisticIndex] = comment;
-    } else if (!comments.any(
-      (existingComment) => existingComment.id == comment.id,
-    )) {
+    } else if (!_isDuplicate(comments, comment)) {
       comments.add(comment);
+      // Incrementar total acumulado (não é afetado pelo trim do overlay)
+      state = state.copyWith(totalComments: state.totalComments + 1);
     }
 
     state = state.copyWith(
@@ -228,19 +262,33 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     if (!existingComment.id.startsWith('local-')) {
       return false;
     }
-
-    final sameUser =
-        existingComment.userId == incomingComment.userId ||
-        existingComment.userName == incomingComment.userName;
-    if (!sameUser || existingComment.message != incomingComment.message) {
+    // Comentários otimistas (`local-*`) são sempre do usuário atual.
+    // Casar por mensagem + janela curta de tempo evita duplicados quando
+    // o backend devolve `userId`/`userName` diferentes do snapshot otimista
+    // (ex.: auth ainda carregando, email vs nome completo).
+    if (existingComment.message != incomingComment.message) {
       return false;
     }
-
     final secondsBetween = incomingComment.timestamp
         .difference(existingComment.timestamp)
         .inSeconds
         .abs();
-    return secondsBetween <= 10;
+    return secondsBetween <= 15;
+  }
+
+  /// Considera duplicado se o backend reemitiu o mesmo comentário
+  /// (mesmo id, OU mesmo user+mensagem dentro de 5s).
+  bool _isDuplicate(List<LiveComment> comments, LiveComment incoming) {
+    for (final c in comments) {
+      if (c.id == incoming.id) return true;
+      if (c.userId.isNotEmpty &&
+          c.userId == incoming.userId &&
+          c.message == incoming.message &&
+          incoming.timestamp.difference(c.timestamp).inSeconds.abs() <= 5) {
+        return true;
+      }
+    }
+    return false;
   }
 
   List<LiveComment> _trimComments(List<LiveComment> comments) {

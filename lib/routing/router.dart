@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../config/feature_flags.dart';
 import '../data/repositories/auth_state_provider.dart';
+import '../data/repositories/live_repository.dart';
+import '../domain/models/live_room.dart';
 import '../ui/auth/widgets/login_screen.dart';
 import '../ui/auth/widgets/signup_screen.dart';
 import '../ui/auth/widgets/welcome_screen.dart';
+import '../ui/auth/widgets/forgot_password_screen.dart';
+import '../ui/auth/widgets/reset_password_screen.dart';
+import '../ui/settings/widgets/change_password_screen.dart';
+import '../ui/settings/widgets/delete_account_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/home/widgets/for_you_screen.dart';
@@ -15,6 +22,7 @@ import '../ui/chat/widgets/chat_list_screen.dart';
 import '../ui/chat/widgets/chat_detail_screen.dart';
 import '../ui/broadcaster/widgets/start_live_screen.dart';
 import '../ui/broadcaster/widgets/broadcaster_screen.dart';
+import '../ui/core/themes/force_dark_theme.dart';
 import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/quests/widgets/quests_screen.dart';
@@ -24,7 +32,6 @@ import '../ui/follows/widgets/follows_screen.dart';
 import '../ui/edit_profile/widgets/edit_profile_screen.dart';
 import '../ui/explore/widgets/explore_screen.dart';
 import '../ui/follows/view_models/follows_view_model.dart';
-import '../domain/models/live_room.dart';
 
 part 'router.g.dart';
 
@@ -41,7 +48,9 @@ GoRouter router(Ref ref) {
       final isLoggingIn =
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
-          state.matchedLocation == '/welcome';
+          state.matchedLocation == '/welcome' ||
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation.startsWith('/reset-password');
 
       if (isLoading) return null;
 
@@ -65,58 +74,96 @@ GoRouter router(Ref ref) {
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
       ),
-      GoRoute(path: '/feed', builder: (context, state) => const FeedScreen()),
       GoRoute(
-        path: '/live',
-        builder: (context, state) => const ForYouLiveListScreen(),
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
-        path: '/live/:roomId',
+        path: '/reset-password',
         builder: (context, state) {
-          final room = state.extra as LiveRoom?;
-          if (room == null) {
-            return const Scaffold(
-              body: Center(child: Text('Room not found.')),
-            );
-          }
-          return LivePlayerScreen(room: room);
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
         },
       ),
+      GoRoute(path: '/feed', builder: (context, state) => const ForceDarkTheme(child: FeedScreen())),
+      GoRoute(
+        path: '/live',
+        builder: (context, state) =>
+            const ForceDarkTheme(child: ForYouLiveListScreen()),
+      ),
+      // IMPORTANTE: rotas estáticas (/live/start, /live/broadcast) DEVEM vir
+      // ANTES da rota dinâmica /live/:roomId — caso contrário o GoRouter faz
+      // match de "start"/"broadcast" como roomId e dispara GET /live/rooms/start
+      // → 404.
       GoRoute(
         path: '/live/start',
-        builder: (context, state) => const StartLiveScreen(),
+        builder: (context, state) =>
+            const ForceDarkTheme(child: StartLiveScreen()),
       ),
       GoRoute(
         path: '/live/broadcast',
         builder: (context, state) {
-          final room = state.extra as LiveRoom?;
-          if (room == null) {
-            return const Scaffold(
-              body: Center(child: Text('Room not found.')),
+          final extraRoom = state.extra as LiveRoom?;
+          final roomId = state.uri.queryParameters['roomId'];
+          if (extraRoom != null) {
+            return ForceDarkTheme(child: BroadcasterScreen(room: extraRoom));
+          }
+          if (roomId != null && roomId.isNotEmpty) {
+            return ForceDarkTheme(
+              child: _LiveRoomResolver(
+                roomId: roomId,
+                builder: (room) => BroadcasterScreen(room: room),
+              ),
             );
           }
-          return BroadcasterScreen(room: room);
+          // Sem room e sem ID → manda criar uma nova live
+          return const ForceDarkTheme(child: StartLiveScreen());
         },
       ),
-      GoRoute(path: '/home', builder: (context, state) => const ForYouScreen()),
+      GoRoute(
+        path: '/live/:roomId',
+        builder: (context, state) {
+          final extraRoom = state.extra as LiveRoom?;
+          final roomId = state.pathParameters['roomId'] ?? '';
+          // Guard extra: nomes reservados nunca devem chegar aqui, mas se
+          // chegarem (deep-link malformado), redirecionamos sem fazer GET.
+          const reserved = {'start', 'broadcast', 'new', 'create'};
+          if (reserved.contains(roomId.toLowerCase())) {
+            return const ForceDarkTheme(child: StartLiveScreen());
+          }
+          if (extraRoom != null) {
+            return ForceDarkTheme(child: LivePlayerScreen(room: extraRoom));
+          }
+          // Fallback: busca a sala pelo ID/slug (deep-links, push notifs, etc.)
+          return ForceDarkTheme(
+            child: _LiveRoomResolver(
+              roomId: roomId,
+              builder: (room) => LivePlayerScreen(room: room),
+            ),
+          );
+        },
+      ),
+      GoRoute(path: '/home', builder: (context, state) => const ForceDarkTheme(child: ForYouScreen())),
       GoRoute(
         path: '/home/classic',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const ForceDarkTheme(child: HomeScreen()),
       ),
       GoRoute(
         path: '/chat',
-        builder: (context, state) => const ChatListScreen(),
+        builder: (context, state) => const ForceDarkTheme(child: ChatListScreen()),
       ),
       GoRoute(
         path: '/chat/:conversationId',
         builder: (context, state) {
           final conversationId = state.pathParameters['conversationId']!;
           final extra = state.extra as Map<String, dynamic>?;
-          return ChatDetailScreen(
-            conversationId: conversationId,
-            participantName: extra?['participantName'] as String? ?? 'Chat',
-            participantAvatarUrl: extra?['participantAvatarUrl'] as String?,
-            participantId: extra?['participantId'] as String?,
+          return ForceDarkTheme(
+            child: ChatDetailScreen(
+              conversationId: conversationId,
+              participantName: extra?['participantName'] as String? ?? 'Chat',
+              participantAvatarUrl: extra?['participantAvatarUrl'] as String?,
+              participantId: extra?['participantId'] as String?,
+            ),
           );
         },
       ),
@@ -128,7 +175,7 @@ GoRouter router(Ref ref) {
           if (userId.startsWith('@')) {
             userId = userId.substring(1);
           }
-          return ProfileScreen(userId: userId);
+          return ForceDarkTheme(child: ProfileScreen(userId: userId));
         },
       ),
       GoRoute(
@@ -136,11 +183,20 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
+        path: '/settings/change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/settings/delete-account',
+        builder: (context, state) => const DeleteAccountScreen(),
+      ),
+      GoRoute(
         path: '/quests',
         builder: (context, state) => const QuestsScreen(),
       ),
       GoRoute(
         path: '/wallet',
+        redirect: (_, __) => kEnableMonetization ? null : '/',
         builder: (context, state) => const WalletScreen(),
       ),
       GoRoute(
@@ -149,11 +205,11 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(
         path: '/edit-profile',
-        builder: (context, state) => const EditProfileScreen(),
+        builder: (context, state) => const ForceDarkTheme(child: EditProfileScreen()),
       ),
       GoRoute(
         path: '/explore',
-        builder: (context, state) => const ExploreScreen(),
+        builder: (context, state) => const ForceDarkTheme(child: ExploreScreen()),
       ),
       GoRoute(
         path: '/follows/:userId',
@@ -163,7 +219,7 @@ GoRouter router(Ref ref) {
           final tab = tabParam == 'following'
               ? FollowsTab.following
               : FollowsTab.followers;
-          return FollowsScreen(userId: userId, initialTab: tab);
+          return ForceDarkTheme(child: FollowsScreen(userId: userId, initialTab: tab));
         },
       ),
     ],
@@ -186,3 +242,110 @@ class RouterRefreshListenable extends ChangeNotifier {
     super.dispose();
   }
 }
+
+
+/// Helper que resolve um LiveRoom a partir do ID/slug quando o `extra` é null
+/// (deep links, push notifications ou navegação simples por
+/// `context.push('/live/<id>')`).
+class _LiveRoomResolver extends ConsumerStatefulWidget {
+  const _LiveRoomResolver({required this.roomId, required this.builder});
+
+  final String roomId;
+  final Widget Function(LiveRoom room) builder;
+
+  @override
+  ConsumerState<_LiveRoomResolver> createState() => _LiveRoomResolverState();
+}
+
+class _LiveRoomResolverState extends ConsumerState<_LiveRoomResolver> {
+  late Future<LiveRoom?> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _fetch();
+  }
+
+  Future<LiveRoom?> _fetch() {
+    return ref.read(liveRepositoryProvider).getRoom(widget.roomId);
+  }
+
+  void _retry() {
+    setState(() => _future = _fetch());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<LiveRoom?>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          );
+        }
+        final room = snap.data;
+        if (snap.hasError || room == null) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.live_tv_outlined,
+                        color: Colors.white54, size: 64),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Live indisponível',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Essa transmissão terminou ou ainda não começou.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.3)),
+                          ),
+                          child: const Text('Voltar'),
+                        ),
+                        const SizedBox(width: 12),
+                        FilledButton(
+                          onPressed: _retry,
+                          child: const Text('Tentar de novo'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        return widget.builder(room);
+      },
+    );
+  }
+}
+

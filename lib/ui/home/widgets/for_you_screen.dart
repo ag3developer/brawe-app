@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/feature_flags.dart';
 import '../../../domain/models/feed_item.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/for_you_feed_view_model.dart';
@@ -22,6 +23,7 @@ class ForYouScreen extends ConsumerStatefulWidget {
 class _ForYouScreenState extends ConsumerState<ForYouScreen> {
   final _ctrl = PageController();
   String _tab = 'forYou';
+  int _currentIndex = 0;
 
   @override
   void dispose() {
@@ -29,11 +31,30 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
     super.dispose();
   }
 
-  Widget _buildView(FeedItem item) {
+  Widget _buildView(FeedItem item, bool isActive) {
     return switch (item) {
-      LiveCommerceItem() => LiveCommerceView(item: item),
+      // v1.0: monetização desativada — lives de commerce renderizam
+      // como live-chat comum (sem botão de compra/produtos).
+      LiveCommerceItem() => kEnableMonetization
+          ? LiveCommerceView(item: item, isActive: isActive)
+          : LiveChatView(
+              isActive: isActive,
+              item: LiveChatItem(
+                id: item.id,
+                author: item.author,
+                likesCount: item.likesCount,
+                commentsCount: item.commentsCount,
+                sharesCount: item.sharesCount,
+                userLiked: item.userLiked,
+                userFollowingAuthor: item.userFollowingAuthor,
+                caption: item.caption,
+                thumbnailUrl: item.thumbnailUrl,
+                viewerCount: item.viewerCount,
+                topic: '',
+              ),
+            ),
       LiveBattleItem() => LiveBattleView(item: item),
-      LiveChatItem() => LiveChatView(item: item),
+      LiveChatItem() => LiveChatView(item: item, isActive: isActive),
       VideoFeedItem() => VideoView(item: item),
       PhotoPostFeedItem() => PhotoPostView(item: item),
     };
@@ -135,7 +156,9 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                   controller: _ctrl,
                   scrollDirection: Axis.vertical,
                   itemCount: items.length,
-                  itemBuilder: (_, i) => _buildView(items[i]),
+                  onPageChanged: (i) => setState(() => _currentIndex = i),
+                  itemBuilder: (_, i) =>
+                      _buildView(items[i], i == _currentIndex),
                 ),
               );
             },

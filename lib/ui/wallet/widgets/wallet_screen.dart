@@ -416,7 +416,7 @@ class _PurchaseSheet extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Pagamentos in-app chegando em breve. Por enquanto, '
-                    'compre moedas pelo navegador em brawe.io/coins.',
+                    'compre moedas pelo navegador em brawe.app/coins.',
                     style: TextStyle(height: 1.35),
                   ),
                 ),

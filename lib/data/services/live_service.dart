@@ -16,6 +16,18 @@ class LiveService {
 
   LiveService(this._dio);
 
+  /// Normaliza chaves do payload da API antes de bater no Freezed:
+  /// - `/live/feed` retorna `room_id`; `/live/rooms/:id` retorna `id`.
+  /// - Mapeia `playback_url` para o nosso modelo.
+  /// Esta camada nos isola de inconsistências do backend.
+  Map<String, dynamic> _normalizeRoomJson(Map<String, dynamic> raw) {
+    final out = Map<String, dynamic>.from(raw);
+    if (out['id'] == null && out['room_id'] != null) {
+      out['id'] = out['room_id'];
+    }
+    return out;
+  }
+
   Future<List<LiveRoomDto>> getLiveFeed({
     String? cursor,
     int limit = 10,
@@ -37,12 +49,12 @@ class LiveService {
 
       if (list != null) {
         return list
-            .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+            .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
             .toList();
       }
     } else if (data is List) {
       return data
-          .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+          .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
           .toList();
     }
 
@@ -72,12 +84,12 @@ class LiveService {
 
       if (list != null) {
         return list
-            .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+            .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
             .toList();
       }
     } else if (data is List) {
       return data
-          .map((e) => LiveRoomDto.fromJson(e as Map<String, dynamic>))
+          .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
           .toList();
     }
 
@@ -91,7 +103,7 @@ class LiveService {
       // The API returns { "success": true, "data": { ...room... } }
       final roomData = data['data'] ?? data;
       if (roomData is Map<String, dynamic>) {
-        return LiveRoomDto.fromJson(roomData);
+        return LiveRoomDto.fromJson(_normalizeRoomJson(roomData));
       }
     }
     return null;
@@ -126,6 +138,36 @@ class LiveService {
 
   Future<Map<String, dynamic>> sendHeartbeat(String roomId) async {
     final response = await _dio.post('/live/rooms/$roomId/heartbeat');
+    return _toMap(response.data);
+  }
+
+  /// Compartilha a live com seguidores via DM (cria mensagens `live_invite`).
+  Future<Map<String, dynamic>> shareLive(
+    String roomId, {
+    required List<String> userIds,
+    String? note,
+  }) async {
+    final response = await _dio.post(
+      '/live/rooms/$roomId/share',
+      data: {
+        'user_ids': userIds,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+    );
+    return _toMap(response.data);
+  }
+
+  /// Warm-up: avisa seguidores que a live vai comecar em alguns segundos.
+  Future<Map<String, dynamic>> announceLive(
+    String roomId, {
+    int? secondsUntilLive,
+  }) async {
+    final response = await _dio.post(
+      '/live/rooms/$roomId/announce',
+      data: {
+        if (secondsUntilLive != null) 'seconds_until_live': secondsUntilLive, // ignore: use_null_aware_elements
+      },
+    );
     return _toMap(response.data);
   }
 

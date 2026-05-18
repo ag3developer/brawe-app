@@ -34,6 +34,14 @@ class PushNotificationService {
   /// Call once at app startup (after Firebase.initializeApp).
   Future<void> init() async {
     if (_initialized) return;
+    // Skip silently when Firebase has no default app configured (e.g. dev
+    // build without GoogleService-Info.plist / google-services.json).
+    if (Firebase.apps.isEmpty) {
+      debugPrint(
+        'PushNotificationService: Firebase not configured, skipping push setup.',
+      );
+      return;
+    }
     try {
       // Request permission (iOS + Android 13+).
       await FirebaseMessaging.instance.requestPermission(
