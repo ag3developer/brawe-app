@@ -55,7 +55,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
             ),
       LiveBattleItem() => LiveBattleView(item: item),
       LiveChatItem() => LiveChatView(item: item, isActive: isActive),
-      VideoFeedItem() => VideoView(item: item),
+      VideoFeedItem() => VideoView(item: item, isActive: isActive),
       PhotoPostFeedItem() => PhotoPostView(item: item),
     };
   }

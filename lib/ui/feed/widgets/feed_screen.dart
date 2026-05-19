@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
@@ -710,7 +711,10 @@ class _PostCardState extends ConsumerState<PostCard>
     Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => StoryComposerScreen(initialRemoteUrl: imageUrl),
+        builder: (_) => StoryComposerScreen(
+          initialRemoteUrl: imageUrl,
+          initialOriginPostId: widget.post.id,
+        ),
       ),
     );
   }
@@ -806,7 +810,9 @@ class _PostCardState extends ConsumerState<PostCard>
             // Image — estilo Threads: full-bleed, sem cantos arredondados
             if (post.imageUrl != null)
               GestureDetector(
-                onTap: () => _openImageLightbox(context, post.imageUrl!),
+                onTap: () => _isVideoUrl(post.imageUrl!)
+                    ? null
+                    : _openImageLightbox(context, post.imageUrl!),
                 onDoubleTap: _doubleTapLike,
                 child: Stack(
                   alignment: Alignment.center,
@@ -820,7 +826,9 @@ class _PostCardState extends ConsumerState<PostCard>
                               maxHeight:
                                   MediaQuery.of(context).size.width * 1.25,
                             ),
-                            child: Image.network(
+                            child: _isVideoUrl(post.imageUrl!)
+                                ? _FeedVideoTile(url: post.imageUrl!)
+                                : Image.network(
                               post.imageUrl!,
                               width: double.infinity,
                               fit: BoxFit.cover,
@@ -937,6 +945,31 @@ class _PostCardState extends ConsumerState<PostCard>
                     icon: Icons.send_rounded,
                     color: _FeedTokens.textMd,
                     onTap: _sharePost,
+                  ),
+                ],
+              ),
+            ),
+          // Linha de views — discreta, estilo Twitter/X.
+          if (post.viewsCount > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.bar_chart_rounded,
+                    size: 14,
+                    color: _FeedTokens.textMd.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    post.viewsCount == 1
+                        ? '1 visualização'
+                        : '${_formatCount(post.viewsCount)} visualizações',
+                    style: TextStyle(
+                      color: _FeedTokens.textMd.withValues(alpha: 0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -1930,6 +1963,138 @@ class _LightboxAction extends StatelessWidget {
               color: color,
               fontSize: 13,
               fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Vídeo inline no feed (Threads-style: autoplay muted, loop) ──────────────
+
+bool _isVideoUrl(String url) {
+  final u = url.toLowerCase().split('?').first;
+  return u.endsWith('.mp4') ||
+      u.endsWith('.mov') ||
+      u.endsWith('.webm') ||
+      u.endsWith('.m4v');
+}
+
+class _FeedVideoTile extends StatefulWidget {
+  const _FeedVideoTile({required this.url});
+  final String url;
+
+  @override
+  State<_FeedVideoTile> createState() => _FeedVideoTileState();
+}
+
+class _FeedVideoTileState extends State<_FeedVideoTile> {
+  VideoPlayerController? _ctrl;
+  bool _ready = false;
+  bool _error = false;
+  bool _muted = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    try {
+      final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      await c.initialize();
+      if (!mounted) {
+        await c.dispose();
+        return;
+      }
+      c
+        ..setLooping(true)
+        ..setVolume(0)
+        ..play();
+      setState(() {
+        _ctrl = c;
+        _ready = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl?.dispose();
+    super.dispose();
+  }
+
+  void _toggleMute() {
+    final c = _ctrl;
+    if (c == null) return;
+    setState(() => _muted = !_muted);
+    c.setVolume(_muted ? 0 : 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error) {
+      return Container(
+        height: 200,
+        color: _FeedTokens.surfaceHi,
+        child: const Center(
+          child: Icon(Icons.broken_image_rounded, color: _FeedTokens.textLo),
+        ),
+      );
+    }
+    if (!_ready || _ctrl == null) {
+      return AspectRatio(
+        aspectRatio: 4 / 5,
+        child: Container(
+          color: _FeedTokens.surfaceHi,
+          child: const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFFA855F7),
+            ),
+          ),
+        ),
+      );
+    }
+    final c = _ctrl!;
+    final aspect = c.value.aspectRatio == 0 ? 9 / 16 : c.value.aspectRatio;
+    return AspectRatio(
+      aspectRatio: aspect.clamp(0.5, 1.91),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: c.value.size.width,
+              height: c.value.size.height,
+              child: VideoPlayer(c),
+            ),
+          ),
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: GestureDetector(
+              onTap: _toggleMute,
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: Icon(
+                  _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
             ),
           ),
         ],

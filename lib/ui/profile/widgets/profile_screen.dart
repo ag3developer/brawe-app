@@ -19,6 +19,7 @@ import '../../../domain/models/live_room.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/product.dart';
 import '../../../domain/models/profile.dart';
+import 'profile_videos_grid.dart';
 import '../../../domain/models/profile_state.dart';
 import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/create_post_sheet.dart';
@@ -91,8 +92,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   TabController? _tabController;
   List<Product> _products = [];
   bool _isSeller = false;
-  // Abas base: Posts, Galeria, Lives. +1 se for vendedor (Loja).
-  int _tabCount = 3;
+  // Abas base: Posts, Vídeos, Galeria, Lives. +1 se for vendedor (Loja).
+  int _tabCount = 4;
 
   @override
   void initState() {
@@ -110,7 +111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           .getUserProducts(widget.userId);
       if (!mounted) return;
       final isSeller = products.isNotEmpty;
-      final newCount = isSeller ? 4 : 3;
+      final newCount = isSeller ? 5 : 4;
       setState(() {
         _products = products;
         _isSeller = isSeller;
@@ -140,6 +141,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     final tabs = <Tab>[
       const Tab(icon: Icon(Icons.article_outlined, size: 20), text: 'Posts'),
+      const Tab(icon: Icon(Icons.play_circle_outline, size: 20), text: 'Vídeos'),
       const Tab(icon: Icon(Icons.grid_on_outlined, size: 20), text: 'Galeria'),
       const Tab(icon: Icon(Icons.live_tv_outlined, size: 20), text: 'Lives'),
       if (_isSeller)
@@ -287,6 +289,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             controller: _tabController,
             children: [
               _PostsGrid(postsState: profileState.posts),
+              ProfileVideosGrid(
+                userId: widget.userId,
+                isMe: isMe,
+                postsState: profileState.posts,
+              ),
               ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
               _LivesGrid(livesState: profileState.lives),
               if (_isSeller) _ProductsGrid(products: products),
@@ -1626,9 +1633,20 @@ class _PostsGrid extends StatelessWidget {
     return postsState.when(
       data: (posts) {
         // Aba "Posts" mostra apenas publicações textuais (sem mídia).
-        // Posts com foto/vídeo ficam na aba "Galeria".
+        // Posts com foto vão para "Galeria" e posts com vídeo vão para "Vídeos".
+        bool _isVideo(String? url) {
+          if (url == null || url.isEmpty) return false;
+          final l = url.toLowerCase();
+          return l.endsWith('.mp4') ||
+              l.endsWith('.mov') ||
+              l.endsWith('.webm') ||
+              l.endsWith('.m4v');
+        }
+
         final textual = posts
-            .where((p) => (p.imageUrl == null || p.imageUrl!.isEmpty))
+            .where((p) =>
+                (p.imageUrl == null || p.imageUrl!.isEmpty) &&
+                !_isVideo(p.imageUrl))
             .toList();
 
         if (textual.isEmpty) {

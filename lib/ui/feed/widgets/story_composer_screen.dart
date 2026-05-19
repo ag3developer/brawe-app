@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -22,11 +23,19 @@ import '../view_models/stories_view_model.dart';
 /// 2. Editor em tela cheia: imagem/vídeo de fundo, camadas de texto
 ///    draggable, paleta de cores, caption, botão publicar.
 class StoryComposerScreen extends ConsumerStatefulWidget {
-  const StoryComposerScreen({super.key, this.initialRemoteUrl});
+  const StoryComposerScreen({
+    super.key,
+    this.initialRemoteUrl,
+    this.initialOriginPostId,
+  });
 
   /// Se fornecido, abre direto no editor com a mídia remota (compartilhar
   /// post como story).
   final String? initialRemoteUrl;
+
+  /// ID do post original quando este story é um repost. Mantém o link
+  /// para que o viewer possa abrir o post original.
+  final String? initialOriginPostId;
 
   @override
   ConsumerState<StoryComposerScreen> createState() =>
@@ -57,11 +66,18 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   Duration _currentSegmentElapsed = Duration.zero;
   bool _flashOn = false;
 
+  // ── Repost de post remoto (initialRemoteUrl) ────────────────────────
+  /// True enquanto a tela está em modo "repost" (mídia remota baixando).
+  /// Nesse modo NÃO mostramos o picker da câmera — só um loader dedicado.
+  bool _isRepostMode = false;
+  String? _remoteError;
+
   @override
   void initState() {
     super.initState();
     final remote = widget.initialRemoteUrl;
     if (remote != null && remote.isNotEmpty) {
+      _isRepostMode = true;
       _prefetchRemote(remote);
     } else {
       _initCameraPreview();
@@ -115,7 +131,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   }
 
   Future<void> _prefetchRemote(String url) async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _remoteError = null;
+    });
     try {
       final dir = await getTemporaryDirectory();
       final isVid = _looksLikeVideo(url);
@@ -125,9 +144,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       await Dio().download(url, tmpPath);
       if (!mounted) return;
       await _setSelected(File(tmpPath), isVideo: isVid);
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[StoryComposer] Falha ao baixar mídia remota: $e\n$st');
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Falha ao carregar mídia.');
+      setState(() => _remoteError = 'Não foi possível carregar a mídia.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -356,12 +376,14 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             localFilePath: _videoSegments[i].path,
             // Caption apenas no primeiro segmento (padrão Instagram)
             caption: i == 0 ? caption : null,
+            originPostId: widget.initialOriginPostId,
           );
         }
       } else {
         await notifier.createStory(
           localFilePath: _file!.path,
           caption: caption,
+          originPostId: widget.initialOriginPostId,
         );
       }
       if (!mounted) return;
@@ -386,8 +408,74 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       backgroundColor: Colors.black,
       body: SafeArea(
         top: false,
-        child: _file == null ? _buildPicker() : _buildEditor(),
+        child: _file != null
+            ? _buildEditor()
+            : (_isRepostMode ? _buildRepostLoader() : _buildPicker()),
       ),
+    );
+  }
+
+  /// Tela exibida enquanto a mídia remota (repost) está sendo baixada.
+  /// Evita confundir o usuário com a UI do picker/câmera.
+  Widget _buildRepostLoader() {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0B0F1A), Color(0xFF1A1240), Color(0xFF0B0F1A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 48,
+          left: 16,
+          child: _CircleIconBtn(
+            icon: Icons.close,
+            onTap: () => Navigator.of(context).pop(),
+          ),
+        ),
+        Center(
+          child: _remoteError != null
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.white70, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      _remoteError!,
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () {
+                        final url = widget.initialRemoteUrl;
+                        if (url != null) _prefetchRemote(url);
+                      },
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      label: const Text('Tentar novamente',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    CircularProgressIndicator(
+                        color: AppColors.electricPurple),
+                    SizedBox(height: 16),
+                    Text(
+                      'Preparando publicação…',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+        ),
+      ],
     );
   }
 
@@ -580,6 +668,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       isVideo: _isVideo,
       videoCtrl: _videoCtrl,
       isPublishing: _isPublishing,
+      isRepost: _isRepostMode,
       onBack: () async {
         await _videoCtrl?.dispose();
         _videoCtrl = null;
@@ -830,12 +919,14 @@ class _StoryEditor extends StatefulWidget {
     required this.isPublishing,
     required this.onBack,
     required this.onPublish,
+    this.isRepost = false,
   });
 
   final File file;
   final bool isVideo;
   final VideoPlayerController? videoCtrl;
   final bool isPublishing;
+  final bool isRepost;
   final VoidCallback onBack;
   final Future<void> Function({required String? caption}) onPublish;
 
@@ -849,6 +940,38 @@ class _StoryEditorState extends State<_StoryEditor> {
   Color _currentColor = Colors.white;
   bool _composingText = false;
   final TextEditingController _composeCtrl = TextEditingController();
+
+  // Pinch-zoom / pan da mídia (estilo Instagram).
+  final TransformationController _transformCtrl = TransformationController();
+  bool _showGuides = false;
+  Timer? _guidesTimer;
+
+  // ── Moldura (frame) — double-tap cicla pelas opções ─────────────────
+  // 0=nenhuma, 1=polaroid branca, 2=gradiente brawe
+  int _frameStyle = 0;
+  static const _frameLabels = ['Sem moldura', 'Polaroid', 'Brawe'];
+
+  void _cycleFrame() {
+    setState(() => _frameStyle = (_frameStyle + 1) % 3);
+    HapticFeedback.selectionClick();
+  }
+
+  void _onInteractionStart(ScaleStartDetails _) {
+    _guidesTimer?.cancel();
+    if (!_showGuides) setState(() => _showGuides = true);
+  }
+
+  void _onInteractionEnd(ScaleEndDetails _) {
+    _guidesTimer?.cancel();
+    _guidesTimer = Timer(const Duration(milliseconds: 700), () {
+      if (mounted) setState(() => _showGuides = false);
+    });
+  }
+
+  void _resetTransform() {
+    _transformCtrl.value = Matrix4.identity();
+    HapticFeedback.selectionClick();
+  }
 
   static const _palette = <Color>[
     Colors.white,
@@ -864,6 +987,8 @@ class _StoryEditorState extends State<_StoryEditor> {
   void dispose() {
     _captionCtrl.dispose();
     _composeCtrl.dispose();
+    _transformCtrl.dispose();
+    _guidesTimer?.cancel();
     super.dispose();
   }
 
@@ -892,8 +1017,82 @@ class _StoryEditorState extends State<_StoryEditor> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Mídia (vídeo ou imagem) cobrindo a tela
-        Positioned.fill(child: _buildMedia()),
+        // Fundo: blur da própria mídia (evita laterais pretas quando cabe inteira).
+        if (!widget.isVideo)
+          Positioned.fill(
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+              child: Image.file(
+                widget.file,
+                fit: BoxFit.cover,
+                opacity: const AlwaysStoppedAnimation(0.55),
+              ),
+            ),
+          ),
+        // Mídia com pinch-zoom / pan (2 dedos para enquadrar).
+        // Double-tap cicla pelas molduras antes de publicar.
+        Positioned.fill(
+          child: GestureDetector(
+            onDoubleTap: _cycleFrame,
+            child: InteractiveViewer(
+              transformationController: _transformCtrl,
+              minScale: 0.3,
+              maxScale: 4.0,
+              panEnabled: true,
+              scaleEnabled: true,
+              clipBehavior: Clip.hardEdge,
+              onInteractionStart: _onInteractionStart,
+              onInteractionEnd: _onInteractionEnd,
+              child: Center(child: _buildFramedMedia()),
+            ),
+          ),
+        ),
+
+        // Linhas guia (área de segurança 9:16) — aparecem durante o gesto.
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 220),
+              opacity: _showGuides ? 1.0 : 0.0,
+              child: const _SafeAreaGuides(),
+            ),
+          ),
+        ),
+
+        // Chip "Toque 2x para trocar moldura" (dica + label da moldura atual).
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 64,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 240),
+                child: Container(
+                  key: ValueKey(_frameStyle),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18)),
+                  ),
+                  child: Text(
+                    _frameStyle == 0
+                        ? 'Toque 2x para moldura'
+                        : 'Moldura: ${_frameLabels[_frameStyle]}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
 
         // Camadas de texto draggable
         ..._layers.asMap().entries.map((entry) {
@@ -941,7 +1140,32 @@ class _StoryEditorState extends State<_StoryEditor> {
             children: [
               _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
               const Spacer(),
+              // Reset zoom — só aparece se houver transformação aplicada.
+              AnimatedBuilder(
+                animation: _transformCtrl,
+                builder: (_, __) {
+                  final isIdentity =
+                      _transformCtrl.value == Matrix4.identity();
+                  if (isIdentity) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _CircleIconBtn(
+                      icon: Icons.center_focus_strong,
+                      onTap: _resetTransform,
+                    ),
+                  );
+                },
+              ),
               _CircleIconBtn(icon: Icons.text_fields, onTap: _startTextCompose),
+              const SizedBox(width: 8),
+              _CircleIconBtn(
+                icon: _frameStyle == 0
+                    ? Icons.crop_din
+                    : (_frameStyle == 1
+                        ? Icons.filter_frames
+                        : Icons.auto_awesome),
+                onTap: _cycleFrame,
+              ),
               const SizedBox(width: 8),
               _CircleIconBtn(
                 icon: Icons.color_lens_outlined,
@@ -1030,6 +1254,87 @@ class _StoryEditorState extends State<_StoryEditor> {
           ),
       ],
     );
+  }
+
+  Widget _buildFramedMedia() {
+    // Em modo repost: BoxFit.contain pra mostrar o post inteiro (não corta).
+    // Em modo câmera: BoxFit.cover (preenche a tela 9:16).
+    final useContain = widget.isRepost;
+    final Widget inner;
+    if (widget.isVideo && widget.videoCtrl != null) {
+      final ctrl = widget.videoCtrl!;
+      inner = FittedBox(
+        fit: useContain ? BoxFit.contain : BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: ctrl.value.size.width,
+          height: ctrl.value.size.height,
+          child: VideoPlayer(ctrl),
+        ),
+      );
+    } else {
+      inner = Image.file(
+        widget.file,
+        fit: useContain ? BoxFit.contain : BoxFit.cover,
+      );
+    }
+    return _applyFrame(inner);
+  }
+
+  Widget _applyFrame(Widget child) {
+    switch (_frameStyle) {
+      case 1: // Polaroid branca
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 64),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 56),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: AspectRatio(aspectRatio: 1, child: child),
+            ),
+          ),
+        );
+      case 2: // Gradiente Brawe
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                colors: [AppColors.electricPurple, AppColors.coolCyan],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  blurRadius: 28,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: child,
+            ),
+          ),
+        );
+      case 0:
+      default:
+        return child;
+    }
   }
 
   Widget _buildMedia() {
@@ -1165,3 +1470,101 @@ final List<int> _kTransparentPngBytes = <int>[
 // Suppress unused-warning shim
 // ignore: unused_element
 void _keepMathImport() => math.pi;
+
+/// Linhas guia tipo Instagram: mostra a "área de segurança" (top/bottom)
+/// para o usuário enquadrar bem a publicação durante o pinch-zoom.
+class _SafeAreaGuides extends StatelessWidget {
+  const _SafeAreaGuides();
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.of(context).padding;
+    // Área de segurança aproximada do Instagram Stories:
+    // ~14% do topo (status bar + header) e ~20% inferior (caption + ações).
+    final topGuide = padding.top + 72;
+    final bottomGuide = padding.bottom + 140;
+
+    return Stack(
+      children: [
+        // Linha superior
+        Positioned(
+          left: 0,
+          right: 0,
+          top: topGuide,
+          child: _GuideLine(label: 'topo seguro'),
+        ),
+        // Linha inferior
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: bottomGuide,
+          child: _GuideLine(label: 'base segura', alignEnd: true),
+        ),
+      ],
+    );
+  }
+}
+
+class _GuideLine extends StatelessWidget {
+  const _GuideLine({required this.label, this.alignEnd = false});
+  final String label;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        if (!alignEnd)
+          Padding(
+            padding: const EdgeInsets.only(left: 14, bottom: 4),
+            child: _GuideTag(text: label),
+          ),
+        Container(
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.0),
+                Colors.white.withValues(alpha: 0.85),
+                Colors.white.withValues(alpha: 0.0),
+              ],
+            ),
+          ),
+        ),
+        if (alignEnd)
+          Padding(
+            padding: const EdgeInsets.only(right: 14, top: 4),
+            child: _GuideTag(text: label),
+          ),
+      ],
+    );
+  }
+}
+
+class _GuideTag extends StatelessWidget {
+  const _GuideTag({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+}

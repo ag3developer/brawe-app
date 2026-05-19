@@ -75,11 +75,14 @@ class StoriesService {
     required String filePath,
     String? caption,
     int? durationSeconds,
+    String? originPostId,
   }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       if (caption != null && caption.trim().isNotEmpty) 'caption': caption.trim(),
       if (durationSeconds != null) 'duration_seconds': durationSeconds,
+      if (originPostId != null && originPostId.isNotEmpty)
+        'origin_post_id': originPostId,
     });
     final response = await _dio.post(
       '/stories/upload',

@@ -103,12 +103,14 @@ class StoriesRepository {
     required String localFilePath,
     String? caption,
     int? durationSeconds,
+    String? originPostId,
   }) async {
     try {
       await _service.createStory(
         filePath: localFilePath,
         caption: caption,
         durationSeconds: durationSeconds,
+        originPostId: originPostId,
       );
     } on DioException catch (_) {
       throw const Failure.network();
@@ -214,6 +216,7 @@ class StoriesRepository {
           : null,
       isSeen: (json['is_viewed'] ?? false) as bool,
       isVerified: isVerified,
+      originPostId: json['origin_post_id'] as String?,
     );
   }
 }

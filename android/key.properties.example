@@ -1,0 +1,24 @@
+# ─── Brawe — Android release signing config ────────────────────────────────
+# COPIE este arquivo para `android/key.properties` e preencha os campos.
+# O arquivo real é ignorado pelo git (.gitignore).
+#
+# Como gerar a keystore (executar UMA ÚNICA VEZ; guardar `.jks` em local
+# seguro tipo 1Password / cofre da empresa):
+#
+#   keytool -genkey -v \
+#     -keystore ~/brawe-upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias brawe-upload
+#
+# IMPORTANTE: se você perder esta keystore, NÃO CONSEGUIRÁ ATUALIZAR o app
+# no Play Store. O Google Play App Signing minimiza o risco mas mesmo assim
+# guarde múltiplas cópias offline.
+#
+# Após gerar, extraia SHA-1 e SHA-256 para adicionar no Firebase Console:
+#
+#   keytool -list -v -keystore ~/brawe-upload-keystore.jks -alias brawe-upload
+
+storePassword=COLE_SUA_SENHA_AQUI
+keyPassword=COLE_SUA_SENHA_AQUI
+keyAlias=brawe-upload
+storeFile=/Users/SEU_USUARIO/brawe-upload-keystore.jks

@@ -204,6 +204,8 @@ class _CreateSheetState extends State<_CreateSheet>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      useSafeArea: false,
       builder: (_) => const CreateVideoSheet(),
     );
   }

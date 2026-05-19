@@ -44,6 +44,15 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Secrets — NUNCA commitar
+/android/key.properties
+/android/app/upload-keystore.jks
+/android/app/*.jks
+/android/app/*.keystore
+# google-services.json contém api keys públicas mas algumas orgs preferem
+# manter fora do repo; descomente se for sua política.
+# /android/app/google-services.json
+
 AGENTS.md
 GEMINI.md
 /docs/live_feature_tracking.md

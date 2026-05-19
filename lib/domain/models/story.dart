@@ -16,6 +16,7 @@ class Story {
     this.expiresAt,
     this.isSeen = false,
     this.isVerified = false,
+    this.originPostId,
   });
 
   final String id;
@@ -34,6 +35,7 @@ class Story {
   final DateTime? expiresAt;
   final bool isSeen;
   final bool isVerified;
+  final String? originPostId;
 
   bool get isVideo => mediaType == 'video';
 
@@ -66,6 +68,7 @@ class Story {
         expiresAt: expiresAt,
         isSeen: isSeen ?? this.isSeen,
         isVerified: isVerified,
+        originPostId: originPostId,
       );
 }
 

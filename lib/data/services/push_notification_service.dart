@@ -51,8 +51,10 @@ class PushNotificationService {
       );
 
       // Local notifications (foreground display on Android).
+      // Usa o ícone monocromático `ic_stat_notification` (drawable) — exigência
+      // do Android para notification bar (colorido só funciona via accent color).
       const androidInit = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
+        'ic_stat_notification',
       );
       const iosInit = DarwinInitializationSettings();
       await _local.initialize(

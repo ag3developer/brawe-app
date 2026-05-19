@@ -63,10 +63,14 @@ class StoriesViewModel extends _$StoriesViewModel {
     required String localFilePath,
     String? mediaType, // mantido para compat; ignorado
     String? caption,
+    int? durationSeconds,
+    String? originPostId,
   }) async {
     await ref.read(storiesRepositoryProvider).createStory(
           localFilePath: localFilePath,
           caption: caption,
+          durationSeconds: durationSeconds,
+          originPostId: originPostId,
         );
     // Recarrega o feed para mostrar o novo story imediatamente.
     state = const AsyncValue.loading();

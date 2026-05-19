@@ -63,6 +63,16 @@ dependencies:
   battery_plus: ^7.0.0
   camera: ^0.12.0+1
 
+# ── Overrides ──────────────────────────────────────────────────────────────
+# path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que
+# requer Native Assets habilitado no Flutter. Sem isso, o framework
+# `objective_c.framework` não é empacotado no .app/.ipa e o app crasha em
+# runtime no simulador/device com `dlopen` failure ao chamar
+# `getTemporaryDirectory()`. Pinar versão antiga (channel method) até o
+# Flutter habilitar Native Assets por padrão.
+dependency_overrides:
+  path_provider_foundation: 2.4.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -130,7 +140,7 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   background_color_ios: "#0A0A0F"
-  min_sdk_android: 21
+  min_sdk_android: 24
   adaptive_icon_background: "#0A0A0F"
   adaptive_icon_foreground: "assets/images/brawe-icon.png"
   web:

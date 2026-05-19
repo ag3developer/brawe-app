@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
@@ -604,6 +606,47 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 ),
               ),
 
+            // Chip "Ver post original" quando o story é um repost
+            if (story.originPostId != null && story.originPostId!.isNotEmpty)
+              Positioned(
+                bottom: story.caption != null ? 120 : 80,
+                left: 16,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    // TODO: navegar para post detail quando a rota existir.
+                    // Por ora, fecha o viewer para o usuário voltar ao feed.
+                    Navigator.of(context).maybePop();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.open_in_new,
+                            size: 14, color: Colors.white),
+                        SizedBox(width: 6),
+                        Text(
+                          'Ver post original',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
             // Reaction flash overlay (animação ❤ ao reagir)
             if (_reactionFlash)
               const Center(
@@ -728,58 +771,95 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
   Widget _buildReplyBar(Story story) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Campo de resposta — glassmorphism (blur + glass white).
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.white54),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: TextField(
-              controller: _replyController,
-              focusNode: _replyFocus,
-              style: const TextStyle(color: Colors.white),
-              minLines: 1,
-              maxLines: 3,
-              textInputAction: TextInputAction.send,
-              onTap: _pause,
-              onSubmitted: (_) => _sendReply(),
-              decoration: const InputDecoration(
-                hintText: 'Responder ao story...',
-                hintStyle: TextStyle(color: Colors.white70),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 10),
-                isDense: true,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    width: 1,
+                  ),
+                ),
+                child: TextField(
+                  controller: _replyController,
+                  focusNode: _replyFocus,
+                  cursorColor: AppColors.electricPurple,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  minLines: 1,
+                  maxLines: 3,
+                  textInputAction: TextInputAction.send,
+                  onTap: _pause,
+                  onSubmitted: (_) => _sendReply(),
+                  decoration: const InputDecoration(
+                    hintText: 'Responder ao story...',
+                    hintStyle: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 14,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    isDense: true,
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
-        GestureDetector(
-          onTap: () => _openGiftSheet(),
-          child: const Icon(Icons.card_giftcard,
-              color: Colors.white, size: 28),
+        const SizedBox(width: 8),
+        // Botão de presente — chip glass.
+        _StoryActionChip(
+          icon: Icons.card_giftcard,
+          onTap: _openGiftSheet,
         ),
-        const SizedBox(width: 12),
-        GestureDetector(
+        const SizedBox(width: 6),
+        // Botão de coração — chip glass.
+        _StoryActionChip(
+          icon: Icons.favorite_border,
           onTap: _sendQuickReaction,
-          child: const Icon(Icons.favorite_border,
-              color: Colors.white, size: 28),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 6),
+        // Botão enviar — pulsa no gradient da marca.
         GestureDetector(
           onTap: _sendingReply ? null : _sendReply,
-          child: _sendingReply
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Icon(Icons.send, color: Colors.white, size: 28),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.electricPurple, AppColors.coolCyan],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: _sendingReply
+                ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.send_rounded,
+                    color: Colors.white, size: 20),
+          ),
         ),
       ],
     );
@@ -1026,6 +1106,38 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                           ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Chip de ação na reply bar (presente / coração) — glass + blur.
+class _StoryActionChip extends StatelessWidget {
+  const _StoryActionChip({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.10),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.22),
+                width: 1,
+              ),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+        ),
       ),
     );
   }

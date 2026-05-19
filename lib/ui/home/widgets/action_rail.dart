@@ -58,6 +58,10 @@ class ActionRail extends StatelessWidget {
           label: _format(item.sharesCount),
           onTap: onShare,
         ),
+        if (item.viewsCount > 0) ...[
+          const SizedBox(height: 14),
+          _ViewsLabel(count: item.viewsCount, formatter: _format),
+        ],
         const SizedBox(height: 18),
         // Animated audio disc (signature)
         _SpinningDisc(avatarUrl: item.author.avatarUrl),
@@ -191,6 +195,37 @@ class _RailButton extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ViewsLabel extends StatelessWidget {
+  const _ViewsLabel({required this.count, required this.formatter});
+  final int count;
+  final String Function(int) formatter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.bar_chart_rounded,
+          color: Colors.white70,
+          size: 18,
+          shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          formatter(count),
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+          ),
+        ),
+      ],
     );
   }
 }
