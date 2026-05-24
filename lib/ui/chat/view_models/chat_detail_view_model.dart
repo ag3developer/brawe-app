@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../data/services/chat_sounds_service.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/user.dart';
@@ -189,16 +190,29 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
           m.content == message.content &&
           m.senderId == message.senderId,
     );
+    var isTrulyNew = false;
     if (optimisticIndex >= 0) {
       messages[optimisticIndex] = message;
     } else if (messages.any((m) => m.id == message.id)) {
       return;
     } else {
       messages.add(message);
+      isTrulyNew = true;
     }
     state = state.copyWith(messages: messages, clearErrorMessage: true);
 
+    if (isTrulyNew) {
+      _maybePlayReceivedSound(message);
+    }
     _autoMarkAsRead(message);
+  }
+
+  Future<void> _maybePlayReceivedSound(ChatMessage message) async {
+    try {
+      final myId = await ref.read(chatRepositoryProvider).getCurrentUserId();
+      if (myId == null || message.senderId == myId) return;
+      ref.read(chatSoundsServiceProvider).playReceived();
+    } catch (_) {}
   }
 
   Future<void> _autoMarkAsRead(ChatMessage message) async {
@@ -247,6 +261,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       );
       _replaceMessage(optimisticMessage.id, merged);
       state = state.copyWith(isSending: false);
+      ref.read(chatSoundsServiceProvider).playSent();
     } on Failure catch (failure) {
       _removeMessage(optimisticMessage.id);
       state = state.copyWith(
@@ -444,6 +459,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
           );
       _replaceMessage(optimisticId, sent);
       state = state.copyWith(isSending: false);
+      ref.read(chatSoundsServiceProvider).playSent();
     } on Failure catch (failure) {
       _removeMessage(optimisticId);
       state = state.copyWith(
@@ -488,6 +504,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
           );
       _replaceMessage(optimisticId, sent);
       state = state.copyWith(isSending: false);
+      ref.read(chatSoundsServiceProvider).playSent();
     } on Failure catch (failure) {
       _removeMessage(optimisticId);
       state = state.copyWith(

@@ -2623,6 +2623,8 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
       _player.playerStateStream.listen((s) {
         if (mounted) setState(() => _isPlaying = s.playing);
         if (s.processingState == ProcessingState.completed && mounted) {
+          // Pausa antes do seek para evitar auto-replay do just_audio.
+          _player.pause();
           _player.seek(Duration.zero);
           setState(() {
             _isPlaying = false;
@@ -2809,6 +2811,9 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
       if (!mounted) return;
       setState(() => _isPlaying = s.playing);
       if (s.processingState == ProcessingState.completed) {
+        // IMPORTANTE: pausar ANTES do seek, senão o just_audio
+        // reinicia a reprodução automaticamente (auto-replay).
+        _player.pause();
         _player.seek(Duration.zero);
         setState(() {
           _isPlaying = false;
