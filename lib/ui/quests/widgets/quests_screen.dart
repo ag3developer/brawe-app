@@ -331,6 +331,13 @@ class _HeroCard extends StatelessWidget {
               ),
               if (streak.multiplierLabel != null)
                 _MultiplierPill(label: streak.multiplierLabel!),
+              const SizedBox(width: 6),
+              const _QuestImage(
+                assetName: 'trophy.png',
+                fallbackIcon: Icons.emoji_events,
+                size: 44,
+                fallbackColor: Color(0xFFFFD93D),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -696,7 +703,14 @@ class _QuestCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: Colors.white, size: 24),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: _QuestImage(
+                    assetName: _assetNameFor(quest),
+                    fallbackIcon: icon,
+                    size: 34,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -814,6 +828,67 @@ IconData _iconFor(String key) {
       return Icons.camera_alt;
     default:
       return Icons.stars;
+  }
+}
+
+/// Mapeia a categoria/ícone da quest para um nome de asset PNG.
+/// Se o asset não existir em `assets/images/quests/`, o widget [_QuestImage]
+/// faz fallback automaticamente para o [IconData] correspondente.
+String _assetNameFor(DailyQuest q) {
+  // Primeiro tenta por ícone (mais específico vindo do backend).
+  switch (q.icon) {
+    case 'Heart':
+      return 'icon_like.png';
+    case 'MessageCircle':
+      return 'icon_comment.png';
+    case 'UserPlus':
+      return 'icon_follow.png';
+    case 'Camera':
+      return 'icon_post.png';
+    case 'Share2':
+      return 'icon_share.png';
+    case 'Play':
+      return 'icon_watch.png';
+  }
+  // Fallback por categoria.
+  switch (q.category) {
+    case 'engagement':
+      return 'icon_like.png';
+    case 'social':
+      return 'icon_follow.png';
+    case 'creator':
+      return 'icon_post.png';
+    default:
+      return 'icon_streak.png';
+  }
+}
+
+/// Widget que tenta carregar uma imagem de `assets/images/quests/` e,
+/// se o arquivo não existir, mostra um [IconData] como fallback.
+///
+/// Permite que o time de design adicione/troque PNGs sem mexer no código.
+class _QuestImage extends StatelessWidget {
+  final String assetName;
+  final IconData fallbackIcon;
+  final double size;
+  final Color fallbackColor;
+  const _QuestImage({
+    required this.assetName,
+    required this.fallbackIcon,
+    required this.size,
+    this.fallbackColor = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/quests/$assetName',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      errorBuilder: (_, e, s) =>
+          Icon(fallbackIcon, color: fallbackColor, size: size * 0.75),
+    );
   }
 }
 
@@ -1051,8 +1126,12 @@ class _EmptyState extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            const Icon(Icons.emoji_events,
-                color: Color(0xFFFFD93D), size: 56),
+            const _QuestImage(
+              assetName: 'empty_state.png',
+              fallbackIcon: Icons.emoji_events,
+              size: 120,
+              fallbackColor: Color(0xFFFFD93D),
+            ),
             const SizedBox(height: 12),
             Text(
               text,
