@@ -14,7 +14,6 @@ import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
-import '../../live_feed/view_models/battle_view_model.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
@@ -1606,126 +1605,6 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
-
-// ════════════════════════════════════════════════════════════════
-// BOTTOM ACTION BAR (legacy — mantida para compatibilidade)
-// ════════════════════════════════════════════════════════════════
-
-class _BottomActionBar extends StatelessWidget {
-  const _BottomActionBar({
-    required this.isPaused,
-    required this.isTogglingPause,
-    required this.isTogglingStream,
-    required this.onPauseResume,
-    required this.onEnd,
-    required this.onMoreOptions,
-  });
-
-  final bool isPaused;
-  final bool isTogglingPause;
-  final bool isTogglingStream;
-  final VoidCallback onPauseResume;
-  final VoidCallback onEnd;
-  final VoidCallback onMoreOptions;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _CompactRoundButton(
-            icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-            color: isPaused ? const Color(0xFF22C55E) : Colors.orange.shade600,
-            loading: isTogglingPause,
-            onTap: onPauseResume,
-            tooltip: isPaused ? s.broadcasterTooltipResume : s.broadcasterTooltipPause,
-          ),
-          const SizedBox(width: 10),
-          _CompactRoundButton(
-            icon: Icons.more_horiz_rounded,
-            color: Colors.black.withValues(alpha: 0.55),
-            border: true,
-            onTap: onMoreOptions,
-            tooltip: s.broadcasterTooltipMore,
-          ),
-          const SizedBox(width: 10),
-          _CompactRoundButton(
-            icon: Icons.stop_rounded,
-            color: Colors.red,
-            loading: isTogglingStream,
-            onTap: onEnd,
-            tooltip: s.broadcasterTooltipEnd,
-            glow: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactRoundButton extends StatelessWidget {
-  const _CompactRoundButton({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-    this.loading = false,
-    this.tooltip,
-    this.border = false,
-    this.glow = false,
-  });
-
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-  final bool loading;
-  final String? tooltip;
-  final bool border;
-  final bool glow;
-
-  @override
-  Widget build(BuildContext context) {
-    final btn = GestureDetector(
-      onTap: loading ? null : onTap,
-      child: Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: border ? Border.all(color: Colors.white24) : null,
-          boxShadow: glow
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.45),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : const [
-                  BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 3)),
-                ],
-        ),
-        child: loading
-            ? const Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                ),
-              )
-            : Icon(icon, color: Colors.white, size: 22),
-      ),
-    );
-    if (tooltip != null) {
-      return Tooltip(message: tooltip!, child: btn);
-    }
-    return btn;
-  }
-}
-
 
 class _MoreOptionTile extends StatelessWidget {
   const _MoreOptionTile({
