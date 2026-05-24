@@ -10,7 +10,11 @@ import '../../../data/repositories/stories_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/social_actions_service.dart';
 import '../../../domain/models/story.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
+import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
 import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
 import 'gift_flight_overlay.dart';
@@ -51,6 +55,9 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   bool _muted = false;
   bool _sendingReply = false;
   bool _reactionFlash = false;
+  // Quando o long-press abre o menu, evita que `onLongPressEnd` retome o
+  // story (o menu cuida do resume ao fechar).
+  bool _menuOpenedByLongPress = false;
   final TextEditingController _replyController = TextEditingController();
   final FocusNode _replyFocus = FocusNode();
 
@@ -164,52 +171,61 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
     final action = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.slate,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (sheetCtx) => ForceDarkTheme(
+        child: Container(
+          decoration: BoxDecoration(
+            color: sheetCtx.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: sheetCtx.colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                if (isOwn)
+                  ListTile(
+                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    title: Text(S.of(sheetCtx).viewerDeleteStory,
+                        style: const TextStyle(color: Colors.red)),
+                    onTap: () => Navigator.pop(sheetCtx, 'delete'),
+                  )
+                else ...[
+                  ListTile(
+                    leading: Icon(Icons.person_off_outlined,
+                        color: sheetCtx.colors.textPrimary),
+                    title: Text(S.of(sheetCtx).viewerUnfollow,
+                        style: TextStyle(color: sheetCtx.colors.textPrimary)),
+                    onTap: () => Navigator.pop(sheetCtx, 'unfollow'),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.block, color: sheetCtx.colors.textPrimary),
+                    title: Text(S.of(sheetCtx).viewerBlockUser,
+                        style: TextStyle(color: sheetCtx.colors.textPrimary)),
+                    onTap: () => Navigator.pop(sheetCtx, 'block'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, color: Colors.red),
+                    title: Text(S.of(sheetCtx).viewerReport,
+                        style: const TextStyle(color: Colors.red)),
+                    onTap: () => Navigator.pop(sheetCtx, 'report'),
+                  ),
+                ],
+              ],
             ),
-            if (isOwn)
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: const Text('Excluir story',
-                    style: TextStyle(color: Colors.red)),
-                onTap: () => Navigator.pop(context, 'delete'),
-              )
-            else ...[
-              ListTile(
-                leading: const Icon(Icons.person_off_outlined,
-                    color: Colors.white),
-                title: const Text('Deixar de seguir',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context, 'unfollow'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.block, color: Colors.white),
-                title: const Text('Bloquear usuário',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () => Navigator.pop(context, 'block'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                title: const Text('Denunciar',
-                    style: TextStyle(color: Colors.red)),
-                onTap: () => Navigator.pop(context, 'report'),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -239,21 +255,22 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _deleteStory() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      barrierDismissible: false, // evita fechar por toque fora
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.slate,
-        title: const Text('Excluir story',
-            style: TextStyle(color: Colors.white)),
-        content: const Text('Esta ação não pode ser desfeita.',
-            style: TextStyle(color: Colors.white70)),
+        title: Text(S.of(context).viewerDeleteStory,
+            style: const TextStyle(color: Colors.white)),
+        content: Text(S.of(context).viewerDeleteConfirm,
+            style: const TextStyle(color: Colors.white70)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.white70)),
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(S.of(context).viewerCancel,
+                style: const TextStyle(color: Colors.white70)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(S.of(context).viewerDelete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -266,16 +283,19 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       await ref
           .read(storiesViewModelProvider.notifier)
           .deleteStory(_story.id);
+      // Invalida também o cache do anel de stories do perfil — sem isso o
+      // anel colorido continua aparecendo e o usuário acha que "não deletou".
+      ref.invalidate(userStoriesProvider(_story.authorId));
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Story excluído.')),
+        SnackBar(content: Text(S.of(context).viewerStoryDeleted)),
       );
       Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       _resume();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível excluir o story.')),
+        SnackBar(content: Text(S.of(context).viewerDeleteError(e))),
       );
     }
   }
@@ -285,12 +305,12 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       await ref.read(socialRepositoryProvider).unfollowUser(_story.authorId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Você deixou de seguir @${_story.authorUsername}.')),
+        SnackBar(content: Text(S.of(context).viewerUnfollowed(_story.authorUsername))),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível deixar de seguir.')),
+        SnackBar(content: Text(S.of(context).viewerUnfollowError)),
       );
     }
   }
@@ -298,23 +318,24 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _block() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.slate,
-        title: const Text('Bloquear usuário',
-            style: TextStyle(color: Colors.white)),
+      useRootNavigator: true,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.colors.surface,
+        title: Text(S.of(ctx).viewerBlockUser,
+            style: TextStyle(color: ctx.colors.textPrimary)),
         content: Text(
-          'Você não verá mais conteúdo de @${_story.authorUsername}.',
-          style: const TextStyle(color: Colors.white70),
+          S.of(ctx).viewerBlockConfirm(_story.authorUsername),
+          style: TextStyle(color: ctx.colors.textSecondary),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.white70)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(S.of(ctx).viewerCancel,
+                style: TextStyle(color: ctx.colors.textSecondary)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Bloquear', style: TextStyle(color: Colors.red)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(S.of(ctx).viewerBlock, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -331,14 +352,14 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('@${_story.authorUsername} bloqueado.')),
+        SnackBar(content: Text(S.of(context).viewerBlocked(_story.authorUsername))),
       );
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
       _resume();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível bloquear.')),
+        SnackBar(content: Text(S.of(context).viewerBlockError)),
       );
     }
   }
@@ -346,38 +367,48 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _report() async {
     final reason = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: AppColors.slate,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (sheetCtx) => ForceDarkTheme(
+        child: Container(
+          decoration: BoxDecoration(
+            color: sheetCtx.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: sheetCtx.colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(S.of(sheetCtx).viewerReportPrompt,
+                        style: TextStyle(
+                            color: sheetCtx.colors.textSecondary, fontSize: 13)),
+                  ),
+                ),
+                _reasonTile(sheetCtx, 'spam', S.of(sheetCtx).viewerReportSpam),
+                _reasonTile(sheetCtx, 'harassment', S.of(sheetCtx).viewerReportHarassment),
+                _reasonTile(sheetCtx, 'inappropriate', S.of(sheetCtx).viewerReportInappropriate),
+                _reasonTile(sheetCtx, 'impersonation', S.of(sheetCtx).viewerReportImpersonation),
+                _reasonTile(sheetCtx, 'other', S.of(sheetCtx).viewerReportOther),
+                const SizedBox(height: 8),
+              ],
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 4, 16, 12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('Por que você está denunciando?',
-                    style: TextStyle(color: Colors.white70, fontSize: 13)),
-              ),
-            ),
-            _reasonTile('spam', 'Spam ou enganoso'),
-            _reasonTile('harassment', 'Assédio ou bullying'),
-            _reasonTile('inappropriate', 'Conteúdo impróprio ou ofensivo'),
-            _reasonTile('impersonation', 'Falsa identidade'),
-            _reasonTile('other', 'Outro'),
-            const SizedBox(height: 8),
-          ],
+          ),
         ),
       ),
     );
@@ -390,20 +421,20 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Denúncia enviada. Obrigado.')),
+        SnackBar(content: Text(S.of(context).viewerReportSent)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível enviar a denúncia.')),
+        SnackBar(content: Text(S.of(context).viewerReportError)),
       );
     }
   }
 
-  Widget _reasonTile(String r, String label) => ListTile(
-        title: Text(label, style: const TextStyle(color: Colors.white)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white38),
-        onTap: () => Navigator.pop(context, r),
+  Widget _reasonTile(BuildContext ctx, String r, String label) => ListTile(
+        title: Text(label, style: TextStyle(color: ctx.colors.textPrimary)),
+        trailing: Icon(Icons.chevron_right, color: ctx.colors.textTertiary),
+        onTap: () => Navigator.pop(ctx, r),
       );
 
   @override
@@ -414,6 +445,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
     return Scaffold(
       backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         onTapDown: (details) {
           final width = MediaQuery.of(context).size.width;
@@ -423,8 +455,24 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
             _nextStory();
           }
         },
-        onLongPressStart: (_) => _pause(),
-        onLongPressEnd: (_) => _resume(),
+        onLongPressStart: (_) {
+          // Segurar abre o menu de ações imediatamente (com vibração).
+          // `_openMenu` já pausa o story e o retoma quando o sheet fecha.
+          HapticFeedback.mediumImpact();
+          _menuOpenedByLongPress = true;
+          _openMenu();
+        },
+        onLongPress: () {
+          // Já tratado em onLongPressStart; mantido vazio para suprimir
+          // o comportamento padrão.
+        },
+        onLongPressEnd: (_) {
+          if (_menuOpenedByLongPress) {
+            _menuOpenedByLongPress = false;
+            return;
+          }
+          _resume();
+        },
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -627,15 +675,15 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                       border: Border.all(
                           color: Colors.white.withValues(alpha: 0.25)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.open_in_new,
+                        const Icon(Icons.open_in_new,
                             size: 14, color: Colors.white),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          'Ver post original',
-                          style: TextStyle(
+                          S.of(context).viewerSeeOriginalPost,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -714,12 +762,12 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       _replyController.clear();
       _replyFocus.unfocus();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Resposta enviada.')),
+        SnackBar(content: Text(S.of(context).viewerReplySent)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível responder.')),
+        SnackBar(content: Text(S.of(context).viewerReplyError)),
       );
     } finally {
       if (mounted) setState(() => _sendingReply = false);
@@ -799,13 +847,20 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   textInputAction: TextInputAction.send,
                   onTap: _pause,
                   onSubmitted: (_) => _sendReply(),
-                  decoration: const InputDecoration(
-                    hintText: 'Responder ao story...',
-                    hintStyle: TextStyle(
+                  decoration: InputDecoration(
+                    hintText: S.of(context).viewerReplyHint,
+                    hintStyle: const TextStyle(
                       color: Colors.white60,
                       fontSize: 14,
                     ),
+                    filled: false,
+                    fillColor: Colors.transparent,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(vertical: 12),
                     isDense: true,
                   ),
@@ -905,7 +960,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Enviou ${result.giftName} x${result.quantity} · 💎 ${result.totalCredits}',
+                S.of(context).viewerGiftSent(result.giftName, result.quantity, result.totalCredits),
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.w700),
               ),
@@ -969,18 +1024,19 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Não foi possível carregar visualizadores.';
+        _error = S.of(context).viewerLoadViewersError;
         _loading = false;
       });
     }
   }
 
-  String _relative(DateTime dt) {
+  String _relative(BuildContext context, DateTime dt) {
+    final s = S.of(context);
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'agora';
-    if (diff.inHours < 1) return 'há ${diff.inMinutes}m';
-    if (diff.inDays < 1) return 'há ${diff.inHours}h';
-    return 'há ${diff.inDays}d';
+    if (diff.inMinutes < 1) return s.viewerTimeNow;
+    if (diff.inHours < 1) return s.viewerTimeMinutes(diff.inMinutes);
+    if (diff.inDays < 1) return s.viewerTimeHours(diff.inHours);
+    return s.viewerTimeDays(diff.inDays);
   }
 
   @override
@@ -1010,10 +1066,8 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                 const SizedBox(width: 8),
                 Text(
                   _loading
-                      ? 'Carregando...'
-                      : _total == 1
-                          ? '1 visualização'
-                          : '$_total visualizações',
+                      ? S.of(context).viewerLoading
+                      : S.of(context).viewerViewsCount(_total),
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -1037,10 +1091,10 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                         ),
                       )
                     : _viewers.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
-                              'Ainda ninguém viu este story.',
-                              style: TextStyle(color: Colors.white54),
+                              S.of(context).viewerNoViewers,
+                              style: const TextStyle(color: Colors.white54),
                             ),
                           )
                         : ListView.builder(
@@ -1089,7 +1143,7 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                                   ],
                                 ),
                                 subtitle: Text(
-                                  '@${v.username} · ${_relative(v.viewedAt)}',
+                                  '@${v.username} · ${_relative(context, v.viewedAt)}',
                                   style: const TextStyle(
                                       color: Colors.white54, fontSize: 12),
                                 ),

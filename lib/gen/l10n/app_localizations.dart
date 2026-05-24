@@ -1,0 +1,5764 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_pt.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of S
+/// returned by `S.of(context)`.
+///
+/// Applications need to include `S.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: S.localizationsDelegates,
+///   supportedLocales: S.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the S.supportedLocales
+/// property.
+abstract class S {
+  S(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static S of(BuildContext context) {
+    return Localizations.of<S>(context, S)!;
+  }
+
+  static const LocalizationsDelegate<S> delegate = _SDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es'),
+    Locale('pt'),
+  ];
+
+  /// No description provided for @appName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe'**
+  String get appName;
+
+  /// No description provided for @navHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Início'**
+  String get navHome;
+
+  /// No description provided for @navFeed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Feed'**
+  String get navFeed;
+
+  /// No description provided for @navChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat'**
+  String get navChat;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil'**
+  String get navProfile;
+
+  /// No description provided for @tabFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get tabFollowing;
+
+  /// No description provided for @tabForYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para Você'**
+  String get tabForYou;
+
+  /// No description provided for @actionFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get actionFollow;
+
+  /// No description provided for @actionUnfollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get actionUnfollow;
+
+  /// No description provided for @actionLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir'**
+  String get actionLike;
+
+  /// No description provided for @actionComment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentar'**
+  String get actionComment;
+
+  /// No description provided for @actionShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get actionShare;
+
+  /// No description provided for @actionSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get actionSave;
+
+  /// No description provided for @actionRepost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar'**
+  String get actionRepost;
+
+  /// No description provided for @actionSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get actionSend;
+
+  /// No description provided for @actionCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get actionCancel;
+
+  /// No description provided for @actionConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar'**
+  String get actionConfirm;
+
+  /// No description provided for @actionRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get actionRetry;
+
+  /// No description provided for @actionRefresh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualizar'**
+  String get actionRefresh;
+
+  /// No description provided for @actionDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir'**
+  String get actionDelete;
+
+  /// No description provided for @actionEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar'**
+  String get actionEdit;
+
+  /// No description provided for @actionClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get actionClose;
+
+  /// No description provided for @actionBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get actionBack;
+
+  /// No description provided for @actionBlock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear'**
+  String get actionBlock;
+
+  /// No description provided for @actionUnblock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloquear'**
+  String get actionUnblock;
+
+  /// No description provided for @actionReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar'**
+  String get actionReport;
+
+  /// No description provided for @actionCopy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar'**
+  String get actionCopy;
+
+  /// No description provided for @feedEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum vídeo por aqui ainda.'**
+  String get feedEmptyTitle;
+
+  /// No description provided for @feedEmptySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga creators ou volte mais tarde.'**
+  String get feedEmptySubtitle;
+
+  /// No description provided for @feedFollowingEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga pessoas para ver os posts delas aqui.'**
+  String get feedFollowingEmptyTitle;
+
+  /// No description provided for @feedLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o feed.'**
+  String get feedLoadError;
+
+  /// No description provided for @feedNoMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em dia! 🎉'**
+  String get feedNoMore;
+
+  /// No description provided for @profileEditButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar perfil'**
+  String get profileEditButton;
+
+  /// No description provided for @profileFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'seguidores'**
+  String get profileFollowers;
+
+  /// No description provided for @profileFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'seguindo'**
+  String get profileFollowing;
+
+  /// No description provided for @profileLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'lives'**
+  String get profileLives;
+
+  /// No description provided for @profileViews.
+  ///
+  /// In pt, this message translates to:
+  /// **'views'**
+  String get profileViews;
+
+  /// No description provided for @profileJoinedAt.
+  ///
+  /// In pt, this message translates to:
+  /// **'entrou em {date}'**
+  String profileJoinedAt(String date);
+
+  /// No description provided for @profileTabPosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posts'**
+  String get profileTabPosts;
+
+  /// No description provided for @profileTabVideos.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeos'**
+  String get profileTabVideos;
+
+  /// No description provided for @profileTabSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvos'**
+  String get profileTabSaved;
+
+  /// No description provided for @authLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar'**
+  String get authLogin;
+
+  /// No description provided for @authRegister.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar'**
+  String get authRegister;
+
+  /// No description provided for @authLogout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair'**
+  String get authLogout;
+
+  /// No description provided for @authEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get authEmail;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha'**
+  String get authPassword;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esqueceu a senha?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authWelcomeBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bem-vindo de volta!'**
+  String get authWelcomeBack;
+
+  /// No description provided for @authCreateAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar conta'**
+  String get authCreateAccount;
+
+  /// No description provided for @chatNewMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova mensagem'**
+  String get chatNewMessage;
+
+  /// No description provided for @chatPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem...'**
+  String get chatPlaceholder;
+
+  /// No description provided for @chatNoConversations.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma conversa ainda.'**
+  String get chatNoConversations;
+
+  /// No description provided for @chatBlockTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear {name}?'**
+  String chatBlockTitle(String name);
+
+  /// No description provided for @chatBlockedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} foi bloqueado(a).'**
+  String chatBlockedSuccess(String name);
+
+  /// No description provided for @chatBlockError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao bloquear: {error}'**
+  String chatBlockError(String error);
+
+  /// No description provided for @chatImagePickError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao escolher imagem: {error}'**
+  String chatImagePickError(String error);
+
+  /// No description provided for @commentsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentários'**
+  String get commentsTitle;
+
+  /// No description provided for @commentsPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione um comentário...'**
+  String get commentsPlaceholder;
+
+  /// No description provided for @commentsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum comentário ainda.\nSeja o primeiro!'**
+  String get commentsEmpty;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma notificação ainda.'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationLiked.
+  ///
+  /// In pt, this message translates to:
+  /// **'{user} curtiu seu post.'**
+  String notificationLiked(String user);
+
+  /// No description provided for @notificationFollowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'{user} começou a te seguir.'**
+  String notificationFollowed(String user);
+
+  /// No description provided for @notificationCommented.
+  ///
+  /// In pt, this message translates to:
+  /// **'{user} comentou no seu post.'**
+  String notificationCommented(String user);
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configurações'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Português · Español · English'**
+  String get settingsLanguageSubtitle;
+
+  /// No description provided for @settingsAppLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma do app'**
+  String get settingsAppLanguage;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparência'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tema'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escuro'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Claro'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sistema'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsNotifLiveStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives começando'**
+  String get settingsNotifLiveStart;
+
+  /// No description provided for @settingsNotifLiveStartHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receba aviso quando seus creators favoritos forem ao vivo'**
+  String get settingsNotifLiveStartHint;
+
+  /// No description provided for @settingsNotifGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes recebidos'**
+  String get settingsNotifGifts;
+
+  /// No description provided for @settingsNotifGiftsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avisar quando alguém te enviar um gift'**
+  String get settingsNotifGiftsHint;
+
+  /// No description provided for @settingsNotifFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos seguidores'**
+  String get settingsNotifFollowers;
+
+  /// No description provided for @settingsNotifMessages.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagens diretas'**
+  String get settingsNotifMessages;
+
+  /// No description provided for @settingsPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Privacidade'**
+  String get settingsPrivacy;
+
+  /// No description provided for @settingsPrivacyShowViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar nº de espectadores'**
+  String get settingsPrivacyShowViewers;
+
+  /// No description provided for @settingsPrivacyShowViewersHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros podem ver quantas pessoas assistem suas lives'**
+  String get settingsPrivacyShowViewersHint;
+
+  /// No description provided for @settingsPrivacyShowEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar ganhos publicamente'**
+  String get settingsPrivacyShowEarnings;
+
+  /// No description provided for @settingsPrivacyShowEarningsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Exibir total de coins/ganhos no seu perfil'**
+  String get settingsPrivacyShowEarningsHint;
+
+  /// No description provided for @settingsSounds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sons'**
+  String get settingsSounds;
+
+  /// No description provided for @settingsSoundsEnabled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Efeitos sonoros'**
+  String get settingsSoundsEnabled;
+
+  /// No description provided for @settingsSoundsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sons ao receber gifts, mensagens etc.'**
+  String get settingsSoundsHint;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre & Legal'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsLogout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da conta'**
+  String get settingsLogout;
+
+  /// No description provided for @settingsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos carregar suas configurações.'**
+  String get settingsLoadError;
+
+  /// No description provided for @settingsThemeAuto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Auto'**
+  String get settingsThemeAuto;
+
+  /// No description provided for @settingsTermsOfUse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos de Uso'**
+  String get settingsTermsOfUse;
+
+  /// No description provided for @settingsPrivacyPolicy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Política de Privacidade'**
+  String get settingsPrivacyPolicy;
+
+  /// No description provided for @settingsSupport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suporte'**
+  String get settingsSupport;
+
+  /// No description provided for @settingsVersion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Versão'**
+  String get settingsVersion;
+
+  /// No description provided for @settingsChangePassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar senha'**
+  String get settingsChangePassword;
+
+  /// No description provided for @settingsDeleteAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir conta'**
+  String get settingsDeleteAccount;
+
+  /// No description provided for @settingsLogoutConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que deseja sair da sua conta?'**
+  String get settingsLogoutConfirm;
+
+  /// No description provided for @settingsHelpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como podemos ajudar?'**
+  String get settingsHelpTitle;
+
+  /// No description provided for @settingsSendSupportEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar e-mail ao suporte'**
+  String get settingsSendSupportEmail;
+
+  /// No description provided for @settingsNoMailApp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum app de e-mail configurado.'**
+  String get settingsNoMailApp;
+
+  /// No description provided for @settingsHelpCenterFaq.
+  ///
+  /// In pt, this message translates to:
+  /// **'Central de ajuda / FAQ'**
+  String get settingsHelpCenterFaq;
+
+  /// No description provided for @settingsSupportEmailSubject.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suporte Brawe — App v{version}'**
+  String settingsSupportEmailSubject(String version);
+
+  /// No description provided for @settingsCantOpenUrl.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir {url}'**
+  String settingsCantOpenUrl(String url);
+
+  /// No description provided for @cpCurrentPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha atual'**
+  String get cpCurrentPassword;
+
+  /// No description provided for @cpNewPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova senha'**
+  String get cpNewPassword;
+
+  /// No description provided for @cpConfirmNewPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar nova senha'**
+  String get cpConfirmNewPassword;
+
+  /// No description provided for @cpMin8Chars.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo 8 caracteres'**
+  String get cpMin8Chars;
+
+  /// No description provided for @cpSaveNewPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar nova senha'**
+  String get cpSaveNewPassword;
+
+  /// No description provided for @cpEnterCurrentPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe sua senha atual.'**
+  String get cpEnterCurrentPassword;
+
+  /// No description provided for @cpPasswordTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'A nova senha deve ter pelo menos 8 caracteres.'**
+  String get cpPasswordTooShort;
+
+  /// No description provided for @cpPasswordsDontMatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'As novas senhas não coincidem.'**
+  String get cpPasswordsDontMatch;
+
+  /// No description provided for @cpChangedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha alterada com sucesso.'**
+  String get cpChangedSuccess;
+
+  /// No description provided for @cpChangeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao alterar senha.'**
+  String get cpChangeError;
+
+  /// No description provided for @delAccTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir conta'**
+  String get delAccTitle;
+
+  /// No description provided for @delAccEnterPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe sua senha para confirmar.'**
+  String get delAccEnterPassword;
+
+  /// No description provided for @delAccAckRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme que entende a ação.'**
+  String get delAccAckRequired;
+
+  /// No description provided for @delAccConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta ação é IRREVERSÍVEL. Sua conta será desativada e seus dados pessoais anonimizados (LGPD). Deseja continuar?'**
+  String get delAccConfirmBody;
+
+  /// No description provided for @delAccConfirmButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir conta'**
+  String get delAccConfirmButton;
+
+  /// No description provided for @delAccSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta excluída. Até logo.'**
+  String get delAccSuccess;
+
+  /// No description provided for @delAccError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao excluir conta.'**
+  String get delAccError;
+
+  /// No description provided for @delAccWarningBanner.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao excluir sua conta, você perderá acesso permanente ao histórico de lives, gifts, saldo, conversas e seguidores. Saldos pendentes podem ser perdidos.'**
+  String get delAccWarningBanner;
+
+  /// No description provided for @delAccWhatHappens.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que acontece:'**
+  String get delAccWhatHappens;
+
+  /// No description provided for @delAccBullet1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta será desativada imediatamente.'**
+  String get delAccBullet1;
+
+  /// No description provided for @delAccBullet2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu email e dados pessoais serão anonimizados.'**
+  String get delAccBullet2;
+
+  /// No description provided for @delAccBullet3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você será desconectado de todos os dispositivos.'**
+  String get delAccBullet3;
+
+  /// No description provided for @delAccBullet4.
+  ///
+  /// In pt, this message translates to:
+  /// **'Registros mantidos pelo prazo legal exigido.'**
+  String get delAccBullet4;
+
+  /// No description provided for @delAccPasswordHelper.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme sua identidade'**
+  String get delAccPasswordHelper;
+
+  /// No description provided for @delAccAckCheckbox.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entendo que esta ação é irreversível.'**
+  String get delAccAckCheckbox;
+
+  /// No description provided for @delAccDeleteMyAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir minha conta'**
+  String get delAccDeleteMyAccount;
+
+  /// No description provided for @legalOpenInBrowser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir no navegador'**
+  String get legalOpenInBrowser;
+
+  /// No description provided for @legalLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar esta página.'**
+  String get legalLoadError;
+
+  /// No description provided for @languagePickerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha o idioma'**
+  String get languagePickerTitle;
+
+  /// No description provided for @languagePt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Português (Brasil)'**
+  String get languagePt;
+
+  /// No description provided for @languageEs.
+  ///
+  /// In pt, this message translates to:
+  /// **'Español'**
+  String get languageEs;
+
+  /// No description provided for @languageEn.
+  ///
+  /// In pt, this message translates to:
+  /// **'English'**
+  String get languageEn;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão. Verifique sua internet.'**
+  String get errorNetwork;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Algo deu errado. Tente novamente.'**
+  String get errorGeneric;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo não encontrado.'**
+  String get errorNotFound;
+
+  /// No description provided for @errorUnauthorized.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sessão expirada. Faça login novamente.'**
+  String get errorUnauthorized;
+
+  /// No description provided for @giftComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'🎁 Em breve!'**
+  String get giftComingSoon;
+
+  /// No description provided for @liveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get liveBadge;
+
+  /// No description provided for @viewerCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} assistindo'**
+  String viewerCount(int count);
+
+  /// No description provided for @authLoginSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entre na sua conta para continuar.'**
+  String get authLoginSubtitle;
+
+  /// No description provided for @authWelcomeBackTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bem-vindo\nde volta.'**
+  String get authWelcomeBackTitle;
+
+  /// No description provided for @authEmailHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'voce@brawe.app'**
+  String get authEmailHint;
+
+  /// No description provided for @authPasswordHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'••••••••'**
+  String get authPasswordHint;
+
+  /// No description provided for @authEmailLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-MAIL'**
+  String get authEmailLabel;
+
+  /// No description provided for @authPasswordLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'SENHA'**
+  String get authPasswordLabel;
+
+  /// No description provided for @authForgotPasswordShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esqueci minha senha'**
+  String get authForgotPasswordShort;
+
+  /// No description provided for @authLoggingIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrando…'**
+  String get authLoggingIn;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não tem conta?'**
+  String get authNoAccount;
+
+  /// No description provided for @authCreateNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar agora'**
+  String get authCreateNow;
+
+  /// No description provided for @authAcceptTermsAndPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao continuar você aceita os Termos de Uso\ne a Política de Privacidade.'**
+  String get authAcceptTermsAndPrivacy;
+
+  /// No description provided for @authWelcomeBackSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bem-vindo de volta.'**
+  String get authWelcomeBackSuccess;
+
+  /// No description provided for @authAlreadyHaveAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já tem conta?'**
+  String get authAlreadyHaveAccount;
+
+  /// No description provided for @authEntrar.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar'**
+  String get authEntrar;
+
+  /// No description provided for @welcomeTagline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conecte. Transmita. Cresça.'**
+  String get welcomeTagline;
+
+  /// No description provided for @welcomeAlreadyHaveAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já tenho uma conta'**
+  String get welcomeAlreadyHaveAccount;
+
+  /// No description provided for @welcomeAcceptTerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao continuar você aceita os Termos de Uso.'**
+  String get welcomeAcceptTerms;
+
+  /// No description provided for @welcomeCreateAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar conta'**
+  String get welcomeCreateAccount;
+
+  /// No description provided for @signupTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie sua conta.'**
+  String get signupTitle;
+
+  /// No description provided for @signupSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Leva menos de um minuto para começar.'**
+  String get signupSubtitle;
+
+  /// No description provided for @signupNameLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo'**
+  String get signupNameLabel;
+
+  /// No description provided for @signupNameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como devemos te chamar?'**
+  String get signupNameHint;
+
+  /// No description provided for @signupEmailLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get signupEmailLabel;
+
+  /// No description provided for @signupPasswordLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha'**
+  String get signupPasswordLabel;
+
+  /// No description provided for @signupPasswordHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'mínimo 8 caracteres'**
+  String get signupPasswordHint;
+
+  /// No description provided for @signupSponsorLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código do patrocinador'**
+  String get signupSponsorLabel;
+
+  /// No description provided for @signupSponsorHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'BRAWE-XXXX'**
+  String get signupSponsorHint;
+
+  /// No description provided for @signupHaveReferral.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tenho um código de indicação'**
+  String get signupHaveReferral;
+
+  /// No description provided for @signupCreatingAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criando conta…'**
+  String get signupCreatingAccount;
+
+  /// No description provided for @signupCreateAccountButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar conta'**
+  String get signupCreateAccountButton;
+
+  /// No description provided for @signupSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta criada com sucesso.'**
+  String get signupSuccess;
+
+  /// No description provided for @signupHelp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuda'**
+  String get signupHelp;
+
+  /// No description provided for @signupCantOpenUrl.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir {url}'**
+  String signupCantOpenUrl(String url);
+
+  /// No description provided for @signupTermsPrefix.
+  ///
+  /// In pt, this message translates to:
+  /// **'Li e aceito os '**
+  String get signupTermsPrefix;
+
+  /// No description provided for @signupTermsAnd.
+  ///
+  /// In pt, this message translates to:
+  /// **' e a '**
+  String get signupTermsAnd;
+
+  /// No description provided for @signupTermsSuffix.
+  ///
+  /// In pt, this message translates to:
+  /// **' do Brawe.'**
+  String get signupTermsSuffix;
+
+  /// No description provided for @pwStrengthWeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fraca'**
+  String get pwStrengthWeak;
+
+  /// No description provided for @pwStrengthMedium.
+  ///
+  /// In pt, this message translates to:
+  /// **'Média'**
+  String get pwStrengthMedium;
+
+  /// No description provided for @pwStrengthGood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Boa'**
+  String get pwStrengthGood;
+
+  /// No description provided for @pwStrengthStrong.
+  ///
+  /// In pt, this message translates to:
+  /// **'Forte'**
+  String get pwStrengthStrong;
+
+  /// No description provided for @forgotTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recuperar senha'**
+  String get forgotTitle;
+
+  /// No description provided for @forgotSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe seu email e enviaremos instruções para criar uma nova senha.'**
+  String get forgotSubtitle;
+
+  /// No description provided for @forgotEmailLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'EMAIL'**
+  String get forgotEmailLabel;
+
+  /// No description provided for @forgotEmailHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'voce@exemplo.com'**
+  String get forgotEmailHint;
+
+  /// No description provided for @forgotInvalidEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe um email válido.'**
+  String get forgotInvalidEmail;
+
+  /// No description provided for @forgotSending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviando...'**
+  String get forgotSending;
+
+  /// No description provided for @forgotSendInstructions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar instruções'**
+  String get forgotSendInstructions;
+
+  /// No description provided for @forgotCannotSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar.'**
+  String get forgotCannotSend;
+
+  /// No description provided for @forgotBackToLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar para login'**
+  String get forgotBackToLogin;
+
+  /// No description provided for @forgotCheckEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique seu email'**
+  String get forgotCheckEmail;
+
+  /// No description provided for @forgotEmailSentBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se {email} estiver cadastrado, você receberá um link para criar uma nova senha em alguns minutos.'**
+  String forgotEmailSentBody(String email);
+
+  /// No description provided for @resetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar nova senha'**
+  String get resetTitle;
+
+  /// No description provided for @resetSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha uma senha forte de pelo menos 8 caracteres.'**
+  String get resetSubtitle;
+
+  /// No description provided for @resetNewPasswordLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'NOVA SENHA'**
+  String get resetNewPasswordLabel;
+
+  /// No description provided for @resetConfirmPasswordLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'CONFIRMAR SENHA'**
+  String get resetConfirmPasswordLabel;
+
+  /// No description provided for @resetPasswordTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'A senha deve ter pelo menos 8 caracteres.'**
+  String get resetPasswordTooShort;
+
+  /// No description provided for @resetPasswordsDontMatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'As senhas não coincidem.'**
+  String get resetPasswordsDontMatch;
+
+  /// No description provided for @resetSaving.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvando...'**
+  String get resetSaving;
+
+  /// No description provided for @resetInvalidToken.
+  ///
+  /// In pt, this message translates to:
+  /// **'Token inválido ou expirado.'**
+  String get resetInvalidToken;
+
+  /// No description provided for @navLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get navLives;
+
+  /// No description provided for @createStoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story'**
+  String get createStoryTitle;
+
+  /// No description provided for @createStorySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto ou vídeo · some em 24h'**
+  String get createStorySubtitle;
+
+  /// No description provided for @createVideoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo'**
+  String get createVideoTitle;
+
+  /// No description provided for @createVideoSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reels · aparece em Para Você'**
+  String get createVideoSubtitle;
+
+  /// No description provided for @createLiveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live'**
+  String get createLiveTitle;
+
+  /// No description provided for @createLiveSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transmita agora e receba gifts'**
+  String get createLiveSubtitle;
+
+  /// No description provided for @createPostTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Post'**
+  String get createPostTitle;
+
+  /// No description provided for @createPostSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Texto, foto ou link no seu feed'**
+  String get createPostSubtitle;
+
+  /// No description provided for @feedEmptyVideoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum vídeo ou foto por aqui ainda.'**
+  String get feedEmptyVideoTitle;
+
+  /// No description provided for @feedEmptyVideoSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga creators ou volte mais tarde.\nPosts de texto estão na aba Feed.'**
+  String get feedEmptyVideoSubtitle;
+
+  /// No description provided for @liveJoining.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrando na live…'**
+  String get liveJoining;
+
+  /// No description provided for @liveBadgeBattle.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO · BATALHA'**
+  String get liveBadgeBattle;
+
+  /// No description provided for @liveBadgeShop.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO · SHOP'**
+  String get liveBadgeShop;
+
+  /// No description provided for @liveOfferNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'OFERTA AGORA'**
+  String get liveOfferNow;
+
+  /// No description provided for @productFeatured.
+  ///
+  /// In pt, this message translates to:
+  /// **'EM DESTAQUE'**
+  String get productFeatured;
+
+  /// No description provided for @videoLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o vídeo.'**
+  String get videoLoadError;
+
+  /// No description provided for @giftSendAnonymous.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar anonimamente'**
+  String get giftSendAnonymous;
+
+  /// No description provided for @giftAnonNameHidden.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu nome não será revelado'**
+  String get giftAnonNameHidden;
+
+  /// No description provided for @giftAnonNameVisible.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos verão que foi você'**
+  String get giftAnonNameVisible;
+
+  /// No description provided for @giftSendButtonAnon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar (anônimo)'**
+  String get giftSendButtonAnon;
+
+  /// No description provided for @giftSendButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presente'**
+  String get giftSendButton;
+
+  /// No description provided for @giftSentAnon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente enviado anonimamente!'**
+  String get giftSentAnon;
+
+  /// No description provided for @giftSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente enviado!'**
+  String get giftSent;
+
+  /// No description provided for @feedCannotLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível curtir. Tente novamente.'**
+  String get feedCannotLike;
+
+  /// No description provided for @feedUseLiveChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use o chat ao vivo para conversar.'**
+  String get feedUseLiveChat;
+
+  /// No description provided for @feedCannotShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível compartilhar.'**
+  String get feedCannotShare;
+
+  /// No description provided for @feedCannotFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível atualizar o follow.'**
+  String get feedCannotFollow;
+
+  /// No description provided for @shareCheckBraweConnect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira no Brawe Connect'**
+  String get shareCheckBraweConnect;
+
+  /// No description provided for @homeStatFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get homeStatFollowers;
+
+  /// No description provided for @homeStatFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get homeStatFollowing;
+
+  /// No description provided for @homeStatLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get homeStatLives;
+
+  /// No description provided for @profileViewFull.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver perfil completo'**
+  String get profileViewFull;
+
+  /// No description provided for @createSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar'**
+  String get createSheetTitle;
+
+  /// No description provided for @createSheetSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhe um momento, abra uma live ou solte uma ideia.'**
+  String get createSheetSubtitle;
+
+  /// No description provided for @productsDrawerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja ao vivo'**
+  String get productsDrawerTitle;
+
+  /// No description provided for @productsDrawerItemCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} itens • {author}'**
+  String productsDrawerItemCount(int count, String author);
+
+  /// No description provided for @giftMysteryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente Misterioso'**
+  String get giftMysteryTitle;
+
+  /// No description provided for @giftMysterySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Surpreenda um dos streamers!\nO destino é escolhido aleatoriamente. 🎲'**
+  String get giftMysterySubtitle;
+
+  /// No description provided for @commentsErrorSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao enviar comentário. Tente novamente.'**
+  String get commentsErrorSend;
+
+  /// No description provided for @commentsErrorLoad.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar comentários.'**
+  String get commentsErrorLoad;
+
+  /// No description provided for @commentsReplyingTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Respondendo a @{username}'**
+  String commentsReplyingTo(String username);
+
+  /// No description provided for @commentsHintReply.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responder...'**
+  String get commentsHintReply;
+
+  /// No description provided for @commentsHintAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar comentário...'**
+  String get commentsHintAdd;
+
+  /// No description provided for @commentsReplyAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responder'**
+  String get commentsReplyAction;
+
+  /// No description provided for @postPublish.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicar'**
+  String get postPublish;
+
+  /// No description provided for @postPublishedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Post publicado!'**
+  String get postPublishedSuccess;
+
+  /// No description provided for @postPublishError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao publicar. Tente novamente.'**
+  String get postPublishError;
+
+  /// No description provided for @postHintWhatsHappening.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que está acontecendo?'**
+  String get postHintWhatsHappening;
+
+  /// No description provided for @audiencePickerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem pode ver?'**
+  String get audiencePickerTitle;
+
+  /// No description provided for @audienceAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get audienceAll;
+
+  /// No description provided for @audienceFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get audienceFollowers;
+
+  /// No description provided for @audienceOnlyMe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas eu'**
+  String get audienceOnlyMe;
+
+  /// No description provided for @videoTooLarge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo muito grande. Máximo 100 MB.'**
+  String get videoTooLarge;
+
+  /// No description provided for @videoOpenError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o vídeo.'**
+  String get videoOpenError;
+
+  /// No description provided for @videoPublishedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo publicado! 🎬'**
+  String get videoPublishedSuccess;
+
+  /// No description provided for @videoPublishError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao publicar vídeo. Tente novamente.'**
+  String get videoPublishError;
+
+  /// No description provided for @videoSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo vídeo'**
+  String get videoSheetTitle;
+
+  /// No description provided for @videoSwapTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar vídeo'**
+  String get videoSwapTooltip;
+
+  /// No description provided for @videoCaptionHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva uma legenda (opcional)…'**
+  String get videoCaptionHint;
+
+  /// No description provided for @videoPublishButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicar vídeo'**
+  String get videoPublishButton;
+
+  /// No description provided for @videoSelect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecionar vídeo'**
+  String get videoSelect;
+
+  /// No description provided for @videoFormatsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'MP4 · MOV · WebM   ·   até 3 min   ·   100 MB'**
+  String get videoFormatsHint;
+
+  /// No description provided for @storySheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo story'**
+  String get storySheetTitle;
+
+  /// No description provided for @storyPublish.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicar'**
+  String get storyPublish;
+
+  /// No description provided for @storyPublishedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story publicado!'**
+  String get storyPublishedSuccess;
+
+  /// No description provided for @storyPublishError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao publicar story. Tente novamente.'**
+  String get storyPublishError;
+
+  /// No description provided for @storyPrefetchError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao carregar imagem do post.'**
+  String get storyPrefetchError;
+
+  /// No description provided for @storyPrefetchLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando imagem do post...'**
+  String get storyPrefetchLoading;
+
+  /// No description provided for @storyCaptionHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva uma legenda (opcional)…'**
+  String get storyCaptionHint;
+
+  /// No description provided for @storySwapMedia.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar mídia'**
+  String get storySwapMedia;
+
+  /// No description provided for @storyPickerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione ou grave uma mídia'**
+  String get storyPickerTitle;
+
+  /// No description provided for @storyPickerSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto ou vídeo (até 60s)'**
+  String get storyPickerSubtitle;
+
+  /// No description provided for @storyPickerSectionGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Galeria'**
+  String get storyPickerSectionGallery;
+
+  /// No description provided for @storyPickerSectionCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera'**
+  String get storyPickerSectionCamera;
+
+  /// No description provided for @storyPickerChipPhoto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto'**
+  String get storyPickerChipPhoto;
+
+  /// No description provided for @storyPickerChipVideo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo'**
+  String get storyPickerChipVideo;
+
+  /// No description provided for @storyPickerChipRecordVideo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gravar vídeo'**
+  String get storyPickerChipRecordVideo;
+
+  /// No description provided for @storiesReload.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recarregar stories'**
+  String get storiesReload;
+
+  /// No description provided for @storiesYour.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu story'**
+  String get storiesYour;
+
+  /// No description provided for @storiesCreate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar'**
+  String get storiesCreate;
+
+  /// No description provided for @storiesFallbackUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'usuário'**
+  String get storiesFallbackUser;
+
+  /// No description provided for @storiesLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE'**
+  String get storiesLiveBadge;
+
+  /// No description provided for @shareLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar contatos.'**
+  String get shareLoadError;
+
+  /// No description provided for @shareSentSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Enviado para {count} pessoa.} other{Enviado para {count} pessoas.}}'**
+  String shareSentSuccess(int count);
+
+  /// No description provided for @shareSentPartial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviado para {sent}. Falha em {failures}.'**
+  String shareSentPartial(int sent, int failures);
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para...'**
+  String get shareTitle;
+
+  /// No description provided for @sharePostFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicação'**
+  String get sharePostFallback;
+
+  /// No description provided for @shareSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar'**
+  String get shareSearchHint;
+
+  /// No description provided for @shareErrorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro'**
+  String get shareErrorGeneric;
+
+  /// No description provided for @shareTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get shareTryAgain;
+
+  /// No description provided for @shareRecents.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recentes'**
+  String get shareRecents;
+
+  /// No description provided for @shareFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get shareFollowers;
+
+  /// No description provided for @shareUserFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário'**
+  String get shareUserFallback;
+
+  /// No description provided for @shareNoContacts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum contato encontrado.'**
+  String get shareNoContacts;
+
+  /// No description provided for @shareCommentHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione um comentário…'**
+  String get shareCommentHint;
+
+  /// No description provided for @shareOutsideBrawe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fora do Brawe'**
+  String get shareOutsideBrawe;
+
+  /// No description provided for @shareSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get shareSend;
+
+  /// No description provided for @shareSendWithCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar ({count})'**
+  String shareSendWithCount(int count);
+
+  /// No description provided for @giftSendError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o presente: {error}'**
+  String giftSendError(Object error);
+
+  /// No description provided for @giftLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os presentes.\n{error}'**
+  String giftLoadError(Object error);
+
+  /// No description provided for @giftEmptyState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum presente disponível agora.'**
+  String get giftEmptyState;
+
+  /// No description provided for @giftSendTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presente pra'**
+  String get giftSendTo;
+
+  /// No description provided for @giftChoose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha um presente'**
+  String get giftChoose;
+
+  /// No description provided for @giftSendCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'ENVIAR · 💎 {total}'**
+  String giftSendCta(int total);
+
+  /// No description provided for @suggestedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestões para você'**
+  String get suggestedTitle;
+
+  /// No description provided for @suggestedSeeAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver todos'**
+  String get suggestedSeeAll;
+
+  /// No description provided for @suggestedFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get suggestedFollow;
+
+  /// No description provided for @suggestedFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get suggestedFollowing;
+
+  /// No description provided for @suggestedLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get suggestedLiveBadge;
+
+  /// No description provided for @composerMediaLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar a mídia.'**
+  String get composerMediaLoadError;
+
+  /// No description provided for @composerPhotoError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao tirar foto.'**
+  String get composerPhotoError;
+
+  /// No description provided for @composerRecordStartError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao iniciar gravação.'**
+  String get composerRecordStartError;
+
+  /// No description provided for @composerRecordStopError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao finalizar gravação.'**
+  String get composerRecordStopError;
+
+  /// No description provided for @composerStoryPublished.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story publicado!'**
+  String get composerStoryPublished;
+
+  /// No description provided for @composerMultipleStoriesPublished.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} stories publicados!'**
+  String composerMultipleStoriesPublished(int count);
+
+  /// No description provided for @composerPublishError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao publicar story.'**
+  String get composerPublishError;
+
+  /// No description provided for @composerRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get composerRetry;
+
+  /// No description provided for @composerPreparing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preparando publicação…'**
+  String get composerPreparing;
+
+  /// No description provided for @composerCreateStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar story'**
+  String get composerCreateStory;
+
+  /// No description provided for @composerCaptureHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para foto • Segure para vídeo'**
+  String get composerCaptureHint;
+
+  /// No description provided for @composerGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Galeria'**
+  String get composerGallery;
+
+  /// No description provided for @composerTextOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só texto'**
+  String get composerTextOnly;
+
+  /// No description provided for @composerFrameNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem moldura'**
+  String get composerFrameNone;
+
+  /// No description provided for @composerFramePolaroid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Polaroid'**
+  String get composerFramePolaroid;
+
+  /// No description provided for @composerFrameBrawe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe'**
+  String get composerFrameBrawe;
+
+  /// No description provided for @composerFrameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque 2x para moldura'**
+  String get composerFrameHint;
+
+  /// No description provided for @composerFrameLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moldura: {style}'**
+  String composerFrameLabel(String style);
+
+  /// No description provided for @composerCaptionHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione uma legenda...'**
+  String get composerCaptionHint;
+
+  /// No description provided for @composerTapOutsideHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque fora para concluir'**
+  String get composerTapOutsideHint;
+
+  /// No description provided for @composerTextHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite algo...'**
+  String get composerTextHint;
+
+  /// No description provided for @composerGuideTop.
+  ///
+  /// In pt, this message translates to:
+  /// **'topo seguro'**
+  String get composerGuideTop;
+
+  /// No description provided for @composerGuideBottom.
+  ///
+  /// In pt, this message translates to:
+  /// **'base segura'**
+  String get composerGuideBottom;
+
+  /// No description provided for @viewerDeleteStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir story'**
+  String get viewerDeleteStory;
+
+  /// No description provided for @viewerUnfollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deixar de seguir'**
+  String get viewerUnfollow;
+
+  /// No description provided for @viewerBlockUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear usuário'**
+  String get viewerBlockUser;
+
+  /// No description provided for @viewerReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar'**
+  String get viewerReport;
+
+  /// No description provided for @viewerDeleteConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta ação não pode ser desfeita.'**
+  String get viewerDeleteConfirm;
+
+  /// No description provided for @viewerCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get viewerCancel;
+
+  /// No description provided for @viewerDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir'**
+  String get viewerDelete;
+
+  /// No description provided for @viewerBlock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear'**
+  String get viewerBlock;
+
+  /// No description provided for @viewerStoryDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story excluído.'**
+  String get viewerStoryDeleted;
+
+  /// No description provided for @viewerDeleteError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível excluir o story. ({error})'**
+  String viewerDeleteError(Object error);
+
+  /// No description provided for @viewerUnfollowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você deixou de seguir @{username}.'**
+  String viewerUnfollowed(String username);
+
+  /// No description provided for @viewerUnfollowError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível deixar de seguir.'**
+  String get viewerUnfollowError;
+
+  /// No description provided for @viewerBlockConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não verá mais conteúdo de @{username}.'**
+  String viewerBlockConfirm(String username);
+
+  /// No description provided for @viewerBlockError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível bloquear.'**
+  String get viewerBlockError;
+
+  /// No description provided for @viewerReportPrompt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que você está denunciando?'**
+  String get viewerReportPrompt;
+
+  /// No description provided for @viewerReportSpam.
+  ///
+  /// In pt, this message translates to:
+  /// **'Spam ou enganoso'**
+  String get viewerReportSpam;
+
+  /// No description provided for @viewerReportHarassment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assédio ou bullying'**
+  String get viewerReportHarassment;
+
+  /// No description provided for @viewerReportInappropriate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo impróprio ou ofensivo'**
+  String get viewerReportInappropriate;
+
+  /// No description provided for @viewerReportImpersonation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falsa identidade'**
+  String get viewerReportImpersonation;
+
+  /// No description provided for @viewerReportOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get viewerReportOther;
+
+  /// No description provided for @viewerReportSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia enviada. Obrigado.'**
+  String get viewerReportSent;
+
+  /// No description provided for @viewerReportError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a denúncia.'**
+  String get viewerReportError;
+
+  /// No description provided for @viewerSeeOriginalPost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver post original'**
+  String get viewerSeeOriginalPost;
+
+  /// No description provided for @viewerReplySent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resposta enviada.'**
+  String get viewerReplySent;
+
+  /// No description provided for @viewerReplyError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível responder.'**
+  String get viewerReplyError;
+
+  /// No description provided for @viewerReplyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responder ao story...'**
+  String get viewerReplyHint;
+
+  /// No description provided for @viewerGiftSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviou {giftName} x{quantity} · 💎 {credits}'**
+  String viewerGiftSent(String giftName, int quantity, int credits);
+
+  /// No description provided for @viewerLoadViewersError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar visualizadores.'**
+  String get viewerLoadViewersError;
+
+  /// No description provided for @viewerTimeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'agora'**
+  String get viewerTimeNow;
+
+  /// No description provided for @viewerTimeMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {minutes}m'**
+  String viewerTimeMinutes(int minutes);
+
+  /// No description provided for @viewerTimeHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {hours}h'**
+  String viewerTimeHours(int hours);
+
+  /// No description provided for @viewerTimeDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {days}d'**
+  String viewerTimeDays(int days);
+
+  /// No description provided for @viewerLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando...'**
+  String get viewerLoading;
+
+  /// No description provided for @viewerNoViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda ninguém viu este story.'**
+  String get viewerNoViewers;
+
+  /// No description provided for @viewerBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'@{username} bloqueado.'**
+  String viewerBlocked(String username);
+
+  /// No description provided for @viewerViewsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 visualização} other{{count} visualizações}}'**
+  String viewerViewsCount(int count);
+
+  /// No description provided for @feedTabForYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para Você'**
+  String get feedTabForYou;
+
+  /// No description provided for @feedTabFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get feedTabFollowing;
+
+  /// No description provided for @feedEmptyQuietTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O feed está quietinho'**
+  String get feedEmptyQuietTitle;
+
+  /// No description provided for @feedEmptyQuietSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seja o primeiro a postar algo brilhante hoje.'**
+  String get feedEmptyQuietSubtitle;
+
+  /// No description provided for @feedEmptyFollowingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada por aqui ainda'**
+  String get feedEmptyFollowingTitle;
+
+  /// No description provided for @feedEmptyFollowingSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga pessoas para ver os posts delas aqui.'**
+  String get feedEmptyFollowingSubtitle;
+
+  /// No description provided for @feedOfflineTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão por aqui'**
+  String get feedOfflineTitle;
+
+  /// No description provided for @feedOfflineSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique sua internet e tente de novo.'**
+  String get feedOfflineSubtitle;
+
+  /// No description provided for @feedRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get feedRetry;
+
+  /// No description provided for @feedSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvo nos seus favoritos'**
+  String get feedSaved;
+
+  /// No description provided for @feedUnsaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Removido dos favoritos'**
+  String get feedUnsaved;
+
+  /// No description provided for @feedLinkCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Link copiado!'**
+  String get feedLinkCopied;
+
+  /// No description provided for @feedDeletePostTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir post?'**
+  String get feedDeletePostTitle;
+
+  /// No description provided for @feedDeleteConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta ação não pode ser desfeita.'**
+  String get feedDeleteConfirm;
+
+  /// No description provided for @feedCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get feedCancel;
+
+  /// No description provided for @feedDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir'**
+  String get feedDelete;
+
+  /// No description provided for @feedPostDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Post excluído.'**
+  String get feedPostDeleted;
+
+  /// No description provided for @feedPostDeleteError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível excluir o post.'**
+  String get feedPostDeleteError;
+
+  /// No description provided for @feedUnfollowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você deixou de seguir @{username}.'**
+  String feedUnfollowed(String username);
+
+  /// No description provided for @feedUnfollowError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível deixar de seguir.'**
+  String get feedUnfollowError;
+
+  /// No description provided for @feedBlockUserTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear usuário'**
+  String get feedBlockUserTitle;
+
+  /// No description provided for @feedBlockConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não verá mais conteúdo de @{username}. Deseja continuar?'**
+  String feedBlockConfirm(String username);
+
+  /// No description provided for @feedBlock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear'**
+  String get feedBlock;
+
+  /// No description provided for @feedBlockError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível bloquear.'**
+  String get feedBlockError;
+
+  /// No description provided for @feedReportTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar post'**
+  String get feedReportTitle;
+
+  /// No description provided for @feedReportPrompt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que você está denunciando?'**
+  String get feedReportPrompt;
+
+  /// No description provided for @feedReportSpam.
+  ///
+  /// In pt, this message translates to:
+  /// **'Spam ou enganoso'**
+  String get feedReportSpam;
+
+  /// No description provided for @feedReportHarassment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assédio ou bullying'**
+  String get feedReportHarassment;
+
+  /// No description provided for @feedReportInappropriate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo impróprio ou ofensivo'**
+  String get feedReportInappropriate;
+
+  /// No description provided for @feedReportImpersonation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falsa identidade'**
+  String get feedReportImpersonation;
+
+  /// No description provided for @feedReportOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get feedReportOther;
+
+  /// No description provided for @feedReportSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia enviada. Obrigado por nos avisar.'**
+  String get feedReportSent;
+
+  /// No description provided for @feedReportError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a denúncia.'**
+  String get feedReportError;
+
+  /// No description provided for @feedRepostUndoConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desfazer repost?'**
+  String get feedRepostUndoConfirm;
+
+  /// No description provided for @feedRepostConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar para seus seguidores?'**
+  String get feedRepostConfirm;
+
+  /// No description provided for @feedRepostUndo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desfazer repost'**
+  String get feedRepostUndo;
+
+  /// No description provided for @feedRepost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar'**
+  String get feedRepost;
+
+  /// No description provided for @feedQuotePost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Citar post'**
+  String get feedQuotePost;
+
+  /// No description provided for @feedCopyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar link'**
+  String get feedCopyLink;
+
+  /// No description provided for @feedShareAsStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar como Story'**
+  String get feedShareAsStory;
+
+  /// No description provided for @feedUnfollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deixar de seguir'**
+  String get feedUnfollow;
+
+  /// No description provided for @feedReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar'**
+  String get feedReport;
+
+  /// No description provided for @feedDeletePost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir post'**
+  String get feedDeletePost;
+
+  /// No description provided for @feedSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get feedSend;
+
+  /// No description provided for @feedTimeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'agora'**
+  String get feedTimeNow;
+
+  /// No description provided for @feedBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'@{username} bloqueado.'**
+  String feedBlocked(String username);
+
+  /// No description provided for @chatStatusOnline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Online'**
+  String get chatStatusOnline;
+
+  /// No description provided for @chatStatusAway.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ausente'**
+  String get chatStatusAway;
+
+  /// No description provided for @chatStatusDnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não perturbe'**
+  String get chatStatusDnd;
+
+  /// No description provided for @chatStatusInvisible.
+  ///
+  /// In pt, this message translates to:
+  /// **'Invisível'**
+  String get chatStatusInvisible;
+
+  /// No description provided for @chatStatusSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meu Status'**
+  String get chatStatusSheetTitle;
+
+  /// No description provided for @chatStatusSheetSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha como você aparece para outros usuários.'**
+  String get chatStatusSheetSubtitle;
+
+  /// No description provided for @chatNewMessageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova Mensagem'**
+  String get chatNewMessageTitle;
+
+  /// No description provided for @chatSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar pessoas que você segue…'**
+  String get chatSearchHint;
+
+  /// No description provided for @chatFollowingLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get chatFollowingLabel;
+
+  /// No description provided for @chatStartConversationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao iniciar conversa: {error}'**
+  String chatStartConversationError(Object error);
+
+  /// No description provided for @chatLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar: {error}'**
+  String chatLoadError(Object error);
+
+  /// No description provided for @chatLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get chatLiveBadge;
+
+  /// No description provided for @chatFallbackName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat'**
+  String get chatFallbackName;
+
+  /// No description provided for @chatEmptySearchTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma pessoa encontrada'**
+  String get chatEmptySearchTitle;
+
+  /// No description provided for @chatEmptySearchSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente pesquisar por nome ou @username de alguém que você segue.'**
+  String get chatEmptySearchSubtitle;
+
+  /// No description provided for @chatListTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagens'**
+  String get chatListTitle;
+
+  /// No description provided for @chatListSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pesquisar conversas, pessoas…'**
+  String get chatListSearchHint;
+
+  /// No description provided for @chatListTabAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todas'**
+  String get chatListTabAll;
+
+  /// No description provided for @chatListTabUnread.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não lidas'**
+  String get chatListTabUnread;
+
+  /// No description provided for @chatListTabArchived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arquivadas'**
+  String get chatListTabArchived;
+
+  /// No description provided for @chatListRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get chatListRetry;
+
+  /// No description provided for @chatListNewTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova conversa'**
+  String get chatListNewTooltip;
+
+  /// No description provided for @chatListEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comece uma conversa'**
+  String get chatListEmptyTitle;
+
+  /// No description provided for @chatListEmptySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas mensagens com creators, amigos e brawers vão aparecer aqui.'**
+  String get chatListEmptySubtitle;
+
+  /// No description provided for @chatListTapToTalk.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para conversar'**
+  String get chatListTapToTalk;
+
+  /// No description provided for @chatListArchive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arquivar'**
+  String get chatListArchive;
+
+  /// No description provided for @chatListUnarchive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desarquivar'**
+  String get chatListUnarchive;
+
+  /// No description provided for @chatListDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar'**
+  String get chatListDelete;
+
+  /// No description provided for @chatListDeleteConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar conversa?'**
+  String get chatListDeleteConfirmTitle;
+
+  /// No description provided for @chatListDeleteConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conversa será apagada apenas para você.'**
+  String get chatListDeleteConfirmBody;
+
+  /// No description provided for @chatListCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get chatListCancel;
+
+  /// No description provided for @chatListTimeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'agora'**
+  String get chatListTimeNow;
+
+  /// No description provided for @chatDetailPickImageError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao escolher imagem: {error}'**
+  String chatDetailPickImageError(Object error);
+
+  /// No description provided for @chatDetailBlockTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear {name}?'**
+  String chatDetailBlockTitle(String name);
+
+  /// No description provided for @chatDetailBlockBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não poderá mais enviar ou receber mensagens desta pessoa.'**
+  String get chatDetailBlockBody;
+
+  /// No description provided for @chatDetailCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get chatDetailCancel;
+
+  /// No description provided for @chatDetailBlock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear'**
+  String get chatDetailBlock;
+
+  /// No description provided for @chatDetailBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} foi bloqueado(a).'**
+  String chatDetailBlocked(String name);
+
+  /// No description provided for @chatDetailBlockError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao bloquear: {error}'**
+  String chatDetailBlockError(Object error);
+
+  /// No description provided for @chatDetailViewProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver perfil'**
+  String get chatDetailViewProfile;
+
+  /// No description provided for @chatDetailOpenProfileError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o perfil deste contato.'**
+  String get chatDetailOpenProfileError;
+
+  /// No description provided for @chatDetailMute.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar notificações'**
+  String get chatDetailMute;
+
+  /// No description provided for @chatDetailComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve'**
+  String get chatDetailComingSoon;
+
+  /// No description provided for @chatDetailSearchInChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar na conversa'**
+  String get chatDetailSearchInChat;
+
+  /// No description provided for @chatDetailBlockMenu.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear {name}'**
+  String chatDetailBlockMenu(String name);
+
+  /// No description provided for @chatDetailReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar'**
+  String get chatDetailReport;
+
+  /// No description provided for @chatDetailReportSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia enviada. Obrigado!'**
+  String get chatDetailReportSent;
+
+  /// No description provided for @chatDetailStatusTyping.
+  ///
+  /// In pt, this message translates to:
+  /// **'digitando'**
+  String get chatDetailStatusTyping;
+
+  /// No description provided for @chatDetailStatusOnline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Online'**
+  String get chatDetailStatusOnline;
+
+  /// No description provided for @chatDetailStatusSeen.
+  ///
+  /// In pt, this message translates to:
+  /// **'visto {when}'**
+  String chatDetailStatusSeen(String when);
+
+  /// No description provided for @chatDetailStatusOffline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Offline'**
+  String get chatDetailStatusOffline;
+
+  /// No description provided for @chatDetailDateToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get chatDetailDateToday;
+
+  /// No description provided for @chatDetailDateYesterday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ontem'**
+  String get chatDetailDateYesterday;
+
+  /// No description provided for @chatDetailReply.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responder'**
+  String get chatDetailReply;
+
+  /// No description provided for @chatDetailCopy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar'**
+  String get chatDetailCopy;
+
+  /// No description provided for @chatDetailDeleteForMe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar para mim'**
+  String get chatDetailDeleteForMe;
+
+  /// No description provided for @chatDetailViewOnceBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver 1x'**
+  String get chatDetailViewOnceBadge;
+
+  /// No description provided for @chatDetailViewOnceTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualização única'**
+  String get chatDetailViewOnceTitle;
+
+  /// No description provided for @chatDetailPhotoViewedOnce.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto vista por 1 vez'**
+  String get chatDetailPhotoViewedOnce;
+
+  /// No description provided for @chatDetailPhotoUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto não está mais disponível'**
+  String get chatDetailPhotoUnavailable;
+
+  /// No description provided for @chatDetailEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga olá 👋'**
+  String get chatDetailEmptyTitle;
+
+  /// No description provided for @chatDetailEmptySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie a primeira mensagem para começar a conversa.'**
+  String get chatDetailEmptySubtitle;
+
+  /// No description provided for @chatDetailReplying.
+  ///
+  /// In pt, this message translates to:
+  /// **'Respondendo'**
+  String get chatDetailReplying;
+
+  /// No description provided for @chatDetailReplyImagePreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'📷 Foto'**
+  String get chatDetailReplyImagePreview;
+
+  /// No description provided for @chatDetailMessageHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem'**
+  String get chatDetailMessageHint;
+
+  /// No description provided for @chatDetailVoiceTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem de voz'**
+  String get chatDetailVoiceTitle;
+
+  /// No description provided for @chatDetailVoiceSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve — gravação com waveform animado'**
+  String get chatDetailVoiceSubtitle;
+
+  /// No description provided for @chatDetailClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get chatDetailClose;
+
+  /// No description provided for @chatDetailAttachGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Galeria'**
+  String get chatDetailAttachGallery;
+
+  /// No description provided for @chatDetailAttachCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera'**
+  String get chatDetailAttachCamera;
+
+  /// No description provided for @chatDetailAttachAudio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio'**
+  String get chatDetailAttachAudio;
+
+  /// No description provided for @chatDetailAttachLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Local'**
+  String get chatDetailAttachLocation;
+
+  /// No description provided for @chatDetailAttachFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arquivo'**
+  String get chatDetailAttachFile;
+
+  /// No description provided for @chatDetailAttachMystery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mistério'**
+  String get chatDetailAttachMystery;
+
+  /// No description provided for @chatDetailRelativeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'agora'**
+  String get chatDetailRelativeNow;
+
+  /// No description provided for @chatDetailRelativeMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {minutes}m'**
+  String chatDetailRelativeMinutes(int minutes);
+
+  /// No description provided for @chatDetailRelativeHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {hours}h'**
+  String chatDetailRelativeHours(int hours);
+
+  /// No description provided for @chatDetailRelativeDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {days}d'**
+  String chatDetailRelativeDays(int days);
+
+  /// No description provided for @chatDetailViewPost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver publicação'**
+  String get chatDetailViewPost;
+
+  /// No description provided for @chatDetailPostUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicação indisponível'**
+  String get chatDetailPostUnavailable;
+
+  /// No description provided for @chatDetailOpenPostSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir publicação em breve'**
+  String get chatDetailOpenPostSoon;
+
+  /// No description provided for @chatDetailBurnedPreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'🔥 Mensagem queimada'**
+  String get chatDetailBurnedPreview;
+
+  /// No description provided for @chatDetailStreamerFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Streamer'**
+  String get chatDetailStreamerFallback;
+
+  /// No description provided for @chatDetailLiveFallbackTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live'**
+  String get chatDetailLiveFallbackTitle;
+
+  /// No description provided for @chatDetailLiveTapToWatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para assistir'**
+  String get chatDetailLiveTapToWatch;
+
+  /// No description provided for @chatDetailLiveSeeDetails.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver detalhes'**
+  String get chatDetailLiveSeeDetails;
+
+  /// No description provided for @chatDetailEmojiSmileys.
+  ///
+  /// In pt, this message translates to:
+  /// **'Smileys'**
+  String get chatDetailEmojiSmileys;
+
+  /// No description provided for @chatDetailEmojiGestures.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gestos'**
+  String get chatDetailEmojiGestures;
+
+  /// No description provided for @chatDetailEmojiHearts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coração'**
+  String get chatDetailEmojiHearts;
+
+  /// No description provided for @chatDetailEmojiAnimals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Animais'**
+  String get chatDetailEmojiAnimals;
+
+  /// No description provided for @chatDetailEmojiFood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comida'**
+  String get chatDetailEmojiFood;
+
+  /// No description provided for @chatDetailEmojiParty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Festa'**
+  String get chatDetailEmojiParty;
+
+  /// No description provided for @chatDetailEmojiObjects.
+  ///
+  /// In pt, this message translates to:
+  /// **'Objetos'**
+  String get chatDetailEmojiObjects;
+
+  /// No description provided for @profileTabGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Galeria'**
+  String get profileTabGallery;
+
+  /// No description provided for @profileTabLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get profileTabLives;
+
+  /// No description provided for @profileTabShop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja'**
+  String get profileTabShop;
+
+  /// No description provided for @profileTooltipShop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja'**
+  String get profileTooltipShop;
+
+  /// No description provided for @profileTooltipQuests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quests'**
+  String get profileTooltipQuests;
+
+  /// No description provided for @profileTooltipNotifications.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações'**
+  String get profileTooltipNotifications;
+
+  /// No description provided for @profileTooltipWallet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carteira'**
+  String get profileTooltipWallet;
+
+  /// No description provided for @profileShareFail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível compartilhar.'**
+  String get profileShareFail;
+
+  /// No description provided for @profileLinkCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Link copiado para a área de transferência'**
+  String get profileLinkCopied;
+
+  /// No description provided for @profileBlockedSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário bloqueado.'**
+  String get profileBlockedSuccess;
+
+  /// No description provided for @profileBlockedError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao bloquear. Tente novamente.'**
+  String get profileBlockedError;
+
+  /// No description provided for @profileReportSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia enviada. Obrigado.'**
+  String get profileReportSent;
+
+  /// No description provided for @profileReportError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao denunciar. Tente novamente.'**
+  String get profileReportError;
+
+  /// No description provided for @profileBlockTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloquear'**
+  String get profileBlockTitle;
+
+  /// No description provided for @profileBlockBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que deseja bloquear {name}? Vocês não poderão mais trocar mensagens nem ver conteúdo um do outro.'**
+  String profileBlockBody(String name);
+
+  /// No description provided for @profileFallbackUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'este usuário'**
+  String get profileFallbackUser;
+
+  /// No description provided for @profileReportQuestion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que está denunciando?'**
+  String get profileReportQuestion;
+
+  /// No description provided for @profileReportReasonSpam.
+  ///
+  /// In pt, this message translates to:
+  /// **'Spam'**
+  String get profileReportReasonSpam;
+
+  /// No description provided for @profileReportReasonHarassment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assédio ou bullying'**
+  String get profileReportReasonHarassment;
+
+  /// No description provided for @profileReportReasonInappropriate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo impróprio'**
+  String get profileReportReasonInappropriate;
+
+  /// No description provided for @profileReportReasonImpersonation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falsa identidade'**
+  String get profileReportReasonImpersonation;
+
+  /// No description provided for @profileReportReasonOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro motivo'**
+  String get profileReportReasonOther;
+
+  /// No description provided for @profileOptionShareProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar perfil'**
+  String get profileOptionShareProfile;
+
+  /// No description provided for @profileOptionCopyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar link'**
+  String get profileOptionCopyLink;
+
+  /// No description provided for @profileOptionReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar'**
+  String get profileOptionReport;
+
+  /// No description provided for @profileOptionDailyQuests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quests diárias'**
+  String get profileOptionDailyQuests;
+
+  /// No description provided for @profileOptionWallet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carteira'**
+  String get profileOptionWallet;
+
+  /// No description provided for @profileOptionNotifications.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações'**
+  String get profileOptionNotifications;
+
+  /// No description provided for @profileOptionSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configurações'**
+  String get profileOptionSettings;
+
+  /// No description provided for @profileOptionLogout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da conta'**
+  String get profileOptionLogout;
+
+  /// No description provided for @profileLogoutTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da conta?'**
+  String get profileLogoutTitle;
+
+  /// No description provided for @profileLogoutBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você precisará entrar novamente para acessar sua arena.'**
+  String get profileLogoutBody;
+
+  /// No description provided for @profileLogoutConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair'**
+  String get profileLogoutConfirm;
+
+  /// No description provided for @profileMessageButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem'**
+  String get profileMessageButton;
+
+  /// No description provided for @profileOpenConversationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao abrir conversa: {error}'**
+  String profileOpenConversationError(Object error);
+
+  /// No description provided for @profileChatFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat'**
+  String get profileChatFallback;
+
+  /// No description provided for @profileUserFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário'**
+  String get profileUserFallback;
+
+  /// No description provided for @profileEditTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar perfil'**
+  String get profileEditTooltip;
+
+  /// No description provided for @profileStatFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get profileStatFollowers;
+
+  /// No description provided for @profileStatFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get profileStatFollowing;
+
+  /// No description provided for @profileStatLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get profileStatLives;
+
+  /// No description provided for @profileStatViews.
+  ///
+  /// In pt, this message translates to:
+  /// **'Views'**
+  String get profileStatViews;
+
+  /// No description provided for @profileLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o perfil'**
+  String get profileLoadError;
+
+  /// No description provided for @profileLoadErrorHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique sua conexão e tente novamente.'**
+  String get profileLoadErrorHint;
+
+  /// No description provided for @profileRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get profileRetry;
+
+  /// No description provided for @profileSellerVerified.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vendedor verificado'**
+  String get profileSellerVerified;
+
+  /// No description provided for @profileSellerSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira a vitrine de produtos'**
+  String get profileSellerSubtitle;
+
+  /// No description provided for @profileNoTextPosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum post de texto ainda'**
+  String get profileNoTextPosts;
+
+  /// No description provided for @profilePostsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar posts'**
+  String get profilePostsLoadError;
+
+  /// No description provided for @profileNoLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live ainda'**
+  String get profileNoLives;
+
+  /// No description provided for @profileLivesLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar lives'**
+  String get profileLivesLoadError;
+
+  /// No description provided for @profileShopEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja vazia'**
+  String get profileShopEmpty;
+
+  /// No description provided for @profileShopFeatured.
+  ///
+  /// In pt, this message translates to:
+  /// **'Destaques'**
+  String get profileShopFeatured;
+
+  /// No description provided for @profileShopAllProducts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos os produtos'**
+  String get profileShopAllProducts;
+
+  /// No description provided for @profileLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE'**
+  String get profileLiveBadge;
+
+  /// No description provided for @profileProductSoldOut.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esgotado'**
+  String get profileProductSoldOut;
+
+  /// No description provided for @profileProductSoldOutUppercase.
+  ///
+  /// In pt, this message translates to:
+  /// **'ESGOTADO'**
+  String get profileProductSoldOutUppercase;
+
+  /// No description provided for @profileProductAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre o produto'**
+  String get profileProductAbout;
+
+  /// No description provided for @profileProductUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Indisponível'**
+  String get profileProductUnavailable;
+
+  /// No description provided for @profileProductBuyNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar agora'**
+  String get profileProductBuyNow;
+
+  /// No description provided for @profileAddedToCart.
+  ///
+  /// In pt, this message translates to:
+  /// **'🛒 Adicionado ao carrinho!'**
+  String get profileAddedToCart;
+
+  /// No description provided for @profileGalleryLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar galeria'**
+  String get profileGalleryLoadError;
+
+  /// No description provided for @profileGalleryEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada por aqui ainda'**
+  String get profileGalleryEmpty;
+
+  /// No description provided for @profileGalleryRemoveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover mídia?'**
+  String get profileGalleryRemoveTitle;
+
+  /// No description provided for @profileGalleryRemoveBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Essa ação não pode ser desfeita.'**
+  String get profileGalleryRemoveBody;
+
+  /// No description provided for @profileGalleryRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover'**
+  String get profileGalleryRemove;
+
+  /// No description provided for @profileVideoDeleteTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar vídeo?'**
+  String get profileVideoDeleteTitle;
+
+  /// No description provided for @profileVideoDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar'**
+  String get profileVideoDelete;
+
+  /// No description provided for @profileVideoDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo apagado'**
+  String get profileVideoDeleted;
+
+  /// No description provided for @profileVideoDeleteError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao apagar vídeo'**
+  String get profileVideoDeleteError;
+
+  /// No description provided for @profileVideoRepostStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar no Stories'**
+  String get profileVideoRepostStory;
+
+  /// No description provided for @profileVideoDeleteAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar vídeo'**
+  String get profileVideoDeleteAction;
+
+  /// No description provided for @profileVideoLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o vídeo.'**
+  String get profileVideoLoadError;
+
+  /// No description provided for @profileGalleryTabPhotos.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fotos ({count}/{max})'**
+  String profileGalleryTabPhotos(int count, int max);
+
+  /// No description provided for @profileGalleryTabVideos.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeos ({count}/{max})'**
+  String profileGalleryTabVideos(int count, int max);
+
+  /// No description provided for @profileGalleryPhotoAdded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto adicionada'**
+  String get profileGalleryPhotoAdded;
+
+  /// No description provided for @profileGalleryPhotoError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar foto'**
+  String get profileGalleryPhotoError;
+
+  /// No description provided for @profileGalleryVideoAdded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo adicionado'**
+  String get profileGalleryVideoAdded;
+
+  /// No description provided for @profileGalleryVideoError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar vídeo'**
+  String get profileGalleryVideoError;
+
+  /// No description provided for @profileVideoDeleteBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Essa ação não pode ser desfeita. O vídeo sairá do Para Você e do seu perfil.'**
+  String get profileVideoDeleteBody;
+
+  /// No description provided for @profileProductLastStock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Últimas {count}'**
+  String profileProductLastStock(int count);
+
+  /// No description provided for @profileProductSoldCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} vendidos'**
+  String profileProductSoldCount(int count);
+
+  /// No description provided for @profileProductLowStock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas {count} restantes'**
+  String profileProductLowStock(int count);
+
+  /// No description provided for @profileProductInStock.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} em estoque'**
+  String profileProductInStock(int count);
+
+  /// No description provided for @profileProductDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produto exclusivo da loja oficial. Envio em até 3 dias úteis. Garantia de 30 dias e troca grátis.'**
+  String get profileProductDescription;
+
+  /// No description provided for @profilePriceBRL.
+  ///
+  /// In pt, this message translates to:
+  /// **'R\\\$ {amount}'**
+  String profilePriceBRL(String amount);
+
+  /// No description provided for @profileVideosLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar vídeos'**
+  String get profileVideosLoadError;
+
+  /// No description provided for @profileVideosEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum vídeo publicado ainda'**
+  String get profileVideosEmpty;
+
+  /// No description provided for @profileVideoSwipeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deslize'**
+  String get profileVideoSwipeHint;
+
+  /// No description provided for @notificationsMarkAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcar todas'**
+  String get notificationsMarkAll;
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tudo em dia!'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não tem notificações novas.'**
+  String get notificationsEmptySubtitle;
+
+  /// No description provided for @notificationsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não consegui carregar suas notificações.'**
+  String get notificationsLoadError;
+
+  /// No description provided for @notificationsTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get notificationsTryAgain;
+
+  /// No description provided for @notificationsTimeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'agora'**
+  String get notificationsTimeNow;
+
+  /// No description provided for @notificationsTimeMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n}m atrás'**
+  String notificationsTimeMinutes(int n);
+
+  /// No description provided for @notificationsTimeHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n}h atrás'**
+  String notificationsTimeHours(int n);
+
+  /// No description provided for @notificationsTimeDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n}d atrás'**
+  String notificationsTimeDays(int n);
+
+  /// No description provided for @followsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pessoas'**
+  String get followsTitle;
+
+  /// No description provided for @followsTabFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get followsTabFollowers;
+
+  /// No description provided for @followsTabFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get followsTabFollowing;
+
+  /// No description provided for @followsSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar...'**
+  String get followsSearchHint;
+
+  /// No description provided for @followsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar'**
+  String get followsLoadError;
+
+  /// No description provided for @followsTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get followsTryAgain;
+
+  /// No description provided for @followsNoResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum resultado para \"{q}\"'**
+  String followsNoResults(String q);
+
+  /// No description provided for @followsEmptyFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda sem seguidores'**
+  String get followsEmptyFollowers;
+
+  /// No description provided for @followsEmptyFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não segue ninguém'**
+  String get followsEmptyFollowing;
+
+  /// No description provided for @followsUserFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário'**
+  String get followsUserFallback;
+
+  /// No description provided for @followsLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE'**
+  String get followsLiveBadge;
+
+  /// No description provided for @questsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quests Diárias'**
+  String get questsTitle;
+
+  /// No description provided for @questsClaimAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coletar tudo ({count})'**
+  String questsClaimAll(int count);
+
+  /// No description provided for @questsClaimedReward.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} recompensa(s) coletada(s)!'**
+  String questsClaimedReward(int n);
+
+  /// No description provided for @questsNothingToClaim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada para coletar agora.'**
+  String get questsNothingToClaim;
+
+  /// No description provided for @questsClaimSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'+{xp} XP · +{coins} moedas'**
+  String questsClaimSuccess(int xp, int coins);
+
+  /// No description provided for @questsClaimError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao resgatar. Tente novamente.'**
+  String get questsClaimError;
+
+  /// No description provided for @questsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem quests por enquanto.\nVolte mais tarde!'**
+  String get questsEmpty;
+
+  /// No description provided for @questsLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {level}'**
+  String questsLevel(int level);
+
+  /// No description provided for @questsXpProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{current} / {total} XP'**
+  String questsXpProgress(int current, int total);
+
+  /// No description provided for @questsSummaryCompleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluídas'**
+  String get questsSummaryCompleted;
+
+  /// No description provided for @questsSummaryXpToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'XP hoje'**
+  String get questsSummaryXpToday;
+
+  /// No description provided for @questsSummaryStreak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Streak'**
+  String get questsSummaryStreak;
+
+  /// No description provided for @questsStreakDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{days}d'**
+  String questsStreakDays(int days);
+
+  /// No description provided for @questsProgressCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{current} / {total}'**
+  String questsProgressCount(int current, int total);
+
+  /// No description provided for @questsRewardXp.
+  ///
+  /// In pt, this message translates to:
+  /// **'+{xp} XP'**
+  String questsRewardXp(int xp);
+
+  /// No description provided for @questsRewardCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'+{coins} moedas'**
+  String questsRewardCoins(int coins);
+
+  /// No description provided for @questsStatusClaimed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coletado ✓'**
+  String get questsStatusClaimed;
+
+  /// No description provided for @questsStatusInProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em progresso'**
+  String get questsStatusInProgress;
+
+  /// No description provided for @questsActionClaim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coletar'**
+  String get questsActionClaim;
+
+  /// No description provided for @questsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não consegui carregar as quests.'**
+  String get questsLoadError;
+
+  /// No description provided for @questsTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get questsTryAgain;
+
+  /// No description provided for @questsSummaryCompletedValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'{done}/{total}'**
+  String questsSummaryCompletedValue(int done, int total);
+
+  /// No description provided for @walletTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carteira'**
+  String get walletTitle;
+
+  /// No description provided for @walletAvailableBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo disponível'**
+  String get walletAvailableBalance;
+
+  /// No description provided for @walletCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'moedas'**
+  String get walletCoins;
+
+  /// No description provided for @walletSectionBuyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar moedas'**
+  String get walletSectionBuyTitle;
+
+  /// No description provided for @walletSectionBuySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use moedas para enviar gifts em lives'**
+  String get walletSectionBuySubtitle;
+
+  /// No description provided for @walletSectionHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico'**
+  String get walletSectionHistoryTitle;
+
+  /// No description provided for @walletSectionHistorySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas últimas movimentações'**
+  String get walletSectionHistorySubtitle;
+
+  /// No description provided for @walletPackageCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} moedas'**
+  String walletPackageCoins(String n);
+
+  /// No description provided for @walletPriceBRL.
+  ///
+  /// In pt, this message translates to:
+  /// **'R\$ {value}'**
+  String walletPriceBRL(String value);
+
+  /// No description provided for @walletPurchaseInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamentos in-app chegando em breve. Por enquanto, compre moedas pelo navegador em brawe.app/coins.'**
+  String get walletPurchaseInfo;
+
+  /// No description provided for @walletPurchaseUnderstood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entendi'**
+  String get walletPurchaseUnderstood;
+
+  /// No description provided for @walletInfoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como funcionam as moedas'**
+  String get walletInfoTitle;
+
+  /// No description provided for @walletInfoQuestsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quests diárias'**
+  String get walletInfoQuestsTitle;
+
+  /// No description provided for @walletInfoQuestsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Complete missões e ganhe moedas + XP todos os dias.'**
+  String get walletInfoQuestsBody;
+
+  /// No description provided for @walletInfoGiftsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receba gifts'**
+  String get walletInfoGiftsTitle;
+
+  /// No description provided for @walletInfoGiftsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas lives recebem gifts dos seus seguidores.'**
+  String get walletInfoGiftsBody;
+
+  /// No description provided for @walletInfoUseTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use em lives'**
+  String get walletInfoUseTitle;
+
+  /// No description provided for @walletInfoUseBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie gifts para creators favoritos durante lives.'**
+  String get walletInfoUseBody;
+
+  /// No description provided for @walletLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não consegui carregar sua carteira.'**
+  String get walletLoadError;
+
+  /// No description provided for @walletTryAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get walletTryAgain;
+
+  /// No description provided for @walletActionAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar'**
+  String get walletActionAdd;
+
+  /// No description provided for @walletActionSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get walletActionSend;
+
+  /// No description provided for @walletActionStatement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Extrato'**
+  String get walletActionStatement;
+
+  /// No description provided for @walletComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve.'**
+  String get walletComingSoon;
+
+  /// No description provided for @walletTxLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o histórico.'**
+  String get walletTxLoadError;
+
+  /// No description provided for @walletTxEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem movimentações ainda.'**
+  String get walletTxEmpty;
+
+  /// No description provided for @walletTxTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para'**
+  String get walletTxTo;
+
+  /// No description provided for @walletTxFrom.
+  ///
+  /// In pt, this message translates to:
+  /// **'De'**
+  String get walletTxFrom;
+
+  /// No description provided for @exploreSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar streamers, lives, categorias…'**
+  String get exploreSearchHint;
+
+  /// No description provided for @exploreTabTrending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em alta'**
+  String get exploreTabTrending;
+
+  /// No description provided for @exploreTabCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categorias'**
+  String get exploreTabCategories;
+
+  /// No description provided for @exploreTabRecommended.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para você'**
+  String get exploreTabRecommended;
+
+  /// No description provided for @exploreSectionLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives ao vivo'**
+  String get exploreSectionLives;
+
+  /// No description provided for @exploreSectionTrendingStreamers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Streamers em alta'**
+  String get exploreSectionTrendingStreamers;
+
+  /// No description provided for @exploreSectionRecommendedLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives recomendadas'**
+  String get exploreSectionRecommendedLives;
+
+  /// No description provided for @exploreSectionRecommendedStreamers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Streamers que você pode gostar'**
+  String get exploreSectionRecommendedStreamers;
+
+  /// No description provided for @exploreEmptyTrending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada em alta agora'**
+  String get exploreEmptyTrending;
+
+  /// No description provided for @exploreEmptyCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma categoria disponível.'**
+  String get exploreEmptyCategories;
+
+  /// No description provided for @exploreEmptyRecommended.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga alguns streamers para receber recomendações personalizadas!'**
+  String get exploreEmptyRecommended;
+
+  /// No description provided for @exploreEmptySearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum resultado.'**
+  String get exploreEmptySearch;
+
+  /// No description provided for @exploreCategoryGeneral.
+  ///
+  /// In pt, this message translates to:
+  /// **'Geral'**
+  String get exploreCategoryGeneral;
+
+  /// No description provided for @exploreFollowersCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} seguidores'**
+  String exploreFollowersCount(int count);
+
+  /// No description provided for @exploreCategoryLiveCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} ao vivo'**
+  String exploreCategoryLiveCount(int count);
+
+  /// No description provided for @exploreLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar. Puxe para baixo para tentar novamente.'**
+  String get exploreLoadError;
+
+  /// No description provided for @exploreLiveSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'{streamer} • {category}'**
+  String exploreLiveSubtitle(String streamer, String category);
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar perfil'**
+  String get editProfileTitle;
+
+  /// No description provided for @editProfileSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get editProfileSave;
+
+  /// No description provided for @editProfileLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar perfil'**
+  String get editProfileLoadError;
+
+  /// No description provided for @editProfileSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil atualizado'**
+  String get editProfileSaved;
+
+  /// No description provided for @editProfileSavedUsernameFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil salvo, mas falhou ao atualizar o username'**
+  String get editProfileSavedUsernameFailed;
+
+  /// No description provided for @editProfileSectionInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informações'**
+  String get editProfileSectionInfo;
+
+  /// No description provided for @editProfileSectionSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Links sociais'**
+  String get editProfileSectionSocial;
+
+  /// No description provided for @editProfileFieldName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome de exibição'**
+  String get editProfileFieldName;
+
+  /// No description provided for @editProfileFieldNameRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigatório'**
+  String get editProfileFieldNameRequired;
+
+  /// No description provided for @editProfileFieldBio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bio'**
+  String get editProfileFieldBio;
+
+  /// No description provided for @editProfileFieldBioHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte um pouco sobre você...'**
+  String get editProfileFieldBioHint;
+
+  /// No description provided for @editProfileSocialInstagram.
+  ///
+  /// In pt, this message translates to:
+  /// **'Instagram'**
+  String get editProfileSocialInstagram;
+
+  /// No description provided for @editProfileSocialTikTok.
+  ///
+  /// In pt, this message translates to:
+  /// **'TikTok'**
+  String get editProfileSocialTikTok;
+
+  /// No description provided for @editProfileSocialTwitter.
+  ///
+  /// In pt, this message translates to:
+  /// **'X / Twitter'**
+  String get editProfileSocialTwitter;
+
+  /// No description provided for @editProfileSocialYouTube.
+  ///
+  /// In pt, this message translates to:
+  /// **'YouTube'**
+  String get editProfileSocialYouTube;
+
+  /// No description provided for @editProfileSocialWebsite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Website'**
+  String get editProfileSocialWebsite;
+
+  /// No description provided for @editProfileSocialUserHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'@usuario'**
+  String get editProfileSocialUserHint;
+
+  /// No description provided for @editProfileSocialChannelHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'canal'**
+  String get editProfileSocialChannelHint;
+
+  /// No description provided for @editProfileSocialUrlHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'https://...'**
+  String get editProfileSocialUrlHint;
+
+  /// No description provided for @editProfileBannerAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar banner'**
+  String get editProfileBannerAdd;
+
+  /// No description provided for @editProfileBannerPosition.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posicionar banner'**
+  String get editProfileBannerPosition;
+
+  /// No description provided for @editProfileAvatarPosition.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posicionar foto'**
+  String get editProfileAvatarPosition;
+
+  /// No description provided for @editProfileUsernameLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Username'**
+  String get editProfileUsernameLabel;
+
+  /// No description provided for @editProfileUsernameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'@seunome'**
+  String get editProfileUsernameHint;
+
+  /// No description provided for @editProfileUsernameAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível'**
+  String get editProfileUsernameAvailable;
+
+  /// No description provided for @editProfileUsernameTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo 3 caracteres'**
+  String get editProfileUsernameTooShort;
+
+  /// No description provided for @editProfileUsernameInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas letras, números e _ (deve começar com letra)'**
+  String get editProfileUsernameInvalid;
+
+  /// No description provided for @editProfileImageProcessError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível processar a imagem.'**
+  String get editProfileImageProcessError;
+
+  /// No description provided for @editProfileImageDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get editProfileImageDone;
+
+  /// No description provided for @editProfileImageHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arraste para reposicionar · Pinch para dar zoom'**
+  String get editProfileImageHint;
+
+  /// No description provided for @editProfileErrorSaveFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar. Tente de novo.'**
+  String get editProfileErrorSaveFailed;
+
+  /// No description provided for @editProfileErrorUsernameCheck.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao verificar'**
+  String get editProfileErrorUsernameCheck;
+
+  /// No description provided for @editProfileErrorUsernameInUse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este username já está em uso'**
+  String get editProfileErrorUsernameInUse;
+
+  /// No description provided for @editProfileErrorUsernameSaveFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar o username. Tente de novo.'**
+  String get editProfileErrorUsernameSaveFailed;
+
+  /// No description provided for @editProfileErrorAvatarUpload.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar avatar.'**
+  String get editProfileErrorAvatarUpload;
+
+  /// No description provided for @editProfileErrorBannerUpload.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar banner.'**
+  String get editProfileErrorBannerUpload;
+
+  /// No description provided for @editProfileErrorAvatarRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao remover avatar.'**
+  String get editProfileErrorAvatarRemove;
+
+  /// No description provided for @editProfileErrorBannerRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao remover banner.'**
+  String get editProfileErrorBannerRemove;
+
+  /// No description provided for @startLivePermissionDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisamos de acesso à câmera e ao microfone para iniciar.'**
+  String get startLivePermissionDenied;
+
+  /// No description provided for @startLiveNoCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma câmera encontrada neste dispositivo.'**
+  String get startLiveNoCamera;
+
+  /// No description provided for @startLiveCameraInitError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao inicializar a câmera: {error}'**
+  String startLiveCameraInitError(String error);
+
+  /// No description provided for @startLiveCameraInitFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao inicializar a câmera.'**
+  String get startLiveCameraInitFailed;
+
+  /// No description provided for @startLiveThumbCaptured.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa capturada da câmera ✨'**
+  String get startLiveThumbCaptured;
+
+  /// No description provided for @startLiveThumbCaptureFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível capturar a capa.'**
+  String get startLiveThumbCaptureFailed;
+
+  /// No description provided for @startLiveThumbUpdated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa atualizada.'**
+  String get startLiveThumbUpdated;
+
+  /// No description provided for @startLiveThumbCaptureNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capturar agora'**
+  String get startLiveThumbCaptureNow;
+
+  /// No description provided for @startLiveThumbCaptureNowSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usa o frame atual da câmera'**
+  String get startLiveThumbCaptureNowSubtitle;
+
+  /// No description provided for @startLiveThumbPickGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher da galeria'**
+  String get startLiveThumbPickGallery;
+
+  /// No description provided for @startLiveThumbRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover capa'**
+  String get startLiveThumbRemove;
+
+  /// No description provided for @startLiveRoomDataError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível obter os dados da live.'**
+  String get startLiveRoomDataError;
+
+  /// No description provided for @startLiveRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get startLiveRetry;
+
+  /// No description provided for @startLiveTitleHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga sobre o que é sua live...'**
+  String get startLiveTitleHint;
+
+  /// No description provided for @startLiveCategoryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria'**
+  String get startLiveCategoryLabel;
+
+  /// No description provided for @startLiveNotifyFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avisar meus seguidores'**
+  String get startLiveNotifyFollowers;
+
+  /// No description provided for @startLiveGoLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'ENTRAR AO VIVO'**
+  String get startLiveGoLive;
+
+  /// No description provided for @startLiveSuggestions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestões'**
+  String get startLiveSuggestions;
+
+  /// No description provided for @startLiveErrorTitleTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'O título precisa ter pelo menos 3 caracteres.'**
+  String get startLiveErrorTitleTooShort;
+
+  /// No description provided for @startLiveErrorCategoryRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione uma categoria para sua live.'**
+  String get startLiveErrorCategoryRequired;
+
+  /// No description provided for @liveCategoryShopping.
+  ///
+  /// In pt, this message translates to:
+  /// **'Shopping'**
+  String get liveCategoryShopping;
+
+  /// No description provided for @liveCategoryGaming.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gaming'**
+  String get liveCategoryGaming;
+
+  /// No description provided for @liveCategoryTalkShow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Talk Show'**
+  String get liveCategoryTalkShow;
+
+  /// No description provided for @liveCategoryMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música'**
+  String get liveCategoryMusic;
+
+  /// No description provided for @liveCategoryEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação'**
+  String get liveCategoryEducation;
+
+  /// No description provided for @liveCategoryFitness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fitness'**
+  String get liveCategoryFitness;
+
+  /// No description provided for @liveCategoryCooking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Culinária'**
+  String get liveCategoryCooking;
+
+  /// No description provided for @liveCategoryBeauty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Beleza'**
+  String get liveCategoryBeauty;
+
+  /// No description provided for @liveCategoryTech.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tecnologia'**
+  String get liveCategoryTech;
+
+  /// No description provided for @liveCategorySports.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esportes'**
+  String get liveCategorySports;
+
+  /// No description provided for @liveCategoryEntertainment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entretenimento'**
+  String get liveCategoryEntertainment;
+
+  /// No description provided for @liveCategoryOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get liveCategoryOther;
+
+  /// No description provided for @liveVisibilityPublic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Público'**
+  String get liveVisibilityPublic;
+
+  /// No description provided for @liveVisibilityFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get liveVisibilityFollowers;
+
+  /// No description provided for @liveVisibilityPrivate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Privada'**
+  String get liveVisibilityPrivate;
+
+  /// No description provided for @liveVisibilityPublicDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qualquer pessoa pode entrar e descobrir'**
+  String get liveVisibilityPublicDesc;
+
+  /// No description provided for @liveVisibilityFollowersDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas quem te segue pode entrar'**
+  String get liveVisibilityFollowersDesc;
+
+  /// No description provided for @liveVisibilityPrivateDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas pessoas com link convidadas'**
+  String get liveVisibilityPrivateDesc;
+
+  /// No description provided for @warmupHeading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aquecendo o público'**
+  String get warmupHeading;
+
+  /// No description provided for @warmupSubheading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avisando seus seguidores...'**
+  String get warmupSubheading;
+
+  /// No description provided for @warmupOpensInSeconds.
+  ///
+  /// In pt, this message translates to:
+  /// **'A live abre em {count} segundo{plural}'**
+  String warmupOpensInSeconds(int count, String plural);
+
+  /// No description provided for @warmupGoNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar ao vivo agora'**
+  String get warmupGoNow;
+
+  /// No description provided for @warmupCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar aquecimento'**
+  String get warmupCancel;
+
+  /// No description provided for @vibeNetworkWifi.
+  ///
+  /// In pt, this message translates to:
+  /// **'Wi-Fi'**
+  String get vibeNetworkWifi;
+
+  /// No description provided for @vibeNetworkMobile.
+  ///
+  /// In pt, this message translates to:
+  /// **'4G/5G'**
+  String get vibeNetworkMobile;
+
+  /// No description provided for @vibeNetworkEthernet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ethernet'**
+  String get vibeNetworkEthernet;
+
+  /// No description provided for @vibeNetworkNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem rede'**
+  String get vibeNetworkNone;
+
+  /// No description provided for @vibeStatusGood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tudo certo para entrar ao vivo'**
+  String get vibeStatusGood;
+
+  /// No description provided for @vibeStatusWarning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Funciona, mas pode oscilar'**
+  String get vibeStatusWarning;
+
+  /// No description provided for @vibeStatusBad.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atenção antes de começar'**
+  String get vibeStatusBad;
+
+  /// No description provided for @vibeNetworkLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rede: {label}'**
+  String vibeNetworkLabel(String label);
+
+  /// No description provided for @vibeBatteryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bateria: {level}%'**
+  String vibeBatteryLabel(int level);
+
+  /// No description provided for @shareLiveLoginNeeded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faça login para compartilhar'**
+  String get shareLiveLoginNeeded;
+
+  /// No description provided for @shareLiveLoadFollowersError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar seus seguidores.'**
+  String get shareLiveLoadFollowersError;
+
+  /// No description provided for @shareLiveSentToCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live enviada para {count, plural, =1{{count} pessoa} other{{count} pessoas}} 🎉'**
+  String shareLiveSentToCount(int count);
+
+  /// No description provided for @shareLiveSendFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao compartilhar a live'**
+  String get shareLiveSendFailed;
+
+  /// No description provided for @shareLiveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar live'**
+  String get shareLiveTitle;
+
+  /// No description provided for @shareLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE'**
+  String get shareLiveBadge;
+
+  /// No description provided for @shareLiveSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar seguidores'**
+  String get shareLiveSearchHint;
+
+  /// No description provided for @shareLiveErrorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro'**
+  String get shareLiveErrorGeneric;
+
+  /// No description provided for @shareLiveRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get shareLiveRetry;
+
+  /// No description provided for @shareLiveEmptyFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum seguidor encontrado.'**
+  String get shareLiveEmptyFollowers;
+
+  /// No description provided for @shareLiveDefaultUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário'**
+  String get shareLiveDefaultUser;
+
+  /// No description provided for @shareLiveNoteHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione uma mensagem (opcional)…'**
+  String get shareLiveNoteHint;
+
+  /// No description provided for @shareLiveSendTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para {count}'**
+  String shareLiveSendTo(int count);
+
+  /// No description provided for @shareLiveSelectContacts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione contatos'**
+  String get shareLiveSelectContacts;
+
+  /// No description provided for @broadcasterPermissionDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisamos de acesso à câmera e ao microfone para você entrar ao vivo.'**
+  String get broadcasterPermissionDenied;
+
+  /// No description provided for @broadcasterNoCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma câmera encontrada neste dispositivo.'**
+  String get broadcasterNoCamera;
+
+  /// No description provided for @broadcasterInitCameraFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao inicializar a câmera.'**
+  String get broadcasterInitCameraFailed;
+
+  /// No description provided for @broadcasterInitCameraError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao inicializar a câmera: {error}'**
+  String broadcasterInitCameraError(String error);
+
+  /// No description provided for @broadcasterRoomUpdateFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível atualizar a live: {error}'**
+  String broadcasterRoomUpdateFailed(String error);
+
+  /// No description provided for @broadcasterMissingStreamCreds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível iniciar: URL RTMP ou chave de transmissão ausente.'**
+  String get broadcasterMissingStreamCreds;
+
+  /// No description provided for @broadcasterConnectedLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectado! Você está ao vivo. 🔴'**
+  String get broadcasterConnectedLive;
+
+  /// No description provided for @broadcasterStreamStartError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao iniciar transmissão: {error}'**
+  String broadcasterStreamStartError(String error);
+
+  /// No description provided for @broadcasterLiveResumed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live retomada — você está ao vivo.'**
+  String get broadcasterLiveResumed;
+
+  /// No description provided for @broadcasterLivePaused.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live pausada (BRB).'**
+  String get broadcasterLivePaused;
+
+  /// No description provided for @broadcasterPauseToggleError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao pausar/retomar: {error}'**
+  String broadcasterPauseToggleError(String error);
+
+  /// No description provided for @broadcasterDiscardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descartar live?'**
+  String get broadcasterDiscardTitle;
+
+  /// No description provided for @broadcasterDiscardMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você criou uma live mas ainda não começou a transmitir. Deseja descartá-la?'**
+  String get broadcasterDiscardMessage;
+
+  /// No description provided for @broadcasterCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get broadcasterCancel;
+
+  /// No description provided for @broadcasterDiscard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descartar'**
+  String get broadcasterDiscard;
+
+  /// No description provided for @broadcasterEndTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar live?'**
+  String get broadcasterEndTitle;
+
+  /// No description provided for @broadcasterEndMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que deseja finalizar a transmissão? Seus viewers serão desconectados.'**
+  String get broadcasterEndMessage;
+
+  /// No description provided for @broadcasterContinueLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar ao vivo'**
+  String get broadcasterContinueLive;
+
+  /// No description provided for @broadcasterEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar'**
+  String get broadcasterEnd;
+
+  /// No description provided for @broadcasterMoreResumeLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar live'**
+  String get broadcasterMoreResumeLive;
+
+  /// No description provided for @broadcasterMorePauseBrb.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausar (BRB)'**
+  String get broadcasterMorePauseBrb;
+
+  /// No description provided for @broadcasterMoreResumeSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volta ao ar e continua a transmissão'**
+  String get broadcasterMoreResumeSubtitle;
+
+  /// No description provided for @broadcasterMorePauseSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausa a transmissão sem encerrar'**
+  String get broadcasterMorePauseSubtitle;
+
+  /// No description provided for @broadcasterMoreSwitchCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar câmera'**
+  String get broadcasterMoreSwitchCamera;
+
+  /// No description provided for @broadcasterMoreSwitchCameraSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterna entre frontal e traseira'**
+  String get broadcasterMoreSwitchCameraSubtitle;
+
+  /// No description provided for @broadcasterMoreShareLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar live'**
+  String get broadcasterMoreShareLive;
+
+  /// No description provided for @broadcasterMoreShareLiveSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar preview da live aos seus seguidores'**
+  String get broadcasterMoreShareLiveSubtitle;
+
+  /// No description provided for @broadcasterMoreEndLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar live'**
+  String get broadcasterMoreEndLive;
+
+  /// No description provided for @broadcasterMoreEndLiveSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Finaliza a transmissão para todos'**
+  String get broadcasterMoreEndLiveSubtitle;
+
+  /// No description provided for @broadcasterBadgePaused.
+  ///
+  /// In pt, this message translates to:
+  /// **'PAUSED'**
+  String get broadcasterBadgePaused;
+
+  /// No description provided for @broadcasterBadgeLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE'**
+  String get broadcasterBadgeLive;
+
+  /// No description provided for @broadcasterTooltipResume.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar'**
+  String get broadcasterTooltipResume;
+
+  /// No description provided for @broadcasterTooltipPause.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausar'**
+  String get broadcasterTooltipPause;
+
+  /// No description provided for @broadcasterTooltipMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais'**
+  String get broadcasterTooltipMore;
+
+  /// No description provided for @broadcasterTooltipEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar'**
+  String get broadcasterTooltipEnd;
+
+  /// No description provided for @broadcasterViewerJoined.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} entrou'**
+  String broadcasterViewerJoined(String name);
+
+  /// No description provided for @suggestTimeDawn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Madrugada'**
+  String get suggestTimeDawn;
+
+  /// No description provided for @suggestTimeMorning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bom dia'**
+  String get suggestTimeMorning;
+
+  /// No description provided for @suggestTimeAfternoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Boa tarde'**
+  String get suggestTimeAfternoon;
+
+  /// No description provided for @suggestTimeEvening.
+  ///
+  /// In pt, this message translates to:
+  /// **'Boa noite'**
+  String get suggestTimeEvening;
+
+  /// No description provided for @suggestModa1.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} de moda — what to wear?'**
+  String suggestModa1(String time);
+
+  /// No description provided for @suggestModa2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Look do dia ao vivo'**
+  String get suggestModa2;
+
+  /// No description provided for @suggestModa3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Provador online — me ajuda a escolher'**
+  String get suggestModa3;
+
+  /// No description provided for @suggestBeleza1.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} fazendo make ao vivo'**
+  String suggestBeleza1(String time);
+
+  /// No description provided for @suggestBeleza2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Skincare routine — bora juntos'**
+  String get suggestBeleza2;
+
+  /// No description provided for @suggestBeleza3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resenha de produto novo'**
+  String get suggestBeleza3;
+
+  /// No description provided for @suggestJogos1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bora jogar — quem entra?'**
+  String get suggestJogos1;
+
+  /// No description provided for @suggestJogos2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rank up live • {time}'**
+  String suggestJogos2(String time);
+
+  /// No description provided for @suggestJogos3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aquecimento antes do ranqueada'**
+  String get suggestJogos3;
+
+  /// No description provided for @suggestMusica1.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} musical — pedidos abertos'**
+  String suggestMusica1(String time);
+
+  /// No description provided for @suggestMusica2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tocando ao vivo — chega aí'**
+  String get suggestMusica2;
+
+  /// No description provided for @suggestMusica3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Playlist + papo'**
+  String get suggestMusica3;
+
+  /// No description provided for @suggestEsportes1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentando o jogo ao vivo'**
+  String get suggestEsportes1;
+
+  /// No description provided for @suggestEsportes2.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} esportiva — vamos comentar'**
+  String suggestEsportes2(String time);
+
+  /// No description provided for @suggestEsportes3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Treino + papo'**
+  String get suggestEsportes3;
+
+  /// No description provided for @suggestComida1.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} na cozinha — bora cozinhar'**
+  String suggestComida1(String time);
+
+  /// No description provided for @suggestComida2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receita ao vivo'**
+  String get suggestComida2;
+
+  /// No description provided for @suggestComida3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Testando uma receita nova'**
+  String get suggestComida3;
+
+  /// No description provided for @suggestGeneric1.
+  ///
+  /// In pt, this message translates to:
+  /// **'{time} com a galera'**
+  String suggestGeneric1(String time);
+
+  /// No description provided for @suggestGeneric2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chega aí, vamos conversar'**
+  String get suggestGeneric2;
+
+  /// No description provided for @suggestGeneric3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live aberta — pode chegar'**
+  String get suggestGeneric3;
+
+  /// No description provided for @liveCommentsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga algo...'**
+  String get liveCommentsHint;
+
+  /// No description provided for @liveCommentsSending.
+  ///
+  /// In pt, this message translates to:
+  /// **'  Enviando...'**
+  String get liveCommentsSending;
+
+  /// No description provided for @giftsSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviou {name}!'**
+  String giftsSent(String name);
+
+  /// No description provided for @giftsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar um presente'**
+  String get giftsTitle;
+
+  /// No description provided for @giftsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum presente disponível'**
+  String get giftsEmpty;
+
+  /// No description provided for @giftsSendButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'ENVIAR'**
+  String get giftsSendButton;
+
+  /// No description provided for @giftsError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar presentes: {error}'**
+  String giftsError(String error);
+
+  /// No description provided for @giftsCreditsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} Créditos'**
+  String giftsCreditsLabel(int count);
+
+  /// No description provided for @giftsPriceLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'{price} pts'**
+  String giftsPriceLabel(int price);
+
+  /// No description provided for @liveFeedEmptyForYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live no Para Você agora.'**
+  String get liveFeedEmptyForYou;
+
+  /// No description provided for @liveFeedEmptyAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live ativa no momento.'**
+  String get liveFeedEmptyAll;
+
+  /// No description provided for @liveFeedEmptyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volte mais tarde ou puxe para atualizar.'**
+  String get liveFeedEmptyHint;
+
+  /// No description provided for @liveFeedRefresh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualizar'**
+  String get liveFeedRefresh;
+
+  /// No description provided for @liveFeedRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get liveFeedRetry;
+
+  /// No description provided for @liveFeedError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro: {error}'**
+  String liveFeedError(String error);
+
+  /// No description provided for @liveFeedCategoryForYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para Você'**
+  String get liveFeedCategoryForYou;
+
+  /// No description provided for @liveFeedCategoryAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todas as Lives'**
+  String get liveFeedCategoryAll;
+
+  /// No description provided for @liveFeedShareMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira esta live no Brawe: {title}\n{url}'**
+  String liveFeedShareMessage(String title, String url);
+
+  /// No description provided for @liveFeedBadgeLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get liveFeedBadgeLive;
+
+  /// No description provided for @liveFeedBadgeLiveWithCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO {count}'**
+  String liveFeedBadgeLiveWithCount(int count);
+
+  /// No description provided for @liveFeedGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente'**
+  String get liveFeedGift;
+
+  /// No description provided for @liveFeedShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get liveFeedShare;
+
+  /// No description provided for @livePlayerInputHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga algo legal...'**
+  String get livePlayerInputHint;
+
+  /// No description provided for @livePlayerTooltipRose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar rosa'**
+  String get livePlayerTooltipRose;
+
+  /// No description provided for @livePlayerTooltipGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get livePlayerTooltipGifts;
+
+  /// No description provided for @livePlayerTooltipLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir'**
+  String get livePlayerTooltipLike;
+
+  /// No description provided for @livePlayerTooltipSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get livePlayerTooltipSend;
+
+  /// No description provided for @livePlayerGiftSentVerb.
+  ///
+  /// In pt, this message translates to:
+  /// **' enviou '**
+  String get livePlayerGiftSentVerb;
+
+  /// No description provided for @livePlayerShareTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar com seguidores'**
+  String get livePlayerShareTitle;
+
+  /// No description provided for @livePlayerShareSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envia esta live numa conversa'**
+  String get livePlayerShareSubtitle;
+
+  /// No description provided for @livePlayerReportTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar live'**
+  String get livePlayerReportTitle;
+
+  /// No description provided for @livePlayerReportSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avisar nossa equipe sobre algo errado'**
+  String get livePlayerReportSubtitle;
+
+  /// No description provided for @livePlayerReportSubmitted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia registrada. Obrigado.'**
+  String get livePlayerReportSubmitted;
+
+  /// No description provided for @liveCurrentUser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você'**
+  String get liveCurrentUser;
+
+  /// No description provided for @commonFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'SEGUIR'**
+  String get commonFollow;
+
+  /// No description provided for @liveBadgeLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get liveBadgeLive;
+
+  /// No description provided for @homeSectionLiveBattles.
+  ///
+  /// In pt, this message translates to:
+  /// **'BATALHAS DE LIVE STREAM'**
+  String get homeSectionLiveBattles;
+
+  /// No description provided for @homeSectionTopStreamers.
+  ///
+  /// In pt, this message translates to:
+  /// **'TOP STREAMERS'**
+  String get homeSectionTopStreamers;
+
+  /// No description provided for @homeSectionCategories.
+  ///
+  /// In pt, this message translates to:
+  /// **'CATEGORIAS'**
+  String get homeSectionCategories;
+
+  /// No description provided for @homeSectionStreamCard.
+  ///
+  /// In pt, this message translates to:
+  /// **'CARTÃO DE STREAM'**
+  String get homeSectionStreamCard;
+
+  /// No description provided for @homeSectionLiveCommerce.
+  ///
+  /// In pt, this message translates to:
+  /// **'LIVE COMMERCE SHOW'**
+  String get homeSectionLiveCommerce;
+
+  /// No description provided for @homeSectionRecentLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives recentes'**
+  String get homeSectionRecentLives;
+
+  /// No description provided for @homeErrorLoadingStats.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar estatísticas'**
+  String get homeErrorLoadingStats;
+
+  /// No description provided for @homeErrorLoadingLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar lives'**
+  String get homeErrorLoadingLives;
+
+  /// No description provided for @homeEmptyPastLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live anterior encontrada'**
+  String get homeEmptyPastLives;
+
+  /// No description provided for @homeEmptyStreamers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum streamer ainda'**
+  String get homeEmptyStreamers;
+
+  /// No description provided for @homeBattleWatchBet.
+  ///
+  /// In pt, this message translates to:
+  /// **'ASSISTIR E APOSTAR'**
+  String get homeBattleWatchBet;
+
+  /// No description provided for @homeBattleLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha PK'**
+  String get homeBattleLabel;
+
+  /// No description provided for @commonError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro'**
+  String get commonError;
+
+  /// No description provided for @videoTooltipRepostStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar nos Stories'**
+  String get videoTooltipRepostStory;
+
+  /// No description provided for @liveBattleTapToWatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para assistir ao vivo'**
+  String get liveBattleTapToWatch;
+
+  /// No description provided for @liveBattleMysteryGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente Misterioso'**
+  String get liveBattleMysteryGift;
+
+  /// No description provided for @livePeekWatchLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir ao vivo'**
+  String get livePeekWatchLive;
+
+  /// No description provided for @productSoldOut.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esgotado'**
+  String get productSoldOut;
+
+  /// No description provided for @productBuy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar'**
+  String get productBuy;
+
+  /// No description provided for @productLowStock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apenas {count} restantes'**
+  String productLowStock(int count);
+
+  /// No description provided for @productSoldCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} vendidos'**
+  String productSoldCount(int count);
+
+  /// No description provided for @emojiCatSmileys.
+  ///
+  /// In pt, this message translates to:
+  /// **'Smileys'**
+  String get emojiCatSmileys;
+
+  /// No description provided for @emojiCatGestures.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gestos'**
+  String get emojiCatGestures;
+
+  /// No description provided for @emojiCatHearts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coração'**
+  String get emojiCatHearts;
+
+  /// No description provided for @emojiCatAnimals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Animais'**
+  String get emojiCatAnimals;
+
+  /// No description provided for @emojiCatFood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comida'**
+  String get emojiCatFood;
+
+  /// No description provided for @emojiCatParty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Festa'**
+  String get emojiCatParty;
+
+  /// No description provided for @emojiCatObjects.
+  ///
+  /// In pt, this message translates to:
+  /// **'Objetos'**
+  String get emojiCatObjects;
+
+  /// No description provided for @battleVs.
+  ///
+  /// In pt, this message translates to:
+  /// **'VS'**
+  String get battleVs;
+
+  /// No description provided for @battleTimer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tempo restante'**
+  String get battleTimer;
+
+  /// No description provided for @battleSendGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presente'**
+  String get battleSendGift;
+
+  /// No description provided for @battleSupport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apoiar'**
+  String get battleSupport;
+
+  /// No description provided for @battleWinner.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vencedor'**
+  String get battleWinner;
+
+  /// No description provided for @battleDraw.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empate'**
+  String get battleDraw;
+
+  /// No description provided for @battleEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha encerrada'**
+  String get battleEnded;
+
+  /// No description provided for @battleResultTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resultado da batalha'**
+  String get battleResultTitle;
+
+  /// No description provided for @battleResultShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar resultado'**
+  String get battleResultShare;
+
+  /// No description provided for @battleResultWatchAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir outra batalha'**
+  String get battleResultWatchAgain;
+
+  /// No description provided for @battleScoreLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'{score} pts'**
+  String battleScoreLabel(String score);
+
+  /// No description provided for @battleTopSupporters.
+  ///
+  /// In pt, this message translates to:
+  /// **'Top apoiadores'**
+  String get battleTopSupporters;
+
+  /// No description provided for @battleYouScore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você: {score}'**
+  String battleYouScore(String score);
+
+  /// No description provided for @battleRivalScore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rival: {score}'**
+  String battleRivalScore(String score);
+
+  /// No description provided for @battleCountdownStarting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começando em {count}'**
+  String battleCountdownStarting(int count);
+
+  /// No description provided for @battleInviteReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} te desafiou para uma batalha!'**
+  String battleInviteReceived(String name);
+
+  /// No description provided for @battleAccept.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aceitar'**
+  String get battleAccept;
+
+  /// No description provided for @battleDecline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusar'**
+  String get battleDecline;
+
+  /// No description provided for @battleLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando batalha...'**
+  String get battleLoading;
+
+  /// No description provided for @battleError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar batalha'**
+  String get battleError;
+
+  /// No description provided for @battleGiftReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{sender} enviou {gift}'**
+  String battleGiftReceived(String sender, String gift);
+}
+
+class _SDelegate extends LocalizationsDelegate<S> {
+  const _SDelegate();
+
+  @override
+  Future<S> load(Locale locale) {
+    return SynchronousFuture<S>(lookupS(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'es', 'pt'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_SDelegate old) => false;
+}
+
+S lookupS(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return SEn();
+    case 'es':
+      return SEs();
+    case 'pt':
+      return SPt();
+  }
+
+  throw FlutterError(
+    'S.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

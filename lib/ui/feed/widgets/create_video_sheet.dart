@@ -8,6 +8,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../data/repositories/post_repository.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../home/view_models/for_you_feed_view_model.dart';
 import '../view_models/feed_view_model.dart';
 
@@ -75,7 +76,7 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       final size = await file.length();
       if (size > _maxBytes) {
         if (!mounted) return;
-        _snack('Vídeo muito grande. Máximo 100 MB.', isError: true);
+        _snack(S.of(context).videoTooLarge, isError: true);
         return;
       }
       final ctrl = VideoPlayerController.file(file);
@@ -93,7 +94,7 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       });
     } catch (_) {
       if (!mounted) return;
-      _snack('Não foi possível abrir o vídeo.', isError: true);
+      _snack(S.of(context).videoOpenError, isError: true);
     }
   }
 
@@ -122,12 +123,13 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       ref.invalidate(forYouFeedViewModelProvider);
       ref.invalidate(feedViewModelProvider);
       if (!mounted) return;
+      final s = S.of(context);
       Navigator.of(context).pop();
-      _snack('Vídeo publicado! 🎬');
+      _snack(s.videoPublishedSuccess);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isPublishing = false);
-      _snack('Erro ao publicar vídeo. Tente novamente.', isError: true);
+      _snack(S.of(context).videoPublishError, isError: true);
     }
   }
 
@@ -239,9 +241,9 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                           onTap: () => Navigator.of(context).pop(),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Novo vídeo',
-                          style: TextStyle(
+                        Text(
+                          S.of(context).videoSheetTitle,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -259,7 +261,7 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                         if (hasVideo)
                           _GlassIconButton(
                             icon: LucideIcons.refreshCw,
-                            tooltip: 'Trocar vídeo',
+                            tooltip: S.of(context).videoSwapTooltip,
                             onTap: _pickVideo,
                           ),
                       ],
@@ -311,7 +313,7 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                                 ),
                                 cursorColor: _accent1,
                                 decoration: InputDecoration(
-                                  hintText: 'Escreva uma legenda (opcional)…',
+                                  hintText: S.of(context).videoCaptionHint,
                                   hintStyle: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.55),
                                   ),
@@ -369,16 +371,16 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                                               strokeWidth: 2.5,
                                             ),
                                           )
-                                        : const Row(
+                                        : Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(LucideIcons.sparkles,
+                                              const Icon(LucideIcons.sparkles,
                                                   color: Colors.white,
                                                   size: 18),
-                                              SizedBox(width: 8),
+                                              const SizedBox(width: 8),
                                               Text(
-                                                'Publicar vídeo',
-                                                style: TextStyle(
+                                                S.of(context).videoPublishButton,
+                                                style: const TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w800,
@@ -475,9 +477,9 @@ class _EmptyPickerState extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Selecionar vídeo',
-                style: TextStyle(
+              Text(
+                S.of(context).videoSelect,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -486,7 +488,7 @@ class _EmptyPickerState extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'MP4 · MOV · WebM   ·   até 3 min   ·   100 MB',
+                S.of(context).videoFormatsHint,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.55),
                   fontSize: 12,

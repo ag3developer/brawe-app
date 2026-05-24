@@ -11,6 +11,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/ui/app_spacing.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/signup_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
@@ -131,7 +132,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     final success = await ref.read(signupViewModelProvider.notifier).submit();
     if (mounted) {
       if (success) {
-        AppSnackBar.showSuccess(context, 'Conta criada com sucesso.');
+        AppSnackBar.showSuccess(context, S.of(context).signupSuccess);
       } else {
         final error = ref.read(signupViewModelProvider).errorMessage;
         if (error != null) AppSnackBar.showError(context, error);
@@ -175,7 +176,7 @@ class _TopBar extends StatelessWidget {
           icon: Icon(LucideIcons.helpCircle,
               color: colors.textTertiary, size: 16),
           label: Text(
-            'Ajuda',
+            S.of(context).signupHelp,
             style: TextStyle(color: colors.textTertiary, fontSize: 13),
           ),
         ),
@@ -190,6 +191,7 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +247,7 @@ class _Hero extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Crie sua conta.',
+          s.signupTitle,
           style: TextStyle(
             color: colors.textPrimary,
             fontSize: 36,
@@ -256,7 +258,7 @@ class _Hero extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Leva menos de um minuto para começar.',
+          s.signupSubtitle,
           style: TextStyle(
             color: colors.textSecondary,
             fontSize: 14,
@@ -301,6 +303,7 @@ class _SignupCardState extends State<_SignupCard> {
     final state = widget.state;
     final textTheme = Theme.of(context).textTheme;
     final colors = context.colors;
+    final s = S.of(context);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -332,15 +335,15 @@ class _SignupCardState extends State<_SignupCard> {
             children: [
               AuthInputField(
                 controller: widget.nameController,
-                label: 'Nome completo',
-                hintText: 'Como devemos te chamar?',
+                label: s.signupNameLabel,
+                hintText: s.signupNameHint,
                 onChanged: widget.notifier.updateName,
                 prefixIcon: LucideIcons.user,
               ),
               const SizedBox(height: AppSpacing.md),
               AuthInputField(
                 controller: widget.emailController,
-                label: 'E-mail',
+                label: s.signupEmailLabel,
                 hintText: 'voce@brawe.app',
                 keyboardType: TextInputType.emailAddress,
                 onChanged: widget.notifier.updateEmail,
@@ -349,8 +352,8 @@ class _SignupCardState extends State<_SignupCard> {
               const SizedBox(height: AppSpacing.md),
               AuthInputField(
                 controller: widget.passwordController,
-                label: 'Senha',
-                hintText: 'mínimo 8 caracteres',
+                label: s.signupPasswordLabel,
+                hintText: s.signupPasswordHint,
                 obscureText: true,
                 onChanged: widget.notifier.updatePassword,
                 prefixIcon: LucideIcons.lock,
@@ -361,8 +364,8 @@ class _SignupCardState extends State<_SignupCard> {
               if (_showSponsor) ...[
                 AuthInputField(
                   controller: widget.sponsorController,
-                  label: 'Código do patrocinador',
-                  hintText: 'BRAWE-XXXX',
+                  label: s.signupSponsorLabel,
+                  hintText: s.signupSponsorHint,
                   onChanged: widget.notifier.updateSponsorCode,
                   prefixIcon: LucideIcons.tag,
                 ),
@@ -380,9 +383,9 @@ class _SignupCardState extends State<_SignupCard> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     icon: const Icon(LucideIcons.plus, size: 14),
-                    label: const Text(
-                      'Tenho um código de indicação',
-                      style: TextStyle(
+                    label: Text(
+                      s.signupHaveReferral,
+                      style: const TextStyle(
                           fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -418,8 +421,8 @@ class _SignupCardState extends State<_SignupCard> {
               const SizedBox(height: AppSpacing.lg),
               AuthActionButton(
                 label: state.status.isLoading
-                    ? 'Criando conta…'
-                    : 'Criar conta',
+                    ? s.signupCreatingAccount
+                    : s.signupCreateAccountButton,
                 onPressed: state.canSubmit ? widget.onSubmit : null,
               ),
               const SizedBox(height: AppSpacing.md),
@@ -427,7 +430,7 @@ class _SignupCardState extends State<_SignupCard> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Já tem conta?',
+                    s.authAlreadyHaveAccount,
                     style: textTheme.bodyMedium?.copyWith(
                       color: colors.textSecondary,
                     ),
@@ -441,9 +444,9 @@ class _SignupCardState extends State<_SignupCard> {
                       minimumSize: const Size(0, 32),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text(
-                      'Entrar',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    child: Text(
+                      s.authEntrar,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -474,6 +477,7 @@ class _PasswordStrength extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (password.isEmpty) return const SizedBox(height: 8);
+    final s = S.of(context);
     final score = _score;
     final tokens = context.colors;
     final colors = [
@@ -483,7 +487,13 @@ class _PasswordStrength extends StatelessWidget {
       tokens.accentSecondary,
       tokens.success,
     ];
-    final labels = ['Fraca', 'Fraca', 'Média', 'Boa', 'Forte'];
+    final labels = [
+      s.pwStrengthWeak,
+      s.pwStrengthWeak,
+      s.pwStrengthMedium,
+      s.pwStrengthGood,
+      s.pwStrengthStrong,
+    ];
     final color = colors[score];
 
     return Row(
@@ -586,7 +596,7 @@ class _TermsRichTextState extends State<_TermsRichText> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível abrir $url')),
+          SnackBar(content: Text(S.of(context).signupCantOpenUrl(url))),
         );
       }
     }
@@ -601,6 +611,7 @@ class _TermsRichTextState extends State<_TermsRichText> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colors = context.colors;
     final base = TextStyle(
       color: colors.textSecondary,
@@ -616,11 +627,11 @@ class _TermsRichTextState extends State<_TermsRichText> {
       text: TextSpan(
         style: base,
         children: [
-          const TextSpan(text: 'Li e aceito os '),
-          TextSpan(text: 'Termos de Uso', style: link, recognizer: _termsTap),
-          const TextSpan(text: ' e a '),
-          TextSpan(text: 'Política de Privacidade', style: link, recognizer: _privacyTap),
-          const TextSpan(text: ' do Brawe.'),
+          TextSpan(text: s.signupTermsPrefix),
+          TextSpan(text: s.settingsTermsOfUse, style: link, recognizer: _termsTap),
+          TextSpan(text: s.signupTermsAnd),
+          TextSpan(text: s.settingsPrivacyPolicy, style: link, recognizer: _privacyTap),
+          TextSpan(text: s.signupTermsSuffix),
         ],
       ),
     );

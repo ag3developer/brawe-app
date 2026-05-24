@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 import 'common/auth_action_button.dart';
@@ -30,9 +31,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final s = S.of(context);
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      AppSnackBar.showError(context, 'Informe um email válido.');
+      AppSnackBar.showError(context, s.forgotInvalidEmail);
       return;
     }
     setState(() => _loading = true);
@@ -42,13 +44,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       setState(() => _sent = true);
     } on DioException catch (e) {
       if (!mounted) return;
+      final fallback = S.of(context).forgotCannotSend;
       final detail = e.response?.data is Map
-          ? (e.response?.data['detail']?.toString() ?? 'Não foi possível enviar.')
-          : 'Não foi possível enviar.';
+          ? (e.response?.data['detail']?.toString() ?? fallback)
+          : fallback;
       AppSnackBar.showError(context, detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Erro de conexão.');
+      AppSnackBar.showError(context, S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -56,6 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colors = context.colors;
     return Scaffold(
       body: Stack(
@@ -77,7 +81,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Recuperar senha',
+                    s.forgotTitle,
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 28,
@@ -86,7 +90,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Informe seu email e enviaremos instruções para criar uma nova senha.',
+                    s.forgotSubtitle,
                     style: TextStyle(color: colors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
@@ -95,15 +99,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   else ...[
                     AuthInputField(
                       controller: _emailController,
-                      label: 'EMAIL',
-                      hintText: 'voce@exemplo.com',
+                      label: s.forgotEmailLabel,
+                      hintText: s.forgotEmailHint,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.mail_outline,
                       onChanged: (_) {},
                     ),
                     const SizedBox(height: 24),
                     AuthActionButton(
-                      label: _loading ? 'Enviando...' : 'Enviar instruções',
+                      label: _loading ? s.forgotSending : s.forgotSendInstructions,
                       onPressed: _loading ? null : _submit,
                     ),
                   ],
@@ -111,7 +115,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     child: Text(
-                      'Voltar para login',
+                      s.forgotBackToLogin,
                       style: TextStyle(color: colors.accentPrimary),
                     ),
                   ),
@@ -131,6 +135,7 @@ class _SentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(20),
@@ -145,7 +150,7 @@ class _SentCard extends StatelessWidget {
               color: colors.accentPrimary, size: 40),
           const SizedBox(height: 12),
           Text(
-            'Verifique seu email',
+            s.forgotCheckEmail,
             style: TextStyle(
               color: colors.textPrimary,
               fontSize: 16,
@@ -154,7 +159,7 @@ class _SentCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Se $email estiver cadastrado, você receberá um link para criar uma nova senha em alguns minutos.',
+            s.forgotEmailSentBody(email),
             textAlign: TextAlign.center,
             style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),

@@ -5,9 +5,12 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'config/locale_provider.dart';
 import 'data/services/push_notification_service.dart';
+import 'gen/l10n/app_localizations.dart';
 import 'routing/router.dart';
 import 'ui/core/themes/app_theme.dart';
 import 'ui/settings/view_models/theme_view_model.dart';
@@ -78,12 +81,22 @@ class _BraweAppState extends ConsumerState<BraweApp> {
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeControllerProvider);
+    final locale = ref.watch(localeControllerProvider);
     return MaterialApp.router(
       title: 'Brawe',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
       routerConfig: router,
+      // ── i18n ──────────────────────────────────────────
+      locale: locale,
+      supportedLocales: LocaleController.supportedLocales,
+      localizationsDelegates: const [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

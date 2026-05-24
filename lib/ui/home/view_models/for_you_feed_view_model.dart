@@ -19,3 +19,18 @@ class ForYouFeedViewModel extends _$ForYouFeedViewModel {
     );
   }
 }
+
+@riverpod
+class FollowingForYouFeedViewModel extends _$FollowingForYouFeedViewModel {
+  @override
+  FutureOr<List<FeedItem>> build() async {
+    return ref.watch(forYouFeedRepositoryProvider).getFollowingFeed();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref.read(forYouFeedRepositoryProvider).getFollowingFeed(),
+    );
+  }
+}

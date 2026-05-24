@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/quest.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/quests_view_model.dart';
 
 class QuestsScreen extends ConsumerWidget {
@@ -10,11 +12,12 @@ class QuestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final async = ref.watch(questsViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quests Diárias'),
+        title: Text(s.questsTitle),
         leading: const BackButton(),
       ),
       body: async.when(
@@ -45,8 +48,8 @@ class QuestsScreen extends ConsumerWidget {
                       SnackBar(
                         content: Text(
                           n > 0
-                              ? '$n recompensa(s) coletada(s)!'
-                              : 'Nada para coletar agora.',
+                              ? s.questsClaimedReward(n)
+                              : s.questsNothingToClaim,
                         ),
                       ),
                     );
@@ -67,15 +70,15 @@ class QuestsScreen extends ConsumerWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              '+${q.xpReward} XP · +${q.coinsReward} moedas',
+                              s.questsClaimSuccess(q.xpReward, q.coinsReward),
                             ),
                           ),
                         );
                       } catch (_) {
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Falha ao resgatar. Tente novamente.'),
+                          SnackBar(
+                            content: Text(s.questsClaimError),
                           ),
                         );
                       }
@@ -84,11 +87,11 @@ class QuestsScreen extends ConsumerWidget {
                 ),
               ),
               if (data.quests.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Center(
                     child: Text(
-                      'Sem quests por enquanto.\nVolte mais tarde!',
+                      s.questsEmpty,
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -127,12 +130,12 @@ class _HeroCard extends StatelessWidget {
           Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.white.withValues(alpha: 0.2),
+                backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.2),
                 radius: 26,
                 child: Text(
                   '${profile.level}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
                   ),
@@ -144,16 +147,16 @@ class _HeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nível ${profile.level}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      S.of(context).questsLevel(profile.level),
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${profile.xpIntoLevel} / ${profile.xpToNextLevel} XP',
+                      S.of(context).questsXpProgress(profile.xpIntoLevel, profile.xpToNextLevel),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.85),
                       ),
@@ -168,13 +171,13 @@ class _HeroCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: context.colors.surfaceHighest.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     streak.multiplierLabel ?? "",
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -187,7 +190,7 @@ class _HeroCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: profile.levelProgressPercent / 100,
               minHeight: 8,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.2),
               valueColor:
                   const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
@@ -205,19 +208,20 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Row(
       children: [
         Expanded(
           child: _MetricCard(
-            label: 'Concluídas',
-            value: '${summary.completed}/${summary.totalQuests}',
+            label: s.questsSummaryCompleted,
+            value: s.questsSummaryCompletedValue(summary.completed, summary.totalQuests),
             icon: Icons.check_circle_outline,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _MetricCard(
-            label: 'XP hoje',
+            label: s.questsSummaryXpToday,
             value: '${summary.totalXpToday}',
             icon: Icons.bolt_outlined,
           ),
@@ -225,8 +229,8 @@ class _SummaryRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _MetricCard(
-            label: 'Streak',
-            value: '${streak.current}d',
+            label: s.questsSummaryStreak,
+            value: s.questsStreakDays(streak.current),
             icon: Icons.local_fire_department_outlined,
           ),
         ),
@@ -293,7 +297,7 @@ class _ClaimAllButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: onTap,
         icon: const Icon(Icons.celebration),
-        label: Text('Coletar tudo ($count)'),
+        label: Text(S.of(context).questsClaimAll(count)),
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           backgroundColor: AppColors.electricPurple,
@@ -389,15 +393,15 @@ class _QuestCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${quest.currentCount} / ${quest.targetCount}',
+                S.of(context).questsProgressCount(quest.currentCount, quest.targetCount),
                 style: TextStyle(
                   fontSize: 12,
                   color: scheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               if (claimed)
-                const _StatusPill(
-                  text: 'Coletado ✓',
+                _StatusPill(
+                  text: S.of(context).questsStatusClaimed,
                   color: Colors.green,
                 )
               else if (claimable)
@@ -411,11 +415,11 @@ class _QuestCard extends StatelessWidget {
                     ),
                     visualDensity: VisualDensity.compact,
                   ),
-                  child: const Text('Coletar'),
+                  child: Text(S.of(context).questsActionClaim),
                 )
               else
                 _StatusPill(
-                  text: 'Em progresso',
+                  text: S.of(context).questsStatusInProgress,
                   color: scheme.onSurface.withValues(alpha: 0.4),
                 ),
             ],
@@ -451,7 +455,7 @@ class _RewardChip extends StatelessWidget {
             ),
           ),
           Text(
-            '+$coins moedas',
+            S.of(context).questsRewardCoins(coins),
             style: const TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 11,
@@ -494,17 +498,18 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 40),
           const SizedBox(height: 12),
-          const Text('Não consegui carregar as quests.'),
+          Text(s.questsLoadError),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
-            child: const Text('Tentar novamente'),
+            child: Text(s.questsTryAgain),
           ),
         ],
       ),

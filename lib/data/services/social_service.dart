@@ -90,4 +90,15 @@ class SocialService {
     return (items: items, total: total);
   }
 
+  Future<List<Map<String, dynamic>>> getSuggestions({int limit = 12}) async {
+    final response = await _dio.get(
+      '/social/suggestions',
+      queryParameters: {'limit': limit},
+    );
+    final data = response.data;
+    if (data is List) return List<Map<String, dynamic>>.from(data);
+    final list = data['data'] ?? data['users'] ?? data['items'];
+    if (list is List) return List<Map<String, dynamic>>.from(list);
+    return [];
+  }
 }

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../domain/models/post_comment.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/comments_view_model.dart';
+import 'story_ring_avatar.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
   const CommentsSheet({super.key, required this.postId});
@@ -35,8 +39,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro ao enviar comentário. Tente novamente.'),
+          SnackBar(
+            content: Text(S.of(context).commentsErrorSend),
             backgroundColor: Colors.red,
           ),
         );
@@ -48,6 +52,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   @override
   Widget build(BuildContext context) {
     final commentsState = ref.watch(commentsViewModelProvider(widget.postId));
+    final s = S.of(context);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -56,9 +61,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
       expand: false,
       builder: (_, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF141824),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             children: [
@@ -69,7 +74,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: context.colors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -79,10 +84,10 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
                   children: [
-                    const Text(
-                      'Comentários',
+                    Text(
+                      s.commentsTitle,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: context.colors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -112,7 +117,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                   ],
                 ),
               ),
-              const Divider(color: Colors.white10, height: 1),
+              Divider(color: context.colors.divider, height: 1),
 
               // Comments list
               Expanded(
@@ -121,19 +126,19 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     child: CircularProgressIndicator(
                         color: AppColors.electricPurple),
                   ),
-                  error: (_, __) => const Center(
+                  error: (_, __) =>  Center(
                     child: Text(
-                      'Erro ao carregar comentários.',
-                      style: TextStyle(color: AppColors.coolGray),
+                      s.commentsErrorLoad,
+                      style: TextStyle(color: context.colors.textSecondary),
                     ),
                   ),
                   data: (comments) => comments.isEmpty
-                      ? const Center(
+                      ?  Center(
                           child: Text(
-                            'Nenhum comentário ainda.\nSeja o primeiro!',
+                            s.commentsEmpty,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                color: AppColors.coolGray, fontSize: 14),
+                                color: context.colors.textSecondary, fontSize: 14),
                           ),
                         )
                       : ListView.builder(
@@ -158,7 +163,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               // Reply banner
               if (_replyingTo != null)
                 Container(
-                  color: AppColors.slate,
+                  color: context.colors.surfaceElevated,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -168,15 +173,15 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Respondendo a @${_replyingTo!.authorUsername}',
-                          style: const TextStyle(
-                              color: AppColors.coolGray, fontSize: 13),
+                          s.commentsReplyingTo(_replyingTo!.authorUsername),
+                          style:  TextStyle(
+                              color: context.colors.textSecondary, fontSize: 13),
                         ),
                       ),
                       GestureDetector(
                         onTap: () => setState(() => _replyingTo = null),
-                        child: const Icon(Icons.close,
-                            color: AppColors.coolGray, size: 18),
+                        child:  Icon(Icons.close,
+                            color: context.colors.textSecondary, size: 18),
                       ),
                     ],
                   ),
@@ -190,35 +195,35 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                   12,
                   MediaQuery.of(context).viewInsets.bottom + 12,
                 ),
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.white10)),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: context.colors.divider)),
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: AppColors.slate,
+                      backgroundColor: context.colors.surfaceElevated,
                       child: Icon(Icons.person,
-                          color: AppColors.coolGray, size: 16),
+                          color: context.colors.textSecondary, size: 16),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: _controller,
                         focusNode: _focusNode,
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: context.colors.textPrimary),
                         decoration: InputDecoration(
                           hintText: _replyingTo != null
-                              ? 'Responder...'
-                              : 'Adicionar comentário...',
-                          hintStyle: const TextStyle(
-                              color: AppColors.coolGray, fontSize: 14),
+                              ? s.commentsHintReply
+                              : s.commentsHintAdd,
+                          hintStyle:  TextStyle(
+                              color: context.colors.textSecondary, fontSize: 14),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: AppColors.slate,
+                          fillColor: context.colors.surfaceElevated,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 10),
                         ),
@@ -237,8 +242,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           color: AppColors.electricPurple,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.send,
-                            color: Colors.white, size: 18),
+                        child: Icon(Icons.send,
+                            color: context.colors.textPrimary, size: 18),
                       ),
                     ),
                   ],
@@ -272,19 +277,13 @@ class _CommentTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
+              StoryRingAvatar(
+                userId: comment.authorId,
+                avatarUrl: comment.authorAvatarUrl,
+                fallbackText: comment.authorName,
                 radius: 16,
-                backgroundColor: AppColors.slate,
-                backgroundImage: comment.authorAvatarUrl != null
-                    ? NetworkImage(comment.authorAvatarUrl!)
-                    : null,
-                child: comment.authorAvatarUrl == null
-                    ? Text(
-                        comment.authorName[0].toUpperCase(),
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 12),
-                      )
-                    : null,
+                onTapWithoutStories: () =>
+                    context.push('/profile/${comment.authorId}'),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -295,8 +294,8 @@ class _CommentTile extends StatelessWidget {
                       children: [
                         Text(
                           comment.authorName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -309,16 +308,16 @@ class _CommentTile extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(
                           comment.timeAgo,
-                          style: const TextStyle(
-                              color: AppColors.coolGray, fontSize: 12),
+                          style:  TextStyle(
+                              color: context.colors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
                     const SizedBox(height: 3),
                     Text(
                       comment.content,
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 14, height: 1.4),
+                      style: TextStyle(
+                          color: context.colors.textPrimary, fontSize: 14, height: 1.4),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -333,14 +332,14 @@ class _CommentTile extends StatelessWidget {
                                     : Icons.favorite_border,
                                 color: comment.userLiked
                                     ? Colors.red
-                                    : AppColors.coolGray,
+                                    : context.colors.textSecondary,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${comment.likesCount}',
-                                style: const TextStyle(
-                                    color: AppColors.coolGray, fontSize: 12),
+                                style:  TextStyle(
+                                    color: context.colors.textSecondary, fontSize: 12),
                               ),
                             ],
                           ),
@@ -348,10 +347,10 @@ class _CommentTile extends StatelessWidget {
                         const SizedBox(width: 16),
                         GestureDetector(
                           onTap: () => onReply(comment),
-                          child: const Text(
-                            'Responder',
+                          child:  Text(
+                            S.of(context).commentsReplyAction,
                             style: TextStyle(
-                              color: AppColors.coolGray,
+                              color: context.colors.textSecondary,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -377,15 +376,15 @@ class _CommentTile extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 radius: 13,
-                                backgroundColor: AppColors.slate,
+                                backgroundColor: context.colors.surfaceElevated,
                                 backgroundImage: reply.authorAvatarUrl != null
                                     ? NetworkImage(reply.authorAvatarUrl!)
                                     : null,
                                 child: reply.authorAvatarUrl == null
                                     ? Text(
                                         reply.authorName[0].toUpperCase(),
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 10),
+                                        style: TextStyle(
+                                            color: context.colors.textPrimary, fontSize: 10),
                                       )
                                     : null,
                               ),
@@ -396,16 +395,16 @@ class _CommentTile extends StatelessWidget {
                                   children: [
                                     Text(
                                       reply.authorName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: context.colors.textPrimary,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12,
                                       ),
                                     ),
                                     Text(
                                       reply.content,
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 13),
+                                      style: TextStyle(
+                                          color: context.colors.textPrimary, fontSize: 13),
                                     ),
                                   ],
                                 ),

@@ -9,7 +9,9 @@ import 'dart:async';
 
 import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/post.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../feed/widgets/story_composer_screen.dart';
@@ -46,17 +48,17 @@ class ProfileVideosGrid extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.electricPurple),
       ),
-      error: (_, _) => const _EmptyVideos(
+      error: (_, _) => _EmptyVideos(
         icon: Icons.error_outline,
-        message: 'Erro ao carregar vídeos',
+        message: S.of(context).profileVideosLoadError,
       ),
       data: (posts) {
         final videos =
             posts.where((p) => _isVideoUrl(p.imageUrl)).toList(growable: false);
         if (videos.isEmpty) {
-          return const _EmptyVideos(
+          return _EmptyVideos(
             icon: Icons.video_library_outlined,
-            message: 'Nenhum vídeo publicado ainda',
+            message: S.of(context).profileVideosEmpty,
           );
         }
         return GridView.builder(
@@ -248,12 +250,12 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
                       color: Colors.white, size: 12),
                   const SizedBox(width: 3),
                   Text('${post.likesCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         shadows: [
-                          Shadow(color: Colors.black87, blurRadius: 4)
+                          Shadow(color: Colors.black, blurRadius: 4)
                         ],
                       )),
                 ],
@@ -272,12 +274,12 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
                       color: Colors.white, size: 12),
                   const SizedBox(width: 3),
                   Text(_formatCount(post.viewsCount),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         shadows: [
-                          Shadow(color: Colors.black87, blurRadius: 4)
+                          Shadow(color: Colors.black, blurRadius: 4)
                         ],
                       )),
                 ],
@@ -303,22 +305,23 @@ Future<void> _confirmDelete(
   final ok = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      backgroundColor: const Color(0xFF1C1C2E),
-      title: const Text('Apagar vídeo?',
-          style: TextStyle(color: Colors.white)),
-      content: const Text(
-        'Essa ação não pode ser desfeita. O vídeo sairá do Para Você '
-        'e do seu perfil.',
-        style: TextStyle(color: Colors.white70),
+      backgroundColor: ctx.colors.surface,
+      title: Text(S.of(ctx).profileVideoDeleteTitle,
+          style: TextStyle(color: ctx.colors.textPrimary)),
+      content: Text(
+        S.of(ctx).profileVideoDeleteBody,
+        style: TextStyle(color: ctx.colors.textSecondary),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancelar'),
+          child: Text(S.of(ctx).actionCancel,
+              style: TextStyle(color: ctx.colors.textSecondary)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Apagar', style: TextStyle(color: Colors.red)),
+          child: Text(S.of(ctx).profileVideoDelete,
+              style: const TextStyle(color: Colors.red)),
         ),
       ],
     ),
@@ -332,12 +335,12 @@ Future<void> _confirmDelete(
         .refresh();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Vídeo apagado')),
+      SnackBar(content: Text(S.of(context).profileVideoDeleted)),
     );
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Falha ao apagar vídeo')),
+      SnackBar(content: Text(S.of(context).profileVideoDeleteError)),
     );
   }
 }
@@ -406,7 +409,7 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       body: Stack(
         children: [
           PageView.builder(
@@ -433,7 +436,7 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                 // Repostar no Stories — mesmo ícone (LucideIcons.aperture) usado
                 // no atalho de criar Story no bottom nav, p/ reforçar memória.
                 IconButton(
-                  tooltip: 'Repostar no Stories',
+                  tooltip: S.of(context).profileVideoRepostStory,
                   icon: const Icon(LucideIcons.aperture, color: Colors.white),
                   onPressed: () =>
                       _repostAsStory(widget.videos[_currentIndex]),
@@ -449,16 +452,16 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         _repostAsStory(widget.videos[_currentIndex]);
                       }
                     },
-                    itemBuilder: (_) => const [
+                    itemBuilder: (ctx) => [
                       PopupMenuItem(
                         value: 'story',
                         child: Row(
                           children: [
-                            Icon(LucideIcons.aperture,
+                            const Icon(LucideIcons.aperture,
                                 color: Colors.white70, size: 18),
-                            SizedBox(width: 10),
-                            Text('Repostar no Stories',
-                                style: TextStyle(color: Colors.white)),
+                            const SizedBox(width: 10),
+                            Text(S.of(ctx).profileVideoRepostStory,
+                                style: const TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -466,11 +469,11 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline,
+                            const Icon(Icons.delete_outline,
                                 color: Colors.redAccent),
-                            SizedBox(width: 8),
-                            Text('Apagar vídeo',
-                                style: TextStyle(color: Colors.white)),
+                            const SizedBox(width: 8),
+                            Text(S.of(ctx).profileVideoDeleteAction,
+                                style: const TextStyle(color: Colors.white)),
                           ],
                         ),
                       ),
@@ -639,17 +642,17 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
               ),
             ),
           if (_failed)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline,
+                    const Icon(Icons.error_outline,
                         color: Colors.white54, size: 40),
-                    SizedBox(height: 8),
-                    Text('Não foi possível carregar o vídeo.',
-                        style: TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 8),
+                    Text(S.of(context).profileVideoLoadError,
+                        style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
               ),
@@ -692,19 +695,19 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                                 imageUrl: post.author.avatarUrl!,
                                 fit: BoxFit.cover,
                                 errorWidget: (_, _, _) =>
-                                    Container(color: AppColors.slate),
+                                    Container(color: context.colors.surfaceElevated),
                               )
-                            : Container(color: AppColors.slate),
+                            : Container(color: context.colors.surfaceElevated),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '@${post.author.username}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.w700,
                         shadows: [
-                          Shadow(color: Colors.black87, blurRadius: 6)
+                          Shadow(color: Colors.black, blurRadius: 6)
                         ],
                       ),
                     ),
@@ -714,10 +717,10 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                   const SizedBox(height: 8),
                   Text(
                     post.content,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 14,
-                      shadows: [Shadow(color: Colors.black87, blurRadius: 6)],
+                      shadows: [Shadow(color: Colors.black, blurRadius: 6)],
                     ),
                   ),
                 ],
@@ -796,12 +799,12 @@ class _SwipeHintState extends State<_SwipeHint>
           Icon(Icons.keyboard_arrow_up,
               color: Colors.white.withValues(alpha: 0.9), size: 28),
           Text(
-            'Deslize',
+            S.of(context).profileVideoSwipeHint,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              shadows: const [Shadow(color: Colors.black87, blurRadius: 4)],
+              shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
             ),
           ),
         ],
@@ -830,11 +833,11 @@ class _Metric extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           _f(value),
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: context.colors.textPrimary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            shadows: [Shadow(color: Colors.black87, blurRadius: 6)],
+            shadows: [Shadow(color: Colors.black, blurRadius: 6)],
           ),
         ),
       ],

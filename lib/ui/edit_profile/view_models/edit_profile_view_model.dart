@@ -6,13 +6,35 @@ import '../../../domain/models/profile.dart';
 
 part 'edit_profile_view_model.g.dart';
 
+/// Error codes for the edit profile flow. Widget layer resolves these to
+/// localized strings via `S.of(context)`.
+enum EditProfileErrorCode {
+  saveFailed,
+  usernameTooShort,
+  usernameCheckFailed,
+  usernameInUse,
+  usernameSaveFailed,
+  avatarUploadFailed,
+  bannerUploadFailed,
+  avatarRemoveFailed,
+  bannerRemoveFailed,
+}
+
 class EditProfileState {
   final Profile? profile;
   final bool isSaving;
   final bool isUploadingAvatar;
   final bool isUploadingBanner;
-  final String? error;
+  final EditProfileErrorCode? error;
   final bool savedOnce;
+  // Username-specific
+  final bool isCheckingUsername;
+  /// `null` = OK. When set, the widget should display the corresponding
+  /// localized message. `usernameErrorMessage` carries the backend-provided
+  /// message when the error is not an `EditProfileErrorCode`.
+  final EditProfileErrorCode? usernameError;
+  final String? usernameErrorMessage;
+  final bool usernameAvailable;
 
   const EditProfileState({
     this.profile,
@@ -21,6 +43,10 @@ class EditProfileState {
     this.isUploadingBanner = false,
     this.error,
     this.savedOnce = false,
+    this.isCheckingUsername = false,
+    this.usernameError,
+    this.usernameErrorMessage,
+    this.usernameAvailable = false,
   });
 
   EditProfileState copyWith({
@@ -28,9 +54,14 @@ class EditProfileState {
     bool? isSaving,
     bool? isUploadingAvatar,
     bool? isUploadingBanner,
-    String? error,
+    EditProfileErrorCode? error,
     bool clearError = false,
     bool? savedOnce,
+    bool? isCheckingUsername,
+    EditProfileErrorCode? usernameError,
+    String? usernameErrorMessage,
+    bool clearUsernameError = false,
+    bool? usernameAvailable,
   }) {
     return EditProfileState(
       profile: profile ?? this.profile,
@@ -39,6 +70,13 @@ class EditProfileState {
       isUploadingBanner: isUploadingBanner ?? this.isUploadingBanner,
       error: clearError ? null : (error ?? this.error),
       savedOnce: savedOnce ?? this.savedOnce,
+      isCheckingUsername: isCheckingUsername ?? this.isCheckingUsername,
+      usernameError:
+          clearUsernameError ? null : (usernameError ?? this.usernameError),
+      usernameErrorMessage: clearUsernameError
+          ? null
+          : (usernameErrorMessage ?? this.usernameErrorMessage),
+      usernameAvailable: usernameAvailable ?? this.usernameAvailable,
     );
   }
 }
@@ -77,7 +115,96 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     } catch (e) {
       state = AsyncValue.data(current.copyWith(
         isSaving: false,
-        error: 'Não foi possível salvar. Tente de novo.',
+        error: EditProfileErrorCode.saveFailed,
+      ));
+      return false;
+    }
+  }
+
+  /// Verifica disponibilidade do username em tempo real (debounce no widget).
+  Future<void> checkUsername(String username) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final trimmed = username.trim().toLowerCase();
+
+    // Se for igual ao username atual, está sempre disponível
+    final currentUsername = current.profile?.username?.toLowerCase() ?? '';
+    if (trimmed == currentUsername) {
+      state = AsyncValue.data(current.copyWith(
+        isCheckingUsername: false,
+        clearUsernameError: true,
+        usernameAvailable: true,
+      ));
+      return;
+    }
+
+    if (trimmed.length < 3) {
+      state = AsyncValue.data(current.copyWith(
+        isCheckingUsername: false,
+        usernameError: EditProfileErrorCode.usernameTooShort,
+        usernameAvailable: false,
+      ));
+      return;
+    }
+
+    state = AsyncValue.data(current.copyWith(
+      isCheckingUsername: true,
+      clearUsernameError: true,
+      usernameAvailable: false,
+    ));
+
+    try {
+      final repo = ref.read(profileRepositoryProvider);
+      final error = await repo.checkUsernameAvailability(trimmed);
+      final st = state.value;
+      if (st == null) return;
+      state = AsyncValue.data(st.copyWith(
+        isCheckingUsername: false,
+        usernameErrorMessage: error,
+        usernameAvailable: error == null,
+      ));
+    } catch (_) {
+      final st = state.value;
+      if (st == null) return;
+      state = AsyncValue.data(st.copyWith(
+        isCheckingUsername: false,
+        usernameError: EditProfileErrorCode.usernameCheckFailed,
+        usernameAvailable: false,
+      ));
+    }
+  }
+
+  /// Salva apenas o username. Retorna `true` em caso de sucesso.
+  Future<bool> saveUsername(String username) async {
+    final current = state.value;
+    if (current == null) return false;
+    final trimmed = username.trim().toLowerCase();
+    if (trimmed.isEmpty) return false;
+
+    // Se não mudou, não faz nada
+    if (trimmed == (current.profile?.username?.toLowerCase() ?? '')) return true;
+
+    state = AsyncValue.data(current.copyWith(isSaving: true, clearError: true));
+    try {
+      final repo = ref.read(profileRepositoryProvider);
+      final newUsername = await repo.updateUsername(trimmed);
+      final updated = current.profile?.copyWith(username: newUsername);
+      state = AsyncValue.data(current.copyWith(
+        profile: updated,
+        isSaving: false,
+        savedOnce: true,
+        clearUsernameError: true,
+        usernameAvailable: false, // reset
+      ));
+      return true;
+    } on Object catch (e) {
+      final code = e.toString().contains('unauthorized')
+          ? EditProfileErrorCode.usernameInUse
+          : EditProfileErrorCode.usernameSaveFailed;
+      state = AsyncValue.data(current.copyWith(
+        isSaving: false,
+        error: code,
       ));
       return false;
     }
@@ -117,7 +244,7 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     } catch (e) {
       state = AsyncValue.data(state.value!.copyWith(
         isUploadingAvatar: false,
-        error: 'Falha ao enviar avatar.',
+        error: EditProfileErrorCode.avatarUploadFailed,
       ));
     }
   }
@@ -139,7 +266,7 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     } catch (e) {
       state = AsyncValue.data(state.value!.copyWith(
         isUploadingBanner: false,
-        error: 'Falha ao enviar banner.',
+        error: EditProfileErrorCode.bannerUploadFailed,
       ));
     }
   }
@@ -159,7 +286,7 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     } catch (e) {
       state = AsyncValue.data(state.value!.copyWith(
         isUploadingAvatar: false,
-        error: 'Falha ao remover avatar.',
+        error: EditProfileErrorCode.avatarRemoveFailed,
       ));
     }
   }
@@ -179,7 +306,7 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     } catch (e) {
       state = AsyncValue.data(state.value!.copyWith(
         isUploadingBanner: false,
-        error: 'Falha ao remover banner.',
+        error: EditProfileErrorCode.bannerRemoveFailed,
       ));
     }
   }

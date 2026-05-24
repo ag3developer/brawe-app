@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/product.dart';
 import '../../../../domain/models/feed_item.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 
 /// Drawer (DraggableScrollableSheet) com a lista de produtos da live.
@@ -21,6 +22,7 @@ class ProductsDrawer extends StatelessWidget {
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollCtrl) {
+        final s = S.of(context);
         return Container(
           decoration: const BoxDecoration(
             color: AppColors.nearBlack,
@@ -50,16 +52,16 @@ class ProductsDrawer extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Loja ao vivo',
-                            style: TextStyle(
+                          Text(
+                            s.productsDrawerTitle,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            '${products.length} itens • ${author.name}',
+                            s.productsDrawerItemCount(products.length, author.name),
                             style: const TextStyle(
                               color: AppColors.coolGray,
                               fontSize: 12,
@@ -141,8 +143,8 @@ class _ProductTile extends StatelessWidget {
                       color: AppColors.electricPurple,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('EM DESTAQUE',
-                        style: TextStyle(
+                    child: Text(S.of(context).productFeatured,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -197,10 +199,10 @@ class _ProductTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   product.isSoldOut
-                      ? 'Esgotado'
+                      ? S.of(context).productSoldOut
                       : product.isLowStock
-                          ? 'Apenas ${product.stock} restantes'
-                          : '${product.soldCount} vendidos',
+                          ? S.of(context).productLowStock(product.stock)
+                          : S.of(context).productSoldCount(product.soldCount),
                   style: TextStyle(
                     color: product.isSoldOut
                         ? AppColors.mutedRed
@@ -227,7 +229,7 @@ class _ProductTile extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 14, vertical: 10),
             ),
-            child: Text(product.isSoldOut ? 'Esgotado' : 'Comprar'),
+            child: Text(product.isSoldOut ? S.of(context).productSoldOut : S.of(context).productBuy),
           ),
         ],
       ),

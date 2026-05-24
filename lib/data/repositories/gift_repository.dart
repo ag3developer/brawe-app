@@ -49,6 +49,7 @@ class GiftRepository {
   Future<void> sendGift({
     required String roomId,
     required String giftId,
+    required String receiverId,
     int quantity = 1,
     String? battleId,
   }) async {
@@ -56,6 +57,7 @@ class GiftRepository {
       await _liveService.sendGift(
         roomId: roomId,
         giftId: giftId,
+        receiverId: receiverId,
         quantity: quantity,
         battleId: battleId,
       );

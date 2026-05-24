@@ -6,6 +6,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../../data/repositories/post_repository.dart';
 import '../../../../../data/repositories/social_repository.dart';
 import '../../../../../domain/models/feed_item.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../feed/widgets/comments_sheet.dart';
 import '../../action_rail.dart';
 
@@ -65,7 +67,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
         _likesCount = prevCount;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível curtir. Tente novamente.')),
+        SnackBar(content: Text(S.of(context).feedCannotLike)),
       );
     }
   }
@@ -73,15 +75,18 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
   void _onComment() {
     if (!_isPost) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Use o chat ao vivo para conversar.')),
+        SnackBar(content: Text(S.of(context).feedUseLiveChat)),
       );
       return;
     }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => CommentsSheet(postId: widget.item.id),
+      builder: (_) => ForceDarkTheme(
+        child: CommentsSheet(postId: widget.item.id),
+      ),
     );
   }
 
@@ -90,14 +95,14 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     final url = 'https://brawe.app/connect/$base/${widget.item.id}';
     final caption = widget.item.caption.isNotEmpty
         ? widget.item.caption
-        : 'Confira no Brawe Connect';
+        : S.of(context).shareCheckBraweConnect;
     try {
       // ignore: deprecated_member_use
       await Share.share('$caption\n\n$url');
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível compartilhar.')),
+        SnackBar(content: Text(S.of(context).feedCannotShare)),
       );
     }
   }
@@ -122,7 +127,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       if (!mounted) return;
       setState(() => _following = prev);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível atualizar o follow.')),
+        SnackBar(content: Text(S.of(context).feedCannotFollow)),
       );
     } finally {
       if (mounted) setState(() => _busyFollow = false);
@@ -131,7 +136,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
 
   void _onGift() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('🎁 Em breve!')),
+      SnackBar(content: Text(S.of(context).giftComingSoon)),
     );
   }
 

@@ -173,13 +173,16 @@ class _FloatingHeartState extends State<_FloatingHeart>
         final wave = math.sin(t * math.pi * 2.4) * 8;
         final xFrac = widget.spec.startX + widget.spec.drift * t;
         final dx = xFrac * size.width + wave;
-        // Sobe 75% da altura disponível a partir da base do rail
-        final dy = size.height * (0.78 - t * 0.62);
-        // Fade-in rápido, fade-out no final
+        // Sobe do botão "Curtir" (bottom ~18%) até ~45% da tela (meio).
+        // Não cruza o avatar do streamer no topo — visual mais limpo.
+        final startY = 0.82;
+        final endY = 0.42;
+        final dy = size.height * (startY - (startY - endY) * t);
+        // Fade-in rápido, fade-out no último terço (some no meio da tela)
         final opacity = t < 0.1
             ? (t / 0.1)
-            : t > 0.75
-                ? ((1 - t) / 0.25).clamp(0.0, 1.0)
+            : t > 0.65
+                ? ((1 - t) / 0.35).clamp(0.0, 1.0)
                 : 1.0;
         return Positioned(
           left: dx - 14,

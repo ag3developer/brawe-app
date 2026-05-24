@@ -16,6 +16,7 @@ class LiveRoomCommentsState {
     this.viewerCount = 0,
     this.likeCount = 0,
     this.totalComments = 0,
+    this.totalGiftsValue = 0,
     this.isSending = false,
     this.errorMessage,
   });
@@ -24,6 +25,8 @@ class LiveRoomCommentsState {
   final int viewerCount;
   final int likeCount;
   final int totalComments;
+  /// 💎 Total acumulado em USDT (aproximado) de gifts recebidos na sala.
+  final double totalGiftsValue;
   final bool isSending;
   final String? errorMessage;
 
@@ -32,6 +35,7 @@ class LiveRoomCommentsState {
     int? viewerCount,
     int? likeCount,
     int? totalComments,
+    double? totalGiftsValue,
     bool? isSending,
     String? errorMessage,
     bool clearErrorMessage = false,
@@ -41,6 +45,7 @@ class LiveRoomCommentsState {
       viewerCount: viewerCount ?? this.viewerCount,
       likeCount: likeCount ?? this.likeCount,
       totalComments: totalComments ?? this.totalComments,
+      totalGiftsValue: totalGiftsValue ?? this.totalGiftsValue,
       isSending: isSending ?? this.isSending,
       errorMessage: clearErrorMessage
           ? null
@@ -55,6 +60,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<LiveComment>? _commentsSubscription;
   StreamSubscription<int>? _viewerCountSubscription;
   StreamSubscription<int>? _likeCountSubscription;
+  StreamSubscription<double>? _giftTotalSubscription;
 
   @override
   LiveRoomCommentsState build(String roomId) {
@@ -65,6 +71,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       _commentsSubscription?.cancel();
       _viewerCountSubscription?.cancel();
       _likeCountSubscription?.cancel();
+      _giftTotalSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
 
@@ -84,6 +91,9 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     _viewerCountSubscription = repository
         .watchViewerCount(roomId)
         .listen((count) => state = state.copyWith(viewerCount: count));
+    _giftTotalSubscription = repository
+        .watchGiftTotal(roomId)
+        .listen((total) => state = state.copyWith(totalGiftsValue: total));
 
     try {
       await repository.connectToRoom(roomId);

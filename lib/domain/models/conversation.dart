@@ -103,6 +103,7 @@ class ChatMessage {
     this.replyToMessageId,
     this.replyTo,
     this.reactions = const {},
+    this.audioDuration,
   });
 
   final String id;
@@ -126,6 +127,9 @@ class ChatMessage {
   /// Reações por emoji: { "❤️": ["userId1", "userId2"], "🔥": ["userId3"] }
   final Map<String, List<String>> reactions;
 
+  /// Duração em segundos (apenas para messageType == 'audio').
+  final int? audioDuration;
+
   ChatMessage copyWith({
     String? id,
     String? conversationId,
@@ -141,6 +145,7 @@ class ChatMessage {
     String? replyToMessageId,
     ReplyPreview? replyTo,
     Map<String, List<String>>? reactions,
+    int? audioDuration,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -157,6 +162,7 @@ class ChatMessage {
       replyToMessageId: replyToMessageId ?? this.replyToMessageId,
       replyTo: replyTo ?? this.replyTo,
       reactions: reactions ?? this.reactions,
+      audioDuration: audioDuration ?? this.audioDuration,
     );
   }
 
@@ -202,6 +208,7 @@ class ChatMessage {
       replyToMessageId: json['reply_to_message_id']?.toString(),
       replyTo: replyTo,
       reactions: reactions,
+      audioDuration: json['audio_duration'] is int ? json['audio_duration'] as int : int.tryParse(json['audio_duration']?.toString() ?? ''),
     );
   }
 }

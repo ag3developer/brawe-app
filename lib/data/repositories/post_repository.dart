@@ -31,6 +31,20 @@ class PostRepository {
     }
   }
 
+  Future<List<Post>> getFollowingFeed({int limit = 20, int offset = 0}) async {
+    try {
+      final responseDto = await _postService.getFollowingFeed(
+        limit: limit,
+        offset: offset,
+      );
+      return responseDto.posts.map((dto) => dto.toDomain()).toList();
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<void> toggleLike(String postId, bool isLiked) async {
     try {
       if (isLiked) {

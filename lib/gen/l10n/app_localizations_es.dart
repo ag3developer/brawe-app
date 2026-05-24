@@ -1,0 +1,3129 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Spanish Castilian (`es`).
+class SEs extends S {
+  SEs([String locale = 'es']) : super(locale);
+
+  @override
+  String get appName => 'Brawe';
+
+  @override
+  String get navHome => 'Inicio';
+
+  @override
+  String get navFeed => 'Feed';
+
+  @override
+  String get navChat => 'Chat';
+
+  @override
+  String get navProfile => 'Perfil';
+
+  @override
+  String get tabFollowing => 'Siguiendo';
+
+  @override
+  String get tabForYou => 'Para Ti';
+
+  @override
+  String get actionFollow => 'Seguir';
+
+  @override
+  String get actionUnfollow => 'Siguiendo';
+
+  @override
+  String get actionLike => 'Me gusta';
+
+  @override
+  String get actionComment => 'Comentar';
+
+  @override
+  String get actionShare => 'Compartir';
+
+  @override
+  String get actionSave => 'Guardar';
+
+  @override
+  String get actionRepost => 'Repostear';
+
+  @override
+  String get actionSend => 'Enviar';
+
+  @override
+  String get actionCancel => 'Cancelar';
+
+  @override
+  String get actionConfirm => 'Confirmar';
+
+  @override
+  String get actionRetry => 'Intentar de nuevo';
+
+  @override
+  String get actionRefresh => 'Actualizar';
+
+  @override
+  String get actionDelete => 'Eliminar';
+
+  @override
+  String get actionEdit => 'Editar';
+
+  @override
+  String get actionClose => 'Cerrar';
+
+  @override
+  String get actionBack => 'Volver';
+
+  @override
+  String get actionBlock => 'Bloquear';
+
+  @override
+  String get actionUnblock => 'Desbloquear';
+
+  @override
+  String get actionReport => 'Denunciar';
+
+  @override
+  String get actionCopy => 'Copiar';
+
+  @override
+  String get feedEmptyTitle => 'Aún no hay videos aquí.';
+
+  @override
+  String get feedEmptySubtitle => 'Sigue a creadores o vuelve más tarde.';
+
+  @override
+  String get feedFollowingEmptyTitle =>
+      'Sigue personas para ver sus posts aquí.';
+
+  @override
+  String get feedLoadError => 'No se pudo cargar el feed.';
+
+  @override
+  String get feedNoMore => '¡Estás al día! 🎉';
+
+  @override
+  String get profileEditButton => 'Editar perfil';
+
+  @override
+  String get profileFollowers => 'seguidores';
+
+  @override
+  String get profileFollowing => 'siguiendo';
+
+  @override
+  String get profileLives => 'directos';
+
+  @override
+  String get profileViews => 'vistas';
+
+  @override
+  String profileJoinedAt(String date) {
+    return 'se unió en $date';
+  }
+
+  @override
+  String get profileTabPosts => 'Posts';
+
+  @override
+  String get profileTabVideos => 'Videos';
+
+  @override
+  String get profileTabSaved => 'Guardados';
+
+  @override
+  String get authLogin => 'Iniciar sesión';
+
+  @override
+  String get authRegister => 'Registrarse';
+
+  @override
+  String get authLogout => 'Cerrar sesión';
+
+  @override
+  String get authEmail => 'Correo electrónico';
+
+  @override
+  String get authPassword => 'Contraseña';
+
+  @override
+  String get authForgotPassword => '¿Olvidaste tu contraseña?';
+
+  @override
+  String get authWelcomeBack => '¡Bienvenido de nuevo!';
+
+  @override
+  String get authCreateAccount => 'Crear cuenta';
+
+  @override
+  String get chatNewMessage => 'Nuevo mensaje';
+
+  @override
+  String get chatPlaceholder => 'Mensaje...';
+
+  @override
+  String get chatNoConversations => 'Sin conversaciones aún.';
+
+  @override
+  String chatBlockTitle(String name) {
+    return '¿Bloquear a $name?';
+  }
+
+  @override
+  String chatBlockedSuccess(String name) {
+    return '$name ha sido bloqueado(a).';
+  }
+
+  @override
+  String chatBlockError(String error) {
+    return 'Error al bloquear: $error';
+  }
+
+  @override
+  String chatImagePickError(String error) {
+    return 'Error al elegir imagen: $error';
+  }
+
+  @override
+  String get commentsTitle => 'Comentarios';
+
+  @override
+  String get commentsPlaceholder => 'Agrega un comentario...';
+
+  @override
+  String get commentsEmpty => 'Aún no hay comentarios.\n¡Sé el primero!';
+
+  @override
+  String get notificationsTitle => 'Notificaciones';
+
+  @override
+  String get notificationsEmpty => 'Sin notificaciones aún.';
+
+  @override
+  String notificationLiked(String user) {
+    return 'A $user le gustó tu post.';
+  }
+
+  @override
+  String notificationFollowed(String user) {
+    return '$user empezó a seguirte.';
+  }
+
+  @override
+  String notificationCommented(String user) {
+    return '$user comentó en tu post.';
+  }
+
+  @override
+  String get settingsTitle => 'Configuración';
+
+  @override
+  String get settingsLanguage => 'Idioma';
+
+  @override
+  String get settingsLanguageSubtitle => 'Português · Español · English';
+
+  @override
+  String get settingsAppLanguage => 'Idioma de la app';
+
+  @override
+  String get settingsAppearance => 'Apariencia';
+
+  @override
+  String get settingsTheme => 'Tema';
+
+  @override
+  String get settingsThemeDark => 'Oscuro';
+
+  @override
+  String get settingsThemeLight => 'Claro';
+
+  @override
+  String get settingsThemeSystem => 'Sistema';
+
+  @override
+  String get settingsNotifications => 'Notificaciones';
+
+  @override
+  String get settingsNotifLiveStart => 'Directos comenzando';
+
+  @override
+  String get settingsNotifLiveStartHint =>
+      'Recibe aviso cuando tus creadores favoritos estén en vivo';
+
+  @override
+  String get settingsNotifGifts => 'Regalos recibidos';
+
+  @override
+  String get settingsNotifGiftsHint =>
+      'Avisar cuando alguien te envíe un regalo';
+
+  @override
+  String get settingsNotifFollowers => 'Nuevos seguidores';
+
+  @override
+  String get settingsNotifMessages => 'Mensajes directos';
+
+  @override
+  String get settingsPrivacy => 'Privacidad';
+
+  @override
+  String get settingsPrivacyShowViewers => 'Mostrar nº de espectadores';
+
+  @override
+  String get settingsPrivacyShowViewersHint =>
+      'Otros pueden ver cuántas personas ven tus directos';
+
+  @override
+  String get settingsPrivacyShowEarnings => 'Mostrar ganancias públicamente';
+
+  @override
+  String get settingsPrivacyShowEarningsHint =>
+      'Mostrar total de coins/ganancias en tu perfil';
+
+  @override
+  String get settingsSounds => 'Sonidos';
+
+  @override
+  String get settingsSoundsEnabled => 'Efectos de sonido';
+
+  @override
+  String get settingsSoundsHint => 'Sonidos al recibir regalos, mensajes, etc.';
+
+  @override
+  String get settingsAbout => 'Acerca de & Legal';
+
+  @override
+  String get settingsAccount => 'Cuenta';
+
+  @override
+  String get settingsLogout => 'Cerrar sesión';
+
+  @override
+  String get settingsLoadError => 'No pudimos cargar tu configuración.';
+
+  @override
+  String get settingsThemeAuto => 'Auto';
+
+  @override
+  String get settingsTermsOfUse => 'Términos de Uso';
+
+  @override
+  String get settingsPrivacyPolicy => 'Política de Privacidad';
+
+  @override
+  String get settingsSupport => 'Soporte';
+
+  @override
+  String get settingsVersion => 'Versión';
+
+  @override
+  String get settingsChangePassword => 'Cambiar contraseña';
+
+  @override
+  String get settingsDeleteAccount => 'Eliminar cuenta';
+
+  @override
+  String get settingsLogoutConfirm => '¿Seguro que quieres cerrar sesión?';
+
+  @override
+  String get settingsHelpTitle => '¿Cómo podemos ayudarte?';
+
+  @override
+  String get settingsSendSupportEmail => 'Enviar correo al soporte';
+
+  @override
+  String get settingsNoMailApp => 'Ningún app de correo configurada.';
+
+  @override
+  String get settingsHelpCenterFaq => 'Centro de ayuda / FAQ';
+
+  @override
+  String settingsSupportEmailSubject(String version) {
+    return 'Soporte Brawe — App v$version';
+  }
+
+  @override
+  String settingsCantOpenUrl(String url) {
+    return 'No se pudo abrir $url';
+  }
+
+  @override
+  String get cpCurrentPassword => 'Contraseña actual';
+
+  @override
+  String get cpNewPassword => 'Nueva contraseña';
+
+  @override
+  String get cpConfirmNewPassword => 'Confirmar nueva contraseña';
+
+  @override
+  String get cpMin8Chars => 'Mínimo 8 caracteres';
+
+  @override
+  String get cpSaveNewPassword => 'Guardar nueva contraseña';
+
+  @override
+  String get cpEnterCurrentPassword => 'Ingresa tu contraseña actual.';
+
+  @override
+  String get cpPasswordTooShort =>
+      'La nueva contraseña debe tener al menos 8 caracteres.';
+
+  @override
+  String get cpPasswordsDontMatch => 'Las nuevas contraseñas no coinciden.';
+
+  @override
+  String get cpChangedSuccess => 'Contraseña cambiada con éxito.';
+
+  @override
+  String get cpChangeError => 'Error al cambiar la contraseña.';
+
+  @override
+  String get delAccTitle => 'Eliminar cuenta';
+
+  @override
+  String get delAccEnterPassword => 'Ingresa tu contraseña para confirmar.';
+
+  @override
+  String get delAccAckRequired => 'Confirma que entiendes la acción.';
+
+  @override
+  String get delAccConfirmBody =>
+      'Esta acción es IRREVERSIBLE. Tu cuenta será desactivada y tus datos personales anonimizados (RGPD). ¿Deseas continuar?';
+
+  @override
+  String get delAccConfirmButton => 'Eliminar cuenta';
+
+  @override
+  String get delAccSuccess => 'Cuenta eliminada. Hasta luego.';
+
+  @override
+  String get delAccError => 'Error al eliminar la cuenta.';
+
+  @override
+  String get delAccWarningBanner =>
+      'Al eliminar tu cuenta perderás permanentemente el acceso al historial de lives, regalos, saldo, conversaciones y seguidores. Los saldos pendientes pueden perderse.';
+
+  @override
+  String get delAccWhatHappens => 'Qué sucede:';
+
+  @override
+  String get delAccBullet1 => 'Tu cuenta será desactivada inmediatamente.';
+
+  @override
+  String get delAccBullet2 => 'Tu email y datos personales serán anonimizados.';
+
+  @override
+  String get delAccBullet3 => 'Cerrarás sesión en todos los dispositivos.';
+
+  @override
+  String get delAccBullet4 =>
+      'Se conservarán los registros por el plazo legal requerido.';
+
+  @override
+  String get delAccPasswordHelper => 'Confirma tu identidad';
+
+  @override
+  String get delAccAckCheckbox => 'Entiendo que esta acción es irreversible.';
+
+  @override
+  String get delAccDeleteMyAccount => 'Eliminar mi cuenta';
+
+  @override
+  String get legalOpenInBrowser => 'Abrir en el navegador';
+
+  @override
+  String get legalLoadError => 'No se pudo cargar esta página.';
+
+  @override
+  String get languagePickerTitle => 'Elige el idioma';
+
+  @override
+  String get languagePt => 'Português (Brasil)';
+
+  @override
+  String get languageEs => 'Español';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get errorNetwork => 'Sin conexión. Verifica tu internet.';
+
+  @override
+  String get errorGeneric => 'Algo salió mal. Intenta de nuevo.';
+
+  @override
+  String get errorNotFound => 'Contenido no encontrado.';
+
+  @override
+  String get errorUnauthorized => 'Sesión expirada. Inicia sesión de nuevo.';
+
+  @override
+  String get giftComingSoon => '🎁 ¡Próximamente!';
+
+  @override
+  String get liveBadge => 'EN VIVO';
+
+  @override
+  String viewerCount(int count) {
+    return '$count viendo';
+  }
+
+  @override
+  String get authLoginSubtitle => 'Inicia sesión en tu cuenta para continuar.';
+
+  @override
+  String get authWelcomeBackTitle => 'Bienvenido\nde vuelta.';
+
+  @override
+  String get authEmailHint => 'tu@brawe.app';
+
+  @override
+  String get authPasswordHint => '••••••••';
+
+  @override
+  String get authEmailLabel => 'CORREO';
+
+  @override
+  String get authPasswordLabel => 'CONTRASEÑA';
+
+  @override
+  String get authForgotPasswordShort => 'Olvidé mi contraseña';
+
+  @override
+  String get authLoggingIn => 'Entrando…';
+
+  @override
+  String get authNoAccount => '¿No tienes cuenta?';
+
+  @override
+  String get authCreateNow => 'Crear ahora';
+
+  @override
+  String get authAcceptTermsAndPrivacy =>
+      'Al continuar aceptas los Términos de Uso\ny la Política de Privacidad.';
+
+  @override
+  String get authWelcomeBackSuccess => 'Bienvenido de vuelta.';
+
+  @override
+  String get authAlreadyHaveAccount => '¿Ya tienes cuenta?';
+
+  @override
+  String get authEntrar => 'Entrar';
+
+  @override
+  String get welcomeTagline => 'Conecta. Transmite. Crece.';
+
+  @override
+  String get welcomeAlreadyHaveAccount => 'Ya tengo una cuenta';
+
+  @override
+  String get welcomeAcceptTerms => 'Al continuar aceptas los Términos de Uso.';
+
+  @override
+  String get welcomeCreateAccount => 'Crear cuenta';
+
+  @override
+  String get signupTitle => 'Crea tu cuenta.';
+
+  @override
+  String get signupSubtitle => 'Toma menos de un minuto empezar.';
+
+  @override
+  String get signupNameLabel => 'Nombre completo';
+
+  @override
+  String get signupNameHint => '¿Cómo debemos llamarte?';
+
+  @override
+  String get signupEmailLabel => 'Correo';
+
+  @override
+  String get signupPasswordLabel => 'Contraseña';
+
+  @override
+  String get signupPasswordHint => 'mínimo 8 caracteres';
+
+  @override
+  String get signupSponsorLabel => 'Código de patrocinador';
+
+  @override
+  String get signupSponsorHint => 'BRAWE-XXXX';
+
+  @override
+  String get signupHaveReferral => 'Tengo un código de referido';
+
+  @override
+  String get signupCreatingAccount => 'Creando cuenta…';
+
+  @override
+  String get signupCreateAccountButton => 'Crear cuenta';
+
+  @override
+  String get signupSuccess => 'Cuenta creada con éxito.';
+
+  @override
+  String get signupHelp => 'Ayuda';
+
+  @override
+  String signupCantOpenUrl(String url) {
+    return 'No se pudo abrir $url';
+  }
+
+  @override
+  String get signupTermsPrefix => 'He leído y acepto los ';
+
+  @override
+  String get signupTermsAnd => ' y la ';
+
+  @override
+  String get signupTermsSuffix => ' de Brawe.';
+
+  @override
+  String get pwStrengthWeak => 'Débil';
+
+  @override
+  String get pwStrengthMedium => 'Media';
+
+  @override
+  String get pwStrengthGood => 'Buena';
+
+  @override
+  String get pwStrengthStrong => 'Fuerte';
+
+  @override
+  String get forgotTitle => 'Recuperar contraseña';
+
+  @override
+  String get forgotSubtitle =>
+      'Ingresa tu correo y te enviaremos instrucciones para crear una nueva contraseña.';
+
+  @override
+  String get forgotEmailLabel => 'CORREO';
+
+  @override
+  String get forgotEmailHint => 'tu@ejemplo.com';
+
+  @override
+  String get forgotInvalidEmail => 'Ingresa un correo válido.';
+
+  @override
+  String get forgotSending => 'Enviando...';
+
+  @override
+  String get forgotSendInstructions => 'Enviar instrucciones';
+
+  @override
+  String get forgotCannotSend => 'No se pudo enviar.';
+
+  @override
+  String get forgotBackToLogin => 'Volver al inicio de sesión';
+
+  @override
+  String get forgotCheckEmail => 'Revisa tu correo';
+
+  @override
+  String forgotEmailSentBody(String email) {
+    return 'Si $email está registrado, recibirás un enlace para crear una nueva contraseña en unos minutos.';
+  }
+
+  @override
+  String get resetTitle => 'Crear nueva contraseña';
+
+  @override
+  String get resetSubtitle =>
+      'Elige una contraseña fuerte de al menos 8 caracteres.';
+
+  @override
+  String get resetNewPasswordLabel => 'NUEVA CONTRASEÑA';
+
+  @override
+  String get resetConfirmPasswordLabel => 'CONFIRMAR CONTRASEÑA';
+
+  @override
+  String get resetPasswordTooShort =>
+      'La contraseña debe tener al menos 8 caracteres.';
+
+  @override
+  String get resetPasswordsDontMatch => 'Las contraseñas no coinciden.';
+
+  @override
+  String get resetSaving => 'Guardando...';
+
+  @override
+  String get resetInvalidToken => 'Token inválido o caducado.';
+
+  @override
+  String get navLives => 'Lives';
+
+  @override
+  String get createStoryTitle => 'Historia';
+
+  @override
+  String get createStorySubtitle => 'Foto o video · desaparece en 24h';
+
+  @override
+  String get createVideoTitle => 'Video';
+
+  @override
+  String get createVideoSubtitle => 'Reels · aparece en Para Ti';
+
+  @override
+  String get createLiveTitle => 'Live';
+
+  @override
+  String get createLiveSubtitle => 'Transmite ahora y recibe regalos';
+
+  @override
+  String get createPostTitle => 'Publicación';
+
+  @override
+  String get createPostSubtitle => 'Texto, foto o enlace en tu feed';
+
+  @override
+  String get feedEmptyVideoTitle => 'Aún no hay video ni foto por aquí.';
+
+  @override
+  String get feedEmptyVideoSubtitle =>
+      'Sigue a creadores o vuelve más tarde.\nLas publicaciones de texto están en la pestaña Feed.';
+
+  @override
+  String get liveJoining => 'Entrando a la live…';
+
+  @override
+  String get liveBadgeBattle => 'EN VIVO · BATALLA';
+
+  @override
+  String get liveBadgeShop => 'EN VIVO · SHOP';
+
+  @override
+  String get liveOfferNow => 'OFERTA AHORA';
+
+  @override
+  String get productFeatured => 'DESTACADO';
+
+  @override
+  String get videoLoadError => 'No se pudo cargar el video.';
+
+  @override
+  String get giftSendAnonymous => 'Enviar anónimamente';
+
+  @override
+  String get giftAnonNameHidden => 'Tu nombre no será revelado';
+
+  @override
+  String get giftAnonNameVisible => 'Todos verán que fuiste tú';
+
+  @override
+  String get giftSendButtonAnon => 'Enviar (anónimo)';
+
+  @override
+  String get giftSendButton => 'Enviar regalo';
+
+  @override
+  String get giftSentAnon => '¡Regalo enviado anónimamente!';
+
+  @override
+  String get giftSent => '¡Regalo enviado!';
+
+  @override
+  String get feedCannotLike => 'No se pudo dar like. Inténtalo de nuevo.';
+
+  @override
+  String get feedUseLiveChat => 'Usa el chat en vivo para hablar.';
+
+  @override
+  String get feedCannotShare => 'No se pudo compartir.';
+
+  @override
+  String get feedCannotFollow => 'No se pudo actualizar el seguimiento.';
+
+  @override
+  String get shareCheckBraweConnect => 'Míralo en Brawe Connect';
+
+  @override
+  String get homeStatFollowers => 'Seguidores';
+
+  @override
+  String get homeStatFollowing => 'Siguiendo';
+
+  @override
+  String get homeStatLives => 'Lives';
+
+  @override
+  String get profileViewFull => 'Ver perfil completo';
+
+  @override
+  String get createSheetTitle => 'Crear';
+
+  @override
+  String get createSheetSubtitle =>
+      'Comparte un momento, abre un live o suelta una idea.';
+
+  @override
+  String get productsDrawerTitle => 'Tienda en vivo';
+
+  @override
+  String productsDrawerItemCount(int count, String author) {
+    return '$count artículos • $author';
+  }
+
+  @override
+  String get giftMysteryTitle => 'Regalo Misterioso';
+
+  @override
+  String get giftMysterySubtitle =>
+      '¡Sorprende a uno de los streamers!\nEl destino se elige al azar. 🎲';
+
+  @override
+  String get commentsErrorSend =>
+      'Error al enviar comentario. Inténtalo de nuevo.';
+
+  @override
+  String get commentsErrorLoad => 'Error al cargar comentarios.';
+
+  @override
+  String commentsReplyingTo(String username) {
+    return 'Respondiendo a @$username';
+  }
+
+  @override
+  String get commentsHintReply => 'Responder...';
+
+  @override
+  String get commentsHintAdd => 'Añadir comentario...';
+
+  @override
+  String get commentsReplyAction => 'Responder';
+
+  @override
+  String get postPublish => 'Publicar';
+
+  @override
+  String get postPublishedSuccess => '¡Publicación creada!';
+
+  @override
+  String get postPublishError => 'Error al publicar. Inténtalo de nuevo.';
+
+  @override
+  String get postHintWhatsHappening => '¿Qué está pasando?';
+
+  @override
+  String get audiencePickerTitle => '¿Quién puede ver?';
+
+  @override
+  String get audienceAll => 'Todos';
+
+  @override
+  String get audienceFollowers => 'Seguidores';
+
+  @override
+  String get audienceOnlyMe => 'Solo yo';
+
+  @override
+  String get videoTooLarge => 'Vídeo demasiado grande. Máximo 100 MB.';
+
+  @override
+  String get videoOpenError => 'No se pudo abrir el vídeo.';
+
+  @override
+  String get videoPublishedSuccess => '¡Vídeo publicado! 🎬';
+
+  @override
+  String get videoPublishError =>
+      'Error al publicar vídeo. Inténtalo de nuevo.';
+
+  @override
+  String get videoSheetTitle => 'Nuevo vídeo';
+
+  @override
+  String get videoSwapTooltip => 'Cambiar vídeo';
+
+  @override
+  String get videoCaptionHint => 'Escribe una descripción (opcional)…';
+
+  @override
+  String get videoPublishButton => 'Publicar vídeo';
+
+  @override
+  String get videoSelect => 'Seleccionar vídeo';
+
+  @override
+  String get videoFormatsHint =>
+      'MP4 · MOV · WebM   ·   hasta 3 min   ·   100 MB';
+
+  @override
+  String get storySheetTitle => 'Nueva story';
+
+  @override
+  String get storyPublish => 'Publicar';
+
+  @override
+  String get storyPublishedSuccess => '¡Story publicada!';
+
+  @override
+  String get storyPublishError =>
+      'Error al publicar story. Inténtalo de nuevo.';
+
+  @override
+  String get storyPrefetchError => 'Error al cargar imagen del post.';
+
+  @override
+  String get storyPrefetchLoading => 'Cargando imagen del post...';
+
+  @override
+  String get storyCaptionHint => 'Escribe una descripción (opcional)…';
+
+  @override
+  String get storySwapMedia => 'Cambiar medio';
+
+  @override
+  String get storyPickerTitle => 'Selecciona o graba un medio';
+
+  @override
+  String get storyPickerSubtitle => 'Foto o vídeo (hasta 60s)';
+
+  @override
+  String get storyPickerSectionGallery => 'Galería';
+
+  @override
+  String get storyPickerSectionCamera => 'Cámara';
+
+  @override
+  String get storyPickerChipPhoto => 'Foto';
+
+  @override
+  String get storyPickerChipVideo => 'Vídeo';
+
+  @override
+  String get storyPickerChipRecordVideo => 'Grabar vídeo';
+
+  @override
+  String get storiesReload => 'Recargar stories';
+
+  @override
+  String get storiesYour => 'Tu story';
+
+  @override
+  String get storiesCreate => 'Crear';
+
+  @override
+  String get storiesFallbackUser => 'usuario';
+
+  @override
+  String get storiesLiveBadge => 'LIVE';
+
+  @override
+  String get shareLoadError => 'No se pudieron cargar los contactos.';
+
+  @override
+  String shareSentSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enviado a $count personas.',
+      one: 'Enviado a $count persona.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String shareSentPartial(int sent, int failures) {
+    return 'Enviado a $sent. Falló en $failures.';
+  }
+
+  @override
+  String get shareTitle => 'Enviar a...';
+
+  @override
+  String get sharePostFallback => 'Publicación';
+
+  @override
+  String get shareSearchHint => 'Buscar';
+
+  @override
+  String get shareErrorGeneric => 'Error';
+
+  @override
+  String get shareTryAgain => 'Intentar de nuevo';
+
+  @override
+  String get shareRecents => 'Recientes';
+
+  @override
+  String get shareFollowers => 'Seguidores';
+
+  @override
+  String get shareUserFallback => 'Usuario';
+
+  @override
+  String get shareNoContacts => 'No se encontraron contactos.';
+
+  @override
+  String get shareCommentHint => 'Añade un comentario…';
+
+  @override
+  String get shareOutsideBrawe => 'Fuera de Brawe';
+
+  @override
+  String get shareSend => 'Enviar';
+
+  @override
+  String shareSendWithCount(int count) {
+    return 'Enviar ($count)';
+  }
+
+  @override
+  String giftSendError(Object error) {
+    return 'No se pudo enviar el regalo: $error';
+  }
+
+  @override
+  String giftLoadError(Object error) {
+    return 'No se pudieron cargar los regalos.\n$error';
+  }
+
+  @override
+  String get giftEmptyState => 'No hay regalos disponibles ahora.';
+
+  @override
+  String get giftSendTo => 'Enviar regalo a';
+
+  @override
+  String get giftChoose => 'Elige un regalo';
+
+  @override
+  String giftSendCta(int total) {
+    return 'ENVIAR · 💎 $total';
+  }
+
+  @override
+  String get suggestedTitle => 'Sugerencias para ti';
+
+  @override
+  String get suggestedSeeAll => 'Ver todos';
+
+  @override
+  String get suggestedFollow => 'Seguir';
+
+  @override
+  String get suggestedFollowing => 'Siguiendo';
+
+  @override
+  String get suggestedLiveBadge => 'EN VIVO';
+
+  @override
+  String get composerMediaLoadError => 'No se pudo cargar el contenido.';
+
+  @override
+  String get composerPhotoError => 'Error al tomar foto.';
+
+  @override
+  String get composerRecordStartError => 'Error al iniciar grabación.';
+
+  @override
+  String get composerRecordStopError => 'Error al finalizar grabación.';
+
+  @override
+  String get composerStoryPublished => '¡Story publicado!';
+
+  @override
+  String composerMultipleStoriesPublished(int count) {
+    return '¡$count stories publicados!';
+  }
+
+  @override
+  String get composerPublishError => 'Error al publicar story.';
+
+  @override
+  String get composerRetry => 'Reintentar';
+
+  @override
+  String get composerPreparing => 'Preparando publicación…';
+
+  @override
+  String get composerCreateStory => 'Crear story';
+
+  @override
+  String get composerCaptureHint => 'Toca para foto • Mantén para video';
+
+  @override
+  String get composerGallery => 'Galería';
+
+  @override
+  String get composerTextOnly => 'Solo texto';
+
+  @override
+  String get composerFrameNone => 'Sin marco';
+
+  @override
+  String get composerFramePolaroid => 'Polaroid';
+
+  @override
+  String get composerFrameBrawe => 'Brawe';
+
+  @override
+  String get composerFrameHint => 'Toca 2 veces para marco';
+
+  @override
+  String composerFrameLabel(String style) {
+    return 'Marco: $style';
+  }
+
+  @override
+  String get composerCaptionHint => 'Añade una leyenda...';
+
+  @override
+  String get composerTapOutsideHint => 'Toca afuera para terminar';
+
+  @override
+  String get composerTextHint => 'Escribe algo...';
+
+  @override
+  String get composerGuideTop => 'tope seguro';
+
+  @override
+  String get composerGuideBottom => 'base segura';
+
+  @override
+  String get viewerDeleteStory => 'Eliminar story';
+
+  @override
+  String get viewerUnfollow => 'Dejar de seguir';
+
+  @override
+  String get viewerBlockUser => 'Bloquear usuario';
+
+  @override
+  String get viewerReport => 'Denunciar';
+
+  @override
+  String get viewerDeleteConfirm => 'Esta acción no se puede deshacer.';
+
+  @override
+  String get viewerCancel => 'Cancelar';
+
+  @override
+  String get viewerDelete => 'Eliminar';
+
+  @override
+  String get viewerBlock => 'Bloquear';
+
+  @override
+  String get viewerStoryDeleted => 'Story eliminado.';
+
+  @override
+  String viewerDeleteError(Object error) {
+    return 'No se pudo eliminar el story. ($error)';
+  }
+
+  @override
+  String viewerUnfollowed(String username) {
+    return 'Dejaste de seguir a @$username.';
+  }
+
+  @override
+  String get viewerUnfollowError => 'No se pudo dejar de seguir.';
+
+  @override
+  String viewerBlockConfirm(String username) {
+    return 'Ya no verás contenido de @$username.';
+  }
+
+  @override
+  String get viewerBlockError => 'No se pudo bloquear.';
+
+  @override
+  String get viewerReportPrompt => '¿Por qué estás denunciando?';
+
+  @override
+  String get viewerReportSpam => 'Spam o engañoso';
+
+  @override
+  String get viewerReportHarassment => 'Acoso o bullying';
+
+  @override
+  String get viewerReportInappropriate => 'Contenido inapropiado u ofensivo';
+
+  @override
+  String get viewerReportImpersonation => 'Identidad falsa';
+
+  @override
+  String get viewerReportOther => 'Otro';
+
+  @override
+  String get viewerReportSent => 'Denuncia enviada. Gracias.';
+
+  @override
+  String get viewerReportError => 'No se pudo enviar la denuncia.';
+
+  @override
+  String get viewerSeeOriginalPost => 'Ver publicación original';
+
+  @override
+  String get viewerReplySent => 'Respuesta enviada.';
+
+  @override
+  String get viewerReplyError => 'No se pudo responder.';
+
+  @override
+  String get viewerReplyHint => 'Responder al story...';
+
+  @override
+  String viewerGiftSent(String giftName, int quantity, int credits) {
+    return 'Envió $giftName x$quantity · 💎 $credits';
+  }
+
+  @override
+  String get viewerLoadViewersError =>
+      'No se pudieron cargar los visualizadores.';
+
+  @override
+  String get viewerTimeNow => 'ahora';
+
+  @override
+  String viewerTimeMinutes(int minutes) {
+    return 'hace ${minutes}m';
+  }
+
+  @override
+  String viewerTimeHours(int hours) {
+    return 'hace ${hours}h';
+  }
+
+  @override
+  String viewerTimeDays(int days) {
+    return 'hace ${days}d';
+  }
+
+  @override
+  String get viewerLoading => 'Cargando...';
+
+  @override
+  String get viewerNoViewers => 'Nadie ha visto este story aún.';
+
+  @override
+  String viewerBlocked(String username) {
+    return '@$username bloqueado.';
+  }
+
+  @override
+  String viewerViewsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count visualizaciones',
+      one: '1 visualización',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedTabForYou => 'Para Ti';
+
+  @override
+  String get feedTabFollowing => 'Siguiendo';
+
+  @override
+  String get feedEmptyQuietTitle => 'El feed está tranquilo';
+
+  @override
+  String get feedEmptyQuietSubtitle =>
+      'Sé el primero en publicar algo brillante hoy.';
+
+  @override
+  String get feedEmptyFollowingTitle => 'Nada por aquí aún';
+
+  @override
+  String get feedEmptyFollowingSubtitle =>
+      'Sigue personas para ver sus publicaciones aquí.';
+
+  @override
+  String get feedOfflineTitle => 'Sin conexión por aquí';
+
+  @override
+  String get feedOfflineSubtitle => 'Verifica tu internet e intenta de nuevo.';
+
+  @override
+  String get feedRetry => 'Intentar de nuevo';
+
+  @override
+  String get feedSaved => 'Guardado en tus favoritos';
+
+  @override
+  String get feedUnsaved => 'Eliminado de favoritos';
+
+  @override
+  String get feedLinkCopied => '¡Enlace copiado!';
+
+  @override
+  String get feedDeletePostTitle => '¿Eliminar publicación?';
+
+  @override
+  String get feedDeleteConfirm => 'Esta acción no se puede deshacer.';
+
+  @override
+  String get feedCancel => 'Cancelar';
+
+  @override
+  String get feedDelete => 'Eliminar';
+
+  @override
+  String get feedPostDeleted => 'Publicación eliminada.';
+
+  @override
+  String get feedPostDeleteError => 'No se pudo eliminar la publicación.';
+
+  @override
+  String feedUnfollowed(String username) {
+    return 'Dejaste de seguir a @$username.';
+  }
+
+  @override
+  String get feedUnfollowError => 'No se pudo dejar de seguir.';
+
+  @override
+  String get feedBlockUserTitle => 'Bloquear usuario';
+
+  @override
+  String feedBlockConfirm(String username) {
+    return 'Ya no verás contenido de @$username. ¿Continuar?';
+  }
+
+  @override
+  String get feedBlock => 'Bloquear';
+
+  @override
+  String get feedBlockError => 'No se pudo bloquear.';
+
+  @override
+  String get feedReportTitle => 'Denunciar publicación';
+
+  @override
+  String get feedReportPrompt => '¿Por qué estás denunciando?';
+
+  @override
+  String get feedReportSpam => 'Spam o engañoso';
+
+  @override
+  String get feedReportHarassment => 'Acoso o bullying';
+
+  @override
+  String get feedReportInappropriate => 'Contenido inapropiado u ofensivo';
+
+  @override
+  String get feedReportImpersonation => 'Identidad falsa';
+
+  @override
+  String get feedReportOther => 'Otro';
+
+  @override
+  String get feedReportSent => 'Denuncia enviada. Gracias por avisarnos.';
+
+  @override
+  String get feedReportError => 'No se pudo enviar la denuncia.';
+
+  @override
+  String get feedRepostUndoConfirm => '¿Deshacer repost?';
+
+  @override
+  String get feedRepostConfirm => '¿Repostar a tus seguidores?';
+
+  @override
+  String get feedRepostUndo => 'Deshacer repost';
+
+  @override
+  String get feedRepost => 'Repostar';
+
+  @override
+  String get feedQuotePost => 'Citar publicación';
+
+  @override
+  String get feedCopyLink => 'Copiar enlace';
+
+  @override
+  String get feedShareAsStory => 'Compartir como Story';
+
+  @override
+  String get feedUnfollow => 'Dejar de seguir';
+
+  @override
+  String get feedReport => 'Denunciar';
+
+  @override
+  String get feedDeletePost => 'Eliminar publicación';
+
+  @override
+  String get feedSend => 'Enviar';
+
+  @override
+  String get feedTimeNow => 'ahora';
+
+  @override
+  String feedBlocked(String username) {
+    return '@$username bloqueado.';
+  }
+
+  @override
+  String get chatStatusOnline => 'En línea';
+
+  @override
+  String get chatStatusAway => 'Ausente';
+
+  @override
+  String get chatStatusDnd => 'No molestar';
+
+  @override
+  String get chatStatusInvisible => 'Invisible';
+
+  @override
+  String get chatStatusSheetTitle => 'Mi estado';
+
+  @override
+  String get chatStatusSheetSubtitle =>
+      'Elige cómo apareces ante otros usuarios.';
+
+  @override
+  String get chatNewMessageTitle => 'Nuevo mensaje';
+
+  @override
+  String get chatSearchHint => 'Buscar personas que sigues…';
+
+  @override
+  String get chatFollowingLabel => 'Siguiendo';
+
+  @override
+  String chatStartConversationError(Object error) {
+    return 'Error al iniciar conversación: $error';
+  }
+
+  @override
+  String chatLoadError(Object error) {
+    return 'Error al cargar: $error';
+  }
+
+  @override
+  String get chatLiveBadge => 'EN VIVO';
+
+  @override
+  String get chatFallbackName => 'Chat';
+
+  @override
+  String get chatEmptySearchTitle => 'No se encontraron personas';
+
+  @override
+  String get chatEmptySearchSubtitle =>
+      'Prueba buscar por nombre o @username de alguien que sigues.';
+
+  @override
+  String get chatListTitle => 'Mensajes';
+
+  @override
+  String get chatListSearchHint => 'Buscar conversaciones, personas…';
+
+  @override
+  String get chatListTabAll => 'Todas';
+
+  @override
+  String get chatListTabUnread => 'No leídas';
+
+  @override
+  String get chatListTabArchived => 'Archivadas';
+
+  @override
+  String get chatListRetry => 'Intentar de nuevo';
+
+  @override
+  String get chatListNewTooltip => 'Nueva conversación';
+
+  @override
+  String get chatListEmptyTitle => 'Inicia una conversación';
+
+  @override
+  String get chatListEmptySubtitle =>
+      'Tus mensajes con creators, amigos y brawers aparecerán aquí.';
+
+  @override
+  String get chatListTapToTalk => 'Toca para conversar';
+
+  @override
+  String get chatListArchive => 'Archivar';
+
+  @override
+  String get chatListUnarchive => 'Desarchivar';
+
+  @override
+  String get chatListDelete => 'Eliminar';
+
+  @override
+  String get chatListDeleteConfirmTitle => '¿Eliminar conversación?';
+
+  @override
+  String get chatListDeleteConfirmBody =>
+      'La conversación se eliminará solo para ti.';
+
+  @override
+  String get chatListCancel => 'Cancelar';
+
+  @override
+  String get chatListTimeNow => 'ahora';
+
+  @override
+  String chatDetailPickImageError(Object error) {
+    return 'Error al elegir imagen: $error';
+  }
+
+  @override
+  String chatDetailBlockTitle(String name) {
+    return '¿Bloquear a $name?';
+  }
+
+  @override
+  String get chatDetailBlockBody =>
+      'Ya no podrás enviar ni recibir mensajes de esta persona.';
+
+  @override
+  String get chatDetailCancel => 'Cancelar';
+
+  @override
+  String get chatDetailBlock => 'Bloquear';
+
+  @override
+  String chatDetailBlocked(String name) {
+    return '$name ha sido bloqueado(a).';
+  }
+
+  @override
+  String chatDetailBlockError(Object error) {
+    return 'Error al bloquear: $error';
+  }
+
+  @override
+  String get chatDetailViewProfile => 'Ver perfil';
+
+  @override
+  String get chatDetailOpenProfileError =>
+      'No se pudo abrir el perfil de este contacto.';
+
+  @override
+  String get chatDetailMute => 'Silenciar notificaciones';
+
+  @override
+  String get chatDetailComingSoon => 'Pronto';
+
+  @override
+  String get chatDetailSearchInChat => 'Buscar en el chat';
+
+  @override
+  String chatDetailBlockMenu(String name) {
+    return 'Bloquear a $name';
+  }
+
+  @override
+  String get chatDetailReport => 'Denunciar';
+
+  @override
+  String get chatDetailReportSent => 'Denuncia enviada. ¡Gracias!';
+
+  @override
+  String get chatDetailStatusTyping => 'escribiendo';
+
+  @override
+  String get chatDetailStatusOnline => 'En línea';
+
+  @override
+  String chatDetailStatusSeen(String when) {
+    return 'visto $when';
+  }
+
+  @override
+  String get chatDetailStatusOffline => 'Desconectado';
+
+  @override
+  String get chatDetailDateToday => 'Hoy';
+
+  @override
+  String get chatDetailDateYesterday => 'Ayer';
+
+  @override
+  String get chatDetailReply => 'Responder';
+
+  @override
+  String get chatDetailCopy => 'Copiar';
+
+  @override
+  String get chatDetailDeleteForMe => 'Eliminar para mí';
+
+  @override
+  String get chatDetailViewOnceBadge => 'Ver 1 vez';
+
+  @override
+  String get chatDetailViewOnceTitle => 'Visualización única';
+
+  @override
+  String get chatDetailPhotoViewedOnce => 'Foto vista 1 vez';
+
+  @override
+  String get chatDetailPhotoUnavailable => 'La foto ya no está disponible';
+
+  @override
+  String get chatDetailEmptyTitle => 'Saluda 👋';
+
+  @override
+  String get chatDetailEmptySubtitle =>
+      'Envía el primer mensaje para iniciar la conversación.';
+
+  @override
+  String get chatDetailReplying => 'Respondiendo';
+
+  @override
+  String get chatDetailReplyImagePreview => '📷 Foto';
+
+  @override
+  String get chatDetailMessageHint => 'Mensaje';
+
+  @override
+  String get chatDetailVoiceTitle => 'Mensaje de voz';
+
+  @override
+  String get chatDetailVoiceSubtitle =>
+      'Pronto — grabación con waveform animado';
+
+  @override
+  String get chatDetailClose => 'Cerrar';
+
+  @override
+  String get chatDetailAttachGallery => 'Galería';
+
+  @override
+  String get chatDetailAttachCamera => 'Cámara';
+
+  @override
+  String get chatDetailAttachAudio => 'Audio';
+
+  @override
+  String get chatDetailAttachLocation => 'Ubicación';
+
+  @override
+  String get chatDetailAttachFile => 'Archivo';
+
+  @override
+  String get chatDetailAttachMystery => 'Misterio';
+
+  @override
+  String get chatDetailRelativeNow => 'ahora';
+
+  @override
+  String chatDetailRelativeMinutes(int minutes) {
+    return 'hace ${minutes}m';
+  }
+
+  @override
+  String chatDetailRelativeHours(int hours) {
+    return 'hace ${hours}h';
+  }
+
+  @override
+  String chatDetailRelativeDays(int days) {
+    return 'hace ${days}d';
+  }
+
+  @override
+  String get chatDetailViewPost => 'Ver publicación';
+
+  @override
+  String get chatDetailPostUnavailable => 'Publicación no disponible';
+
+  @override
+  String get chatDetailOpenPostSoon => 'Abrir publicación próximamente';
+
+  @override
+  String get chatDetailBurnedPreview => '🔥 Mensaje quemado';
+
+  @override
+  String get chatDetailStreamerFallback => 'Streamer';
+
+  @override
+  String get chatDetailLiveFallbackTitle => 'En vivo';
+
+  @override
+  String get chatDetailLiveTapToWatch => 'Toca para ver';
+
+  @override
+  String get chatDetailLiveSeeDetails => 'Ver detalles';
+
+  @override
+  String get chatDetailEmojiSmileys => 'Emoticonos';
+
+  @override
+  String get chatDetailEmojiGestures => 'Gestos';
+
+  @override
+  String get chatDetailEmojiHearts => 'Corazones';
+
+  @override
+  String get chatDetailEmojiAnimals => 'Animales';
+
+  @override
+  String get chatDetailEmojiFood => 'Comida';
+
+  @override
+  String get chatDetailEmojiParty => 'Fiesta';
+
+  @override
+  String get chatDetailEmojiObjects => 'Objetos';
+
+  @override
+  String get profileTabGallery => 'Galería';
+
+  @override
+  String get profileTabLives => 'Directos';
+
+  @override
+  String get profileTabShop => 'Tienda';
+
+  @override
+  String get profileTooltipShop => 'Tienda';
+
+  @override
+  String get profileTooltipQuests => 'Misiones';
+
+  @override
+  String get profileTooltipNotifications => 'Notificaciones';
+
+  @override
+  String get profileTooltipWallet => 'Cartera';
+
+  @override
+  String get profileShareFail => 'No se pudo compartir.';
+
+  @override
+  String get profileLinkCopied => 'Enlace copiado al portapapeles';
+
+  @override
+  String get profileBlockedSuccess => 'Usuario bloqueado.';
+
+  @override
+  String get profileBlockedError => 'No se pudo bloquear. Inténtalo de nuevo.';
+
+  @override
+  String get profileReportSent => 'Denuncia enviada. Gracias.';
+
+  @override
+  String get profileReportError => 'No se pudo denunciar. Inténtalo de nuevo.';
+
+  @override
+  String get profileBlockTitle => 'Bloquear';
+
+  @override
+  String profileBlockBody(String name) {
+    return '¿Seguro que quieres bloquear a $name? Ya no podrán intercambiar mensajes ni ver el contenido del otro.';
+  }
+
+  @override
+  String get profileFallbackUser => 'este usuario';
+
+  @override
+  String get profileReportQuestion => '¿Por qué denuncias?';
+
+  @override
+  String get profileReportReasonSpam => 'Spam';
+
+  @override
+  String get profileReportReasonHarassment => 'Acoso o bullying';
+
+  @override
+  String get profileReportReasonInappropriate => 'Contenido inapropiado';
+
+  @override
+  String get profileReportReasonImpersonation => 'Suplantación de identidad';
+
+  @override
+  String get profileReportReasonOther => 'Otro motivo';
+
+  @override
+  String get profileOptionShareProfile => 'Compartir perfil';
+
+  @override
+  String get profileOptionCopyLink => 'Copiar enlace';
+
+  @override
+  String get profileOptionReport => 'Denunciar';
+
+  @override
+  String get profileOptionDailyQuests => 'Misiones diarias';
+
+  @override
+  String get profileOptionWallet => 'Cartera';
+
+  @override
+  String get profileOptionNotifications => 'Notificaciones';
+
+  @override
+  String get profileOptionSettings => 'Configuración';
+
+  @override
+  String get profileOptionLogout => 'Cerrar sesión';
+
+  @override
+  String get profileLogoutTitle => '¿Cerrar sesión?';
+
+  @override
+  String get profileLogoutBody =>
+      'Tendrás que iniciar sesión de nuevo para acceder a tu arena.';
+
+  @override
+  String get profileLogoutConfirm => 'Cerrar sesión';
+
+  @override
+  String get profileMessageButton => 'Mensaje';
+
+  @override
+  String profileOpenConversationError(Object error) {
+    return 'Error al abrir la conversación: $error';
+  }
+
+  @override
+  String get profileChatFallback => 'Chat';
+
+  @override
+  String get profileUserFallback => 'Usuario';
+
+  @override
+  String get profileEditTooltip => 'Editar perfil';
+
+  @override
+  String get profileStatFollowers => 'Seguidores';
+
+  @override
+  String get profileStatFollowing => 'Siguiendo';
+
+  @override
+  String get profileStatLives => 'Directos';
+
+  @override
+  String get profileStatViews => 'Vistas';
+
+  @override
+  String get profileLoadError => 'No se pudo cargar el perfil';
+
+  @override
+  String get profileLoadErrorHint =>
+      'Comprueba tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get profileRetry => 'Reintentar';
+
+  @override
+  String get profileSellerVerified => 'Vendedor verificado';
+
+  @override
+  String get profileSellerSubtitle => 'Mira el escaparate de productos';
+
+  @override
+  String get profileNoTextPosts => 'Aún no hay publicaciones de texto';
+
+  @override
+  String get profilePostsLoadError => 'Error al cargar publicaciones';
+
+  @override
+  String get profileNoLives => 'Aún no hay directos';
+
+  @override
+  String get profileLivesLoadError => 'Error al cargar directos';
+
+  @override
+  String get profileShopEmpty => 'Tienda vacía';
+
+  @override
+  String get profileShopFeatured => 'Destacados';
+
+  @override
+  String get profileShopAllProducts => 'Todos los productos';
+
+  @override
+  String get profileLiveBadge => 'EN VIVO';
+
+  @override
+  String get profileProductSoldOut => 'Agotado';
+
+  @override
+  String get profileProductSoldOutUppercase => 'AGOTADO';
+
+  @override
+  String get profileProductAbout => 'Sobre el producto';
+
+  @override
+  String get profileProductUnavailable => 'No disponible';
+
+  @override
+  String get profileProductBuyNow => 'Comprar ahora';
+
+  @override
+  String get profileAddedToCart => '🛒 ¡Añadido al carrito!';
+
+  @override
+  String get profileGalleryLoadError => 'Error al cargar la galería';
+
+  @override
+  String get profileGalleryEmpty => 'Aún no hay nada aquí';
+
+  @override
+  String get profileGalleryRemoveTitle => '¿Eliminar contenido?';
+
+  @override
+  String get profileGalleryRemoveBody => 'Esta acción no se puede deshacer.';
+
+  @override
+  String get profileGalleryRemove => 'Eliminar';
+
+  @override
+  String get profileVideoDeleteTitle => '¿Eliminar vídeo?';
+
+  @override
+  String get profileVideoDelete => 'Eliminar';
+
+  @override
+  String get profileVideoDeleted => 'Vídeo eliminado';
+
+  @override
+  String get profileVideoDeleteError => 'No se pudo eliminar el vídeo';
+
+  @override
+  String get profileVideoRepostStory => 'Repostear en Stories';
+
+  @override
+  String get profileVideoDeleteAction => 'Eliminar vídeo';
+
+  @override
+  String get profileVideoLoadError => 'No se pudo cargar el vídeo.';
+
+  @override
+  String profileGalleryTabPhotos(int count, int max) {
+    return 'Fotos ($count/$max)';
+  }
+
+  @override
+  String profileGalleryTabVideos(int count, int max) {
+    return 'Vídeos ($count/$max)';
+  }
+
+  @override
+  String get profileGalleryPhotoAdded => 'Foto añadida';
+
+  @override
+  String get profileGalleryPhotoError => 'No se pudo subir la foto';
+
+  @override
+  String get profileGalleryVideoAdded => 'Vídeo añadido';
+
+  @override
+  String get profileGalleryVideoError => 'No se pudo subir el vídeo';
+
+  @override
+  String get profileVideoDeleteBody =>
+      'Esta acción no se puede deshacer. El vídeo se eliminará de Para Ti y de tu perfil.';
+
+  @override
+  String profileProductLastStock(int count) {
+    return 'Últimas $count';
+  }
+
+  @override
+  String profileProductSoldCount(int count) {
+    return '$count vendidos';
+  }
+
+  @override
+  String profileProductLowStock(int count) {
+    return 'Solo quedan $count';
+  }
+
+  @override
+  String profileProductInStock(int count) {
+    return '$count en stock';
+  }
+
+  @override
+  String get profileProductDescription =>
+      'Producto exclusivo de la tienda oficial. Envío en hasta 3 días hábiles. Garantía de 30 días y cambio gratis.';
+
+  @override
+  String profilePriceBRL(String amount) {
+    return 'R\\\$ $amount';
+  }
+
+  @override
+  String get profileVideosLoadError => 'Error al cargar los vídeos';
+
+  @override
+  String get profileVideosEmpty => 'Aún no hay vídeos publicados';
+
+  @override
+  String get profileVideoSwipeHint => 'Desliza';
+
+  @override
+  String get notificationsMarkAll => 'Marcar todas';
+
+  @override
+  String get notificationsEmptyTitle => '¡Todo al día!';
+
+  @override
+  String get notificationsEmptySubtitle => 'No tienes notificaciones nuevas.';
+
+  @override
+  String get notificationsLoadError => 'No pude cargar tus notificaciones.';
+
+  @override
+  String get notificationsTryAgain => 'Intentar de nuevo';
+
+  @override
+  String get notificationsTimeNow => 'ahora';
+
+  @override
+  String notificationsTimeMinutes(int n) {
+    return 'hace ${n}m';
+  }
+
+  @override
+  String notificationsTimeHours(int n) {
+    return 'hace ${n}h';
+  }
+
+  @override
+  String notificationsTimeDays(int n) {
+    return 'hace ${n}d';
+  }
+
+  @override
+  String get followsTitle => 'Personas';
+
+  @override
+  String get followsTabFollowers => 'Seguidores';
+
+  @override
+  String get followsTabFollowing => 'Siguiendo';
+
+  @override
+  String get followsSearchHint => 'Buscar...';
+
+  @override
+  String get followsLoadError => 'Error al cargar';
+
+  @override
+  String get followsTryAgain => 'Intentar de nuevo';
+
+  @override
+  String followsNoResults(String q) {
+    return 'Sin resultados para \"$q\"';
+  }
+
+  @override
+  String get followsEmptyFollowers => 'Aún sin seguidores';
+
+  @override
+  String get followsEmptyFollowing => 'Aún no sigues a nadie';
+
+  @override
+  String get followsUserFallback => 'Usuario';
+
+  @override
+  String get followsLiveBadge => 'LIVE';
+
+  @override
+  String get questsTitle => 'Misiones Diarias';
+
+  @override
+  String questsClaimAll(int count) {
+    return 'Reclamar todo ($count)';
+  }
+
+  @override
+  String questsClaimedReward(int n) {
+    return '¡$n recompensa(s) recogida(s)!';
+  }
+
+  @override
+  String get questsNothingToClaim => 'Nada para reclamar ahora.';
+
+  @override
+  String questsClaimSuccess(int xp, int coins) {
+    return '+$xp XP · +$coins monedas';
+  }
+
+  @override
+  String get questsClaimError => 'Error al reclamar. Intenta de nuevo.';
+
+  @override
+  String get questsEmpty => 'No hay misiones por ahora.\n¡Vuelve más tarde!';
+
+  @override
+  String questsLevel(int level) {
+    return 'Nivel $level';
+  }
+
+  @override
+  String questsXpProgress(int current, int total) {
+    return '$current / $total XP';
+  }
+
+  @override
+  String get questsSummaryCompleted => 'Completadas';
+
+  @override
+  String get questsSummaryXpToday => 'XP hoy';
+
+  @override
+  String get questsSummaryStreak => 'Racha';
+
+  @override
+  String questsStreakDays(int days) {
+    return '${days}d';
+  }
+
+  @override
+  String questsProgressCount(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String questsRewardXp(int xp) {
+    return '+$xp XP';
+  }
+
+  @override
+  String questsRewardCoins(int coins) {
+    return '+$coins monedas';
+  }
+
+  @override
+  String get questsStatusClaimed => 'Reclamado ✓';
+
+  @override
+  String get questsStatusInProgress => 'En progreso';
+
+  @override
+  String get questsActionClaim => 'Reclamar';
+
+  @override
+  String get questsLoadError => 'No pude cargar las misiones.';
+
+  @override
+  String get questsTryAgain => 'Intentar de nuevo';
+
+  @override
+  String questsSummaryCompletedValue(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String get walletTitle => 'Cartera';
+
+  @override
+  String get walletAvailableBalance => 'Saldo disponible';
+
+  @override
+  String get walletCoins => 'monedas';
+
+  @override
+  String get walletSectionBuyTitle => 'Comprar monedas';
+
+  @override
+  String get walletSectionBuySubtitle =>
+      'Usa monedas para enviar regalos en directos';
+
+  @override
+  String get walletSectionHistoryTitle => 'Historial';
+
+  @override
+  String get walletSectionHistorySubtitle => 'Tus últimos movimientos';
+
+  @override
+  String walletPackageCoins(String n) {
+    return '$n monedas';
+  }
+
+  @override
+  String walletPriceBRL(String value) {
+    return 'R\$ $value';
+  }
+
+  @override
+  String get walletPurchaseInfo =>
+      'Pagos en la app próximamente. Por ahora, compra monedas en el navegador en brawe.app/coins.';
+
+  @override
+  String get walletPurchaseUnderstood => 'Entendido';
+
+  @override
+  String get walletInfoTitle => 'Cómo funcionan las monedas';
+
+  @override
+  String get walletInfoQuestsTitle => 'Misiones diarias';
+
+  @override
+  String get walletInfoQuestsBody =>
+      'Completa misiones y gana monedas + XP cada día.';
+
+  @override
+  String get walletInfoGiftsTitle => 'Recibe regalos';
+
+  @override
+  String get walletInfoGiftsBody =>
+      'Tus directos reciben regalos de tus seguidores.';
+
+  @override
+  String get walletInfoUseTitle => 'Usa en directos';
+
+  @override
+  String get walletInfoUseBody =>
+      'Envía regalos a tus creadores favoritos en sus directos.';
+
+  @override
+  String get walletLoadError => 'No pude cargar tu cartera.';
+
+  @override
+  String get walletTryAgain => 'Intentar de nuevo';
+
+  @override
+  String get walletActionAdd => 'Añadir';
+
+  @override
+  String get walletActionSend => 'Enviar';
+
+  @override
+  String get walletActionStatement => 'Movimientos';
+
+  @override
+  String get walletComingSoon => 'Próximamente.';
+
+  @override
+  String get walletTxLoadError => 'No se pudo cargar el historial.';
+
+  @override
+  String get walletTxEmpty => 'Aún sin movimientos.';
+
+  @override
+  String get walletTxTo => 'Para';
+
+  @override
+  String get walletTxFrom => 'De';
+
+  @override
+  String get exploreSearchHint => 'Buscar streamers, directos, categorías…';
+
+  @override
+  String get exploreTabTrending => 'En tendencia';
+
+  @override
+  String get exploreTabCategories => 'Categorías';
+
+  @override
+  String get exploreTabRecommended => 'Para ti';
+
+  @override
+  String get exploreSectionLives => 'En directo ahora';
+
+  @override
+  String get exploreSectionTrendingStreamers => 'Streamers en tendencia';
+
+  @override
+  String get exploreSectionRecommendedLives => 'Directos recomendados';
+
+  @override
+  String get exploreSectionRecommendedStreamers =>
+      'Streamers que te pueden gustar';
+
+  @override
+  String get exploreEmptyTrending => 'Nada en tendencia ahora';
+
+  @override
+  String get exploreEmptyCategories => 'No hay categorías disponibles.';
+
+  @override
+  String get exploreEmptyRecommended =>
+      '¡Sigue algunos streamers para recibir recomendaciones personalizadas!';
+
+  @override
+  String get exploreEmptySearch => 'Sin resultados.';
+
+  @override
+  String get exploreCategoryGeneral => 'General';
+
+  @override
+  String exploreFollowersCount(int count) {
+    return '$count seguidores';
+  }
+
+  @override
+  String exploreCategoryLiveCount(int count) {
+    return '$count en directo';
+  }
+
+  @override
+  String get exploreLoadError =>
+      'Error al cargar. Desliza hacia abajo para reintentar.';
+
+  @override
+  String exploreLiveSubtitle(String streamer, String category) {
+    return '$streamer • $category';
+  }
+
+  @override
+  String get editProfileTitle => 'Editar perfil';
+
+  @override
+  String get editProfileSave => 'Guardar';
+
+  @override
+  String get editProfileLoadError => 'Error al cargar el perfil';
+
+  @override
+  String get editProfileSaved => 'Perfil actualizado';
+
+  @override
+  String get editProfileSavedUsernameFailed =>
+      'Perfil guardado, pero falló al actualizar el username';
+
+  @override
+  String get editProfileSectionInfo => 'Información';
+
+  @override
+  String get editProfileSectionSocial => 'Enlaces sociales';
+
+  @override
+  String get editProfileFieldName => 'Nombre para mostrar';
+
+  @override
+  String get editProfileFieldNameRequired => 'Obligatorio';
+
+  @override
+  String get editProfileFieldBio => 'Bio';
+
+  @override
+  String get editProfileFieldBioHint => 'Cuéntanos un poco sobre ti...';
+
+  @override
+  String get editProfileSocialInstagram => 'Instagram';
+
+  @override
+  String get editProfileSocialTikTok => 'TikTok';
+
+  @override
+  String get editProfileSocialTwitter => 'X / Twitter';
+
+  @override
+  String get editProfileSocialYouTube => 'YouTube';
+
+  @override
+  String get editProfileSocialWebsite => 'Sitio web';
+
+  @override
+  String get editProfileSocialUserHint => '@usuario';
+
+  @override
+  String get editProfileSocialChannelHint => 'canal';
+
+  @override
+  String get editProfileSocialUrlHint => 'https://...';
+
+  @override
+  String get editProfileBannerAdd => 'Agregar banner';
+
+  @override
+  String get editProfileBannerPosition => 'Posicionar banner';
+
+  @override
+  String get editProfileAvatarPosition => 'Posicionar foto';
+
+  @override
+  String get editProfileUsernameLabel => 'Username';
+
+  @override
+  String get editProfileUsernameHint => '@tunombre';
+
+  @override
+  String get editProfileUsernameAvailable => 'Disponible';
+
+  @override
+  String get editProfileUsernameTooShort => 'Mínimo 3 caracteres';
+
+  @override
+  String get editProfileUsernameInvalid =>
+      'Solo letras, números y _ (debe comenzar con letra)';
+
+  @override
+  String get editProfileImageProcessError => 'No se pudo procesar la imagen.';
+
+  @override
+  String get editProfileImageDone => 'Listo';
+
+  @override
+  String get editProfileImageHint =>
+      'Arrastra para reposicionar · Pellizca para hacer zoom';
+
+  @override
+  String get editProfileErrorSaveFailed =>
+      'No se pudo guardar. Inténtalo de nuevo.';
+
+  @override
+  String get editProfileErrorUsernameCheck => 'Error al verificar';
+
+  @override
+  String get editProfileErrorUsernameInUse => 'Este username ya está en uso';
+
+  @override
+  String get editProfileErrorUsernameSaveFailed =>
+      'No se pudo guardar el username. Inténtalo de nuevo.';
+
+  @override
+  String get editProfileErrorAvatarUpload => 'Error al subir el avatar.';
+
+  @override
+  String get editProfileErrorBannerUpload => 'Error al subir el banner.';
+
+  @override
+  String get editProfileErrorAvatarRemove => 'Error al eliminar el avatar.';
+
+  @override
+  String get editProfileErrorBannerRemove => 'Error al eliminar el banner.';
+
+  @override
+  String get startLivePermissionDenied =>
+      'Necesitamos acceso a la cámara y al micrófono para empezar.';
+
+  @override
+  String get startLiveNoCamera => 'No se encontró cámara en este dispositivo.';
+
+  @override
+  String startLiveCameraInitError(String error) {
+    return 'Error al inicializar la cámara: $error';
+  }
+
+  @override
+  String get startLiveCameraInitFailed => 'Error al inicializar la cámara.';
+
+  @override
+  String get startLiveThumbCaptured => 'Portada capturada de la cámara ✨';
+
+  @override
+  String get startLiveThumbCaptureFailed => 'No se pudo capturar la portada.';
+
+  @override
+  String get startLiveThumbUpdated => 'Portada actualizada.';
+
+  @override
+  String get startLiveThumbCaptureNow => 'Capturar ahora';
+
+  @override
+  String get startLiveThumbCaptureNowSubtitle =>
+      'Usa el frame actual de la cámara';
+
+  @override
+  String get startLiveThumbPickGallery => 'Elegir de la galería';
+
+  @override
+  String get startLiveThumbRemove => 'Quitar portada';
+
+  @override
+  String get startLiveRoomDataError =>
+      'No se pudieron obtener los datos del live.';
+
+  @override
+  String get startLiveRetry => 'Reintentar';
+
+  @override
+  String get startLiveTitleHint => 'Cuenta de qué va tu live...';
+
+  @override
+  String get startLiveCategoryLabel => 'Categoría';
+
+  @override
+  String get startLiveNotifyFollowers => 'Avisar a mis seguidores';
+
+  @override
+  String get startLiveGoLive => 'ENTRAR EN VIVO';
+
+  @override
+  String get startLiveSuggestions => 'Sugerencias';
+
+  @override
+  String get startLiveErrorTitleTooShort =>
+      'El título debe tener al menos 3 caracteres.';
+
+  @override
+  String get startLiveErrorCategoryRequired =>
+      'Selecciona una categoría para tu live.';
+
+  @override
+  String get liveCategoryShopping => 'Shopping';
+
+  @override
+  String get liveCategoryGaming => 'Gaming';
+
+  @override
+  String get liveCategoryTalkShow => 'Talk Show';
+
+  @override
+  String get liveCategoryMusic => 'Música';
+
+  @override
+  String get liveCategoryEducation => 'Educación';
+
+  @override
+  String get liveCategoryFitness => 'Fitness';
+
+  @override
+  String get liveCategoryCooking => 'Cocina';
+
+  @override
+  String get liveCategoryBeauty => 'Belleza';
+
+  @override
+  String get liveCategoryTech => 'Tecnología';
+
+  @override
+  String get liveCategorySports => 'Deportes';
+
+  @override
+  String get liveCategoryEntertainment => 'Entretenimiento';
+
+  @override
+  String get liveCategoryOther => 'Otro';
+
+  @override
+  String get liveVisibilityPublic => 'Público';
+
+  @override
+  String get liveVisibilityFollowers => 'Seguidores';
+
+  @override
+  String get liveVisibilityPrivate => 'Privado';
+
+  @override
+  String get liveVisibilityPublicDesc =>
+      'Cualquier persona puede entrar y descubrir';
+
+  @override
+  String get liveVisibilityFollowersDesc => 'Solo quien te sigue puede entrar';
+
+  @override
+  String get liveVisibilityPrivateDesc =>
+      'Solo personas con el enlace invitadas';
+
+  @override
+  String get warmupHeading => 'Calentando al público';
+
+  @override
+  String get warmupSubheading => 'Avisando a tus seguidores...';
+
+  @override
+  String warmupOpensInSeconds(int count, String plural) {
+    return 'El live abre en $count segundo$plural';
+  }
+
+  @override
+  String get warmupGoNow => 'Entrar en vivo ahora';
+
+  @override
+  String get warmupCancel => 'Cancelar calentamiento';
+
+  @override
+  String get vibeNetworkWifi => 'Wi-Fi';
+
+  @override
+  String get vibeNetworkMobile => '4G/5G';
+
+  @override
+  String get vibeNetworkEthernet => 'Ethernet';
+
+  @override
+  String get vibeNetworkNone => 'Sin red';
+
+  @override
+  String get vibeStatusGood => 'Todo listo para entrar en vivo';
+
+  @override
+  String get vibeStatusWarning => 'Funciona, pero puede oscilar';
+
+  @override
+  String get vibeStatusBad => 'Atención antes de empezar';
+
+  @override
+  String vibeNetworkLabel(String label) {
+    return 'Red: $label';
+  }
+
+  @override
+  String vibeBatteryLabel(int level) {
+    return 'Batería: $level%';
+  }
+
+  @override
+  String get shareLiveLoginNeeded => 'Inicia sesión para compartir';
+
+  @override
+  String get shareLiveLoadFollowersError =>
+      'No se pudieron cargar tus seguidores.';
+
+  @override
+  String shareLiveSentToCount(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString personas',
+      one: '$countString persona',
+    );
+    return 'Live enviado a $_temp0 🎉';
+  }
+
+  @override
+  String get shareLiveSendFailed => 'Error al compartir el live';
+
+  @override
+  String get shareLiveTitle => 'Compartir live';
+
+  @override
+  String get shareLiveBadge => 'LIVE';
+
+  @override
+  String get shareLiveSearchHint => 'Buscar seguidores';
+
+  @override
+  String get shareLiveErrorGeneric => 'Error';
+
+  @override
+  String get shareLiveRetry => 'Reintentar';
+
+  @override
+  String get shareLiveEmptyFollowers => 'No se encontraron seguidores.';
+
+  @override
+  String get shareLiveDefaultUser => 'Usuario';
+
+  @override
+  String get shareLiveNoteHint => 'Añade un mensaje (opcional)…';
+
+  @override
+  String shareLiveSendTo(int count) {
+    return 'Enviar a $count';
+  }
+
+  @override
+  String get shareLiveSelectContacts => 'Selecciona contactos';
+
+  @override
+  String get broadcasterPermissionDenied =>
+      'Necesitamos acceso a la cámara y al micrófono para que entres en vivo.';
+
+  @override
+  String get broadcasterNoCamera =>
+      'No se encontró ninguna cámara en este dispositivo.';
+
+  @override
+  String get broadcasterInitCameraFailed => 'Error al inicializar la cámara.';
+
+  @override
+  String broadcasterInitCameraError(String error) {
+    return 'Error al inicializar la cámara: $error';
+  }
+
+  @override
+  String broadcasterRoomUpdateFailed(String error) {
+    return 'No se pudo actualizar el live: $error';
+  }
+
+  @override
+  String get broadcasterMissingStreamCreds =>
+      'No se pudo iniciar: falta URL RTMP o clave de transmisión.';
+
+  @override
+  String get broadcasterConnectedLive => '¡Conectado! Estás en vivo. 🔴';
+
+  @override
+  String broadcasterStreamStartError(String error) {
+    return 'Error al iniciar la transmisión: $error';
+  }
+
+  @override
+  String get broadcasterLiveResumed =>
+      'Live reanudado — estás de vuelta al aire.';
+
+  @override
+  String get broadcasterLivePaused => 'Live pausado (BRB).';
+
+  @override
+  String broadcasterPauseToggleError(String error) {
+    return 'Error al pausar/reanudar: $error';
+  }
+
+  @override
+  String get broadcasterDiscardTitle => '¿Descartar live?';
+
+  @override
+  String get broadcasterDiscardMessage =>
+      'Creaste un live pero aún no empezaste a transmitir. ¿Descartarlo?';
+
+  @override
+  String get broadcasterCancel => 'Cancelar';
+
+  @override
+  String get broadcasterDiscard => 'Descartar';
+
+  @override
+  String get broadcasterEndTitle => '¿Finalizar live?';
+
+  @override
+  String get broadcasterEndMessage =>
+      '¿Seguro que quieres finalizar la transmisión? Tus viewers serán desconectados.';
+
+  @override
+  String get broadcasterContinueLive => 'Seguir en vivo';
+
+  @override
+  String get broadcasterEnd => 'Finalizar';
+
+  @override
+  String get broadcasterMoreResumeLive => 'Reanudar live';
+
+  @override
+  String get broadcasterMorePauseBrb => 'Pausar (BRB)';
+
+  @override
+  String get broadcasterMoreResumeSubtitle =>
+      'Vuelve al aire y continúa transmitiendo';
+
+  @override
+  String get broadcasterMorePauseSubtitle =>
+      'Pausa la transmisión sin finalizarla';
+
+  @override
+  String get broadcasterMoreSwitchCamera => 'Cambiar cámara';
+
+  @override
+  String get broadcasterMoreSwitchCameraSubtitle =>
+      'Alterna entre frontal y trasera';
+
+  @override
+  String get broadcasterMoreShareLive => 'Compartir live';
+
+  @override
+  String get broadcasterMoreShareLiveSubtitle =>
+      'Envía preview del live a tus seguidores';
+
+  @override
+  String get broadcasterMoreEndLive => 'Finalizar live';
+
+  @override
+  String get broadcasterMoreEndLiveSubtitle =>
+      'Finaliza la transmisión para todos';
+
+  @override
+  String get broadcasterBadgePaused => 'PAUSED';
+
+  @override
+  String get broadcasterBadgeLive => 'LIVE';
+
+  @override
+  String get broadcasterTooltipResume => 'Reanudar';
+
+  @override
+  String get broadcasterTooltipPause => 'Pausar';
+
+  @override
+  String get broadcasterTooltipMore => 'Más';
+
+  @override
+  String get broadcasterTooltipEnd => 'Finalizar';
+
+  @override
+  String broadcasterViewerJoined(String name) {
+    return '$name entró';
+  }
+
+  @override
+  String get suggestTimeDawn => 'Madrugada';
+
+  @override
+  String get suggestTimeMorning => 'Buenos días';
+
+  @override
+  String get suggestTimeAfternoon => 'Buenas tardes';
+
+  @override
+  String get suggestTimeEvening => 'Buenas noches';
+
+  @override
+  String suggestModa1(String time) {
+    return '$time de moda — ¿qué me pongo?';
+  }
+
+  @override
+  String get suggestModa2 => 'Look del día en vivo';
+
+  @override
+  String get suggestModa3 => 'Probador online — ayúdame a elegir';
+
+  @override
+  String suggestBeleza1(String time) {
+    return '$time maquillaje en vivo';
+  }
+
+  @override
+  String get suggestBeleza2 => 'Skincare routine — juntos';
+
+  @override
+  String get suggestBeleza3 => 'Reseña de producto nuevo';
+
+  @override
+  String get suggestJogos1 => 'A jugar — ¿quién entra?';
+
+  @override
+  String suggestJogos2(String time) {
+    return 'Rank up live • $time';
+  }
+
+  @override
+  String get suggestJogos3 => 'Calentamiento antes de ranked';
+
+  @override
+  String suggestMusica1(String time) {
+    return '$time musical — pedidos abiertos';
+  }
+
+  @override
+  String get suggestMusica2 => 'Tocando en vivo — vente';
+
+  @override
+  String get suggestMusica3 => 'Playlist + charla';
+
+  @override
+  String get suggestEsportes1 => 'Comentando el partido en vivo';
+
+  @override
+  String suggestEsportes2(String time) {
+    return '$time deportiva — comentamos';
+  }
+
+  @override
+  String get suggestEsportes3 => 'Entreno + charla';
+
+  @override
+  String suggestComida1(String time) {
+    return '$time en la cocina — cocinemos';
+  }
+
+  @override
+  String get suggestComida2 => 'Receta en vivo';
+
+  @override
+  String get suggestComida3 => 'Probando una receta nueva';
+
+  @override
+  String suggestGeneric1(String time) {
+    return '$time con la banda';
+  }
+
+  @override
+  String get suggestGeneric2 => 'Vente, hablamos';
+
+  @override
+  String get suggestGeneric3 => 'Live abierto — pasa por aquí';
+
+  @override
+  String get liveCommentsHint => 'Di algo...';
+
+  @override
+  String get liveCommentsSending => '  Enviando...';
+
+  @override
+  String giftsSent(String name) {
+    return '¡Enviaste $name!';
+  }
+
+  @override
+  String get giftsTitle => 'Enviar un regalo';
+
+  @override
+  String get giftsEmpty => 'No hay regalos disponibles';
+
+  @override
+  String get giftsSendButton => 'ENVIAR';
+
+  @override
+  String giftsError(String error) {
+    return 'Error al cargar los regalos: $error';
+  }
+
+  @override
+  String giftsCreditsLabel(int count) {
+    return '$count Créditos';
+  }
+
+  @override
+  String giftsPriceLabel(int price) {
+    return '$price pts';
+  }
+
+  @override
+  String get liveFeedEmptyForYou => 'No hay lives en Para Ti ahora.';
+
+  @override
+  String get liveFeedEmptyAll => 'No hay lives activos en este momento.';
+
+  @override
+  String get liveFeedEmptyHint => 'Vuelve más tarde o desliza para actualizar.';
+
+  @override
+  String get liveFeedRefresh => 'Actualizar';
+
+  @override
+  String get liveFeedRetry => 'Reintentar';
+
+  @override
+  String liveFeedError(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get liveFeedCategoryForYou => 'Para Ti';
+
+  @override
+  String get liveFeedCategoryAll => 'Todos los Lives';
+
+  @override
+  String liveFeedShareMessage(String title, String url) {
+    return 'Mira este live en Brawe: $title\n$url';
+  }
+
+  @override
+  String get liveFeedBadgeLive => 'EN VIVO';
+
+  @override
+  String liveFeedBadgeLiveWithCount(int count) {
+    return 'EN VIVO $count';
+  }
+
+  @override
+  String get liveFeedGift => 'Regalo';
+
+  @override
+  String get liveFeedShare => 'Compartir';
+
+  @override
+  String get livePlayerInputHint => 'Di algo genial...';
+
+  @override
+  String get livePlayerTooltipRose => 'Enviar rosa';
+
+  @override
+  String get livePlayerTooltipGifts => 'Regalos';
+
+  @override
+  String get livePlayerTooltipLike => 'Me gusta';
+
+  @override
+  String get livePlayerTooltipSend => 'Enviar';
+
+  @override
+  String get livePlayerGiftSentVerb => ' envió ';
+
+  @override
+  String get livePlayerShareTitle => 'Compartir con seguidores';
+
+  @override
+  String get livePlayerShareSubtitle => 'Envía este live en una conversación';
+
+  @override
+  String get livePlayerReportTitle => 'Denunciar live';
+
+  @override
+  String get livePlayerReportSubtitle =>
+      'Avisa a nuestro equipo sobre algo incorrecto';
+
+  @override
+  String get livePlayerReportSubmitted => 'Denuncia registrada. Gracias.';
+
+  @override
+  String get liveCurrentUser => 'Tú';
+
+  @override
+  String get commonFollow => 'SEGUIR';
+
+  @override
+  String get liveBadgeLive => 'EN VIVO';
+
+  @override
+  String get homeSectionLiveBattles => 'BATALLAS DE LIVE STREAM';
+
+  @override
+  String get homeSectionTopStreamers => 'TOP STREAMERS';
+
+  @override
+  String get homeSectionCategories => 'CATEGORÍAS';
+
+  @override
+  String get homeSectionStreamCard => 'TARJETA DE STREAM';
+
+  @override
+  String get homeSectionLiveCommerce => 'LIVE COMMERCE SHOW';
+
+  @override
+  String get homeSectionRecentLives => 'Lives recientes';
+
+  @override
+  String get homeErrorLoadingStats => 'Error al cargar estadísticas';
+
+  @override
+  String get homeErrorLoadingLives => 'Error al cargar lives';
+
+  @override
+  String get homeEmptyPastLives => 'No se encontraron lives anteriores';
+
+  @override
+  String get homeEmptyStreamers => 'Aún no hay streamers';
+
+  @override
+  String get homeBattleWatchBet => 'VER Y APOSTAR';
+
+  @override
+  String get homeBattleLabel => 'Batalla PK';
+
+  @override
+  String get commonError => 'Error';
+
+  @override
+  String get videoTooltipRepostStory => 'Republicar en Stories';
+
+  @override
+  String get liveBattleTapToWatch => 'Toca para ver en vivo';
+
+  @override
+  String get liveBattleMysteryGift => 'Regalo Misterioso';
+
+  @override
+  String get livePeekWatchLive => 'Ver en Vivo';
+
+  @override
+  String get productSoldOut => 'Agotado';
+
+  @override
+  String get productBuy => 'Comprar';
+
+  @override
+  String productLowStock(int count) {
+    return 'Solo quedan $count';
+  }
+
+  @override
+  String productSoldCount(int count) {
+    return '$count vendidos';
+  }
+
+  @override
+  String get emojiCatSmileys => 'Smileys';
+
+  @override
+  String get emojiCatGestures => 'Gestos';
+
+  @override
+  String get emojiCatHearts => 'Corazón';
+
+  @override
+  String get emojiCatAnimals => 'Animales';
+
+  @override
+  String get emojiCatFood => 'Comida';
+
+  @override
+  String get emojiCatParty => 'Fiesta';
+
+  @override
+  String get emojiCatObjects => 'Objetos';
+
+  @override
+  String get battleVs => 'VS';
+
+  @override
+  String get battleTimer => 'Tiempo restante';
+
+  @override
+  String get battleSendGift => 'Enviar regalo';
+
+  @override
+  String get battleSupport => 'Apoyar';
+
+  @override
+  String get battleWinner => 'Ganador';
+
+  @override
+  String get battleDraw => 'Empate';
+
+  @override
+  String get battleEnded => 'Batalla terminada';
+
+  @override
+  String get battleResultTitle => 'Resultado de la batalla';
+
+  @override
+  String get battleResultShare => 'Compartir resultado';
+
+  @override
+  String get battleResultWatchAgain => 'Ver otra batalla';
+
+  @override
+  String battleScoreLabel(String score) {
+    return '$score pts';
+  }
+
+  @override
+  String get battleTopSupporters => 'Top apoyadores';
+
+  @override
+  String battleYouScore(String score) {
+    return 'Tú: $score';
+  }
+
+  @override
+  String battleRivalScore(String score) {
+    return 'Rival: $score';
+  }
+
+  @override
+  String battleCountdownStarting(int count) {
+    return 'Comenzando en $count';
+  }
+
+  @override
+  String battleInviteReceived(String name) {
+    return '¡$name te desafió a una batalla!';
+  }
+
+  @override
+  String get battleAccept => 'Aceptar';
+
+  @override
+  String get battleDecline => 'Rechazar';
+
+  @override
+  String get battleLoading => 'Cargando batalla...';
+
+  @override
+  String get battleError => 'Error al cargar batalla';
+
+  @override
+  String battleGiftReceived(String sender, String gift) {
+    return '$sender envió $gift';
+  }
+}

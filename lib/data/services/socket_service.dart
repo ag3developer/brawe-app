@@ -20,6 +20,9 @@ class SocketService {
   io.Socket? _socket;
   User? _currentUser;
   Future<void>? _connectFuture;
+  // 🔁 Rooms we are currently joined to. On auto-reconnect we re-join them
+  // so chat / gifts / viewer count keep flowing without the user noticing.
+  final Set<String> _joinedRooms = <String>{};
 
   SocketService(this._storageService);
 
@@ -54,6 +57,12 @@ class SocketService {
     _socket?.onConnect((_) {
       debugPrint('Socket.IO: Connected');
       _authenticate(token);
+      // 🔁 Re-join all rooms that we believe we belong to. Required after
+      // an auto-reconnect — otherwise the server stops forwarding chat,
+      // gifts and viewer events for those rooms.
+      for (final roomId in _joinedRooms.toList()) {
+        _emitWithUserProfile(AppConstants.eventJoinRoom, {'room_id': roomId});
+      }
       if (!completer.isCompleted) {
         completer.complete();
       }
@@ -62,6 +71,13 @@ class SocketService {
     _socket?.onDisconnect((_) {
       debugPrint('Socket.IO: Disconnected');
       _connectFuture = null;
+      // Auto-reconnect after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (!(_socket?.connected ?? false)) {
+          debugPrint('Socket.IO: Attempting auto-reconnect...');
+          _socket?.connect();
+        }
+      });
     });
 
     _socket?.onConnectError((err) {
@@ -83,17 +99,20 @@ class SocketService {
   }
 
   void disconnect() {
+    _joinedRooms.clear();
     _socket?.disconnect();
     _socket = null;
     _currentUser = null;
   }
 
   void joinRoom(String roomId) {
+    _joinedRooms.add(roomId);
     _emitWithUserProfile(AppConstants.eventJoinRoom, {'room_id': roomId});
     debugPrint('Socket.IO: Joining room $roomId');
   }
 
   void leaveRoom(String roomId) {
+    _joinedRooms.remove(roomId);
     emit(AppConstants.eventLeaveRoom, {'room_id': roomId});
     debugPrint('Socket.IO: Leaving room $roomId');
   }

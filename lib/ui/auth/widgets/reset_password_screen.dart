@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 import 'common/auth_action_button.dart';
@@ -33,14 +34,15 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final s = S.of(context);
     final pwd = _passwordController.text;
     final confirm = _confirmController.text;
     if (pwd.length < 8) {
-      AppSnackBar.showError(context, 'A senha deve ter pelo menos 8 caracteres.');
+      AppSnackBar.showError(context, s.resetPasswordTooShort);
       return;
     }
     if (pwd != confirm) {
-      AppSnackBar.showError(context, 'As senhas não coincidem.');
+      AppSnackBar.showError(context, s.resetPasswordsDontMatch);
       return;
     }
     setState(() => _loading = true);
@@ -50,17 +52,18 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             newPassword: pwd,
           );
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Senha alterada com sucesso.');
+      AppSnackBar.showSuccess(context, S.of(context).cpChangedSuccess);
       context.go('/login');
     } on DioException catch (e) {
       if (!mounted) return;
+      final fallback = S.of(context).resetInvalidToken;
       final detail = e.response?.data is Map
-          ? (e.response?.data['detail']?.toString() ?? 'Token inválido ou expirado.')
-          : 'Token inválido ou expirado.';
+          ? (e.response?.data['detail']?.toString() ?? fallback)
+          : fallback;
       AppSnackBar.showError(context, detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Erro de conexão.');
+      AppSnackBar.showError(context, S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -68,6 +71,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -81,7 +85,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                 children: [
                   const SizedBox(height: 24),
                   Text(
-                    'Criar nova senha',
+                    s.resetTitle,
                     style: TextStyle(
                       color: context.colors.textPrimary,
                       fontSize: 28,
@@ -90,14 +94,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Escolha uma senha forte de pelo menos 8 caracteres.',
+                    s.resetSubtitle,
                     style: TextStyle(
                         color: context.colors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
                   AuthInputField(
                     controller: _passwordController,
-                    label: 'NOVA SENHA',
+                    label: s.resetNewPasswordLabel,
                     hintText: '••••••••',
                     obscureText: true,
                     prefixIcon: Icons.lock_outline,
@@ -106,7 +110,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   const SizedBox(height: 16),
                   AuthInputField(
                     controller: _confirmController,
-                    label: 'CONFIRMAR SENHA',
+                    label: s.resetConfirmPasswordLabel,
                     hintText: '••••••••',
                     obscureText: true,
                     prefixIcon: Icons.lock_outline,
@@ -114,7 +118,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                   const SizedBox(height: 24),
                   AuthActionButton(
-                    label: _loading ? 'Salvando...' : 'Salvar nova senha',
+                    label: _loading ? s.resetSaving : s.cpSaveNewPassword,
                     onPressed: _loading ? null : _submit,
                   ),
                 ],

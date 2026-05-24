@@ -23,6 +23,14 @@ class PostService {
     return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<PostFeedResponseDto> getFollowingFeed({int limit = 20, int offset = 0}) async {
+    final response = await _dio.get(
+      '/posts/following',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
   /// Backend: GET /posts/:id  → retorna PostResponseDto plano.
   Future<PostResponseDto> getById(String postId) async {
     final response = await _dio.get('/posts/$postId');

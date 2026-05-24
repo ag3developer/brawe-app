@@ -17,6 +17,7 @@ import 'start_live/warmup_overlay.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../data/model/create_live_room_request_dto.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -53,8 +54,13 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _bootstrapCamera();
-    _loadLastConfig();
-    _refreshSuggestions();
+    // Defer i18n-dependent work until after first frame so `S.of(context)`
+    // is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadLastConfig();
+      _refreshSuggestions();
+    });
   }
 
   Future<void> _loadLastConfig() async {
@@ -71,9 +77,13 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   }
 
   void _refreshSuggestions() {
+    if (!mounted) return;
     final cat = ref.read(startLiveViewModelProvider).category;
     setState(() {
-      _titleSuggestions = _suggester.suggest(category: cat.isEmpty ? null : cat);
+      _titleSuggestions = _suggester.suggest(
+        s: S.of(context),
+        category: cat.isEmpty ? null : cat,
+      );
     });
   }
 
@@ -110,8 +120,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       if (!cameraStatus.isGranted || !micStatus.isGranted) {
         setState(() {
           _initializing = false;
-          _initError =
-              'Precisamos de acesso à câmera e ao microfone para iniciar.';
+          _initError = S.of(context).startLivePermissionDenied;
         });
         return;
       }
@@ -120,7 +129,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       if (cameras.isEmpty) {
         setState(() {
           _initializing = false;
-          _initError = 'Nenhuma câmera encontrada neste dispositivo.';
+          _initError = S.of(context).startLiveNoCamera;
         });
         return;
       }
@@ -136,7 +145,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       if (mounted) {
         setState(() {
           _initializing = false;
-          _initError = 'Erro ao inicializar a câmera: $e';
+          _initError = S.of(context).startLiveCameraInitError(e.toString());
         });
       }
     }
@@ -155,7 +164,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) {
-        setState(() => _initError = 'Falha ao inicializar a câmera.');
+        setState(() => _initError = S.of(context).startLiveCameraInitFailed);
       }
     }
   }
@@ -177,11 +186,11 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       await controller.takePicture(path);
       ref.read(startLiveViewModelProvider.notifier).setThumbnail(path);
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Capa capturada da câmera ✨');
+        AppSnackBar.showSuccess(context, S.of(context).startLiveThumbCaptured);
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Não foi possível capturar a capa.');
+        AppSnackBar.showError(context, S.of(context).startLiveThumbCaptureFailed);
       }
     }
   }
@@ -193,11 +202,12 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     if (file == null) return;
     ref.read(startLiveViewModelProvider.notifier).setThumbnail(file.path);
     if (mounted) {
-      AppSnackBar.showSuccess(context, 'Capa atualizada.');
+      AppSnackBar.showSuccess(context, S.of(context).startLiveThumbUpdated);
     }
   }
 
   void _openThumbnailSheet() {
+    final s = S.of(context);
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.slate,
@@ -211,10 +221,10 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined,
                   color: AppColors.electricPurple),
-              title: const Text('Capturar agora',
-                  style: TextStyle(color: Colors.white)),
-              subtitle: const Text('Usa o frame atual da câmera',
-                  style: TextStyle(color: AppColors.coolGray)),
+              title: Text(s.startLiveThumbCaptureNow,
+                  style: const TextStyle(color: Colors.white)),
+              subtitle: Text(s.startLiveThumbCaptureNowSubtitle,
+                  style: const TextStyle(color: AppColors.coolGray)),
               onTap: () {
                 Navigator.pop(ctx);
                 _captureThumbnailFromCamera();
@@ -223,8 +233,8 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             ListTile(
               leading: const Icon(Icons.image_outlined,
                   color: AppColors.electricPurple),
-              title: const Text('Escolher da galeria',
-                  style: TextStyle(color: Colors.white)),
+              title: Text(s.startLiveThumbPickGallery,
+                  style: const TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickThumbnailFromGallery();
@@ -234,8 +244,8 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               ListTile(
                 leading: const Icon(Icons.delete_outline,
                     color: AppColors.mutedRed),
-                title: const Text('Remover capa',
-                    style: TextStyle(color: AppColors.mutedRed)),
+                title: Text(s.startLiveThumbRemove,
+                    style: const TextStyle(color: AppColors.mutedRed)),
                 onTap: () {
                   ref
                       .read(startLiveViewModelProvider.notifier)
@@ -251,12 +261,13 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   }
 
   Future<void> _onStartLive() async {
+    final s = S.of(context);
     final success =
         await ref.read(startLiveViewModelProvider.notifier).submit();
     if (!mounted) return;
 
     if (!success) {
-      final error = ref.read(startLiveViewModelProvider).errorMessage;
+      final error = ref.read(startLiveViewModelProvider).displayError(s);
       if (error != null) AppSnackBar.showError(context, error);
       return;
     }
@@ -264,7 +275,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     final state = ref.read(startLiveViewModelProvider);
     final room = state.status.asData?.value;
     if (room == null) {
-      AppSnackBar.showError(context, 'Não foi possível obter os dados da live.');
+      AppSnackBar.showError(context, s.startLiveRoomDataError);
       return;
     }
 
@@ -371,6 +382,15 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                   onNotifyChanged: ref
                       .read(startLiveViewModelProvider.notifier)
                       .toggleNotifyFollowers,
+                  onBattleModeChanged: ref
+                      .read(startLiveViewModelProvider.notifier)
+                      .toggleBattleMode,
+                  onGiftsChanged: ref
+                      .read(startLiveViewModelProvider.notifier)
+                      .toggleGifts,
+                  onTapFeaturedProduct: () {
+                    // TODO: abrir seletor de produto
+                  },
                   onTapThumbnail: _openThumbnailSheet,
                   onSubmit: state.canSubmit ? _onStartLive : null,
                 ),
@@ -412,7 +432,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               const SizedBox(height: AppSpacing.lg),
               FilledButton(
                 onPressed: _bootstrapCamera,
-                child: const Text('Tentar novamente'),
+                child: Text(S.of(context).startLiveRetry),
               ),
             ],
           ),
@@ -443,16 +463,56 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           _GlassButton(icon: Icons.close, onTap: onClose),
+          const SizedBox(width: 12),
+          // Badge de conexão
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 7, height: 7,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4ADE80),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text(
+                      'Conexão: ótima',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded, size: 14, color: Colors.white.withValues(alpha: 0.5)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const Spacer(),
           if (onFlip != null)
-            _GlassButton(icon: Icons.flip_camera_ios_outlined, onTap: onFlip!),
+            _GlassButton(
+              icon: Icons.flip_camera_ios_outlined,
+              onTap: onFlip!,
+              label: 'Inverter',
+            ),
         ],
       ),
     );
@@ -460,9 +520,10 @@ class _TopBar extends StatelessWidget {
 }
 
 class _GlassButton extends StatelessWidget {
-  const _GlassButton({required this.icon, required this.onTap});
+  const _GlassButton({required this.icon, required this.onTap, this.label});
   final IconData icon;
   final VoidCallback onTap;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -474,11 +535,23 @@ class _GlassButton extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.15),
           child: InkWell(
             onTap: onTap,
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Icon(icon, color: Colors.white, size: 22),
-            ),
+            child: label != null
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(label!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                      ],
+                    ),
+                  )
+                : SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Icon(icon, color: Colors.white, size: 22),
+                  ),
           ),
         ),
       ),
@@ -497,6 +570,9 @@ class _BottomSheet extends StatelessWidget {
     required this.onCategoryChanged,
     required this.onVisibilityChanged,
     required this.onNotifyChanged,
+    required this.onBattleModeChanged,
+    required this.onGiftsChanged,
+    required this.onTapFeaturedProduct,
     required this.onTapThumbnail,
     required this.onSubmit,
   });
@@ -510,6 +586,9 @@ class _BottomSheet extends StatelessWidget {
   final ValueChanged<String> onCategoryChanged;
   final ValueChanged<LiveVisibility> onVisibilityChanged;
   final ValueChanged<bool> onNotifyChanged;
+  final ValueChanged<bool> onBattleModeChanged;
+  final ValueChanged<bool> onGiftsChanged;
+  final VoidCallback onTapFeaturedProduct;
   final VoidCallback onTapThumbnail;
   final VoidCallback? onSubmit;
 
@@ -517,73 +596,497 @@ class _BottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLoading = state.status.isLoading;
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
+            color: const Color(0xFF0E0E14).withValues(alpha: 0.92),
             border: Border(
-              top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
             ),
           ),
           padding: EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg,
-            AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
+            20,
+            20,
+            20,
+            20 + MediaQuery.of(context).viewInsets.bottom,
           ),
           child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _LiveTitleField(
+                // ── Drag handle ──
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 18),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // ── Título ──
+                _CompactTitleField(
                   controller: titleController,
                   onChanged: onTitleChanged,
                   enabled: !isLoading,
                 ),
                 if (titleSuggestions.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: 10),
                   _TitleSuggestions(
                     suggestions: titleSuggestions,
                     onTap: onSuggestionTap,
                     enabled: !isLoading,
                   ),
                 ],
-                const SizedBox(height: AppSpacing.md),
-                _CategoryChips(
-                  value: state.category.isEmpty ? null : state.category,
-                  onChanged: onCategoryChanged,
-                  enabled: !isLoading,
+                const SizedBox(height: 16),
+
+                // ── Categoria + Visibilidade inline ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: _InlineDropdown(
+                        icon: Icons.category_outlined,
+                        label: state.category.isEmpty
+                            ? S.of(context).startLiveCategoryLabel
+                            : _CategoryChips.categoryLabel(S.of(context), state.category),
+                        onTap: () => _showCategorySheet(context),
+                        enabled: !isLoading,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _InlineDropdown(
+                        icon: Icons.public_outlined,
+                        label: _visLabel(S.of(context), state.visibility),
+                        onTap: () => _showVisibilitySheet(context),
+                        enabled: !isLoading,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _VisibilityPicker(
-                  value: state.visibility,
-                  onChanged: onVisibilityChanged,
-                  enabled: !isLoading,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                _NotifyFollowersToggle(
+                const SizedBox(height: 8),
+
+                // ── Avisar seguidores ──
+                _SlimToggleRow(
+                  icon: Icons.notifications_active_outlined,
+                  iconColor: const Color(0xFF4ADE80),
+                  label: S.of(context).startLiveNotifyFollowers,
                   value: state.notifyFollowers,
                   onChanged: onNotifyChanged,
                   enabled: !isLoading,
                 ),
+                const SizedBox(height: 6),
+
+                // ── Divisor ──
+                Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
+
+                // ── Feature tiles compactos ──
+                _FeatureTile(
+                  icon: Icons.sports_kabaddi_outlined,
+                  iconColor: AppColors.electricPurple,
+                  title: 'Modo batalha',
+                  subtitle: 'Permitir desafios e batalhas com outros criadores',
+                  trailing: Switch.adaptive(
+                    value: state.battleModeEnabled,
+                    onChanged: isLoading ? null : onBattleModeChanged,
+                    activeColor: AppColors.electricPurple,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                _FeatureTile(
+                  icon: Icons.card_giftcard_outlined,
+                  iconColor: const Color(0xFFEC4899),
+                  title: 'Gifts',
+                  subtitle: 'Receba presentes dos espectadores',
+                  trailing: Switch.adaptive(
+                    value: state.giftsEnabled,
+                    onChanged: isLoading ? null : onGiftsChanged,
+                    activeColor: const Color(0xFFEC4899),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                _FeatureTile(
+                  icon: Icons.shopping_bag_outlined,
+                  iconColor: const Color(0xFFF59E0B),
+                  title: 'Produto em destaque',
+                  subtitle: 'Selecione um produto para promover na live',
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                      color: Colors.white38, size: 20),
+                  onTap: onTapFeaturedProduct,
+                ),
+                const SizedBox(height: 20),
+
+                // ── Erro ──
                 if (state.errorMessage != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
                   Text(
-                    state.errorMessage!,
+                    state.displayError(S.of(context)) ?? state.errorMessage!,
                     style: const TextStyle(color: AppColors.mutedRed),
                   ),
+                  const SizedBox(height: 12),
                 ],
-                const SizedBox(height: AppSpacing.lg),
-                _GoLiveButton(
-                  onPressed: onSubmit,
-                  isLoading: isLoading,
+
+                // ── Botão ENTRAR AO VIVO ──
+                _GoLiveButton(onPressed: onSubmit, isLoading: isLoading),
+                const SizedBox(height: 6),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.help_outline, size: 14, color: Colors.white38),
+                    label: const Text(
+                      'Dicas para uma boa live',
+                      style: TextStyle(color: Colors.white38, fontSize: 12),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  String _visLabel(S s, LiveVisibility v) {
+    switch (v) {
+      case LiveVisibility.public: return s.liveVisibilityPublic;
+      case LiveVisibility.followers: return s.liveVisibilityFollowers;
+      case LiveVisibility.private: return s.liveVisibilityPrivate;
+    }
+  }
+
+  void _showCategorySheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12121A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ...AppConstants.categories.map((cat) {
+                  final emoji = _CategoryChips._emojis[cat] ?? '•';
+                  return ListTile(
+                    leading: Text(emoji, style: const TextStyle(fontSize: 20)),
+                    title: Text(
+                      _CategoryChips.categoryLabel(S.of(context), cat),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    trailing: state.category == cat
+                        ? const Icon(Icons.check_rounded, color: AppColors.electricPurple)
+                        : null,
+                    onTap: () {
+                      onCategoryChanged(cat);
+                      Navigator.pop(ctx);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVisibilitySheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12121A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final s = S.of(context);
+        final options = [
+          (LiveVisibility.public, Icons.public_outlined, s.liveVisibilityPublic, 'Qualquer pessoa pode assistir'),
+          (LiveVisibility.followers, Icons.group_outlined, s.liveVisibilityFollowers, 'Apenas seus seguidores'),
+          (LiveVisibility.private, Icons.lock_outline, s.liveVisibilityPrivate, 'Somente com link privado'),
+        ];
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                ...options.map((o) => ListTile(
+                  leading: Icon(o.$2, color: Colors.white70),
+                  title: Text(o.$3, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  subtitle: Text(o.$4, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                  trailing: state.visibility == o.$1
+                      ? const Icon(Icons.check_rounded, color: AppColors.electricPurple)
+                      : null,
+                  onTap: () {
+                    onVisibilityChanged(o.$1);
+                    Navigator.pop(ctx);
+                  },
+                )),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CompactTitleField extends StatelessWidget {
+  const _CompactTitleField({
+    required this.onChanged,
+    this.controller,
+    this.enabled = true,
+  });
+  final ValueChanged<String> onChanged;
+  final TextEditingController? controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final charCount = controller?.text.length ?? 0;
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        TextField(
+          controller: controller,
+          enabled: enabled,
+          onChanged: onChanged,
+          maxLength: 100,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          cursorColor: AppColors.electricPurple,
+          decoration: InputDecoration(
+            hintText: S.of(context).startLiveTitleHint,
+            hintStyle: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
+            counterText: '',
+            contentPadding: const EdgeInsets.only(left: 16, right: 56, top: 14, bottom: 14),
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.06),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: AppColors.electricPurple, width: 1.5),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 14,
+          child: Text(
+            '$charCount/100',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.3),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InlineDropdown extends StatelessWidget {
+  const _InlineDropdown({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 15, color: Colors.white60),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.expand_more_rounded, size: 16, color: Colors.white.withValues(alpha: 0.4)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlimToggleRow extends StatelessWidget {
+  const _SlimToggleRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.enabled = true,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: enabled ? () => onChanged(!value) : null,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: iconColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              onChanged: enabled ? onChanged : null,
+              activeColor: iconColor,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+    this.onTap,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            trailing,
+          ],
         ),
       ),
     );
@@ -614,7 +1117,7 @@ class _LiveTitleField extends StatelessWidget {
       ),
       cursorColor: AppColors.electricPurple,
       decoration: InputDecoration(
-        hintText: 'Diga sobre o que é sua live...',
+        hintText: S.of(context).startLiveTitleHint,
         hintStyle: TextStyle(
           color: Colors.white.withValues(alpha: 0.5),
           fontWeight: FontWeight.w500,
@@ -672,8 +1175,40 @@ class _CategoryChips extends StatelessWidget {
     'Outro': '✨',
   };
 
+  static String categoryLabel(S s, String id) {
+    switch (id) {
+      case 'Shopping':
+        return s.liveCategoryShopping;
+      case 'Gaming':
+        return s.liveCategoryGaming;
+      case 'Talk Show':
+        return s.liveCategoryTalkShow;
+      case 'Música':
+        return s.liveCategoryMusic;
+      case 'Educação':
+        return s.liveCategoryEducation;
+      case 'Fitness':
+        return s.liveCategoryFitness;
+      case 'Culinária':
+        return s.liveCategoryCooking;
+      case 'Beleza':
+        return s.liveCategoryBeauty;
+      case 'Tecnologia':
+        return s.liveCategoryTech;
+      case 'Esportes':
+        return s.liveCategorySports;
+      case 'Entretenimento':
+        return s.liveCategoryEntertainment;
+      case 'Outro':
+        return s.liveCategoryOther;
+      default:
+        return id;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -681,9 +1216,9 @@ class _CategoryChips extends StatelessWidget {
           padding: const EdgeInsets.only(left: 2, bottom: 8),
           child: Row(
             children: [
-              const Text(
-                'Categoria',
-                style: TextStyle(
+              Text(
+                s.startLiveCategoryLabel,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -692,8 +1227,8 @@ class _CategoryChips extends StatelessWidget {
               const SizedBox(width: 6),
               if (value != null && value!.isNotEmpty)
                 Text(
-                  '· ${value!}',
-                  style: TextStyle(
+                  '· ${categoryLabel(s, value!)}',
+                  style: const TextStyle(
                     color: AppColors.electricPurple,
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
@@ -778,7 +1313,7 @@ class _CategoryChips extends StatelessWidget {
                         Text(emoji, style: const TextStyle(fontSize: 15)),
                         const SizedBox(width: 6),
                         Text(
-                          category,
+                          categoryLabel(s, category),
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: selected
@@ -811,8 +1346,20 @@ class _VisibilityPicker extends StatelessWidget {
   final ValueChanged<LiveVisibility> onChanged;
   final bool enabled;
 
+  static String _label(S s, LiveVisibility v) {
+    switch (v) {
+      case LiveVisibility.public:
+        return s.liveVisibilityPublic;
+      case LiveVisibility.followers:
+        return s.liveVisibilityFollowers;
+      case LiveVisibility.private:
+        return s.liveVisibilityPrivate;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
@@ -849,7 +1396,7 @@ class _VisibilityPicker extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      v.label,
+                      _label(s, v),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -891,10 +1438,10 @@ class _NotifyFollowersToggle extends StatelessWidget {
             const Icon(Icons.notifications_active_outlined,
                 color: Colors.white, size: 20),
             const SizedBox(width: AppSpacing.sm),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Avisar meus seguidores',
-                style: TextStyle(
+                S.of(context).startLiveNotifyFollowers,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -961,23 +1508,24 @@ class _GoLiveButton extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.fiber_manual_record,
+                        const Icon(Icons.fiber_manual_record,
                             color: Colors.white, size: 14),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
-                          'ENTRAR AO VIVO',
-                          style: TextStyle(
+                          S.of(context).startLiveGoLive,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
                             letterSpacing: 1.1,
                           ),
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward,
+                            color: Colors.white, size: 18),
                       ],
                     ),
             ),
@@ -1020,7 +1568,7 @@ class _TitleSuggestions extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Sugestões',
+                    S.of(context).startLiveSuggestions,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,

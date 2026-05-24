@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/stories_view_model.dart';
 
 class CreateStorySheet extends ConsumerStatefulWidget {
@@ -54,7 +56,7 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha ao carregar imagem do post.')),
+        SnackBar(content: Text(S.of(context).storyPrefetchError)),
       );
     } finally {
       if (mounted) setState(() => _isPrefetching = false);
@@ -140,20 +142,21 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                 : _captionController.text.trim(),
           );
       if (!mounted) return;
+      final s = S.of(context);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Story publicado!'),
+        SnackBar(
+          content: Text(s.storyPublishedSuccess),
           backgroundColor: AppColors.electricPurple,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _isPublishing = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erro ao publicar story. Tente novamente.'),
+        SnackBar(
+          content: Text(S.of(context).storyPublishError),
           backgroundColor: Colors.red,
         ),
       );
@@ -162,6 +165,7 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return AnimatedPadding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -171,9 +175,9 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.92,
         ),
-        decoration: const BoxDecoration(
-          color: Color(0xFF141824),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -200,11 +204,11 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                         ? null
                         : () => Navigator.of(context).pop(),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Novo story',
+                      s.storySheetTitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -224,9 +228,9 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                               color: AppColors.electricPurple,
                             ),
                           )
-                        : const Text(
-                            'Publicar',
-                            style: TextStyle(
+                        : Text(
+                            s.storyPublish,
+                            style: const TextStyle(
                               color: AppColors.electricPurple,
                               fontWeight: FontWeight.w600,
                             ),
@@ -249,17 +253,17 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: _isPrefetching
-                      ? const Center(
+                      ? Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              CircularProgressIndicator(
+                              const CircularProgressIndicator(
                                 color: AppColors.electricPurple,
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
                               Text(
-                                'Carregando imagem do post...',
-                                style: TextStyle(color: Colors.white70),
+                                s.storyPrefetchLoading,
+                                style: const TextStyle(color: Colors.white70),
                               ),
                             ],
                           ),
@@ -309,14 +313,14 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: TextField(
                 controller: _captionController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: context.colors.textPrimary),
                 maxLength: 200,
                 decoration: InputDecoration(
-                  hintText: 'Escreva uma legenda (opcional)…',
-                  hintStyle: const TextStyle(color: Colors.white38),
+                  hintText: s.storyCaptionHint,
+                  hintStyle: TextStyle(color: context.colors.textTertiary),
                   filled: true,
-                  fillColor: const Color(0xFF1F2433),
-                  counterStyle: const TextStyle(color: Colors.white38),
+                  fillColor: context.colors.surfaceElevated,
+                  counterStyle: TextStyle(color: context.colors.textTertiary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -331,10 +335,10 @@ class _CreateStorySheetState extends ConsumerState<CreateStorySheet> {
                   children: [
                     TextButton.icon(
                       onPressed: _resetSelection,
-                      icon: const Icon(Icons.refresh, color: Colors.white70),
-                      label: const Text(
-                        'Trocar mídia',
-                        style: TextStyle(color: Colors.white70),
+                      icon: Icon(Icons.refresh, color: context.colors.textSecondary),
+                      label: Text(
+                        s.storySwapMedia,
+                        style: TextStyle(color: context.colors.textSecondary),
                       ),
                     ),
                   ],
@@ -362,8 +366,9 @@ class _PickerPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Container(
-      color: const Color(0xFF0F1320),
+      color: context.colors.surfaceElevated,
       alignment: Alignment.center,
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -371,20 +376,20 @@ class _PickerPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_a_photo_outlined,
-                color: Colors.white54, size: 56),
+            Icon(Icons.add_a_photo_outlined,
+                color: context.colors.textSecondary, size: 56),
             const SizedBox(height: 12),
-            const Text(
-              'Selecione ou grave uma mídia',
-              style: TextStyle(color: Colors.white70, fontSize: 15),
+            Text(
+              s.storyPickerTitle,
+              style: TextStyle(color: context.colors.textSecondary, fontSize: 15),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Foto ou vídeo (até 60s)',
-              style: TextStyle(color: Colors.white38, fontSize: 12),
+            Text(
+              s.storyPickerSubtitle,
+              style: TextStyle(color: context.colors.textTertiary, fontSize: 12),
             ),
             const SizedBox(height: 20),
-            const _SectionLabel(label: 'Galeria'),
+            _SectionLabel(label: s.storyPickerSectionGallery),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -393,16 +398,16 @@ class _PickerPlaceholder extends StatelessWidget {
               children: [
                 _PickerChip(
                     icon: Icons.photo_library,
-                    label: 'Foto',
+                    label: s.storyPickerChipPhoto,
                     onTap: onGalleryImage),
                 _PickerChip(
                     icon: Icons.video_library,
-                    label: 'Vídeo',
+                    label: s.storyPickerChipVideo,
                     onTap: onGalleryVideo),
               ],
             ),
             const SizedBox(height: 18),
-            const _SectionLabel(label: 'Câmera'),
+            _SectionLabel(label: s.storyPickerSectionCamera),
             const SizedBox(height: 8),
             Wrap(
               spacing: 10,
@@ -411,11 +416,11 @@ class _PickerPlaceholder extends StatelessWidget {
               children: [
                 _PickerChip(
                     icon: Icons.photo_camera,
-                    label: 'Foto',
+                    label: s.storyPickerChipPhoto,
                     onTap: onCameraImage),
                 _PickerChip(
                     icon: Icons.videocam,
-                    label: 'Gravar vídeo',
+                    label: s.storyPickerChipRecordVideo,
                     onTap: onCameraVideo),
               ],
             ),
@@ -433,8 +438,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: const TextStyle(
-        color: Colors.white54,
+      style: TextStyle(
+        color: context.colors.textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.2,
@@ -462,16 +467,16 @@ class _PickerChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1F2433),
+          color: context.colors.surfaceHighest,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: context.colors.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 18),
+            Icon(icon, color: context.colors.textPrimary, size: 18),
             const SizedBox(width: 6),
-            Text(label, style: const TextStyle(color: Colors.white)),
+            Text(label, style: TextStyle(color: context.colors.textPrimary)),
           ],
         ),
       ),

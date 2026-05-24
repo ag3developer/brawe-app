@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/themes/brawe_colors.dart';
 
@@ -30,19 +31,20 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   }
 
   Future<void> _submit() async {
+    final s = S.of(context);
     final current = _currentController.text;
     final next = _newController.text;
     final confirm = _confirmController.text;
     if (current.isEmpty) {
-      AppSnackBar.showError(context, 'Informe sua senha atual.');
+      AppSnackBar.showError(context, s.cpEnterCurrentPassword);
       return;
     }
     if (next.length < 8) {
-      AppSnackBar.showError(context, 'A nova senha deve ter pelo menos 8 caracteres.');
+      AppSnackBar.showError(context, s.cpPasswordTooShort);
       return;
     }
     if (next != confirm) {
-      AppSnackBar.showError(context, 'As novas senhas não coincidem.');
+      AppSnackBar.showError(context, s.cpPasswordsDontMatch);
       return;
     }
     setState(() => _loading = true);
@@ -52,17 +54,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             newPassword: next,
           );
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Senha alterada com sucesso.');
+      AppSnackBar.showSuccess(context, S.of(context).cpChangedSuccess);
       context.pop();
     } on DioException catch (e) {
       if (!mounted) return;
+      final fallback = S.of(context).cpChangeError;
       final detail = e.response?.data is Map
-          ? (e.response?.data['detail']?.toString() ?? 'Falha ao alterar senha.')
-          : 'Falha ao alterar senha.';
+          ? (e.response?.data['detail']?.toString() ?? fallback)
+          : fallback;
       AppSnackBar.showError(context, detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Erro de conexão.');
+      AppSnackBar.showError(context, S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -70,9 +73,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alterar senha'),
+        title: Text(s.settingsChangePassword),
         leading: const BackButton(),
       ),
       body: SingleChildScrollView(
@@ -84,31 +88,31 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             TextField(
               controller: _currentController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Senha atual',
-                prefixIcon: Icon(Icons.lock_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: s.cpCurrentPassword,
+                prefixIcon: const Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _newController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Nova senha',
-                helperText: 'Mínimo 8 caracteres',
-                prefixIcon: Icon(Icons.lock_reset_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: s.cpNewPassword,
+                helperText: s.cpMin8Chars,
+                prefixIcon: const Icon(Icons.lock_reset_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _confirmController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Confirmar nova senha',
-                prefixIcon: Icon(Icons.lock_reset_outlined),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: s.cpConfirmNewPassword,
+                prefixIcon: const Icon(Icons.lock_reset_outlined),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 24),
@@ -128,7 +132,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         color: context.colors.textOnAccent,
                       ),
                     )
-                  : const Text('Salvar nova senha'),
+                  : Text(s.cpSaveNewPassword),
             ),
           ],
         ),

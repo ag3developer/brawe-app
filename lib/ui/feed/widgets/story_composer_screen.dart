@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
@@ -14,6 +15,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/stories_view_model.dart';
 
 /// Brawe "Pulse" Composer — substitui o antigo bottom sheet.
@@ -147,7 +149,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     } catch (e, st) {
       debugPrint('[StoryComposer] Falha ao baixar mídia remota: $e\n$st');
       if (!mounted) return;
-      setState(() => _remoteError = 'Não foi possível carregar a mídia.');
+      setState(() => _remoteError = S.of(context).composerMediaLoadError);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -195,7 +197,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       await _setSelected(dst, isVideo: false);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Falha ao tirar foto.');
+      AppSnackBar.showError(context, S.of(context).composerPhotoError);
     }
   }
 
@@ -218,7 +220,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       });
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Falha ao iniciar gravação.');
+      AppSnackBar.showError(context, S.of(context).composerRecordStartError);
     }
   }
 
@@ -305,7 +307,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       await _setSelected(_videoSegments.first, isVideo: true);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Falha ao finalizar gravação.');
+      AppSnackBar.showError(context, S.of(context).composerRecordStopError);
       setState(() {
         _isRecording = false;
         _previousSegmentsTotal = Duration.zero;
@@ -364,13 +366,18 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     await _setSelected(File(x.path), isVideo: isVid);
   }
 
-  Future<void> _publish({required String? caption}) async {
+  Future<void> _publish({
+    required String? caption,
+    File? flattenedImage,
+  }) async {
     if (_file == null) return;
     setState(() => _isPublishing = true);
     try {
       final notifier = ref.read(storiesViewModelProvider.notifier);
       // Publica multi-segmento (cada parte vira 1 story sequencial)
       if (_isVideo && _videoSegments.length > 1) {
+        // ⚠️ TODO(video-flatten): hoje vídeos ignoram textos/transform.
+        // Pra renderizar overlays em vídeo precisaria ffmpeg_kit_flutter.
         for (int i = 0; i < _videoSegments.length; i++) {
           await notifier.createStory(
             localFilePath: _videoSegments[i].path,
@@ -380,8 +387,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
           );
         }
       } else {
+        // Foto: usa o PNG renderizado (com transform + textos) se disponível.
+        final pathToUpload = flattenedImage?.path ?? _file!.path;
         await notifier.createStory(
-          localFilePath: _file!.path,
+          localFilePath: pathToUpload,
           caption: caption,
           originPostId: widget.initialOriginPostId,
         );
@@ -390,13 +399,13 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       AppSnackBar.showSuccess(
         context,
         _videoSegments.length > 1
-            ? '${_videoSegments.length} stories publicados!'
-            : 'Story publicado!',
+            ? S.of(context).composerMultipleStoriesPublished(_videoSegments.length)
+            : S.of(context).composerStoryPublished,
       );
       Navigator.of(context).pop(true);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Falha ao publicar story.');
+      AppSnackBar.showError(context, S.of(context).composerPublishError);
     } finally {
       if (mounted) setState(() => _isPublishing = false);
     }
@@ -457,20 +466,20 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                         if (url != null) _prefetchRemote(url);
                       },
                       icon: const Icon(Icons.refresh, color: Colors.white),
-                      label: const Text('Tentar novamente',
-                          style: TextStyle(color: Colors.white)),
+                      label: Text(S.of(context).composerRetry,
+                          style: const TextStyle(color: Colors.white)),
                     ),
                   ],
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    CircularProgressIndicator(
+                  children: [
+                    const CircularProgressIndicator(
                         color: AppColors.electricPurple),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
-                      'Preparando publicação…',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                      S.of(context).composerPreparing,
+                      style: const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -540,9 +549,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   const Spacer(),
-                  const Text(
-                    'Criar story',
-                    style: TextStyle(
+                  Text(
+                    S.of(context).composerCreateStory,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 17,
@@ -615,10 +624,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                         fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     )
-                  : const Text(
-                      'Toque para foto • Segure para vídeo',
-                      key: ValueKey('rec-hint'),
-                      style: TextStyle(color: Colors.white60, fontSize: 12),
+                  : Text(
+                      S.of(context).composerCaptureHint,
+                      key: const ValueKey('rec-hint'),
+                      style: const TextStyle(color: Colors.white60, fontSize: 12),
                     ),
             ),
             const SizedBox(height: 32),
@@ -629,12 +638,12 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                 children: [
                   _PickerOption(
                     icon: Icons.photo_library_outlined,
-                    label: 'Galeria',
+                    label: S.of(context).composerGallery,
                     onTap: _pickFromGallery,
                   ),
                   _PickerOption(
                     icon: Icons.text_fields,
-                    label: 'Só texto',
+                    label: S.of(context).composerTextOnly,
                     onTap: _createTextOnly,
                   ),
                 ],
@@ -672,8 +681,20 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       onBack: () async {
         await _videoCtrl?.dispose();
         _videoCtrl = null;
+        // Reseta estado de captura para um próximo take.
+        _videoSegments.clear();
+        _previousSegmentsTotal = Duration.zero;
+        _segmentStartedAt = null;
+        _currentSegmentElapsed = Duration.zero;
         if (!mounted) return;
-        setState(() => _file = null);
+        setState(() {
+          _file = null;
+          _isVideo = false;
+        });
+        // Reinicializa a câmera para o próximo take (foi parada no _setSelected).
+        if (!_isRepostMode) {
+          await _initCameraPreview();
+        }
       },
       onPublish: _publish,
     );
@@ -928,7 +949,10 @@ class _StoryEditor extends StatefulWidget {
   final bool isPublishing;
   final bool isRepost;
   final VoidCallback onBack;
-  final Future<void> Function({required String? caption}) onPublish;
+  final Future<void> Function({
+    required String? caption,
+    File? flattenedImage,
+  }) onPublish;
 
   @override
   State<_StoryEditor> createState() => _StoryEditorState();
@@ -941,6 +965,21 @@ class _StoryEditorState extends State<_StoryEditor> {
   bool _composingText = false;
   final TextEditingController _composeCtrl = TextEditingController();
 
+  // Estilo de fundo do texto sendo composto (cicla com botão "A").
+  // 0 = sem fundo, 1 = preto translúcido, 2 = branco sólido (cor invertida).
+  int _composeBgStyle = 0;
+
+  // ── Drag para lixeira ───────────────────────────────────────────────
+  int? _draggingLayerIdx;
+  bool _hoverTrash = false;
+
+  // ── Flatten/Capture (fidelidade ao publicar) ────────────────────────
+  // Envolvemos a tela em RepaintBoundary e renderizamos um PNG com o
+  // que o usuário vê (mídia + transformação + textos). Os controles são
+  // escondidos durante a captura via [_capturing].
+  final GlobalKey _captureKey = GlobalKey();
+  bool _capturing = false;
+
   // Pinch-zoom / pan da mídia (estilo Instagram).
   final TransformationController _transformCtrl = TransformationController();
   bool _showGuides = false;
@@ -949,7 +988,18 @@ class _StoryEditorState extends State<_StoryEditor> {
   // ── Moldura (frame) — double-tap cicla pelas opções ─────────────────
   // 0=nenhuma, 1=polaroid branca, 2=gradiente brawe
   int _frameStyle = 0;
-  static const _frameLabels = ['Sem moldura', 'Polaroid', 'Brawe'];
+
+  String _frameLabel(BuildContext context) {
+    final s = S.of(context);
+    switch (_frameStyle) {
+      case 1:
+        return s.composerFramePolaroid;
+      case 2:
+        return s.composerFrameBrawe;
+      default:
+        return s.composerFrameNone;
+    }
+  }
 
   void _cycleFrame() {
     setState(() => _frameStyle = (_frameStyle + 1) % 3);
@@ -994,6 +1044,7 @@ class _StoryEditorState extends State<_StoryEditor> {
 
   void _startTextCompose() {
     _composeCtrl.clear();
+    _composeBgStyle = 0;
     setState(() => _composingText = true);
   }
 
@@ -1005,16 +1056,70 @@ class _StoryEditorState extends State<_StoryEditor> {
         color: _currentColor,
         offset: const Offset(80, 200),
         scale: 1.0,
+        bgStyle: _composeBgStyle,
       ));
     }
     setState(() => _composingText = false);
+  }
+
+  /// Renderiza a tela inteira (mídia transformada + textos) em um PNG
+  /// e dispara o [onPublish] com esse arquivo. Vídeos pulam o flatten
+  /// (não dá pra rasterizar — usam o arquivo original + caption).
+  Future<void> _flattenAndPublish() async {
+    final caption =
+        _captionCtrl.text.trim().isEmpty ? null : _captionCtrl.text.trim();
+
+    // Vídeo: publica direto, sem flatten.
+    if (widget.isVideo) {
+      await widget.onPublish(caption: caption);
+      return;
+    }
+
+    File? flat;
+    try {
+      // 1) Esconde controles (top bar, lixeira, guias, chip etc.)
+      setState(() => _capturing = true);
+      // Garante que a UI ocultou antes do snapshot.
+      await WidgetsBinding.instance.endOfFrame;
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+
+      // 2) Captura PNG via RepaintBoundary.
+      final boundary = _captureKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary != null) {
+        // pixelRatio 3.0 ~= 1080p em devices comuns. Limita o teto para
+        // evitar uploads gigantes em iPads/devices grandes.
+        final dpr = MediaQuery.of(context).devicePixelRatio;
+        final ratio = math.min(3.0, dpr * 1.5);
+        final uiImage = await boundary.toImage(pixelRatio: ratio);
+        final bytes =
+            await uiImage.toByteData(format: ui.ImageByteFormat.png);
+        uiImage.dispose();
+        if (bytes != null) {
+          final dir = await getTemporaryDirectory();
+          flat = File(
+            '${dir.path}/story_flat_${DateTime.now().millisecondsSinceEpoch}.png',
+          );
+          await flat.writeAsBytes(bytes.buffer.asUint8List());
+        }
+      }
+    } catch (e, st) {
+      // Falha no flatten — publica o original com aviso silencioso (debug).
+      debugPrint('[StoryComposer] Flatten falhou: $e\n$st');
+    } finally {
+      if (mounted) setState(() => _capturing = false);
+    }
+
+    await widget.onPublish(caption: caption, flattenedImage: flat);
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    return Stack(
+    return RepaintBoundary(
+      key: _captureKey,
+      child: Stack(
       fit: StackFit.expand,
       children: [
         // Fundo: blur da própria mídia (evita laterais pretas quando cabe inteira).
@@ -1029,18 +1134,22 @@ class _StoryEditorState extends State<_StoryEditor> {
               ),
             ),
           ),
-        // Mídia com pinch-zoom / pan (2 dedos para enquadrar).
+        // Mídia com pinch-zoom / pan / 1 dedo (estilo Instagram Stories):
+        // permite mover livremente, diminuir e até sair dos limites da tela.
         // Double-tap cicla pelas molduras antes de publicar.
         Positioned.fill(
           child: GestureDetector(
             onDoubleTap: _cycleFrame,
             child: InteractiveViewer(
               transformationController: _transformCtrl,
-              minScale: 0.3,
-              maxScale: 4.0,
+              minScale: 0.2,
+              maxScale: 5.0,
               panEnabled: true,
               scaleEnabled: true,
-              clipBehavior: Clip.hardEdge,
+              // Permite arrastar pra fora da tela (igual Instagram).
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              // Sem clip: a mídia pode "vazar" pra fora durante o ajuste.
+              clipBehavior: Clip.none,
               onInteractionStart: _onInteractionStart,
               onInteractionEnd: _onInteractionEnd,
               child: Center(child: _buildFramedMedia()),
@@ -1049,50 +1158,52 @@ class _StoryEditorState extends State<_StoryEditor> {
         ),
 
         // Linhas guia (área de segurança 9:16) — aparecem durante o gesto.
-        Positioned.fill(
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 220),
-              opacity: _showGuides ? 1.0 : 0.0,
-              child: const _SafeAreaGuides(),
+        if (!_capturing)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 220),
+                opacity: _showGuides ? 1.0 : 0.0,
+                child: const _SafeAreaGuides(),
+              ),
             ),
           ),
-        ),
 
         // Chip "Toque 2x para trocar moldura" (dica + label da moldura atual).
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 64,
-          left: 0,
-          right: 0,
-          child: IgnorePointer(
-            child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 240),
-                child: Container(
-                  key: ValueKey(_frameStyle),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.18)),
-                  ),
-                  child: Text(
-                    _frameStyle == 0
-                        ? 'Toque 2x para moldura'
-                        : 'Moldura: ${_frameLabels[_frameStyle]}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+        if (!_capturing)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 64,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  child: Container(
+                    key: ValueKey(_frameStyle),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18)),
+                    ),
+                    child: Text(
+                      _frameStyle == 0
+                          ? S.of(context).composerFrameHint
+                          : S.of(context).composerFrameLabel(_frameLabel(context)),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
 
         // Camadas de texto draggable
         ..._layers.asMap().entries.map((entry) {
@@ -1102,169 +1213,276 @@ class _StoryEditorState extends State<_StoryEditor> {
             left: layer.offset.dx,
             top: layer.offset.dy,
             child: GestureDetector(
-              onPanUpdate: (d) {
+              onPanStart: (_) {
                 setState(() {
-                  _layers[idx] = layer.copyWith(
-                    offset: Offset(
-                      (layer.offset.dx + d.delta.dx).clamp(0, size.width - 40),
-                      (layer.offset.dy + d.delta.dy).clamp(0, size.height - 60),
-                    ),
-                  );
+                  _draggingLayerIdx = idx;
+                  _hoverTrash = false;
+                });
+                HapticFeedback.selectionClick();
+              },
+              onPanUpdate: (d) {
+                final newOffset = Offset(
+                  layer.offset.dx + d.delta.dx,
+                  layer.offset.dy + d.delta.dy,
+                );
+                // Detecta hover sobre a lixeira (área inferior central).
+                final trashY = size.height - 110;
+                final trashCenterX = size.width / 2;
+                final onTrash = (newOffset.dy > trashY) &&
+                    ((newOffset.dx - trashCenterX).abs() < 80);
+                if (onTrash != _hoverTrash) {
+                  HapticFeedback.mediumImpact();
+                }
+                setState(() {
+                  _hoverTrash = onTrash;
+                  _layers[idx] = layer.copyWith(offset: newOffset);
                 });
               },
-              onLongPress: () {
-                setState(() => _layers.removeAt(idx));
-                HapticFeedback.mediumImpact();
+              onPanEnd: (_) {
+                if (_hoverTrash) {
+                  setState(() {
+                    _layers.removeAt(idx);
+                    _draggingLayerIdx = null;
+                    _hoverTrash = false;
+                  });
+                  HapticFeedback.heavyImpact();
+                } else {
+                  // Clamp dentro da tela ao soltar (se não foi pra lixeira).
+                  final clamped = Offset(
+                    _layers[idx]
+                        .offset
+                        .dx
+                        .clamp(0.0, size.width - 40),
+                    _layers[idx]
+                        .offset
+                        .dy
+                        .clamp(0.0, size.height - 60),
+                  );
+                  setState(() {
+                    _layers[idx] = _layers[idx].copyWith(offset: clamped);
+                    _draggingLayerIdx = null;
+                    _hoverTrash = false;
+                  });
+                }
               },
-              child: Text(
-                layer.text,
-                style: TextStyle(
-                  color: layer.color,
-                  fontSize: 28 * layer.scale,
-                  fontWeight: FontWeight.w700,
-                  shadows: const [
-                    Shadow(blurRadius: 6, color: Colors.black54),
-                  ],
-                ),
-              ),
+              child: _TextLayerView(layer: layer),
             ),
           );
         }),
 
         // Top bar
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 12,
-          right: 12,
-          child: Row(
-            children: [
-              _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
-              const Spacer(),
-              // Reset zoom — só aparece se houver transformação aplicada.
-              AnimatedBuilder(
-                animation: _transformCtrl,
-                builder: (_, __) {
-                  final isIdentity =
-                      _transformCtrl.value == Matrix4.identity();
-                  if (isIdentity) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _CircleIconBtn(
-                      icon: Icons.center_focus_strong,
-                      onTap: _resetTransform,
-                    ),
-                  );
-                },
-              ),
-              _CircleIconBtn(icon: Icons.text_fields, onTap: _startTextCompose),
-              const SizedBox(width: 8),
-              _CircleIconBtn(
-                icon: _frameStyle == 0
-                    ? Icons.crop_din
-                    : (_frameStyle == 1
-                        ? Icons.filter_frames
-                        : Icons.auto_awesome),
-                onTap: _cycleFrame,
-              ),
-              const SizedBox(width: 8),
-              _CircleIconBtn(
-                icon: Icons.color_lens_outlined,
-                onTap: () => _showColorPicker(),
-              ),
-            ],
+        if (!_capturing)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 12,
+            right: 12,
+            child: Row(
+              children: [
+                _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
+                const Spacer(),
+                // Reset zoom — só aparece se houver transformação aplicada.
+                AnimatedBuilder(
+                  animation: _transformCtrl,
+                  builder: (_, __) {
+                    final isIdentity =
+                        _transformCtrl.value == Matrix4.identity();
+                    if (isIdentity) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _CircleIconBtn(
+                        icon: Icons.center_focus_strong,
+                        onTap: _resetTransform,
+                      ),
+                    );
+                  },
+                ),
+                _CircleIconBtn(
+                    icon: Icons.text_fields, onTap: _startTextCompose),
+                const SizedBox(width: 8),
+                _CircleIconBtn(
+                  icon: _frameStyle == 0
+                      ? Icons.crop_din
+                      : (_frameStyle == 1
+                          ? Icons.filter_frames
+                          : Icons.auto_awesome),
+                  onTap: _cycleFrame,
+                ),
+                const SizedBox(width: 8),
+                _CircleIconBtn(
+                  icon: Icons.color_lens_outlined,
+                  onTap: () => _showColorPicker(),
+                ),
+              ],
+            ),
           ),
-        ),
 
         // Bottom bar (caption + publish)
-        Positioned(
-          left: 12,
-          right: 12,
-          bottom: MediaQuery.of(context).padding.bottom + 12,
-          child: Row(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(24),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                  ),
-                  child: TextField(
-                    controller: _captionCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: 1,
-                    decoration: const InputDecoration(
-                      hintText: 'Adicione uma legenda...',
-                      hintStyle: TextStyle(color: Colors.white54),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+        if (!_capturing)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: MediaQuery.of(context).padding.bottom + 12,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                    child: TextField(
+                      controller: _captionCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      maxLines: 1,
+                      decoration: InputDecoration(
+                        hintText: S.of(context).composerCaptionHint,
+                        hintStyle: const TextStyle(color: Colors.white54),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              _PublishFab(
-                loading: widget.isPublishing,
-                onPressed: () => widget.onPublish(
-                  caption: _captionCtrl.text.trim().isEmpty
-                      ? null
-                      : _captionCtrl.text.trim(),
+                const SizedBox(width: 12),
+                _PublishFab(
+                  loading: widget.isPublishing,
+                  onPressed: _flattenAndPublish,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
 
         // Overlay de composição de texto
-        if (_composingText)
+        if (_composingText && !_capturing)
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: _commitTextLayer,
               child: Container(
                 color: Colors.black.withValues(alpha: 0.55),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: TextField(
-                      controller: _composeCtrl,
-                      autofocus: true,
-                      textAlign: TextAlign.center,
-                      maxLines: null,
-                      style: TextStyle(
-                        color: _currentColor,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 24),
+                        child: _ComposeTextField(
+                          controller: _composeCtrl,
+                          color: _currentColor,
+                          bgStyle: _composeBgStyle,
+                          onSubmitted: (_) => _commitTextLayer(),
+                        ),
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'Digite algo...',
-                        hintStyle: TextStyle(color: Colors.white54),
-                        border: InputBorder.none,
-                      ),
-                      onSubmitted: (_) => _commitTextLayer(),
                     ),
+                    // Botão "A" (cicla fundo do texto) — canto superior direito.
+                    Positioned(
+                      top: MediaQuery.of(context).padding.top + 8,
+                      right: 12,
+                      child: _CircleIconBtn(
+                        icon: _composeBgStyle == 0
+                            ? Icons.format_color_text
+                            : (_composeBgStyle == 1
+                                ? Icons.title
+                                : Icons.text_format),
+                        onTap: () {
+                          setState(() =>
+                              _composeBgStyle = (_composeBgStyle + 1) % 3);
+                          HapticFeedback.selectionClick();
+                        },
+                      ),
+                    ),
+                    // Dica
+                    Positioned(
+                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                      left: 0,
+                      right: 0,
+                      child: IgnorePointer(
+                        child: Center(
+                          child: Text(
+                            S.of(context).composerTapOutsideHint,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // Lixeira (aparece enquanto arrasta uma camada de texto).
+        if (_draggingLayerIdx != null && !_capturing)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).padding.bottom + 32,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  width: _hoverTrash ? 84 : 64,
+                  height: _hoverTrash ? 84 : 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _hoverTrash
+                        ? Colors.redAccent.withValues(alpha: 0.9)
+                        : Colors.black.withValues(alpha: 0.5),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      if (_hoverTrash)
+                        BoxShadow(
+                          color: Colors.redAccent.withValues(alpha: 0.5),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                        ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.white,
+                    size: _hoverTrash ? 36 : 28,
                   ),
                 ),
               ),
             ),
           ),
       ],
+      ),
     );
   }
 
   Widget _buildFramedMedia() {
-    // Em modo repost: BoxFit.contain pra mostrar o post inteiro (não corta).
-    // Em modo câmera: BoxFit.cover (preenche a tela 9:16).
-    final useContain = widget.isRepost;
+    // Padrão Instagram Stories: a mídia entra na tela com BoxFit.contain
+    // — ou seja, cabe INTEIRA dentro da viewport (sem cortar nada).
+    // O usuário decide se quer aumentar/posicionar com 2 dedos.
+    //
+    // ⚠️ Não usar BoxFit.cover aqui: se a foto tem texto/elemento perto da
+    // borda (ex.: print de WhatsApp), o cover esconderia esse conteúdo.
+    //
+    // TODO(publish-fidelity): hoje o backend recebe o arquivo original, então
+    // a transformação aplicada (zoom/pan) NÃO é refletida no story publicado.
+    // Pra preservar 100% do que o usuário vê, será preciso renderizar a Stack
+    // inteira (mídia transformada + camadas de texto) em PNG via RepaintBoundary
+    // antes de chamar createStory.
+    final fit = BoxFit.contain;
     final Widget inner;
     if (widget.isVideo && widget.videoCtrl != null) {
       final ctrl = widget.videoCtrl!;
       inner = FittedBox(
-        fit: useContain ? BoxFit.contain : BoxFit.cover,
+        fit: fit,
         clipBehavior: Clip.hardEdge,
         child: SizedBox(
           width: ctrl.value.size.width,
@@ -1273,10 +1491,7 @@ class _StoryEditorState extends State<_StoryEditor> {
         ),
       );
     } else {
-      inner = Image.file(
-        widget.file,
-        fit: useContain ? BoxFit.contain : BoxFit.cover,
-      );
+      inner = Image.file(widget.file, fit: fit);
     }
     return _applyFrame(inner);
   }
@@ -1441,6 +1656,7 @@ class _TextLayer {
     required this.color,
     required this.offset,
     required this.scale,
+    this.bgStyle = 0,
   });
 
   final String text;
@@ -1448,13 +1664,148 @@ class _TextLayer {
   final Offset offset;
   final double scale;
 
-  _TextLayer copyWith({Offset? offset, double? scale, Color? color}) =>
+  /// 0 = sem fundo (com sombra)
+  /// 1 = fundo preto translúcido (plaquinha)
+  /// 2 = fundo branco sólido (texto inverte pra cor)
+  final int bgStyle;
+
+  _TextLayer copyWith({
+    Offset? offset,
+    double? scale,
+    Color? color,
+    int? bgStyle,
+  }) =>
       _TextLayer(
         text: text,
         color: color ?? this.color,
         offset: offset ?? this.offset,
         scale: scale ?? this.scale,
+        bgStyle: bgStyle ?? this.bgStyle,
       );
+}
+
+/// Renderiza uma camada de texto com 3 estilos:
+/// 0 = sem fundo, sombra para legibilidade
+/// 1 = "plaquinha" preta translúcida
+/// 2 = fundo branco sólido com cor do texto invertida
+class _TextLayerView extends StatelessWidget {
+  const _TextLayerView({required this.layer});
+  final _TextLayer layer;
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = 28 * layer.scale;
+    final txtStyle = TextStyle(
+      color: layer.bgStyle == 2 ? _invertOnWhite(layer.color) : layer.color,
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.15,
+      shadows: layer.bgStyle == 0
+          ? const [Shadow(blurRadius: 6, color: Colors.black54)]
+          : null,
+    );
+
+    final text = Text(layer.text, style: txtStyle);
+
+    switch (layer.bgStyle) {
+      case 1:
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: text,
+        );
+      case 2:
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: text,
+        );
+      case 0:
+      default:
+        return text;
+    }
+  }
+
+  /// Se a cor escolhida é muito clara, no fundo branco usamos preto;
+  /// se é escura, mantém a própria cor.
+  static Color _invertOnWhite(Color c) {
+    final luminance = c.computeLuminance();
+    return luminance > 0.7 ? Colors.black : c;
+  }
+}
+
+/// TextField do overlay de composição com fundo (plaquinha) opcional.
+class _ComposeTextField extends StatelessWidget {
+  const _ComposeTextField({
+    required this.controller,
+    required this.color,
+    required this.bgStyle,
+    required this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final Color color;
+  final int bgStyle;
+  final ValueChanged<String> onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = bgStyle == 2 ? _TextLayerView._invertOnWhite(color) : color;
+    final field = TextField(
+      controller: controller,
+      autofocus: true,
+      textAlign: TextAlign.center,
+      maxLines: null,
+      style: TextStyle(
+        color: textColor,
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        shadows: bgStyle == 0
+            ? const [Shadow(blurRadius: 6, color: Colors.black54)]
+            : null,
+      ),
+      decoration: InputDecoration(
+        hintText: S.of(context).composerTextHint,
+        hintStyle: TextStyle(
+          color: bgStyle == 2 ? Colors.black38 : Colors.white54,
+        ),
+        border: InputBorder.none,
+        isCollapsed: true,
+        contentPadding: EdgeInsets.zero,
+      ),
+      onSubmitted: onSubmitted,
+    );
+
+    switch (bgStyle) {
+      case 1:
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: field,
+        );
+      case 2:
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: field,
+        );
+      case 0:
+      default:
+        return field;
+    }
+  }
 }
 
 // PNG 1x1 transparente (mínimo para criar um arquivo válido).
@@ -1491,14 +1842,14 @@ class _SafeAreaGuides extends StatelessWidget {
           left: 0,
           right: 0,
           top: topGuide,
-          child: _GuideLine(label: 'topo seguro'),
+          child: _GuideLine(label: S.of(context).composerGuideTop),
         ),
         // Linha inferior
         Positioned(
           left: 0,
           right: 0,
           bottom: bottomGuide,
-          child: _GuideLine(label: 'base segura', alignEnd: true),
+          child: _GuideLine(label: S.of(context).composerGuideBottom, alignEnd: true),
         ),
       ],
     );

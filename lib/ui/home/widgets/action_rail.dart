@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/feed_item.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 
 /// Right-side rail with social actions, shared by every For You view.
 class ActionRail extends StatelessWidget {
@@ -110,7 +111,7 @@ class _AvatarFollow extends StatelessWidget {
                 child: author.avatarUrl != null
                     ? Image.network(author.avatarUrl!, fit: BoxFit.cover)
                     : Container(
-                        color: AppColors.slate,
+                        color: context.colors.surfaceElevated,
                         child: Center(
                           child: Text(
                             author.name[0].toUpperCase(),
@@ -186,8 +187,8 @@ class _RailButton extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
               shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
@@ -218,8 +219,8 @@ class _ViewsLabel extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           formatter(count),
-          style: const TextStyle(
-            color: Colors.white70,
+          style: TextStyle(
+            color: context.colors.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.w500,
             shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
@@ -300,10 +301,10 @@ class _MysteryGiftButtonState extends State<_MysteryGiftButton>
             },
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Mistério',
             style: TextStyle(
-              color: Colors.white,
+              color: context.colors.textPrimary,
               fontSize: 11,
               fontWeight: FontWeight.bold,
               shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
@@ -357,7 +358,7 @@ class _SpinningDiscState extends State<_SpinningDisc>
         child: ClipOval(
           child: widget.avatarUrl != null
               ? Image.network(widget.avatarUrl!, fit: BoxFit.cover)
-              : Container(color: AppColors.slate),
+              : Container(color: context.colors.surfaceElevated),
         ),
       ),
     );

@@ -1,0 +1,1470 @@
+{
+  "@@locale": "en",
+  "appName": "Brawe",
+  "navHome": "Home",
+  "navFeed": "Feed",
+  "navChat": "Chat",
+  "navProfile": "Profile",
+  "tabFollowing": "Following",
+  "tabForYou": "For You",
+  "actionFollow": "Follow",
+  "actionUnfollow": "Following",
+  "actionLike": "Like",
+  "actionComment": "Comment",
+  "actionShare": "Share",
+  "actionSave": "Save",
+  "actionRepost": "Repost",
+  "actionSend": "Send",
+  "actionCancel": "Cancel",
+  "actionConfirm": "Confirm",
+  "actionRetry": "Try again",
+  "actionRefresh": "Refresh",
+  "actionDelete": "Delete",
+  "actionEdit": "Edit",
+  "actionClose": "Close",
+  "actionBack": "Back",
+  "actionBlock": "Block",
+  "actionUnblock": "Unblock",
+  "actionReport": "Report",
+  "actionCopy": "Copy",
+  "feedEmptyTitle": "No videos here yet.",
+  "feedEmptySubtitle": "Follow creators or come back later.",
+  "feedFollowingEmptyTitle": "Follow people to see their posts here.",
+  "feedLoadError": "Could not load the feed.",
+  "feedNoMore": "You're all caught up! 🎉",
+  "profileEditButton": "Edit profile",
+  "profileFollowers": "followers",
+  "profileFollowing": "following",
+  "profileLives": "lives",
+  "profileViews": "views",
+  "profileJoinedAt": "joined {date}",
+  "profileTabPosts": "Posts",
+  "profileTabVideos": "Videos",
+  "profileTabSaved": "Saved",
+  "authLogin": "Log in",
+  "authRegister": "Sign up",
+  "authLogout": "Log out",
+  "authEmail": "Email",
+  "authPassword": "Password",
+  "authForgotPassword": "Forgot password?",
+  "authWelcomeBack": "Welcome back!",
+  "authCreateAccount": "Create account",
+  "chatNewMessage": "New message",
+  "chatPlaceholder": "Message...",
+  "chatNoConversations": "No conversations yet.",
+  "chatBlockTitle": "Block {name}?",
+  "chatBlockedSuccess": "{name} has been blocked.",
+  "chatBlockError": "Failed to block: {error}",
+  "chatImagePickError": "Failed to pick image: {error}",
+  "commentsTitle": "Comments",
+  "commentsPlaceholder": "Add a comment...",
+  "commentsEmpty": "No comments yet.\nBe the first!",
+  "notificationsTitle": "Notifications",
+  "notificationsEmpty": "No notifications yet.",
+  "notificationLiked": "{user} liked your post.",
+  "notificationFollowed": "{user} started following you.",
+  "notificationCommented": "{user} commented on your post.",
+  "settingsTitle": "Settings",
+  "settingsLanguage": "Language",
+  "settingsLanguageSubtitle": "Português · Español · English",
+  "settingsAppLanguage": "App language",
+  "settingsAppearance": "Appearance",
+  "settingsTheme": "Theme",
+  "settingsThemeDark": "Dark",
+  "settingsThemeLight": "Light",
+  "settingsThemeSystem": "System",
+  "settingsNotifications": "Notifications",
+  "settingsNotifLiveStart": "Lives starting",
+  "settingsNotifLiveStartHint": "Get notified when your favorite creators go live",
+  "settingsNotifGifts": "Gifts received",
+  "settingsNotifGiftsHint": "Notify when someone sends you a gift",
+  "settingsNotifFollowers": "New followers",
+  "settingsNotifMessages": "Direct messages",
+  "settingsPrivacy": "Privacy",
+  "settingsPrivacyShowViewers": "Show viewer count",
+  "settingsPrivacyShowViewersHint": "Others can see how many people are watching your lives",
+  "settingsPrivacyShowEarnings": "Show earnings publicly",
+  "settingsPrivacyShowEarningsHint": "Display total coins/earnings on your profile",
+  "settingsSounds": "Sounds",
+  "settingsSoundsEnabled": "Sound effects",
+  "settingsSoundsHint": "Sounds when receiving gifts, messages, etc.",
+  "settingsAbout": "About & Legal",
+  "settingsAccount": "Account",
+  "settingsLogout": "Sign out",
+  "settingsLoadError": "We couldn't load your settings.",
+  "settingsThemeAuto": "Auto",
+  "settingsTermsOfUse": "Terms of Use",
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "settingsSupport": "Support",
+  "settingsVersion": "Version",
+  "settingsChangePassword": "Change password",
+  "settingsDeleteAccount": "Delete account",
+  "settingsLogoutConfirm": "Are you sure you want to sign out?",
+  "settingsHelpTitle": "How can we help?",
+  "settingsSendSupportEmail": "Email support",
+  "settingsNoMailApp": "No email app configured.",
+  "settingsHelpCenterFaq": "Help center / FAQ",
+  "settingsSupportEmailSubject": "Brawe Support — App v{version}",
+  "@settingsSupportEmailSubject": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsCantOpenUrl": "Could not open {url}",
+  "@settingsCantOpenUrl": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "cpCurrentPassword": "Current password",
+  "cpNewPassword": "New password",
+  "cpConfirmNewPassword": "Confirm new password",
+  "cpMin8Chars": "Minimum 8 characters",
+  "cpSaveNewPassword": "Save new password",
+  "cpEnterCurrentPassword": "Enter your current password.",
+  "cpPasswordTooShort": "The new password must be at least 8 characters long.",
+  "cpPasswordsDontMatch": "The new passwords don't match.",
+  "cpChangedSuccess": "Password changed successfully.",
+  "cpChangeError": "Failed to change password.",
+  "delAccTitle": "Delete account",
+  "delAccEnterPassword": "Enter your password to confirm.",
+  "delAccAckRequired": "Please confirm you understand the action.",
+  "delAccConfirmBody": "This action is IRREVERSIBLE. Your account will be deactivated and your personal data anonymized (GDPR). Do you want to continue?",
+  "delAccConfirmButton": "Delete account",
+  "delAccSuccess": "Account deleted. Goodbye.",
+  "delAccError": "Failed to delete account.",
+  "delAccWarningBanner": "By deleting your account, you will permanently lose access to your live history, gifts, balance, conversations and followers. Pending balances may be lost.",
+  "delAccWhatHappens": "What happens:",
+  "delAccBullet1": "Your account will be deactivated immediately.",
+  "delAccBullet2": "Your email and personal data will be anonymized.",
+  "delAccBullet3": "You will be signed out from all devices.",
+  "delAccBullet4": "Records will be kept for the legally required period.",
+  "delAccPasswordHelper": "Confirm your identity",
+  "delAccAckCheckbox": "I understand this action is irreversible.",
+  "delAccDeleteMyAccount": "Delete my account",
+  "legalOpenInBrowser": "Open in browser",
+  "legalLoadError": "Could not load this page.",
+  "languagePickerTitle": "Choose language",
+  "languagePt": "Português (Brasil)",
+  "languageEs": "Español",
+  "languageEn": "English",
+  "errorNetwork": "No connection. Check your internet.",
+  "errorGeneric": "Something went wrong. Please try again.",
+  "errorNotFound": "Content not found.",
+  "errorUnauthorized": "Session expired. Please log in again.",
+  "giftComingSoon": "🎁 Coming soon!",
+  "liveBadge": "LIVE",
+  "viewerCount": "{count} watching",
+  "authLoginSubtitle": "Sign in to your account to continue.",
+  "authWelcomeBackTitle": "Welcome\nback.",
+  "authEmailHint": "you@brawe.app",
+  "authPasswordHint": "••••••••",
+  "authEmailLabel": "EMAIL",
+  "authPasswordLabel": "PASSWORD",
+  "authForgotPasswordShort": "Forgot password",
+  "authLoggingIn": "Signing in…",
+  "authNoAccount": "Don't have an account?",
+  "authCreateNow": "Sign up",
+  "authAcceptTermsAndPrivacy": "By continuing you accept the Terms of Use\nand Privacy Policy.",
+  "authWelcomeBackSuccess": "Welcome back.",
+  "authAlreadyHaveAccount": "Already have an account?",
+  "authEntrar": "Sign in",
+  "welcomeTagline": "Connect. Stream. Grow.",
+  "welcomeAlreadyHaveAccount": "I already have an account",
+  "welcomeAcceptTerms": "By continuing you accept the Terms of Use.",
+  "welcomeCreateAccount": "Create account",
+  "signupTitle": "Create your account.",
+  "signupSubtitle": "It takes less than a minute to get started.",
+  "signupNameLabel": "Full name",
+  "signupNameHint": "What should we call you?",
+  "signupEmailLabel": "Email",
+  "signupPasswordLabel": "Password",
+  "signupPasswordHint": "minimum 8 characters",
+  "signupSponsorLabel": "Sponsor code",
+  "signupSponsorHint": "BRAWE-XXXX",
+  "signupHaveReferral": "I have a referral code",
+  "signupCreatingAccount": "Creating account…",
+  "signupCreateAccountButton": "Create account",
+  "signupSuccess": "Account created successfully.",
+  "signupHelp": "Help",
+  "signupCantOpenUrl": "Could not open {url}",
+  "@signupCantOpenUrl": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "signupTermsPrefix": "I have read and accept the ",
+  "signupTermsAnd": " and the ",
+  "signupTermsSuffix": " of Brawe.",
+  "pwStrengthWeak": "Weak",
+  "pwStrengthMedium": "Medium",
+  "pwStrengthGood": "Good",
+  "pwStrengthStrong": "Strong",
+  "forgotTitle": "Recover password",
+  "forgotSubtitle": "Enter your email and we'll send instructions to create a new password.",
+  "forgotEmailLabel": "EMAIL",
+  "forgotEmailHint": "you@example.com",
+  "forgotInvalidEmail": "Please enter a valid email.",
+  "forgotSending": "Sending...",
+  "forgotSendInstructions": "Send instructions",
+  "forgotCannotSend": "Could not send.",
+  "forgotBackToLogin": "Back to sign in",
+  "forgotCheckEmail": "Check your email",
+  "forgotEmailSentBody": "If {email} is registered, you will receive a link to create a new password in a few minutes.",
+  "@forgotEmailSentBody": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "resetTitle": "Create new password",
+  "resetSubtitle": "Choose a strong password with at least 8 characters.",
+  "resetNewPasswordLabel": "NEW PASSWORD",
+  "resetConfirmPasswordLabel": "CONFIRM PASSWORD",
+  "resetPasswordTooShort": "Password must be at least 8 characters.",
+  "resetPasswordsDontMatch": "Passwords don't match.",
+  "resetSaving": "Saving...",
+  "resetInvalidToken": "Invalid or expired token.",
+  "navLives": "Lives",
+  "createStoryTitle": "Story",
+  "createStorySubtitle": "Photo or video · disappears in 24h",
+  "createVideoTitle": "Video",
+  "createVideoSubtitle": "Reels · shows up in For You",
+  "createLiveTitle": "Live",
+  "createLiveSubtitle": "Stream now and receive gifts",
+  "createPostTitle": "Post",
+  "createPostSubtitle": "Text, photo or link on your feed",
+  "feedEmptyVideoTitle": "No video or photo here yet.",
+  "feedEmptyVideoSubtitle": "Follow creators or come back later.\nText posts are in the Feed tab.",
+  "liveJoining": "Joining the live…",
+  "liveBadgeBattle": "LIVE · BATTLE",
+  "liveBadgeShop": "LIVE · SHOP",
+  "liveOfferNow": "OFFER NOW",
+  "productFeatured": "FEATURED",
+  "videoLoadError": "Could not load video.",
+  "giftSendAnonymous": "Send anonymously",
+  "giftAnonNameHidden": "Your name will not be revealed",
+  "giftAnonNameVisible": "Everyone will see it was you",
+  "giftSendButtonAnon": "Send (anonymous)",
+  "giftSendButton": "Send gift",
+  "giftSentAnon": "Gift sent anonymously!",
+  "giftSent": "Gift sent!",
+  "feedCannotLike": "Could not like. Try again.",
+  "feedUseLiveChat": "Use the live chat to talk.",
+  "feedCannotShare": "Could not share.",
+  "feedCannotFollow": "Could not update follow.",
+  "shareCheckBraweConnect": "Check it out on Brawe Connect",
+  "homeStatFollowers": "Followers",
+  "homeStatFollowing": "Following",
+  "homeStatLives": "Lives",
+  "profileViewFull": "View full profile",
+  "createSheetTitle": "Create",
+  "createSheetSubtitle": "Share a moment, go live, or drop an idea.",
+  "productsDrawerTitle": "Live shop",
+  "productsDrawerItemCount": "{count} items • {author}",
+  "@productsDrawerItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "author": {
+        "type": "String"
+      }
+    }
+  },
+  "giftMysteryTitle": "Mystery Gift",
+  "giftMysterySubtitle": "Surprise one of the streamers!\nThe recipient is chosen at random. 🎲",
+  "commentsErrorSend": "Failed to send comment. Try again.",
+  "commentsErrorLoad": "Failed to load comments.",
+  "commentsReplyingTo": "Replying to @{username}",
+  "commentsHintReply": "Reply...",
+  "commentsHintAdd": "Add a comment...",
+  "commentsReplyAction": "Reply",
+  "@commentsReplyingTo": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "postPublish": "Publish",
+  "postPublishedSuccess": "Post published!",
+  "postPublishError": "Failed to publish. Try again.",
+  "postHintWhatsHappening": "What's happening?",
+  "audiencePickerTitle": "Who can see?",
+  "audienceAll": "Everyone",
+  "audienceFollowers": "Followers",
+  "audienceOnlyMe": "Only me",
+  "videoTooLarge": "Video too large. Max 100 MB.",
+  "videoOpenError": "Couldn't open the video.",
+  "videoPublishedSuccess": "Video published! 🎬",
+  "videoPublishError": "Failed to publish video. Try again.",
+  "videoSheetTitle": "New video",
+  "videoSwapTooltip": "Swap video",
+  "videoCaptionHint": "Write a caption (optional)…",
+  "videoPublishButton": "Publish video",
+  "videoSelect": "Select video",
+  "videoFormatsHint": "MP4 · MOV · WebM   ·   up to 3 min   ·   100 MB",
+  "storySheetTitle": "New story",
+  "storyPublish": "Publish",
+  "storyPublishedSuccess": "Story published!",
+  "storyPublishError": "Failed to publish story. Try again.",
+  "storyPrefetchError": "Failed to load image from post.",
+  "storyPrefetchLoading": "Loading image from post...",
+  "storyCaptionHint": "Write a caption (optional)…",
+  "storySwapMedia": "Swap media",
+  "storyPickerTitle": "Select or record media",
+  "storyPickerSubtitle": "Photo or video (up to 60s)",
+  "storyPickerSectionGallery": "Gallery",
+  "storyPickerSectionCamera": "Camera",
+  "storyPickerChipPhoto": "Photo",
+  "storyPickerChipVideo": "Video",
+  "storyPickerChipRecordVideo": "Record video",
+  "storiesReload": "Reload stories",
+  "storiesYour": "Your story",
+  "storiesCreate": "Create",
+  "storiesFallbackUser": "user",
+  "storiesLiveBadge": "LIVE",
+  "shareLoadError": "Could not load contacts.",
+  "shareSentSuccess": "{count, plural, =1{Sent to {count} person.} other{Sent to {count} people.}}",
+  "@shareSentSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "shareSentPartial": "Sent to {sent}. Failed for {failures}.",
+  "@shareSentPartial": {
+    "placeholders": {
+      "sent": {
+        "type": "int"
+      },
+      "failures": {
+        "type": "int"
+      }
+    }
+  },
+  "shareTitle": "Send to...",
+  "sharePostFallback": "Post",
+  "shareSearchHint": "Search",
+  "shareErrorGeneric": "Error",
+  "shareTryAgain": "Try again",
+  "shareRecents": "Recent",
+  "shareFollowers": "Followers",
+  "shareUserFallback": "User",
+  "shareNoContacts": "No contacts found.",
+  "shareCommentHint": "Add a comment…",
+  "shareOutsideBrawe": "Outside Brawe",
+  "shareSend": "Send",
+  "shareSendWithCount": "Send ({count})",
+  "@shareSendWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftSendError": "Could not send the gift: {error}",
+  "@giftSendError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "giftLoadError": "Could not load gifts.\n{error}",
+  "@giftLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "giftEmptyState": "No gifts available right now.",
+  "giftSendTo": "Send gift to",
+  "giftChoose": "Choose a gift",
+  "giftSendCta": "SEND · 💎 {total}",
+  "@giftSendCta": {
+    "placeholders": {
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "suggestedTitle": "Suggestions for you",
+  "suggestedSeeAll": "See all",
+  "suggestedFollow": "Follow",
+  "suggestedFollowing": "Following",
+  "suggestedLiveBadge": "LIVE",
+  "composerMediaLoadError": "Could not load media.",
+  "composerPhotoError": "Failed to take photo.",
+  "composerRecordStartError": "Failed to start recording.",
+  "composerRecordStopError": "Failed to finish recording.",
+  "composerStoryPublished": "Story published!",
+  "composerMultipleStoriesPublished": "{count} stories published!",
+  "@composerMultipleStoriesPublished": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "composerPublishError": "Failed to publish story.",
+  "composerRetry": "Try again",
+  "composerPreparing": "Preparing to publish…",
+  "composerCreateStory": "Create story",
+  "composerCaptureHint": "Tap for photo • Hold for video",
+  "composerGallery": "Gallery",
+  "composerTextOnly": "Text only",
+  "composerFrameNone": "No frame",
+  "composerFramePolaroid": "Polaroid",
+  "composerFrameBrawe": "Brawe",
+  "composerFrameHint": "Double tap for frame",
+  "composerFrameLabel": "Frame: {style}",
+  "@composerFrameLabel": {
+    "placeholders": {
+      "style": {
+        "type": "String"
+      }
+    }
+  },
+  "composerCaptionHint": "Add a caption...",
+  "composerTapOutsideHint": "Tap outside to finish",
+  "composerTextHint": "Type something...",
+  "composerGuideTop": "safe top",
+  "composerGuideBottom": "safe bottom",
+  "viewerDeleteStory": "Delete story",
+  "viewerUnfollow": "Unfollow",
+  "viewerBlockUser": "Block user",
+  "viewerReport": "Report",
+  "viewerDeleteConfirm": "This action cannot be undone.",
+  "viewerCancel": "Cancel",
+  "viewerDelete": "Delete",
+  "viewerBlock": "Block",
+  "viewerStoryDeleted": "Story deleted.",
+  "viewerDeleteError": "Could not delete the story. ({error})",
+  "@viewerDeleteError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "viewerUnfollowed": "You unfollowed @{username}.",
+  "@viewerUnfollowed": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerUnfollowError": "Could not unfollow.",
+  "viewerBlockConfirm": "You won't see content from @{username} anymore.",
+  "@viewerBlockConfirm": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerBlockError": "Could not block.",
+  "viewerReportPrompt": "Why are you reporting?",
+  "viewerReportSpam": "Spam or misleading",
+  "viewerReportHarassment": "Harassment or bullying",
+  "viewerReportInappropriate": "Inappropriate or offensive content",
+  "viewerReportImpersonation": "False identity",
+  "viewerReportOther": "Other",
+  "viewerReportSent": "Report sent. Thank you.",
+  "viewerReportError": "Could not send the report.",
+  "viewerSeeOriginalPost": "See original post",
+  "viewerReplySent": "Reply sent.",
+  "viewerReplyError": "Could not reply.",
+  "viewerReplyHint": "Reply to story...",
+  "viewerGiftSent": "Sent {giftName} x{quantity} · 💎 {credits}",
+  "@viewerGiftSent": {
+    "placeholders": {
+      "giftName": {
+        "type": "String"
+      },
+      "quantity": {
+        "type": "int"
+      },
+      "credits": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerLoadViewersError": "Could not load viewers.",
+  "viewerTimeNow": "now",
+  "viewerTimeMinutes": "{minutes}m ago",
+  "@viewerTimeMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerTimeHours": "{hours}h ago",
+  "@viewerTimeHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerTimeDays": "{days}d ago",
+  "@viewerTimeDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "viewerLoading": "Loading...",
+  "viewerNoViewers": "No one has viewed this story yet.",
+  "viewerBlocked": "@{username} blocked.",
+  "@viewerBlocked": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "viewerViewsCount": "{count, plural, =1{1 view} other{{count} views}}",
+  "@viewerViewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "feedTabForYou": "For You",
+  "feedTabFollowing": "Following",
+  "feedEmptyQuietTitle": "The feed is quiet",
+  "feedEmptyQuietSubtitle": "Be the first to post something brilliant today.",
+  "feedEmptyFollowingTitle": "Nothing here yet",
+  "feedEmptyFollowingSubtitle": "Follow people to see their posts here.",
+  "feedOfflineTitle": "No connection here",
+  "feedOfflineSubtitle": "Check your internet and try again.",
+  "feedRetry": "Try again",
+  "feedSaved": "Saved to your favorites",
+  "feedUnsaved": "Removed from favorites",
+  "feedLinkCopied": "Link copied!",
+  "feedDeletePostTitle": "Delete post?",
+  "feedDeleteConfirm": "This action cannot be undone.",
+  "feedCancel": "Cancel",
+  "feedDelete": "Delete",
+  "feedPostDeleted": "Post deleted.",
+  "feedPostDeleteError": "Could not delete the post.",
+  "feedUnfollowed": "You unfollowed @{username}.",
+  "@feedUnfollowed": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "feedUnfollowError": "Could not unfollow.",
+  "feedBlockUserTitle": "Block user",
+  "feedBlockConfirm": "You won't see content from @{username} anymore. Continue?",
+  "@feedBlockConfirm": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "feedBlock": "Block",
+  "feedBlockError": "Could not block.",
+  "feedReportTitle": "Report post",
+  "feedReportPrompt": "Why are you reporting?",
+  "feedReportSpam": "Spam or misleading",
+  "feedReportHarassment": "Harassment or bullying",
+  "feedReportInappropriate": "Inappropriate or offensive content",
+  "feedReportImpersonation": "False identity",
+  "feedReportOther": "Other",
+  "feedReportSent": "Report sent. Thanks for letting us know.",
+  "feedReportError": "Could not send the report.",
+  "feedRepostUndoConfirm": "Undo repost?",
+  "feedRepostConfirm": "Repost to your followers?",
+  "feedRepostUndo": "Undo repost",
+  "feedRepost": "Repost",
+  "feedQuotePost": "Quote post",
+  "feedCopyLink": "Copy link",
+  "feedShareAsStory": "Share as Story",
+  "feedUnfollow": "Unfollow",
+  "feedReport": "Report",
+  "feedDeletePost": "Delete post",
+  "feedSend": "Send",
+  "feedTimeNow": "now",
+  "feedBlocked": "@{username} blocked.",
+  "@feedBlocked": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "chatStatusOnline": "Online",
+  "chatStatusAway": "Away",
+  "chatStatusDnd": "Do not disturb",
+  "chatStatusInvisible": "Invisible",
+  "chatStatusSheetTitle": "My Status",
+  "chatStatusSheetSubtitle": "Choose how you appear to other users.",
+  "chatNewMessageTitle": "New Message",
+  "chatSearchHint": "Search people you follow…",
+  "chatFollowingLabel": "Following",
+  "chatStartConversationError": "Error starting conversation: {error}",
+  "chatLoadError": "Loading error: {error}",
+  "chatLiveBadge": "LIVE",
+  "chatFallbackName": "Chat",
+  "chatEmptySearchTitle": "No people found",
+  "chatEmptySearchSubtitle": "Try searching by name or @username of someone you follow.",
+  "chatListTitle": "Messages",
+  "chatListSearchHint": "Search conversations, people…",
+  "chatListTabAll": "All",
+  "chatListTabUnread": "Unread",
+  "chatListTabArchived": "Archived",
+  "chatListRetry": "Try again",
+  "chatListNewTooltip": "New conversation",
+  "chatListEmptyTitle": "Start a conversation",
+  "chatListEmptySubtitle": "Your messages with creators, friends and brawers will appear here.",
+  "chatListTapToTalk": "Tap to chat",
+  "chatListArchive": "Archive",
+  "chatListUnarchive": "Unarchive",
+  "chatListDelete": "Delete",
+  "chatListDeleteConfirmTitle": "Delete conversation?",
+  "chatListDeleteConfirmBody": "The conversation will be deleted only for you.",
+  "chatListCancel": "Cancel",
+  "chatListTimeNow": "now",
+  "chatDetailPickImageError": "Error picking image: {error}",
+  "chatDetailBlockTitle": "Block {name}?",
+  "chatDetailBlockBody": "You won't be able to send or receive messages from this person anymore.",
+  "chatDetailCancel": "Cancel",
+  "chatDetailBlock": "Block",
+  "chatDetailBlocked": "{name} has been blocked.",
+  "chatDetailBlockError": "Error blocking: {error}",
+  "chatDetailViewProfile": "View profile",
+  "chatDetailOpenProfileError": "Could not open this contact's profile.",
+  "chatDetailMute": "Mute notifications",
+  "chatDetailComingSoon": "Coming soon",
+  "chatDetailSearchInChat": "Search in chat",
+  "chatDetailBlockMenu": "Block {name}",
+  "chatDetailReport": "Report",
+  "chatDetailReportSent": "Report sent. Thank you!",
+  "chatDetailStatusTyping": "typing",
+  "chatDetailStatusOnline": "Online",
+  "chatDetailStatusSeen": "seen {when}",
+  "chatDetailStatusOffline": "Offline",
+  "chatDetailDateToday": "Today",
+  "chatDetailDateYesterday": "Yesterday",
+  "chatDetailReply": "Reply",
+  "chatDetailCopy": "Copy",
+  "chatDetailDeleteForMe": "Delete for me",
+  "chatDetailViewOnceBadge": "View once",
+  "chatDetailViewOnceTitle": "View once",
+  "chatDetailPhotoViewedOnce": "Photo viewed once",
+  "chatDetailPhotoUnavailable": "Photo is no longer available",
+  "chatDetailEmptyTitle": "Say hello 👋",
+  "chatDetailEmptySubtitle": "Send the first message to start the conversation.",
+  "chatDetailReplying": "Replying",
+  "chatDetailReplyImagePreview": "📷 Photo",
+  "chatDetailMessageHint": "Message",
+  "chatDetailVoiceTitle": "Voice message",
+  "chatDetailVoiceSubtitle": "Coming soon — recording with animated waveform",
+  "chatDetailClose": "Close",
+  "chatDetailAttachGallery": "Gallery",
+  "chatDetailAttachCamera": "Camera",
+  "chatDetailAttachAudio": "Audio",
+  "chatDetailAttachLocation": "Location",
+  "chatDetailAttachFile": "File",
+  "chatDetailAttachMystery": "Mystery",
+  "chatDetailRelativeNow": "now",
+  "chatDetailRelativeMinutes": "{minutes}m ago",
+  "chatDetailRelativeHours": "{hours}h ago",
+  "chatDetailRelativeDays": "{days}d ago",
+  "chatDetailViewPost": "View post",
+  "chatDetailPostUnavailable": "Post unavailable",
+  "chatDetailOpenPostSoon": "Open post coming soon",
+  "chatDetailBurnedPreview": "🔥 Burned message",
+  "chatDetailStreamerFallback": "Streamer",
+  "chatDetailLiveFallbackTitle": "Live",
+  "chatDetailLiveTapToWatch": "Tap to watch",
+  "chatDetailLiveSeeDetails": "See details",
+  "chatDetailEmojiSmileys": "Smileys",
+  "chatDetailEmojiGestures": "Gestures",
+  "chatDetailEmojiHearts": "Hearts",
+  "chatDetailEmojiAnimals": "Animals",
+  "chatDetailEmojiFood": "Food",
+  "chatDetailEmojiParty": "Party",
+  "chatDetailEmojiObjects": "Objects",
+  "profileTabGallery": "Gallery",
+  "profileTabLives": "Lives",
+  "profileTabShop": "Shop",
+  "profileTooltipShop": "Shop",
+  "profileTooltipQuests": "Quests",
+  "profileTooltipNotifications": "Notifications",
+  "profileTooltipWallet": "Wallet",
+  "profileShareFail": "Could not share.",
+  "profileLinkCopied": "Link copied to clipboard",
+  "profileBlockedSuccess": "User blocked.",
+  "profileBlockedError": "Failed to block. Try again.",
+  "profileReportSent": "Report sent. Thank you.",
+  "profileReportError": "Failed to report. Try again.",
+  "profileBlockTitle": "Block",
+  "profileBlockBody": "Are you sure you want to block {name}? You will no longer be able to exchange messages or see each other's content.",
+  "@profileBlockBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "profileFallbackUser": "this user",
+  "profileReportQuestion": "Why are you reporting?",
+  "profileReportReasonSpam": "Spam",
+  "profileReportReasonHarassment": "Harassment or bullying",
+  "profileReportReasonInappropriate": "Inappropriate content",
+  "profileReportReasonImpersonation": "Impersonation",
+  "profileReportReasonOther": "Other reason",
+  "profileOptionShareProfile": "Share profile",
+  "profileOptionCopyLink": "Copy link",
+  "profileOptionReport": "Report",
+  "profileOptionDailyQuests": "Daily quests",
+  "profileOptionWallet": "Wallet",
+  "profileOptionNotifications": "Notifications",
+  "profileOptionSettings": "Settings",
+  "profileOptionLogout": "Log out",
+  "profileLogoutTitle": "Log out?",
+  "profileLogoutBody": "You will need to sign in again to access your arena.",
+  "profileLogoutConfirm": "Log out",
+  "profileMessageButton": "Message",
+  "profileOpenConversationError": "Error opening conversation: {error}",
+  "@profileOpenConversationError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "profileChatFallback": "Chat",
+  "profileUserFallback": "User",
+  "profileEditTooltip": "Edit profile",
+  "profileStatFollowers": "Followers",
+  "profileStatFollowing": "Following",
+  "profileStatLives": "Lives",
+  "profileStatViews": "Views",
+  "profileLoadError": "Could not load the profile",
+  "profileLoadErrorHint": "Check your connection and try again.",
+  "profileRetry": "Try again",
+  "profileSellerVerified": "Verified seller",
+  "profileSellerSubtitle": "Check out the product showcase",
+  "profileNoTextPosts": "No text posts yet",
+  "profilePostsLoadError": "Error loading posts",
+  "profileNoLives": "No lives yet",
+  "profileLivesLoadError": "Error loading lives",
+  "profileShopEmpty": "Empty shop",
+  "profileShopFeatured": "Featured",
+  "profileShopAllProducts": "All products",
+  "profileLiveBadge": "LIVE",
+  "profileProductSoldOut": "Sold out",
+  "profileProductSoldOutUppercase": "SOLD OUT",
+  "profileProductAbout": "About the product",
+  "profileProductUnavailable": "Unavailable",
+  "profileProductBuyNow": "Buy now",
+  "profileAddedToCart": "🛒 Added to cart!",
+  "profileGalleryLoadError": "Error loading gallery",
+  "profileGalleryEmpty": "Nothing here yet",
+  "profileGalleryRemoveTitle": "Remove media?",
+  "profileGalleryRemoveBody": "This action cannot be undone.",
+  "profileGalleryRemove": "Remove",
+  "profileVideoDeleteTitle": "Delete video?",
+  "profileVideoDelete": "Delete",
+  "profileVideoDeleted": "Video deleted",
+  "profileVideoDeleteError": "Failed to delete video",
+  "profileVideoRepostStory": "Repost to Stories",
+  "profileVideoDeleteAction": "Delete video",
+  "profileVideoLoadError": "Could not load the video.",
+  "profileGalleryTabPhotos": "Photos ({count}/{max})",
+  "@profileGalleryTabPhotos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "profileGalleryTabVideos": "Videos ({count}/{max})",
+  "@profileGalleryTabVideos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "profileGalleryPhotoAdded": "Photo added",
+  "profileGalleryPhotoError": "Failed to upload photo",
+  "profileGalleryVideoAdded": "Video added",
+  "profileGalleryVideoError": "Failed to upload video",
+  "profileVideoDeleteBody": "This action cannot be undone. The video will be removed from For You and your profile.",
+  "profileProductLastStock": "Last {count}",
+  "@profileProductLastStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileProductSoldCount": "{count} sold",
+  "@profileProductSoldCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileProductLowStock": "Only {count} left",
+  "@profileProductLowStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileProductInStock": "{count} in stock",
+  "@profileProductInStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileProductDescription": "Exclusive product from the official store. Ships within 3 business days. 30-day guarantee and free exchange.",
+  "profilePriceBRL": "R\\$ {amount}",
+  "@profilePriceBRL": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "profileVideosLoadError": "Error loading videos",
+  "profileVideosEmpty": "No videos posted yet",
+  "profileVideoSwipeHint": "Swipe",
+  "notificationsMarkAll": "Mark all",
+  "notificationsEmptyTitle": "All caught up!",
+  "notificationsEmptySubtitle": "You don't have any new notifications.",
+  "notificationsLoadError": "Couldn't load your notifications.",
+  "notificationsTryAgain": "Try again",
+  "notificationsTimeNow": "now",
+  "notificationsTimeMinutes": "{n}m ago",
+  "@notificationsTimeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsTimeHours": "{n}h ago",
+  "@notificationsTimeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationsTimeDays": "{n}d ago",
+  "@notificationsTimeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "followsTitle": "People",
+  "followsTabFollowers": "Followers",
+  "followsTabFollowing": "Following",
+  "followsSearchHint": "Search...",
+  "followsLoadError": "Loading error",
+  "followsTryAgain": "Try again",
+  "followsNoResults": "No results for \"{q}\"",
+  "@followsNoResults": {
+    "placeholders": {
+      "q": {
+        "type": "String"
+      }
+    }
+  },
+  "followsEmptyFollowers": "No followers yet",
+  "followsEmptyFollowing": "Not following anyone yet",
+  "followsUserFallback": "User",
+  "followsLiveBadge": "LIVE",
+  "questsTitle": "Daily Quests",
+  "questsClaimAll": "Claim all ({count})",
+  "@questsClaimAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "questsClaimedReward": "{n} reward(s) collected!",
+  "@questsClaimedReward": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "questsNothingToClaim": "Nothing to claim right now.",
+  "questsClaimSuccess": "+{xp} XP · +{coins} coins",
+  "@questsClaimSuccess": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      },
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "questsClaimError": "Failed to claim. Try again.",
+  "questsEmpty": "No quests for now.\nCome back later!",
+  "questsLevel": "Level {level}",
+  "@questsLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "questsXpProgress": "{current} / {total} XP",
+  "@questsXpProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "questsSummaryCompleted": "Completed",
+  "questsSummaryXpToday": "XP today",
+  "questsSummaryStreak": "Streak",
+  "questsStreakDays": "{days}d",
+  "@questsStreakDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "questsProgressCount": "{current} / {total}",
+  "@questsProgressCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "questsRewardXp": "+{xp} XP",
+  "@questsRewardXp": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "questsRewardCoins": "+{coins} coins",
+  "@questsRewardCoins": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "questsStatusClaimed": "Claimed ✓",
+  "questsStatusInProgress": "In progress",
+  "questsActionClaim": "Claim",
+  "questsLoadError": "Couldn't load quests.",
+  "questsTryAgain": "Try again",
+  "questsSummaryCompletedValue": "{done}/{total}",
+  "@questsSummaryCompletedValue": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "walletTitle": "Wallet",
+  "walletAvailableBalance": "Available balance",
+  "walletCoins": "coins",
+  "walletSectionBuyTitle": "Buy coins",
+  "walletSectionBuySubtitle": "Use coins to send gifts in lives",
+  "walletSectionHistoryTitle": "History",
+  "walletSectionHistorySubtitle": "Your latest transactions",
+  "walletPackageCoins": "{n} coins",
+  "@walletPackageCoins": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "walletPriceBRL": "R$ {value}",
+  "@walletPriceBRL": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "walletPurchaseInfo": "In-app payments coming soon. For now, buy coins via browser at brawe.app/coins.",
+  "walletPurchaseUnderstood": "Got it",
+  "walletInfoTitle": "How coins work",
+  "walletInfoQuestsTitle": "Daily quests",
+  "walletInfoQuestsBody": "Complete missions and earn coins + XP every day.",
+  "walletInfoGiftsTitle": "Receive gifts",
+  "walletInfoGiftsBody": "Your lives receive gifts from your followers.",
+  "walletInfoUseTitle": "Use in lives",
+  "walletInfoUseBody": "Send gifts to favorite creators during lives.",
+  "walletLoadError": "Couldn't load your wallet.",
+  "walletTryAgain": "Try again",
+  "walletActionAdd": "Add",
+  "walletActionSend": "Send",
+  "walletActionStatement": "Statement",
+  "walletComingSoon": "Coming soon.",
+  "walletTxLoadError": "Couldn't load history.",
+  "walletTxEmpty": "No transactions yet.",
+  "walletTxTo": "To",
+  "walletTxFrom": "From",
+  "exploreSearchHint": "Search streamers, lives, categories…",
+  "exploreTabTrending": "Trending",
+  "exploreTabCategories": "Categories",
+  "exploreTabRecommended": "For you",
+  "exploreSectionLives": "Live now",
+  "exploreSectionTrendingStreamers": "Trending streamers",
+  "exploreSectionRecommendedLives": "Recommended lives",
+  "exploreSectionRecommendedStreamers": "Streamers you may like",
+  "exploreEmptyTrending": "Nothing trending right now",
+  "exploreEmptyCategories": "No categories available.",
+  "exploreEmptyRecommended": "Follow some streamers to get personalized recommendations!",
+  "exploreEmptySearch": "No results.",
+  "exploreCategoryGeneral": "General",
+  "exploreFollowersCount": "{count} followers",
+  "@exploreFollowersCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exploreCategoryLiveCount": "{count} live",
+  "@exploreCategoryLiveCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exploreLoadError": "Loading error. Pull down to try again.",
+  "exploreLiveSubtitle": "{streamer} • {category}",
+  "@exploreLiveSubtitle": {
+    "placeholders": {
+      "streamer": {
+        "type": "String"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "editProfileTitle": "Edit profile",
+  "editProfileSave": "Save",
+  "editProfileLoadError": "Failed to load profile",
+  "editProfileSaved": "Profile updated",
+  "editProfileSavedUsernameFailed": "Profile saved, but failed to update username",
+  "editProfileSectionInfo": "Information",
+  "editProfileSectionSocial": "Social links",
+  "editProfileFieldName": "Display name",
+  "editProfileFieldNameRequired": "Required",
+  "editProfileFieldBio": "Bio",
+  "editProfileFieldBioHint": "Tell us a bit about you...",
+  "editProfileSocialInstagram": "Instagram",
+  "editProfileSocialTikTok": "TikTok",
+  "editProfileSocialTwitter": "X / Twitter",
+  "editProfileSocialYouTube": "YouTube",
+  "editProfileSocialWebsite": "Website",
+  "editProfileSocialUserHint": "@user",
+  "editProfileSocialChannelHint": "channel",
+  "editProfileSocialUrlHint": "https://...",
+  "editProfileBannerAdd": "Add banner",
+  "editProfileBannerPosition": "Position banner",
+  "editProfileAvatarPosition": "Position photo",
+  "editProfileUsernameLabel": "Username",
+  "editProfileUsernameHint": "@yourname",
+  "editProfileUsernameAvailable": "Available",
+  "editProfileUsernameTooShort": "Minimum 3 characters",
+  "editProfileUsernameInvalid": "Only letters, numbers and _ (must start with a letter)",
+  "editProfileImageProcessError": "Could not process the image.",
+  "editProfileImageDone": "Done",
+  "editProfileImageHint": "Drag to reposition · Pinch to zoom",
+  "editProfileErrorSaveFailed": "Could not save. Please try again.",
+  "editProfileErrorUsernameCheck": "Failed to verify",
+  "editProfileErrorUsernameInUse": "This username is already taken",
+  "editProfileErrorUsernameSaveFailed": "Could not save username. Please try again.",
+  "editProfileErrorAvatarUpload": "Failed to upload avatar.",
+  "editProfileErrorBannerUpload": "Failed to upload banner.",
+  "editProfileErrorAvatarRemove": "Failed to remove avatar.",
+  "editProfileErrorBannerRemove": "Failed to remove banner.",
+  "startLivePermissionDenied": "We need camera and microphone access to start.",
+  "startLiveNoCamera": "No camera found on this device.",
+  "startLiveCameraInitError": "Error initializing camera: {error}",
+  "startLiveCameraInitFailed": "Failed to initialize camera.",
+  "startLiveThumbCaptured": "Cover captured from camera ✨",
+  "startLiveThumbCaptureFailed": "Could not capture the cover.",
+  "startLiveThumbUpdated": "Cover updated.",
+  "startLiveThumbCaptureNow": "Capture now",
+  "startLiveThumbCaptureNowSubtitle": "Uses the current camera frame",
+  "startLiveThumbPickGallery": "Choose from gallery",
+  "startLiveThumbRemove": "Remove cover",
+  "startLiveRoomDataError": "Could not get live data.",
+  "startLiveRetry": "Try again",
+  "startLiveTitleHint": "Tell us what your live is about...",
+  "startLiveCategoryLabel": "Category",
+  "startLiveNotifyFollowers": "Notify my followers",
+  "startLiveGoLive": "GO LIVE",
+  "startLiveSuggestions": "Suggestions",
+  "startLiveErrorTitleTooShort": "The title must be at least 3 characters.",
+  "startLiveErrorCategoryRequired": "Select a category for your live.",
+  "liveCategoryShopping": "Shopping",
+  "liveCategoryGaming": "Gaming",
+  "liveCategoryTalkShow": "Talk Show",
+  "liveCategoryMusic": "Music",
+  "liveCategoryEducation": "Education",
+  "liveCategoryFitness": "Fitness",
+  "liveCategoryCooking": "Cooking",
+  "liveCategoryBeauty": "Beauty",
+  "liveCategoryTech": "Technology",
+  "liveCategorySports": "Sports",
+  "liveCategoryEntertainment": "Entertainment",
+  "liveCategoryOther": "Other",
+  "liveVisibilityPublic": "Public",
+  "liveVisibilityFollowers": "Followers",
+  "liveVisibilityPrivate": "Private",
+  "liveVisibilityPublicDesc": "Anyone can join and discover",
+  "liveVisibilityFollowersDesc": "Only your followers can join",
+  "liveVisibilityPrivateDesc": "Only people with the link invited",
+  "warmupHeading": "Warming up the crowd",
+  "warmupSubheading": "Notifying your followers...",
+  "warmupOpensInSeconds": "Live opens in {count} second{plural}",
+  "warmupGoNow": "Go live now",
+  "warmupCancel": "Cancel warmup",
+  "vibeNetworkWifi": "Wi-Fi",
+  "vibeNetworkMobile": "4G/5G",
+  "vibeNetworkEthernet": "Ethernet",
+  "vibeNetworkNone": "No network",
+  "vibeStatusGood": "All set to go live",
+  "vibeStatusWarning": "Works, but may be unstable",
+  "vibeStatusBad": "Heads up before starting",
+  "vibeNetworkLabel": "Network: {label}",
+  "vibeBatteryLabel": "Battery: {level}%",
+  "shareLiveLoginNeeded": "Log in to share",
+  "shareLiveLoadFollowersError": "Could not load your followers.",
+  "shareLiveSentToCount": "Live sent to {count, plural, =1{{count} person} other{{count} people}} 🎉",
+  "shareLiveSendFailed": "Failed to share the live",
+  "shareLiveTitle": "Share live",
+  "shareLiveBadge": "LIVE",
+  "shareLiveSearchHint": "Search followers",
+  "shareLiveErrorGeneric": "Error",
+  "shareLiveRetry": "Try again",
+  "shareLiveEmptyFollowers": "No followers found.",
+  "shareLiveDefaultUser": "User",
+  "shareLiveNoteHint": "Add a message (optional)…",
+  "shareLiveSendTo": "Send to {count}",
+  "shareLiveSelectContacts": "Select contacts",
+  "broadcasterPermissionDenied": "We need camera and microphone access for you to go live.",
+  "broadcasterNoCamera": "No camera found on this device.",
+  "broadcasterInitCameraFailed": "Failed to initialize the camera.",
+  "broadcasterInitCameraError": "Error initializing the camera: {error}",
+  "@broadcasterInitCameraError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "broadcasterRoomUpdateFailed": "Could not update the live: {error}",
+  "broadcasterMissingStreamCreds": "Could not start: RTMP URL or stream key missing.",
+  "broadcasterConnectedLive": "Connected! You're live. 🔴",
+  "broadcasterStreamStartError": "Error starting broadcast: {error}",
+  "broadcasterLiveResumed": "Live resumed — you're back on air.",
+  "broadcasterLivePaused": "Live paused (BRB).",
+  "broadcasterPauseToggleError": "Error pausing/resuming: {error}",
+  "broadcasterDiscardTitle": "Discard live?",
+  "broadcasterDiscardMessage": "You created a live but haven't started broadcasting. Discard it?",
+  "broadcasterCancel": "Cancel",
+  "broadcasterDiscard": "Discard",
+  "broadcasterEndTitle": "End live?",
+  "broadcasterEndMessage": "Are you sure you want to end the broadcast? Your viewers will be disconnected.",
+  "broadcasterContinueLive": "Stay live",
+  "broadcasterEnd": "End",
+  "broadcasterMoreResumeLive": "Resume live",
+  "broadcasterMorePauseBrb": "Pause (BRB)",
+  "broadcasterMoreResumeSubtitle": "Go back on air and continue broadcasting",
+  "broadcasterMorePauseSubtitle": "Pause the broadcast without ending it",
+  "broadcasterMoreSwitchCamera": "Switch camera",
+  "broadcasterMoreSwitchCameraSubtitle": "Toggle between front and back",
+  "broadcasterMoreShareLive": "Share live",
+  "broadcasterMoreShareLiveSubtitle": "Send a live preview to your followers",
+  "broadcasterMoreEndLive": "End live",
+  "broadcasterMoreEndLiveSubtitle": "Ends the broadcast for everyone",
+  "broadcasterBadgePaused": "PAUSED",
+  "broadcasterBadgeLive": "LIVE",
+  "broadcasterTooltipResume": "Resume",
+  "broadcasterTooltipPause": "Pause",
+  "broadcasterTooltipMore": "More",
+  "broadcasterTooltipEnd": "End",
+  "broadcasterViewerJoined": "{name} joined",
+  "suggestTimeDawn": "Late night",
+  "suggestTimeMorning": "Good morning",
+  "suggestTimeAfternoon": "Good afternoon",
+  "suggestTimeEvening": "Good evening",
+  "suggestModa1": "{time} fashion — what to wear?",
+  "suggestModa2": "OOTD live",
+  "suggestModa3": "Online fitting room — help me choose",
+  "suggestBeleza1": "{time} doing makeup live",
+  "suggestBeleza2": "Skincare routine — together",
+  "suggestBeleza3": "New product review",
+  "suggestJogos1": "Let's play — who's in?",
+  "suggestJogos2": "Rank up live • {time}",
+  "suggestJogos3": "Warmup before ranked",
+  "suggestMusica1": "{time} music — taking requests",
+  "suggestMusica2": "Playing live — come hang",
+  "suggestMusica3": "Playlist + chat",
+  "suggestEsportes1": "Commenting the game live",
+  "suggestEsportes2": "{time} sports — chat with me",
+  "suggestEsportes3": "Workout + chat",
+  "suggestComida1": "{time} in the kitchen — cook with me",
+  "suggestComida2": "Recipe live",
+  "suggestComida3": "Trying a new recipe",
+  "suggestGeneric1": "{time} with the crew",
+  "suggestGeneric2": "Come hang, let's chat",
+  "suggestGeneric3": "Open live — drop in",
+  "liveCommentsHint": "Say something...",
+  "liveCommentsSending": "  Sending...",
+  "giftsSent": "Sent {name}!",
+  "@giftsSent": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "giftsTitle": "Send a Gift",
+  "giftsEmpty": "No gifts available",
+  "giftsSendButton": "SEND",
+  "giftsError": "Error loading gifts: {error}",
+  "@giftsError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "giftsCreditsLabel": "{count} Credits",
+  "@giftsCreditsLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "giftsPriceLabel": "{price} pts",
+  "@giftsPriceLabel": {
+    "placeholders": {
+      "price": {
+        "type": "int"
+      }
+    }
+  },
+  "liveFeedEmptyForYou": "No lives in For You right now.",
+  "liveFeedEmptyAll": "No active lives at the moment.",
+  "liveFeedEmptyHint": "Check back later or try refreshing.",
+  "liveFeedRefresh": "Refresh",
+  "liveFeedRetry": "Retry",
+  "liveFeedError": "Error: {error}",
+  "@liveFeedError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "liveFeedCategoryForYou": "For You",
+  "liveFeedCategoryAll": "All Lives",
+  "liveFeedShareMessage": "Check out this live on Brawe: {title}\n{url}",
+  "@liveFeedShareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "liveFeedBadgeLive": "LIVE",
+  "liveFeedBadgeLiveWithCount": "LIVE {count}",
+  "@liveFeedBadgeLiveWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "liveFeedGift": "Gift",
+  "liveFeedShare": "Share",
+  "livePlayerInputHint": "Say something nice...",
+  "livePlayerTooltipRose": "Send rose",
+  "livePlayerTooltipGifts": "Gifts",
+  "livePlayerTooltipLike": "Like",
+  "livePlayerTooltipSend": "Send",
+  "livePlayerGiftSentVerb": " sent ",
+  "livePlayerShareTitle": "Share with followers",
+  "livePlayerShareSubtitle": "Send this live in a conversation",
+  "livePlayerReportTitle": "Report live",
+  "livePlayerReportSubtitle": "Let our team know about something wrong",
+  "livePlayerReportSubmitted": "Report registered. Thank you.",
+  "liveCurrentUser": "You",
+  "commonFollow": "FOLLOW",
+  "liveBadgeLive": "LIVE",
+  "homeSectionLiveBattles": "LIVE STREAM BATTLES",
+  "homeSectionTopStreamers": "TOP STREAMERS",
+  "homeSectionCategories": "CATEGORIES",
+  "homeSectionStreamCard": "STREAM CARD",
+  "homeSectionLiveCommerce": "LIVE COMMERCE SHOW",
+  "homeSectionRecentLives": "Recent Lives",
+  "homeErrorLoadingStats": "Error loading stats",
+  "homeErrorLoadingLives": "Error loading lives",
+  "homeEmptyPastLives": "No past lives found",
+  "homeEmptyStreamers": "No streamers yet",
+  "homeBattleWatchBet": "WATCH & BET",
+  "homeBattleLabel": "PK battle",
+  "commonError": "Error",
+  "videoTooltipRepostStory": "Repost to Stories",
+  "liveBattleTapToWatch": "Tap to watch live",
+  "liveBattleMysteryGift": "Mystery Gift",
+  "livePeekWatchLive": "Watch Live",
+  "productSoldOut": "Sold out",
+  "productBuy": "Buy",
+  "productLowStock": "Only {count} left",
+  "@productLowStock": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productSoldCount": "{count} sold",
+  "@productSoldCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "emojiCatSmileys": "Smileys",
+  "emojiCatGestures": "Gestures",
+  "emojiCatHearts": "Hearts",
+  "emojiCatAnimals": "Animals",
+  "emojiCatFood": "Food",
+  "emojiCatParty": "Party",
+  "emojiCatObjects": "Objects",
+  "battleVs": "VS",
+  "battleTimer": "Time remaining",
+  "battleSendGift": "Send gift",
+  "battleSupport": "Support",
+  "battleWinner": "Winner",
+  "battleDraw": "Draw",
+  "battleEnded": "Battle ended",
+  "battleResultTitle": "Battle result",
+  "battleResultShare": "Share result",
+  "battleResultWatchAgain": "Watch another battle",
+  "battleScoreLabel": "{score} pts",
+  "@battleScoreLabel": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "battleTopSupporters": "Top supporters",
+  "battleYouScore": "You: {score}",
+  "@battleYouScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "battleRivalScore": "Rival: {score}",
+  "@battleRivalScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "battleCountdownStarting": "Starting in {count}",
+  "@battleCountdownStarting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "battleInviteReceived": "{name} challenged you to a battle!",
+  "@battleInviteReceived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleAccept": "Accept",
+  "battleDecline": "Decline",
+  "battleLoading": "Loading battle...",
+  "battleError": "Error loading battle",
+  "battleGiftReceived": "{sender} sent {gift}",
+  "@battleGiftReceived": {
+    "placeholders": {
+      "sender": {
+        "type": "String"
+      },
+      "gift": {
+        "type": "String"
+      }
+    }
+  }
+}

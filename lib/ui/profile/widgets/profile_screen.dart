@@ -7,13 +7,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/feature_flags.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/follow_button.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/social_actions_service.dart';
+import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/product_repository.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/post.dart';
@@ -139,26 +142,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final isMe = currentUserId == widget.userId;
     final products = _products;
 
+    final s = S.of(context);
     final tabs = <Tab>[
-      const Tab(icon: Icon(Icons.article_outlined, size: 20), text: 'Posts'),
-      const Tab(icon: Icon(Icons.play_circle_outline, size: 20), text: 'Vídeos'),
-      const Tab(icon: Icon(Icons.grid_on_outlined, size: 20), text: 'Galeria'),
-      const Tab(icon: Icon(Icons.live_tv_outlined, size: 20), text: 'Lives'),
+      Tab(icon: const Icon(Icons.article_outlined, size: 20), text: s.profileTabPosts),
+      Tab(icon: const Icon(Icons.play_circle_outline, size: 20), text: s.profileTabVideos),
+      Tab(icon: const Icon(Icons.grid_on_outlined, size: 20), text: s.profileTabGallery),
+      Tab(icon: const Icon(Icons.live_tv_outlined, size: 20), text: s.profileTabLives),
       if (_isSeller)
-        const Tab(
-            icon: Icon(Icons.shopping_bag_outlined, size: 20), text: 'Loja'),
+        Tab(
+            icon: const Icon(Icons.shopping_bag_outlined, size: 20),
+            text: s.profileTabShop),
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.nearBlack,
+      backgroundColor: context.colors.background,
       body: NestedScrollView(
         headerSliverBuilder: (_, __) => [
           SliverAppBar(
-            backgroundColor: AppColors.nearBlack,
+            backgroundColor: context.colors.background,
             elevation: 0,
             pinned: true,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
               onPressed: () => context.pop(),
             ),
             title: profileState.profile.maybeWhen(
@@ -167,8 +172,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 if (handle == null) return const SizedBox.shrink();
                 return Text(
                   '@$handle',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -179,17 +184,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             actions: [
               if (_isSeller)
                 IconButton(
-                  icon: const Icon(Icons.storefront, color: Colors.white),
-                  tooltip: 'Loja',
+                  icon: Icon(Icons.storefront, color: context.colors.textPrimary),
+                  tooltip: s.profileTooltipShop,
                   onPressed: () => _tabController?.animateTo(3),
                 ),
               if (isMe)
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.emoji_events_outlined,
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                   ),
-                  tooltip: 'Quests',
+                  tooltip: s.profileTooltipQuests,
                   onPressed: () => context.push('/quests'),
                 ),
               if (isMe)
@@ -204,11 +209,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       alignment: Alignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.notifications_outlined,
-                            color: Colors.white,
+                            color: context.colors.textPrimary,
                           ),
-                          tooltip: 'Notificacoes',
+                          tooltip: s.profileTooltipNotifications,
                           onPressed: () => context.push('/notifications'),
                         ),
                         if (unread > 0)
@@ -225,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               ),
                               child: Text(
                                 unread > 99 ? '99+' : unread.toString(),
-                                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: context.colors.textPrimary, fontSize: 9, fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -236,15 +241,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ),
               if (isMe && kEnableMonetization)
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.account_balance_wallet_outlined,
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                   ),
-                  tooltip: 'Carteira',
+                  tooltip: s.profileTooltipWallet,
                   onPressed: () => context.push('/wallet'),
                 ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
+                icon: Icon(Icons.more_vert, color: context.colors.textPrimary),
                 onPressed: () => _showOptions(context, isMe),
               ),
             ],
@@ -269,8 +274,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 controller: _tabController,
                 indicatorColor: AppColors.electricPurple,
                 indicatorWeight: 2,
-                labelColor: Colors.white,
-                unselectedLabelColor: AppColors.coolGray,
+                labelColor: context.colors.textPrimary,
+                unselectedLabelColor: context.colors.textSecondary,
                 labelStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -329,7 +334,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível compartilhar.')),
+        SnackBar(content: Text(S.of(context).profileShareFail)),
       );
     }
   }
@@ -341,30 +346,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Link copiado para a área de transferência')),
+      SnackBar(content: Text(S.of(context).profileLinkCopied)),
     );
   }
 
   Future<void> _confirmBlock(BuildContext context) async {
     final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
-    final name = profile?.displayName ?? 'este usuário';
+    final name = profile?.displayName ?? S.of(context).profileFallbackUser;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Bloquear'),
-        content: Text(
-          'Tem certeza que deseja bloquear $name? Vocês não poderão mais '
-          'trocar mensagens nem ver conteúdo um do outro.',
-        ),
+        title: Text(S.of(ctx).profileBlockTitle),
+        content: Text(S.of(ctx).profileBlockBody(name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Bloquear'),
+            child: Text(S.of(ctx).profileBlockTitle),
           ),
         ],
       ),
@@ -377,28 +379,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       await ref.read(socialActionsServiceProvider).blockUser(slug);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuário bloqueado.')),
+        SnackBar(content: Text(S.of(context).profileBlockedSuccess)),
       );
       if (context.canPop()) context.pop();
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha ao bloquear. Tente novamente.')),
+        SnackBar(content: Text(S.of(context).profileBlockedError)),
       );
     }
   }
 
   void _showReportSheet(BuildContext context) {
-    final reasons = const [
-      ('spam', 'Spam'),
-      ('harassment', 'Assédio ou bullying'),
-      ('inappropriate', 'Conteúdo impróprio'),
-      ('impersonation', 'Falsa identidade'),
-      ('other', 'Outro motivo'),
+    final s = S.of(context);
+    final reasons = <(String, String)>[
+      ('spam', s.profileReportReasonSpam),
+      ('harassment', s.profileReportReasonHarassment),
+      ('inappropriate', s.profileReportReasonInappropriate),
+      ('impersonation', s.profileReportReasonImpersonation),
+      ('other', s.profileReportReasonOther),
     ];
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.slate,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -406,12 +409,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                'Por que está denunciando?',
+                s.profileReportQuestion,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
@@ -419,7 +422,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             ),
             for (final r in reasons)
               ListTile(
-                title: Text(r.$2, style: const TextStyle(color: Colors.white)),
+                title: Text(r.$2, style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _submitReport(context, r.$1);
@@ -441,12 +444,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Denúncia enviada. Obrigado.')),
+        SnackBar(content: Text(S.of(context).profileReportSent)),
       );
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Falha ao denunciar. Tente novamente.')),
+        SnackBar(content: Text(S.of(context).profileReportError)),
       );
     }
   }
@@ -454,11 +457,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     void _showOptions(BuildContext context, bool isMe) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.slate,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -467,33 +472,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             if (!isMe) ...[
               ListTile(
-                leading: const Icon(Icons.share_outlined, color: Colors.white),
-                title: const Text('Compartilhar perfil',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.share_outlined, color: context.colors.textPrimary),
+                title: Text(s.profileOptionShareProfile,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   _shareProfile(context);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.link, color: Colors.white),
-                title: const Text('Copiar link',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.link, color: context.colors.textPrimary),
+                title: Text(s.profileOptionCopyLink,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   _copyProfileLink(context);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.block, color: Colors.white),
-                title: const Text('Bloquear',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.block, color: context.colors.textPrimary),
+                title: Text(s.profileBlockTitle,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   _confirmBlock(context);
@@ -501,8 +506,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               ),
               ListTile(
                 leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                title: const Text('Denunciar',
-                    style: TextStyle(color: Colors.red)),
+                title: Text(s.profileOptionReport,
+                    style: const TextStyle(color: Colors.red)),
                 onTap: () {
                   Navigator.of(context).pop();
                   _showReportSheet(context);
@@ -510,57 +515,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               ),
             ] else ...[
               ListTile(
-                leading: const Icon(Icons.emoji_events_outlined,
-                    color: Colors.white),
-                title: const Text('Quests diárias',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.emoji_events_outlined,
+                    color: context.colors.textPrimary),
+                title: Text(s.profileOptionDailyQuests,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/quests');
                 },
               ),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: context.colors.divider, height: 1),
               if (kEnableMonetization) ...[
                 ListTile(
-                  leading: const Icon(Icons.account_balance_wallet_outlined,
-                      color: Colors.white),
-                  title: const Text('Carteira',
-                      style: TextStyle(color: Colors.white)),
+                  leading: Icon(Icons.account_balance_wallet_outlined,
+                      color: context.colors.textPrimary),
+                  title: Text(s.profileOptionWallet,
+                      style: TextStyle(color: context.colors.textPrimary)),
                   onTap: () {
                     Navigator.of(context).pop();
                     context.push('/wallet');
                   },
                 ),
-                const Divider(color: Colors.white12, height: 1),
+                Divider(color: context.colors.divider, height: 1),
               ],
               ListTile(
-                leading: const Icon(Icons.notifications_outlined,
-                    color: Colors.white),
-                title: const Text('Notificacoes',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.notifications_outlined,
+                    color: context.colors.textPrimary),
+                title: Text(s.profileOptionNotifications,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/notifications');
                 },
               ),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: context.colors.divider, height: 1),
               ListTile(
-                leading: const Icon(Icons.settings_outlined,
-                    color: Colors.white),
-                title: const Text('Configurações',
-                    style: TextStyle(color: Colors.white)),
+                leading: Icon(Icons.settings_outlined,
+                    color: context.colors.textPrimary),
+                title: Text(s.profileOptionSettings,
+                    style: TextStyle(color: context.colors.textPrimary)),
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/settings');
                 },
               ),
-              const Divider(color: Colors.white12, height: 1),
+              Divider(color: context.colors.divider, height: 1),
               ListTile(
                 leading: const Icon(Icons.logout_rounded,
                     color: AppColors.mutedRed),
-                title: const Text(
-                  'Sair da conta',
-                  style: TextStyle(
+                title: Text(
+                  s.profileOptionLogout,
+                  style: const TextStyle(
                     color: AppColors.mutedRed,
                     fontWeight: FontWeight.w600,
                   ),
@@ -574,7 +579,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             const SizedBox(height: 8),
           ],
         ),
-      ),
+        );
+      },
     );
   }
 
@@ -582,35 +588,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.slate,
+        backgroundColor: context.colors.surfaceElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text(
-          'Sair da conta?',
+        title: Text(
+          S.of(ctx).profileLogoutTitle,
           style: TextStyle(
-            color: Colors.white,
+            color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
-        content: const Text(
-          'Você precisará entrar novamente para acessar sua arena.',
-          style: TextStyle(color: Colors.white70, height: 1.4),
+        content: Text(
+          S.of(ctx).profileLogoutBody,
+          style: TextStyle(color: context.colors.textSecondary, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             style: TextButton.styleFrom(foregroundColor: Colors.white70),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).actionCancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.mutedRed,
             ),
-            child: const Text(
-              'Sair',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            child: Text(
+              S.of(ctx).profileLogoutConfirm,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -711,9 +717,9 @@ class _ProfileHeader extends ConsumerWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      profile.displayName ?? profile.username ?? 'User',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      profile.displayName ?? profile.username ?? S.of(context).profileUserFallback,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -728,55 +734,63 @@ class _ProfileHeader extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 2),
-              if (_realHandle(profile.username) != null)
-                Text(
-                  '@${_realHandle(profile.username)}',
-                  style: const TextStyle(
-                      color: AppColors.coolGray, fontSize: 14),
-                ),
+              // ── @username + data de entrada na mesma linha ────────────
+              Row(
+                children: [
+                  if (_realHandle(profile.username) != null)
+                    Text(
+                      '@${_realHandle(profile.username)}',
+                      style:  TextStyle(
+                          color: context.colors.textSecondary, fontSize: 14),
+                    ),
+                  if (_realHandle(profile.username) != null && joinedAt != null)
+                     Text('  ·  ',
+                        style: TextStyle(
+                            color: context.colors.textSecondary, fontSize: 14)),
+                  if (joinedAt != null)
+                    Row(
+                      children: [
+                         Icon(Icons.calendar_today_outlined,
+                            color: context.colors.textSecondary, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          joinedAt,
+                          style:  TextStyle(
+                              color: context.colors.textSecondary, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+
+              // ── Stats compactos (inline, sem card) ────────────────────
+              if (stats != null) ...[
+                const SizedBox(height: 10),
+                _CompactStats(stats: stats, userId: userId),
+              ],
+
               if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   profile.bio!,
-                  style: const TextStyle(
-                      color: Colors.white70, fontSize: 14, height: 1.4),
+                  style: TextStyle(
+                      color: context.colors.textSecondary, fontSize: 14, height: 1.4),
                 ),
               ],
 
               // ── Links sociais ────────────────────────────────────────
               if (profile.socialLinks != null &&
                   profile.socialLinks!.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 _SocialLinks(links: profile.socialLinks!),
               ],
 
-              const SizedBox(height: 16),
-
-              // ── Stats card ───────────────────────────────────────────
-              if (stats != null) _StatsCard(stats: stats, userId: userId),
-              if (stats == null) const SizedBox(height: 8),
-
-              // ── Data de entrada ───────────────────────────────────────
-              if (joinedAt != null) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        color: AppColors.coolGray, size: 14),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Entrou em $joinedAt',
-                      style: const TextStyle(
-                          color: AppColors.coolGray, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ],
-
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // ── Ações ──────────────────────────────────────────────────
-              _buildActions(context),
+              // Quando isMe == true, _buildActions retorna SizedBox.shrink()
+              // (a ação "Editar" virou ícone flutuante no banner).
+              _buildActions(context, ref, profile),
 
               if (isSeller) ...[
                 const SizedBox(height: 12),
@@ -791,52 +805,13 @@ class _ProfileHeader extends ConsumerWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
+  Widget _buildActions(BuildContext context, WidgetRef ref, Profile profile) {
+    // No perfil próprio, NÃO renderizamos botão na área de conteúdo —
+    // a ação "Editar perfil" virou um ícone flutuante (pencil) no canto
+    // superior direito do banner (ver _BannerSection). Isso deixa o
+    // perfil mais limpo, alinhado com Instagram/X.
     if (isMe) {
-      return Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => context.push('/edit-profile'),
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1C2E),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.edit_outlined, color: Colors.white, size: 16),
-                    SizedBox(width: 6),
-                    Text('Editar Perfil',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => context.push('/settings'),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C2E),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white12),
-              ),
-              child: const Icon(Icons.settings_outlined,
-                  color: Colors.white, size: 18),
-            ),
-          ),
-        ],
-      );
+      return const SizedBox.shrink();
     }
 
     return Row(
@@ -845,23 +820,23 @@ class _ProfileHeader extends ConsumerWidget {
         const SizedBox(width: 8),
         Expanded(
           child: GestureDetector(
-            onTap: () => context.push('/chat'),
+            onTap: () => _openConversation(context, ref, profile),
             child: Container(
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C2E),
+                color: context.colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: context.colors.divider),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.message_outlined,
-                      color: Colors.white, size: 16),
+                      color: context.colors.textPrimary, size: 16),
                   SizedBox(width: 6),
-                  Text('Mensagem',
+                  Text(S.of(context).profileMessageButton,
                       style: TextStyle(
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600)),
                 ],
@@ -871,6 +846,31 @@ class _ProfileHeader extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _openConversation(
+      BuildContext context, WidgetRef ref, Profile profile) async {
+    // Mostra um spinner discreto enquanto resolve/cria a conversa.
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final convId = await ref
+          .read(chatRepositoryProvider)
+          .startConversation(participantId: profile.id);
+      if (!context.mounted) return;
+      context.push(
+        '/chat/$convId',
+        extra: {
+          'participantName':
+              profile.displayName ?? profile.username ?? S.of(context).profileChatFallback,
+          'participantAvatarUrl': profile.avatarUrl,
+          'participantId': profile.id,
+        },
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(S.of(context).profileOpenConversationError(e))),
+      );
+    }
   }
 
   String? _parseJoinDate(WidgetRef ref) {
@@ -938,7 +938,7 @@ class _BannerSection extends StatelessWidget {
         Container(
           height: bannerHeight,
           width: double.infinity,
-          color: AppColors.nearBlack,
+          color: context.colors.background,
           child: hasBanner
               ? CachedNetworkImage(
                   imageUrl: bannerUrl!,
@@ -947,6 +947,21 @@ class _BannerSection extends StatelessWidget {
                 )
               : null,
         ),
+
+        // ── Botão flutuante "Editar perfil" (apenas no perfil próprio) ──
+        // Estilo Instagram/X: ícone discreto no canto superior direito do
+        // banner, com glassmorphism leve. Substitui o antigo botão outlined
+        // grande que ficava abaixo da bio.
+        if (isMe)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _BannerActionChip(
+              icon: Icons.edit_outlined,
+              tooltip: S.of(context).profileEditTooltip,
+              onTap: onEditProfile,
+            ),
+          ),
 
         // Avatar com anel (gradiente quando há stories não vistos,
         // cinza quando já foram vistos, neutro quando não há stories)
@@ -981,9 +996,9 @@ class _BannerSection extends StatelessWidget {
                   ),
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
+                    decoration:  BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.nearBlack,
+                      color: context.colors.background,
                     ),
                     child: ClipOval(
                       child: SizedBox(
@@ -1006,7 +1021,7 @@ class _BannerSection extends StatelessWidget {
                     color: const Color(0xFF4CAF50),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: AppColors.nearBlack, width: 2),
+                        color: context.colors.background, width: 2),
                   ),
                 ),
               ),
@@ -1015,6 +1030,117 @@ class _BannerSection extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+// ── Chip de ação flutuante no banner (ex.: "Editar perfil") ─────────────────
+/// Botão circular discreto com glassmorphism, posicionado sobre o banner.
+/// Substitui o antigo botão outlined grande que poluía a área de conteúdo.
+class _BannerActionChip extends StatelessWidget {
+  const _BannerActionChip({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final btn = GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: context.colors.textPrimary, size: 18),
+      ),
+    );
+    if (tooltip == null) return btn;
+    return Tooltip(message: tooltip!, child: btn);
+  }
+}
+
+// ── Compact Stats (inline, sem card) ─────────────────────────────────────────
+class _CompactStats extends StatelessWidget {
+  const _CompactStats({required this.stats, required this.userId});
+  final SocialStats stats;
+  final String userId;
+
+  String _fmt(int v) {
+    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return '$v';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Wrap(
+      spacing: 18,
+      runSpacing: 4,
+      children: [
+        _InlineStat(
+          value: _fmt(stats.followersCount),
+          label: s.profileFollowers,
+          valueColor: AppColors.electricPurple,
+          onTap: () => context.push('/follows/$userId?tab=followers'),
+        ),
+        _InlineStat(
+          value: _fmt(stats.followingCount),
+          label: s.profileFollowing,
+          onTap: () => context.push('/follows/$userId?tab=following'),
+        ),
+        _InlineStat(value: _fmt(stats.livesCount), label: s.profileLives),
+        _InlineStat(value: _fmt(stats.totalLikes), label: s.profileViews),
+      ],
+    );
+  }
+}
+
+class _InlineStat extends StatelessWidget {
+  const _InlineStat({
+    required this.value,
+    required this.label,
+    this.valueColor,
+    this.onTap,
+  });
+  final String value;
+  final String label;
+  final Color? valueColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(value,
+            style: TextStyle(
+                color: valueColor ?? context.colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(width: 4),
+        Text(label,
+            style:  TextStyle(
+                color: context.colors.textSecondary, fontSize: 13)),
+      ],
+    );
+    if (onTap == null) return row;
+    return GestureDetector(onTap: onTap, child: row);
   }
 }
 
@@ -1032,32 +1158,33 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF111120),
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: context.colors.surfaceHighest.withValues(alpha: 0.06)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatsCol(
             value: _fmt(stats.followersCount),
-            label: 'Seguidores',
+            label: s.profileStatFollowers,
             valueColor: AppColors.electricPurple,
             onTap: () => context.push('/follows/$userId?tab=followers'),
           ),
           _Divider(),
           _StatsCol(
             value: _fmt(stats.followingCount),
-            label: 'Seguindo',
+            label: s.profileStatFollowing,
             onTap: () => context.push('/follows/$userId?tab=following'),
           ),
           _Divider(),
-          _StatsCol(value: _fmt(stats.livesCount), label: 'Lives'),
+          _StatsCol(value: _fmt(stats.livesCount), label: s.profileStatLives),
           _Divider(),
-          _StatsCol(value: _fmt(stats.totalLikes), label: 'Views'),
+          _StatsCol(value: _fmt(stats.totalLikes), label: s.profileStatViews),
         ],
       ),
     );
@@ -1069,7 +1196,7 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         width: 1,
         height: 28,
-        color: Colors.white.withValues(alpha: 0.08),
+        color: context.colors.surfaceHighest.withValues(alpha: 0.08),
       );
 }
 
@@ -1096,8 +1223,8 @@ class _StatsCol extends StatelessWidget {
                 fontWeight: FontWeight.bold)),
         const SizedBox(height: 2),
         Text(label,
-            style: const TextStyle(
-                color: AppColors.coolGray, fontSize: 11)),
+            style:  TextStyle(
+                color: context.colors.textSecondary, fontSize: 11)),
       ],
     );
     if (onTap == null) return col;
@@ -1351,28 +1478,43 @@ class _SocialPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    // Para marcas com cor branca/quase branca (X, TikTok, Threads), no tema
+    // claro o branco fica invisível — usamos textPrimary como fallback.
+    final brand = style.border;
+    final brandLuma = brand.computeLuminance();
+    final fg = (isLight && brandLuma > 0.7) ? colors.textPrimary : brand;
+
+    // Fundo do pill: tint suave da marca sobre a superfície elevada, em vez
+    // do hex escuro fixo. Mantém legibilidade em ambos os temas.
+    final bg = Color.alphaBlend(
+      brand.withValues(alpha: isLight ? 0.10 : 0.18),
+      colors.surfaceElevated,
+    );
+
     return GestureDetector(
       onTap: () => _launchSocial(network, url),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: style.color,
+          color: bg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: style.border.withValues(alpha: 0.6)),
+          border: Border.all(color: fg.withValues(alpha: 0.6)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (style.isNative)
-              Icon(style.icon, color: style.border, size: 14)
+              Icon(style.icon, color: fg, size: 14)
             else
-              FaIcon(style.icon, color: style.border, size: 14),
+              FaIcon(style.icon, color: fg, size: 14),
             const SizedBox(width: 6),
             Text(
               style.label,
               style: TextStyle(
-                color: style.border,
+                color: fg,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -1402,7 +1544,7 @@ class _Avatar extends StatelessWidget {
       // Cache por 7 dias, mas sempre revalida se a URL mudou
       cacheKey: url,
       placeholder: (_, __) => Container(
-        color: AppColors.slate,
+        color: context.colors.surfaceElevated,
         child: const Center(
           child: SizedBox(
             width: 22,
@@ -1441,8 +1583,8 @@ class _AvatarFallback extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: context.colors.textPrimary,
           fontSize: 32,
           fontWeight: FontWeight.w800,
           letterSpacing: -1,
@@ -1462,7 +1604,7 @@ class _HeaderSkeleton extends StatelessWidget {
           width: w,
           height: h,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
+            color: context.colors.surfaceHighest.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(6),
           ),
         );
@@ -1476,7 +1618,7 @@ class _HeaderSkeleton extends StatelessWidget {
             height: 102,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.05),
+              color: context.colors.surfaceHighest.withValues(alpha: 0.05),
             ),
           ),
           const SizedBox(height: 14),
@@ -1517,33 +1659,33 @@ class _HeaderError extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Não foi possível carregar o perfil',
+          Text(
+            S.of(context).profileLoadError,
             style: TextStyle(
-              color: Colors.white,
+              color: context.colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Verifique sua conexão e tente novamente.',
+            S.of(context).profileLoadErrorHint,
             style: TextStyle(
-              color: AppColors.coolGray.withValues(alpha: 0.85),
+              color: context.colors.textSecondary.withValues(alpha: 0.85),
               fontSize: 12,
             ),
           ),
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: onRetry,
-            icon: const Icon(Icons.refresh_rounded,
-                size: 18, color: Colors.white),
-            label: const Text(
-              'Tentar novamente',
-              style: TextStyle(color: Colors.white),
+            icon: Icon(Icons.refresh_rounded,
+                size: 18, color: context.colors.textPrimary),
+            label: Text(
+              S.of(context).profileRetry,
+              style: TextStyle(color: context.colors.textPrimary),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              side: BorderSide(color: context.colors.surfaceHighest.withValues(alpha: 0.2)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -1583,21 +1725,21 @@ class _SellerBadge extends StatelessWidget {
         children: [
           const Icon(Icons.storefront, color: Color(0xFFFF9500), size: 20),
           const SizedBox(width: 10),
-          const Expanded(
+           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Vendedor verificado',
+                  S.of(context).profileSellerVerified,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
                 ),
                 Text(
-                  'Confira a vitrine de produtos',
-                  style: TextStyle(color: AppColors.coolGray, fontSize: 11),
+                  S.of(context).profileSellerSubtitle,
+                  style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -1610,8 +1752,8 @@ class _SellerBadge extends StatelessWidget {
             ),
             child: Text(
               '$productsCount itens',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.colors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -1650,13 +1792,13 @@ class _PostsGrid extends StatelessWidget {
             .toList();
 
         if (textual.isEmpty) {
-          return const _EmptyState(
+          return _EmptyState(
             icon: Icons.article_outlined,
-            message: 'Nenhum post de texto ainda',
+            message: S.of(context).profileNoTextPosts,
           );
         }
         return ListView.separated(
-          padding: const EdgeInsets.only(top: 4, bottom: 80),
+          padding: const EdgeInsets.only(top: 4, bottom: 16),
           itemCount: textual.length,
           separatorBuilder: (_, __) =>
               const Divider(color: Colors.white10, height: 1),
@@ -1666,9 +1808,9 @@ class _PostsGrid extends StatelessWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.electricPurple),
       ),
-      error: (_, __) => const _EmptyState(
+      error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
-        message: 'Erro ao carregar posts',
+        message: S.of(context).profilePostsLoadError,
       ),
     );
   }
@@ -1684,9 +1826,9 @@ class _LivesGrid extends StatelessWidget {
     return livesState.when(
       data: (lives) {
         if (lives.isEmpty) {
-          return const _EmptyState(
+          return _EmptyState(
             icon: Icons.live_tv_outlined,
-            message: 'Nenhuma live ainda',
+            message: S.of(context).profileNoLives,
           );
         }
         return GridView.builder(
@@ -1702,7 +1844,7 @@ class _LivesGrid extends StatelessWidget {
             final live = lives[index];
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.slate,
+                color: context.colors.surfaceElevated,
                 image: live.thumbnailUrl != null
                     ? DecorationImage(
                         image: NetworkImage(live.thumbnailUrl!),
@@ -1722,17 +1864,17 @@ class _LivesGrid extends StatelessWidget {
                         color: AppColors.mutedRed,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text('LIVE',
+                      child: Text(S.of(context).profileLiveBadge,
                           style: TextStyle(
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                               fontSize: 9,
                               fontWeight: FontWeight.bold)),
                     ),
                   ),
                   if (live.thumbnailUrl == null)
-                    const Center(
+                    Center(
                       child: Icon(Icons.play_circle_outline,
-                          color: Colors.white24, size: 32),
+                          color: context.colors.border, size: 32),
                     ),
                 ],
               ),
@@ -1743,9 +1885,9 @@ class _LivesGrid extends StatelessWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.electricPurple),
       ),
-      error: (_, __) => const _EmptyState(
+      error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
-        message: 'Erro ao carregar lives',
+        message: S.of(context).profileLivesLoadError,
       ),
     );
   }
@@ -1759,9 +1901,9 @@ class _ProductsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (products.isEmpty) {
-      return const _EmptyState(
+      return _EmptyState(
         icon: Icons.shopping_bag_outlined,
-        message: 'Loja vazia',
+        message: S.of(context).profileShopEmpty,
       );
     }
 
@@ -1771,18 +1913,18 @@ class _ProductsGrid extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         if (featured.isNotEmpty) ...[
-          const SliverPadding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             sliver: SliverToBoxAdapter(
               child: Row(
                 children: [
-                  Icon(Icons.local_fire_department,
+                  const Icon(Icons.local_fire_department,
                       color: Color(0xFFFF9500), size: 20),
-                  SizedBox(width: 6),
+                  const SizedBox(width: 6),
                   Text(
-                    'Destaques',
+                    S.of(context).profileShopFeatured,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1809,13 +1951,13 @@ class _ProductsGrid extends StatelessWidget {
             ),
           ),
         ],
-        const SliverPadding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           sliver: SliverToBoxAdapter(
             child: Text(
-              'Todos os produtos',
+              S.of(context).profileShopAllProducts,
               style: TextStyle(
-                color: Colors.white,
+                color: context.colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -1853,7 +1995,7 @@ class _ProductCard extends StatelessWidget {
       onTap: () => _openProductSheet(context, product),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.slate,
+          color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.circular(12),
         ),
         clipBehavior: Clip.antiAlias,
@@ -1869,9 +2011,9 @@ class _ProductCard extends StatelessWidget {
                     product.imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.nearBlack,
-                      child: const Icon(Icons.image_outlined,
-                          color: AppColors.coolGray),
+                      color: context.colors.background,
+                      child:  Icon(Icons.image_outlined,
+                          color: context.colors.textSecondary),
                     ),
                   ),
                   if (product.hasDiscount)
@@ -1887,8 +2029,8 @@ class _ProductCard extends StatelessWidget {
                         ),
                         child: Text(
                           '-${product.discountPercent}%',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 10,
                           ),
@@ -1899,10 +2041,10 @@ class _ProductCard extends StatelessWidget {
                     Container(
                       color: Colors.black54,
                       alignment: Alignment.center,
-                      child: const Text(
-                        'ESGOTADO',
+                      child: Text(
+                        S.of(context).profileProductSoldOutUppercase,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,
                         ),
@@ -1920,9 +2062,9 @@ class _ProductCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          'Últimas ${product.stock}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          S.of(context).profileProductLastStock(product.stock),
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1941,8 +2083,8 @@ class _ProductCard extends StatelessWidget {
                     product.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       height: 1.2,
@@ -1964,8 +2106,8 @@ class _ProductCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: AppColors.coolGray,
+                          style:  TextStyle(
+                            color: context.colors.textSecondary,
                             fontSize: 10,
                             decoration: TextDecoration.lineThrough,
                           ),
@@ -1975,9 +2117,9 @@ class _ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${product.soldCount} vendidos',
-                    style: const TextStyle(
-                      color: AppColors.coolGray,
+                    S.of(context).profileProductSoldCount(product.soldCount),
+                    style:  TextStyle(
+                      color: context.colors.textSecondary,
                       fontSize: 10,
                     ),
                   ),
@@ -2011,8 +2153,8 @@ class _ProductDetailSheet extends StatelessWidget {
       maxChildSize: 0.95,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.slate,
+        decoration:  BoxDecoration(
+          color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -2022,7 +2164,7 @@ class _ProductDetailSheet extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2039,15 +2181,15 @@ class _ProductDetailSheet extends StatelessWidget {
                         product.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) =>
-                            Container(color: AppColors.nearBlack),
+                            Container(color: context.colors.background),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     product.name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -2067,8 +2209,8 @@ class _ProductDetailSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: AppColors.coolGray,
+                          style:  TextStyle(
+                            color: context.colors.textSecondary,
                             fontSize: 14,
                             decoration: TextDecoration.lineThrough,
                           ),
@@ -2083,8 +2225,8 @@ class _ProductDetailSheet extends StatelessWidget {
                           ),
                           child: Text(
                             '-${product.discountPercent}%',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -2108,39 +2250,38 @@ class _ProductDetailSheet extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         product.isSoldOut
-                            ? 'Esgotado'
+                            ? S.of(context).profileProductSoldOut
                             : product.isLowStock
-                                ? 'Apenas ${product.stock} restantes'
-                                : '${product.stock} em estoque',
+                                ? S.of(context).profileProductLowStock(product.stock)
+                                : S.of(context).profileProductInStock(product.stock),
                         style: TextStyle(
                           color: product.isSoldOut
                               ? AppColors.mutedRed
-                              : Colors.white70,
+                              : context.colors.textSecondary,
                           fontSize: 13,
                         ),
                       ),
                       const Spacer(),
                       Text(
-                        '${product.soldCount} vendidos',
-                        style: const TextStyle(
-                            color: AppColors.coolGray, fontSize: 12),
+                        S.of(context).profileProductSoldCount(product.soldCount),
+                        style:  TextStyle(
+                            color: context.colors.textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Sobre o produto',
+                  Text(
+                    S.of(context).profileProductAbout,
                     style: TextStyle(
-                        color: Colors.white,
+                        color: context.colors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Produto exclusivo da loja oficial. Envio em até 3 dias úteis. '
-                    'Garantia de 30 dias e troca grátis.',
+                  Text(
+                    S.of(context).profileProductDescription,
                     style: TextStyle(
-                        color: Colors.white70, fontSize: 13, height: 1.5),
+                        color: context.colors.textSecondary, fontSize: 13, height: 1.5),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -2159,16 +2300,16 @@ class _ProductDetailSheet extends StatelessWidget {
                         : () {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('🛒 Adicionado ao carrinho!'),
+                              SnackBar(
+                                content: Text(S.of(context).profileAddedToCart),
                                 backgroundColor: AppColors.electricPurple,
-                                duration: Duration(seconds: 2),
+                                duration: const Duration(seconds: 2),
                               ),
                             );
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.electricPurple,
-                      disabledBackgroundColor: AppColors.slate,
+                      disabledBackgroundColor: context.colors.surfaceElevated,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -2177,12 +2318,14 @@ class _ProductDetailSheet extends StatelessWidget {
                       product.isSoldOut
                           ? Icons.block
                           : Icons.shopping_cart_outlined,
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                     ),
                     label: Text(
-                      product.isSoldOut ? 'Indisponível' : 'Comprar agora',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      product.isSoldOut
+                          ? S.of(context).profileProductUnavailable
+                          : S.of(context).profileProductBuyNow,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -2210,10 +2353,10 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 56, color: AppColors.coolGray.withValues(alpha: 0.4)),
+          Icon(icon, size: 56, color: context.colors.textSecondary.withValues(alpha: 0.4)),
           const SizedBox(height: 12),
           Text(message,
-              style: const TextStyle(color: AppColors.coolGray, fontSize: 14)),
+              style:  TextStyle(color: context.colors.textSecondary, fontSize: 14)),
         ],
       ),
     );
@@ -2232,7 +2375,7 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(color: AppColors.nearBlack, child: _tabBar);
+    return Container(color: context.colors.background, child: _tabBar);
   }
 
   @override

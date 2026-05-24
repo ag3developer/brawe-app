@@ -6,6 +6,7 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../domain/models/follow_user.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 /// Bottom sheet "Compartilhar live" — envia preview clicável da live aos
 /// seguidores selecionados via DM. Cada destinatário recebe uma mensagem
@@ -66,7 +67,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     _searchCtrl.addListener(
       () => setState(() => _query = _searchCtrl.text.trim().toLowerCase()),
     );
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   @override
@@ -81,13 +84,14 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       _loading = true;
       _error = null;
     });
+    final s = S.of(context);
     final socialRepo = ref.read(socialRepositoryProvider);
     final me = ref.read(authStateProvider).asData?.value;
     try {
       if (me == null) {
         setState(() {
           _loading = false;
-          _error = 'Faça login para compartilhar';
+          _error = s.shareLiveLoginNeeded;
         });
         return;
       }
@@ -101,7 +105,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       debugPrint('[ShareLiveSheet] load failed: $e');
       if (!mounted) return;
       setState(() {
-        _error = 'Não foi possível carregar seus seguidores.';
+        _error = s.shareLiveLoadFollowersError;
         _loading = false;
       });
     }
@@ -129,6 +133,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   Future<void> _send() async {
     if (_selectedUserIds.isEmpty || _sending) return;
     setState(() => _sending = true);
+    final s = S.of(context);
     try {
       final repo = ref.read(liveRepositoryProvider);
       final note = _noteCtrl.text.trim();
@@ -142,9 +147,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.electricPurple,
-          content: Text(
-            'Live enviada para $sent ${sent == 1 ? "pessoa" : "pessoas"} 🎉',
-          ),
+          content: Text(s.shareLiveSentToCount(sent)),
         ),
       );
     } catch (e) {
@@ -153,7 +156,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade700,
-          content: const Text('Falha ao compartilhar a live'),
+          content: Text(s.shareLiveSendFailed),
         ),
       );
     }
@@ -212,13 +215,13 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         ),
       );
 
-  Widget _header() => const Padding(
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+  Widget _header() => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            'Compartilhar live',
-            style: TextStyle(
+            S.of(context).shareLiveTitle,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -266,9 +269,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                       color: AppColors.mutedRed,
                       borderRadius: BorderRadius.circular(3),
                     ),
-                    child: const Text(
-                      'LIVE',
-                      style: TextStyle(
+                    child: Text(
+                      S.of(context).shareLiveBadge,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 8,
                         fontWeight: FontWeight.w800,
@@ -324,7 +327,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         controller: _searchCtrl,
         style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
-          hintText: 'Buscar seguidores',
+          hintText: S.of(context).shareLiveSearchHint,
           hintStyle: const TextStyle(color: AppColors.coolGray),
           prefixIcon: const Icon(Icons.search, color: AppColors.coolGray),
           filled: true,
@@ -340,14 +343,15 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   }
 
   Widget _errorState() {
+    final s = S.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_error ?? 'Erro',
+          Text(_error ?? s.shareLiveErrorGeneric,
               style: const TextStyle(color: AppColors.coolGray)),
           const SizedBox(height: 8),
-          TextButton(onPressed: _load, child: const Text('Tentar de novo')),
+          TextButton(onPressed: _load, child: Text(s.shareLiveRetry)),
         ],
       ),
     );
@@ -355,13 +359,14 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
 
   Widget _list(ScrollController controller) {
     final items = _filtered;
+    final s = S.of(context);
     if (items.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Nenhum seguidor encontrado.',
-            style: TextStyle(color: AppColors.coolGray),
+            s.shareLiveEmptyFollowers,
+            style: const TextStyle(color: AppColors.coolGray),
           ),
         ),
       );
@@ -375,7 +380,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         return _RecipientTile(
           name: (p.displayName != null && p.displayName!.isNotEmpty)
               ? p.displayName!
-              : (p.username.isNotEmpty ? p.username : 'Usuário'),
+              : (p.username.isNotEmpty ? p.username : s.shareLiveDefaultUser),
           username: p.username.isNotEmpty ? p.username : null,
           avatarUrl: p.avatarUrl,
           isVerified: p.isVerified,
@@ -395,7 +400,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         maxLines: 2,
         minLines: 1,
         decoration: InputDecoration(
-          hintText: 'Adicione uma mensagem (opcional)…',
+          hintText: S.of(context).shareLiveNoteHint,
           hintStyle: const TextStyle(color: AppColors.coolGray),
           filled: true,
           fillColor: AppColors.slate,
@@ -413,6 +418,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   Widget _bottomActions() {
     final count = _selectedUserIds.length;
     final hasSelection = count > 0;
+    final s = S.of(context);
     return SafeArea(
       top: false,
       child: Padding(
@@ -441,7 +447,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                     ),
                   )
                 : Text(
-                    hasSelection ? 'Enviar para $count' : 'Selecione contatos',
+                    hasSelection
+                        ? s.shareLiveSendTo(count)
+                        : s.shareLiveSelectContacts,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
           ),

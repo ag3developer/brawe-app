@@ -1,10 +1,17 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/model/create_live_room_request_dto.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
+import '../../../domain/models/user.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 part 'start_live_view_model.g.dart';
+
+/// Códigos de erro de validação client-side para o fluxo de Start Live.
+/// O widget resolve para a string localizada via `S.of(context)`.
+enum StartLiveValidation { titleTooShort, categoryRequired }
 
 class StartLiveState {
   const StartLiveState({
@@ -13,6 +20,8 @@ class StartLiveState {
     this.category = '',
     this.visibility = LiveVisibility.public,
     this.notifyFollowers = true,
+    this.battleModeEnabled = true,
+    this.giftsEnabled = true,
     this.thumbnailUrl,
     this.status = const AsyncValue<LiveRoom?>.data(null),
   });
@@ -22,6 +31,8 @@ class StartLiveState {
   final String category;
   final LiveVisibility visibility;
   final bool notifyFollowers;
+  final bool battleModeEnabled;
+  final bool giftsEnabled;
   final String? thumbnailUrl;
   final AsyncValue<LiveRoom?> status;
 
@@ -32,12 +43,38 @@ class StartLiveState {
         error: (error, _) => (error as Failure).toDisplayMessage(),
       );
 
+  /// Resolve a mensagem de erro localizada. Para erros de validação
+  /// client-side, mapeia `StartLiveValidation.<name>` → string i18n.
+  /// Para outras falhas, usa `Failure.toDisplayMessage()`.
+  String? displayError(S s) => status.whenOrNull(
+        error: (error, _) {
+          if (error is Failure) {
+            return error.maybeWhen(
+              validation: (message) {
+                switch (message) {
+                  case 'titleTooShort':
+                    return s.startLiveErrorTitleTooShort;
+                  case 'categoryRequired':
+                    return s.startLiveErrorCategoryRequired;
+                  default:
+                    return message ?? error.toDisplayMessage();
+                }
+              },
+              orElse: () => error.toDisplayMessage(),
+            );
+          }
+          return error.toString();
+        },
+      );
+
   StartLiveState copyWith({
     String? title,
     String? description,
     String? category,
     LiveVisibility? visibility,
     bool? notifyFollowers,
+    bool? battleModeEnabled,
+    bool? giftsEnabled,
     String? thumbnailUrl,
     bool clearThumbnail = false,
     AsyncValue<LiveRoom?>? status,
@@ -48,6 +85,8 @@ class StartLiveState {
       category: category ?? this.category,
       visibility: visibility ?? this.visibility,
       notifyFollowers: notifyFollowers ?? this.notifyFollowers,
+      battleModeEnabled: battleModeEnabled ?? this.battleModeEnabled,
+      giftsEnabled: giftsEnabled ?? this.giftsEnabled,
       thumbnailUrl: clearThumbnail ? null : (thumbnailUrl ?? this.thumbnailUrl),
       status: status ?? this.status,
     );
@@ -84,6 +123,14 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     );
   }
 
+  void toggleBattleMode(bool value) {
+    state = state.copyWith(battleModeEnabled: value, status: const AsyncValue.data(null));
+  }
+
+  void toggleGifts(bool value) {
+    state = state.copyWith(giftsEnabled: value, status: const AsyncValue.data(null));
+  }
+
   void toggleNotifyFollowers(bool value) {
     state = state.copyWith(
       notifyFollowers: value,
@@ -105,16 +152,22 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     }
 
     if (state.title.trim().length < 3) {
-      _setError('O título precisa ter pelo menos 3 caracteres.');
+      _setError(StartLiveValidation.titleTooShort);
       return false;
     }
 
     if (state.category.isEmpty) {
-      _setError('Selecione uma categoria para sua live.');
+      _setError(StartLiveValidation.categoryRequired);
       return false;
     }
 
     state = state.copyWith(status: const AsyncValue.loading());
+
+    // 🆕 Identidade do streamer: o backend prioriza esses campos para evitar
+    // salas com nome "Streamer" quando o wallet_bridge falha entre microserviços.
+    final authState = ref.read(authStateProvider);
+    final currentUser = authState is AsyncData<User?> ? authState.value : null;
+    final streamerName = _resolveStreamerName(currentUser);
 
     final request = CreateLiveRoomRequestDto(
       title: state.title.trim(),
@@ -123,6 +176,8 @@ class StartLiveViewModel extends _$StartLiveViewModel {
       visibility: state.visibility,
       notifyFollowers: state.notifyFollowers,
       thumbnailUrl: state.thumbnailUrl,
+      streamerName: streamerName,
+      streamerAvatarUrl: currentUser?.avatarUrl,
     );
 
     try {
@@ -156,9 +211,28 @@ class StartLiveViewModel extends _$StartLiveViewModel {
     return trimmed;
   }
 
-  void _setError(String message) {
+  /// Resolve o nome a ser enviado ao backend como `streamer_name`.
+  /// Prioriza `user.name`; cai para a parte local do email; nunca retorna
+  /// "Streamer" — se nada for resolvível, retorna `null` para o backend
+  /// usar o wallet_bridge / self-heal.
+  String? _resolveStreamerName(User? user) {
+    if (user == null) return null;
+    final name = user.name.trim();
+    if (name.isNotEmpty) return name;
+    final email = user.email.trim();
+    if (email.isNotEmpty) {
+      final local = email.split('@').first.trim();
+      if (local.isNotEmpty) return local;
+    }
+    return null;
+  }
+
+  void _setError(StartLiveValidation code) {
     state = state.copyWith(
-      status: AsyncValue.error(Failure.validation(message), StackTrace.current),
+      status: AsyncValue.error(
+        Failure.validation(code.name),
+        StackTrace.current,
+      ),
     );
   }
 }

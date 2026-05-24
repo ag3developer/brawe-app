@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 
 /// "AO VIVO • XX viewers" badge usado por todas as live views.
 class LiveBadge extends StatelessWidget {
   const LiveBadge({
     super.key,
     required this.viewerCount,
-    this.label = 'AO VIVO',
+    this.label,
   });
   final int viewerCount;
-  final String label;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
+    final resolvedLabel = label ?? S.of(context).liveBadgeLive;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -31,7 +33,7 @@ class LiveBadge extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(label,
+          Text(resolvedLabel,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,

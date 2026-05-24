@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/ui/app_radius.dart';
 import '../../../core/ui/app_spacing.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 
 /// Overlay de "Aquecer público" — countdown de 30s antes da live de verdade.
 ///
@@ -73,6 +74,7 @@ class _WarmupOverlayState extends State<WarmupOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Positioned.fill(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -83,8 +85,8 @@ class _WarmupOverlayState extends State<WarmupOverlay>
               children: [
                 const Spacer(),
                 Text(
-                  'Aquecendo o público',
-                  style: TextStyle(
+                  s.warmupHeading,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -93,7 +95,7 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Avisando seus seguidores...',
+                  s.warmupSubheading,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
@@ -138,7 +140,7 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text(
-                  'A live abre em $_remaining segundo${_remaining == 1 ? '' : 's'}',
+                  s.warmupOpensInSeconds(_remaining, _remaining == 1 ? '' : 's'),
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
                 const Spacer(),
@@ -157,9 +159,9 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),
                           ),
-                          child: const Text(
-                            'Entrar ao vivo agora',
-                            style: TextStyle(
+                          child: Text(
+                            s.warmupGoNow,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 15,
@@ -171,7 +173,7 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                       TextButton(
                         onPressed: _cancel,
                         child: Text(
-                          'Cancelar aquecimento',
+                          s.warmupCancel,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.6),
                             fontWeight: FontWeight.w500,

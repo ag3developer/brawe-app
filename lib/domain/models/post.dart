@@ -16,6 +16,7 @@ sealed class Post with _$Post {
     required PostAuthor author,
     @Default(false) bool userLiked,
     @Default(false) bool userReposted,
+    @Default(false) bool userFollowingAuthor,
   }) = _Post;
 }
 

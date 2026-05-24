@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,8 +19,10 @@ import '../ui/home/widgets/home_screen.dart';
 import '../ui/home/widgets/for_you_screen.dart';
 import '../ui/live_feed/widgets/for_you_live_list_screen.dart';
 import '../ui/live_feed/widgets/live_player_screen.dart';
+import '../ui/live_feed/widgets/viewer_battle_screen.dart';
 import '../ui/chat/widgets/chat_list_screen.dart';
 import '../ui/chat/widgets/chat_detail_screen.dart';
+import '../ui/chat/widgets/new_conversation_screen.dart';
 import '../ui/broadcaster/widgets/start_live_screen.dart';
 import '../ui/broadcaster/widgets/broadcaster_screen.dart';
 import '../ui/core/themes/force_dark_theme.dart';
@@ -32,6 +35,7 @@ import '../ui/follows/widgets/follows_screen.dart';
 import '../ui/edit_profile/widgets/edit_profile_screen.dart';
 import '../ui/explore/widgets/explore_screen.dart';
 import '../ui/follows/view_models/follows_view_model.dart';
+import '../ui/home/widgets/home_bottom_nav.dart';
 
 part 'router.g.dart';
 
@@ -85,21 +89,114 @@ GoRouter router(Ref ref) {
           return ResetPasswordScreen(token: token);
         },
       ),
-      GoRoute(path: '/feed', builder: (context, state) => const ForceDarkTheme(child: FeedScreen())),
-      GoRoute(
-        path: '/live',
-        builder: (context, state) =>
-            const ForceDarkTheme(child: ForYouLiveListScreen()),
+      // ── Shell: rotas com HomeBottomNav global ────────────────────────────
+      //
+      // Usamos Scaffold + bottomNavigationBar (em vez de Stack+Positioned)
+      // para que o nav reserve altura real. Assim:
+      //  • Conteúdo das telas não fica atrás do nav.
+      //  • FABs dos Scaffolds internos flutuam logo acima do nav.
+      //  • SafeArea funciona corretamente.
+      ShellRoute(
+        builder: (context, state, child) => Scaffold(
+          backgroundColor: Colors.transparent,
+          extendBody: false,
+          resizeToAvoidBottomInset: false,
+          body: child,
+          bottomNavigationBar: const HomeBottomNav(),
+        ),
+        routes: [
+          // Telas imersivas de mídia continuam dark-fixo (padrão TikTok/IG).
+          GoRoute(
+            path: '/home',
+            builder: (context, state) =>
+                const ForceDarkTheme(child: ForYouScreen()),
+          ),
+          GoRoute(
+            path: '/home/classic',
+            builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: '/feed',
+            builder: (context, state) => const FeedScreen(),
+          ),
+          GoRoute(
+            path: '/live',
+            builder: (context, state) =>
+                const ForceDarkTheme(child: ForYouLiveListScreen()),
+          ),
+          // /live/start fica dentro do shell (tem bottom nav — tela de setup).
+          GoRoute(
+            path: '/live/start',
+            builder: (context, state) =>
+                const ForceDarkTheme(child: StartLiveScreen()),
+          ),
+          GoRoute(
+            path: '/chat',
+            builder: (context, state) => const ChatListScreen(),
+          ),
+          GoRoute(
+            path: '/chat/new',
+            builder: (context, state) => const NewConversationScreen(),
+          ),
+          GoRoute(
+            // Aceita UUID, username ou @username — o backend resolve em /profile/{slug}.
+            path: '/profile/:userId',
+            builder: (context, state) {
+              var userId = state.pathParameters['userId']!;
+              if (userId.startsWith('@')) {
+                userId = userId.substring(1);
+              }
+              return ProfileScreen(userId: userId);
+            },
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/change-password',
+            builder: (context, state) => const ChangePasswordScreen(),
+          ),
+          GoRoute(
+            path: '/settings/delete-account',
+            builder: (context, state) => const DeleteAccountScreen(),
+          ),
+          GoRoute(
+            path: '/quests',
+            builder: (context, state) => const QuestsScreen(),
+          ),
+          GoRoute(
+            path: '/wallet',
+            redirect: (_, __) => kEnableMonetization ? null : '/',
+            builder: (context, state) => const WalletScreen(),
+          ),
+          GoRoute(
+            path: '/notifications',
+            builder: (context, state) => const NotificationsScreen(),
+          ),
+          GoRoute(
+            path: '/edit-profile',
+            builder: (context, state) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: '/explore',
+            builder: (context, state) => const ExploreScreen(),
+          ),
+          GoRoute(
+            path: '/follows/:userId',
+            builder: (context, state) {
+              final userId = state.pathParameters['userId']!;
+              final tabParam = state.uri.queryParameters['tab'];
+              final tab = tabParam == 'following'
+                  ? FollowsTab.following
+                  : FollowsTab.followers;
+              return FollowsScreen(userId: userId, initialTab: tab);
+            },
+          ),
+        ],
       ),
-      // IMPORTANTE: rotas estáticas (/live/start, /live/broadcast) DEVEM vir
-      // ANTES da rota dinâmica /live/:roomId — caso contrário o GoRouter faz
-      // match de "start"/"broadcast" como roomId e dispara GET /live/rooms/start
-      // → 404.
-      GoRoute(
-        path: '/live/start',
-        builder: (context, state) =>
-            const ForceDarkTheme(child: StartLiveScreen()),
-      ),
+      // ── Rotas fullscreen (sem HomeBottomNav) ─────────────────────────────
+      // Live broadcast, viewer e battle são imersivas fullscreen — sem bottom nav.
       GoRoute(
         path: '/live/broadcast',
         builder: (context, state) {
@@ -116,8 +213,16 @@ GoRouter router(Ref ref) {
               ),
             );
           }
-          // Sem room e sem ID → manda criar uma nova live
           return const ForceDarkTheme(child: StartLiveScreen());
+        },
+      ),
+      GoRoute(
+        path: '/live/battle/:battleId',
+        builder: (context, state) {
+          final battleId = state.pathParameters['battleId'] ?? '';
+          return ForceDarkTheme(
+            child: ViewerBattleScreen(battleId: battleId),
+          );
         },
       ),
       GoRoute(
@@ -125,8 +230,6 @@ GoRouter router(Ref ref) {
         builder: (context, state) {
           final extraRoom = state.extra as LiveRoom?;
           final roomId = state.pathParameters['roomId'] ?? '';
-          // Guard extra: nomes reservados nunca devem chegar aqui, mas se
-          // chegarem (deep-link malformado), redirecionamos sem fazer GET.
           const reserved = {'start', 'broadcast', 'new', 'create'};
           if (reserved.contains(roomId.toLowerCase())) {
             return const ForceDarkTheme(child: StartLiveScreen());
@@ -134,7 +237,6 @@ GoRouter router(Ref ref) {
           if (extraRoom != null) {
             return ForceDarkTheme(child: LivePlayerScreen(room: extraRoom));
           }
-          // Fallback: busca a sala pelo ID/slug (deep-links, push notifs, etc.)
           return ForceDarkTheme(
             child: _LiveRoomResolver(
               roomId: roomId,
@@ -143,21 +245,15 @@ GoRouter router(Ref ref) {
           );
         },
       ),
-      GoRoute(path: '/home', builder: (context, state) => const ForceDarkTheme(child: ForYouScreen())),
-      GoRoute(
-        path: '/home/classic',
-        builder: (context, state) => const ForceDarkTheme(child: HomeScreen()),
-      ),
-      GoRoute(
-        path: '/chat',
-        builder: (context, state) => const ForceDarkTheme(child: ChatListScreen()),
-      ),
+      // A tela de conversa aberta é imersiva — nada de bottom nav atrapalhando.
+      // Usa CupertinoPage para habilitar o swipe-back nativo do iOS.
       GoRoute(
         path: '/chat/:conversationId',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final conversationId = state.pathParameters['conversationId']!;
           final extra = state.extra as Map<String, dynamic>?;
-          return ForceDarkTheme(
+          return CupertinoPage(
+            key: state.pageKey,
             child: ChatDetailScreen(
               conversationId: conversationId,
               participantName: extra?['participantName'] as String? ?? 'Chat',
@@ -165,61 +261,6 @@ GoRouter router(Ref ref) {
               participantId: extra?['participantId'] as String?,
             ),
           );
-        },
-      ),
-      GoRoute(
-        // Aceita UUID, username ou @username — o backend resolve em /profile/{slug}.
-        path: '/profile/:userId',
-        builder: (context, state) {
-          var userId = state.pathParameters['userId']!;
-          if (userId.startsWith('@')) {
-            userId = userId.substring(1);
-          }
-          return ForceDarkTheme(child: ProfileScreen(userId: userId));
-        },
-      ),
-      GoRoute(
-        path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
-      GoRoute(
-        path: '/settings/change-password',
-        builder: (context, state) => const ChangePasswordScreen(),
-      ),
-      GoRoute(
-        path: '/settings/delete-account',
-        builder: (context, state) => const DeleteAccountScreen(),
-      ),
-      GoRoute(
-        path: '/quests',
-        builder: (context, state) => const QuestsScreen(),
-      ),
-      GoRoute(
-        path: '/wallet',
-        redirect: (_, __) => kEnableMonetization ? null : '/',
-        builder: (context, state) => const WalletScreen(),
-      ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-      GoRoute(
-        path: '/edit-profile',
-        builder: (context, state) => const ForceDarkTheme(child: EditProfileScreen()),
-      ),
-      GoRoute(
-        path: '/explore',
-        builder: (context, state) => const ForceDarkTheme(child: ExploreScreen()),
-      ),
-      GoRoute(
-        path: '/follows/:userId',
-        builder: (context, state) {
-          final userId = state.pathParameters['userId']!;
-          final tabParam = state.uri.queryParameters['tab'];
-          final tab = tabParam == 'following'
-              ? FollowsTab.following
-              : FollowsTab.followers;
-          return ForceDarkTheme(child: FollowsScreen(userId: userId, initialTab: tab));
         },
       ),
     ],

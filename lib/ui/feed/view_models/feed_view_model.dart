@@ -4,6 +4,7 @@ import '../../../data/repositories/post_repository.dart';
 
 part 'feed_view_model.g.dart';
 
+// ── Para Você (algoritmo / descoberta) ────────────────────────────────────
 @riverpod
 class FeedViewModel extends _$FeedViewModel {
   @override
@@ -41,7 +42,6 @@ class FeedViewModel extends _$FeedViewModel {
     try {
       await ref.read(postRepositoryProvider).toggleLike(postId, post.userLiked);
     } catch (_) {
-      // Revert state on failure
       final revertedPosts = List<Post>.from(posts);
       state = AsyncData(revertedPosts);
     }
@@ -51,7 +51,6 @@ class FeedViewModel extends _$FeedViewModel {
     ref.read(postRepositoryProvider).incrementView(postId);
   }
 
-  /// Remove o post otimisticamente; em caso de falha, restaura a lista.
   Future<bool> deletePost(String postId) async {
     final posts = state.value;
     if (posts == null) return false;
@@ -66,6 +65,41 @@ class FeedViewModel extends _$FeedViewModel {
     } catch (_) {
       state = AsyncData(previous);
       return false;
+    }
+  }
+}
+
+// ── Seguindo (só posts de quem você segue) ────────────────────────────────
+@riverpod
+class FollowingFeedViewModel extends _$FollowingFeedViewModel {
+  @override
+  FutureOr<List<Post>> build() async {
+    return ref.read(postRepositoryProvider).getFollowingFeed(limit: 20);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref.read(postRepositoryProvider).getFollowingFeed(limit: 20),
+    );
+  }
+
+  Future<void> toggleLike(String postId) async {
+    final posts = state.value;
+    if (posts == null) return;
+    final index = posts.indexWhere((p) => p.id == postId);
+    if (index == -1) return;
+    final post = posts[index];
+    final updated = List<Post>.from(posts);
+    updated[index] = post.copyWith(
+      userLiked: !post.userLiked,
+      likesCount: post.userLiked ? post.likesCount - 1 : post.likesCount + 1,
+    );
+    state = AsyncData(updated);
+    try {
+      await ref.read(postRepositoryProvider).toggleLike(postId, post.userLiked);
+    } catch (_) {
+      state = AsyncData(List<Post>.from(posts));
     }
   }
 }

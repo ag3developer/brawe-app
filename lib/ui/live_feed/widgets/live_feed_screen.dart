@@ -15,6 +15,7 @@ import '../../core/ui/follow_button.dart';
 import 'gifts_overlay.dart';
 import 'gift_animation_overlay.dart';
 import 'live_comments_overlay.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class LiveFeedScreen extends ConsumerStatefulWidget {
   const LiveFeedScreen({super.key});
@@ -29,6 +30,7 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final liveFeedState = ref.watch(liveFeedViewModelProvider);
 
     return Scaffold(
@@ -50,17 +52,17 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                       const SizedBox(height: 16),
                       Text(
                         _selectedCategory == LiveFeedCategory.forYou
-                            ? 'No lives in For You right now.'
-                            : 'No active lives at the moment.',
+                            ? s.liveFeedEmptyForYou
+                            : s.liveFeedEmptyAll,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Check back later or try refreshing.',
-                        style: TextStyle(color: Colors.white38, fontSize: 14),
+                      Text(
+                        s.liveFeedEmptyHint,
+                        style: const TextStyle(color: Colors.white38, fontSize: 14),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
@@ -68,7 +70,7 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                             .read(liveFeedViewModelProvider.notifier)
                             .refresh(),
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Refresh'),
+                        label: Text(s.liveFeedRefresh),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6E4DFF),
                           foregroundColor: Colors.white,
@@ -106,7 +108,7 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Error: ${error.toString()}',
+                    s.liveFeedError(error.toString()),
                     style: const TextStyle(color: Colors.red),
                     textAlign: TextAlign.center,
                   ),
@@ -114,7 +116,7 @@ class _LiveFeedScreenState extends ConsumerState<LiveFeedScreen> {
                   ElevatedButton(
                     onPressed: () =>
                         ref.read(liveFeedViewModelProvider.notifier).refresh(),
-                    child: const Text('Retry'),
+                    child: Text(s.liveFeedRetry),
                   ),
                 ],
               ),
@@ -156,6 +158,7 @@ class _LiveFeedCategorySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -167,12 +170,12 @@ class _LiveFeedCategorySelector extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _CategoryButton(
-            label: 'For You',
+            label: s.liveFeedCategoryForYou,
             isSelected: selected == LiveFeedCategory.forYou,
             onTap: () => onSelected(LiveFeedCategory.forYou),
           ),
           _CategoryButton(
-            label: 'All Lives',
+            label: s.liveFeedCategoryAll,
             isSelected: selected == LiveFeedCategory.allLives,
             onTap: () => onSelected(LiveFeedCategory.allLives),
           ),
@@ -264,8 +267,9 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
   }
 
   Future<void> _handleShare() async {
+    final s = S.of(context);
     final url = 'https://brawe.app/live/${widget.room.slug}';
-    final message = 'Check out this live on Brawe: ${widget.room.title}\n$url';
+    final message = s.liveFeedShareMessage(widget.room.title, url);
     await SharePlus.instance.share(ShareParams(text: message));
   }
 
@@ -323,6 +327,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final commentsState = widget.isActive
         ? ref.watch(liveRoomCommentsViewModelProvider(widget.room.id))
         : null;
@@ -397,7 +402,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 const Icon(Icons.sensors, color: Colors.white, size: 16),
                 const SizedBox(width: 4),
                 Text(
-                  'LIVE ${commentsState?.viewerCount ?? widget.room.viewerCount}',
+                  s.liveFeedBadgeLiveWithCount(commentsState?.viewerCount ?? widget.room.viewerCount),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -514,7 +519,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
               if (kEnableMonetization) ...[
                 _buildIconButton(
                   Icons.card_giftcard,
-                  'Gift',
+                  s.liveFeedGift,
                   onTap: () => GiftsOverlay.show(
                     context,
                     widget.room.id,
@@ -523,7 +528,7 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
                 ),
                 const SizedBox(height: 16),
               ],
-              _buildIconButton(Icons.share, 'Share', onTap: _handleShare),
+              _buildIconButton(Icons.share, s.liveFeedShare, onTap: _handleShare),
             ],
           ),
         ),

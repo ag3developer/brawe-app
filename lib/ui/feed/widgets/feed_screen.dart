@@ -6,17 +6,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/social_actions_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/feed_view_model.dart';
 import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
 import 'story_composer_screen.dart';
 import 'share_to_chat_sheet.dart';
 import 'stories_rail.dart';
+import 'story_ring_avatar.dart';
+import 'suggested_users_rail.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// Paleta dedicada ao redesign 2026: dark mais profundo, accents premium,
@@ -95,7 +99,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   Widget build(BuildContext context) {
     final blur = (_scrollOffset / 80) * 24;
     return Scaffold(
-      backgroundColor: _FeedTokens.bg,
+      backgroundColor: context.colors.background,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -110,7 +114,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                 _GlassTopBar(
                   blur: blur,
                   onSearch: () => context.push('/explore'),
-                  onMessages: () => context.push('/messages'),
+                  onMessages: () => context.push('/chat'),
                   onNotifications: () => context.push('/notifications'),
                 ),
                 _PillTabBar(controller: _tabController),
@@ -211,10 +215,10 @@ class _GlassTopBar extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 8, 8, 10),
           decoration: BoxDecoration(
-            color: _FeedTokens.bg.withValues(alpha: blur > 4 ? 0.55 : 0.0),
+            color: context.colors.background.withValues(alpha: blur > 4 ? 0.55 : 0.0),
             border: Border(
               bottom: BorderSide(
-                color: _FeedTokens.outline.withValues(alpha: blur > 4 ? 1 : 0),
+                color: context.colors.border.withValues(alpha: blur > 4 ? 1 : 0),
                 width: 0.5,
               ),
             ),
@@ -260,14 +264,14 @@ class _IconChip extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: _FeedTokens.surface,
+            color: context.colors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: _FeedTokens.outline),
+            border: Border.all(color: context.colors.border),
           ),
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(icon, color: _FeedTokens.textHi, size: 20),
+              Icon(icon, color: context.colors.textPrimary, size: 20),
               if (badge)
                 Positioned(
                   top: 9,
@@ -278,7 +282,7 @@ class _IconChip extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: _FeedTokens.brandGradient,
                       shape: BoxShape.circle,
-                      border: Border.all(color: _FeedTokens.surface, width: 1.5),
+                      border: Border.all(color: context.colors.surface, width: 1.5),
                     ),
                   ),
                 ),
@@ -302,9 +306,9 @@ class _PillTabBar extends StatelessWidget {
       child: Container(
         height: 42,
         decoration: BoxDecoration(
-          color: _FeedTokens.surface,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _FeedTokens.outline),
+          border: Border.all(color: context.colors.border),
         ),
         child: TabBar(
           controller: controller,
@@ -323,8 +327,8 @@ class _PillTabBar extends StatelessWidget {
               ),
             ],
           ),
-          labelColor: Colors.white,
-          unselectedLabelColor: _FeedTokens.textMd,
+          labelColor: context.colors.textPrimary,
+          unselectedLabelColor: context.colors.textSecondary,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 13.5,
@@ -334,9 +338,9 @@ class _PillTabBar extends StatelessWidget {
             fontWeight: FontWeight.w600,
             fontSize: 13.5,
           ),
-          tabs: const [
-            Tab(text: 'Para Você'),
-            Tab(text: 'Seguindo'),
+          tabs: [
+            Tab(text: S.of(context).feedTabForYou),
+            Tab(text: S.of(context).feedTabFollowing),
           ],
         ),
       ),
@@ -367,7 +371,7 @@ class _GradientFab extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+        child: Icon(Icons.add_rounded, color: context.colors.textPrimary, size: 30),
       ),
     );
   }
@@ -380,14 +384,22 @@ class _FeedTab extends ConsumerWidget {
   final FeedTabType tabType;
   final ScrollController? scrollController;
 
+  bool get _isFollowing => tabType == FeedTabType.following;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final feedState = ref.watch(feedViewModelProvider);
+    final feedState = _isFollowing
+        ? ref.watch(followingFeedViewModelProvider)
+        : ref.watch(feedViewModelProvider);
+
+    void onRefresh() => _isFollowing
+        ? ref.read(followingFeedViewModelProvider.notifier).refresh()
+        : ref.read(feedViewModelProvider.notifier).refresh();
 
     return RefreshIndicator(
       color: const Color(0xFFA855F7),
-      backgroundColor: _FeedTokens.surface,
-      onRefresh: () => ref.read(feedViewModelProvider.notifier).refresh(),
+      backgroundColor: context.colors.surface,
+      onRefresh: () async => onRefresh(),
       child: feedState.when(
         data: (posts) => CustomScrollView(
           controller: scrollController,
@@ -399,17 +411,34 @@ class _FeedTab extends ConsumerWidget {
             const SliverToBoxAdapter(child: StoriesRail()),
             const SliverToBoxAdapter(child: SizedBox(height: 10)),
             if (posts.isEmpty)
-              const SliverFillRemaining(
+              SliverFillRemaining(
                 hasScrollBody: false,
-                child: _EmptyFeed(),
+                child: _isFollowing
+                    ? const _EmptyFollowingFeed()
+                    : const _EmptyFeed(),
               )
-            else
+            else ...[
+              // "Para Você": sugestões intercaladas no feed
+              if (!_isFollowing && posts.length < 3)
+                const SliverToBoxAdapter(child: SuggestedUsersRail()),
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => PostCard(post: posts[index]),
+                  (context, index) {
+                    if (!_isFollowing && index == 2) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PostCard(post: posts[index]),
+                          const SuggestedUsersRail(),
+                        ],
+                      );
+                    }
+                    return PostCard(post: posts[index]);
+                  },
                   childCount: posts.length,
                 ),
               ),
+            ],
             const SliverToBoxAdapter(child: SizedBox(height: 110)),
           ],
         ),
@@ -418,9 +447,7 @@ class _FeedTab extends ConsumerWidget {
           itemCount: 4,
           itemBuilder: (_, __) => const _PostSkeleton(),
         ),
-        error: (_, __) => _ErrorState(
-          onRetry: () => ref.read(feedViewModelProvider.notifier).refresh(),
-        ),
+        error: (_, __) => _ErrorState(onRetry: onRefresh),
       ),
     );
   }
@@ -450,23 +477,69 @@ class _EmptyFeed extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Icons.bolt_rounded, color: Colors.white, size: 38),
+              child: Icon(Icons.bolt_rounded, color: context.colors.textPrimary, size: 38),
             ),
             const SizedBox(height: 18),
-            const Text(
-              'O feed está quietinho',
+            Text(
+              S.of(context).feedEmptyQuietTitle,
               style: TextStyle(
-                color: _FeedTokens.textHi,
+                color: context.colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Seja o primeiro a postar algo brilhante hoje.',
+            Text(
+              S.of(context).feedEmptyQuietSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(color: _FeedTokens.textMd, fontSize: 13.5, height: 1.4),
+              style: TextStyle(color: context.colors.textSecondary, fontSize: 13.5, height: 1.4),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyFollowingFeed extends StatelessWidget {
+  const _EmptyFollowingFeed();
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: context.colors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: context.colors.border),
+              ),
+              child: Icon(Icons.people_outline_rounded,
+                  color: context.colors.textSecondary, size: 36),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              S.of(context).feedEmptyFollowingTitle,
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              S.of(context).feedEmptyFollowingSubtitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: context.colors.textSecondary, fontSize: 13.5, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            // Mostra sugestões de quem seguir
+            const SuggestedUsersRail(),
           ],
         ),
       ),
@@ -483,23 +556,23 @@ class _ErrorState extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         const SizedBox(height: 120),
-        const Icon(Icons.wifi_off_rounded, color: _FeedTokens.textLo, size: 52),
+        Icon(Icons.wifi_off_rounded, color: context.colors.textTertiary, size: 52),
         const SizedBox(height: 14),
-        const Center(
+        Center(
           child: Text(
-            'Sem conexão por aqui',
+            S.of(context).feedOfflineTitle,
             style: TextStyle(
-              color: _FeedTokens.textHi,
+              color: context.colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
         const SizedBox(height: 6),
-        const Center(
+        Center(
           child: Text(
-            'Verifique sua internet e tente de novo.',
-            style: TextStyle(color: _FeedTokens.textMd, fontSize: 13),
+            S.of(context).feedOfflineSubtitle,
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
           ),
         ),
         const SizedBox(height: 18),
@@ -511,13 +584,13 @@ class _ErrorState extends StatelessWidget {
             ),
             child: TextButton.icon(
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
+                foregroundColor: context.colors.textPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               ),
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Tentar de novo',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              label: Text(S.of(context).feedRetry,
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
         ),
@@ -580,9 +653,9 @@ class _PostSkeletonState extends State<_PostSkeleton>
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: _FeedTokens.outline, width: 0.5),
+          bottom: BorderSide(color: context.colors.border, width: 0.5),
         ),
       ),
       child: Column(
@@ -668,8 +741,8 @@ class _PostCardState extends ConsumerState<PostCard>
     setState(() => _saved = !_saved);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(_saved ? 'Salvo nos seus favoritos' : 'Removido dos favoritos'),
-        backgroundColor: _FeedTokens.surfaceHi,
+        content: Text(_saved ? S.of(context).feedSaved : S.of(context).feedUnsaved),
+        backgroundColor: context.colors.surfaceElevated,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -723,7 +796,7 @@ class _PostCardState extends ConsumerState<PostCard>
   Widget build(BuildContext context) {
     final post = widget.post;
     return Container(
-      color: _FeedTokens.bg,
+      color: context.colors.background,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -734,6 +807,7 @@ class _PostCardState extends ConsumerState<PostCard>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _AuthorAvatar(
+                    userId: post.author.id,
                     avatarUrl: post.author.avatarUrl,
                     name: post.author.name,
                     isVerified: post.author.isVerified,
@@ -749,8 +823,8 @@ class _PostCardState extends ConsumerState<PostCard>
                             Flexible(
                               child: Text(
                                 post.author.name,
-                                style: const TextStyle(
-                                  color: _FeedTokens.textHi,
+                                style: TextStyle(
+                                  color: context.colors.textPrimary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14.5,
                                   letterSpacing: -0.1,
@@ -770,9 +844,9 @@ class _PostCardState extends ConsumerState<PostCard>
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          '@${post.author.username} · ${_timeAgo(post.createdAt)}',
-                          style: const TextStyle(
-                            color: _FeedTokens.textLo,
+                          '@${post.author.username} · ${_timeAgo(context, post.createdAt)}',
+                          style: TextStyle(
+                            color: context.colors.textTertiary,
                             fontSize: 12,
                           ),
                         ),
@@ -780,9 +854,9 @@ class _PostCardState extends ConsumerState<PostCard>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.more_horiz_rounded,
-                      color: _FeedTokens.textMd,
+                      color: context.colors.textSecondary,
                       size: 22,
                     ),
                     onPressed: () => _showPostOptions(context),
@@ -798,8 +872,8 @@ class _PostCardState extends ConsumerState<PostCard>
                     16, 0, 16, post.imageUrl != null ? 12 : 14),
                 child: Text(
                   post.content,
-                  style: const TextStyle(
-                    color: _FeedTokens.textHi,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 15,
                     height: 1.45,
                     letterSpacing: -0.1,
@@ -837,7 +911,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                 return AspectRatio(
                                   aspectRatio: 4 / 5,
                                   child: Container(
-                                    color: _FeedTokens.surfaceHi,
+                                    color: context.colors.surfaceElevated,
                                     child: const Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
@@ -849,11 +923,11 @@ class _PostCardState extends ConsumerState<PostCard>
                               },
                               errorBuilder: (_, __, ___) => Container(
                                 height: 200,
-                                color: _FeedTokens.surfaceHi,
-                                child: const Center(
+                                color: context.colors.surfaceElevated,
+                                child: Center(
                                   child: Icon(
                                     Icons.broken_image_rounded,
-                                    color: _FeedTokens.textLo,
+                                    color: context.colors.textTertiary,
                                   ),
                                 ),
                               ),
@@ -875,9 +949,9 @@ class _PostCardState extends ConsumerState<PostCard>
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.favorite_rounded,
-                            color: Colors.white,
+                            color: context.colors.textPrimary,
                             size: 110,
                           ),
                         ),
@@ -898,7 +972,7 @@ class _PostCardState extends ConsumerState<PostCard>
                     label: _formatCount(post.likesCount),
                     color: post.userLiked
                         ? _FeedTokens.likeRed
-                        : _FeedTokens.textMd,
+                        : context.colors.textSecondary,
                     active: post.userLiked,
                     activeBg: _FeedTokens.likeRed.withValues(alpha: 0.14),
                     onTap: () {
@@ -911,7 +985,7 @@ class _PostCardState extends ConsumerState<PostCard>
                   _ActionPill(
                     icon: Icons.mode_comment_outlined,
                     label: _formatCount(post.commentsCount),
-                    color: _FeedTokens.textMd,
+                    color: context.colors.textSecondary,
                     onTap: () {
                       HapticFeedback.selectionClick();
                       showModalBottomSheet(
@@ -927,7 +1001,7 @@ class _PostCardState extends ConsumerState<PostCard>
                     label: _formatCount(post.repostsCount),
                     color: post.userReposted
                         ? _FeedTokens.repostGreen
-                        : _FeedTokens.textMd,
+                        : context.colors.textSecondary,
                     active: post.userReposted,
                     activeBg: _FeedTokens.repostGreen.withValues(alpha: 0.14),
                     onTap: () => _confirmRepost(context, post),
@@ -937,13 +1011,13 @@ class _PostCardState extends ConsumerState<PostCard>
                     icon: _saved
                         ? Icons.bookmark_rounded
                         : Icons.bookmark_border_rounded,
-                    color: _saved ? _FeedTokens.saveGold : _FeedTokens.textMd,
+                    color: _saved ? _FeedTokens.saveGold : context.colors.textSecondary,
                     onTap: _toggleSave,
                   ),
                   const SizedBox(width: 4),
                   _IconAction(
                     icon: Icons.send_rounded,
-                    color: _FeedTokens.textMd,
+                    color: context.colors.textSecondary,
                     onTap: _sharePost,
                   ),
                 ],
@@ -958,7 +1032,7 @@ class _PostCardState extends ConsumerState<PostCard>
                   Icon(
                     Icons.bar_chart_rounded,
                     size: 14,
-                    color: _FeedTokens.textMd.withValues(alpha: 0.7),
+                    color: context.colors.textSecondary.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -966,7 +1040,7 @@ class _PostCardState extends ConsumerState<PostCard>
                         ? '1 visualização'
                         : '${_formatCount(post.viewsCount)} visualizações',
                     style: TextStyle(
-                      color: _FeedTokens.textMd.withValues(alpha: 0.7),
+                      color: context.colors.textSecondary.withValues(alpha: 0.7),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -978,7 +1052,7 @@ class _PostCardState extends ConsumerState<PostCard>
           Container(
             height: 0.5,
             margin: const EdgeInsets.symmetric(horizontal: 14),
-            color: _FeedTokens.outline,
+            color: context.colors.border,
           ),
           ],
         ),
@@ -1005,7 +1079,7 @@ class _PostCardState extends ConsumerState<PostCard>
           );
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Link copiado!')),
+            SnackBar(content: Text(S.of(context).feedLinkCopied)),
           );
         },
         onShareStory: () {
@@ -1036,20 +1110,20 @@ class _PostCardState extends ConsumerState<PostCard>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF15151F),
-        title: const Text('Excluir post?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Esta ação não pode ser desfeita.',
-          style: TextStyle(color: Colors.white70),
+        backgroundColor: ctx.colors.surface,
+        title: Text(S.of(ctx).feedDeletePostTitle, style: TextStyle(color: ctx.colors.textPrimary)),
+        content: Text(
+          S.of(ctx).feedDeleteConfirm,
+          style: TextStyle(color: ctx.colors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+            child: Text(S.of(ctx).feedCancel, style: TextStyle(color: ctx.colors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir', style: TextStyle(color: Color(0xFFFF3B7E))),
+            child: Text(S.of(ctx).feedDelete, style: const TextStyle(color: Color(0xFFFF3B7E))),
           ),
         ],
       ),
@@ -1061,7 +1135,7 @@ class _PostCardState extends ConsumerState<PostCard>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok ? 'Post excluído.' : 'Não foi possível excluir o post.'),
+        content: Text(ok ? S.of(context).feedPostDeleted : S.of(context).feedPostDeleteError),
       ),
     );
   }
@@ -1073,12 +1147,12 @@ class _PostCardState extends ConsumerState<PostCard>
           .unfollowUser(widget.post.author.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Você deixou de seguir @${widget.post.author.username}.')),
+        SnackBar(content: Text(S.of(context).feedUnfollowed(widget.post.author.username))),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível deixar de seguir.')),
+        SnackBar(content: Text(S.of(context).feedUnfollowError)),
       );
     }
   }
@@ -1088,23 +1162,23 @@ class _PostCardState extends ConsumerState<PostCard>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: _FeedTokens.surfaceHi,
-        title: const Text('Bloquear usuário',
-            style: TextStyle(color: Colors.white)),
+        backgroundColor: context.colors.surfaceElevated,
+        title: Text(S.of(context).feedBlockUserTitle,
+            style: TextStyle(color: context.colors.textPrimary)),
         content: Text(
-          'Você não verá mais conteúdo de @${author.username}. Deseja continuar?',
-          style: const TextStyle(color: Colors.white70),
+          S.of(context).feedBlockConfirm(author.username),
+          style: TextStyle(color: context.colors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar',
-                style: TextStyle(color: Colors.white70)),
+            child: Text(S.of(context).feedCancel,
+                style: TextStyle(color: context.colors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child:
-                const Text('Bloquear', style: TextStyle(color: Colors.red)),
+                Text(S.of(context).feedBlock, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -1116,13 +1190,13 @@ class _PostCardState extends ConsumerState<PostCard>
           .blockUser(author.username.isNotEmpty ? author.username : author.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('@${author.username} bloqueado.')),
+        SnackBar(content: Text(S.of(context).feedBlocked(author.username))),
       );
       ref.read(feedViewModelProvider.notifier).refresh();
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível bloquear.')),
+        SnackBar(content: Text(S.of(context).feedBlockError)),
       );
     }
   }
@@ -1130,26 +1204,26 @@ class _PostCardState extends ConsumerState<PostCard>
   Future<void> _reportPost() async {
     final reason = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: _FeedTokens.surfaceHi,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => SafeArea(
+      builder: (sheetCtx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            _SheetHandle(),
-            _ReportReasonHeader(),
-            _ReportReasonTile(reason: 'spam', label: 'Spam ou enganoso'),
+          children: [
+            const _SheetHandle(),
+            const _ReportReasonHeader(),
+            _ReportReasonTile(reason: 'spam', label: S.of(sheetCtx).feedReportSpam),
             _ReportReasonTile(
-                reason: 'harassment', label: 'Assédio ou bullying'),
+                reason: 'harassment', label: S.of(sheetCtx).feedReportHarassment),
             _ReportReasonTile(
                 reason: 'inappropriate',
-                label: 'Conteúdo impróprio ou ofensivo'),
+                label: S.of(sheetCtx).feedReportInappropriate),
             _ReportReasonTile(
-                reason: 'impersonation', label: 'Falsa identidade'),
-            _ReportReasonTile(reason: 'other', label: 'Outro'),
-            SizedBox(height: 8),
+                reason: 'impersonation', label: S.of(sheetCtx).feedReportImpersonation),
+            _ReportReasonTile(reason: 'other', label: S.of(sheetCtx).feedReportOther),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -1163,13 +1237,13 @@ class _PostCardState extends ConsumerState<PostCard>
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Denúncia enviada. Obrigado por nos avisar.')),
+        SnackBar(
+            content: Text(S.of(context).feedReportSent)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível enviar a denúncia.')),
+        SnackBar(content: Text(S.of(context).feedReportError)),
       );
     }
   }
@@ -1178,7 +1252,7 @@ class _PostCardState extends ConsumerState<PostCard>
     HapticFeedback.selectionClick();
     showModalBottomSheet(
       context: context,
-      backgroundColor: _FeedTokens.surfaceHi,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1193,10 +1267,10 @@ class _PostCardState extends ConsumerState<PostCard>
                 alignment: Alignment.centerLeft,
                 child: Text(
                   post.userReposted
-                      ? 'Desfazer repost?'
-                      : 'Repostar para seus seguidores?',
-                  style: const TextStyle(
-                    color: Colors.white,
+                      ? S.of(context).feedRepostUndoConfirm
+                      : S.of(context).feedRepostConfirm,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1207,14 +1281,14 @@ class _PostCardState extends ConsumerState<PostCard>
               icon: Icons.repeat_rounded,
               iconColor: _FeedTokens.repostGreen,
               iconBg: _FeedTokens.repostGreen.withValues(alpha: 0.18),
-              label: post.userReposted ? 'Desfazer repost' : 'Repostar',
+              label: post.userReposted ? S.of(context).feedRepostUndo : S.of(context).feedRepost,
               onTap: () => Navigator.pop(context),
             ),
             _SheetTile(
               icon: Icons.edit_rounded,
-              iconColor: Colors.white,
+              iconColor: context.colors.textPrimary,
               iconBg: Colors.white12,
-              label: 'Citar post',
+              label: S.of(context).feedQuotePost,
               onTap: () => Navigator.pop(context),
             ),
             const SizedBox(height: 8),
@@ -1230,9 +1304,9 @@ class _PostCardState extends ConsumerState<PostCard>
     return count.toString();
   }
 
-  String _timeAgo(DateTime date) {
+  String _timeAgo(BuildContext context, DateTime date) {
     final diff = DateTime.now().difference(date);
-    if (diff.inSeconds < 60) return 'agora';
+    if (diff.inSeconds < 60) return S.of(context).feedTimeNow;
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 30) return '${diff.inDays}d';
@@ -1241,55 +1315,31 @@ class _PostCardState extends ConsumerState<PostCard>
 }
 
 /// ─── Author avatar with gradient ring (when verified) ────────────────────
-class _AuthorAvatar extends StatelessWidget {
+class _AuthorAvatar extends ConsumerWidget {
   const _AuthorAvatar({
+    required this.userId,
     required this.avatarUrl,
     required this.name,
     required this.isVerified,
     required this.onTap,
   });
+  final String userId;
   final String? avatarUrl;
   final String name;
   final bool isVerified;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final inner = CircleAvatar(
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Se o autor tem stories ativos, o anel do story PRECEDE o de "verified".
+    // Caso contrário, mantemos o visual antigo (anel de verificado / borda).
+    return StoryRingAvatar(
+      userId: userId,
+      avatarUrl: avatarUrl,
+      fallbackText: name,
       radius: 21,
-      backgroundColor: _FeedTokens.surfaceHi,
-      backgroundImage:
-          avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-      child: avatarUrl == null
-          ? Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w700),
-            )
-          : null,
-    );
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(2),
-        decoration: isVerified
-            ? const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: _FeedTokens.verifiedRing,
-              )
-            : BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: _FeedTokens.outline, width: 1.5),
-              ),
-        child: Container(
-          padding: const EdgeInsets.all(1.5),
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: _FeedTokens.surface,
-          ),
-          child: inner,
-        ),
-      ),
+      backgroundColor: context.colors.surfaceElevated,
+      onTapWithoutStories: onTap,
     );
   }
 }
@@ -1397,8 +1447,8 @@ class _PostOptionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: _FeedTokens.surfaceHi,
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
@@ -1411,7 +1461,7 @@ class _PostOptionsSheet extends StatelessWidget {
               icon: Icons.link_rounded,
               iconColor: const Color(0xFFA855F7),
               iconBg: const Color(0xFFA855F7).withValues(alpha: 0.18),
-              label: 'Copiar link',
+              label: S.of(context).feedCopyLink,
               onTap: onCopyLink,
             ),
             if (hasImage)
@@ -1419,7 +1469,7 @@ class _PostOptionsSheet extends StatelessWidget {
                 icon: Icons.auto_stories_rounded,
                 iconColor: const Color(0xFFEC4899),
                 iconBg: const Color(0xFFEC4899).withValues(alpha: 0.18),
-                label: 'Compartilhar como Story',
+                label: S.of(context).feedShareAsStory,
                 onTap: onShareStory,
               ),
             if (!isOwn)
@@ -1427,15 +1477,15 @@ class _PostOptionsSheet extends StatelessWidget {
                 icon: Icons.person_remove_rounded,
                 iconColor: const Color(0xFFFFC857),
                 iconBg: const Color(0xFFFFC857).withValues(alpha: 0.16),
-                label: 'Deixar de seguir',
+                label: S.of(context).feedUnfollow,
                 onTap: onUnfollow,
               ),
             if (!isOwn)
               _SheetTile(
                 icon: Icons.block_rounded,
-                iconColor: Colors.white,
-                iconBg: Colors.white10,
-                label: 'Bloquear usuário',
+                iconColor: context.colors.textPrimary,
+                iconBg: context.colors.surfaceHighest,
+                label: S.of(context).feedBlockUserTitle,
                 onTap: onBlock,
               ),
             if (!isOwn)
@@ -1443,7 +1493,7 @@ class _PostOptionsSheet extends StatelessWidget {
                 icon: Icons.flag_rounded,
                 iconColor: _FeedTokens.likeRed,
                 iconBg: _FeedTokens.likeRed.withValues(alpha: 0.16),
-                label: 'Denunciar',
+                label: S.of(context).feedReport,
                 destructive: true,
                 onTap: onReport,
               ),
@@ -1452,7 +1502,7 @@ class _PostOptionsSheet extends StatelessWidget {
                 icon: Icons.delete_outline_rounded,
                 iconColor: _FeedTokens.likeRed,
                 iconBg: _FeedTokens.likeRed.withValues(alpha: 0.16),
-                label: 'Excluir post',
+                label: S.of(context).feedDeletePost,
                 destructive: true,
                 onTap: onDelete,
               ),
@@ -1473,7 +1523,7 @@ class _SheetHandle extends StatelessWidget {
       height: 5,
       margin: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white24,
+        color: context.colors.border,
         borderRadius: BorderRadius.circular(3),
       ),
     );
@@ -1523,14 +1573,14 @@ class _SheetTile extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: destructive ? _FeedTokens.likeRed : Colors.white,
+                    color: destructive ? _FeedTokens.likeRed : context.colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
-                  color: Colors.white24, size: 22),
+              Icon(Icons.chevron_right_rounded,
+                  color: context.colors.border, size: 22),
             ],
           ),
         ),
@@ -1543,7 +1593,7 @@ class _ReportReasonHeader extends StatelessWidget {
   const _ReportReasonHeader();
   @override
   Widget build(BuildContext context) {
-    return const Padding(
+    return Padding(
       padding: EdgeInsets.fromLTRB(20, 4, 20, 14),
       child: Align(
         alignment: Alignment.centerLeft,
@@ -1551,17 +1601,17 @@ class _ReportReasonHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Denunciar post',
+              S.of(context).feedReportTitle,
               style: TextStyle(
-                color: Colors.white,
+                color: context.colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
               ),
             ),
             SizedBox(height: 4),
             Text(
-              'Por que você está denunciando?',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              S.of(context).feedReportPrompt,
+              style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
             ),
           ],
         ),
@@ -1577,8 +1627,8 @@ class _ReportReasonTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(label, style: const TextStyle(color: Colors.white)),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white38),
+      title: Text(label, style: TextStyle(color: context.colors.textPrimary)),
+      trailing: Icon(Icons.chevron_right_rounded, color: context.colors.textTertiary),
       onTap: () => Navigator.pop(context, reason),
     );
   }
@@ -1722,9 +1772,9 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                       alignment: Alignment.center,
                       child: Image.network(
                         widget.imageUrl,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, __, ___) => Icon(
                           Icons.broken_image_rounded,
-                          color: Colors.white54,
+                          color: context.colors.textTertiary,
                           size: 80,
                         ),
                       ),
@@ -1751,9 +1801,9 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.favorite_rounded,
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       size: 160,
                     ),
                   ),
@@ -1785,12 +1835,12 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    icon: Icon(Icons.close_rounded, color: context.colors.textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: _FeedTokens.surface,
+                    backgroundColor: context.colors.surface,
                     backgroundImage: (widget.authorAvatarUrl != null &&
                             widget.authorAvatarUrl!.isNotEmpty)
                         ? NetworkImage(widget.authorAvatarUrl!)
@@ -1801,8 +1851,8 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                             widget.authorName.isNotEmpty
                                 ? widget.authorName[0].toUpperCase()
                                 : '?',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 12),
+                            style: TextStyle(
+                                color: context.colors.textPrimary, fontSize: 12),
                           )
                         : null,
                   ),
@@ -1814,8 +1864,8 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                       children: [
                         Text(
                           widget.authorName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -1823,8 +1873,8 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         ),
                         Text(
                           '@${widget.authorUsername}',
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: context.colors.textSecondary,
                             fontSize: 12,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -1868,8 +1918,8 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         widget.caption,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontSize: 14,
                           height: 1.4,
                         ),
@@ -1896,7 +1946,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         const SizedBox(width: 22),
                         _LightboxAction(
                           icon: Icons.mode_comment_outlined,
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           label: _formatLightboxCount(commentsCount),
                           onTap: () {
                             Navigator.of(context).pop();
@@ -1905,8 +1955,8 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         const SizedBox(width: 22),
                         _LightboxAction(
                           icon: Icons.send_rounded,
-                          color: Colors.white,
-                          label: 'Enviar',
+                          color: context.colors.textPrimary,
+                          label: S.of(context).feedSend,
                           onTap: () {
                             ShareToChatSheet.show(
                               context,
@@ -2040,9 +2090,9 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     if (_error) {
       return Container(
         height: 200,
-        color: _FeedTokens.surfaceHi,
-        child: const Center(
-          child: Icon(Icons.broken_image_rounded, color: _FeedTokens.textLo),
+        color: context.colors.surfaceElevated,
+        child: Center(
+          child: Icon(Icons.broken_image_rounded, color: context.colors.textTertiary),
         ),
       );
     }
@@ -2050,7 +2100,7 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
       return AspectRatio(
         aspectRatio: 4 / 5,
         child: Container(
-          color: _FeedTokens.surfaceHi,
+          color: context.colors.surfaceElevated,
           child: const Center(
             child: CircularProgressIndicator(
               strokeWidth: 2,
@@ -2084,10 +2134,14 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.55),
+                  // Mídia (vídeo) é o fundo: usar overlay escuro fixo
+                  // independente do tema do app para garantir contraste.
+                  color: Colors.black.withValues(alpha: 0.45),
                   shape: BoxShape.circle,
-                  border:
-                      Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
                 ),
                 child: Icon(
                   _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,

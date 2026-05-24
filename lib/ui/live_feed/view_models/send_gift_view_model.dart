@@ -13,6 +13,7 @@ class SendGiftViewModel extends _$SendGiftViewModel {
   Future<bool> sendGift({
     required String roomId,
     required String giftId,
+    required String receiverId,
     int quantity = 1,
     String? battleId,
   }) async {
@@ -22,6 +23,7 @@ class SendGiftViewModel extends _$SendGiftViewModel {
       await ref.read(giftRepositoryProvider).sendGift(
         roomId: roomId,
         giftId: giftId,
+        receiverId: receiverId,
         quantity: quantity,
         battleId: battleId,
       );

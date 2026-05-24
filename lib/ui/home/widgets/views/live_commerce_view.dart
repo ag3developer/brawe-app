@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
 // go_router used transitively via _live_peek.openLiveRoom
 import '../../../../domain/models/product.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import 'shared/_live_peek.dart';
 import 'products_drawer.dart';
@@ -91,7 +92,7 @@ class LiveCommerceView extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const LiveDotPulse(label: 'AO VIVO • SHOP'),
+                  LiveDotPulse(label: S.of(context).liveBadgeShop),
                   const SizedBox(width: 6),
                   ViewerCountChip(count: item.viewerCount),
                 ],
@@ -197,8 +198,8 @@ class _FeaturedProductCard extends StatelessWidget {
                           color: AppColors.mutedRed,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text('OFERTA AGORA',
-                            style: TextStyle(
+                        child: Text(S.of(context).liveOfferNow,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,
                               fontWeight: FontWeight.bold,

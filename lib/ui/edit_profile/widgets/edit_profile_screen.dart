@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
 
@@ -15,6 +19,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _instaCtrl = TextEditingController();
@@ -23,10 +28,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _ytCtrl = TextEditingController();
   final _siteCtrl = TextEditingController();
 
+  Timer? _usernameDebounce;
   bool _initialized = false;
 
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
+    _usernameCtrl.dispose();
     _nameCtrl.dispose();
     _bioCtrl.dispose();
     _instaCtrl.dispose();
@@ -40,6 +48,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void _hydrate(EditProfileState s) {
     if (_initialized || s.profile == null) return;
     final p = s.profile!;
+    _usernameCtrl.text = p.username ?? '';
     _nameCtrl.text = p.displayName ?? '';
     _bioCtrl.text = p.bio ?? '';
     final links = p.socialLinks ?? const <String, String>{};
@@ -73,12 +82,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           socialLinks: socialLinks,
         );
     if (!mounted) return;
+
+    // Salva username separadamente se foi alterado
+    final vmState = ref.read(editProfileViewModelProvider).value;
+    final currentUsername = vmState?.profile?.username?.toLowerCase() ?? '';
+    final newUsername = _usernameCtrl.text.trim().toLowerCase();
+    if (ok && newUsername.isNotEmpty && newUsername != currentUsername) {
+      final usernameOk = await ref
+          .read(editProfileViewModelProvider.notifier)
+          .saveUsername(newUsername);
+      if (!mounted) return;
+      if (!usernameOk) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(S.of(context).editProfileSavedUsernameFailed),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    }
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Perfil atualizado'),
+        SnackBar(
+          content: Text(S.of(context).editProfileSaved),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -86,30 +115,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final async = ref.watch(editProfileViewModelProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: context.colors.background,
+        foregroundColor: context.colors.textPrimary,
         elevation: 0,
-        title: const Text('Editar perfil'),
+        title: Text(s.editProfileTitle),
         actions: [
           TextButton(
             onPressed: async.value?.isSaving == true ? null : _onSave,
             child: async.value?.isSaving == true
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                     ),
                   )
-                : const Text(
-                    'Salvar',
-                    style: TextStyle(
+                : Text(
+                    s.editProfileSave,
+                    style: const TextStyle(
                       color: AppColors.mutedRed,
                       fontWeight: FontWeight.bold,
                     ),
@@ -125,13 +155,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Erro ao carregar perfil',
-              style: TextStyle(color: Colors.white70),
+              s.editProfileLoadError,
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           ),
         ),
-        data: (s) {
-          _hydrate(s);
+        data: (state) {
+          _hydrate(state);
           return SingleChildScrollView(
             padding: const EdgeInsets.only(bottom: 32),
             child: Form(
@@ -139,11 +169,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _BannerEditor(state: s),
+                  _BannerEditor(state: state),
                   const SizedBox(height: 60),
-                  _AvatarEditor(state: s),
+                  _AvatarEditor(state: state),
                   const SizedBox(height: 24),
-                  if (s.error != null)
+                  if (state.error != null)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       padding: const EdgeInsets.all(12),
@@ -152,56 +182,71 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
                       ),
-                      child: Text(s.error!,
-                          style: const TextStyle(color: Colors.white)),
+                      child: Text(_errorMessage(s, state.error!),
+                          style: TextStyle(color: context.colors.textPrimary)),
                     ),
-                  const _SectionLabel('Informações'),
+                  _SectionLabel(s.editProfileSectionInfo),
+                  _UsernameField(
+                    controller: _usernameCtrl,
+                    state: state,
+                    onChanged: (val) {
+                      _usernameDebounce?.cancel();
+                      _usernameDebounce = Timer(
+                        const Duration(milliseconds: 600),
+                        () => ref
+                            .read(editProfileViewModelProvider.notifier)
+                            .checkUsername(val),
+                      );
+                    },
+                  ),
                   _Field(
                     controller: _nameCtrl,
-                    label: 'Nome de exibição',
+                    label: s.editProfileFieldName,
                     maxLength: 50,
                     validator: (v) {
-                      if ((v ?? '').trim().isEmpty) return 'Obrigatório';
+                      if ((v ?? '').trim().isEmpty) {
+                        return s.editProfileFieldNameRequired;
+                      }
                       return null;
                     },
                   ),
                   _Field(
                     controller: _bioCtrl,
-                    label: 'Bio',
+                    label: s.editProfileFieldBio,
                     maxLength: 500,
                     maxLines: 4,
-                    hint: 'Conte um pouco sobre você...',
+                    hint: s.editProfileFieldBioHint,
                   ),
-                  const _SectionLabel('Links sociais'),
+                  _SectionLabel(s.editProfileSectionSocial),
                   _Field(
                     controller: _instaCtrl,
-                    label: 'Instagram',
+                    label: s.editProfileSocialInstagram,
                     prefixIcon: Icons.camera_alt_outlined,
-                    hint: '@usuario',
+                    hint: s.editProfileSocialUserHint,
                   ),
                   _Field(
                     controller: _tiktokCtrl,
-                    label: 'TikTok',
+                    label: s.editProfileSocialTikTok,
                     prefixIcon: Icons.music_note,
-                    hint: '@usuario',
+                    hint: s.editProfileSocialUserHint,
                   ),
                   _Field(
                     controller: _twitterCtrl,
-                    label: 'X / Twitter',
+                    label: s.editProfileSocialTwitter,
                     prefixIcon: Icons.alternate_email,
-                    hint: '@usuario',
+                    hint: s.editProfileSocialUserHint,
                   ),
                   _Field(
                     controller: _ytCtrl,
-                    label: 'YouTube',
+                    label: s.editProfileSocialYouTube,
                     prefixIcon: Icons.play_circle_outline,
-                    hint: 'canal',
+                    hint: s.editProfileSocialChannelHint,
                   ),
                   _Field(
                     controller: _siteCtrl,
-                    label: 'Website',
+                    label: s.editProfileSocialWebsite,
                     prefixIcon: Icons.link,
-                    hint: 'https://...',
+                    hint: s.editProfileSocialUrlHint,
                   ),
                 ],
               ),
@@ -210,6 +255,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         },
       ),
     );
+  }
+
+  String _errorMessage(S s, EditProfileErrorCode code) {
+    switch (code) {
+      case EditProfileErrorCode.saveFailed:
+        return s.editProfileErrorSaveFailed;
+      case EditProfileErrorCode.usernameTooShort:
+        return s.editProfileUsernameTooShort;
+      case EditProfileErrorCode.usernameCheckFailed:
+        return s.editProfileErrorUsernameCheck;
+      case EditProfileErrorCode.usernameInUse:
+        return s.editProfileErrorUsernameInUse;
+      case EditProfileErrorCode.usernameSaveFailed:
+        return s.editProfileErrorUsernameSaveFailed;
+      case EditProfileErrorCode.avatarUploadFailed:
+        return s.editProfileErrorAvatarUpload;
+      case EditProfileErrorCode.bannerUploadFailed:
+        return s.editProfileErrorBannerUpload;
+      case EditProfileErrorCode.avatarRemoveFailed:
+        return s.editProfileErrorAvatarRemove;
+      case EditProfileErrorCode.bannerRemoveFailed:
+        return s.editProfileErrorBannerRemove;
+    }
   }
 }
 
@@ -229,7 +297,7 @@ class _BannerEditor extends ConsumerWidget {
           sourcePath: picked,
           aspectRatio: 3.0,
           circle: false,
-          title: 'Posicionar banner',
+          title: S.of(context).editProfileBannerPosition,
           outputWidth: 1500,
         ),
       ),
@@ -251,15 +319,15 @@ class _BannerEditor extends ConsumerWidget {
             width: double.infinity,
             color: Colors.white10,
             child: url == null || url.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.image_outlined,
-                            size: 40, color: Colors.white54),
+                            size: 40, color: context.colors.textTertiary),
                         SizedBox(height: 6),
-                        Text('Adicionar banner',
-                            style: TextStyle(color: Colors.white54)),
+                        Text(S.of(context).editProfileBannerAdd,
+                            style: TextStyle(color: context.colors.textTertiary)),
                       ],
                     ),
                   )
@@ -270,8 +338,8 @@ class _BannerEditor extends ConsumerWidget {
           Positioned.fill(
             child: Container(
               color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(color: Colors.white),
+              child: Center(
+                child: CircularProgressIndicator(color: context.colors.textPrimary),
               ),
             ),
           ),
@@ -316,7 +384,7 @@ class _AvatarEditor extends ConsumerWidget {
           sourcePath: picked,
           aspectRatio: 1.0,
           circle: true,
-          title: 'Posicionar foto',
+          title: S.of(context).editProfileAvatarPosition,
           outputWidth: 1024,
         ),
       ),
@@ -342,12 +410,12 @@ class _AvatarEditor extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.black, width: 4),
-                  color: Colors.white12,
+                  color: context.colors.divider,
                 ),
                 child: ClipOval(
                   child: url == null || url.isEmpty
-                      ? const Icon(Icons.person,
-                          size: 64, color: Colors.white54)
+                      ? Icon(Icons.person,
+                          size: 64, color: context.colors.textTertiary)
                       : CachedNetworkImage(
                           imageUrl: url,
                           fit: BoxFit.cover,
@@ -364,8 +432,8 @@ class _AvatarEditor extends ConsumerWidget {
                     shape: BoxShape.circle,
                     color: Colors.black54,
                   ),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                  child: Center(
+                    child: CircularProgressIndicator(color: context.colors.textPrimary),
                   ),
                 ),
               )
@@ -397,10 +465,122 @@ class _RoundIconBtn extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: Colors.white, size: 18),
+          child: Icon(icon, color: context.colors.textPrimary, size: 18),
         ),
       ),
     );
+  }
+}
+
+class _UsernameField extends StatelessWidget {
+  final TextEditingController controller;
+  final EditProfileState state;
+  final ValueChanged<String> onChanged;
+
+  const _UsernameField({
+    required this.controller,
+    required this.state,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    Widget? suffixIcon;
+    String? helperText;
+    Color helperColor = Colors.white54;
+
+    if (state.isCheckingUsername) {
+      suffixIcon =  Padding(
+        padding: EdgeInsets.all(12),
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: context.colors.textSecondary,
+          ),
+        ),
+      );
+    } else if (state.usernameAvailable) {
+      suffixIcon =
+          const Icon(Icons.check_circle, color: Colors.greenAccent, size: 20);
+      helperText = s.editProfileUsernameAvailable;
+      helperColor = Colors.greenAccent;
+    } else if (state.usernameError != null ||
+        state.usernameErrorMessage != null) {
+      suffixIcon = const Icon(Icons.cancel, color: Colors.redAccent, size: 20);
+      helperText = state.usernameError != null
+          ? _usernameErrorText(s, state.usernameError!)
+          : state.usernameErrorMessage;
+      helperColor = Colors.redAccent;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: TextFormField(
+        controller: controller,
+        maxLength: 30,
+        onChanged: onChanged,
+        style: TextStyle(color: context.colors.textPrimary),
+        validator: (v) {
+          final val = (v ?? '').trim();
+          if (val.isEmpty) return null;
+          if (val.length < 3) return s.editProfileUsernameTooShort;
+          final re = RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*$');
+          if (!re.hasMatch(val)) {
+            return s.editProfileUsernameInvalid;
+          }
+          return null;
+        },
+        decoration: InputDecoration(
+          labelText: s.editProfileUsernameLabel,
+          hintText: s.editProfileUsernameHint,
+          labelStyle:  TextStyle(color: context.colors.textSecondary),
+          hintStyle: TextStyle(color: context.colors.border),
+          prefixIcon:  Icon(
+            Icons.alternate_email,
+            color: context.colors.textSecondary,
+            size: 20,
+          ),
+          suffixIcon: suffixIcon,
+          helperText: helperText,
+          helperStyle: TextStyle(color: helperColor),
+          filled: true,
+          fillColor: Colors.white10,
+          counterStyle:  TextStyle(color: context.colors.textSecondary),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                const BorderSide(color: AppColors.mutedRed, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                const BorderSide(color: Colors.redAccent, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _usernameErrorText(S s, EditProfileErrorCode code) {
+    switch (code) {
+      case EditProfileErrorCode.usernameTooShort:
+        return s.editProfileUsernameTooShort;
+      case EditProfileErrorCode.usernameCheckFailed:
+        return s.editProfileErrorUsernameCheck;
+      case EditProfileErrorCode.usernameInUse:
+        return s.editProfileErrorUsernameInUse;
+      case EditProfileErrorCode.usernameSaveFailed:
+        return s.editProfileErrorUsernameSaveFailed;
+      default:
+        return s.editProfileErrorUsernameCheck;
+    }
   }
 }
 
@@ -414,8 +594,8 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: Text(
         text.toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.coolGray,
+        style:  TextStyle(
+          color: context.colors.textSecondary,
           fontWeight: FontWeight.w700,
           fontSize: 11,
           letterSpacing: 0.6,
@@ -453,18 +633,18 @@ class _Field extends StatelessWidget {
         maxLength: maxLength,
         maxLines: maxLines,
         validator: validator,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: context.colors.textPrimary),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle: const TextStyle(color: AppColors.coolGray),
-          hintStyle: const TextStyle(color: Colors.white24),
+          labelStyle:  TextStyle(color: context.colors.textSecondary),
+          hintStyle: TextStyle(color: context.colors.border),
           prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: AppColors.coolGray, size: 20)
+              ? Icon(prefixIcon, color: context.colors.textSecondary, size: 20)
               : null,
           filled: true,
           fillColor: Colors.white10,
-          counterStyle: const TextStyle(color: AppColors.coolGray),
+          counterStyle:  TextStyle(color: context.colors.textSecondary),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide.none,

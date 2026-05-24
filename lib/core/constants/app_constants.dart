@@ -11,16 +11,16 @@ class AppConstants {
   // Public site (deeplinks / share / legal pages) — hosted at brawe.app
   static const String publicBaseUrl = 'https://brawe.app';
   static const String legalBaseUrl = publicBaseUrl;
-  static const String termsUrl = '\$legalBaseUrl/terms';
-  static const String privacyUrl = '\$legalBaseUrl/privacy';
-  static const String supportUrl = '\$legalBaseUrl/support';
+  static const String termsUrl = '$legalBaseUrl/terms';
+  static const String privacyUrl = '$legalBaseUrl/privacy';
+  static const String supportUrl = '$legalBaseUrl/support';
   static const String supportEmail = 'support@brawe.app';
 
   // Public deeplinks (compartilhamento)
   static String profileUrl(String handleOrId) =>
-      '\$publicBaseUrl/connect/u/\$handleOrId';
-  static String postUrl(String postId) => '\$publicBaseUrl/connect/p/\$postId';
-  static String liveUrl(String slug) => '\$publicBaseUrl/live/\$slug';
+      '$publicBaseUrl/connect/u/$handleOrId';
+  static String postUrl(String postId) => '$publicBaseUrl/connect/p/$postId';
+  static String liveUrl(String slug) => '$publicBaseUrl/live/$slug';
 
   // Legal versions (must match backend TERMS_VERSION / PRIVACY_VERSION)
   static const String termsVersion = '2025-01-01';
@@ -42,7 +42,7 @@ class AppConstants {
 
   // Socket.IO
   static const String socketPath = '/ws/socket.io';
-  static const List<String> socketTransports = ['websocket', 'polling'];
+  static const List<String> socketTransports = ['websocket'];
 
   // Socket Events — Auth
   static const String eventAuthenticate = 'authenticate';
@@ -74,6 +74,13 @@ class AppConstants {
   static const String eventPresenceUpdate = 'presence_update'; // backend -> client
   static const String eventMessageBurned = 'message_burned'; // backend -> client
   static const String eventMessageReaction = 'message_reaction'; // backend -> client
+
+  // Socket Events — Battle
+  static const String eventBattleInvite = 'connect:battle:invite';
+  static const String eventBattleCountdown = 'connect:battle:countdown';
+  static const String eventBattleStarted = 'connect:battle:started';
+  static const String eventBattleScoreUpdate = 'connect:battle:score_update';
+  static const String eventBattleEnded = 'connect:battle:ended';
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';

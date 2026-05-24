@@ -68,6 +68,29 @@ class PushNotificationService {
       // Foreground message handler.
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
+      // Configura como exibir notificações em foreground no iOS
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // Token refresh automático → re-registra no backend
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        try {
+          await _dio.post(
+            '/devices/register',
+            data: {
+              'token': newToken,
+              'platform': Platform.isIOS ? 'ios' : 'android',
+            },
+          );
+        } catch (e) {
+          debugPrint('onTokenRefresh re-register failed: $e');
+        }
+      });
+
       _initialized = true;
     } catch (e, st) {
       debugPrint('PushNotificationService.init failed: $e\n$st');
@@ -130,10 +153,15 @@ class PushNotificationService {
 /// Top-level handler required by firebase_messaging for background messages.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Background isolate. Keep minimal - just ensure Firebase is initialized.
+  // Background isolate. Inicializa Firebase para processar a mensagem.
   try {
-    await Firebase.initializeApp();
-  } catch (_) {}
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+    debugPrint('🔔 Background push recebido: ${message.notification?.title}');
+  } catch (e) {
+    debugPrint('Background handler error: $e');
+  }
 }
 
 @riverpod

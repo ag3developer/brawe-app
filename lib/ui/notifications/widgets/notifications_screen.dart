@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/app_notification.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/notifications_view_model.dart';
@@ -11,11 +12,12 @@ class NotificationsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final async = ref.watch(notificationsViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notificações'),
+        title: Text(s.notificationsTitle),
         leading: const BackButton(),
         actions: [
           async.when(
@@ -25,7 +27,7 @@ class NotificationsScreen extends ConsumerWidget {
                         .read(notificationsViewModelProvider.notifier)
                         .markAllRead(),
                     icon: const Icon(Icons.done_all, size: 18),
-                    label: const Text('Marcar todas'),
+                    label: Text(s.notificationsMarkAll),
                   )
                 : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
@@ -171,7 +173,7 @@ class _NotificationTile extends StatelessWidget {
                     if (notification.createdAt != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        _timeAgo(notification.createdAt!),
+                        _timeAgo(context, notification.createdAt!),
                         style: TextStyle(
                           fontSize: 11,
                           color: scheme.onSurface.withValues(alpha: 0.5),
@@ -210,12 +212,13 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 
-  static String _timeAgo(DateTime dt) {
+  static String _timeAgo(BuildContext context, DateTime dt) {
+    final s = S.of(context);
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'agora';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m atrás';
-    if (diff.inHours < 24) return '${diff.inHours}h atrás';
-    if (diff.inDays < 7) return '${diff.inDays}d atrás';
+    if (diff.inMinutes < 1) return s.notificationsTimeNow;
+    if (diff.inMinutes < 60) return s.notificationsTimeMinutes(diff.inMinutes);
+    if (diff.inHours < 24) return s.notificationsTimeHours(diff.inHours);
+    if (diff.inDays < 7) return s.notificationsTimeDays(diff.inDays);
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 }
@@ -223,6 +226,7 @@ class _NotificationTile extends StatelessWidget {
 class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return ListView(
       children: [
         const SizedBox(height: 100),
@@ -232,16 +236,16 @@ class _EmptyView extends StatelessWidget {
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
         ),
         const SizedBox(height: 16),
-        const Center(
+        Center(
           child: Text(
-            'Tudo em dia!',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            s.notificationsEmptyTitle,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
           ),
         ),
         const SizedBox(height: 6),
         Center(
           child: Text(
-            'Você não tem notificações novas.',
+            s.notificationsEmptySubtitle,
             style: TextStyle(
               color:
                   Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -259,17 +263,18 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 40),
           const SizedBox(height: 12),
-          const Text('Não consegui carregar suas notificações.'),
+          Text(s.notificationsLoadError),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
-            child: const Text('Tentar novamente'),
+            child: Text(s.notificationsTryAgain),
           ),
         ],
       ),

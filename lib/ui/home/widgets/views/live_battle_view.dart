@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import 'shared/_live_overlay.dart';
 
@@ -19,10 +20,10 @@ class LiveBattleView extends StatelessWidget {
       onTap: () {
         // TODO: context.push('/live/${item.id}');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Entrando na live…'),
+          SnackBar(
+            content: Text(S.of(context).liveJoining),
             backgroundColor: AppColors.electricPurple,
-            duration: Duration(seconds: 1),
+            duration: const Duration(seconds: 1),
           ),
         );
       },
@@ -72,7 +73,7 @@ class LiveBattleView extends StatelessWidget {
             left: 16,
             child: LiveBadge(
               viewerCount: item.viewerCount,
-              label: 'AO VIVO • BATALHA',
+              label: S.of(context).liveBadgeBattle,
             ),
           ),
 
@@ -122,9 +123,9 @@ class LiveBattleView extends StatelessWidget {
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Toque para assistir ao vivo',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                child: Text(
+                  S.of(context).liveBattleTapToWatch,
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
               ),
             ),
@@ -411,14 +412,14 @@ class _GiftButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 20),
-            SizedBox(width: 8),
+            const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
             Text(
-              'Presente Misterioso',
-              style: TextStyle(
+              S.of(context).liveBattleMysteryGift,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
@@ -453,6 +454,7 @@ class _GiftSheetState extends State<_GiftSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.slate,
@@ -493,19 +495,19 @@ class _GiftSheetState extends State<_GiftSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Presente Misterioso',
-            style: TextStyle(
+          Text(
+            s.giftMysteryTitle,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Surpreenda um dos streamers!\nO destino é escolhido aleatoriamente. 🎲',
+          Text(
+            s.giftMysterySubtitle,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.coolGray, fontSize: 13, height: 1.5),
+            style: const TextStyle(color: AppColors.coolGray, fontSize: 13, height: 1.5),
           ),
           const SizedBox(height: 24),
           // Toggle anônimo
@@ -519,14 +521,14 @@ class _GiftSheetState extends State<_GiftSheet> {
               onChanged: (v) => setState(() => _anonymous = v),
               activeThumbColor: AppColors.electricPurple,
               activeTrackColor: AppColors.electricPurple.withValues(alpha: 0.4),
-              title: const Text(
-                'Enviar anonimamente',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+              title: Text(
+                s.giftSendAnonymous,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
               subtitle: Text(
                 _anonymous
-                    ? 'Seu nome não será revelado'
-                    : 'Todos verão que foi você',
+                    ? s.giftAnonNameHidden
+                    : s.giftAnonNameVisible,
                 style: const TextStyle(
                     color: AppColors.coolGray, fontSize: 12),
               ),
@@ -550,7 +552,7 @@ class _GiftSheetState extends State<_GiftSheet> {
               ),
               icon: const Icon(Icons.send_rounded, color: Colors.white),
               label: Text(
-                _anonymous ? 'Enviar (anônimo)' : 'Enviar presente',
+                _anonymous ? s.giftSendButtonAnon : s.giftSendButton,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -562,8 +564,8 @@ class _GiftSheetState extends State<_GiftSheet> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(_anonymous
-                        ? 'Presente enviado anonimamente!'
-                        : 'Presente enviado!'),
+                        ? s.giftSentAnon
+                        : s.giftSent),
                     backgroundColor: const Color(0xFFFF9500),
                     duration: const Duration(seconds: 2),
                   ),

@@ -10,6 +10,7 @@ import 'dart:async';
 
 import '../../../../data/repositories/post_repository.dart';
 import '../../../../domain/models/feed_item.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/force_dark_theme.dart';
 import '../../../feed/widgets/story_composer_screen.dart';
@@ -286,17 +287,17 @@ class _VideoViewState extends ConsumerState<VideoView> {
 
           // ── Camada 6: erro ─────────────────────────────────────
           if (_failed)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.error_outline,
+                    const Icon(Icons.error_outline,
                         color: Colors.white54, size: 40),
-                    SizedBox(height: 8),
-                    Text('Não foi possível carregar o vídeo.',
-                        style: TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 8),
+                    Text(S.of(context).videoLoadError,
+                        style: const TextStyle(color: Colors.white70)),
                   ],
                 ),
               ),
@@ -410,7 +411,7 @@ class _RepostStoryButton extends StatelessWidget {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: Tooltip(
-          message: 'Repostar no Stories',
+          message: S.of(context).videoTooltipRepostStory,
           child: Container(
             width: 38,
             height: 38,

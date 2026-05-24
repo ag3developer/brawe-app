@@ -40,6 +40,7 @@ _PostResponseDto _$PostResponseDtoFromJson(Map<String, dynamic> json) =>
       ),
       userLiked: json['user_liked'] as bool? ?? false,
       userReposted: json['user_reposted'] as bool? ?? false,
+      userFollowingAuthor: json['user_following_author'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
@@ -56,6 +57,7 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'author': instance.author,
       'user_liked': instance.userLiked,
       'user_reposted': instance.userReposted,
+      'user_following_author': instance.userFollowingAuthor,
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>

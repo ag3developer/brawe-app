@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/failure.dart';
 import '../../domain/models/story.dart';
+import '../../domain/models/story_active_status.dart';
 import '../services/stories_service.dart';
 part 'stories_repository.g.dart';
 
@@ -90,7 +91,7 @@ class StoriesRepository {
   Future<void> deleteStory(String storyId) async {
     try {
       await _service.deleteStory(storyId);
-    } on DioException catch (_) {
+    } on DioException {
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();
@@ -148,6 +149,33 @@ class StoriesRepository {
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();
+    }
+  }
+
+  /// Status (has_stories / has_unviewed) em LOTE para vários usuários.
+  ///
+  /// Retorna um mapa `userId → StoryActiveStatus`. Todos os IDs pedidos
+  /// estão presentes na resposta — usuários sem stories vêm como
+  /// `StoryActiveStatus.empty`. Em caso de erro, devolve mapa vazio
+  /// (o UI deve degradar para "sem anel" — não é dado crítico).
+  Future<Map<String, StoryActiveStatus>> getActiveStatusBatch(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return const {};
+    try {
+      final raw = await _service.getActiveStatusBatch(userIds);
+      final users = (raw['users'] as Map<String, dynamic>? ?? const {});
+      final out = <String, StoryActiveStatus>{};
+      users.forEach((id, value) {
+        if (value is Map<String, dynamic>) {
+          out[id] = StoryActiveStatus.fromJson(value);
+        }
+      });
+      return out;
+    } on DioException catch (_) {
+      return const {};
+    } catch (_) {
+      return const {};
     }
   }
 

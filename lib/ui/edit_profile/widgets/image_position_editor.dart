@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 /// Tela fullscreen que permite ao usuário arrastar e dar zoom em uma imagem
 /// antes do upload, dentro de uma máscara fixa (círculo para avatar,
@@ -182,8 +183,8 @@ class _ImagePositionEditorState extends State<ImagePositionEditor> {
       if (!mounted) return;
       setState(() => _exporting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível processar a imagem.'),
+        SnackBar(
+          content: Text(S.of(context).editProfileImageProcessError),
           backgroundColor: Colors.red,
         ),
       );
@@ -221,9 +222,9 @@ class _ImagePositionEditorState extends State<ImagePositionEditor> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Concluir',
-                    style: TextStyle(
+                : Text(
+                    S.of(context).editProfileImageDone,
+                    style: const TextStyle(
                       color: AppColors.mutedRed,
                       fontWeight: FontWeight.bold,
                     ),
@@ -299,7 +300,7 @@ class _ImagePositionEditorState extends State<ImagePositionEditor> {
                       bottom: 16,
                       child: Center(
                         child: Text(
-                          'Arraste para reposicionar · Pinch para dar zoom',
+                          S.of(context).editProfileImageHint,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 13,

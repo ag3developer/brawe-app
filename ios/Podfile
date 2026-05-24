@@ -41,7 +41,7 @@ post_install do |installer|
   # Reescrevemos para o formato angle-bracket APENAS nos pods que sabemos que
   # precisam (Logboard, HaishinKit). NÃO mexer em pods do Firebase/Google
   # (PromisesObjC tem module name != pod name e quebra com esse patch).
-  pods_to_patch = %w[Logboard HaishinKit]
+  pods_to_patch = %w[Logboard HaishinKit wakelock_plus]
   pods_to_patch.each do |pod_name|
     Dir.glob(File.expand_path("Pods/Target Support Files/#{pod_name}/*-umbrella.h", __dir__)).each do |umbrella|
       content = File.read(umbrella)

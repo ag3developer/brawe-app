@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,17 +7,26 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rtmp_broadcaster/camera.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../../data/repositories/explore_repository.dart';
 import '../../../data/repositories/live_repository.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_viewer_event.dart';
+import '../../../domain/models/user.dart';
+import '../../live_feed/view_models/battle_view_model.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live_feed/widgets/gift_animation_overlay.dart';
 import '../../live_feed/widgets/live_comments_overlay.dart';
+import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../data/services/battle_service.dart';
+import '../../../data/services/socket_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class BroadcasterScreen extends ConsumerStatefulWidget {
   const BroadcasterScreen({super.key, required this.room});
@@ -58,6 +68,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   Timer? _viewerToastTimer;
   AnimationController? _toastAnimController;
 
+  // Battle state
+  String? _activeBattleId;
+  String? _pendingBattleId;
+  String? _pendingBattleFromName;
+
   // Likes (atualizado em tempo real via socket like_count_update)
   // O valor inicial vem de widget.room.totalLikes e é sincronizado pelo LiveRoomCommentsViewModel.
 
@@ -73,6 +88,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     );
     _initializeController();
     WakelockPlus.enable();
+    // Escutar convites de batalha via Socket.IO
+    WidgetsBinding.instance.addPostFrameCallback((_) => _subscribeToBattleEvents());
   }
 
   bool get _hasStreamingCredentials =>
@@ -88,7 +105,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         if (mounted) {
           AppSnackBar.showError(
             context,
-            'Precisamos de acesso à câmera e ao microfone para você entrar ao vivo.',
+            S.of(context).broadcasterPermissionDenied,
           );
           _closeBroadcaster();
         }
@@ -100,7 +117,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
         if (mounted) {
-          AppSnackBar.showError(context, 'Nenhuma câmera encontrada neste dispositivo.');
+          AppSnackBar.showError(
+              context, S.of(context).broadcasterNoCamera);
           _closeBroadcaster();
         }
         return;
@@ -123,7 +141,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       debugPrint('Erro ao inicializar a câmera: $e');
       debugPrint('Stack trace: $stackTrace');
       if (mounted) {
-        AppSnackBar.showError(context, 'Erro ao inicializar a câmera: $e');
+        AppSnackBar.showError(
+            context, S.of(context).broadcasterInitCameraError(e.toString()));
         _closeBroadcaster();
       }
     }
@@ -140,6 +159,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   void _handleViewerEvent(LiveViewerEvent event) {
     if (!mounted) return;
     if (!event.joined) return; // Mostrar só entradas
+    // 🚫 Ignorar evento do próprio criador (broadcaster). O backend ecoa o
+    // viewer_joined também para quem está transmitindo; não faz sentido
+    // exibir "Você entrou" no toast.
+    final authState = ref.read(authStateProvider);
+    final currentUser = authState is AsyncData<User?> ? authState.value : null;
+    final currentUserId = currentUser?.id;
+    if (currentUserId != null && event.userId == currentUserId) return;
+    // Também ignorar o streamer da sala (defesa extra caso o user id no payload
+    // venha como o streamer_id ao invés do current user — mesmo efeito).
+    if (event.userId.isNotEmpty && event.userId == _room.streamerId) return;
     setState(() => _lastViewerEvent = event);
     _toastAnimController?.forward(from: 0);
     _viewerToastTimer?.cancel();
@@ -171,7 +200,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (e) {
       debugPrint('Failed to initialize camera controller: $e');
       if (mounted) {
-        AppSnackBar.showError(context, 'Falha ao inicializar a câmera.');
+        AppSnackBar.showError(
+            context, S.of(context).broadcasterInitCameraFailed);
       }
     }
   }
@@ -292,7 +322,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       if (mounted) AppSnackBar.showError(context, failure.toDisplayMessage());
     } catch (error) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Não foi possível atualizar a live: $error');
+        AppSnackBar.showError(
+            context, S.of(context).broadcasterRoomUpdateFailed(error.toString()));
       }
     } finally {
       if (mounted) setState(() => _isResolvingRoom = false);
@@ -355,7 +386,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         if (mounted) {
           AppSnackBar.showError(
             context,
-            'Não foi possível iniciar: URL RTMP ou chave de transmissão ausente.',
+            S.of(context).broadcasterMissingStreamCreds,
           );
         }
         return;
@@ -372,7 +403,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         });
         _startHeartbeat();
         _startLiveElapsedTicker();
-        AppSnackBar.showSuccess(context, 'Conectado! Você está ao vivo. 🔴');
+        AppSnackBar.showSuccess(context, S.of(context).broadcasterConnectedLive);
       }
     } catch (error) {
       if (mounted) {
@@ -380,7 +411,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           _isStreaming = false;
           _isTogglingStream = false;
         });
-        AppSnackBar.showError(context, 'Erro ao iniciar transmissão: $error');
+        AppSnackBar.showError(
+            context, S.of(context).broadcasterStreamStartError(error.toString()));
       }
       try {
         await ref.read(liveRepositoryProvider).endLive(_room.id);
@@ -416,7 +448,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           });
           _startHeartbeat();
           _startLiveElapsedTicker();
-          AppSnackBar.showSuccess(context, 'Live retomada — você está ao vivo.');
+          AppSnackBar.showSuccess(context, S.of(context).broadcasterLiveResumed);
         }
       } else {
         if (!_isStreaming) return;
@@ -424,11 +456,14 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         if (mounted) {
           setState(() => _isPaused = true);
           _stopLiveElapsedTicker();
-          AppSnackBar.showSuccess(context, 'Live pausada (BRB).');
+          AppSnackBar.showSuccess(context, S.of(context).broadcasterLivePaused);
         }
       }
     } catch (error) {
-      if (mounted) AppSnackBar.showError(context, 'Erro ao pausar/retomar: $error');
+      if (mounted) {
+        AppSnackBar.showError(
+            context, S.of(context).broadcasterPauseToggleError(error.toString()));
+      }
     } finally {
       if (mounted) setState(() => _isTogglingPause = false);
     }
@@ -463,21 +498,26 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   Future<bool> _confirmCloseDialog() async {
+    final s = S.of(context);
     if (!_isStreaming && !_isPaused) {
       final discard = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.slate,
-          title: const Text('Descartar live?', style: TextStyle(color: Colors.white)),
-          content: const Text(
-            'Você criou uma live mas ainda não começou a transmitir. Deseja descartá-la?',
-            style: TextStyle(color: AppColors.coolGray),
+          title: Text(s.broadcasterDiscardTitle,
+              style: const TextStyle(color: Colors.white)),
+          content: Text(
+            s.broadcasterDiscardMessage,
+            style: const TextStyle(color: AppColors.coolGray),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(s.broadcasterCancel)),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Descartar', style: TextStyle(color: AppColors.mutedRed)),
+              child: Text(s.broadcasterDiscard,
+                  style: const TextStyle(color: AppColors.mutedRed)),
             ),
           ],
         ),
@@ -489,16 +529,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.slate,
-        title: const Text('Encerrar live?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Tem certeza que deseja finalizar a transmissão? Seus viewers serão desconectados.',
-          style: TextStyle(color: AppColors.coolGray),
+        title: Text(s.broadcasterEndTitle,
+            style: const TextStyle(color: Colors.white)),
+        content: Text(
+          s.broadcasterEndMessage,
+          style: const TextStyle(color: AppColors.coolGray),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Continuar ao vivo')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.broadcasterContinueLive)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Encerrar', style: TextStyle(color: AppColors.mutedRed)),
+            child: Text(s.broadcasterEnd,
+                style: const TextStyle(color: AppColors.mutedRed)),
           ),
         ],
       ),
@@ -537,8 +581,304 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     context.go('/home');
   }
 
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE
+  // ════════════════════════════════════════════════════════════════
+
+  void _subscribeToBattleEvents() {
+    final socket = ref.read(socketServiceProvider);
+    socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+  }
+
+  void _unsubscribeFromBattleEvents() {
+    final socket = ref.read(socketServiceProvider);
+    socket.off(AppConstants.eventBattleInvite);
+    socket.off(AppConstants.eventBattleStarted);
+  }
+
+  void _onBattleInvite(dynamic raw) {
+    if (!mounted) return;
+    Map<String, dynamic> data = {};
+    if (raw is Map<String, dynamic>) data = raw;
+    final battleId = data['battle_id'] as String?;
+    final fromName = data['from_streamer'] as String?;
+    if (battleId == null) return;
+    setState(() {
+      _pendingBattleId = battleId;
+      _pendingBattleFromName = fromName ?? '?';
+    });
+    _showBattleInviteDialog(battleId, fromName ?? '?');
+  }
+
+  void _onBattleStarted(dynamic raw) {
+    if (!mounted) return;
+    Map<String, dynamic> data = {};
+    if (raw is Map<String, dynamic>) data = raw;
+    final battleId = data['battle_id'] as String?;
+    if (battleId == null) return;
+    setState(() {
+      _activeBattleId = battleId;
+      _pendingBattleId = null;
+    });
+  }
+
+  Future<void> _showBattleInviteDialog(String battleId, String fromName) async {
+    if (!mounted) return;
+    final l10n = S.of(context);
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.slate,
+        title: Row(
+          children: [
+            const Icon(Icons.sports_kabaddi, color: AppColors.electricPurple),
+            const SizedBox(width: 10),
+            Text(
+              l10n.battleInviteReceived(fromName),
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              l10n.battleDecline,
+              style: const TextStyle(color: Colors.white54),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.electricPurple,
+            ),
+            child: Text(l10n.battleAccept),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (accepted == true) {
+      try {
+        await ref.read(battleServiceProvider).acceptBattle(battleId);
+        setState(() => _activeBattleId = battleId);
+      } catch (e) {
+        if (mounted) AppSnackBar.showError(context, 'Erro ao aceitar batalha');
+      }
+    } else {
+      try {
+        await ref.read(battleServiceProvider).declineBattle(battleId);
+      } catch (_) {}
+      setState(() => _pendingBattleId = null);
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE SHEET — convidar para batalha
+  // ════════════════════════════════════════════════════════════════
+
+  Future<void> _showBattleSheet(BuildContext context) async {
+    if (_activeBattleId != null) return; // já em batalha
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF0E0E14),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _BattleInviteSheet(
+        myRoomId: _room.id,
+        onInvite: (targetRoomId, durationSeconds) async {
+          Navigator.pop(ctx);
+          try {
+            await ref.read(battleServiceProvider).inviteBattle(
+              roomId: _room.id,
+              targetRoomId: targetRoomId,
+              durationSeconds: durationSeconds,
+            );
+            if (mounted) {
+              AppSnackBar.showSuccess(context, 'Convite de batalha enviado!');
+            }
+          } catch (e) {
+            if (mounted) {
+              AppSnackBar.showError(context, 'Erro ao enviar convite');
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // CO-HOST SHEET — convidar co-apresentador
+  // ════════════════════════════════════════════════════════════════
+
+  Future<void> _showCoHostSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF0E0E14),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.people_alt_rounded,
+                          color: Color(0xFF0EA5E9), size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Convidar Co-host',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                        Text('Transmita junto com outro criador',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Como funciona
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Como funciona:',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                      const SizedBox(height: 8),
+                      ...[
+                        '📲 O co-host recebe uma notificação',
+                        '🎥 A tela divide automaticamente',
+                        '💬 Vocês compartilham o chat ao vivo',
+                        '⏱ Sem limite de tempo',
+                      ].map((t) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Text(t, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+                      )),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Seguidores online (placeholder)
+                Text('Seguidores online',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 72,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    itemBuilder: (_, i) => Padding(
+                      padding: const EdgeInsets.only(right: 14),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 44, height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.08),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: const Icon(Icons.person_outline, color: Colors.white38, size: 22),
+                          ),
+                          const SizedBox(height: 4),
+                          Text('• • •', style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 10)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          // TODO: integrar co-host invite
+                          AppSnackBar.showSuccess(context, 'Co-host em breve!');
+                        },
+                        child: const Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.link_rounded, color: Colors.white, size: 18),
+                              SizedBox(width: 8),
+                              Text('Enviar Convite de Co-host',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
+    _unsubscribeFromBattleEvents();
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     _viewerToastTimer?.cancel();
@@ -569,6 +909,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   Future<void> _showMoreOptions(BuildContext context) async {
+    final s = S.of(context);
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF1A1A22),
@@ -594,10 +935,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 _MoreOptionTile(
                   icon: _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                   iconColor: _isPaused ? const Color(0xFF22C55E) : Colors.orange,
-                  title: _isPaused ? 'Retomar live' : 'Pausar (BRB)',
+                  title: _isPaused
+                      ? s.broadcasterMoreResumeLive
+                      : s.broadcasterMorePauseBrb,
                   subtitle: _isPaused
-                      ? 'Volta ao ar e continua a transmissão'
-                      : 'Pausa a transmissão sem encerrar',
+                      ? s.broadcasterMoreResumeSubtitle
+                      : s.broadcasterMorePauseSubtitle,
                   onTap: () {
                     Navigator.pop(ctx);
                     _togglePause();
@@ -607,8 +950,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   _MoreOptionTile(
                     icon: Icons.flip_camera_ios_outlined,
                     iconColor: Colors.white,
-                    title: 'Trocar câmera',
-                    subtitle: 'Alterna entre frontal e traseira',
+                    title: s.broadcasterMoreSwitchCamera,
+                    subtitle: s.broadcasterMoreSwitchCameraSubtitle,
                     onTap: () {
                       Navigator.pop(ctx);
                       _switchCamera();
@@ -617,8 +960,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 _MoreOptionTile(
                   icon: Icons.share_outlined,
                   iconColor: Colors.white,
-                  title: 'Compartilhar live',
-                  subtitle: 'Enviar preview da live aos seus seguidores',
+                  title: s.broadcasterMoreShareLive,
+                  subtitle: s.broadcasterMoreShareLiveSubtitle,
                   onTap: () {
                     Navigator.pop(ctx);
                     ShareLiveSheet.show(
@@ -633,8 +976,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 _MoreOptionTile(
                   icon: Icons.stop_rounded,
                   iconColor: AppColors.mutedRed,
-                  title: 'Encerrar live',
-                  subtitle: 'Finaliza a transmissão para todos',
+                  title: s.broadcasterMoreEndLive,
+                  subtitle: s.broadcasterMoreEndLiveSubtitle,
                   onTap: () {
                     Navigator.pop(ctx);
                     _closeBroadcaster();
@@ -745,78 +1088,83 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             // ===== Gift animations =====
             GiftAnimationOverlay(roomId: widget.room.id),
 
-            // ===== UI Layers =====
-            SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 14,
-                  right: 14,
-                  top: 10,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+            // ===== Battle HUD (streamer) =====
+            if (_activeBattleId != null)
+              Positioned.fill(
+                child: StreamerBattleHud(
+                  battleId: _activeBattleId!,
+                  myStreamerId: _room.streamerId,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // ----- HEADER (compacto: X · LIVE · stats inline · flip) -----
-                    _TopBar(
-                      isStreaming: _isStreaming,
-                      isPaused: _isPaused,
-                      viewerCount: commentsState.viewerCount,
-                      likes: commentsState.likeCount,
-                      messages: commentsState.totalComments,
-                      elapsedLabel: _formatDuration(_liveElapsed),
-                      countFormatter: _formatCount,
-                      onClose: _closeBroadcaster,
-                      onSwitchCamera: _cameras.length > 1 ? _switchCamera : null,
-                    ),
-                    const SizedBox(height: 6),
+              ),
 
-                    // ----- VIEWER-JOINED TOAST -----
-                    if (viewerEvent != null)
-                      _ViewerJoinedToast(
-                        event: viewerEvent,
-                        controller: _toastAnimController!,
-                      ),
-
-                    const Spacer(),
-
-                    // ----- COMMENTS (bottom) -----
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4, right: 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_isStreaming || _isPaused || commentsState.comments.isNotEmpty)
-                            LiveCommentsOverlay(
-                              comments: commentsState.comments,
-                              isSending: commentsState.isSending,
-                              onSendComment: (message) => ref
-                                  .read(
-                                    liveRoomCommentsViewModelProvider(
-                                      widget.room.id,
-                                    ).notifier,
-                                  )
-                                  .sendComment(message),
-                            ),
-                          const SizedBox(height: 8),
-                        ],
-                      ),
-                    ),
-
-                    // ----- BOTTOM ACTION BAR (compacto) -----
-                    if (!_showCountdown && (_isStreaming || _isPaused))
-                      _BottomActionBar(
+            // ===== UI Layers =====
+            // Top bar (HUD) — floating
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _TopBar(
+                        isStreaming: _isStreaming,
                         isPaused: _isPaused,
-                        isTogglingPause: _isTogglingPause,
-                        isTogglingStream: _isTogglingStream,
-                        onPauseResume: _togglePause,
-                        onEnd: _closeBroadcaster,
-                        onMoreOptions: () => _showMoreOptions(context),
+                        viewerCount: commentsState.viewerCount,
+                        likes: commentsState.likeCount,
+                        messages: commentsState.totalComments,
+                        totalGiftsValue: commentsState.totalGiftsValue,
+                        elapsedLabel: _formatDuration(_liveElapsed),
+                        countFormatter: _formatCount,
+                        onClose: _closeBroadcaster,
+                        onSwitchCamera: _cameras.length > 1 ? _switchCamera : null,
                       ),
-                  ],
+                      const SizedBox(height: 6),
+                      if (viewerEvent != null)
+                        _ViewerJoinedToast(
+                          event: viewerEvent,
+                          controller: _toastAnimController!,
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
+
+            // Comments overlay — left-bottom floating
+            Positioned(
+              left: 14, right: 80, bottom: 90,
+              child: _isStreaming || _isPaused || commentsState.comments.isNotEmpty
+                  ? LiveCommentsOverlay(
+                      comments: commentsState.comments,
+                      isSending: commentsState.isSending,
+                      onSendComment: (message) => ref
+                          .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+                          .sendComment(message),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+
+            // Bottom action bar — floating glass pill
+            if (!_showCountdown && (_isStreaming || _isPaused))
+              Positioned(
+                left: 14, right: 14, bottom: 16,
+                child: SafeArea(
+                  top: false,
+                  child: _LiveActionBar(
+                    isPaused: _isPaused,
+                    isTogglingPause: _isTogglingPause,
+                    isTogglingStream: _isTogglingStream,
+                    hasBattle: _activeBattleId != null,
+                    onBattle: () => _showBattleSheet(context),
+                    onCoHost: () => _showCoHostSheet(context),
+                    onPauseResume: _togglePause,
+                    onEnd: _closeBroadcaster,
+                    onMoreOptions: () => _showMoreOptions(context),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -835,6 +1183,7 @@ class _TopBar extends StatelessWidget {
     required this.viewerCount,
     required this.likes,
     required this.messages,
+    required this.totalGiftsValue,
     required this.elapsedLabel,
     required this.countFormatter,
     required this.onClose,
@@ -846,10 +1195,18 @@ class _TopBar extends StatelessWidget {
   final int viewerCount;
   final int likes;
   final int messages;
+  final double totalGiftsValue;
   final String elapsedLabel;
   final String Function(int) countFormatter;
   final VoidCallback onClose;
   final VoidCallback? onSwitchCamera;
+
+  String _formatGiftValue(double v) {
+    if (v <= 0) return '0';
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    if (v >= 10) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(2);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -868,6 +1225,12 @@ class _TopBar extends StatelessWidget {
               child: Row(
                 children: [
                   _InlineStat(icon: Icons.visibility, label: countFormatter(viewerCount)),
+                  const SizedBox(width: 6),
+                  _InlineStat(
+                    icon: Icons.diamond_outlined,
+                    label: _formatGiftValue(totalGiftsValue),
+                    iconColor: const Color(0xFF7DD3FC),
+                  ),
                   const SizedBox(width: 6),
                   _InlineStat(icon: Icons.favorite, label: countFormatter(likes), iconColor: Colors.redAccent),
                   const SizedBox(width: 6),
@@ -960,8 +1323,9 @@ class _LiveOrPausedBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final s = S.of(context);
     final color = showPaused ? Colors.orange : Colors.red;
-    final label = showPaused ? 'PAUSED' : 'LIVE';
+    final label = showPaused ? s.broadcasterBadgePaused : s.broadcasterBadgeLive;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1042,7 +1406,7 @@ class _ViewerJoinedToast extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${event.viewerName} entrou',
+                  S.of(context).broadcasterViewerJoined(event.viewerName),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -1061,7 +1425,190 @@ class _ViewerJoinedToast extends StatelessWidget {
 }
 
 // ════════════════════════════════════════════════════════════════
-// BOTTOM ACTION BAR
+// LIVE ACTION BAR — estilo TikTok Live
+// ════════════════════════════════════════════════════════════════
+
+class _LiveActionBar extends StatelessWidget {
+  const _LiveActionBar({
+    required this.isPaused,
+    required this.isTogglingPause,
+    required this.isTogglingStream,
+    required this.hasBattle,
+    required this.onBattle,
+    required this.onCoHost,
+    required this.onPauseResume,
+    required this.onEnd,
+    required this.onMoreOptions,
+  });
+
+  final bool isPaused;
+  final bool isTogglingPause;
+  final bool isTogglingStream;
+  final bool hasBattle;
+  final VoidCallback onBattle;
+  final VoidCallback onCoHost;
+  final VoidCallback onPauseResume;
+  final VoidCallback onEnd;
+  final VoidCallback onMoreOptions;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.32),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+          // Pause / Resume
+          _ActionBtn(
+            icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+            label: isPaused ? 'Retomar' : 'Pausar',
+            color: isPaused ? const Color(0xFF22C55E) : Colors.orange,
+            loading: isTogglingPause,
+            onTap: onPauseResume,
+          ),
+          // ⚔ Batalha — destaque especial
+          _ActionBtn(
+            icon: Icons.sports_kabaddi_rounded,
+            label: hasBattle ? 'Em batalha' : 'Batalha',
+            color: AppColors.electricPurple,
+            glow: !hasBattle,
+            badge: hasBattle ? '⚔' : null,
+            onTap: hasBattle ? null : onBattle,
+          ),
+          // 👥 Co-host
+          _ActionBtn(
+            icon: Icons.people_alt_rounded,
+            label: 'Co-host',
+            color: const Color(0xFF0EA5E9),
+            onTap: onCoHost,
+          ),
+          // ···
+          _ActionBtn(
+            icon: Icons.more_horiz_rounded,
+            label: 'Mais',
+            color: Colors.white24,
+            onTap: onMoreOptions,
+            flat: true,
+          ),
+          // ⏹ Encerrar
+          _ActionBtn(
+            icon: Icons.stop_rounded,
+            label: 'Encerrar',
+            color: const Color(0xFFEF4444),
+            glow: true,
+            loading: isTogglingStream,
+            onTap: onEnd,
+          ),
+        ],
+      ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionBtn extends StatelessWidget {
+  const _ActionBtn({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.loading = false,
+    this.glow = false,
+    this.flat = false,
+    this.badge,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+  final bool loading;
+  final bool glow;
+  final bool flat;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    return Opacity(
+      opacity: disabled ? 0.45 : 1.0,
+      child: GestureDetector(
+        onTap: loading || disabled ? null : onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: flat ? Colors.black.withValues(alpha: 0.4) : color.withValues(alpha: 0.9),
+                    shape: BoxShape.circle,
+                    border: flat ? Border.all(color: Colors.white24) : null,
+                    boxShadow: glow && !disabled
+                        ? [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.5),
+                              blurRadius: 14,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: loading
+                      ? const Center(
+                          child: SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ),
+                        )
+                      : Icon(icon, color: Colors.white, size: 22),
+                ),
+                if (badge != null)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(badge!, style: const TextStyle(fontSize: 8)),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: disabled ? 0.4 : 0.85),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// BOTTOM ACTION BAR (legacy — mantida para compatibilidade)
 // ════════════════════════════════════════════════════════════════
 
 class _BottomActionBar extends StatelessWidget {
@@ -1083,6 +1630,7 @@ class _BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Row(
@@ -1093,7 +1641,7 @@ class _BottomActionBar extends StatelessWidget {
             color: isPaused ? const Color(0xFF22C55E) : Colors.orange.shade600,
             loading: isTogglingPause,
             onTap: onPauseResume,
-            tooltip: isPaused ? 'Retomar' : 'Pausar',
+            tooltip: isPaused ? s.broadcasterTooltipResume : s.broadcasterTooltipPause,
           ),
           const SizedBox(width: 10),
           _CompactRoundButton(
@@ -1101,7 +1649,7 @@ class _BottomActionBar extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.55),
             border: true,
             onTap: onMoreOptions,
-            tooltip: 'Mais',
+            tooltip: s.broadcasterTooltipMore,
           ),
           const SizedBox(width: 10),
           _CompactRoundButton(
@@ -1109,7 +1657,7 @@ class _BottomActionBar extends StatelessWidget {
             color: Colors.red,
             loading: isTogglingStream,
             onTap: onEnd,
-            tooltip: 'Encerrar',
+            tooltip: s.broadcasterTooltipEnd,
             glow: true,
           ),
         ],
@@ -1219,6 +1767,442 @@ class _MoreOptionTile extends StatelessWidget {
         subtitle,
         style: const TextStyle(color: Colors.white54, fontSize: 12),
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Battle Invite Sheet — real live-room search
+// ──────────────────────────────────────────────────────────────────────────────
+class _BattleInviteSheet extends ConsumerStatefulWidget {
+  const _BattleInviteSheet({
+    required this.myRoomId,
+    required this.onInvite,
+  });
+
+  final String myRoomId;
+  final void Function(String targetRoomId, int durationSeconds) onInvite;
+
+  @override
+  ConsumerState<_BattleInviteSheet> createState() => _BattleInviteSheetState();
+}
+
+class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
+  final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+  List<LiveRoom> _rooms = [];
+  bool _loading = true;
+  String? _error;
+  LiveRoom? _selected;
+  int _durationSeconds = 300;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeed();
+    _searchCtrl.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadFeed() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final rooms = await ref.read(liveRepositoryProvider).getLiveFeed(limit: 20);
+      if (mounted) {
+        setState(() {
+          _rooms = rooms.where((r) => r.id != widget.myRoomId).toList();
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _error = 'Não foi possível carregar criadores ao vivo'; _loading = false; });
+    }
+  }
+
+  void _onSearchChanged() {
+    _debounce?.cancel();
+    final q = _searchCtrl.text.trim();
+    if (q.isEmpty) {
+      _loadFeed();
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 450), () => _search(q));
+  }
+
+  Future<void> _search(String q) async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final results = await ref.read(exploreRepositoryProvider).search(q);
+      // Convert live-type results to LiveRoom objects
+      final liveRooms = results
+          .where((r) => r.type == 'live' && r.id != widget.myRoomId)
+          .map((r) => LiveRoom(
+                id: r.id,
+                slug: r.id,
+                title: r.title,
+                liveType: 'live',
+                isPrivate: false,
+                status: 'live',
+                streamerId: (r.metadata['streamer_id'] ?? r.id).toString(),
+                streamerName: r.subtitle ?? r.title,
+                streamerAvatarUrl: r.thumbnail,
+                viewerCount: (r.metadata['viewer_count'] as num?)?.toInt() ?? 0,
+              ))
+          .toList();
+      if (mounted) setState(() { _rooms = liveRooms; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = 'Erro na busca'; _loading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (ctx, scrollCtrl) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF0E0E14),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricPurple.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.sports_kabaddi_rounded,
+                          color: AppColors.electricPurple, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Iniciar Batalha',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+                        Text('Escolha um criador ao vivo',
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Search field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _searchCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar criador...',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, color: Colors.white38, size: 18),
+                            onPressed: () { _searchCtrl.clear(); },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.07),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.electricPurple, width: 1.5),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Duration picker
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text('Duração:',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13)),
+                    const SizedBox(width: 10),
+                    ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((opt) {
+                      final selected = _durationSeconds == opt.$2;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _durationSeconds = opt.$2),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.electricPurple.withValues(alpha: 0.25)
+                                  : Colors.white.withValues(alpha: 0.07),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: selected
+                                    ? AppColors.electricPurple.withValues(alpha: 0.7)
+                                    : Colors.white.withValues(alpha: 0.1),
+                              ),
+                            ),
+                            child: Text(opt.$1,
+                                style: TextStyle(
+                                  color: selected ? AppColors.electricPurple : Colors.white60,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                )),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Divider(color: Colors.white12, height: 20),
+              // Rooms list
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.electricPurple))
+                    : _error != null
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.wifi_off_rounded, color: Colors.white38, size: 36),
+                                const SizedBox(height: 8),
+                                Text(_error!, style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                                const SizedBox(height: 12),
+                                TextButton(onPressed: _loadFeed, child: const Text('Tentar novamente',
+                                    style: TextStyle(color: AppColors.electricPurple))),
+                              ],
+                            ),
+                          )
+                        : _rooms.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.live_tv_rounded, color: Colors.white24, size: 40),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _searchCtrl.text.isNotEmpty
+                                          ? 'Nenhum criador ao vivo encontrado'
+                                          : 'Nenhum criador ao vivo agora',
+                                      style: const TextStyle(color: Colors.white38, fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: scrollCtrl,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                itemCount: _rooms.length,
+                                itemBuilder: (_, i) {
+                                  final room = _rooms[i];
+                                  final isSelected = _selected?.id == room.id;
+                                  return GestureDetector(
+                                    onTap: () => setState(() =>
+                                        _selected = isSelected ? null : room),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      margin: const EdgeInsets.symmetric(vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.electricPurple.withValues(alpha: 0.15)
+                                            : Colors.white.withValues(alpha: 0.04),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? AppColors.electricPurple.withValues(alpha: 0.5)
+                                              : Colors.white.withValues(alpha: 0.07),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          // Avatar with live badge
+                                          Stack(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 24,
+                                                backgroundColor: AppColors.electricPurple.withValues(alpha: 0.3),
+                                                backgroundImage: room.streamerAvatarUrl != null
+                                                    ? NetworkImage(room.streamerAvatarUrl!)
+                                                    : null,
+                                                child: room.streamerAvatarUrl == null
+                                                    ? Text(
+                                                        room.streamerName.isNotEmpty
+                                                            ? room.streamerName[0].toUpperCase()
+                                                            : '?',
+                                                        style: const TextStyle(
+                                                            color: Colors.white, fontWeight: FontWeight.w700))
+                                                    : null,
+                                              ),
+                                              Positioned(
+                                                bottom: 0, right: 0,
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.red,
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(color: const Color(0xFF0E0E14), width: 1.5),
+                                                  ),
+                                                  child: const Text('AO VIVO',
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 7,
+                                                          fontWeight: FontWeight.w900,
+                                                          letterSpacing: 0.3)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(room.streamerName,
+                                                    style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight: FontWeight.w700,
+                                                        fontSize: 14),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis),
+                                                const SizedBox(height: 2),
+                                                if (room.title.isNotEmpty)
+                                                  Text(room.title,
+                                                      style: TextStyle(
+                                                          color: Colors.white.withValues(alpha: 0.45),
+                                                          fontSize: 12),
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(Icons.remove_red_eye_rounded,
+                                                      color: Colors.white38, size: 12),
+                                                  const SizedBox(width: 3),
+                                                  Text('${room.viewerCount}',
+                                                      style: const TextStyle(
+                                                          color: Colors.white38,
+                                                          fontSize: 12,
+                                                          fontWeight: FontWeight.w600)),
+                                                ],
+                                              ),
+                                              if (isSelected)
+                                                Padding(
+                                                  padding: const EdgeInsets.only(top: 4),
+                                                  child: Icon(Icons.check_circle_rounded,
+                                                      color: AppColors.electricPurple, size: 18),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+              ),
+              // Invite button
+              Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: _selected != null
+                          ? const LinearGradient(colors: [Color(0xFF7C3AED), AppColors.electricPurple])
+                          : null,
+                      color: _selected == null ? Colors.white.withValues(alpha: 0.07) : null,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: _selected != null
+                          ? [BoxShadow(
+                              color: AppColors.electricPurple.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            )]
+                          : null,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: _selected == null
+                            ? null
+                            : () => widget.onInvite(_selected!.id, _durationSeconds),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.send_rounded,
+                                  color: _selected != null ? Colors.white : Colors.white30, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                _selected != null
+                                    ? 'Convidar ${_selected!.streamerName}'
+                                    : 'Selecione um criador',
+                                style: TextStyle(
+                                  color: _selected != null ? Colors.white : Colors.white30,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  letterSpacing: 0.3,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

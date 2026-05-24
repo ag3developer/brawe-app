@@ -46,6 +46,9 @@ class ChatRepository {
       StreamController<ChatMessage>.broadcast();
   final Map<String, StreamController<String>> _burnControllers = {};
   final Map<String, StreamController<MessageReactionUpdate>> _reactionControllers = {};
+  final Map<String, StreamController<String>> _deletedControllers = {};
+  final StreamController<void> _reconnectController =
+      StreamController<void>.broadcast();
 
   bool _handlersRegistered = false;
   void Function(dynamic)? _onNewMessage;
@@ -54,6 +57,8 @@ class ChatRepository {
   void Function(dynamic)? _onMessageNotification;
   void Function(dynamic)? _onMessageBurned;
   void Function(dynamic)? _onMessageReaction;
+  void Function(dynamic)? _onAuthenticated;
+  void Function(dynamic)? _onMessageDeleted;
 
   // ────────────────────── lifecycle ──────────────────────
 
@@ -151,6 +156,22 @@ class ChatRepository {
       }
     };
     _socketService.on(AppConstants.eventMessageReaction, _onMessageReaction!);
+
+    _onAuthenticated = (_) => _reconnectController.add(null);
+    _socketService.on('authenticated', _onAuthenticated!);
+
+    _onMessageDeleted = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final conversationId = payload['conversation_id']?.toString();
+      final messageId = payload['id']?.toString();
+      if (conversationId == null || messageId == null) return;
+      final controller = _deletedControllers[conversationId];
+      if (controller != null && !controller.isClosed) {
+        controller.add(messageId);
+      }
+    };
+    _socketService.on('message_deleted', _onMessageDeleted!);
   }
 
   void dispose() {
@@ -163,6 +184,8 @@ class ChatRepository {
     );
     _socketService.off(AppConstants.eventMessageBurned, _onMessageBurned);
     _socketService.off(AppConstants.eventMessageReaction, _onMessageReaction);
+    _socketService.off('authenticated', _onAuthenticated);
+    _socketService.off('message_deleted', _onMessageDeleted);
 
     for (final c in _messageControllers.values) {
       c.close();
@@ -176,14 +199,21 @@ class ChatRepository {
     for (final c in _reactionControllers.values) {
       c.close();
     }
+    for (final c in _deletedControllers.values) {
+      c.close();
+    }
     _messageControllers.clear();
     _typingControllers.clear();
     _burnControllers.clear();
     _notificationController.close();
+    _reconnectController.close();
     _handlersRegistered = false;
   }
 
   // ────────────────────── streams ──────────────────────
+
+  /// Emits whenever the socket reconnects and authenticates (e.g. after server restart).
+  Stream<void> watchReconnect() => _reconnectController.stream;
 
   Stream<ChatMessage> watchMessages(String conversationId) {
     final controller = _messageControllers.putIfAbsent(
@@ -349,6 +379,22 @@ class ChatRepository {
     }
   }
 
+  Future<ChatMessage> uploadAudio({
+    required String conversationId,
+    required String filePath,
+    int duration = 0,
+  }) async {
+    try {
+      return await _messagesService.uploadAudio(
+        conversationId: conversationId,
+        filePath: filePath,
+        duration: duration,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
   Future<void> burnMessage(String messageId) async {
     try {
       await _messagesService.burnMessage(messageId);
@@ -357,9 +403,9 @@ class ChatRepository {
     }
   }
 
-  Future<void> deleteMessage(String messageId) async {
+  Future<void> deleteMessage(String messageId, {bool forEveryone = false}) async {
     try {
-      await _messagesService.deleteMessage(messageId);
+      await _messagesService.deleteMessage(messageId, forEveryone: forEveryone);
     } on DioException catch (e) {
       throw _toFailure(e);
     }
@@ -369,6 +415,15 @@ class ChatRepository {
     final controller = _reactionControllers.putIfAbsent(
       conversationId,
       () => StreamController<MessageReactionUpdate>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  /// Emite o ID de mensagens apagadas para todos ("apagar para todos" via socket).
+  Stream<String> watchDeleted(String conversationId) {
+    final controller = _deletedControllers.putIfAbsent(
+      conversationId,
+      () => StreamController<String>.broadcast(),
     );
     return controller.stream;
   }
@@ -394,6 +449,41 @@ class ChatRepository {
       await _messagesService.deleteConversation(conversationId);
     } on DioException catch (e) {
       throw _toFailure(e);
+    }
+  }
+
+  Future<void> blockUser(String userId) async {
+    try {
+      await _messagesService.blockUser(userId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<void> unblockUser(String userId) async {
+    try {
+      await _messagesService.unblockUser(userId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<List<String>> getBlockedUsers() async {
+    try {
+      return await _messagesService.getBlockedUsers();
+    } on DioException catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getFollowingForDm({
+    String query = '',
+    int limit = 50,
+  }) async {
+    try {
+      return await _messagesService.getFollowing(query: query, limit: limit);
+    } on DioException catch (_) {
+      return const [];
     }
   }
 

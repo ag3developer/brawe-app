@@ -6,23 +6,26 @@ import '../view_models/gift_catalog_view_model.dart';
 import '../view_models/send_gift_view_model.dart';
 import '../../core/view_models/credits_view_model.dart';
 import '../../../domain/models/gift.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class GiftsOverlay extends ConsumerStatefulWidget {
   final String roomId;
   final String streamerId;
+  final String? battleId;
 
   const GiftsOverlay({
     super.key,
     required this.roomId,
     required this.streamerId,
+    this.battleId,
   });
 
-  static void show(BuildContext context, String roomId, String streamerId) {
+  static void show(BuildContext context, String roomId, String streamerId, {String? battleId}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => GiftsOverlay(roomId: roomId, streamerId: streamerId),
+      builder: (context) => GiftsOverlay(roomId: roomId, streamerId: streamerId, battleId: battleId),
     );
   }
 
@@ -49,22 +52,27 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
   void _handleSend() async {
     if (_selectedGift == null) return;
 
+    final s = S.of(context);
+    final giftName = _selectedGift!.name;
     final success = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
       roomId: widget.roomId,
       giftId: _selectedGift!.id,
+      receiverId: widget.streamerId,
+      battleId: widget.battleId,
     );
 
     if (success && mounted) {
       ref.read(creditsViewModelProvider.notifier).refresh();
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sent ${_selectedGift!.name}!')),
+        SnackBar(content: Text(s.giftsSent(giftName))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final catalogState = ref.watch(giftCatalogViewModelProvider);
     final sendState = ref.watch(sendGiftViewModelProvider);
 
@@ -87,9 +95,9 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Send a Gift',
-                      style: TextStyle(
+                    Text(
+                      s.giftsTitle,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -113,7 +121,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
                 ),
               Expanded(
                 child: tiers.isEmpty
-                    ? const Center(child: Text('No gifts available', style: TextStyle(color: Colors.white54)))
+                    ? Center(child: Text(s.giftsEmpty, style: const TextStyle(color: Colors.white54)))
                     : TabBarView(
                         controller: _tabController,
                         children: tiers.map((tier) => _GiftsGrid(
@@ -134,7 +142,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
                         builder: (context, ref, child) {
                           final balanceState = ref.watch(creditsViewModelProvider);
                           return Text(
-                            '${balanceState.value?.toInt() ?? 0} Credits',
+                            s.giftsCreditsLabel(balanceState.value?.toInt() ?? 0),
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           );
                         },
@@ -151,7 +159,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
                         ),
                         child: sendState.isLoading
                             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                            : const Text('SEND'),
+                            : Text(s.giftsSendButton),
                       ),
                     ],
                   ),
@@ -161,7 +169,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay> with TickerProvider
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error loading gifts: $e', style: const TextStyle(color: Colors.white))),
+        error: (e, _) => Center(child: Text(s.giftsError(e.toString()), style: const TextStyle(color: Colors.white))),
       ),
     );
   }
@@ -180,6 +188,7 @@ class _GiftsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return GridView.builder(
       padding: const EdgeInsets.all(AppSpacing.md),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -222,7 +231,7 @@ class _GiftsGrid extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                '${gift.price.toInt()} pts',
+                s.giftsPriceLabel(gift.price.toInt()),
                 style: const TextStyle(color: AppColors.coolCyan, fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],

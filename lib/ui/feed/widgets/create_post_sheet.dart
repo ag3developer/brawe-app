@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../data/repositories/post_repository.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/feed_view_model.dart';
 import '../../home/view_models/for_you_feed_view_model.dart';
 
@@ -42,20 +44,21 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       ref.invalidate(feedViewModelProvider);
       ref.invalidate(forYouFeedViewModelProvider);
       if (!mounted) return;
+      final s = S.of(context);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Post publicado!'),
+        SnackBar(
+          content: Text(s.postPublishedSuccess),
           backgroundColor: AppColors.electricPurple,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _isPosting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erro ao publicar. Tente novamente.'),
+        SnackBar(
+          content: Text(S.of(context).postPublishError),
           backgroundColor: Colors.red,
         ),
       );
@@ -73,10 +76,17 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     }
   }
 
+  String _audienceLabel(S s, String value) => switch (value) {
+        'Seguidores' => s.audienceFollowers,
+        'Apenas eu' => s.audienceOnlyMe,
+        _ => s.audienceAll,
+      };
+
   @override
   Widget build(BuildContext context) {
     final canPost =
         _textController.text.trim().isNotEmpty && _charCount <= _maxChars;
+    final s = S.of(context);
 
     return AnimatedPadding(
       padding: EdgeInsets.only(
@@ -87,9 +97,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.92,
         ),
-        decoration: const BoxDecoration(
-          color: Color(0xFF141824),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: context.colors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -101,7 +111,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                 height: 4,
                 margin: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -112,11 +122,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 children: [
-                  const CircleAvatar(
+                   CircleAvatar(
                     radius: 18,
-                    backgroundColor: AppColors.slate,
+                    backgroundColor: context.colors.surfaceElevated,
                     child: Icon(Icons.person,
-                        color: AppColors.coolGray, size: 18),
+                        color: context.colors.textSecondary, size: 18),
                   ),
                   const SizedBox(width: 12),
                   // Audience selector
@@ -135,7 +145,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _audience,
+                            _audienceLabel(s, _audience),
                             style: const TextStyle(
                               color: AppColors.electricPurple,
                               fontSize: 12,
@@ -155,7 +165,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     style: TextButton.styleFrom(
                       backgroundColor: canPost && !_isPosting
                           ? AppColors.electricPurple
-                          : AppColors.slate,
+                          : context.colors.surfaceElevated,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -163,18 +173,18 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       ),
                     ),
                     child: _isPosting
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'Publicar',
+                        : Text(
+                            s.postPublish,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -193,15 +203,15 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     TextField(
                       controller: _textController,
                       autofocus: true,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 16,
                         height: 1.5,
                       ),
-                      decoration: const InputDecoration(
-                        hintText: 'O que está acontecendo?',
+                      decoration:  InputDecoration(
+                        hintText: s.postHintWhatsHappening,
                         hintStyle: TextStyle(
-                          color: AppColors.coolGray,
+                          color: context.colors.textSecondary,
                           fontSize: 16,
                         ),
                         border: InputBorder.none,
@@ -237,8 +247,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.close,
-                                    color: Colors.white, size: 16),
+                                child: Icon(Icons.close,
+                                    color: context.colors.textPrimary, size: 16),
                               ),
                             ),
                           ),
@@ -300,7 +310,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                               style: TextStyle(
                                 color: _charCount > _maxChars
                                     ? Colors.red
-                                    : AppColors.coolGray,
+                                    : context.colors.textSecondary,
                                 fontSize: 10,
                               ),
                             ),
@@ -319,7 +329,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   void _showAudiencePicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.slate,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -332,16 +342,16 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               height: 4,
               margin: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Text(
-                'Quem pode ver?',
+                S.of(context).audiencePickerTitle,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.colors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -360,11 +370,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       : Colors.white,
                 ),
                 title: Text(
-                  option,
+                  _audienceLabel(S.of(context), option),
                   style: TextStyle(
                     color: _audience == option
                         ? AppColors.electricPurple
-                        : Colors.white,
+                        : context.colors.textPrimary,
                     fontWeight: _audience == option
                         ? FontWeight.bold
                         : FontWeight.normal,

@@ -12,6 +12,7 @@ import '../../feed/widgets/create_video_sheet.dart';
 import '../../feed/widgets/story_composer_screen.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class HomeBottomNav extends ConsumerStatefulWidget {
   const HomeBottomNav({super.key});
@@ -23,25 +24,21 @@ class HomeBottomNav extends ConsumerStatefulWidget {
 class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
   int _selected = 0;
 
-  final List<_NavDestination> _destinations = [
-    _NavDestination(icon: Icons.home_filled, label: 'Início', route: '/home'),
-    _NavDestination(icon: Icons.newspaper, label: 'Feed', route: '/feed'),
-    _NavDestination(icon: Icons.sensors, label: 'Lives', route: '/live'),
+  List<_NavDestination> _buildDestinations(S s) => [
+    _NavDestination(icon: Icons.home_filled, label: s.navHome, route: '/home'),
+    _NavDestination(icon: Icons.newspaper, label: s.navFeed, route: '/feed'),
+    _NavDestination(icon: Icons.sensors, label: s.navLives, route: '/live'),
     _NavDestination(
-        icon: Icons.chat_bubble_outline, label: 'Chat', route: '/chat'),
-    _NavDestination(icon: Icons.person_outline, label: 'Perfil', route: null),
+        icon: Icons.chat_bubble_outline, label: s.navChat, route: '/chat'),
+    _NavDestination(icon: Icons.person_outline, label: s.navProfile, route: null),
   ];
 
   void _onTap(int index, String? route, String? userId) {
     setState(() => _selected = index);
     if (index == 4 && userId != null) {
-      context.push('/profile/$userId');
+      context.go('/profile/$userId');
     } else if (route != null) {
-      if (route == '/home') {
-        context.go(route);
-      } else {
-        context.push(route);
-      }
+      context.go(route);
     }
   }
 
@@ -49,6 +46,8 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).value;
     final colors = context.colors;
+    final s = S.of(context);
+    final destinations = _buildDestinations(s);
 
     return ClipRect(
       child: BackdropFilter(
@@ -64,7 +63,7 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
           child: SizedBox(
             height: 56,
             child: Row(
-              children: List.generate(_destinations.length, (i) {
+              children: List.generate(destinations.length, (i) {
                 // Center item = post button
                 if (i == 2) {
                   return Expanded(
@@ -99,7 +98,7 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                   );
                 }
 
-                final dest = _destinations[i];
+                final dest = destinations[i];
                 final isSelected = _selected == i;
 
                 return Expanded(
@@ -122,7 +121,7 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                           style: TextStyle(
                             color: isSelected
                                 ? colors.accentPrimary
-                                : colors.textTertiary,
+                                : colors.textSecondary,
                             fontSize: 10,
                             fontWeight: isSelected
                                 ? FontWeight.bold
@@ -228,6 +227,7 @@ class _CreateSheetState extends State<_CreateSheet>
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -298,7 +298,7 @@ class _CreateSheetState extends State<_CreateSheet>
                             colors.accentSecondary,
                           ]).createShader(b),
                           child: Text(
-                            'Criar',
+                            s.createSheetTitle,
                             style: TextStyle(
                               color: colors.textPrimary,
                               fontSize: 26,
@@ -309,7 +309,7 @@ class _CreateSheetState extends State<_CreateSheet>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Compartilhe um momento, abra uma live ou solte uma ideia.',
+                          s.createSheetSubtitle,
                           style: TextStyle(
                             color: colors.textSecondary,
                             fontSize: 13.5,
@@ -332,8 +332,8 @@ class _CreateSheetState extends State<_CreateSheet>
                           animation: _stagger(0),
                           child: _CreateCard(
                             icon: LucideIcons.aperture,
-                            title: 'Story',
-                            subtitle: 'Foto ou vídeo · some em 24h',
+                            title: s.createStoryTitle,
+                            subtitle: s.createStorySubtitle,
                             iconSpin: true,
                             gradient: const [
                               Color(0xFF7C3AED),
@@ -347,8 +347,8 @@ class _CreateSheetState extends State<_CreateSheet>
                           animation: _stagger(1),
                           child: _CreateCard(
                             icon: LucideIcons.video,
-                            title: 'Vídeo',
-                            subtitle: 'Reels · aparece em Para Você',
+                            title: s.createVideoTitle,
+                            subtitle: s.createVideoSubtitle,
                             gradient: const [
                               Color(0xFFEC4899),
                               Color(0xFF8B5CF6),
@@ -361,9 +361,9 @@ class _CreateSheetState extends State<_CreateSheet>
                           animation: _stagger(2),
                           child: _CreateCard(
                             icon: LucideIcons.radio,
-                            title: 'Live',
-                            subtitle: 'Transmita agora e receba gifts',
-                            badge: 'AO VIVO',
+                            title: s.createLiveTitle,
+                            subtitle: s.createLiveSubtitle,
+                            badge: s.liveBadge,
                             badgePulse: true,
                             gradient: const [
                               Color(0xFFEF4444),
@@ -377,8 +377,8 @@ class _CreateSheetState extends State<_CreateSheet>
                           animation: _stagger(3),
                           child: _CreateCard(
                             icon: LucideIcons.edit3,
-                            title: 'Post',
-                            subtitle: 'Texto, foto ou link no seu feed',
+                            title: s.createPostTitle,
+                            subtitle: s.createPostSubtitle,
                             gradient: const [
                               Color(0xFF6366F1),
                               Color(0xFF8B5CF6),
@@ -409,9 +409,9 @@ class _CreateSheetState extends State<_CreateSheet>
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text(
-                          'Fechar',
-                          style: TextStyle(
+                        child: Text(
+                          s.actionClose,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -558,9 +558,9 @@ class _CreateCardState extends State<_CreateCard>
                     ? RotationTransition(
                         turns: _spin,
                         child: Icon(widget.icon,
-                            color: Colors.white, size: 24),
+                            color: context.colors.textPrimary, size: 24),
                       )
-                    : Icon(widget.icon, color: Colors.white, size: 24),
+                    : Icon(widget.icon, color: context.colors.textPrimary, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -706,7 +706,7 @@ class NavBarItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Icon(icon, color: Colors.white, size: 28),
+      child: Icon(icon, color: context.colors.textPrimary, size: 28),
     );
   }
 }

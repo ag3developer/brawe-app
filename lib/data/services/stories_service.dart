@@ -22,6 +22,26 @@ class StoriesService {
     return response.data as Map<String, dynamic>;
   }
 
+  /// POST /stories/active-status
+  /// Body: { "user_ids": [...] }
+  /// Resposta: { "users": { "<id>": { has_stories, has_unviewed }, ... } }
+  ///
+  /// Limite recomendado: 200 ids por chamada (o backend valida).
+  Future<Map<String, dynamic>> getActiveStatusBatch(
+    List<String> userIds,
+  ) async {
+    final response = await _dio.post(
+      '/stories/active-status',
+      data: {'user_ids': userIds},
+      options: Options(
+        contentType: 'application/json',
+        sendTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   /// POST /stories/{id}/view
   Future<void> markAsViewed(String storyId) async {
     await _dio.post('/stories/$storyId/view');
@@ -65,8 +85,22 @@ class StoriesService {
   }
 
   /// DELETE /stories/{id}
+  ///
+  /// Obs: o `LiveDio` define `Content-Type: application/json` no header do
+  /// BaseOptions. Em requisições sem corpo (DELETE), o Dio compara esse header
+  /// com o campo interno `contentType` e — mesmo sendo o mesmo valor — lança
+  /// `Invalid argument (contentType): Unable to set different values...`.
+  /// Setar `contentType` explicitamente aqui resolve o conflito.
   Future<void> deleteStory(String storyId) async {
-    await _dio.delete('/stories/$storyId');
+    await _dio.delete<dynamic>(
+      '/stories/$storyId',
+      options: Options(
+        contentType: 'application/json',
+        sendTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        validateStatus: (status) => status != null && status < 500,
+      ),
+    );
   }
 
   /// POST /stories/upload — multipart com `file`, `caption`, `duration_seconds`.
@@ -87,7 +121,15 @@ class StoriesService {
     final response = await _dio.post(
       '/stories/upload',
       data: formData,
-      options: Options(contentType: 'multipart/form-data'),
+      options: Options(
+        contentType: 'multipart/form-data',
+        // Upload de PNG flatten (3-5MB) em 4G/Wi-Fi instável pode demorar
+        // mais que o timeout padrão (30s). Sem isso o cliente cai no catch
+        // mesmo após o backend ter persistido o story → usuário vê "falha"
+        // e ao recarregar o feed o story está lá.
+        sendTimeout: const Duration(minutes: 2),
+        receiveTimeout: const Duration(minutes: 2),
+      ),
     );
     return response.data as Map<String, dynamic>;
   }

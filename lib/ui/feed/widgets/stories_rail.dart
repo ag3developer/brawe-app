@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/story.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_composer_screen.dart';
@@ -33,14 +35,14 @@ class StoriesRail extends ConsumerWidget {
     return SizedBox(
       height: _tileH + 14,
       child: asyncGroups.when(
-        loading: () => _buildSkeleton(),
-        error: (_, _) => _buildError(ref),
+        loading: () => _buildSkeleton(context),
+        error: (_, _) => _buildError(context, ref),
         data: (groups) => _buildList(context, ref, groups),
       ),
     );
   }
 
-  Widget _buildSkeleton() {
+  Widget _buildSkeleton(BuildContext context) {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -51,7 +53,7 @@ class StoriesRail extends ConsumerWidget {
           width: _tileW,
           height: _tileH,
           decoration: BoxDecoration(
-            color: AppColors.slate,
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(_radius),
           ),
         ),
@@ -59,14 +61,14 @@ class StoriesRail extends ConsumerWidget {
     );
   }
 
-  Widget _buildError(WidgetRef ref) {
+  Widget _buildError(BuildContext context, WidgetRef ref) {
     return Center(
       child: TextButton.icon(
-        icon: const Icon(Icons.refresh, color: AppColors.coolGray, size: 18),
+        icon:  Icon(Icons.refresh, color: context.colors.textSecondary, size: 18),
         onPressed: () => ref.read(storiesViewModelProvider.notifier).refresh(),
-        label: const Text(
-          'Recarregar stories',
-          style: TextStyle(color: AppColors.coolGray),
+        label:  Text(
+          S.of(context).storiesReload,
+          style: TextStyle(color: context.colors.textSecondary),
         ),
       ),
     );
@@ -233,7 +235,7 @@ class _CreateTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.electricPurple,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2.5),
+                        border: Border.all(color: context.colors.textPrimary, width: 2.5),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.electricPurple.withValues(alpha: 0.6),
@@ -242,7 +244,7 @@ class _CreateTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.add, color: Colors.white, size: 18),
+                      child: Icon(Icons.add, color: context.colors.textPrimary, size: 18),
                     ),
                   ),
                 ),
@@ -253,10 +255,10 @@ class _CreateTile extends StatelessWidget {
                 right: 6,
                 bottom: 8,
                 child: Text(
-                  hasMine ? 'Seu story' : 'Criar',
+                  hasMine ? S.of(context).storiesYour : S.of(context).storiesCreate,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     shadows: [
@@ -329,7 +331,7 @@ class _StoryTileState extends State<_StoryTile>
   Widget build(BuildContext context) {
     final g = widget.group;
     final preview = g.stories.first;
-    final name = g.username ?? g.displayName ?? 'usuário';
+    final name = g.username ?? g.displayName ?? S.of(context).storiesFallbackUser;
     final unviewed = g.hasUnviewed;
     final isLive = g.isLive;
 
@@ -443,8 +445,8 @@ class _StoryTileState extends State<_StoryTile>
                         ),
                         child: Text(
                           '${g.stories.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -461,8 +463,8 @@ class _StoryTileState extends State<_StoryTile>
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         shadows: [
@@ -500,8 +502,8 @@ class _AvatarMini extends StatelessWidget {
       height: 30,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        color: AppColors.slate,
+        border: Border.all(color: context.colors.textPrimary, width: 2),
+        color: context.colors.surfaceElevated,
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -513,9 +515,9 @@ class _AvatarMini extends StatelessWidget {
                     fit: BoxFit.cover,
                     width: 26,
                     height: 26,
-                    errorBuilder: (_, _, _) => _initialFallback(),
+                    errorBuilder: (_, _, _) => _initialFallback(context),
                   )
-                : _initialFallback(),
+                : _initialFallback(context),
           ),
           if (isVerified)
             const Positioned(
@@ -532,15 +534,15 @@ class _AvatarMini extends StatelessWidget {
     );
   }
 
-  Widget _initialFallback() => Container(
+  Widget _initialFallback(BuildContext context) => Container(
         width: 26,
         height: 26,
         alignment: Alignment.center,
-        color: AppColors.slate,
+        color: context.colors.surfaceElevated,
         child: Text(
           initial,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: context.colors.textPrimary,
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -567,14 +569,14 @@ class _MediaPreview extends StatelessWidget {
     Widget content;
     if (!isVideo) {
       content = mediaUrl.isEmpty
-          ? Container(color: AppColors.slate)
+          ? Container(color: context.colors.surfaceElevated)
           : _NetworkImage(url: mediaUrl);
     } else if (thumb != null && thumb.isNotEmpty) {
       content = _NetworkImage(url: thumb);
     } else if (mediaUrl.isNotEmpty) {
       content = _VideoFramePreview(url: mediaUrl);
     } else {
-      content = Container(color: AppColors.slate);
+      content = Container(color: context.colors.surfaceElevated);
     }
 
     return Stack(
@@ -582,13 +584,13 @@ class _MediaPreview extends StatelessWidget {
       children: [
         content,
         if (isVideo)
-          const Positioned(
+          Positioned(
             right: 6,
             bottom: 28,
             child: Icon(
               Icons.play_circle_filled_rounded,
               size: 18,
-              color: Colors.white,
+              color: context.colors.textPrimary,
               shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
             ),
           ),
@@ -608,18 +610,18 @@ class _NetworkImage extends StatelessWidget {
       url,
       fit: BoxFit.cover,
       gaplessPlayback: true,
-      errorBuilder: (_, _, _) => Container(color: AppColors.slate),
+      errorBuilder: (_, _, _) => Container(color: context.colors.surfaceElevated),
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return Container(
-          color: AppColors.slate,
+          color: context.colors.surfaceElevated,
           alignment: Alignment.center,
-          child: const SizedBox(
+          child: SizedBox(
             width: 18,
             height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: Colors.white54,
+              color: context.colors.textTertiary,
             ),
           ),
         );
@@ -676,19 +678,19 @@ class _VideoFramePreviewState extends State<_VideoFramePreview> {
   @override
   Widget build(BuildContext context) {
     if (_failed) {
-      return Container(color: AppColors.slate);
+      return Container(color: context.colors.surfaceElevated);
     }
     final c = _controller;
     if (!_ready || c == null || !c.value.isInitialized) {
       return Container(
-        color: AppColors.slate,
+        color: context.colors.surfaceElevated,
         alignment: Alignment.center,
-        child: const SizedBox(
+        child: SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
             strokeWidth: 1.5,
-            color: Colors.white54,
+            color: context.colors.textTertiary,
           ),
         ),
       );
@@ -760,10 +762,10 @@ class _LiveBadge extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Text(
-                  'LIVE',
+                Text(
+                  S.of(context).storiesLiveBadge,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                     fontSize: 9,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.6,

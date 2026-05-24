@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/push_notification_service.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/ui/app_snackbar.dart';
 
 class DeleteAccountScreen extends ConsumerStatefulWidget {
@@ -28,34 +29,36 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   }
 
   Future<void> _submit() async {
+    final s = S.of(context);
     final password = _passwordController.text;
     if (password.isEmpty) {
-      AppSnackBar.showError(context, 'Informe sua senha para confirmar.');
+      AppSnackBar.showError(context, s.delAccEnterPassword);
       return;
     }
     if (!_ack) {
-      AppSnackBar.showError(context, 'Confirme que entende a ação.');
+      AppSnackBar.showError(context, s.delAccAckRequired);
       return;
     }
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Excluir conta'),
-        content: const Text(
-          'Esta ação é IRREVERSÍVEL. Sua conta será desativada e seus dados pessoais anonimizados (LGPD). Deseja continuar?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir conta'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final ds = S.of(ctx);
+        return AlertDialog(
+          title: Text(ds.delAccTitle),
+          content: Text(ds.delAccConfirmBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(ds.actionCancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(ds.delAccConfirmButton),
+            ),
+          ],
+        );
+      },
     );
     if (ok != true) return;
 
@@ -67,17 +70,18 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       } catch (_) {}
       await ref.read(authStateProvider.notifier).logout();
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Conta excluída. Até logo.');
+      AppSnackBar.showSuccess(context, S.of(context).delAccSuccess);
       context.go('/welcome');
     } on DioException catch (e) {
       if (!mounted) return;
+      final fallback = S.of(context).delAccError;
       final detail = e.response?.data is Map
-          ? (e.response?.data['detail']?.toString() ?? 'Falha ao excluir conta.')
-          : 'Falha ao excluir conta.';
+          ? (e.response?.data['detail']?.toString() ?? fallback)
+          : fallback;
       AppSnackBar.showError(context, detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Erro de conexão.');
+      AppSnackBar.showError(context, S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -85,9 +89,10 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Excluir conta'),
+        title: Text(s.delAccTitle),
         leading: const BackButton(),
       ),
       body: SingleChildScrollView(
@@ -104,48 +109,48 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                   color: Colors.redAccent.withValues(alpha: 0.4),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                  SizedBox(width: 12),
+                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Ao excluir sua conta, você perderá acesso permanente ao histórico de lives, gifts, saldo, conversas e seguidores. Saldos pendentes podem ser perdidos.',
-                      style: TextStyle(fontSize: 13),
+                      s.delAccWarningBanner,
+                      style: const TextStyle(fontSize: 13),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'O que acontece:',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            Text(
+              s.delAccWhatHappens,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
             ),
             const SizedBox(height: 8),
-            const _BulletItem('Sua conta será desativada imediatamente.'),
-            const _BulletItem('Seu email e dados pessoais serão anonimizados.'),
-            const _BulletItem('Você será desconectado de todos os dispositivos.'),
-            const _BulletItem('Registros mantidos pelo prazo legal exigido.'),
+            _BulletItem(s.delAccBullet1),
+            _BulletItem(s.delAccBullet2),
+            _BulletItem(s.delAccBullet3),
+            _BulletItem(s.delAccBullet4),
             const SizedBox(height: 24),
             TextField(
               controller: _passwordController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Senha atual',
-                helperText: 'Confirme sua identidade',
-                prefixIcon: Icon(Icons.lock_outline),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: s.cpCurrentPassword,
+                helperText: s.delAccPasswordHelper,
+                prefixIcon: const Icon(Icons.lock_outline),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
             CheckboxListTile(
               value: _ack,
               onChanged: (v) => setState(() => _ack = v ?? false),
-              title: const Text(
-                'Entendo que esta ação é irreversível.',
-                style: TextStyle(fontSize: 14),
+              title: Text(
+                s.delAccAckCheckbox,
+                style: const TextStyle(fontSize: 14),
               ),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
@@ -166,12 +171,12 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Excluir minha conta'),
+                  : Text(s.delAccDeleteMyAccount),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancelar'),
+              child: Text(s.actionCancel),
             ),
           ],
         ),

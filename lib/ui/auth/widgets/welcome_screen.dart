@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'common/auth_action_button.dart';
 
@@ -67,6 +68,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final size = MediaQuery.of(context).size;
     final colors = context.colors;
 
@@ -155,7 +157,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Conecte. Transmita. Cresça.',
+                              s.welcomeTagline,
                               style: TextStyle(
                                 color: colors.textSecondary,
                                 fontSize: 15,
@@ -172,18 +174,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           AuthActionButton(
-                            label: 'Criar conta',
+                            label: s.welcomeCreateAccount,
                             onPressed: () => context.push('/signup'),
                           ),
                           const SizedBox(height: 12),
                           _OutlineBtn(
-                            label: 'Já tenho uma conta',
+                            label: s.welcomeAlreadyHaveAccount,
                             onTap: () => context.push('/login'),
                           ),
                           const SizedBox(height: 28),
                           Center(
                             child: Text(
-                              'Ao continuar você aceita os Termos de Uso.',
+                              s.welcomeAcceptTerms,
                               style: TextStyle(
                                 color: colors.textTertiary,
                                 fontSize: 11,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../view_models/follow_view_model.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class FollowButton extends ConsumerWidget {
   final String userId;
@@ -35,7 +36,7 @@ class FollowButton extends ConsumerWidget {
               border: Border.all(color: Colors.white, width: 1),
             ),
             child: Text(
-              'FOLLOW',
+              S.of(context).commonFollow,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: compact ? 10 : 12,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../view_models/login_view_model.dart';
@@ -54,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final success = await ref.read(loginViewModelProvider.notifier).submit();
     if (mounted) {
       if (success) {
-        AppSnackBar.showSuccess(context, 'Bem-vindo de volta.');
+        AppSnackBar.showSuccess(context, S.of(context).authWelcomeBackSuccess);
       } else {
         final error = ref.read(loginViewModelProvider).errorMessage;
         if (error != null) AppSnackBar.showError(context, error);
@@ -64,6 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final state = ref.watch(loginViewModelProvider);
     final notifier = ref.read(loginViewModelProvider.notifier);
     final colors = context.colors;
@@ -105,7 +107,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Bem-vindo\nde volta.',
+                        s.authWelcomeBackTitle,
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 34,
@@ -116,7 +118,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Entre na sua conta para continuar.',
+                        s.authLoginSubtitle,
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 14,
@@ -129,16 +131,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Campos ───────────────────────────────────────────
                       AuthInputField(
                         controller: _emailController,
-                        label: 'E-MAIL',
-                        hintText: 'voce@brawe.app',
+                        label: s.authEmailLabel,
+                        hintText: s.authEmailHint,
                         keyboardType: TextInputType.emailAddress,
                         onChanged: notifier.updateEmail,
                       ),
                       const SizedBox(height: 16),
                       AuthInputField(
                         controller: _passwordController,
-                        label: 'SENHA',
-                        hintText: '••••••••',
+                        label: s.authPasswordLabel,
+                        hintText: s.authPasswordHint,
                         obscureText: true,
                         onChanged: notifier.updatePassword,
                       ),
@@ -150,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         child: GestureDetector(
                           onTap: () => context.push('/forgot-password'),
                           child: Text(
-                            'Esqueci minha senha',
+                            s.authForgotPasswordShort,
                             style: TextStyle(
                               color: colors.textSecondary,
                               fontSize: 13,
@@ -196,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                       // ── Botão Entrar ──────────────────────────────────────
                       AuthActionButton(
-                        label: state.status.isLoading ? 'Entrando…' : 'Entrar',
+                        label: state.status.isLoading ? s.authLoggingIn : s.authEntrar,
                         onPressed: state.canSubmit ? _onSubmit : null,
                       ),
 
@@ -207,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Não tem conta?',
+                            s.authNoAccount,
                             style: TextStyle(
                               color: colors.textSecondary,
                               fontSize: 14,
@@ -217,7 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           GestureDetector(
                             onTap: () => context.push('/signup'),
                             child: Text(
-                              'Criar agora',
+                              s.authCreateNow,
                               style: TextStyle(
                                 color: colors.textPrimary,
                                 fontSize: 14,
@@ -233,7 +235,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Termos ─────────────────────────────────────────────
                       Center(
                         child: Text(
-                          'Ao continuar você aceita os Termos de Uso\ne a Política de Privacidade.',
+                          s.authAcceptTermsAndPrivacy,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: colors.textTertiary,

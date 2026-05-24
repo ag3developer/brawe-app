@@ -8,16 +8,20 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/push_notification_service.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../view_models/settings_view_model.dart';
 import '../view_models/theme_view_model.dart';
+import 'language_picker_sheet.dart';
+import 'legal_webview_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final asyncSettings = ref.watch(settingsViewModelProvider);
     final themeMode = ref.watch(themeControllerProvider);
 
@@ -30,7 +34,7 @@ class SettingsScreen extends ConsumerWidget {
       body: asyncSettings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(
-          message: 'Não conseguimos carregar suas configurações.',
+          message: s.settingsLoadError,
           onRetry: () => ref.invalidate(settingsViewModelProvider),
         ),
         data: (settings) => ListView(
@@ -38,7 +42,7 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             _SectionHeader(
               icon: Icons.palette_outlined,
-              title: 'Aparência',
+              title: s.settingsAppearance,
             ),
             _ThemeSelector(
               themeMode: themeMode,
@@ -55,34 +59,46 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             _SectionHeader(
+              icon: Icons.language_outlined,
+              title: s.settingsLanguage,
+            ),
+            ListTile(
+              leading: const Icon(Icons.translate_rounded),
+              title: Text(s.settingsAppLanguage),
+              subtitle: Text(s.settingsLanguageSubtitle),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => LanguagePickerSheet.show(context),
+            ),
+            const SizedBox(height: 24),
+            _SectionHeader(
               icon: Icons.notifications_outlined,
-              title: 'Notificações',
+              title: s.settingsNotifications,
             ),
             _SwitchTile(
-              title: 'Lives começando',
-              subtitle: 'Receba aviso quando seus creators favoritos forem ao vivo',
+              title: s.settingsNotifLiveStart,
+              subtitle: s.settingsNotifLiveStartHint,
               value: settings.notificationsLiveStart,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
                   .setBool('notifications_live_start', v),
             ),
             _SwitchTile(
-              title: 'Presentes recebidos',
-              subtitle: 'Avisar quando alguém te enviar um gift',
+              title: s.settingsNotifGifts,
+              subtitle: s.settingsNotifGiftsHint,
               value: settings.notificationsGifts,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
                   .setBool('notifications_gifts', v),
             ),
             _SwitchTile(
-              title: 'Novos seguidores',
+              title: s.settingsNotifFollowers,
               value: settings.notificationsFollowers,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
                   .setBool('notifications_followers', v),
             ),
             _SwitchTile(
-              title: 'Mensagens diretas',
+              title: s.settingsNotifMessages,
               value: settings.notificationsMessages,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
@@ -91,19 +107,19 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _SectionHeader(
               icon: Icons.lock_outline,
-              title: 'Privacidade',
+              title: s.settingsPrivacy,
             ),
             _SwitchTile(
-              title: 'Mostrar nº de espectadores',
-              subtitle: 'Outros podem ver quantas pessoas assistem suas lives',
+              title: s.settingsPrivacyShowViewers,
+              subtitle: s.settingsPrivacyShowViewersHint,
               value: settings.privacyShowViewers,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
                   .setBool('privacy_show_viewers', v),
             ),
             _SwitchTile(
-              title: 'Mostrar ganhos publicamente',
-              subtitle: 'Exibir total de coins/ganhos no seu perfil',
+              title: s.settingsPrivacyShowEarnings,
+              subtitle: s.settingsPrivacyShowEarningsHint,
               value: settings.privacyShowEarnings,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
@@ -112,11 +128,11 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _SectionHeader(
               icon: Icons.volume_up_outlined,
-              title: 'Sons',
+              title: s.settingsSounds,
             ),
             _SwitchTile(
-              title: 'Efeitos sonoros',
-              subtitle: 'Sons ao receber gifts, mensagens etc.',
+              title: s.settingsSoundsEnabled,
+              subtitle: s.settingsSoundsHint,
               value: settings.soundsEnabled,
               onChanged: (v) => ref
                   .read(settingsViewModelProvider.notifier)
@@ -125,46 +141,54 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _SectionHeader(
               icon: Icons.info_outline,
-              title: 'Sobre & Legal',
+              title: s.settingsAbout,
             ),
             ListTile(
               leading: const Icon(Icons.description_outlined),
-              title: const Text('Termos de Uso'),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openExternal(context, AppConstants.termsUrl),
+              title: Text(s.settingsTermsOfUse),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => _openLegal(
+                context,
+                url: AppConstants.termsUrl,
+                title: s.settingsTermsOfUse,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Política de Privacidade'),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openExternal(context, AppConstants.privacyUrl),
+              title: Text(s.settingsPrivacyPolicy),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => _openLegal(
+                context,
+                url: AppConstants.privacyUrl,
+                title: s.settingsPrivacyPolicy,
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.support_agent_outlined),
-              title: const Text('Suporte'),
-              trailing: const Icon(Icons.open_in_new, size: 18),
-              onTap: () => _openExternal(context, AppConstants.supportUrl),
+              title: Text(s.settingsSupport),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => _showSupportSheet(context),
             ),
-            const ListTile(
-              leading: Icon(Icons.tag_outlined),
-              title: Text('Versão'),
-              trailing: Text('1.0.0'),
+            ListTile(
+              leading: const Icon(Icons.tag_outlined),
+              title: Text(s.settingsVersion),
+              trailing: const Text('1.0.0'),
             ),
             const SizedBox(height: 24),
             _SectionHeader(
               icon: Icons.logout,
-              title: 'Conta',
+              title: s.settingsAccount,
             ),
             ListTile(
               leading: const Icon(Icons.lock_reset_outlined),
-              title: const Text('Alterar senha'),
+              title: Text(s.settingsChangePassword),
               trailing: const Icon(Icons.chevron_right, size: 20),
               onTap: () => context.push('/settings/change-password'),
             ),
             ListTile(
               leading: Icon(Icons.logout, color: context.colors.danger),
               title: Text(
-                'Sair',
+                s.settingsLogout,
                 style: TextStyle(color: context.colors.danger),
               ),
               onTap: () => _confirmLogout(context, ref),
@@ -173,7 +197,7 @@ class SettingsScreen extends ConsumerWidget {
               leading: Icon(Icons.delete_forever_outlined,
                   color: context.colors.danger),
               title: Text(
-                'Excluir conta',
+                s.settingsDeleteAccount,
                 style: TextStyle(color: context.colors.danger),
               ),
               trailing: const Icon(Icons.chevron_right, size: 20),
@@ -191,27 +215,116 @@ class SettingsScreen extends ConsumerWidget {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível abrir $url')),
+          SnackBar(content: Text(S.of(context).settingsCantOpenUrl(url))),
         );
       }
     }
   }
 
+  void _openLegal(
+    BuildContext context, {
+    required String url,
+    required String title,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LegalWebViewScreen(url: url, title: title),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
+  void _showSupportSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.support_agent_outlined,
+                        color: Theme.of(ctx).colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Text(
+                      s.settingsHelpTitle,
+                      style: Theme.of(ctx)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.email_outlined),
+                title: Text(s.settingsSendSupportEmail),
+                subtitle: const Text(AppConstants.supportEmail),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final uri = Uri(
+                    scheme: 'mailto',
+                    path: AppConstants.supportEmail,
+                    queryParameters: {
+                      'subject':
+                          s.settingsSupportEmailSubject('1.0.0'),
+                    },
+                  );
+                  if (!await launchUrl(uri)) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text(S.of(context).settingsNoMailApp),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.help_outline),
+                title: Text(s.settingsHelpCenterFaq),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _openLegal(
+                    context,
+                    url: AppConstants.supportUrl,
+                    title: s.settingsSupport,
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
     Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final s = S.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sair'),
-        content: const Text('Tem certeza que deseja sair da sua conta?'),
+        title: Text(s.settingsLogout),
+        content: Text(s.settingsLogoutConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(s.actionCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sair'),
+            child: Text(s.settingsLogout),
           ),
         ],
       ),
@@ -282,10 +395,11 @@ class _ThemeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final options = <(ThemeMode, IconData, String)>[
-      (ThemeMode.light, Icons.wb_sunny_outlined, 'Claro'),
-      (ThemeMode.dark, Icons.dark_mode_outlined, 'Escuro'),
-      (ThemeMode.system, Icons.brightness_auto_outlined, 'Auto'),
+      (ThemeMode.light, Icons.wb_sunny_outlined, s.settingsThemeLight),
+      (ThemeMode.dark, Icons.dark_mode_outlined, s.settingsThemeDark),
+      (ThemeMode.system, Icons.brightness_auto_outlined, s.settingsThemeAuto),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -381,7 +495,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
-            child: const Text('Tentar novamente'),
+            child: Text(S.of(context).actionRetry),
           ),
         ],
       ),

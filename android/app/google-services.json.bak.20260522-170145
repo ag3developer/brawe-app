@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "645443636608",
+    "project_id": "device-streaming-2455ae88",
+    "storage_bucket": "device-streaming-2455ae88.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645443636608:android:7b536e8833b7d5b50a0565",
+        "android_client_info": {
+          "package_name": "app.brawe.connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAozrE9PF_J-dmegrcYJJOFd37IPpwJGzo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

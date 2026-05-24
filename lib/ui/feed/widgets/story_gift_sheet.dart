@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/gift.dart';
 import '../../../data/repositories/gift_repository.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
 import '../../live_feed/view_models/gift_catalog_view_model.dart';
 
 class StoryGiftResult {
@@ -53,12 +55,15 @@ class StoryGiftSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet<StoryGiftResult>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (_) => StoryGiftSheet(
-        storyId: storyId,
-        creatorName: creatorName,
-        creatorAvatarUrl: creatorAvatarUrl,
+      builder: (_) => ForceDarkTheme(
+        child: StoryGiftSheet(
+          storyId: storyId,
+          creatorName: creatorName,
+          creatorAvatarUrl: creatorAvatarUrl,
+        ),
       ),
     );
   }
@@ -108,7 +113,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.mutedRed,
-          content: Text('Não foi possível enviar o presente: $e'),
+          content: Text(S.of(context).giftSendError(e)),
         ),
       );
     } finally {
@@ -161,7 +166,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                     child: Padding(
                       padding: const EdgeInsets.all(24),
                       child: Text(
-                        'Não foi possível carregar os presentes.\n$e',
+                        S.of(context).giftLoadError(e),
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white70),
                       ),
@@ -169,10 +174,10 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                   ),
                   data: (tiers) {
                     if (tiers.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
-                          'Nenhum presente disponível agora.',
-                          style: TextStyle(color: Colors.white70),
+                          S.of(context).giftEmptyState,
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       );
                     }
@@ -263,9 +268,9 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Enviar presente pra',
-                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                Text(
+                  S.of(context).giftSendTo,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 Text(
                   '@$creatorName',
@@ -528,8 +533,8 @@ class _Footer extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Text(
                                   selected == null
-                                      ? 'Escolha um presente'
-                                      : 'ENVIAR · 💎 $total',
+                                      ? S.of(context).giftChoose
+                                      : S.of(context).giftSendCta(total),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 15,

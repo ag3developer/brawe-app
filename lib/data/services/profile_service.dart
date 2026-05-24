@@ -1,18 +1,23 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
+import '../../core/network/dio_provider.dart';
 
 part 'profile_service.g.dart';
 
 @riverpod
 ProfileService profileService(Ref ref) {
-  return ProfileService(ref.watch(liveDioProvider));
+  return ProfileService(
+    ref.watch(liveDioProvider),
+    ref.watch(dioProvider),
+  );
 }
 
 class ProfileService {
-  final Dio _dio;
+  final Dio _dio;        // connect API  (profile/me, avatar, etc.)
+  final Dio _braweApi;   // main Brawe API (users/me/username, check-username)
 
-  ProfileService(this._dio);
+  ProfileService(this._dio, this._braweApi);
 
   Future<Map<String, dynamic>> getMyProfile() async {
     final response = await _dio.get('/profile/me');
@@ -110,4 +115,30 @@ class ProfileService {
     await _dio.delete('/profile/me/banner');
   }
 
+  /// Verifica se o username está disponível.
+  /// Retorna `null` se disponível, ou uma mensagem de erro se não estiver.
+  Future<String?> checkUsernameAvailability(String username) async {
+    try {
+      final response = await _braweApi.get('/users/check-username/$username');
+      final data = response.data;
+      final available = data['available'] as bool? ?? false;
+      if (available) return null;
+      return (data['reason'] as String?) ?? 'Username indisponível';
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return (e.response?.data['detail'] as String?) ?? 'Username inválido';
+      }
+      return 'Erro ao verificar username';
+    }
+  }
+
+  /// Atualiza o username do usuário autenticado.
+  /// Lança [DioException] em caso de erro (409 = já em uso, 400 = inválido).
+  Future<String> updateUsername(String username) async {
+    final response = await _braweApi.put(
+      '/users/me/username',
+      data: {'username': username.toLowerCase().trim()},
+    );
+    return response.data['new_username'] as String;
+  }
 }

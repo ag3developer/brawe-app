@@ -32,7 +32,30 @@ class ForYouFeedRepository {
 
   ForYouFeedRepository(this._liveRepo, this._postRepo);
 
-  /// Carrega o feed misto. Em caso de falha total, devolve mock para não travar UX.
+  /// Feed "Seguindo" — vídeos de quem o usuário segue.
+  Future<List<FeedItem>> getFollowingFeed({int limit = 20}) async {
+    try {
+      final posts = await _postRepo.getFollowingFeed(limit: limit);
+      final items = posts
+          .where((p) {
+            final url = p.imageUrl ?? '';
+            if (url.isEmpty) return false;
+            return url.endsWith('.mp4') ||
+                url.endsWith('.mov') ||
+                url.endsWith('.webm') ||
+                url.contains('/video');
+          })
+          .map(_mapPost)
+          .toList();
+      return items;
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Feed "Para Você" — vídeos de descoberta (todos os usuários).
   Future<List<FeedItem>> getFeed({int limit = 20}) async {
     try {
       final results = await Future.wait([
@@ -178,7 +201,7 @@ class ForYouFeedRepository {
         commentsCount: post.commentsCount,
         sharesCount: post.repostsCount,
         userLiked: post.userLiked,
-        userFollowingAuthor: false,
+        userFollowingAuthor: post.userFollowingAuthor,
         caption: post.content,
         viewsCount: post.viewsCount,
         videoUrl: url,
@@ -197,7 +220,7 @@ class ForYouFeedRepository {
       commentsCount: post.commentsCount,
       sharesCount: post.repostsCount,
       userLiked: post.userLiked,
-      userFollowingAuthor: false,
+      userFollowingAuthor: post.userFollowingAuthor,
       caption: post.content,
       viewsCount: post.viewsCount,
       videoUrl: url,

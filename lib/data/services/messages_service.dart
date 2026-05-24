@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/constants/app_constants.dart';
@@ -32,8 +33,13 @@ class MessagesService {
         'archived': archived,
       },
     );
+    debugPrint('[MessagesService] listConversations status: ${response.statusCode}');
+    debugPrint('[MessagesService] listConversations body: ${response.data}');
     final raw = response.data['data'];
-    if (raw is! List) return const <Conversation>[];
+    if (raw is! List) {
+      debugPrint('[MessagesService] listConversations: "data" is not a List, got: ${raw.runtimeType} = $raw');
+      return const <Conversation>[];
+    }
     return raw
         .whereType<Map>()
         .map((e) => Conversation.fromApi(Map<String, dynamic>.from(e)))
@@ -196,14 +202,37 @@ class MessagesService {
     return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
   }
 
+  /// `POST /messages/conversations/{conversation_id}/upload-audio` (multipart `file`).
+  Future<ChatMessage> uploadAudio({
+    required String conversationId,
+    required String filePath,
+    int duration = 0,
+  }) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final response = await _dio.post(
+      '/messages/conversations/$conversationId/upload-audio',
+      data: form,
+      queryParameters: {'duration': duration},
+    );
+    final data = response.data['data'];
+    final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    map['conversation_id'] ??= conversationId;
+    return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
+  }
+
   /// `POST /messages/messages/{message_id}/burn`
   Future<void> burnMessage(String messageId) async {
     await _dio.post('/messages/messages/$messageId/burn');
   }
 
-  /// `DELETE /messages/messages/{message_id}`
-  Future<void> deleteMessage(String messageId) async {
-    await _dio.delete('/messages/messages/$messageId');
+  /// `DELETE /messages/messages/{message_id}?for_everyone=true|false`
+  Future<void> deleteMessage(String messageId, {bool forEveryone = false}) async {
+    await _dio.delete(
+      '/messages/messages/$messageId',
+      queryParameters: {'for_everyone': forEveryone},
+    );
   }
 
   /// `POST /messages/conversations/{conversation_id}/archive`
@@ -219,6 +248,62 @@ class MessagesService {
   /// `DELETE /messages/conversations/{conversation_id}`
   Future<void> deleteConversation(String conversationId) async {
     await _dio.delete('/messages/conversations/$conversationId');
+  }
+
+  // ────────────────────── Blocks ──────────────────────
+
+  /// `POST /messages/blocks/{userId}` — bloqueia usuário.
+  Future<void> blockUser(String userId) async {
+    await _dio.post('/messages/blocks/$userId');
+  }
+
+  /// `DELETE /messages/blocks/{userId}` — desbloqueia usuário.
+  Future<void> unblockUser(String userId) async {
+    await _dio.delete('/messages/blocks/$userId');
+  }
+
+  /// `GET /messages/blocks` — lista IDs bloqueados.
+  Future<List<String>> getBlockedUsers() async {
+    final response = await _dio.get('/messages/blocks');
+    final list = response.data['data'];
+    if (list is! List) return const [];
+    return list
+        .whereType<Map>()
+        .map((e) => e['blocked_id']?.toString() ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  // ────────────────────── Social (for DM search) ──────────────────────
+
+  /// `GET /social/following` — retorna quem o usuário atual segue (para busca de nova conversa).
+  Future<List<Map<String, dynamic>>> getFollowing({
+    int page = 1,
+    int limit = 50,
+    String query = '',
+  }) async {
+    final response = await _dio.get(
+      '/social/following',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+    final raw = response.data['data'];
+    if (raw is! List) return const [];
+    final all = raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    if (query.isEmpty) return all;
+    final lower = query.toLowerCase();
+    return all
+        .where((u) =>
+            (u['display_name'] as String? ?? '').toLowerCase().contains(lower) ||
+            (u['username'] as String? ?? '').toLowerCase().contains(lower))
+        .toList();
+  }
+
+  // ────────────────────── Status ──────────────────────
+
+  /// `PUT /profile` — atualiza status de presença (online/away/offline via custom_status).
+  Future<void> updatePresenceStatus(String status) async {
+    // Encaminha para o profile endpoint do Connect
+    await _dio.put('/profile', data: {'custom_status': status});
   }
 }
 

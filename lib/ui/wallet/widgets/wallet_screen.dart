@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/wallet.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/wallet_view_model.dart';
 
 class WalletScreen extends ConsumerWidget {
@@ -10,11 +12,12 @@ class WalletScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final async = ref.watch(walletViewModelProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Carteira'),
+        title: Text(s.walletTitle),
         leading: const BackButton(),
       ),
       body: async.when(
@@ -33,9 +36,9 @@ class WalletScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const _QuickActionsRow(),
               const SizedBox(height: 24),
-              const _SectionHeader(
-                title: 'Comprar moedas',
-                subtitle: 'Use moedas para enviar gifts em lives',
+              _SectionHeader(
+                title: s.walletSectionBuyTitle,
+                subtitle: s.walletSectionBuySubtitle,
               ),
               const SizedBox(height: 12),
               _PackagesGrid(
@@ -43,9 +46,9 @@ class WalletScreen extends ConsumerWidget {
                 onSelect: (p) => _showPurchaseSheet(context, p),
               ),
               const SizedBox(height: 24),
-              const _SectionHeader(
-                title: 'Histórico',
-                subtitle: 'Suas últimas movimentações',
+              _SectionHeader(
+                title: s.walletSectionHistoryTitle,
+                subtitle: s.walletSectionHistorySubtitle,
               ),
               const SizedBox(height: 12),
               const _TransactionsList(),
@@ -91,31 +94,30 @@ class _BalanceCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.account_balance_wallet_outlined,
-                color: Colors.white,
+                color: context.colors.textPrimary,
                 size: 22,
               ),
               const SizedBox(width: 8),
               Text(
-                'Saldo disponível',
+                S.of(context).walletAvailableBalance,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w600,
                 ),
-              ),
-            ],
+              ),            ],
           ),
           const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Icon(Icons.monetization_on, color: Colors.white, size: 36),
+              Icon(Icons.monetization_on, color: context.colors.textPrimary, size: 36),
               const SizedBox(width: 10),
               Text(
                 _format(wallet.balance),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontSize: 38,
                   fontWeight: FontWeight.w800,
                   height: 1,
@@ -125,7 +127,7 @@ class _BalanceCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
-                  'moedas',
+                  S.of(context).walletCoins,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontWeight: FontWeight.w600,
@@ -142,22 +144,22 @@ class _BalanceCard extends StatelessWidget {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: context.colors.surfaceHighest.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.tag,
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                     size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     wallet.accountNumber!,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -278,8 +280,8 @@ class _PackageCard extends StatelessWidget {
                 ),
                 child: Text(
                   package.label,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                   ),
@@ -305,7 +307,7 @@ class _PackageCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'moedas',
+              S.of(context).walletCoins,
               style: TextStyle(
                 fontSize: 11,
                 color: scheme.onSurface.withValues(alpha: 0.6),
@@ -320,7 +322,7 @@ class _PackageCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'R\$ ${_formatInt(package.priceBRL.round())}',
+                S.of(context).walletPriceBRL(_formatInt(package.priceBRL.round())),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
@@ -367,7 +369,7 @@ class _PurchaseSheet extends StatelessWidget {
             height: 4,
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: context.colors.surfaceHighest.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -380,7 +382,7 @@ class _PurchaseSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_PackageCard._formatInt(package.coins)} moedas',
+                      S.of(context).walletPackageCoins(_PackageCard._formatInt(package.coins)),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 20,
@@ -388,7 +390,7 @@ class _PurchaseSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'R\$ ${_PackageCard._formatInt(package.priceBRL.round())}',
+                      S.of(context).walletPriceBRL(_PackageCard._formatInt(package.priceBRL.round())),
                       style: const TextStyle(
                         color: AppColors.electricPurple,
                         fontWeight: FontWeight.w700,
@@ -409,15 +411,14 @@ class _PurchaseSheet extends StatelessWidget {
                 color: AppColors.electricPurple.withValues(alpha: 0.3),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.electricPurple),
-                SizedBox(width: 10),
+                const Icon(Icons.info_outline, color: AppColors.electricPurple),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Pagamentos in-app chegando em breve. Por enquanto, '
-                    'compre moedas pelo navegador em brawe.app/coins.',
-                    style: TextStyle(height: 1.35),
+                    S.of(context).walletPurchaseInfo,
+                    style: const TextStyle(height: 1.35),
                   ),
                 ),
               ],
@@ -432,9 +433,9 @@ class _PurchaseSheet extends StatelessWidget {
                 backgroundColor: AppColors.electricPurple,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text(
-                'Entendi',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              child: Text(
+                S.of(context).walletPurchaseUnderstood,
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -450,21 +451,22 @@ class _InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final items = <(IconData, String, String)>[
       (
         Icons.bolt_outlined,
-        'Quests diárias',
-        'Complete missões e ganhe moedas + XP todos os dias.'
+        s.walletInfoQuestsTitle,
+        s.walletInfoQuestsBody,
       ),
       (
         Icons.card_giftcard_outlined,
-        'Receba gifts',
-        'Suas lives recebem gifts dos seus seguidores.'
+        s.walletInfoGiftsTitle,
+        s.walletInfoGiftsBody,
       ),
       (
         Icons.shopping_bag_outlined,
-        'Use em lives',
-        'Envie gifts para creators favoritos durante lives.'
+        s.walletInfoUseTitle,
+        s.walletInfoUseBody,
       ),
     ];
     return Container(
@@ -477,9 +479,9 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Como funcionam as moedas',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+          Text(
+            s.walletInfoTitle,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 12),
           ...items.map(
@@ -527,17 +529,18 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 40),
           const SizedBox(height: 12),
-          const Text('Não consegui carregar sua carteira.'),
+          Text(s.walletLoadError),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
-            child: const Text('Tentar novamente'),
+            child: Text(s.walletTryAgain),
           ),
         ],
       ),
@@ -554,12 +557,13 @@ class _QuickActionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Row(
       children: [
         Expanded(
           child: _ActionButton(
             icon: Icons.add_card,
-            label: 'Adicionar',
+            label: s.walletActionAdd,
             onTap: () {},
           ),
         ),
@@ -567,10 +571,10 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.send,
-            label: 'Enviar',
+            label: s.walletActionSend,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Em breve.')),
+                SnackBar(content: Text(s.walletComingSoon)),
               );
             },
           ),
@@ -579,7 +583,7 @@ class _QuickActionsRow extends StatelessWidget {
         Expanded(
           child: _ActionButton(
             icon: Icons.history,
-            label: 'Extrato',
+            label: s.walletActionStatement,
             onTap: () {},
           ),
         ),
@@ -654,7 +658,7 @@ class _TransactionsList extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Theme.of(context).dividerColor),
         ),
-        child: const Text('Não foi possível carregar o histórico.'),
+        child: Text(S.of(context).walletTxLoadError),
       ),
       data: (items) {
         if (items.isEmpty) {
@@ -670,7 +674,7 @@ class _TransactionsList extends ConsumerWidget {
             ),
             child: Center(
               child: Text(
-                'Sem movimentações ainda.',
+                S.of(context).walletTxEmpty,
                 style: TextStyle(
                   color: scheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -742,7 +746,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${isSent ? 'Para' : 'De'} ${item.counterpartyName}',
+                  '${isSent ? S.of(context).walletTxTo : S.of(context).walletTxFrom} ${item.counterpartyName}',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/live_comment.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class LiveCommentsOverlay extends StatefulWidget {
   const LiveCommentsOverlay({
@@ -29,6 +30,7 @@ class _LiveCommentsOverlayState extends State<LiveCommentsOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,11 +66,11 @@ class _LiveCommentsOverlayState extends State<LiveCommentsOverlay> {
                   onSubmitted: (_) => _submitComment(),
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                   cursorColor: Colors.white,
-                  decoration: const InputDecoration(
-                    hintText: 'Say something...',
-                    hintStyle: TextStyle(color: Colors.white38, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: s.liveCommentsHint,
+                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 10,
                     ),
@@ -125,6 +127,7 @@ class _LiveCommentBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -179,7 +182,7 @@ class _LiveCommentBubble extends StatelessWidget {
                       ),
                       if (comment.isPending)
                         TextSpan(
-                          text: '  Sending...',
+                          text: s.liveCommentsSending,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.45),
                             fontSize: 11,

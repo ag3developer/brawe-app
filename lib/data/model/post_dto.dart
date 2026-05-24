@@ -45,6 +45,7 @@ sealed class PostResponseDto with _$PostResponseDto {
     required AuthorResponseDto author,
     @JsonKey(name: 'user_liked') @Default(false) bool userLiked,
     @JsonKey(name: 'user_reposted') @Default(false) bool userReposted,
+    @JsonKey(name: 'user_following_author') @Default(false) bool userFollowingAuthor,
   }) = _PostResponseDto;
 
   factory PostResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -65,6 +66,7 @@ extension PostResponseDtoMapper on PostResponseDto {
       author: author.toDomain(),
       userLiked: userLiked,
       userReposted: userReposted,
+      userFollowingAuthor: userFollowingAuthor,
     );
   }
 }

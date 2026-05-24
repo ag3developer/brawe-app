@@ -3,21 +3,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 class ForYouLiveListScreen extends ConsumerWidget {
   const ForYouLiveListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final liveFeedState = ref.watch(liveFeedViewModelProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B0F1A),
-        title: const Text(
-          'For You',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          s.liveFeedCategoryForYou,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -38,21 +40,21 @@ class ForYouLiveListScreen extends ConsumerWidget {
                     size: 64,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'No lives in For You right now.',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  Text(
+                    s.liveFeedEmptyForYou,
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Check back later or try refreshing.',
-                    style: TextStyle(color: Colors.white38, fontSize: 14),
+                  Text(
+                    s.liveFeedEmptyHint,
+                    style: const TextStyle(color: Colors.white38, fontSize: 14),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () =>
                         ref.read(liveFeedViewModelProvider.notifier).refresh(),
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
+                    label: Text(s.liveFeedRefresh),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6E4DFF),
                       foregroundColor: Colors.white,
@@ -91,7 +93,7 @@ class ForYouLiveListScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Error: ${error.toString()}',
+                s.liveFeedError(error.toString()),
                 style: const TextStyle(color: Colors.red),
                 textAlign: TextAlign.center,
               ),
@@ -99,7 +101,7 @@ class ForYouLiveListScreen extends ConsumerWidget {
               ElevatedButton(
                 onPressed: () =>
                     ref.read(liveFeedViewModelProvider.notifier).refresh(),
-                child: const Text('Retry'),
+                child: Text(s.liveFeedRetry),
               ),
             ],
           ),
@@ -117,6 +119,7 @@ class _LiveThumbnailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -161,14 +164,14 @@ class _LiveThumbnailCard extends StatelessWidget {
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.sensors, color: Colors.white, size: 12),
-                    SizedBox(width: 2),
+                    const Icon(Icons.sensors, color: Colors.white, size: 12),
+                    const SizedBox(width: 2),
                     Text(
-                      'LIVE',
-                      style: TextStyle(
+                      s.liveFeedBadgeLive,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 10,

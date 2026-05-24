@@ -36,6 +36,7 @@ class LiveRepository {
   final Map<String, StreamController<LiveGift>> _giftControllers = {};
   final Map<String, StreamController<LiveViewerEvent>> _viewerEventControllers = {};
   final Map<String, StreamController<LiveReactionEvent>> _reactionControllers = {};
+  final Map<String, StreamController<double>> _giftTotalControllers = {};
   final Set<String> _connectedRooms = {};
   final Map<String, int> _roomConnectionLeases = {};
   bool _socketHandlersRegistered = false;
@@ -46,6 +47,7 @@ class LiveRepository {
   void Function(dynamic)? _onNewGift;
   void Function(dynamic)? _onLiveReaction;
   void Function(dynamic)? _onLikeCount;
+  void Function(dynamic)? _onGiftCountUpdate;
 
   LiveRepository(this._liveService, [SocketService? socketService])
     : _socketService = socketService;
@@ -322,6 +324,7 @@ class LiveRepository {
     _socketService?.off('viewer_joined', _onViewerJoined);
     _socketService?.off('viewer_left', _onViewerLeft);
     _socketService?.off(AppConstants.eventNewGift, _onNewGift);
+    _socketService?.off('gift_count_update', _onGiftCountUpdate);
     _socketService?.off(AppConstants.eventLiveReaction, _onLiveReaction);
     _socketService?.off(AppConstants.eventLikeCountUpdate, _onLikeCount);
 
@@ -345,6 +348,10 @@ class LiveRepository {
       controller.close();
     }
     _reactionControllers.clear();
+    for (final controller in _giftTotalControllers.values) {
+      controller.close();
+    }
+    _giftTotalControllers.clear();
     _connectedRooms.clear();
     _roomConnectionLeases.clear();
     _socketHandlersRegistered = false;
@@ -381,6 +388,9 @@ class LiveRepository {
 
     final reactionController = _reactionControllers.remove(roomId);
     reactionController?.close();
+
+    final giftTotalController = _giftTotalControllers.remove(roomId);
+    giftTotalController?.close();
   }
 
   Stream<LiveComment> watchComments(String roomId) {
@@ -444,6 +454,16 @@ class LiveRepository {
     final controller = _giftControllers.putIfAbsent(
       roomId,
       () => StreamController<LiveGift>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  /// 💎 Stream do total acumulado em USDT de gifts recebidos na sala.
+  /// Atualizado a cada gift enviado (evento `gift_count_update`).
+  Stream<double> watchGiftTotal(String roomId) {
+    final controller = _giftTotalControllers.putIfAbsent(
+      roomId,
+      () => StreamController<double>.broadcast(),
     );
     return controller.stream;
   }
@@ -641,6 +661,19 @@ class LiveRepository {
     };
     _socketService.on(AppConstants.eventNewGift, _onNewGift!);
 
+    _onGiftCountUpdate = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final msgRoomId = payload['room_id']?.toString();
+      final raw = payload['total_gifts_value'] ?? payload['total'];
+      final total = raw is num
+          ? raw.toDouble()
+          : double.tryParse(raw?.toString() ?? '');
+      if (total == null) return;
+      _dispatchToControllers(_giftTotalControllers, total, roomId: msgRoomId);
+    };
+    _socketService.on('gift_count_update', _onGiftCountUpdate!);
+
     _onLiveReaction = (data) {
       final payload = _asMap(data);
       if (payload == null) return;
@@ -775,11 +808,36 @@ class LiveRepository {
       senderAvatarUrl: payload['sender_avatar']?.toString(),
       giftId: giftId,
       giftName: payload['gift_name']?.toString() ?? 'Gift',
-      giftIconUrl: payload['animation_url']?.toString(),
+      // 🖼 Static PNG icon for inline chat ticker / small overlay.
+      // Prefer the explicit `icon_url`; fall back to `animation_url` only if
+      // it looks like an image (legacy payloads).
+      giftIconUrl: _pickIconUrl(payload),
+      animationUrl: payload['animation_url']?.toString(),
+      animationType: payload['animation_type']?.toString(),
+      isFullscreen: payload['is_fullscreen'] == true,
+      emoji: payload['gift_emoji']?.toString(),
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
       value: int.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0,
       timestamp: timestamp,
     );
+  }
+
+  /// Choose a renderable static icon URL.
+  /// Priority: `icon_url` → `animation_url` only when it ends with an image ext.
+  String? _pickIconUrl(Map<String, dynamic> payload) {
+    final icon = payload['icon_url']?.toString();
+    if (icon != null && icon.trim().isNotEmpty) return icon;
+    final anim = payload['animation_url']?.toString();
+    if (anim == null) return null;
+    final lower = anim.toLowerCase();
+    if (lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif')) {
+      return anim;
+    }
+    return null;
   }
 
   Map<String, dynamic>? _asMap(dynamic data) {

@@ -11,6 +11,7 @@ import '../../../../../domain/models/live_comment.dart';
 import '../../../../../domain/models/profile.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 
 /// 👤 Provider que busca o perfil completo de um streamer pelo id,
 /// usado para garantir que avatar + nome real sempre apareçam no card de
@@ -163,8 +164,8 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
 /// 🔴 Pílula compacta "● AO VIVO" pulsante (sem viewer count — fica em outro
 /// lugar pra não poluir e não brigar com a topbar Seguindo/Para Você).
 class LiveDotPulse extends StatefulWidget {
-  const LiveDotPulse({super.key, this.label = 'AO VIVO'});
-  final String label;
+  const LiveDotPulse({super.key, this.label});
+  final String? label;
 
   @override
   State<LiveDotPulse> createState() => _LiveDotPulseState();
@@ -220,7 +221,7 @@ class _LiveDotPulseState extends State<LiveDotPulse>
               ),
               const SizedBox(width: 6),
               Text(
-                widget.label,
+                widget.label ?? S.of(context).liveBadgeLive,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,
@@ -464,9 +465,9 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
               }),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Assistir ao Vivo',
-              style: TextStyle(
+            Text(
+              S.of(context).livePeekWatchLive,
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,

@@ -1,10 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../domain/models/follow_user.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../feed/widgets/story_ring_avatar.dart';
 import '../view_models/follows_view_model.dart';
 
 class FollowsScreen extends ConsumerStatefulWidget {
@@ -48,22 +50,23 @@ class _FollowsScreenState extends ConsumerState<FollowsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        backgroundColor: context.colors.background,
+        foregroundColor: context.colors.textPrimary,
         elevation: 0,
-        title: const Text('Pessoas'),
+        title: Text(s.followsTitle),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: AppColors.coolGray,
+          labelColor: context.colors.textPrimary,
+          unselectedLabelColor: context.colors.textSecondary,
           indicatorColor: AppColors.mutedRed,
           indicatorWeight: 2,
-          tabs: const [
-            Tab(text: 'Seguidores'),
-            Tab(text: 'Seguindo'),
+          tabs: [
+            Tab(text: s.followsTabFollowers),
+            Tab(text: s.followsTabFollowing),
           ],
         ),
       ),
@@ -105,11 +108,11 @@ class _SearchBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: TextField(
         onChanged: onChanged,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: context.colors.textPrimary),
         decoration: InputDecoration(
-          hintText: 'Buscar...',
-          hintStyle: const TextStyle(color: AppColors.coolGray),
-          prefixIcon: const Icon(Icons.search, color: AppColors.coolGray),
+          hintText: S.of(context).followsSearchHint,
+          hintStyle:  TextStyle(color: context.colors.textSecondary),
+          prefixIcon:  Icon(Icons.search, color: context.colors.textSecondary),
           filled: true,
           fillColor: Colors.white10,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -181,18 +184,18 @@ class _FollowsListState extends ConsumerState<_FollowsList>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline,
-                color: AppColors.coolGray, size: 40),
+             Icon(Icons.error_outline,
+                color: context.colors.textSecondary, size: 40),
             const SizedBox(height: 12),
-            Text('Erro ao carregar', style: TextStyle(color: Colors.white)),
+            Text(S.of(context).followsLoadError, style: TextStyle(color: context.colors.textPrimary)),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => ref
                   .read(followsViewModelProvider(widget.userId, widget.tab)
                       .notifier)
                   .refresh(),
-              child: const Text('Tentar de novo',
-                  style: TextStyle(color: AppColors.mutedRed)),
+              child: Text(S.of(context).followsTryAgain,
+                  style: const TextStyle(color: AppColors.mutedRed)),
             ),
           ],
         ),
@@ -218,17 +221,17 @@ class _FollowsListState extends ConsumerState<_FollowsList>
                         ? Icons.people_outline
                         : Icons.person_add_alt_outlined,
                     size: 56,
-                    color: AppColors.coolGray,
+                    color: context.colors.textSecondary,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     widget.query.isNotEmpty
-                        ? 'Nenhum resultado para "${widget.query}"'
+                        ? S.of(context).followsNoResults(widget.query)
                         : widget.tab == FollowsTab.followers
-                            ? 'Ainda sem seguidores'
-                            : 'Ainda não segue ninguém',
+                            ? S.of(context).followsEmptyFollowers
+                            : S.of(context).followsEmptyFollowing,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.coolGray),
+                    style:  TextStyle(color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -238,7 +241,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
 
         return RefreshIndicator(
           color: AppColors.mutedRed,
-          backgroundColor: Colors.black,
+          backgroundColor: context.colors.background,
           onRefresh: () => ref
               .read(followsViewModelProvider(widget.userId, widget.tab)
                   .notifier)
@@ -249,7 +252,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
             padding: const EdgeInsets.symmetric(vertical: 4),
             itemCount: filtered.length + (s.isLoadingMore ? 1 : 0),
             separatorBuilder: (_, __) =>
-                const Divider(color: Colors.white12, height: 1),
+                Divider(color: context.colors.divider, height: 1),
             itemBuilder: (context, i) {
               if (i >= filtered.length) {
                 return const Padding(
@@ -294,7 +297,7 @@ class _UserRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (user.displayName?.isNotEmpty ?? false)
         ? user.displayName!
-        : (user.username.isNotEmpty ? '@${user.username}' : 'Usuário');
+        : (user.username.isNotEmpty ? '@${user.username}' : S.of(context).followsUserFallback);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -303,7 +306,13 @@ class _UserRow extends StatelessWidget {
           children: [
             Stack(
               children: [
-                _Avatar(url: user.avatarUrl, name: name),
+                StoryRingAvatar(
+                  userId: user.userId,
+                  avatarUrl: user.avatarUrl,
+                  fallbackText: name,
+                  radius: 22,
+                  onTapWithoutStories: onTap,
+                ),
                 if (user.isLive)
                   Positioned(
                     bottom: -2,
@@ -316,10 +325,10 @@ class _UserRow extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.black, width: 1.5),
                       ),
-                      child: const Text(
-                        'LIVE',
+                      child: Text(
+                        S.of(context).followsLiveBadge,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: context.colors.textPrimary,
                           fontSize: 8,
                           fontWeight: FontWeight.w800,
                         ),
@@ -341,8 +350,8 @@ class _UserRow extends StatelessWidget {
                           name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -360,8 +369,8 @@ class _UserRow extends StatelessWidget {
                       '@${user.username}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.coolGray,
+                      style:  TextStyle(
+                        color: context.colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -371,8 +380,8 @@ class _UserRow extends StatelessWidget {
                       user.bio!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -383,45 +392,6 @@ class _UserRow extends StatelessWidget {
             const SizedBox(width: 8),
             _FollowChip(isFollowing: user.isFollowing, onTap: onFollowTap),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  final String? url;
-  final String name;
-  const _Avatar({required this.url, required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final initials = name.trim().isNotEmpty
-        ? name.trim().substring(0, 1).toUpperCase()
-        : '?';
-    if (url == null || url!.isEmpty) {
-      return CircleAvatar(
-        radius: 22,
-        backgroundColor: Colors.white12,
-        child: Text(
-          initials,
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      );
-    }
-    return ClipOval(
-      child: CachedNetworkImage(
-        imageUrl: url!,
-        width: 44,
-        height: 44,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => Container(color: Colors.white10, width: 44, height: 44),
-        errorWidget: (_, __, ___) => CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.white12,
-          child: Text(initials,
-              style: const TextStyle(color: Colors.white)),
         ),
       ),
     );
@@ -451,9 +421,9 @@ class _FollowChip extends StatelessWidget {
             ),
           ),
           child: Text(
-            isFollowing ? 'Seguindo' : 'Seguir',
-            style: const TextStyle(
-              color: Colors.white,
+            isFollowing ? S.of(context).actionUnfollow : S.of(context).actionFollow,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),

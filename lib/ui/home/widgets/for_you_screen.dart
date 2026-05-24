@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/feature_flags.dart';
 import '../../../domain/models/feed_item.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/for_you_feed_view_model.dart';
 import 'home_bottom_nav.dart';
@@ -62,7 +63,15 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncItems = ref.watch(forYouFeedViewModelProvider);
+    final s = S.of(context);
+    final isFollowing = _tab == 'following';
+    final asyncItems = isFollowing
+        ? ref.watch(followingForYouFeedViewModelProvider)
+        : ref.watch(forYouFeedViewModelProvider);
+
+    void onRefresh() => isFollowing
+        ? ref.read(followingForYouFeedViewModelProvider.notifier).refresh()
+        : ref.read(forYouFeedViewModelProvider.notifier).refresh();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -84,18 +93,16 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                     const Icon(Icons.wifi_off,
                         color: Colors.white54, size: 48),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Não foi possível carregar o feed.',
-                      style: TextStyle(color: Colors.white70),
+                    Text(
+                      s.feedLoadError,
+                      style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
-                      onPressed: () => ref
-                          .read(forYouFeedViewModelProvider.notifier)
-                          .refresh(),
+                      onPressed: onRefresh,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Tentar novamente'),
+                      label: Text(s.actionRetry),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.electricPurple,
                         foregroundColor: Colors.white,
@@ -116,30 +123,28 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                         const Icon(Icons.play_circle_outline,
                             color: Colors.white24, size: 64),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Nenhum vídeo ou foto por aqui ainda.',
+                        Text(
+                          s.feedEmptyVideoTitle,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 16,
                               fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Siga creators ou volte mais tarde.\nPosts de texto estão na aba Feed.',
+                        Text(
+                          s.feedEmptyVideoSubtitle,
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.white38, fontSize: 13),
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 13),
                         ),
                         const SizedBox(height: 24),
                         TextButton.icon(
-                          onPressed: () => ref
-                              .read(forYouFeedViewModelProvider.notifier)
-                              .refresh(),
+                          onPressed: onRefresh,
                           icon: const Icon(Icons.refresh,
                               color: AppColors.electricPurple),
-                          label: const Text('Atualizar',
-                              style: TextStyle(
+                          label: Text(s.actionRefresh,
+                              style: const TextStyle(
                                   color: AppColors.electricPurple)),
                         ),
                       ],
@@ -149,9 +154,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
               }
               return RefreshIndicator(
                 color: AppColors.electricPurple,
-                onRefresh: () => ref
-                    .read(forYouFeedViewModelProvider.notifier)
-                    .refresh(),
+                onRefresh: () async => onRefresh(),
                 child: PageView.builder(
                   controller: _ctrl,
                   scrollDirection: Axis.vertical,
@@ -172,13 +175,13 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                 children: [
                   const Spacer(),
                   _TopTab(
-                    label: 'Seguindo',
+                    label: s.tabFollowing,
                     selected: _tab == 'following',
                     onTap: () => setState(() => _tab = 'following'),
                   ),
                   const SizedBox(width: 18),
                   _TopTab(
-                    label: 'Para Você',
+                    label: s.tabForYou,
                     selected: _tab == 'forYou',
                     onTap: () => setState(() => _tab = 'forYou'),
                   ),
@@ -192,13 +195,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
             ),
           ),
 
-          // Bottom nav
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: HomeBottomNav(),
-          ),
+          // Bottom nav — agora gerenciado pelo ShellRoute em router.dart
         ],
       ),
     );

@@ -40,14 +40,16 @@ class ChatListState {
   }
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class ChatListViewModel extends _$ChatListViewModel {
   StreamSubscription<ChatMessage>? _notificationsSubscription;
+  Timer? _pollingTimer;
 
   @override
   ChatListState build() {
     ref.onDispose(() {
       _notificationsSubscription?.cancel();
+      _pollingTimer?.cancel();
     });
 
     _initialize();
@@ -67,6 +69,11 @@ class ChatListViewModel extends _$ChatListViewModel {
     // Quando chega notificação de nova mensagem em outra conversa, recarrega lista
     _notificationsSubscription =
         repo.watchNotifications().listen((_) => _loadConversations(silent: true));
+
+    // Polling a cada 15s para pegar novas conversas iniciadas pela outra pessoa
+    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      _loadConversations(silent: true);
+    });
   }
 
   Future<void> _loadConversations({bool silent = false}) async {
@@ -75,20 +82,25 @@ class ChatListViewModel extends _$ChatListViewModel {
       final items = await ref
           .read(chatRepositoryProvider)
           .listConversations(archived: state.showArchived);
+      debugPrint(
+          '[ChatListViewModel] _loadConversations OK: ${items.length} conversas (archived=${state.showArchived})');
       state = state.copyWith(
         conversations: items,
         isLoading: false,
         clearErrorMessage: true,
       );
     } on Failure catch (failure) {
+      debugPrint(
+          '[ChatListViewModel] _loadConversations Failure: ${failure.toDisplayMessage()}');
       state = state.copyWith(
         isLoading: false,
         errorMessage: failure.toDisplayMessage(),
       );
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[ChatListViewModel] _loadConversations error: $e\n$st');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Erro ao carregar conversas',
+        errorMessage: 'Erro ao carregar conversas: $e',
       );
     }
   }

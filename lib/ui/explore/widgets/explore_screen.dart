@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/models/explore_models.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/explore_view_model.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
@@ -44,26 +46,27 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isSearching = _searchCtrl.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0E18),
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0E18),
+        backgroundColor: context.colors.background,
         elevation: 0,
         title: TextField(
           controller: _searchCtrl,
           onChanged: _onSearchChanged,
           autofocus: false,
-          style: const TextStyle(color: Colors.white, fontSize: 15),
+          style: TextStyle(color: context.colors.textPrimary, fontSize: 15),
           decoration: InputDecoration(
-            hintText: 'Buscar streamers, lives, categorias…',
-            hintStyle: const TextStyle(color: AppColors.coolGray, fontSize: 14),
+            hintText: s.exploreSearchHint,
+            hintStyle:  TextStyle(color: context.colors.textSecondary, fontSize: 14),
             prefixIcon:
-                const Icon(Icons.search, color: AppColors.coolGray, size: 20),
+                 Icon(Icons.search, color: context.colors.textSecondary, size: 20),
             suffixIcon: isSearching
                 ? IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.coolGray),
+                    icon:  Icon(Icons.close, color: context.colors.textSecondary),
                     onPressed: () {
                       _searchCtrl.clear();
                       ref.read(searchControllerProvider.notifier).clear();
@@ -72,7 +75,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
                   )
                 : null,
             filled: true,
-            fillColor: AppColors.slate,
+            fillColor: context.colors.surfaceElevated,
             isDense: true,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(20),
@@ -86,12 +89,12 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
             : TabBar(
                 controller: _tabs,
                 labelColor: AppColors.electricPurple,
-                unselectedLabelColor: AppColors.coolGray,
+                unselectedLabelColor: context.colors.textSecondary,
                 indicatorColor: AppColors.electricPurple,
-                tabs: const [
-                  Tab(text: 'Em alta'),
-                  Tab(text: 'Categorias'),
-                  Tab(text: 'Para você'),
+                tabs: [
+                  Tab(text: s.exploreTabTrending),
+                  Tab(text: s.exploreTabCategories),
+                  Tab(text: s.exploreTabRecommended),
                 ],
               ),
       ),
@@ -128,7 +131,7 @@ class _TrendingTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             if (data.lives.isNotEmpty) ...[
-              const _SectionHeader(title: 'Lives ao vivo', icon: Icons.live_tv),
+              _SectionHeader(title: S.of(context).exploreSectionLives, icon: Icons.live_tv),
               const SizedBox(height: 12),
               SizedBox(
                 height: 200,
@@ -142,20 +145,20 @@ class _TrendingTab extends ConsumerWidget {
               const SizedBox(height: 24),
             ],
             if (data.streamers.isNotEmpty) ...[
-              const _SectionHeader(
-                  title: 'Streamers em alta', icon: Icons.trending_up),
+              _SectionHeader(
+                  title: S.of(context).exploreSectionTrendingStreamers, icon: Icons.trending_up),
               const SizedBox(height: 12),
               ...data.streamers
                   .map((s) => _StreamerTile(streamer: s))
                   ,
             ],
             if (data.lives.isEmpty && data.streamers.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 80),
+               Padding(
+                padding: const EdgeInsets.symmetric(vertical: 80),
                 child: Center(
                   child: Text(
-                    'Nada em alta agora',
-                    style: TextStyle(color: AppColors.coolGray),
+                    S.of(context).exploreEmptyTrending,
+                    style: TextStyle(color: context.colors.textSecondary),
                   ),
                 ),
               ),
@@ -183,11 +186,11 @@ class _CategoriesTab extends ConsumerWidget {
         error: (_, __) => const _ErrorView(),
         data: (cats) => cats.isEmpty
             ? ListView(
-                children: const [
-                  SizedBox(height: 100),
+                children: [
+                  const SizedBox(height: 100),
                   Center(
-                    child: Text('Nenhuma categoria disponível.',
-                        style: TextStyle(color: AppColors.coolGray)),
+                    child: Text(S.of(context).exploreEmptyCategories,
+                        style: TextStyle(color: context.colors.textSecondary)),
                   ),
                 ],
               )
@@ -227,15 +230,15 @@ class _RecommendedTab extends ConsumerWidget {
           final items = [...data.lives];
           return items.isEmpty && data.streamers.isEmpty
               ? ListView(
-                  children: const [
-                    SizedBox(height: 100),
+                  children: [
+                    const SizedBox(height: 100),
                     Center(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 32),
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
                         child: Text(
-                          'Siga alguns streamers para receber recomendações personalizadas!',
+                          S.of(context).exploreEmptyRecommended,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.coolGray),
+                          style: TextStyle(color: context.colors.textSecondary),
                         ),
                       ),
                     ),
@@ -245,8 +248,8 @@ class _RecommendedTab extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   children: [
                     if (items.isNotEmpty) ...[
-                      const _SectionHeader(
-                          title: 'Lives recomendadas', icon: Icons.recommend),
+                      _SectionHeader(
+                          title: S.of(context).exploreSectionRecommendedLives, icon: Icons.recommend),
                       const SizedBox(height: 12),
                       ...items.map((l) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
@@ -255,8 +258,8 @@ class _RecommendedTab extends ConsumerWidget {
                     ],
                     if (data.streamers.isNotEmpty) ...[
                       const SizedBox(height: 8),
-                      const _SectionHeader(
-                          title: 'Streamers que você pode gostar',
+                      _SectionHeader(
+                          title: S.of(context).exploreSectionRecommendedStreamers,
                           icon: Icons.person_add),
                       const SizedBox(height: 12),
                       ...data.streamers.map((s) => _StreamerTile(streamer: s)),
@@ -282,10 +285,10 @@ class _SearchResults extends ConsumerWidget {
       ),
       error: (_, __) => const _ErrorView(),
       data: (list) => list.isEmpty
-          ? const Center(
+          ?  Center(
               child: Text(
-                'Nenhum resultado.',
-                style: TextStyle(color: AppColors.coolGray),
+                S.of(context).exploreEmptySearch,
+                style: TextStyle(color: context.colors.textSecondary),
               ),
             )
           : ListView.separated(
@@ -312,8 +315,8 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: context.colors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -336,7 +339,7 @@ class _LiveCard extends StatelessWidget {
       child: Container(
         width: width,
         decoration: BoxDecoration(
-          color: AppColors.slate,
+          color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.circular(12),
         ),
         clipBehavior: Clip.antiAlias,
@@ -367,10 +370,10 @@ class _LiveCard extends StatelessWidget {
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
-                        'AO VIVO',
+                      child: Text(
+                        S.of(context).liveBadge,
                         style: TextStyle(
-                            color: Colors.white,
+                            color: context.colors.textPrimary,
                             fontSize: 10,
                             fontWeight: FontWeight.bold),
                       ),
@@ -389,13 +392,13 @@ class _LiveCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.visibility,
-                              color: Colors.white, size: 12),
+                          Icon(Icons.visibility,
+                              color: context.colors.textPrimary, size: 12),
                           const SizedBox(width: 4),
                           Text(
                             '${live.viewerCount}',
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 11),
+                            style: TextStyle(
+                                color: context.colors.textPrimary, fontSize: 11),
                           ),
                         ],
                       ),
@@ -413,19 +416,22 @@ class _LiveCard extends StatelessWidget {
                     live.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${live.streamerName ?? ''} • ${live.category ?? 'Geral'}',
+                    S.of(context).exploreLiveSubtitle(
+                      live.streamerName ?? '',
+                      live.category ?? S.of(context).exploreCategoryGeneral,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: AppColors.coolGray, fontSize: 11),
+                    style:  TextStyle(
+                        color: context.colors.textSecondary, fontSize: 11),
                   ),
                 ],
               ),
@@ -450,7 +456,7 @@ class _StreamerTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.slate,
+            backgroundColor: context.colors.surfaceElevated,
             backgroundImage: streamer.avatarUrl != null
                 ? CachedNetworkImageProvider(streamer.avatarUrl!)
                 : null,
@@ -459,7 +465,7 @@ class _StreamerTile extends StatelessWidget {
                     streamer.displayName.isNotEmpty
                         ? streamer.displayName[0].toUpperCase()
                         : '?',
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: context.colors.textPrimary),
                   )
                 : null,
           ),
@@ -473,12 +479,12 @@ class _StreamerTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFF0B0E18), width: 1.5),
+                  border: Border.all(color: context.colors.background, width: 1.5),
                 ),
-                child: const Text(
-                  'LIVE',
+                child: Text(
+                  S.of(context).followsLiveBadge,
                   style: TextStyle(
-                      color: Colors.white,
+                      color: context.colors.textPrimary,
                       fontSize: 8,
                       fontWeight: FontWeight.bold),
                 ),
@@ -488,12 +494,12 @@ class _StreamerTile extends StatelessWidget {
       ),
       title: Text(
         streamer.displayName,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+        style: TextStyle(
+            color: context.colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
       ),
       subtitle: Text(
-        '${streamer.followerCount} seguidores',
-        style: const TextStyle(color: AppColors.coolGray, fontSize: 12),
+        S.of(context).exploreFollowersCount(streamer.followerCount),
+        style:  TextStyle(color: context.colors.textSecondary, fontSize: 12),
       ),
     );
   }
@@ -523,20 +529,20 @@ class _CategoryCard extends StatelessWidget {
           children: [
             Text(
               category.name,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Row(
               children: [
-                const Icon(Icons.live_tv, color: Colors.white70, size: 14),
+                Icon(Icons.live_tv, color: context.colors.textSecondary, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '${category.liveCount} ao vivo',
+                  S.of(context).exploreCategoryLiveCount(category.liveCount),
                   style:
-                      const TextStyle(color: Colors.white70, fontSize: 12),
+                      TextStyle(color: context.colors.textSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -573,13 +579,13 @@ class _SearchTile extends StatelessWidget {
                   imageUrl: result.thumbnail!,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) =>
-                      Container(color: AppColors.slate),
+                      Container(color: context.colors.surfaceElevated),
                 )
               : Container(
-                  color: AppColors.slate,
+                  color: context.colors.surfaceElevated,
                   child: Icon(
                     isLive ? Icons.live_tv : Icons.person,
-                    color: AppColors.coolGray,
+                    color: context.colors.textSecondary,
                   ),
                 ),
         ),
@@ -595,10 +601,10 @@ class _SearchTile extends StatelessWidget {
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: const Text(
-                'LIVE',
+              child: Text(
+                S.of(context).followsLiveBadge,
                 style: TextStyle(
-                    color: Colors.white,
+                    color: context.colors.textPrimary,
                     fontSize: 9,
                     fontWeight: FontWeight.bold),
               ),
@@ -608,7 +614,7 @@ class _SearchTile extends StatelessWidget {
               result.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: context.colors.textPrimary),
             ),
           ),
         ],
@@ -619,7 +625,7 @@ class _SearchTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style:
-                  const TextStyle(color: AppColors.coolGray, fontSize: 12),
+                   TextStyle(color: context.colors.textSecondary, fontSize: 12),
             )
           : null,
     );
@@ -629,13 +635,13 @@ class _SearchTile extends StatelessWidget {
 class _ErrorView extends StatelessWidget {
   const _ErrorView();
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) =>  Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Erro ao carregar. Puxe para baixo para tentar novamente.',
+            S.of(context).exploreLoadError,
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.coolGray),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
         ),
       );

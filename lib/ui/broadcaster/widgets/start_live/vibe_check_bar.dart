@@ -8,19 +8,22 @@ import 'package:flutter/material.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/ui/app_radius.dart';
 import '../../../core/ui/app_spacing.dart';
+import '../../../../gen/l10n/app_localizations.dart';
 
 enum VibeStatus { good, warning, bad }
+
+enum NetworkKind { wifi, mobile, ethernet, none }
 
 class VibeSnapshot {
   const VibeSnapshot({
     required this.network,
     required this.battery,
-    required this.networkLabel,
+    required this.networkKind,
     required this.batteryLevel,
   });
   final VibeStatus network;
   final VibeStatus battery;
-  final String networkLabel;
+  final NetworkKind networkKind;
   final int batteryLevel;
 
   VibeStatus get overall {
@@ -47,7 +50,7 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
   VibeSnapshot _snapshot = const VibeSnapshot(
     network: VibeStatus.good,
     battery: VibeStatus.good,
-    networkLabel: 'Wi-Fi',
+    networkKind: NetworkKind.wifi,
     batteryLevel: 100,
   );
 
@@ -67,24 +70,24 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
 
   void _updateNetwork(List<ConnectivityResult> results) {
     VibeStatus status;
-    String label;
+    NetworkKind kind;
     if (results.contains(ConnectivityResult.wifi)) {
       status = VibeStatus.good;
-      label = 'Wi-Fi';
+      kind = NetworkKind.wifi;
     } else if (results.contains(ConnectivityResult.mobile)) {
       status = VibeStatus.warning;
-      label = '4G/5G';
+      kind = NetworkKind.mobile;
     } else if (results.contains(ConnectivityResult.ethernet)) {
       status = VibeStatus.good;
-      label = 'Ethernet';
+      kind = NetworkKind.ethernet;
     } else {
       status = VibeStatus.bad;
-      label = 'Sem rede';
+      kind = NetworkKind.none;
     }
     _emit(VibeSnapshot(
       network: status,
       battery: _snapshot.battery,
-      networkLabel: label,
+      networkKind: kind,
       batteryLevel: _snapshot.batteryLevel,
     ));
   }
@@ -98,7 +101,7 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
       _emit(VibeSnapshot(
         network: _snapshot.network,
         battery: status,
-        networkLabel: _snapshot.networkLabel,
+        networkKind: _snapshot.networkKind,
         batteryLevel: level,
       ));
     } catch (_) {}
@@ -123,76 +126,103 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
         VibeStatus.bad => AppColors.mutedRed,
       };
 
-  String _label() => switch (_snapshot.overall) {
-        VibeStatus.good => 'Tudo certo para entrar ao vivo',
-        VibeStatus.warning => 'Funciona, mas pode oscilar',
-        VibeStatus.bad => 'Atenção antes de começar',
+  String _label(S s) => switch (_snapshot.overall) {
+        VibeStatus.good => s.vibeStatusGood,
+        VibeStatus.warning => s.vibeStatusWarning,
+        VibeStatus.bad => s.vibeStatusBad,
+      };
+
+  String _networkLabelText(S s) => switch (_snapshot.networkKind) {
+        NetworkKind.wifi => s.vibeNetworkWifi,
+        NetworkKind.mobile => s.vibeNetworkMobile,
+        NetworkKind.ethernet => s.vibeNetworkEthernet,
+        NetworkKind.none => s.vibeNetworkNone,
       };
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final overallColor = _colorFor(_snapshot.overall);
+
     return GestureDetector(
       onTap: () => setState(() => _expanded = !_expanded),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(50),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              horizontal: AppSpacing.md,
-              vertical: _expanded ? AppSpacing.sm : 6,
-            ),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            padding: _expanded
+                ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+                : const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-              border: Border.all(color: overallColor.withValues(alpha: 0.55), width: 1),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
+              color: Colors.black.withValues(alpha: 0.50),
+              border: Border.all(color: overallColor.withValues(alpha: 0.5), width: 1),
+              borderRadius: BorderRadius.circular(_expanded ? 14 : 50),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: overallColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: overallColor.withValues(alpha: 0.6), blurRadius: 6, spreadRadius: 1),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(_label(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-                    const SizedBox(width: 6),
-                    Icon(_expanded ? Icons.expand_less : Icons.expand_more, color: Colors.white, size: 16),
-                  ],
-                ),
-                if (_expanded) ...[
-                  const SizedBox(height: 6),
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.wifi, color: _colorFor(_snapshot.network), size: 14),
-                    const SizedBox(width: 6),
-                    Text('Rede: ${_snapshot.networkLabel}', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                  ]),
-                  const SizedBox(height: 2),
-                  Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_snapshot.batteryLevel < 20 ? Icons.battery_alert : Icons.battery_full,
-                        color: _colorFor(_snapshot.battery), size: 14),
-                    const SizedBox(width: 6),
-                    Text('Bateria: ${_snapshot.batteryLevel}%', style: const TextStyle(color: Colors.white, fontSize: 11)),
-                  ]),
-                ],
-              ],
-            ),
+            child: _expanded ? _ExpandedContent(snapshot: _snapshot, colorFor: _colorFor, networkLabelText: _networkLabelText(s), l10n: s) : _Dot(color: overallColor),
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Dot (collapsed) ──────────────────────────────────────────────────────────
+class _Dot extends StatelessWidget {
+  const _Dot({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 6, spreadRadius: 1)],
+      ),
+    );
+  }
+}
+
+// ── Expanded content ─────────────────────────────────────────────────────────
+class _ExpandedContent extends StatelessWidget {
+  const _ExpandedContent({
+    required this.snapshot,
+    required this.colorFor,
+    required this.networkLabelText,
+    required this.l10n,
+  });
+
+  final VibeSnapshot snapshot;
+  final Color Function(VibeStatus) colorFor;
+  final String networkLabelText;
+  final S l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Rede
+        Icon(Icons.wifi, color: colorFor(snapshot.network), size: 13),
+        const SizedBox(width: 4),
+        Text(networkLabelText,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+        const SizedBox(width: 10),
+        // Bateria
+        Icon(
+          snapshot.batteryLevel < 20 ? Icons.battery_alert : Icons.battery_full,
+          color: colorFor(snapshot.battery),
+          size: 13,
+        ),
+        const SizedBox(width: 4),
+        Text('${snapshot.batteryLevel}%',
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+      ],
     );
   }
 }

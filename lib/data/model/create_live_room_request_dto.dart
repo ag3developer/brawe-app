@@ -40,6 +40,8 @@ class CreateLiveRoomRequestDto {
     this.shoppingEnabled = true,
     this.notifyFollowers = true,
     this.thumbnailUrl,
+    this.streamerName,
+    this.streamerAvatarUrl,
   });
 
   final String title;
@@ -54,6 +56,15 @@ class CreateLiveRoomRequestDto {
   final bool shoppingEnabled;
   final bool notifyFollowers;
   final String? thumbnailUrl;
+
+  /// Nome real do streamer enviado pelo cliente (cache do usuário logado).
+  /// O backend prioriza este valor; o wallet_bridge fica como validação
+  /// autoritativa quando responde. Evita salas com nome "Streamer" quando
+  /// a chamada HTTP entre microserviços falha.
+  final String? streamerName;
+
+  /// Avatar do streamer (mesmo motivo de `streamerName`).
+  final String? streamerAvatarUrl;
 
   /// Atalho legado: só verdadeiro quando visibility == private.
   bool get isPrivate => visibility == LiveVisibility.private;
@@ -74,6 +85,8 @@ class CreateLiveRoomRequestDto {
       'shopping_enabled': shoppingEnabled,
       'notify_followers': notifyFollowers,
       'thumbnail_url': thumbnailUrl,
+      'streamer_name': streamerName,
+      'streamer_avatar_url': streamerAvatarUrl,
     }..removeWhere((_, value) => value == null);
   }
 }

@@ -62,6 +62,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   StreamSubscription<bool>? _typingSubscription;
   StreamSubscription<String>? _burnSubscription;
   StreamSubscription<MessageReactionUpdate>? _reactionSubscription;
+  StreamSubscription<String>? _deletedSubscription;
+  StreamSubscription? _reconnectSubscription;
   Timer? _typingStopTimer;
   int _currentPage = 1;
 
@@ -74,6 +76,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _typingSubscription?.cancel();
       _burnSubscription?.cancel();
       _reactionSubscription?.cancel();
+      _deletedSubscription?.cancel();
+      _reconnectSubscription?.cancel();
       _typingStopTimer?.cancel();
       try {
         ref.read(chatRepositoryProvider).leaveConversation(conversationId);
@@ -95,6 +99,12 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       debugPrint('ChatDetailViewModel: socket connect failed: $e');
     }
 
+    // Re-entrar na sala quando o socket reconectar (ex: servidor reiniciado)
+    _reconnectSubscription = repo.watchReconnect().listen((_) {
+      debugPrint('ChatDetailViewModel: socket reconnected, re-joining $conversationId');
+      repo.joinConversation(conversationId);
+    });
+
     _messagesSubscription =
         repo.watchMessages(conversationId).listen(_handleIncomingMessage);
     _typingSubscription =
@@ -103,6 +113,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         repo.watchBurns(conversationId).listen(_handleBurnEvent);
     _reactionSubscription =
         repo.reactionStream(conversationId).listen(_handleReactionUpdate);
+    _deletedSubscription =
+        repo.watchDeleted(conversationId).listen(_removeMessage);
 
     await _loadInitial();
 
@@ -403,6 +415,50 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     );
   }
 
+  /// Envia um áudio gravado.
+  Future<void> sendAudio({
+    required String filePath,
+    int duration = 0,
+  }) async {
+    final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final authState = ref.read(authStateProvider);
+    final currentUser = authState is AsyncData<User?> ? authState.value : null;
+    final optimistic = ChatMessage(
+      id: optimisticId,
+      conversationId: _conversationId,
+      senderId: currentUser?.id ?? 'current-user',
+      content: filePath,
+      timestamp: DateTime.now(),
+      isPending: true,
+      messageType: 'audio',
+      audioDuration: duration > 0 ? duration : null,
+    );
+    _appendMessage(optimistic);
+    state = state.copyWith(isSending: true, clearErrorMessage: true);
+
+    try {
+      final sent = await ref.read(chatRepositoryProvider).uploadAudio(
+            conversationId: _conversationId,
+            filePath: filePath,
+            duration: duration,
+          );
+      _replaceMessage(optimisticId, sent);
+      state = state.copyWith(isSending: false);
+    } on Failure catch (failure) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(
+        isSending: false,
+        errorMessage: failure.toDisplayMessage(),
+      );
+    } catch (_) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(
+        isSending: false,
+        errorMessage: 'Não foi possível enviar o áudio.',
+      );
+    }
+  }
+
   /// Envia uma imagem (com opção de view-once).
   Future<void> sendImage({
     required String filePath,
@@ -460,11 +516,11 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   }
 
   /// Apaga a mensagem (soft delete por participante).
-  Future<void> deleteMessage(String messageId) async {
+  Future<void> deleteMessage(String messageId, {bool forEveryone = false}) async {
     final snapshot = state.messages;
     _removeMessage(messageId);
     try {
-      await ref.read(chatRepositoryProvider).deleteMessage(messageId);
+      await ref.read(chatRepositoryProvider).deleteMessage(messageId, forEveryone: forEveryone);
     } on Failure catch (failure) {
       state = state.copyWith(
         messages: snapshot,

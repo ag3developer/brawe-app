@@ -156,6 +156,31 @@ class ProfileRepository {
     }
   }
 
+  /// Retorna `null` se disponível, ou uma mensagem de erro se não estiver.
+  Future<String?> checkUsernameAvailability(String username) async {
+    try {
+      return await _profileService.checkUsernameAvailability(username);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Atualiza o username e retorna o novo username confirmado.
+  Future<String> updateUsername(String username) async {
+    try {
+      return await _profileService.updateUsername(username);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 409) {
+        throw const Failure.unauthorized(); // reuse as "conflict"
+      }
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
   Failure _mapFailure(DioException exception) {
     final statusCode = exception.response?.statusCode;
     if (statusCode == 401 || statusCode == 403) {

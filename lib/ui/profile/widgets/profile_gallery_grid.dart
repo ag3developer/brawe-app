@@ -7,7 +7,9 @@ import 'package:video_player/video_player.dart';
 
 import '../../../data/repositories/gallery_repository.dart';
 import '../../../domain/models/gallery_media.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../view_models/gallery_view_model.dart';
 
 /// Mini-galeria do perfil (até 6 fotos + 3 vídeos curtos).
@@ -51,11 +53,11 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
           child: CircularProgressIndicator(color: AppColors.electricPurple),
         ),
         error: (_, __) => ListView(
-          children: const [
-            SizedBox(height: 120),
+          children: [
+            const SizedBox(height: 120),
             Center(
-              child: Text('Erro ao carregar galeria',
-                  style: TextStyle(color: Colors.white60)),
+              child: Text(S.of(context).profileGalleryLoadError,
+                  style: const TextStyle(color: Colors.white60)),
             ),
           ],
         ),
@@ -68,11 +70,11 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
               unselectedLabelColor: Colors.white54,
               tabs: [
                 Tab(
-                    text:
-                        'Fotos (${data.photos.length}/${data.limits?.maxPhotos ?? 6})'),
+                    text: S.of(context).profileGalleryTabPhotos(
+                        data.photos.length, data.limits?.maxPhotos ?? 6)),
                 Tab(
-                    text:
-                        'Vídeos (${data.videos.length}/${data.limits?.maxVideos ?? 3})'),
+                    text: S.of(context).profileGalleryTabVideos(
+                        data.videos.length, data.limits?.maxVideos ?? 3)),
               ],
             ),
             Expanded(
@@ -114,7 +116,9 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
         .read(galleryViewModelProvider(widget.userId).notifier)
         .uploadPhoto(f.path);
     if (mounted) Navigator.of(context, rootNavigator: true).pop();
-    _toast(ok ? 'Foto adicionada' : 'Falha ao enviar foto');
+    if (!mounted) return;
+    final s = S.of(context);
+    _toast(ok ? s.profileGalleryPhotoAdded : s.profileGalleryPhotoError);
   }
 
   Future<void> _pickVideo() async {
@@ -128,7 +132,9 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
         .read(galleryViewModelProvider(widget.userId).notifier)
         .uploadVideo(f.path);
     if (mounted) Navigator.of(context, rootNavigator: true).pop();
-    _toast(ok ? 'Vídeo adicionado' : 'Falha ao enviar vídeo');
+    if (!mounted) return;
+    final s = S.of(context);
+    _toast(ok ? s.profileGalleryVideoAdded : s.profileGalleryVideoError);
   }
 
   void _showProgress() {
@@ -170,18 +176,19 @@ class _MediaGrid extends ConsumerWidget {
     if (tileCount == 0) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 80),
+        children: [
+          const SizedBox(height: 80),
           Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.image_outlined, size: 48, color: Colors.white24),
-                  SizedBox(height: 8),
-                  Text('Nada por aqui ainda',
-                      style: TextStyle(color: Colors.white54)),
+                  const Icon(Icons.image_outlined,
+                      size: 48, color: Colors.white24),
+                  const SizedBox(height: 8),
+                  Text(S.of(context).profileGalleryEmpty,
+                      style: const TextStyle(color: Colors.white54)),
                 ],
               ),
             ),
@@ -292,8 +299,8 @@ class _MediaTile extends ConsumerWidget {
                     const Icon(Icons.favorite, color: Colors.white, size: 12),
                     const SizedBox(width: 3),
                     Text(media.likesCount.toString(),
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 11)),
+                        style: TextStyle(
+                            color: context.colors.textPrimary, fontSize: 11)),
                   ],
                 ),
               ),
@@ -307,20 +314,21 @@ class _MediaTile extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C2E),
-        title: const Text('Remover mídia?',
-            style: TextStyle(color: Colors.white)),
-        content: const Text('Essa ação não pode ser desfeita.',
-            style: TextStyle(color: Colors.white70)),
+        backgroundColor: ctx.colors.surface,
+        title: Text(S.of(ctx).profileGalleryRemoveTitle,
+            style: TextStyle(color: ctx.colors.textPrimary)),
+        content: Text(S.of(ctx).profileGalleryRemoveBody,
+            style: TextStyle(color: ctx.colors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).actionCancel,
+                style: TextStyle(color: ctx.colors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remover',
-                style: TextStyle(color: Colors.red)),
+            child: Text(S.of(ctx).profileGalleryRemove,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -384,7 +392,7 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
     final isVideo = m.mediaType == 'video';
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
