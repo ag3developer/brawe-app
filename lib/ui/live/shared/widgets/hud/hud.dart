@@ -10,5 +10,6 @@ library;
 
 export 'live_pill.dart';
 export 'metric_pill.dart';
+export 'streamer_identity_bar.dart';
 export 'top_hud_circle_icon.dart';
 export 'viewers_stack.dart';
