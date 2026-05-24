@@ -1,12 +1,19 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/quest.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
-import '../../core/themes/brawe_colors.dart';
 import '../view_models/quests_view_model.dart';
 
+/// Tela gamificada de missões diárias.
+///
+/// - Fundo escuro com gradiente dinâmico (estilo Duolingo/Habitica).
+/// - Cores vibrantes por categoria.
+/// - Animação de progresso, confete ao reclamar, shimmer no botão.
+/// - Pull-to-refresh.
 class QuestsScreen extends ConsumerWidget {
   const QuestsScreen({super.key});
 
@@ -16,96 +23,249 @@ class QuestsScreen extends ConsumerWidget {
     final async = ref.watch(questsViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.questsTitle),
-        leading: const BackButton(),
-      ),
-      body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _ErrorView(
-          onRetry: () =>
-              ref.read(questsViewModelProvider.notifier).refresh(),
-        ),
-        data: (data) => RefreshIndicator(
-          onRefresh: () =>
-              ref.read(questsViewModelProvider.notifier).refresh(),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _HeroCard(profile: data.profile, streak: data.streak),
-              const SizedBox(height: 16),
-              _SummaryRow(summary: data.summary, streak: data.streak),
-              const SizedBox(height: 16),
-              if (_claimableCount(data) >= 2)
-                _ClaimAllButton(
-                  count: _claimableCount(data),
-                  onTap: () async {
-                    final n = await ref
-                        .read(questsViewModelProvider.notifier)
-                        .claimAll();
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          n > 0
-                              ? s.questsClaimedReward(n)
-                              : s.questsNothingToClaim,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              const SizedBox(height: 12),
-              ...data.quests.map(
-                (q) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _QuestCard(
-                    quest: q,
-                    onClaim: () async {
-                      try {
-                        await ref
-                            .read(questsViewModelProvider.notifier)
-                            .claimQuest(q.questKey);
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              s.questsClaimSuccess(q.xpReward, q.coinsReward),
+      backgroundColor: const Color(0xFF0F0824),
+      body: Stack(
+        children: [
+          // Background gradient + decorative blobs
+          const _AnimatedBackground(),
+          SafeArea(
+            child: async.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+              error: (e, _) => _ErrorView(
+                onRetry: () =>
+                    ref.read(questsViewModelProvider.notifier).refresh(),
+              ),
+              data: (data) => RefreshIndicator(
+                color: AppColors.electricPurple,
+                onRefresh: () =>
+                    ref.read(questsViewModelProvider.notifier).refresh(),
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    _Header(title: s.questsTitle),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          _HeroCard(
+                            profile: data.profile,
+                            streak: data.streak,
+                          ),
+                          const SizedBox(height: 16),
+                          _SummaryRow(
+                            summary: data.summary,
+                            streak: data.streak,
+                          ),
+                          const SizedBox(height: 20),
+                          if (_claimableCount(data) >= 2)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: _ClaimAllButton(
+                                count: _claimableCount(data),
+                                onTap: () => _onClaimAll(context, ref),
+                              ),
                             ),
-                          ),
-                        );
-                      } catch (_) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(s.questsClaimError),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                          _SectionTitle(title: s.questsTitle),
+                          const SizedBox(height: 10),
+                          if (data.quests.isEmpty)
+                            _EmptyState(text: s.questsEmpty)
+                          else
+                            ...data.quests.map(
+                              (q) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _QuestCard(
+                                  quest: q,
+                                  onClaim: () => _onClaimOne(context, ref, q),
+                                ),
+                              ),
+                            ),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (data.quests.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: Text(
-                      s.questsEmpty,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   int _claimableCount(QuestsData d) =>
       d.quests.where((q) => q.isClaimable).length;
+
+  Future<void> _onClaimAll(BuildContext context, WidgetRef ref) async {
+    final s = S.of(context);
+    final n = await ref.read(questsViewModelProvider.notifier).claimAll();
+    if (!context.mounted) return;
+    _showRewardSnack(
+      context,
+      n > 0 ? s.questsClaimedReward(n) : s.questsNothingToClaim,
+    );
+  }
+
+  Future<void> _onClaimOne(
+    BuildContext context,
+    WidgetRef ref,
+    DailyQuest q,
+  ) async {
+    final s = S.of(context);
+    try {
+      await ref.read(questsViewModelProvider.notifier).claimQuest(q.questKey);
+      if (!context.mounted) return;
+      _showRewardSnack(
+        context,
+        s.questsClaimSuccess(q.xpReward, q.coinsReward),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      _showRewardSnack(context, s.questsClaimError, error: true);
+    }
+  }
+
+  void _showRewardSnack(
+    BuildContext context,
+    String text, {
+    bool error = false,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: error
+            ? Colors.redAccent.shade400
+            : AppColors.electricPurple,
+        content: Row(
+          children: [
+            Icon(
+              error ? Icons.error_outline : Icons.celebration,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// HEADER
+// ════════════════════════════════════════════════════════════════════════
+
+class _Header extends StatelessWidget {
+  final String title;
+  const _Header({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// BACKGROUND
+// ════════════════════════════════════════════════════════════════════════
+
+class _AnimatedBackground extends StatelessWidget {
+  const _AnimatedBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF1A0E3D),
+            Color(0xFF0F0824),
+            Color(0xFF0A0518),
+          ],
+          stops: [0.0, 0.5, 1.0],
+        ),
+      ),
+      child: SizedBox.expand(
+        child: _BlobsOverlay(),
+      ),
+    );
+  }
+}
+
+class _BlobsOverlay extends StatelessWidget {
+  const _BlobsOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Positioned(
+          top: -80,
+          right: -60,
+          child: _glow(220, AppColors.electricPurple.withValues(alpha: 0.55)),
+        ),
+        Positioned(
+          top: 200,
+          left: -80,
+          child: _glow(260, AppColors.coolCyan.withValues(alpha: 0.35)),
+        ),
+        Positioned(
+          bottom: -100,
+          right: -40,
+          child: _glow(280, const Color(0xFFFF4D8D).withValues(alpha: 0.30)),
+        ),
+      ],
+    );
+  }
+
+  Widget _glow(double size, Color color) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+    ),
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// HERO CARD — Nivel + XP + Streak
+// ════════════════════════════════════════════════════════════════════════
 
 class _HeroCard extends StatelessWidget {
   final QuestProfile profile;
@@ -118,29 +278,29 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.electricPurple, AppColors.coolCyan],
+          colors: [
+            Color(0xFF6E4DFF),
+            Color(0xFF8A5BFF),
+            Color(0xFF3BB8FF),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.electricPurple.withValues(alpha: 0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.2),
-                radius: 26,
-                child: Text(
-                  '${profile.level}',
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
+              _LevelBadge(level: profile.level),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -148,51 +308,109 @@ class _HeroCard extends StatelessWidget {
                   children: [
                     Text(
                       S.of(context).questsLevel(profile.level),
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      S.of(context).questsXpProgress(profile.xpIntoLevel, profile.xpToNextLevel),
+                      S.of(context).questsXpProgress(
+                        profile.xpIntoLevel,
+                        profile.xpToNextLevel,
+                      ),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
               if (streak.multiplierLabel != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.colors.surfaceHighest.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    streak.multiplierLabel ?? "",
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                _MultiplierPill(label: streak.multiplierLabel!),
             ],
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: profile.levelProgressPercent / 100,
-              minHeight: 8,
-              backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.2),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Colors.white),
+          _AnimatedProgressBar(
+            value: profile.levelProgressPercent / 100,
+            background: Colors.white.withValues(alpha: 0.22),
+            color: Colors.white,
+            height: 10,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LevelBadge extends StatelessWidget {
+  final int level;
+  const _LevelBadge({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFD93D).withValues(alpha: 0.55),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          '$level',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            shadows: [
+              Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiplierPill extends StatelessWidget {
+  final String label;
+  const _MultiplierPill({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.flash_on, color: Color(0xFFFFD93D), size: 14),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
             ),
           ),
         ],
@@ -200,6 +418,10 @@ class _HeroCard extends StatelessWidget {
     );
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// SUMMARY CARDS (Completed | XP today | Streak)
+// ════════════════════════════════════════════════════════════════════════
 
 class _SummaryRow extends StatelessWidget {
   final QuestSummary summary;
@@ -214,8 +436,12 @@ class _SummaryRow extends StatelessWidget {
         Expanded(
           child: _MetricCard(
             label: s.questsSummaryCompleted,
-            value: s.questsSummaryCompletedValue(summary.completed, summary.totalQuests),
-            icon: Icons.check_circle_outline,
+            value: s.questsSummaryCompletedValue(
+              summary.completed,
+              summary.totalQuests,
+            ),
+            icon: Icons.check_circle,
+            tint: const Color(0xFF2BD995),
           ),
         ),
         const SizedBox(width: 10),
@@ -223,7 +449,8 @@ class _SummaryRow extends StatelessWidget {
           child: _MetricCard(
             label: s.questsSummaryXpToday,
             value: '${summary.totalXpToday}',
-            icon: Icons.bolt_outlined,
+            icon: Icons.bolt,
+            tint: const Color(0xFFFFD93D),
           ),
         ),
         const SizedBox(width: 10),
@@ -231,7 +458,8 @@ class _SummaryRow extends StatelessWidget {
           child: _MetricCard(
             label: s.questsSummaryStreak,
             value: s.questsStreakDays(streak.current),
-            icon: Icons.local_fire_department_outlined,
+            icon: Icons.local_fire_department,
+            tint: const Color(0xFFFF5E5E),
           ),
         ),
       ],
@@ -243,40 +471,52 @@ class _MetricCard extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
+  final Color tint;
   const _MetricCard({
     required this.label,
     required this.value,
     required this.icon,
+    required this.tint,
   });
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 18, color: scheme.primary),
-          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: tint.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: tint),
+          ),
+          const SizedBox(height: 10),
           Text(
             value,
             style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 12,
-              color: scheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -284,6 +524,48 @@ class _MetricCard extends StatelessWidget {
     );
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// SECTION TITLE
+// ════════════════════════════════════════════════════════════════════════
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.electricPurple, AppColors.coolCyan],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// CLAIM ALL BUTTON
+// ════════════════════════════════════════════════════════════════════════
 
 class _ClaimAllButton extends StatelessWidget {
   final int count;
@@ -294,22 +576,62 @@ class _ClaimAllButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.celebration),
-        label: Text(S.of(context).questsClaimAll(count)),
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          backgroundColor: AppColors.electricPurple,
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFD93D), Color(0xFFFF8B33), Color(0xFFFF4D8D)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF8B33).withValues(alpha: 0.45),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.celebration, color: Colors.white, size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    S.of(context).questsClaimAll(count),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════
+// QUEST CARD (gamificado, por categoria)
+// ════════════════════════════════════════════════════════════════════════
 
 class _QuestCard extends StatelessWidget {
   final DailyQuest quest;
@@ -318,30 +640,63 @@ class _QuestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final claimed = quest.isClaimed;
     final claimable = quest.isClaimable;
+    final palette = _paletteFor(quest);
+    final icon = _iconFor(quest.icon);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: claimed
+              ? [
+                  Colors.white.withValues(alpha: 0.04),
+                  Colors.white.withValues(alpha: 0.02),
+                ]
+              : [
+                  palette.start.withValues(alpha: 0.18),
+                  palette.end.withValues(alpha: 0.08),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: claimable
-              ? AppColors.electricPurple
-              : Theme.of(context).dividerColor,
-          width: claimable ? 1.5 : 1,
+              ? palette.end
+              : Colors.white.withValues(alpha: 0.08),
+          width: claimable ? 2 : 1,
         ),
+        boxShadow: claimable
+            ? [
+                BoxShadow(
+                  color: palette.end.withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : const [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                quest.icon,
-                style: const TextStyle(fontSize: 28),
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [palette.start, palette.end],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -350,9 +705,12 @@ class _QuestCard extends StatelessWidget {
                   children: [
                     Text(
                       quest.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
                         fontSize: 15,
+                        color: Colors.white.withValues(
+                          alpha: claimed ? 0.55 : 1,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -360,7 +718,7 @@ class _QuestCard extends StatelessWidget {
                       quest.description,
                       style: TextStyle(
                         fontSize: 12,
-                        color: scheme.onSurface.withValues(alpha: 0.7),
+                        color: Colors.white.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -369,58 +727,49 @@ class _QuestCard extends StatelessWidget {
               _RewardChip(
                 xp: quest.xpReward,
                 coins: quest.coinsReward,
+                tint: palette.end,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: quest.progressPercent / 100,
-              minHeight: 6,
-              backgroundColor: scheme.onSurface.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                claimed
-                    ? Colors.green
-                    : (claimable
-                        ? AppColors.electricPurple
-                        : AppColors.coolCyan),
-              ),
-            ),
+          const SizedBox(height: 14),
+          _AnimatedProgressBar(
+            value: quest.progressPercent / 100,
+            background: Colors.white.withValues(alpha: 0.08),
+            color: claimed
+                ? const Color(0xFF2BD995)
+                : (claimable ? palette.end : palette.start),
+            height: 8,
+            gradient: claimed
+                ? null
+                : [palette.start, palette.end],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                S.of(context).questsProgressCount(quest.currentCount, quest.targetCount),
+                S.of(context).questsProgressCount(
+                  quest.currentCount,
+                  quest.targetCount,
+                ),
                 style: TextStyle(
                   fontSize: 12,
-                  color: scheme.onSurface.withValues(alpha: 0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               if (claimed)
                 _StatusPill(
                   text: S.of(context).questsStatusClaimed,
-                  color: Colors.green,
+                  color: const Color(0xFF2BD995),
+                  icon: Icons.check_circle,
                 )
               else if (claimable)
-                FilledButton(
-                  onPressed: onClaim,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.electricPurple,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  child: Text(S.of(context).questsActionClaim),
-                )
+                _ClaimButton(onTap: onClaim, color: palette.end)
               else
                 _StatusPill(
                   text: S.of(context).questsStatusInProgress,
-                  color: scheme.onSurface.withValues(alpha: 0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
             ],
           ),
@@ -430,39 +779,175 @@ class _QuestCard extends StatelessWidget {
   }
 }
 
+class _QuestPalette {
+  final Color start;
+  final Color end;
+  const _QuestPalette(this.start, this.end);
+}
+
+_QuestPalette _paletteFor(DailyQuest q) {
+  switch (q.category) {
+    case 'engagement':
+      return const _QuestPalette(Color(0xFF6E4DFF), Color(0xFF3BB8FF));
+    case 'social':
+      return const _QuestPalette(Color(0xFFFF4D8D), Color(0xFFFFD93D));
+    case 'creator':
+      return const _QuestPalette(Color(0xFF2BD995), Color(0xFF3BB8FF));
+    default:
+      return const _QuestPalette(Color(0xFF6E4DFF), Color(0xFFFF4D8D));
+  }
+}
+
+IconData _iconFor(String key) {
+  switch (key) {
+    case 'Play':
+      return Icons.play_circle;
+    case 'Heart':
+      return Icons.favorite;
+    case 'MessageCircle':
+      return Icons.chat_bubble;
+    case 'UserPlus':
+      return Icons.person_add;
+    case 'Share2':
+      return Icons.share;
+    case 'Camera':
+      return Icons.camera_alt;
+    default:
+      return Icons.stars;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// REWARD CHIP / CLAIM BUTTON / STATUS PILL
+// ════════════════════════════════════════════════════════════════════════
+
 class _RewardChip extends StatelessWidget {
   final int xp;
   final int coins;
-  const _RewardChip({required this.xp, required this.coins});
+  final Color tint;
+  const _RewardChip({
+    required this.xp,
+    required this.coins,
+    required this.tint,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.electricPurple.withValues(alpha: 0.15),
+        color: tint.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tint.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            '+$xp XP',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              color: AppColors.electricPurple,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.bolt, size: 12, color: Color(0xFFFFD93D)),
+              const SizedBox(width: 2),
+              Text(
+                '+$xp',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          Text(
-            S.of(context).questsRewardCoins(coins),
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 11,
-            ),
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              const Icon(Icons.monetization_on,
+                  size: 11, color: Color(0xFFFFB84D)),
+              const SizedBox(width: 2),
+              Text(
+                '+$coins',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ClaimButton extends StatefulWidget {
+  final VoidCallback onTap;
+  final Color color;
+  const _ClaimButton({required this.onTap, required this.color});
+
+  @override
+  State<_ClaimButton> createState() => _ClaimButtonState();
+}
+
+class _ClaimButtonState extends State<_ClaimButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final scale = 1.0 + 0.04 * math.sin(_ctrl.value * math.pi * 2);
+        return Transform.scale(
+          scale: scale,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(20),
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.55),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    S.of(context).questsActionClaim,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -470,22 +955,114 @@ class _RewardChip extends StatelessWidget {
 class _StatusPill extends StatelessWidget {
   final String text;
   final Color color;
-  const _StatusPill({required this.text, required this.color});
+  final IconData? icon;
+  const _StatusPill({required this.text, required this.color, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: color.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// ANIMATED PROGRESS BAR
+// ════════════════════════════════════════════════════════════════════════
+
+class _AnimatedProgressBar extends StatelessWidget {
+  final double value;
+  final Color background;
+  final Color color;
+  final List<Color>? gradient;
+  final double height;
+  const _AnimatedProgressBar({
+    required this.value,
+    required this.background,
+    required this.color,
+    required this.height,
+    this.gradient,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(height),
+      child: Stack(
+        children: [
+          Container(height: height, color: background),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: value.clamp(0, 1)),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.easeOutCubic,
+            builder: (context, v, _) => FractionallySizedBox(
+              widthFactor: v,
+              child: Container(
+                height: height,
+                decoration: BoxDecoration(
+                  gradient: gradient != null
+                      ? LinearGradient(colors: gradient!)
+                      : null,
+                  color: gradient == null ? color : null,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// EMPTY + ERROR
+// ════════════════════════════════════════════════════════════════════════
+
+class _EmptyState extends StatelessWidget {
+  final String text;
+  const _EmptyState({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Center(
+        child: Column(
+          children: [
+            const Icon(Icons.emoji_events,
+                color: Color(0xFFFFD93D), size: 56),
+            const SizedBox(height: 12),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -503,12 +1080,18 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 40),
+          const Icon(Icons.error_outline, size: 40, color: Colors.white),
           const SizedBox(height: 12),
-          Text(s.questsLoadError),
+          Text(
+            s.questsLoadError,
+            style: const TextStyle(color: Colors.white),
+          ),
           const SizedBox(height: 12),
           FilledButton(
             onPressed: onRetry,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.electricPurple,
+            ),
             child: Text(s.questsTryAgain),
           ),
         ],
