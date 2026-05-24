@@ -22,6 +22,8 @@ import '../../../domain/models/live_reaction_event.dart';
 import '../../../domain/models/user.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/follow_button.dart';
+import '../../live/shared/widgets/hud/hud.dart';
+import '../../live/shared/widgets/video/live_gradients.dart';
 import 'gifts_overlay.dart';
 import 'gift_animation_overlay.dart';
 import 'floating_hearts_overlay.dart';
@@ -321,8 +323,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           _buildVideoLayer(),
 
           // ── 2. Gradients para legibilidade ──
-          const _TopGradient(),
-          const _BottomGradient(),
+          const LiveTopGradient(),
+          const LiveBottomGradient(),
 
           // ── 3. Top bar ──
           Positioned(
@@ -484,10 +486,10 @@ class _TopBar extends StatelessWidget {
             Expanded(child: _StreamerIdentityBar(room: room)),
             const SizedBox(width: 8),
             // Stack de avatares de viewers + total (350+ etc.)
-            _ViewersStack(viewerCount: viewerCount),
+            ViewersStack(viewerCount: viewerCount),
             const SizedBox(width: 8),
             // More menu (⋯)
-            _TopHudCircleIcon(
+            TopHudCircleIcon(
               icon: Icons.more_horiz_rounded,
               onTap: () => _MoreSheet.show(context, onShare: onShare),
             ),
@@ -499,9 +501,9 @@ class _TopBar extends StatelessWidget {
           padding: const EdgeInsets.only(left: 36),
           child: Row(
             children: [
-              _LivePill(label: s.liveFeedBadgeLive),
+              LivePill(label: s.liveFeedBadgeLive),
               const SizedBox(width: 8),
-              _MetricPill(
+              MetricPill(
                 icon: Icons.visibility_rounded,
                 value: _formatCount(viewerCount),
               ),
@@ -522,80 +524,11 @@ class _TopBar extends StatelessWidget {
 }
 
 // ── Top HUD átomos ────────────────────────────────────────────────────
-
-/// Pílula `LIVE` vermelha do mockup.
-class _LivePill extends StatelessWidget {
-  const _LivePill({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE63946),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFE63946).withValues(alpha: 0.35),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
-}
-
-/// Pílula escura com ícone + valor (viewers, likes).
-class _MetricPill extends StatelessWidget {
-  const _MetricPill({
-    required this.icon,
-    required this.value,
-    this.iconColor = Colors.white,
-  });
-  final IconData icon;
-  final String value;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: iconColor, size: 13),
-          const SizedBox(width: 5),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//
+// `LivePill`, `MetricPill`, `ViewersStack` e `TopHudCircleIcon` foram
+// extraídos para `lib/ui/live/shared/widgets/hud/` (barrel `hud.dart`).
+// Aqui mantemos apenas o wrapper `_LiveLikesPill` que adiciona a cor
+// rosa específica do contador de likes.
 
 /// Pílula de likes (escuta o contador local que já é incrementado por
 /// `_onTapLike` + eventos socket no `_LivePlayerScreenState`).
@@ -606,7 +539,7 @@ class _LiveLikesPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _MetricPill(
+    return MetricPill(
       icon: Icons.favorite_rounded,
       iconColor: const Color(0xFFFF3D6E),
       value: _format(initial),
@@ -621,112 +554,10 @@ class _LiveLikesPill extends StatelessWidget {
 }
 
 /// Stack horizontal de até 3 avatares + contador (ex.: "350+").
-class _ViewersStack extends ConsumerWidget {
-  const _ViewersStack({required this.viewerCount});
-  final int viewerCount;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Por ora usamos avatares "placeholder" coloridos; quando tivermos
-    // a lista real de viewers no estado, plugamos aqui.
-    final colors = const [
-      Color(0xFFFF9F43),
-      Color(0xFF9C88FF),
-      Color(0xFF4DD0E1),
-    ];
-    return Container(
-      padding: const EdgeInsets.fromLTRB(4, 3, 10, 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 46,
-            height: 22,
-            child: Stack(
-              children: [
-                for (var i = 0; i < colors.length; i++)
-                  Positioned(
-                    left: i * 12.0,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colors[i],
-                        border: Border.all(
-                          color: const Color(0xFF0A0B14),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            _formatBucket(viewerCount),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _formatBucket(int n) {
-    if (n <= 0) return '0';
-    if (n < 50) return '$n';
-    if (n < 100) return '50+';
-    if (n < 500) return '${(n ~/ 100) * 100}+';
-    if (n < 1000) return '500+';
-    if (n < 10000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return '${(n / 1000).round()}K+';
-  }
-}
+/// ⚠️ Migrado para `lib/ui/live/shared/widgets/hud/viewers_stack.dart`.
 
 /// Círculo glass usado para botões soltos no topo (more menu).
-class _TopHudCircleIcon extends StatelessWidget {
-  const _TopHudCircleIcon({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.10),
-                width: 0.5,
-              ),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-        ),
-      ),
-    );
-  }
-}
+/// ⚠️ Migrado para `lib/ui/live/shared/widgets/hud/top_hud_circle_icon.dart`.
 
 /// Bottom sheet moderno (glassmorphism + dark) que substitui o `PopupMenuButton`
 /// material padrão. Mostra ações secundárias da live.
@@ -2188,48 +2019,9 @@ class _InlineAction extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────
 // Gradientes de legibilidade
 // ────────────────────────────────────────────────────────────────────────
-
-class _TopGradient extends StatelessWidget {
-  const _TopGradient();
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        height: 200,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black54, Colors.transparent],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomGradient extends StatelessWidget {
-  const _BottomGradient();
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
-          height: 280,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.transparent, Colors.black87],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0.0, 1.0],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// ⚠️ `_TopGradient` e `_BottomGradient` foram extraídos para
+// `lib/ui/live/shared/widgets/video/live_gradients.dart`
+// (renomeados para `LiveTopGradient` e `LiveBottomGradient`).
 
 // ────────────────────────────────────────────────────────────────────────
 // Haptic helper (sem dependência externa — uso seguro do HapticFeedback)
