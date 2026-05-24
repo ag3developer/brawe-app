@@ -10,6 +10,7 @@ library;
 
 export 'live_likes_pill.dart';
 export 'live_pill.dart';
+export 'live_top_bar.dart';
 export 'metric_pill.dart';
 export 'streamer_identity_bar.dart';
 export 'top_hud_circle_icon.dart';

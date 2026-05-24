@@ -23,7 +23,6 @@ import '../../live/shared/widgets/chat/chat.dart';
 import '../../live/shared/widgets/commerce/commerce.dart';
 import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
-import '../../live/shared/widgets/sheets/sheets.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
@@ -331,7 +330,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               bottom: false,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: _TopBar(
+                child: LiveTopBar(
                   room: widget.room,
                   viewerCount: commentsState.viewerCount,
                   likesCount: _likesCount,
@@ -440,86 +439,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       );
 }
 
-// ────────────────────────────────────────────────────────────────────────
-// Top bar
-// ────────────────────────────────────────────────────────────────────────
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({
-    required this.room,
-    required this.viewerCount,
-    required this.likesCount,
-    required this.roomId,
-    required this.onBack,
-    required this.onShare,
-  });
-  final LiveRoom room;
-  final int viewerCount;
-  final int likesCount;
-  final String roomId;
-  final VoidCallback onBack;
-  final VoidCallback onShare;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ─── Linha 1: identidade + viewers stack + more ───────────────
-        Row(
-          children: [
-            // X close
-            GestureDetector(
-              onTap: onBack,
-              child: const SizedBox(
-                width: 36,
-                height: 36,
-                child: Icon(Icons.close_rounded,
-                    color: Colors.white, size: 26),
-              ),
-            ),
-            const SizedBox(width: 4),
-            // Identity pill (avatar + nome + verified + estrela/score)
-            Expanded(child: StreamerIdentityBar(room: room)),
-            const SizedBox(width: 8),
-            // Stack de avatares de viewers + total (350+ etc.)
-            ViewersStack(viewerCount: viewerCount),
-            const SizedBox(width: 8),
-            // More menu (⋯)
-            TopHudCircleIcon(
-              icon: Icons.more_horiz_rounded,
-              onTap: () => MoreSheet.show(context, onShare: onShare),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // ─── Linha 2: pílulas LIVE · views · likes ───────────────────
-        Padding(
-          padding: const EdgeInsets.only(left: 36),
-          child: Row(
-            children: [
-              LivePill(label: s.liveFeedBadgeLive),
-              const SizedBox(width: 8),
-              MetricPill(
-                icon: Icons.visibility_rounded,
-                value: _formatCount(viewerCount),
-              ),
-              const SizedBox(width: 8),
-              LiveLikesPill(roomId: roomId, initial: likesCount),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-}
+// ⚠️ _TopBar migrado para lib/ui/live/shared/widgets/hud/live_top_bar.dart
+//    (renomeado para LiveTopBar público).
 
 // ⚠️ _MoreSheet + _MoreTile migrados para
 //    lib/ui/live/shared/widgets/sheets/more_sheet.dart
