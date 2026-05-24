@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/models/live_gift.dart';
-import '../view_models/live_room_gifts_view_model.dart';
-import '../../../gen/l10n/app_localizations.dart';
+import '../../../../../domain/models/live_gift.dart';
+import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 
 /// Limiar (em créditos) acima do qual o presente vira "premium" —
 /// dispara animação fullscreen com efeito de luz/blur.

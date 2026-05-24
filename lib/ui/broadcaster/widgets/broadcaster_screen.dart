@@ -17,7 +17,7 @@ import '../../../domain/models/user.dart';
 import '../../live_feed/view_models/battle_view_model.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
-import '../../live_feed/widgets/gift_animation_overlay.dart';
+import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
 import '../../live_feed/widgets/live_comments_overlay.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';

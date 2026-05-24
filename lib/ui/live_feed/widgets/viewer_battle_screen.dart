@@ -10,7 +10,7 @@ import '../../../domain/models/battle_state.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/battle_view_model.dart';
 import 'battle_gift_alert.dart';
-import 'gifts_overlay.dart';
+import '../../live/shared/widgets/overlays/gifts_overlay.dart';
 import 'battle_score_bar.dart';
 import 'battle_timer.dart';
 

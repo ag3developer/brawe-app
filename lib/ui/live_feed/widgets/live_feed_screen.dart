@@ -12,8 +12,8 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/live_room.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/follow_button.dart';
-import 'gifts_overlay.dart';
-import 'gift_animation_overlay.dart';
+import '../../live/shared/widgets/overlays/gifts_overlay.dart';
+import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
 import 'live_comments_overlay.dart';
 import '../../../gen/l10n/app_localizations.dart';
 

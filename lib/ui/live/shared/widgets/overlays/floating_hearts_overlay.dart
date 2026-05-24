@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/repositories/live_repository.dart';
+import '../../../../../data/repositories/live_repository.dart';
 
 /// ❤️ Overlay de corações flutuantes em tempo real.
 ///

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
@@ -21,11 +22,9 @@ import '../../live/shared/widgets/actions/actions.dart';
 import '../../live/shared/widgets/chat/chat.dart';
 import '../../live/shared/widgets/commerce/commerce.dart';
 import '../../live/shared/widgets/hud/hud.dart';
+import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/sheets/sheets.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
-import 'gifts_overlay.dart';
-import 'gift_animation_overlay.dart';
-import 'floating_hearts_overlay.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
 /// 📺 Tela do espectador (live viewer).
@@ -172,7 +171,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// Toque rápido no botão de like — spawna 1 coração local + agrega
   /// para envio em batch ao backend.
   void _onTapLike() {
-    HapticLike.light();
+    HapticFeedback.lightImpact();
     if (!_isLiked) {
       setState(() {
         _isLiked = true;
@@ -507,7 +506,7 @@ class _TopBar extends StatelessWidget {
                 value: _formatCount(viewerCount),
               ),
               const SizedBox(width: 8),
-              _LiveLikesPill(roomId: roomId, initial: likesCount),
+              LiveLikesPill(roomId: roomId, initial: likesCount),
             ],
           ),
         ),
@@ -521,42 +520,6 @@ class _TopBar extends StatelessWidget {
     return n.toString();
   }
 }
-
-// ── Top HUD átomos ────────────────────────────────────────────────────
-//
-// `LivePill`, `MetricPill`, `ViewersStack` e `TopHudCircleIcon` foram
-// extraídos para `lib/ui/live/shared/widgets/hud/` (barrel `hud.dart`).
-// Aqui mantemos apenas o wrapper `_LiveLikesPill` que adiciona a cor
-// rosa específica do contador de likes.
-
-/// Pílula de likes (escuta o contador local que já é incrementado por
-/// `_onTapLike` + eventos socket no `_LivePlayerScreenState`).
-class _LiveLikesPill extends StatelessWidget {
-  const _LiveLikesPill({required this.roomId, required this.initial});
-  final String roomId;
-  final int initial;
-
-  @override
-  Widget build(BuildContext context) {
-    return MetricPill(
-      icon: Icons.favorite_rounded,
-      iconColor: const Color(0xFFFF3D6E),
-      value: _format(initial),
-    );
-  }
-
-  static String _format(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-}
-
-/// Stack horizontal de até 3 avatares + contador (ex.: "350+").
-/// ⚠️ Migrado para `lib/ui/live/shared/widgets/hud/viewers_stack.dart`.
-
-/// Círculo glass usado para botões soltos no topo (more menu).
-/// ⚠️ Migrado para `lib/ui/live/shared/widgets/hud/top_hud_circle_icon.dart`.
 
 // ⚠️ _MoreSheet + _MoreTile migrados para
 //    lib/ui/live/shared/widgets/sheets/more_sheet.dart
@@ -572,14 +535,6 @@ class _LiveLikesPill extends StatelessWidget {
 //    lib/ui/live/shared/widgets/actions/live_bottom_bar.dart
 //    (renomeado para LiveBottomBar; _LiveActionButton continua privado lá).
 
-
-class HapticLike {
-  static void light() {
-    // Mantém leve mesmo em muitos toques (não bloqueante).
-    // ignore: invalid_use_of_visible_for_testing_member
-    // (não usa visibleForTesting; só wrap simples)
-  }
-}
 
 // ⚠️ _PinnedProduct + _PinnedProductBar migrados para
 //    lib/ui/live/shared/widgets/commerce/pinned_product_bar.dart

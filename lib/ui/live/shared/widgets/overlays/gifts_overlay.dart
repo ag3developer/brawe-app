@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/themes/app_colors.dart';
-import '../../core/ui/app_spacing.dart';
-import '../view_models/gift_catalog_view_model.dart';
-import '../view_models/send_gift_view_model.dart';
-import '../../core/view_models/credits_view_model.dart';
-import '../../../domain/models/gift.dart';
-import '../../../gen/l10n/app_localizations.dart';
+import '../../../../core/themes/app_colors.dart';
+import '../../../../core/ui/app_spacing.dart';
+import '../../../../live_feed/view_models/gift_catalog_view_model.dart';
+import '../../../../live_feed/view_models/send_gift_view_model.dart';
+import '../../../../core/view_models/credits_view_model.dart';
+import '../../../../../domain/models/gift.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 
 class GiftsOverlay extends ConsumerStatefulWidget {
   final String roomId;

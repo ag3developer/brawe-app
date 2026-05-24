@@ -8,6 +8,7 @@
 /// ```
 library;
 
+export 'live_likes_pill.dart';
 export 'live_pill.dart';
 export 'metric_pill.dart';
 export 'streamer_identity_bar.dart';
