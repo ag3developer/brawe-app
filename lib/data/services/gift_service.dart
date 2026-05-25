@@ -58,4 +58,23 @@ class GiftService {
     }
     return [];
   }
+
+  /// Retorna o nível atual do gifter (espectador) — usado no header da
+  /// sacola de presentes para exibir avatar + chip de nível + barra de XP.
+  ///
+  /// Endpoint: `GET /live/gifts/me/level`
+  /// Payload:
+  /// ```json
+  /// { "level": 12, "xp": 4500, "badge": {...}, "next_level": {...} }
+  /// ```
+  Future<Map<String, dynamic>> getMyGifterLevel() async {
+    final response = await _dio.get('/live/gifts/me/level');
+    final raw = response.data;
+    if (raw is Map<String, dynamic>) {
+      final data = raw['data'];
+      if (data is Map<String, dynamic>) return data;
+      return raw;
+    }
+    return <String, dynamic>{};
+  }
 }

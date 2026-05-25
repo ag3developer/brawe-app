@@ -283,7 +283,13 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
 
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(streamUrl),
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: true,
+        allowBackgroundPlayback: false,
+      ),
+      httpHeaders: const {
+        'User-Agent': 'BraweApp/1.0 (HLS-Live)',
+      },
     );
     try {
       await _controller!.initialize();
@@ -292,7 +298,8 @@ class _LiveRoomItemState extends ConsumerState<LiveRoomItem> {
           _isInitialized = true;
         });
         _controller!.play();
-        _controller!.setLooping(true);
+        // Live HLS: NÃO setar loop — quebra continuidade do stream.
+        _controller!.setLooping(false);
         _controller!.setVolume(1.0);
         WakelockPlus.enable();
       }

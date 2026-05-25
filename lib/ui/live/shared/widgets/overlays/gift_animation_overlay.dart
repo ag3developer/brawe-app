@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import '../level_chip.dart';
 
 /// Limiar (em créditos) acima do qual o presente vira "premium" —
 /// dispara animação fullscreen com efeito de luz/blur.
@@ -23,9 +24,26 @@ class GiftAnimationOverlay extends ConsumerStatefulWidget {
 }
 
 class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
-  final Set<String> _shownPremium = {};
-  final Set<String> _shownToast = {};
+  // 🔒 Dedup por `transaction_id` (vem do backend, único por gift).
+  // Antes usávamos `senderId::giftId::quantity` — e como rosa+rosa fora da
+  // janela de combo voltavam ambos com `quantity=1`, a 2ª rosa era
+  // descartada silenciosamente (bug "às vezes aparece, às vezes não").
+  // Também limpamos o set quando passa do limite, para não vazar memória
+  // numa live longa.
+  static const int _kDedupCap = 300;
+  final Set<String> _shownPremium = <String>{};
+  final Set<String> _shownToast = <String>{};
   final List<LiveGift> _activeToasts = [];
+
+  void _rememberShown(Set<String> bag, String id) {
+    bag.add(id);
+    if (bag.length > _kDedupCap) {
+      // FIFO trim — remove o(s) mais antigo(s) (Set mantém ordem de inserção).
+      final overflow = bag.length - _kDedupCap;
+      final toRemove = bag.take(overflow).toList(growable: false);
+      bag.removeAll(toRemove);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +51,22 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
       liveRoomGiftsViewModelProvider(widget.roomId),
       (prev, next) {
         for (final g in next) {
-          final isPremium = g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
-              g.value >= _kPremiumThreshold;
-          final comboKey = '${g.senderId}::${g.giftId}::${g.quantity}';
+          final isPremium =
+              g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
+                  g.value >= _kPremiumThreshold;
+
+          // Chave única do gift (transaction_id). Em combos, o view-model
+          // mantém o mesmo `id` e só incrementa `quantity` → não re-dispara
+          // a animação (correto: TikTok-style, mostra 1x e fica visível).
+          final dedupKey = g.id;
 
           if (isPremium) {
-            if (_shownPremium.contains(comboKey)) continue;
-            _shownPremium.add(comboKey);
+            if (_shownPremium.contains(dedupKey)) continue;
+            _rememberShown(_shownPremium, dedupKey);
             _showPremiumBurst(g);
           } else {
-            // Show small gift toast
-            final toastKey = '${g.senderId}::${g.giftId}';
-            if (_shownToast.contains(comboKey)) continue;
-            _shownToast.add(comboKey);
+            if (_shownToast.contains(dedupKey)) continue;
+            _rememberShown(_shownToast, dedupKey);
             _showGiftToast(g);
           }
         }
@@ -151,92 +172,154 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
 
   @override
   Widget build(BuildContext context) {
+    // ⚠️ OverlayEntry NÃO tem ancestor Material/Directionality por padrão.
+    // Qualquer Text descendente ganha a "linha amarela double underline" do
+    // default textStyle de erro do Flutter. Por isso embrulhamos o conteúdo
+    // em Directionality + Material(transparency) + DefaultTextStyle DENTRO
+    // do Positioned (o Positioned precisa ser filho direto do Overlay Stack).
     return Positioned(
-      bottom: 120,
+      // ⬆️ Subimos para 220px (antes 200) para o toast NUNCA cobrir o
+      // LiveActionBar do broadcaster (Pausar/Batalha/Co-host/Mais/Encerrar).
+      // O action bar fica em bottom:16 + SafeArea + altura ~120 = ~180-200px,
+      // então 220 garante folga.
+      bottom: 220,
       left: 12,
-      child: IgnorePointer(
-        child: AnimatedBuilder(
-          animation: _ctrl,
-          builder: (_, __) => SlideTransition(
-            position: _slide,
-            child: FadeTransition(
-              opacity: _fade,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Gift icon: use network image or emoji fallback
-                    if (widget.gift.giftIconUrl != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          widget.gift.giftIconUrl!,
-                          width: 32,
-                          height: 32,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Text(
-                            _giftEmoji(widget.gift.giftName),
-                            style: const TextStyle(fontSize: 26),
-                          ),
-                        ),
-                      )
-                    else
-                      Text(
-                        _giftEmoji(widget.gift.giftName),
-                        style: const TextStyle(fontSize: 26),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          type: MaterialType.transparency,
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              decoration: TextDecoration.none,
+              decorationColor: Colors.transparent,
+              decorationThickness: 0,
+            ),
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _ctrl,
+                builder: (_, __) => SlideTransition(
+                  position: _slide,
+                  child: FadeTransition(
+                    opacity: _fade,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.78),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                       ),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.gift.senderName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 1) Avatar circular
+                          _AvatarCircle(
+                            url: widget.gift.senderAvatarUrl,
+                            fallback: widget.gift.senderName,
                           ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              widget.gift.giftName,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.75),
-                                fontSize: 11,
-                              ),
-                            ),
-                            if (widget.gift.quantity > 1) ...[
-                              const SizedBox(width: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF4D8B).withValues(alpha: 0.85),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'x${widget.gift.quantity}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
+                          const SizedBox(width: 8),
+                          // 2) Nome + chip de level + "enviou {gift}"
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Chip de nível (💎 Lv34) estilo TikTok
+                                  LevelChip(
+                                    level: widget.gift.gifterLevel,
+                                    badge: widget.gift.gifterBadge,
+                                    colorHex: widget.gift.gifterColor,
+                                    imageUrl: widget.gift.gifterImageUrl,
                                   ),
-                                ),
+                                  const SizedBox(width: 6),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 160),
+                                    child: Text(
+                                      widget.gift.senderName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'enviou ',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.7),
+                                      fontSize: 11,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 120),
+                                    child: Text(
+                                      widget.gift.giftName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Color(0xFFFFD166),
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11,
+                                        decoration: TextDecoration.none,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
+                          ),
+                          const SizedBox(width: 10),
+                          // 3) Ícone do gift (à direita)
+                          if (widget.gift.giftIconUrl != null)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                widget.gift.giftIconUrl!,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => Text(
+                                  _giftEmoji(widget.gift.giftName),
+                                  style: const TextStyle(fontSize: 28, decoration: TextDecoration.none),
+                                ),
+                              ),
+                            )
+                          else
+                            Text(
+                              _giftEmoji(widget.gift.giftName),
+                              style: const TextStyle(fontSize: 28, decoration: TextDecoration.none),
+                            ),
+                          // 4) Multiplicador xN
+                          if (widget.gift.quantity > 1) ...[
+                            const SizedBox(width: 4),
+                            Text(
+                              'x${widget.gift.quantity}',
+                              style: const TextStyle(
+                                color: Color(0xFFFF4D8B),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
                           ],
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -246,6 +329,7 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
     );
   }
 }
+
 
 // ────────────────────────────────────────────────────────────────────────
 // Premium burst (fullscreen, ~2.5s)
@@ -283,7 +367,21 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
   Widget build(BuildContext context) {
     final s = S.of(context);
     return IgnorePointer(
-      child: AnimatedBuilder(
+      // 🛡️ Wrap em Directionality + Material + DefaultTextStyle: OverlayEntry
+      // não fornece ancestor Material/Directionality, então Text widgets sem
+      // estilo explícito renderizam com `decoration: double-underline yellow`
+      // (warning style) — exatamente as linhas amarelas que apareciam embaixo
+      // do nome do presenteador.
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          type: MaterialType.transparency,
+          child: DefaultTextStyle(
+          style: const TextStyle(
+            color: Colors.white,
+            decoration: TextDecoration.none,
+          ),
+          child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
           final t = _ctrl.value;
@@ -430,6 +528,69 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
           );
         },
       ),
+        ),
+      ),
+      ),
     );
   }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// TikTok-style helpers — avatar + level chip
+// ────────────────────────────────────────────────────────────────────────
+
+class _AvatarCircle extends StatelessWidget {
+  const _AvatarCircle({required this.url, required this.fallback});
+  final String? url;
+  final String fallback;
+
+  @override
+  Widget build(BuildContext context) {
+    const double size = 36;
+    final initial = fallback.trim().isNotEmpty ? fallback.trim()[0].toUpperCase() : '?';
+    final placeholder = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF4D8B), Color(0xFFFFD166)],
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+          decoration: TextDecoration.none,
+        ),
+      ),
+    );
+
+    if (url == null || url!.trim().isEmpty) return placeholder;
+    return ClipOval(
+      child: Image.network(
+        url!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder,
+        loadingBuilder: (ctx, child, p) => p == null ? child : placeholder,
+      ),
+    );
+  }
+}
+
+class _LevelChip extends StatelessWidget {
+  const _LevelChip({required this.level, this.badge, this.colorHex, this.imageUrl});
+  final int level;
+  final String? badge;
+  final String? colorHex;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) =>
+      LevelChip(level: level, badge: badge, colorHex: colorHex, imageUrl: imageUrl);
 }

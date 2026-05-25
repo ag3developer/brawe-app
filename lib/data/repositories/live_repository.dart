@@ -33,6 +33,7 @@ class LiveRepository {
   final Map<String, StreamController<LiveComment>> _commentControllers = {};
   final Map<String, StreamController<int>> _viewerCountControllers = {};
   final Map<String, StreamController<int>> _likeCountControllers = {};
+  final Map<String, StreamController<int>> _commentCountControllers = {};
   final Map<String, StreamController<LiveGift>> _giftControllers = {};
   final Map<String, StreamController<LiveViewerEvent>> _viewerEventControllers = {};
   final Map<String, StreamController<LiveReactionEvent>> _reactionControllers = {};
@@ -47,6 +48,7 @@ class LiveRepository {
   void Function(dynamic)? _onNewGift;
   void Function(dynamic)? _onLiveReaction;
   void Function(dynamic)? _onLikeCount;
+  void Function(dynamic)? _onCommentCount;
   void Function(dynamic)? _onGiftCountUpdate;
 
   LiveRepository(this._liveService, [SocketService? socketService])
@@ -327,6 +329,7 @@ class LiveRepository {
     _socketService?.off('gift_count_update', _onGiftCountUpdate);
     _socketService?.off(AppConstants.eventLiveReaction, _onLiveReaction);
     _socketService?.off(AppConstants.eventLikeCountUpdate, _onLikeCount);
+    _socketService?.off(AppConstants.eventCommentCountUpdate, _onCommentCount);
 
     for (final controller in _commentControllers.values) {
       controller.close();
@@ -337,12 +340,17 @@ class LiveRepository {
     for (final controller in _likeCountControllers.values) {
       controller.close();
     }
+    for (final controller in _commentCountControllers.values) {
+      controller.close();
+    }
     for (final controller in _giftControllers.values) {
       controller.close();
     }
 
     _commentControllers.clear();
     _viewerCountControllers.clear();
+    _likeCountControllers.clear();
+    _commentCountControllers.clear();
     _giftControllers.clear();
     for (final controller in _reactionControllers.values) {
       controller.close();
@@ -380,6 +388,9 @@ class LiveRepository {
     final likeCountController = _likeCountControllers.remove(roomId);
     likeCountController?.close();
 
+    final commentCountController = _commentCountControllers.remove(roomId);
+    commentCountController?.close();
+
     final giftController = _giftControllers.remove(roomId);
     giftController?.close();
 
@@ -411,6 +422,14 @@ class LiveRepository {
 
   Stream<int> watchLikeCount(String roomId) {
     final controller = _likeCountControllers.putIfAbsent(
+      roomId,
+      () => StreamController<int>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  Stream<int> watchCommentCount(String roomId) {
+    final controller = _commentCountControllers.putIfAbsent(
       roomId,
       () => StreamController<int>.broadcast(),
     );
@@ -563,6 +582,17 @@ class LiveRepository {
       _dispatchToIntControllers(_likeCountControllers, count, roomId: msgRoomId);
     };
     _socketService.on(AppConstants.eventLikeCountUpdate, _onLikeCount!);
+    _onCommentCount = (data) {
+      final payload = _asMap(data);
+      if (payload == null) return;
+      final msgRoomId = payload['room_id']?.toString();
+      final raw = payload['total_messages'] ?? payload['count'];
+      final count = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+      if (count == null) return;
+      debugPrint('LiveRepository: comment_count_update → room=$msgRoomId count=$count');
+      _dispatchToIntControllers(_commentCountControllers, count, roomId: msgRoomId);
+    };
+    _socketService.on(AppConstants.eventCommentCountUpdate, _onCommentCount!);
     _onNewMessage = (data) {
       debugPrint(
         'LiveRepository: Received event ${AppConstants.eventLiveChat}: $data',
@@ -766,7 +796,26 @@ class LiveRepository {
           payload['avatar_url']?.toString(),
       message: message,
       timestamp: timestamp,
+      // ─── Gifter level pin (TikTok-style) ───
+      gifterLevel: int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
+      gifterBadge: payload['gifter_badge']?.toString(),
+      gifterLabel: payload['gifter_label']?.toString(),
+      gifterColor: payload['gifter_color']?.toString(),
+      gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
     );
+  }
+
+  /// Resolve URL pública do badge PNG.
+  /// - Se já é absoluta (http/https), retorna direto.
+  /// - Se é caminho relativo (`/static/badges/lvNN.png`), prefixa com
+  ///   `AppConstants.connectApiBaseUrl` para virar URL completa.
+  /// - Se vazia/null, retorna null (cliente usa emoji fallback no chip).
+  String? _resolveBadgeUrl(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final v = raw.trim();
+    if (v.startsWith('http://') || v.startsWith('https://')) return v;
+    final base = AppConstants.connectApiBaseUrl.replaceAll(RegExp(r'/+$'), '');
+    return v.startsWith('/') ? '$base$v' : '$base/$v';
   }
 
   int? _parseViewerCount(dynamic data) {
@@ -819,6 +868,13 @@ class LiveRepository {
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
       value: int.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0,
       timestamp: timestamp,
+      // ─── Gifter level (TikTok-style chip) ───
+      gifterLevel: int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
+      gifterBadge: payload['gifter_badge']?.toString(),
+      gifterLabel: payload['gifter_label']?.toString(),
+      gifterColor: payload['gifter_color']?.toString(),
+      gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
+      levelUpgraded: payload['level_upgraded'] == true,
     );
   }
 

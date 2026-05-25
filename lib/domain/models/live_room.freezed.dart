@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$LiveRoom {
 
- String get id; String get slug; String get title; String? get description; String? get category; String get liveType; bool get isPrivate; String get status; int get viewerCount; int get totalLikes; bool get isPaused; DateTime? get pausedAt; String? get playbackId; String? get streamUrl; String? get rtmpUrl; String? get streamKey; String? get thumbnailUrl; String get streamerId; String get streamerName; String? get streamerAvatarUrl; String? get streamerUsername; bool get streamerVerified;
+ String get id; String get slug; String get title; String? get description; String? get category; String get liveType; bool get isPrivate; String get status; int get viewerCount; int get totalLikes; int get totalMessages; bool get isPaused; DateTime? get pausedAt; String? get playbackId; String? get streamUrl; String? get rtmpUrl; String? get streamKey; String? get thumbnailUrl; String get streamerId; String get streamerName; String? get streamerAvatarUrl; String? get streamerUsername; bool get streamerVerified;
 /// Create a copy of LiveRoom
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $LiveRoomCopyWith<LiveRoom> get copyWith => _$LiveRoomCopyWithImpl<LiveRoom>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveRoom&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackId, playbackId) || other.playbackId == playbackId)&&(identical(other.streamUrl, streamUrl) || other.streamUrl == streamUrl)&&(identical(other.rtmpUrl, rtmpUrl) || other.rtmpUrl == rtmpUrl)&&(identical(other.streamKey, streamKey) || other.streamKey == streamKey)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatarUrl, streamerAvatarUrl) || other.streamerAvatarUrl == streamerAvatarUrl)&&(identical(other.streamerUsername, streamerUsername) || other.streamerUsername == streamerUsername)&&(identical(other.streamerVerified, streamerVerified) || other.streamerVerified == streamerVerified));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveRoom&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.totalMessages, totalMessages) || other.totalMessages == totalMessages)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackId, playbackId) || other.playbackId == playbackId)&&(identical(other.streamUrl, streamUrl) || other.streamUrl == streamUrl)&&(identical(other.rtmpUrl, rtmpUrl) || other.rtmpUrl == rtmpUrl)&&(identical(other.streamKey, streamKey) || other.streamKey == streamKey)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatarUrl, streamerAvatarUrl) || other.streamerAvatarUrl == streamerAvatarUrl)&&(identical(other.streamerUsername, streamerUsername) || other.streamerUsername == streamerUsername)&&(identical(other.streamerVerified, streamerVerified) || other.streamerVerified == streamerVerified));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,isPaused,pausedAt,playbackId,streamUrl,rtmpUrl,streamKey,thumbnailUrl,streamerId,streamerName,streamerAvatarUrl,streamerUsername,streamerVerified]);
+int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,totalMessages,isPaused,pausedAt,playbackId,streamUrl,rtmpUrl,streamKey,thumbnailUrl,streamerId,streamerName,streamerAvatarUrl,streamerUsername,streamerVerified]);
 
 @override
 String toString() {
-  return 'LiveRoom(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, isPaused: $isPaused, pausedAt: $pausedAt, playbackId: $playbackId, streamUrl: $streamUrl, rtmpUrl: $rtmpUrl, streamKey: $streamKey, thumbnailUrl: $thumbnailUrl, streamerId: $streamerId, streamerName: $streamerName, streamerAvatarUrl: $streamerAvatarUrl, streamerUsername: $streamerUsername, streamerVerified: $streamerVerified)';
+  return 'LiveRoom(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, totalMessages: $totalMessages, isPaused: $isPaused, pausedAt: $pausedAt, playbackId: $playbackId, streamUrl: $streamUrl, rtmpUrl: $rtmpUrl, streamKey: $streamKey, thumbnailUrl: $thumbnailUrl, streamerId: $streamerId, streamerName: $streamerName, streamerAvatarUrl: $streamerAvatarUrl, streamerUsername: $streamerUsername, streamerVerified: $streamerVerified)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $LiveRoomCopyWith<$Res>  {
   factory $LiveRoomCopyWith(LiveRoom value, $Res Function(LiveRoom) _then) = _$LiveRoomCopyWithImpl;
 @useResult
 $Res call({
- String id, String slug, String title, String? description, String? category, String liveType, bool isPrivate, String status, int viewerCount, int totalLikes, bool isPaused, DateTime? pausedAt, String? playbackId, String? streamUrl, String? rtmpUrl, String? streamKey, String? thumbnailUrl, String streamerId, String streamerName, String? streamerAvatarUrl, String? streamerUsername, bool streamerVerified
+ String id, String slug, String title, String? description, String? category, String liveType, bool isPrivate, String status, int viewerCount, int totalLikes, int totalMessages, bool isPaused, DateTime? pausedAt, String? playbackId, String? streamUrl, String? rtmpUrl, String? streamKey, String? thumbnailUrl, String streamerId, String streamerName, String? streamerAvatarUrl, String? streamerUsername, bool streamerVerified
 });
 
 
@@ -62,7 +62,7 @@ class _$LiveRoomCopyWithImpl<$Res>
 
 /// Create a copy of LiveRoom
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? slug = null,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackId = freezed,Object? streamUrl = freezed,Object? rtmpUrl = freezed,Object? streamKey = freezed,Object? thumbnailUrl = freezed,Object? streamerId = null,Object? streamerName = null,Object? streamerAvatarUrl = freezed,Object? streamerUsername = freezed,Object? streamerVerified = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? slug = null,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? totalMessages = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackId = freezed,Object? streamUrl = freezed,Object? rtmpUrl = freezed,Object? streamKey = freezed,Object? thumbnailUrl = freezed,Object? streamerId = null,Object? streamerName = null,Object? streamerAvatarUrl = freezed,Object? streamerUsername = freezed,Object? streamerVerified = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,7 @@ as String,isPrivate: null == isPrivate ? _self.isPrivate : isPrivate // ignore: 
 as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
 as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,totalMessages: null == totalMessages ? _self.totalMessages : totalMessages // ignore: cast_nullable_to_non_nullable
 as int,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
 as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,playbackId: freezed == playbackId ? _self.playbackId : playbackId // ignore: cast_nullable_to_non_nullable
@@ -168,10 +169,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  int totalMessages,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveRoom() when $default != null:
-return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);case _:
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.totalMessages,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);case _:
   return orElse();
 
 }
@@ -189,10 +190,10 @@ return $default(_that.id,_that.slug,_that.title,_that.description,_that.category
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  int totalMessages,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)  $default,) {final _that = this;
 switch (_that) {
 case _LiveRoom():
-return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);}
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.totalMessages,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -206,10 +207,10 @@ return $default(_that.id,_that.slug,_that.title,_that.description,_that.category
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String slug,  String title,  String? description,  String? category,  String liveType,  bool isPrivate,  String status,  int viewerCount,  int totalLikes,  int totalMessages,  bool isPaused,  DateTime? pausedAt,  String? playbackId,  String? streamUrl,  String? rtmpUrl,  String? streamKey,  String? thumbnailUrl,  String streamerId,  String streamerName,  String? streamerAvatarUrl,  String? streamerUsername,  bool streamerVerified)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveRoom() when $default != null:
-return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);case _:
+return $default(_that.id,_that.slug,_that.title,_that.description,_that.category,_that.liveType,_that.isPrivate,_that.status,_that.viewerCount,_that.totalLikes,_that.totalMessages,_that.isPaused,_that.pausedAt,_that.playbackId,_that.streamUrl,_that.rtmpUrl,_that.streamKey,_that.thumbnailUrl,_that.streamerId,_that.streamerName,_that.streamerAvatarUrl,_that.streamerUsername,_that.streamerVerified);case _:
   return null;
 
 }
@@ -221,7 +222,7 @@ return $default(_that.id,_that.slug,_that.title,_that.description,_that.category
 
 
 class _LiveRoom implements LiveRoom {
-  const _LiveRoom({required this.id, required this.slug, required this.title, this.description, this.category, required this.liveType, required this.isPrivate, required this.status, required this.viewerCount, this.totalLikes = 0, this.isPaused = false, this.pausedAt, this.playbackId, this.streamUrl, this.rtmpUrl, this.streamKey, this.thumbnailUrl, required this.streamerId, required this.streamerName, this.streamerAvatarUrl, this.streamerUsername, this.streamerVerified = false});
+  const _LiveRoom({required this.id, required this.slug, required this.title, this.description, this.category, required this.liveType, required this.isPrivate, required this.status, required this.viewerCount, this.totalLikes = 0, this.totalMessages = 0, this.isPaused = false, this.pausedAt, this.playbackId, this.streamUrl, this.rtmpUrl, this.streamKey, this.thumbnailUrl, required this.streamerId, required this.streamerName, this.streamerAvatarUrl, this.streamerUsername, this.streamerVerified = false});
   
 
 @override final  String id;
@@ -234,6 +235,7 @@ class _LiveRoom implements LiveRoom {
 @override final  String status;
 @override final  int viewerCount;
 @override@JsonKey() final  int totalLikes;
+@override@JsonKey() final  int totalMessages;
 @override@JsonKey() final  bool isPaused;
 @override final  DateTime? pausedAt;
 @override final  String? playbackId;
@@ -257,16 +259,16 @@ _$LiveRoomCopyWith<_LiveRoom> get copyWith => __$LiveRoomCopyWithImpl<_LiveRoom>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveRoom&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackId, playbackId) || other.playbackId == playbackId)&&(identical(other.streamUrl, streamUrl) || other.streamUrl == streamUrl)&&(identical(other.rtmpUrl, rtmpUrl) || other.rtmpUrl == rtmpUrl)&&(identical(other.streamKey, streamKey) || other.streamKey == streamKey)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatarUrl, streamerAvatarUrl) || other.streamerAvatarUrl == streamerAvatarUrl)&&(identical(other.streamerUsername, streamerUsername) || other.streamerUsername == streamerUsername)&&(identical(other.streamerVerified, streamerVerified) || other.streamerVerified == streamerVerified));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveRoom&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.liveType, liveType) || other.liveType == liveType)&&(identical(other.isPrivate, isPrivate) || other.isPrivate == isPrivate)&&(identical(other.status, status) || other.status == status)&&(identical(other.viewerCount, viewerCount) || other.viewerCount == viewerCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.totalMessages, totalMessages) || other.totalMessages == totalMessages)&&(identical(other.isPaused, isPaused) || other.isPaused == isPaused)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt)&&(identical(other.playbackId, playbackId) || other.playbackId == playbackId)&&(identical(other.streamUrl, streamUrl) || other.streamUrl == streamUrl)&&(identical(other.rtmpUrl, rtmpUrl) || other.rtmpUrl == rtmpUrl)&&(identical(other.streamKey, streamKey) || other.streamKey == streamKey)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.streamerId, streamerId) || other.streamerId == streamerId)&&(identical(other.streamerName, streamerName) || other.streamerName == streamerName)&&(identical(other.streamerAvatarUrl, streamerAvatarUrl) || other.streamerAvatarUrl == streamerAvatarUrl)&&(identical(other.streamerUsername, streamerUsername) || other.streamerUsername == streamerUsername)&&(identical(other.streamerVerified, streamerVerified) || other.streamerVerified == streamerVerified));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,isPaused,pausedAt,playbackId,streamUrl,rtmpUrl,streamKey,thumbnailUrl,streamerId,streamerName,streamerAvatarUrl,streamerUsername,streamerVerified]);
+int get hashCode => Object.hashAll([runtimeType,id,slug,title,description,category,liveType,isPrivate,status,viewerCount,totalLikes,totalMessages,isPaused,pausedAt,playbackId,streamUrl,rtmpUrl,streamKey,thumbnailUrl,streamerId,streamerName,streamerAvatarUrl,streamerUsername,streamerVerified]);
 
 @override
 String toString() {
-  return 'LiveRoom(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, isPaused: $isPaused, pausedAt: $pausedAt, playbackId: $playbackId, streamUrl: $streamUrl, rtmpUrl: $rtmpUrl, streamKey: $streamKey, thumbnailUrl: $thumbnailUrl, streamerId: $streamerId, streamerName: $streamerName, streamerAvatarUrl: $streamerAvatarUrl, streamerUsername: $streamerUsername, streamerVerified: $streamerVerified)';
+  return 'LiveRoom(id: $id, slug: $slug, title: $title, description: $description, category: $category, liveType: $liveType, isPrivate: $isPrivate, status: $status, viewerCount: $viewerCount, totalLikes: $totalLikes, totalMessages: $totalMessages, isPaused: $isPaused, pausedAt: $pausedAt, playbackId: $playbackId, streamUrl: $streamUrl, rtmpUrl: $rtmpUrl, streamKey: $streamKey, thumbnailUrl: $thumbnailUrl, streamerId: $streamerId, streamerName: $streamerName, streamerAvatarUrl: $streamerAvatarUrl, streamerUsername: $streamerUsername, streamerVerified: $streamerVerified)';
 }
 
 
@@ -277,7 +279,7 @@ abstract mixin class _$LiveRoomCopyWith<$Res> implements $LiveRoomCopyWith<$Res>
   factory _$LiveRoomCopyWith(_LiveRoom value, $Res Function(_LiveRoom) _then) = __$LiveRoomCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String slug, String title, String? description, String? category, String liveType, bool isPrivate, String status, int viewerCount, int totalLikes, bool isPaused, DateTime? pausedAt, String? playbackId, String? streamUrl, String? rtmpUrl, String? streamKey, String? thumbnailUrl, String streamerId, String streamerName, String? streamerAvatarUrl, String? streamerUsername, bool streamerVerified
+ String id, String slug, String title, String? description, String? category, String liveType, bool isPrivate, String status, int viewerCount, int totalLikes, int totalMessages, bool isPaused, DateTime? pausedAt, String? playbackId, String? streamUrl, String? rtmpUrl, String? streamKey, String? thumbnailUrl, String streamerId, String streamerName, String? streamerAvatarUrl, String? streamerUsername, bool streamerVerified
 });
 
 
@@ -294,7 +296,7 @@ class __$LiveRoomCopyWithImpl<$Res>
 
 /// Create a copy of LiveRoom
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? slug = null,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackId = freezed,Object? streamUrl = freezed,Object? rtmpUrl = freezed,Object? streamKey = freezed,Object? thumbnailUrl = freezed,Object? streamerId = null,Object? streamerName = null,Object? streamerAvatarUrl = freezed,Object? streamerUsername = freezed,Object? streamerVerified = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? slug = null,Object? title = null,Object? description = freezed,Object? category = freezed,Object? liveType = null,Object? isPrivate = null,Object? status = null,Object? viewerCount = null,Object? totalLikes = null,Object? totalMessages = null,Object? isPaused = null,Object? pausedAt = freezed,Object? playbackId = freezed,Object? streamUrl = freezed,Object? rtmpUrl = freezed,Object? streamKey = freezed,Object? thumbnailUrl = freezed,Object? streamerId = null,Object? streamerName = null,Object? streamerAvatarUrl = freezed,Object? streamerUsername = freezed,Object? streamerVerified = null,}) {
   return _then(_LiveRoom(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
@@ -306,6 +308,7 @@ as String,isPrivate: null == isPrivate ? _self.isPrivate : isPrivate // ignore: 
 as bool,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as String,viewerCount: null == viewerCount ? _self.viewerCount : viewerCount // ignore: cast_nullable_to_non_nullable
 as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,totalMessages: null == totalMessages ? _self.totalMessages : totalMessages // ignore: cast_nullable_to_non_nullable
 as int,isPaused: null == isPaused ? _self.isPaused : isPaused // ignore: cast_nullable_to_non_nullable
 as bool,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,playbackId: freezed == playbackId ? _self.playbackId : playbackId // ignore: cast_nullable_to_non_nullable

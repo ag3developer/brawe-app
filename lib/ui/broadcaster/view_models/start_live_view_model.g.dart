@@ -42,7 +42,7 @@ final class StartLiveViewModelProvider
 }
 
 String _$startLiveViewModelHash() =>
-    r'd812b3136473bef36688047ead5f4cebf1fb1bae';
+    r'58c26167d79cef5b61094c397a077161696b09c7';
 
 abstract class _$StartLiveViewModel extends $Notifier<StartLiveState> {
   StartLiveState build();

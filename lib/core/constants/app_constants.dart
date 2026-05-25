@@ -60,6 +60,7 @@ class AppConstants {
   static const String eventSendReaction = 'live_reaction';
   static const String eventLiveEnded = 'live_ended';
   static const String eventLikeCountUpdate = 'like_count_update';
+  static const String eventCommentCountUpdate = 'comment_count_update';
 
   // Socket Events — Direct Messages (alinhados ao backend)
   // Backend emite/escuta estes nomes em app/services/socket_manager.py

@@ -60,6 +60,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<LiveComment>? _commentsSubscription;
   StreamSubscription<int>? _viewerCountSubscription;
   StreamSubscription<int>? _likeCountSubscription;
+  StreamSubscription<int>? _commentCountSubscription;
   StreamSubscription<double>? _giftTotalSubscription;
 
   @override
@@ -71,6 +72,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       _commentsSubscription?.cancel();
       _viewerCountSubscription?.cancel();
       _likeCountSubscription?.cancel();
+      _commentCountSubscription?.cancel();
       _giftTotalSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
@@ -91,6 +93,18 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     _viewerCountSubscription = repository
         .watchViewerCount(roomId)
         .listen((count) => state = state.copyWith(viewerCount: count));
+    _likeCountSubscription = repository
+        .watchLikeCount(roomId)
+        .listen((count) => state = state.copyWith(likeCount: count));
+    _commentCountSubscription = repository
+        .watchCommentCount(roomId)
+        .listen((count) {
+          // Sempre adota o valor do servidor (fonte de verdade), exceto
+          // se já estivermos com um valor maior local (otimismo recente).
+          if (count > state.totalComments) {
+            state = state.copyWith(totalComments: count);
+          }
+        });
     _giftTotalSubscription = repository
         .watchGiftTotal(roomId)
         .listen((total) => state = state.copyWith(totalGiftsValue: total));
@@ -112,6 +126,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         state = state.copyWith(
           viewerCount: room.viewerCount,
           likeCount: room.totalLikes,
+          totalComments: room.totalMessages,
         );
       }
     } on Failure catch (failure) {
@@ -273,28 +288,38 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       return false;
     }
     // Comentários otimistas (`local-*`) são sempre do usuário atual.
-    // Casar por mensagem + janela curta de tempo evita duplicados quando
-    // o backend devolve `userId`/`userName` diferentes do snapshot otimista
-    // (ex.: auth ainda carregando, email vs nome completo).
+    // Casar por mensagem + (mesmo user_id OU janela de tempo) evita
+    // duplicados. A janela é generosa (60s) porque o backend emitia
+    // `datetime.utcnow().isoformat()` SEM o sufixo `Z`, fazendo o
+    // Flutter parsear como hora local — diferença de fuso (até 12h)
+    // estourava qualquer janela curta e o eco do servidor virava um
+    // segundo comentário.
     if (existingComment.message != incomingComment.message) {
       return false;
+    }
+    // Se o user_id bate, é match imediato (mais robusto que tempo).
+    if (incomingComment.userId.isNotEmpty &&
+        existingComment.userId.isNotEmpty &&
+        existingComment.userId == incomingComment.userId) {
+      return true;
     }
     final secondsBetween = incomingComment.timestamp
         .difference(existingComment.timestamp)
         .inSeconds
         .abs();
-    return secondsBetween <= 15;
+    return secondsBetween <= 60;
   }
 
   /// Considera duplicado se o backend reemitiu o mesmo comentário
-  /// (mesmo id, OU mesmo user+mensagem dentro de 5s).
+  /// (mesmo id, OU mesmo user+mensagem dentro de 60s — janela generosa
+  /// para tolerar timestamps sem fuso vindos de versões antigas do server).
   bool _isDuplicate(List<LiveComment> comments, LiveComment incoming) {
     for (final c in comments) {
       if (c.id == incoming.id) return true;
       if (c.userId.isNotEmpty &&
           c.userId == incoming.userId &&
           c.message == incoming.message &&
-          incoming.timestamp.difference(c.timestamp).inSeconds.abs() <= 5) {
+          incoming.timestamp.difference(c.timestamp).inSeconds.abs() <= 60) {
         return true;
       }
     }

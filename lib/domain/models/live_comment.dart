@@ -7,6 +7,11 @@ class LiveComment {
     required this.timestamp,
     this.avatarUrl,
     this.isPending = false,
+    this.gifterLevel = 1,
+    this.gifterBadge,
+    this.gifterLabel,
+    this.gifterColor,
+    this.gifterImageUrl,
   });
 
   final String id;
@@ -16,6 +21,12 @@ class LiveComment {
   final DateTime timestamp;
   final String? avatarUrl;
   final bool isPending;
+  // ─── Gifter level pin (TikTok-style) ───
+  final int gifterLevel;
+  final String? gifterBadge;     // emoji fallback (⭐, 🔥, 👑, 💎)
+  final String? gifterLabel;     // "Fã", "Lenda", "Brawe Legend"
+  final String? gifterColor;     // hex "#FFD700"
+  final String? gifterImageUrl;  // PNG remoto do pin (CDN ou /static)
 
   LiveComment copyWith({
     String? id,
@@ -25,6 +36,11 @@ class LiveComment {
     DateTime? timestamp,
     String? avatarUrl,
     bool? isPending,
+    int? gifterLevel,
+    String? gifterBadge,
+    String? gifterLabel,
+    String? gifterColor,
+    String? gifterImageUrl,
   }) {
     return LiveComment(
       id: id ?? this.id,
@@ -34,6 +50,11 @@ class LiveComment {
       timestamp: timestamp ?? this.timestamp,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isPending: isPending ?? this.isPending,
+      gifterLevel: gifterLevel ?? this.gifterLevel,
+      gifterBadge: gifterBadge ?? this.gifterBadge,
+      gifterLabel: gifterLabel ?? this.gifterLabel,
+      gifterColor: gifterColor ?? this.gifterColor,
+      gifterImageUrl: gifterImageUrl ?? this.gifterImageUrl,
     );
   }
 }

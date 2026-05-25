@@ -20,6 +20,9 @@ _Gift _$GiftFromJson(Map<String, dynamic> json) => _Gift(
   isFullscreen: json['is_fullscreen'] as bool? ?? false,
   animationDurationMs: (json['animation_duration_ms'] as num?)?.toInt() ?? 0,
   comboEnabled: json['combo_enabled'] as bool? ?? false,
+  isMonetary: json['is_monetary'] as bool? ?? true,
+  priceCoins: (json['price_coins'] as num?)?.toInt() ?? 0,
+  cooldownSeconds: (json['cooldown_seconds'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$GiftToJson(_Gift instance) => <String, dynamic>{
@@ -36,6 +39,9 @@ Map<String, dynamic> _$GiftToJson(_Gift instance) => <String, dynamic>{
   'is_fullscreen': instance.isFullscreen,
   'animation_duration_ms': instance.animationDurationMs,
   'combo_enabled': instance.comboEnabled,
+  'is_monetary': instance.isMonetary,
+  'price_coins': instance.priceCoins,
+  'cooldown_seconds': instance.cooldownSeconds,
 };
 
 _GiftTier _$GiftTierFromJson(Map<String, dynamic> json) => _GiftTier(

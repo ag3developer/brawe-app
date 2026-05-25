@@ -21,11 +21,19 @@ sealed class Gift with _$Gift {
     @JsonKey(name: 'is_fullscreen') @Default(false) bool isFullscreen,
     @JsonKey(name: 'animation_duration_ms') @Default(0) int animationDurationMs,
     @JsonKey(name: 'combo_enabled') @Default(false) bool comboEnabled,
+    // ── Economia não-monetária (FREE) ──
+    @JsonKey(name: 'is_monetary') @Default(true) bool isMonetary,
+    @JsonKey(name: 'price_coins') @Default(0) int priceCoins,
+    @JsonKey(name: 'cooldown_seconds') @Default(0) int cooldownSeconds,
   }) = _Gift;
 
   factory Gift.fromJson(Map<String, dynamic> json) => _$GiftFromJson(json);
 
-  double get price => priceCredits;
+  /// Preço exibido na UI: créditos (USDT) para gifts monetários, coins para FREE.
+  double get price => isMonetary ? priceCredits : priceCoins.toDouble();
+
+  /// True se este gift é pago com coins de quests (FREE tier).
+  bool get isFreeTier => !isMonetary;
 }
 
 @freezed

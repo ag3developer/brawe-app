@@ -68,6 +68,7 @@ dependencies:
   webview_flutter: ^4.10.0
   record: ^5.2.1
   just_audio: ^0.9.43
+  audio_session: ^0.1.21
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que
@@ -110,6 +111,13 @@ flutter:
   generate: true
   assets:
     - assets/images/
+    - assets/images/quests/
+    - assets/images/gifts/
+    - assets/images/gifts/free/
+    - assets/images/gifts/basic/
+    - assets/images/gifts/premium/
+    - assets/images/gifts/luxury/
+    - assets/images/gifts/legendary/
     - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:

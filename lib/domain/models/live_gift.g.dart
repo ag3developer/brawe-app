@@ -21,6 +21,12 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   quantity: (json['quantity'] as num).toInt(),
   value: (json['value'] as num?)?.toInt() ?? 0,
   timestamp: DateTime.parse(json['timestamp'] as String),
+  gifterLevel: (json['gifterLevel'] as num?)?.toInt() ?? 1,
+  gifterBadge: json['gifterBadge'] as String?,
+  gifterLabel: json['gifterLabel'] as String?,
+  gifterColor: json['gifterColor'] as String?,
+  gifterImageUrl: json['gifterImageUrl'] as String?,
+  levelUpgraded: json['levelUpgraded'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
@@ -38,4 +44,10 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'quantity': instance.quantity,
   'value': instance.value,
   'timestamp': instance.timestamp.toIso8601String(),
+  'gifterLevel': instance.gifterLevel,
+  'gifterBadge': instance.gifterBadge,
+  'gifterLabel': instance.gifterLabel,
+  'gifterColor': instance.gifterColor,
+  'gifterImageUrl': instance.gifterImageUrl,
+  'levelUpgraded': instance.levelUpgraded,
 };

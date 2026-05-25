@@ -1,16 +1,19 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
-/// Bottom bar da live no estilo TikTok Live:
+/// Bottom bar da live no estilo TikTok Live (TELA DO ESPECTADOR):
 ///
-/// - Linha 1: chat input full-width (glass) com ícone emoji/send no canto.
-/// - Linha 2: ações flutuantes (Presentes · Curtir · Seguir · [Loja] ·
+/// - Linha 1: chat input full-width TRANSPARENTE (mesmo "peso visual" do
+///   ChatTicker — sem caixa glass, só texto sobre o vídeo com sombra para
+///   legibilidade).
+/// - Linha 2: ações flutuantes (Presentes · Curtir · Rosa · [Loja] ·
 ///   Compartilhar) — "Loja" só aparece quando `hasStorefront=true`.
 ///
-/// ⚠️ `onSendRose` e `likesCount` são mantidos no contrato por compat —
-/// hoje não são usados na UI, mas podem voltar quando a feature de
-/// "rosa rápida" e contador inline forem reativadas.
+/// 🌹 O botão "Rosa" envia 1 rosa direto como presente (atalho rápido,
+/// sem abrir o catálogo). Substituiu o antigo "Seguir" — o follow agora
+/// vive só na `StreamerIdentityBar` no topo.
+///
+/// ⚠️ `likesCount` é mantido no contrato por compat — hoje não é usado
+/// na UI, mas pode voltar quando o contador inline for reativado.
 class LiveBottomBar extends StatelessWidget {
   const LiveBottomBar({
     super.key,
@@ -23,7 +26,7 @@ class LiveBottomBar extends StatelessWidget {
     required this.onSendRose,
     required this.onGifts,
     required this.onLike,
-    required this.onShare,
+    this.onShare,
     required this.onSeguir,
     required this.onShop,
     required this.hasStorefront,
@@ -38,7 +41,10 @@ class LiveBottomBar extends StatelessWidget {
   final VoidCallback onSendRose;
   final VoidCallback onGifts;
   final VoidCallback onLike;
-  final VoidCallback onShare;
+  /// Mantido opcional para callers legados; hoje o botão "Compartilhar" foi
+  /// removido do bottom bar (confundia com "enviar mensagem"). Acessível
+  /// pelo sheet do streamer.
+  final VoidCallback? onShare;
   final VoidCallback onSeguir;
   final VoidCallback onShop;
   final bool hasStorefront;
@@ -48,66 +54,91 @@ class LiveBottomBar extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ─── Chat input full-width com 😊 dentro ────────────────────
-        ClipRRect(
-          borderRadius: BorderRadius.circular(30),
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.10),
-                  width: 0.6,
+        // ─── Chat input full-width — TRANSPARENTE (TikTok-style) ──
+        // Sem BackdropFilter / sem container glass. O input flutua sobre
+        // o vídeo igual aos comentários do `ChatTicker` — só borda fina
+        // translúcida pra delimitar a zona de toque, e sombras no texto
+        // para legibilidade. Visual minimalista, sem "barra cortando" o
+        // frame.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.22),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => onSend(),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.7),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  cursorColor: Colors.white,
+                  decoration: InputDecoration(
+                    hintText: 'Diga algo...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 13),
+                  ),
                 ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => onSend(),
-                      style: const TextStyle(
-                          color: Colors.white, fontSize: 14),
-                      cursorColor: Colors.white,
-                      decoration: InputDecoration(
-                        hintText: 'Diga algo...',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.50),
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 13),
+              // Emoji / send (alterna)
+              GestureDetector(
+                onTap: () {
+                  if (controller.text.trim().isEmpty) {
+                    // TODO: abrir emoji picker
+                  } else {
+                    onSend();
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
+                  child: Icon(
+                    controller.text.trim().isEmpty
+                        ? Icons.emoji_emotions_outlined
+                        : Icons.send_rounded,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    size: 22,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
                       ),
-                    ),
+                    ],
                   ),
-                  // Emoji / send (alterna)
-                  GestureDetector(
-                    onTap: () {
-                      if (controller.text.trim().isEmpty) {
-                        // TODO: abrir emoji picker
-                      } else {
-                        onSend();
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
-                      child: Icon(
-                        controller.text.trim().isEmpty
-                            ? Icons.emoji_emotions_outlined
-                            : Icons.send_rounded,
-                        color: Colors.white.withValues(alpha: 0.55),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
         const SizedBox(height: 10),
@@ -132,10 +163,16 @@ class LiveBottomBar extends StatelessWidget {
               iconColor: isLiked ? const Color(0xFFFF3D6E) : Colors.white,
               onTap: onLike,
             ),
+            // 🌹 Rosa rápida — envia 1 rosa direto como presente.
+            // Substituiu o antigo "Seguir" (que vivia duplicado aqui +
+            // na StreamerIdentityBar do topo). Atalho fast-tap, sem
+            // abrir o catálogo. Visual: emoji rosa sobre o círculo
+            // outlined padrão.
             _LiveActionButton(
-              icon: Icons.person_add_alt_1_outlined,
-              label: 'Seguir',
-              onTap: onSeguir,
+              icon: Icons.local_florist_rounded, // fallback (não usado — emoji override)
+              emoji: '🌹',
+              label: 'Rosa',
+              onTap: onSendRose,
             ),
             if (hasStorefront)
               _LiveActionButton(
@@ -143,11 +180,10 @@ class LiveBottomBar extends StatelessWidget {
                 label: 'Loja',
                 onTap: onShop,
               ),
-            _LiveActionButton(
-              icon: Icons.send_rounded,
-              label: 'Compartilhar',
-              onTap: onShare,
-            ),
+            // 🗑 "Compartilhar" foi removido do bottom bar: o ícone de
+            // avião era confundido com "enviar mensagem" (mesmo glifo do
+            // input de chat acima). Compartilhamento externo continua
+            // acessível pelo sheet do streamer (StreamerIdentityBar).
           ],
         ),
       ],
@@ -166,12 +202,15 @@ class _LiveActionButton extends StatelessWidget {
     required this.onTap,
     this.filled = false,
     this.iconColor = Colors.white,
+    this.emoji,
   });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool filled;
   final Color iconColor;
+  /// Se fornecido, renderiza este emoji no lugar do `icon` (usado pra rosa).
+  final String? emoji;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +250,14 @@ class _LiveActionButton extends StatelessWidget {
                     ]
                   : null,
             ),
-            child: Icon(icon, color: iconColor, size: 19),
+            child: emoji != null
+                ? Center(
+                    child: Text(
+                      emoji!,
+                      style: const TextStyle(fontSize: 20, height: 1.0),
+                    ),
+                  )
+                : Icon(icon, color: iconColor, size: 19),
           ),
           const SizedBox(height: 4),
           Text(

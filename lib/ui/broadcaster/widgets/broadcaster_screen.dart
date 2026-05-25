@@ -24,6 +24,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/services/battle_service.dart';
 import '../../../data/services/socket_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../core/services/broadcast_audio_session.dart';
 import '../../live/streamer/widgets/widgets.dart';
 
 class BroadcasterScreen extends ConsumerStatefulWidget {
@@ -183,10 +184,30 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       await _controller!.dispose();
     }
 
+    // ⭐ Configura AVAudioSession (iOS) / AudioFocus (Android) em modo
+    // `videoRecording` ANTES de inicializar a câmera. Isso elimina o chiado
+    // causado pelo modo default `voiceChat`/AGC agressivo do iOS.
+    await BroadcastAudioSession.activate();
+
+    // Câmera traseira tem sensor melhor e suporta 1080p; a frontal costuma
+    // estar capada em 720p (sensor menor, sem OIS). Adaptamos o preset por
+    // câmera para extrair o máximo de cada uma sem forçar um modo que ela
+    // não suporta (o que causaria fallback silencioso para resolução menor).
+    final isRearCamera =
+        description.lensDirection == CameraLensDirection.back;
+    final preset = isRearCamera
+        ? ResolutionPreset.veryHigh // 1080p na traseira (melhor sensor)
+        : ResolutionPreset.high;    // 720p na frontal (limite típico)
+
     final controller = CameraController(
       description,
-      ResolutionPreset.medium,
+      // Preview local — mesmo preset do streaming para evitar reescalonar.
+      preset,
       enableAudio: true,
+      streamingPreset: preset,
+      // Android: usa pipeline OpenGL (hardware encoder) — qualidade superior
+      // e menor uso de CPU/bateria.
+      androidUseOpenGL: true,
     );
 
     _controller = controller;
@@ -888,6 +909,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       _controller?.stopVideoStreaming();
     }
     _controller?.dispose();
+    // Libera a sessão de áudio para outras telas/apps usarem o microfone.
+    BroadcastAudioSession.deactivate();
     WakelockPlus.disable();
     super.dispose();
   }

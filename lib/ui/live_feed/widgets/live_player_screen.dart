@@ -149,7 +149,18 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (streamUrl == null || streamUrl.isEmpty) return;
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(streamUrl),
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      videoPlayerOptions: VideoPlayerOptions(
+        // Permite que SFX/gifts toquem junto com o áudio da live.
+        mixWithOthers: true,
+        // ⭐ Mantém o áudio rolando em segundo plano (avFoundation) quando o
+        // app perde foco momentâneo (notificação, alarme). Reduz cortes.
+        allowBackgroundPlayback: false,
+      ),
+      // Cabeçalhos para o HLS da Mux — User-Agent identifica o app no
+      // analytics e ajuda em CDN-edge caching.
+      httpHeaders: const {
+        'User-Agent': 'BraweApp/1.0 (HLS-Live)',
+      },
     );
     try {
       await _controller!.initialize();
@@ -157,7 +168,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       setState(() => _isInitialized = true);
       _controller!
         ..play()
-        ..setLooping(true)
+        // Live HLS NÃO faz loop — é stream contínuo. Loop tentava reiniciar a
+        // playlist a cada segmento perdido, causando "travadinhas". 🐛
+        ..setLooping(false)
         ..setVolume(1.0);
       WakelockPlus.enable();
     } catch (e) {
@@ -264,17 +277,50 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     );
   }
 
-  /// Envia 1 rosa direto, sem abrir o catálogo. Usa o slug 'rose' como
-  /// padrão (gift mais barato/básico do catálogo). Fire-and-forget.
+  /// 🌹 Atalho rápido — envia 1 rosa direto, sem abrir o catálogo.
+  ///
+  /// **Mesmo caminho da rosa dentro da sacola** (`gifts_overlay.dart`):
+  ///   1. Cada tap dispara 1 request em paralelo via `unawaited` —
+  ///      NÃO bloqueia próximos taps (combo TikTok-style, igual sacola).
+  ///   2. Usa o slug `rose` + envia `battleId` quando ativo (assim a
+  ///      rosa pontua no placar da batalha, igual a sacola faz).
+  ///   3. Animação chega via Socket.IO (`gift_received`) — mesmo
+  ///      caminho visual do catálogo formal.
+  ///   4. Só mostra SnackBar de erro se request falhar (saldo, etc.).
   void _sendRose() {
-    unawaited(
-      ref.read(sendGiftViewModelProvider.notifier).sendGift(
+    HapticFeedback.lightImpact();
+    unawaited(_fireRoseRequest());
+  }
+
+  Future<void> _fireRoseRequest() async {
+    try {
+      final ok = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
             roomId: widget.room.id,
             giftId: 'rose',
             receiverId: widget.room.streamerId,
             quantity: 1,
-          ),
-    );
+            battleId: _activeBattleId,
+          );
+      if (!mounted || ok) return;
+      final err = ref.read(sendGiftViewModelProvider).error;
+      final msg = err == null
+          ? 'Não foi possível enviar a rosa.'
+          : err.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(msg),
+          duration: const Duration(seconds: 2),
+        ));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text('Erro ao enviar rosa: ${e.toString().replaceFirst('Exception: ', '')}'),
+          duration: const Duration(seconds: 2),
+        ));
+    }
   }
 
   void _sendComment() {

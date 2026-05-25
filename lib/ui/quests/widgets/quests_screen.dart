@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/quest.dart';
+import '../../../domain/models/user.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/quests_view_model.dart';
@@ -21,6 +23,9 @@ class QuestsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     final async = ref.watch(questsViewModelProvider);
+    final authState = ref.watch(authStateProvider);
+    final currentUser =
+        authState is AsyncData<User?> ? authState.value : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0824),
@@ -52,12 +57,21 @@ class QuestsScreen extends ConsumerWidget {
                           _HeroCard(
                             profile: data.profile,
                             streak: data.streak,
+                            avatarUrl: currentUser?.avatarUrl,
                           ),
                           const SizedBox(height: 16),
                           _SummaryRow(
                             summary: data.summary,
                             streak: data.streak,
                           ),
+                          if (_mascotFor(data) != null) ...[
+                            const SizedBox(height: 16),
+                            _MascotBanner(
+                              asset: _mascotFor(data)!.asset,
+                              message: _mascotFor(data)!.message(context),
+                              tint: _mascotFor(data)!.tint,
+                            ),
+                          ],
                           const SizedBox(height: 20),
                           if (_claimableCount(data) >= 2)
                             Padding(
@@ -96,6 +110,31 @@ class QuestsScreen extends ConsumerWidget {
 
   int _claimableCount(QuestsData d) =>
       d.quests.where((q) => q.isClaimable).length;
+
+  /// Decide qual mascote (se algum) exibir no banner condicional do topo.
+  /// - Tudo concluído → mascote comemorando.
+  /// - Streak >= 3 → mascote em chamas.
+  /// - Senão → null (sem banner).
+  _MascotState? _mascotFor(QuestsData d) {
+    final allDone = d.quests.isNotEmpty &&
+        d.quests.every((q) => q.isClaimed);
+    if (allDone) {
+      return _MascotState(
+        asset: 'mascot_celebrate.png',
+        tint: const Color(0xFFFFD93D),
+        message: (ctx) => '🎉 Você completou todas as missões de hoje!',
+      );
+    }
+    if (d.streak.current >= 3) {
+      return _MascotState(
+        asset: 'mascot_fire.png',
+        tint: const Color(0xFFFF5E5E),
+        message: (ctx) =>
+            '🔥 Sequência de ${d.streak.current} dias! Continue assim!',
+      );
+    }
+    return null;
+  }
 
   Future<void> _onClaimAll(BuildContext context, WidgetRef ref) async {
     final s = S.of(context);
@@ -270,7 +309,12 @@ class _BlobsOverlay extends StatelessWidget {
 class _HeroCard extends StatelessWidget {
   final QuestProfile profile;
   final QuestStreak streak;
-  const _HeroCard({required this.profile, required this.streak});
+  final String? avatarUrl;
+  const _HeroCard({
+    required this.profile,
+    required this.streak,
+    this.avatarUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -295,12 +339,27 @@ class _HeroCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Decorative background overlay (silently absent if asset missing).
+            Positioned.fill(
+              child: Opacity(
+                opacity: 0.35,
+                child: Image.asset(
+                  'assets/images/quests/hero_bg.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, e, s) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           Row(
             children: [
-              _LevelBadge(level: profile.level),
+              _LevelBadge(level: profile.level, avatarUrl: avatarUrl),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -349,49 +408,197 @@ class _HeroCard extends StatelessWidget {
           ),
         ],
       ),
+          ],
+        ),
+      ),
     );
   }
 }
 
 class _LevelBadge extends StatelessWidget {
   final int level;
-  const _LevelBadge({required this.level});
+  final String? avatarUrl;
+  const _LevelBadge({required this.level, this.avatarUrl});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFFFD93D).withValues(alpha: 0.55),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+    final tier = _LevelTier.fromLevel(level);
+    const size = 72.0;
+    const avatarSize = 52.0;
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // 1) Glow colorido por trás (depende do tier)
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: tier.glow.withValues(alpha: 0.55),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ),
+          // 2) Avatar circular (foto do user) — com fallback pra inicial.
+          Container(
+            width: avatarSize,
+            height: avatarSize,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: tier.ringColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            padding: const EdgeInsets.all(2.5),
+            child: ClipOval(
+              child: avatarUrl != null && avatarUrl!.isNotEmpty
+                  ? Image.network(
+                      avatarUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, e, st) => _avatarFallback(),
+                    )
+                  : _avatarFallback(),
+            ),
+          ),
+          // 3) Moldura PNG sobreposta (silenciosamente some se não existir).
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Image.asset(
+                'assets/images/quests/${tier.frameAsset}',
+                fit: BoxFit.contain,
+                errorBuilder: (_, e, st) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+          // 4) Selo de level no canto inferior direito (gradient).
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: tier.badgeColors),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: tier.glow.withValues(alpha: 0.55),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                '$level',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black38,
+                      blurRadius: 2,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          '$level',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            shadows: [
-              Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-            ],
-          ),
-        ),
-      ),
     );
   }
+
+  Widget _avatarFallback() {
+    return Container(
+      color: const Color(0xFF2A1854),
+      alignment: Alignment.center,
+      child: const Icon(Icons.person, color: Colors.white70, size: 28),
+    );
+  }
+}
+
+/// Tier de moldura/aro do avatar baseado no level.
+///
+/// 5 patamares — quanto maior o level, mais raro/épico o visual.
+/// PNGs em `assets/images/quests/frame_<tier>.png`. Se não existirem,
+/// o aro gradient + selo de level continuam funcionando como fallback.
+class _LevelTier {
+  final String name;
+  final String frameAsset;
+  final List<Color> ringColors;
+  final List<Color> badgeColors;
+  final Color glow;
+
+  const _LevelTier({
+    required this.name,
+    required this.frameAsset,
+    required this.ringColors,
+    required this.badgeColors,
+    required this.glow,
+  });
+
+  static _LevelTier fromLevel(int level) {
+    if (level >= 50) return _legendary;
+    if (level >= 25) return _epic;
+    if (level >= 10) return _gold;
+    if (level >= 5) return _silver;
+    return _bronze;
+  }
+
+  // Bronze — level 1-4 (iniciante)
+  static const _bronze = _LevelTier(
+    name: 'bronze',
+    frameAsset: 'frame_bronze.png',
+    ringColors: [Color(0xFFCD7F32), Color(0xFF8B5A2B)],
+    badgeColors: [Color(0xFFCD7F32), Color(0xFF8B5A2B)],
+    glow: Color(0xFFCD7F32),
+  );
+  // Silver — level 5-9
+  static const _silver = _LevelTier(
+    name: 'silver',
+    frameAsset: 'frame_silver.png',
+    ringColors: [Color(0xFFE0E0E0), Color(0xFF9E9E9E)],
+    badgeColors: [Color(0xFFBDBDBD), Color(0xFF757575)],
+    glow: Color(0xFFE0E0E0),
+  );
+  // Gold — level 10-24
+  static const _gold = _LevelTier(
+    name: 'gold',
+    frameAsset: 'frame_gold.png',
+    ringColors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
+    badgeColors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
+    glow: Color(0xFFFFD93D),
+  );
+  // Epic — level 25-49 (roxo/rosa neon)
+  static const _epic = _LevelTier(
+    name: 'epic',
+    frameAsset: 'frame_epic.png',
+    ringColors: [Color(0xFFB14DFF), Color(0xFFFF4D8D)],
+    badgeColors: [Color(0xFF8A5BFF), Color(0xFFFF4D8D)],
+    glow: Color(0xFFB14DFF),
+  );
+  // Legendary — level 50+ (chamas/dourado lendário)
+  static const _legendary = _LevelTier(
+    name: 'legendary',
+    frameAsset: 'frame_legendary.png',
+    ringColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D), Color(0xFF3BB8FF)],
+    badgeColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D)],
+    glow: Color(0xFFFFD93D),
+  );
 }
 
 class _MultiplierPill extends StatelessWidget {
@@ -605,11 +812,15 @@ class _ClaimAllButton extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.celebration, color: Colors.white, size: 22),
+                  const _QuestImage(
+                    assetName: 'reward_chest.png',
+                    fallbackIcon: Icons.celebration,
+                    size: 36,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     S.of(context).questsClaimAll(count),
@@ -693,26 +904,37 @@ class _QuestCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 58,
+                height: 58,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [palette.start, palette.end],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: palette.end.withValues(alpha: claimed ? 0.15 : 0.55),
+                      blurRadius: 16,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
+                child: Center(
                   child: _QuestImage(
                     assetName: _assetNameFor(quest),
                     fallbackIcon: icon,
-                    size: 34,
+                    size: 52,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -920,7 +1142,12 @@ class _RewardChip extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.bolt, size: 12, color: Color(0xFFFFD93D)),
+              const _QuestImage(
+                assetName: 'xp_bolt.png',
+                fallbackIcon: Icons.bolt,
+                size: 14,
+                fallbackColor: Color(0xFFFFD93D),
+              ),
               const SizedBox(width: 2),
               Text(
                 '+$xp',
@@ -935,8 +1162,12 @@ class _RewardChip extends StatelessWidget {
           const SizedBox(height: 2),
           Row(
             children: [
-              const Icon(Icons.monetization_on,
-                  size: 11, color: Color(0xFFFFB84D)),
+              const _QuestImage(
+                assetName: 'coin_brc.png',
+                fallbackIcon: Icons.monetization_on,
+                size: 13,
+                fallbackColor: Color(0xFFFFB84D),
+              ),
               const SizedBox(width: 2),
               Text(
                 '+$coins',
@@ -1172,6 +1403,80 @@ class _ErrorView extends StatelessWidget {
               backgroundColor: AppColors.electricPurple,
             ),
             child: Text(s.questsTryAgain),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// MASCOT BANNER (aparece condicionalmente: streak alto ou tudo concluído)
+// ════════════════════════════════════════════════════════════════════════
+
+class _MascotState {
+  final String asset;
+  final Color tint;
+  final String Function(BuildContext) message;
+  const _MascotState({
+    required this.asset,
+    required this.tint,
+    required this.message,
+  });
+}
+
+class _MascotBanner extends StatelessWidget {
+  final String asset;
+  final String message;
+  final Color tint;
+  const _MascotBanner({
+    required this.asset,
+    required this.message,
+    required this.tint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 18, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            tint.withValues(alpha: 0.22),
+            tint.withValues(alpha: 0.06),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tint.withValues(alpha: 0.45), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: tint.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _QuestImage(
+            assetName: asset,
+            fallbackIcon: Icons.emoji_emotions,
+            size: 64,
+            fallbackColor: tint,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                height: 1.3,
+              ),
+            ),
           ),
         ],
       ),

@@ -206,17 +206,6 @@ class LiveService {
     return _toMap(response.data);
   }
 
-  Future<Map<String, dynamic>> inviteCoHost({
-    required String roomId,
-    required String guestUserId,
-  }) async {
-    final response = await _dio.post(
-      '/live/$roomId/cohost/invite',
-      data: {'guest_user_id': guestUserId},
-    );
-    return _toMap(response.data);
-  }
-
   Map<String, dynamic> _toMap(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data;

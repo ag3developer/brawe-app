@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/live_comment.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../live/shared/widgets/level_chip.dart';
 
 class LiveCommentsOverlay extends StatefulWidget {
   const LiveCommentsOverlay({
@@ -163,6 +164,20 @@ class _LiveCommentBubble extends StatelessWidget {
                 child: RichText(
                   text: TextSpan(
                     children: [
+                      // 🎖️ Level pin (TikTok-style) — só aparece se Lv > 1
+                      if (comment.gifterLevel > 1) ...[
+                        WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: LevelChip(
+                            level: comment.gifterLevel,
+                            badge: comment.gifterBadge,
+                            colorHex: comment.gifterColor,
+                            imageUrl: comment.gifterImageUrl,
+                            height: 16,
+                          ),
+                        ),
+                        const WidgetSpan(child: SizedBox(width: 6)),
+                      ],
                       TextSpan(
                         text: '${comment.userName} ',
                         style: const TextStyle(

@@ -15,6 +15,7 @@ sealed class LiveRoom with _$LiveRoom {
     required String status,
     required int viewerCount,
     @Default(0) int totalLikes,
+    @Default(0) int totalMessages,
     @Default(false) bool isPaused,
     DateTime? pausedAt,
     String? playbackId,

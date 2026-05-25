@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/failure.dart';
 import '../../domain/models/gift.dart';
 import '../../domain/models/gifter.dart';
+import '../../domain/models/gifter_level.dart';
 import '../services/gift_service.dart';
 import '../services/live_service.dart';
 
@@ -92,6 +93,19 @@ class GiftRepository {
     try {
       final list = await _giftService.getTopGifters(roomId, limit: limit);
       return list.map((json) => Gifter.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Nível do gifter logado (XP, badge, progresso até o próximo nível).
+  /// Backend: `GET /live/gifts/me/level`.
+  Future<GifterLevel> getMyGifterLevel() async {
+    try {
+      final data = await _giftService.getMyGifterLevel();
+      return GifterLevel.fromJson(data);
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {

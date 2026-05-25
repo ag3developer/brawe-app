@@ -130,6 +130,19 @@ class SocketService {
   }
 
   void sendChatMessage({required String roomId, required String message}) {
+    final connected = _socket?.connected ?? false;
+    if (!connected) {
+      debugPrint(
+        '⚠️ Socket.IO: sendChatMessage chamado SEM socket conectado '
+        '(room=$roomId). Mensagem perdida — o caller deveria ter feito '
+        'connect() antes (LiveRepository.sendComment faz isso via '
+        '_ensureConnectedToRoom).',
+      );
+    }
+    debugPrint(
+      '📤 Socket.IO: emit live_chat_message room=$roomId '
+      'user=${_currentUser?.name ?? "(anon)"} msg="${message.length > 40 ? "${message.substring(0, 40)}…" : message}"',
+    );
     _emitWithUserProfile(AppConstants.eventSendMessage, {
       'room_id': roomId,
       'message': message,
@@ -185,6 +198,11 @@ class SocketService {
 
   void _emitWithUserProfile(String event, Map<String, dynamic> payload) {
     final user = _currentUser;
+    // 🪪 Se `_currentUser` ainda não foi carregado (auth assíncrono pode não
+    // ter completado quando o socket conectou), o servidor receberia o
+    // evento sem `sender_name`/`sender_avatar` e mostraria "Anônimo" no
+    // chat — mas o envio em si funciona. NÃO bloqueamos aqui: melhor enviar
+    // como anônimo do que perder a mensagem do usuário.
     final enrichedPayload = Map<String, dynamic>.from(payload)
       ..addAll(
         {
@@ -195,5 +213,12 @@ class SocketService {
         }..removeWhere((key, value) => value == null),
       );
     emit(event, enrichedPayload);
+  }
+
+  /// Atualiza o snapshot do usuário em cache, usado para enriquecer
+  /// payloads de eventos (chat / gift / reaction). Deve ser chamado
+  /// após login/refresh para evitar mensagens marcadas como "Anônimo".
+  Future<void> refreshCurrentUser() async {
+    _currentUser = await _storageService.getUser();
   }
 }
