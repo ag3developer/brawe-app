@@ -284,7 +284,7 @@ as bool,
 /// @nodoc
 mixin _$PostResponseDto {
 
- String get id; String get content;@JsonKey(name: 'image_url') String? get imageUrl;@JsonKey(name: 'likes_count') int get likesCount;@JsonKey(name: 'comments_count') int get commentsCount;@JsonKey(name: 'reposts_count') int get repostsCount;@JsonKey(name: 'views_count') int get viewsCount;@JsonKey(name: 'created_at') String get createdAt;@JsonKey(name: 'updated_at') String get updatedAt; AuthorResponseDto get author;@JsonKey(name: 'user_liked') bool get userLiked;@JsonKey(name: 'user_reposted') bool get userReposted;@JsonKey(name: 'user_following_author') bool get userFollowingAuthor;
+ String get id; String get content;@JsonKey(name: 'image_url') String? get imageUrl;@JsonKey(name: 'likes_count') int get likesCount;@JsonKey(name: 'comments_count') int get commentsCount;@JsonKey(name: 'reposts_count') int get repostsCount;@JsonKey(name: 'views_count') int get viewsCount;@JsonKey(name: 'created_at') String get createdAt;@JsonKey(name: 'updated_at') String get updatedAt; AuthorResponseDto get author;@JsonKey(name: 'user_liked') bool get userLiked;@JsonKey(name: 'user_reposted') bool get userReposted;@JsonKey(name: 'user_following_author') bool get userFollowingAuthor;@JsonKey(name: 'reposted_by') AuthorResponseDto? get repostedBy;@JsonKey(name: 'repost_created_at') String? get repostCreatedAt;
 /// Create a copy of PostResponseDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -297,16 +297,16 @@ $PostResponseDtoCopyWith<PostResponseDto> get copyWith => _$PostResponseDtoCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostResponseDto&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostResponseDto&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,updatedAt,author,userLiked,userReposted,userFollowingAuthor);
+int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,updatedAt,author,userLiked,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt);
 
 @override
 String toString() {
-  return 'PostResponseDto(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, updatedAt: $updatedAt, author: $author, userLiked: $userLiked, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor)';
+  return 'PostResponseDto(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, updatedAt: $updatedAt, author: $author, userLiked: $userLiked, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt)';
 }
 
 
@@ -317,11 +317,11 @@ abstract mixin class $PostResponseDtoCopyWith<$Res>  {
   factory $PostResponseDtoCopyWith(PostResponseDto value, $Res Function(PostResponseDto) _then) = _$PostResponseDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String content,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'comments_count') int commentsCount,@JsonKey(name: 'reposts_count') int repostsCount,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt, AuthorResponseDto author,@JsonKey(name: 'user_liked') bool userLiked,@JsonKey(name: 'user_reposted') bool userReposted,@JsonKey(name: 'user_following_author') bool userFollowingAuthor
+ String id, String content,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'comments_count') int commentsCount,@JsonKey(name: 'reposts_count') int repostsCount,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt, AuthorResponseDto author,@JsonKey(name: 'user_liked') bool userLiked,@JsonKey(name: 'user_reposted') bool userReposted,@JsonKey(name: 'user_following_author') bool userFollowingAuthor,@JsonKey(name: 'reposted_by') AuthorResponseDto? repostedBy,@JsonKey(name: 'repost_created_at') String? repostCreatedAt
 });
 
 
-$AuthorResponseDtoCopyWith<$Res> get author;
+$AuthorResponseDtoCopyWith<$Res> get author;$AuthorResponseDtoCopyWith<$Res>? get repostedBy;
 
 }
 /// @nodoc
@@ -334,7 +334,7 @@ class _$PostResponseDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostResponseDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? updatedAt = null,Object? author = null,Object? userLiked = null,Object? userReposted = null,Object? userFollowingAuthor = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? updatedAt = null,Object? author = null,Object? userLiked = null,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
@@ -349,7 +349,9 @@ as String,author: null == author ? _self.author : author // ignore: cast_nullabl
 as AuthorResponseDto,userLiked: null == userLiked ? _self.userLiked : userLiked // ignore: cast_nullable_to_non_nullable
 as bool,userReposted: null == userReposted ? _self.userReposted : userReposted // ignore: cast_nullable_to_non_nullable
 as bool,userFollowingAuthor: null == userFollowingAuthor ? _self.userFollowingAuthor : userFollowingAuthor // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,repostedBy: freezed == repostedBy ? _self.repostedBy : repostedBy // ignore: cast_nullable_to_non_nullable
+as AuthorResponseDto?,repostCreatedAt: freezed == repostCreatedAt ? _self.repostCreatedAt : repostCreatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 /// Create a copy of PostResponseDto
@@ -360,6 +362,18 @@ $AuthorResponseDtoCopyWith<$Res> get author {
   
   return $AuthorResponseDtoCopyWith<$Res>(_self.author, (value) {
     return _then(_self.copyWith(author: value));
+  });
+}/// Create a copy of PostResponseDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AuthorResponseDtoCopyWith<$Res>? get repostedBy {
+    if (_self.repostedBy == null) {
+    return null;
+  }
+
+  return $AuthorResponseDtoCopyWith<$Res>(_self.repostedBy!, (value) {
+    return _then(_self.copyWith(repostedBy: value));
   });
 }
 }
@@ -440,10 +454,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor, @JsonKey(name: 'reposted_by')  AuthorResponseDto? repostedBy, @JsonKey(name: 'repost_created_at')  String? repostCreatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PostResponseDto() when $default != null:
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor);case _:
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);case _:
   return orElse();
 
 }
@@ -461,10 +475,10 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor, @JsonKey(name: 'reposted_by')  AuthorResponseDto? repostedBy, @JsonKey(name: 'repost_created_at')  String? repostCreatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PostResponseDto():
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor);}
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -478,10 +492,10 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String content, @JsonKey(name: 'image_url')  String? imageUrl, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'comments_count')  int commentsCount, @JsonKey(name: 'reposts_count')  int repostsCount, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt,  AuthorResponseDto author, @JsonKey(name: 'user_liked')  bool userLiked, @JsonKey(name: 'user_reposted')  bool userReposted, @JsonKey(name: 'user_following_author')  bool userFollowingAuthor, @JsonKey(name: 'reposted_by')  AuthorResponseDto? repostedBy, @JsonKey(name: 'repost_created_at')  String? repostCreatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PostResponseDto() when $default != null:
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor);case _:
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.updatedAt,_that.author,_that.userLiked,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);case _:
   return null;
 
 }
@@ -493,7 +507,7 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 @JsonSerializable()
 
 class _PostResponseDto implements PostResponseDto {
-  const _PostResponseDto({required this.id, required this.content, @JsonKey(name: 'image_url') this.imageUrl, @JsonKey(name: 'likes_count') required this.likesCount, @JsonKey(name: 'comments_count') required this.commentsCount, @JsonKey(name: 'reposts_count') required this.repostsCount, @JsonKey(name: 'views_count') required this.viewsCount, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, required this.author, @JsonKey(name: 'user_liked') this.userLiked = false, @JsonKey(name: 'user_reposted') this.userReposted = false, @JsonKey(name: 'user_following_author') this.userFollowingAuthor = false});
+  const _PostResponseDto({required this.id, required this.content, @JsonKey(name: 'image_url') this.imageUrl, @JsonKey(name: 'likes_count') required this.likesCount, @JsonKey(name: 'comments_count') required this.commentsCount, @JsonKey(name: 'reposts_count') required this.repostsCount, @JsonKey(name: 'views_count') required this.viewsCount, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, required this.author, @JsonKey(name: 'user_liked') this.userLiked = false, @JsonKey(name: 'user_reposted') this.userReposted = false, @JsonKey(name: 'user_following_author') this.userFollowingAuthor = false, @JsonKey(name: 'reposted_by') this.repostedBy, @JsonKey(name: 'repost_created_at') this.repostCreatedAt});
   factory _PostResponseDto.fromJson(Map<String, dynamic> json) => _$PostResponseDtoFromJson(json);
 
 @override final  String id;
@@ -509,6 +523,8 @@ class _PostResponseDto implements PostResponseDto {
 @override@JsonKey(name: 'user_liked') final  bool userLiked;
 @override@JsonKey(name: 'user_reposted') final  bool userReposted;
 @override@JsonKey(name: 'user_following_author') final  bool userFollowingAuthor;
+@override@JsonKey(name: 'reposted_by') final  AuthorResponseDto? repostedBy;
+@override@JsonKey(name: 'repost_created_at') final  String? repostCreatedAt;
 
 /// Create a copy of PostResponseDto
 /// with the given fields replaced by the non-null parameter values.
@@ -523,16 +539,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostResponseDto&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PostResponseDto&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,updatedAt,author,userLiked,userReposted,userFollowingAuthor);
+int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,updatedAt,author,userLiked,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt);
 
 @override
 String toString() {
-  return 'PostResponseDto(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, updatedAt: $updatedAt, author: $author, userLiked: $userLiked, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor)';
+  return 'PostResponseDto(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, updatedAt: $updatedAt, author: $author, userLiked: $userLiked, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt)';
 }
 
 
@@ -543,11 +559,11 @@ abstract mixin class _$PostResponseDtoCopyWith<$Res> implements $PostResponseDto
   factory _$PostResponseDtoCopyWith(_PostResponseDto value, $Res Function(_PostResponseDto) _then) = __$PostResponseDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String content,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'comments_count') int commentsCount,@JsonKey(name: 'reposts_count') int repostsCount,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt, AuthorResponseDto author,@JsonKey(name: 'user_liked') bool userLiked,@JsonKey(name: 'user_reposted') bool userReposted,@JsonKey(name: 'user_following_author') bool userFollowingAuthor
+ String id, String content,@JsonKey(name: 'image_url') String? imageUrl,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'comments_count') int commentsCount,@JsonKey(name: 'reposts_count') int repostsCount,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt, AuthorResponseDto author,@JsonKey(name: 'user_liked') bool userLiked,@JsonKey(name: 'user_reposted') bool userReposted,@JsonKey(name: 'user_following_author') bool userFollowingAuthor,@JsonKey(name: 'reposted_by') AuthorResponseDto? repostedBy,@JsonKey(name: 'repost_created_at') String? repostCreatedAt
 });
 
 
-@override $AuthorResponseDtoCopyWith<$Res> get author;
+@override $AuthorResponseDtoCopyWith<$Res> get author;@override $AuthorResponseDtoCopyWith<$Res>? get repostedBy;
 
 }
 /// @nodoc
@@ -560,7 +576,7 @@ class __$PostResponseDtoCopyWithImpl<$Res>
 
 /// Create a copy of PostResponseDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? updatedAt = null,Object? author = null,Object? userLiked = null,Object? userReposted = null,Object? userFollowingAuthor = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? updatedAt = null,Object? author = null,Object? userLiked = null,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,}) {
   return _then(_PostResponseDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
@@ -575,7 +591,9 @@ as String,author: null == author ? _self.author : author // ignore: cast_nullabl
 as AuthorResponseDto,userLiked: null == userLiked ? _self.userLiked : userLiked // ignore: cast_nullable_to_non_nullable
 as bool,userReposted: null == userReposted ? _self.userReposted : userReposted // ignore: cast_nullable_to_non_nullable
 as bool,userFollowingAuthor: null == userFollowingAuthor ? _self.userFollowingAuthor : userFollowingAuthor // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,repostedBy: freezed == repostedBy ? _self.repostedBy : repostedBy // ignore: cast_nullable_to_non_nullable
+as AuthorResponseDto?,repostCreatedAt: freezed == repostCreatedAt ? _self.repostCreatedAt : repostCreatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -587,6 +605,18 @@ $AuthorResponseDtoCopyWith<$Res> get author {
   
   return $AuthorResponseDtoCopyWith<$Res>(_self.author, (value) {
     return _then(_self.copyWith(author: value));
+  });
+}/// Create a copy of PostResponseDto
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$AuthorResponseDtoCopyWith<$Res>? get repostedBy {
+    if (_self.repostedBy == null) {
+    return null;
+  }
+
+  return $AuthorResponseDtoCopyWith<$Res>(_self.repostedBy!, (value) {
+    return _then(_self.copyWith(repostedBy: value));
   });
 }
 }

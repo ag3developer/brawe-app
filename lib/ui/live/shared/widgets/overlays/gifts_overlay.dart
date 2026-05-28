@@ -6,6 +6,7 @@ import '../../../../live_feed/view_models/gift_catalog_view_model.dart';
 import '../../../../live_feed/view_models/send_gift_view_model.dart';
 import '../../../../live_feed/view_models/gifter_level_view_model.dart';
 import '../../../../core/view_models/credits_view_model.dart';
+import '../../../../wallet/widgets/top_up_coins_sheet.dart';
 import '../../../../../data/repositories/auth_state_provider.dart';
 import '../../../../../domain/models/gift.dart';
 import '../../../../../domain/models/gifter_level.dart';
@@ -64,6 +65,22 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     if (_selectedGift == null) return;
     final s = S.of(context);
     final giftName = _selectedGift!.name;
+
+    // Verifica saldo ANTES de tentar enviar — se insuficiente abre top-up
+    // (gifts FREE não precisam de saldo de coins compradas)
+    if (_selectedGift!.isMonetary) {
+      final balance =
+          ref.read(creditsViewModelProvider).value?.toInt() ?? 0;
+      final cost = _selectedGift!.priceCredits.ceil();
+      if (balance < cost) {
+        await TopUpCoinsSheet.show(
+          context,
+          reason: widget.battleId != null ? 'battle' : 'gift',
+        );
+        return;
+      }
+    }
+
     final success = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
           roomId: widget.roomId,
           giftId: _selectedGift!.id,
@@ -584,7 +601,7 @@ class _BalanceFooter extends ConsumerWidget {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () {},
+                onTap: () => TopUpCoinsSheet.show(context),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -599,8 +616,15 @@ class _BalanceFooter extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right,
-                        color: Colors.white60, size: 20),
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF4F8B),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add,
+                          color: Colors.white, size: 14),
+                    ),
                   ],
                 ),
               ),

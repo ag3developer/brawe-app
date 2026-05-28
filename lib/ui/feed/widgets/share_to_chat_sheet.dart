@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'dart:async';
+
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/social_repository.dart';
+import '../../../data/services/post_service.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/follow_user.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -196,6 +199,12 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
 
     if (!mounted) return;
     Navigator.of(context).pop();
+    // Quest progress: share_1_post (best-effort, não bloqueia UX)
+    if (sent > 0) {
+      unawaited(
+        ref.read(postServiceProvider).trackShare(widget.postId),
+      );
+    }
     final s = S.of(context);
     final msg = failures.isEmpty
         ? s.shareSentSuccess(sent)
@@ -209,6 +218,10 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
         : _postUrl;
     try {
       await Share.share(text);
+      // Quest progress: share_1_post (best-effort)
+      unawaited(
+        ref.read(postServiceProvider).trackShare(widget.postId),
+      );
     } catch (_) {/* ignore */}
   }
 

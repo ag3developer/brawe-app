@@ -85,10 +85,13 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   }
 
   void _notifyViewed() {
-    final cb = widget.onStoryViewed;
-    if (cb == null) return;
     if (_currentIndex < 0 || _currentIndex >= widget.stories.length) return;
-    cb(widget.stories[_currentIndex].id);
+    final storyId = widget.stories[_currentIndex].id;
+    // Callback do parent (UI cache).
+    widget.onStoryViewed?.call(storyId);
+    // Persiste no backend (fire-and-forget; ignora falhas silenciosamente).
+    // Backend não conta view do próprio autor, então é seguro chamar sempre.
+    ref.read(storiesRepositoryProvider).markAsViewed(storyId).catchError((_) {});
   }
 
   Future<void> _startStory() async {
@@ -737,7 +740,8 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     _videoController?.setVolume(_muted ? 0 : 1);
   }
 
-  Future<void> _sendQuickReaction() async {
+  Future<void> _sendQuickReaction({String emoji = '❤️'}) async {
+    HapticFeedback.mediumImpact();
     setState(() => _reactionFlash = true);
     Future.delayed(const Duration(milliseconds: 700), () {
       if (!mounted) return;
@@ -746,9 +750,24 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     try {
       await ref
           .read(storiesRepositoryProvider)
-          .react(_story.id, reaction: '❤️');
+          .react(_story.id, reaction: emoji);
     } catch (_) {
       // silencioso
+    }
+  }
+
+  Future<void> _openReactionPicker() async {
+    _pause();
+    HapticFeedback.selectionClick();
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _StoryReactionPicker(),
+    );
+    if (!mounted) return;
+    _resume();
+    if (result != null) {
+      await _sendQuickReaction(emoji: result);
     }
   }
 
@@ -876,10 +895,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           onTap: _openGiftSheet,
         ),
         const SizedBox(width: 6),
-        // Botão de coração — chip glass.
+        // Botão de coração — chip glass. Long-press abre picker de 6 reações.
         _StoryActionChip(
           icon: Icons.favorite_border,
-          onTap: _sendQuickReaction,
+          onTap: () => _sendQuickReaction(),
+          onLongPress: _openReactionPicker,
         ),
         const SizedBox(width: 6),
         // Botão enviar — pulsa no gradient da marca.
@@ -1167,14 +1187,20 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
 
 /// Chip de ação na reply bar (presente / coração) — glass + blur.
 class _StoryActionChip extends StatelessWidget {
-  const _StoryActionChip({required this.icon, required this.onTap});
+  const _StoryActionChip({
+    required this.icon,
+    required this.onTap,
+    this.onLongPress,
+  });
   final IconData icon;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: ClipOval(
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
@@ -1191,6 +1217,80 @@ class _StoryActionChip extends StatelessWidget {
             ),
             child: Icon(icon, color: Colors.white, size: 22),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Picker de reações para stories (6 emojis grandes em barra horizontal).
+/// Espelha visualmente o reactions_bar do feed, mas é apresentado via
+/// modal bottom sheet pois o story viewer já está em fullscreen.
+class _StoryReactionPicker extends StatelessWidget {
+  static const _emojis = ['❤️', '🔥', '😂', '😮', '😢', '👍'];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.75),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (final e in _emojis)
+                _ReactionEmojiButton(
+                  emoji: e,
+                  onTap: () => Navigator.of(context).pop(e),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReactionEmojiButton extends StatefulWidget {
+  const _ReactionEmojiButton({required this.emoji, required this.onTap});
+  final String emoji;
+  final VoidCallback onTap;
+
+  @override
+  State<_ReactionEmojiButton> createState() => _ReactionEmojiButtonState();
+}
+
+class _ReactionEmojiButtonState extends State<_ReactionEmojiButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _pressed ? 1.35 : 1.0,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Text(widget.emoji, style: const TextStyle(fontSize: 32)),
         ),
       ),
     );

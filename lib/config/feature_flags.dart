@@ -11,6 +11,6 @@ library;
 /// 💰 Monetização (gifts, wallet, loja, live commerce).
 ///
 /// Apple Guideline 3.1.1: bens digitais consumidos no app devem
-/// usar In-App Purchase. Enquanto o IAP não estiver implementado,
-/// mantenha este flag em `false` para a v1.0.
-const bool kEnableMonetization = false;
+/// usar In-App Purchase. IAP implementado em v1.0.5+ (Android + iOS),
+/// portanto monetização ativa.
+const bool kEnableMonetization = true;

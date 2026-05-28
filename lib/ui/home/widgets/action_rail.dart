@@ -14,6 +14,9 @@ class ActionRail extends StatelessWidget {
     required this.onFollow,
     required this.onGift,
     required this.onProfile,
+    this.onLikeLongPress,
+    this.onLikeCountTap,
+    this.onShareLongPress,
   });
 
   final FeedItem item;
@@ -23,6 +26,9 @@ class ActionRail extends StatelessWidget {
   final VoidCallback onFollow;
   final VoidCallback onGift;
   final VoidCallback onProfile;
+  final VoidCallback? onLikeLongPress;
+  final VoidCallback? onLikeCountTap;
+  final VoidCallback? onShareLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +49,8 @@ class ActionRail extends StatelessWidget {
           label: _format(item.likesCount + (item.userLiked ? 1 : 0)),
           color: item.userLiked ? Colors.red : Colors.white,
           onTap: onLike,
+          onLongPress: onLikeLongPress,
+          onLabelTap: onLikeCountTap,
         ),
         const SizedBox(height: 18),
         _RailButton(
@@ -58,6 +66,7 @@ class ActionRail extends StatelessWidget {
           icon: Icons.send_rounded,
           label: _format(item.sharesCount),
           onTap: onShare,
+          onLongPress: onShareLongPress,
         ),
         if (item.viewsCount > 0) ...[
           const SizedBox(height: 14),
@@ -163,20 +172,25 @@ class _RailButton extends StatelessWidget {
     required this.label,
     this.color = Colors.white,
     required this.onTap,
+    this.onLongPress,
+    this.onLabelTap,
   });
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onLabelTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        children: [
-          Icon(
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          behavior: HitTestBehavior.opaque,
+          child: Icon(
             icon,
             color: color,
             size: 32,
@@ -184,8 +198,12 @@ class _RailButton extends StatelessWidget {
               Shadow(color: Colors.black54, blurRadius: 6),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: onLabelTap ?? onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Text(
             label,
             style: TextStyle(
               color: context.colors.textPrimary,
@@ -194,8 +212,8 @@ class _RailButton extends StatelessWidget {
               shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

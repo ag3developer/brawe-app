@@ -29,6 +29,7 @@ import '../../../domain/models/post.dart';
 import '../../feed/widgets/story_viewer.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
+import 'shared_post_sheet.dart';
 import 'user_status_sheet.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
@@ -1250,9 +1251,14 @@ class _MessageBubble extends ConsumerWidget {
   }
 }
 
-// Regex p/ detectar link de post compartilhado: https://brawe.app/connect/p/<uuid>
+// Regex p/ detectar link de post compartilhado em mensagens de chat.
+// Aceita os 2 formatos canônicos:
+//   • https://brawe.app/post/<id>           (formato novo, a partir de v1.0.8)
+//   • https://brawe.app/connect/p/<id>      (legacy, para mensagens antigas)
+// O <id> pode ser UUID, slug ou qualquer string alfanumérica com - _ .
+// Captura o ID no group(1) — usado para renderizar o preview rico.
 final RegExp _kSharedPostRegex = RegExp(
-  r'https?://brawe\.app/connect/p/([0-9a-fA-F-]{36})',
+  r'https?://(?:www\.)?brawe\.app/(?:post|connect/p)/([a-zA-Z0-9_\-\.]+)',
 );
 
 class _TextBubbleContent extends ConsumerWidget {
@@ -2462,14 +2468,9 @@ class _SharedPostPreview extends ConsumerWidget {
   }
 
   void _openPost(BuildContext context) {
-    // TODO: navegar para tela de detalhe do post quando rota existir.
-    // Por enquanto apenas feedback visual.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(S.of(context).chatDetailOpenPostSoon),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    // Abre o bottom sheet rico: preview + ações sem sair da conversa.
+    // Tem botão "Ver publicação completa" caso o user queira navegar.
+    SharedPostSheet.show(context, postId);
   }
 }
 

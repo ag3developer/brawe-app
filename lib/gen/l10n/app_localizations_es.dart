@@ -1342,6 +1342,17 @@ class SEs extends S {
   String get feedRepost => 'Repostar';
 
   @override
+  String get feedReposted => 'Reposteado a tus seguidores';
+
+  @override
+  String get shareToFollowers => 'Enviar a seguidores';
+
+  @override
+  String feedRepostBanner(String name) {
+    return '$name reposteó';
+  }
+
+  @override
   String get feedQuotePost => 'Citar publicación';
 
   @override
@@ -2123,10 +2134,10 @@ class SEs extends S {
   }
 
   @override
-  String get walletTitle => 'Cartera';
+  String get walletTitle => 'Monedas Brawe';
 
   @override
-  String get walletAvailableBalance => 'Saldo disponible';
+  String get walletAvailableBalance => 'Saldo de monedas';
 
   @override
   String get walletCoins => 'monedas';
@@ -2136,13 +2147,86 @@ class SEs extends S {
 
   @override
   String get walletSectionBuySubtitle =>
-      'Usa monedas para enviar regalos en directos';
+      'Usa monedas para enviar regalos virtuales a los creadores en directos';
 
   @override
-  String get walletSectionHistoryTitle => 'Historial';
+  String get walletSectionHistoryTitle => 'Historial de regalos';
 
   @override
-  String get walletSectionHistorySubtitle => 'Tus últimos movimientos';
+  String get walletSectionHistorySubtitle =>
+      'Regalos enviados y recibidos en directos';
+
+  @override
+  String get giftersTabReceived => 'Recibidos';
+
+  @override
+  String get giftersTabSent => 'Enviados';
+
+  @override
+  String get giftersEmptyReceivedTitle => 'Aún nadie te ha regalado';
+
+  @override
+  String get giftersEmptyReceivedBody =>
+      'Cuando alguien te envíe regalos en los directos, aparecerán agrupados por persona aquí.';
+
+  @override
+  String get giftersEmptySentTitle => 'Aún no has enviado regalos';
+
+  @override
+  String get giftersEmptySentBody =>
+      'Los creadores que apoyes en los directos aparecerán agrupados aquí.';
+
+  @override
+  String giftersInLives(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n directos',
+      one: '1 directo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String giftersGiftsCount(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n regalos',
+      one: '1 regalo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get giftersActionThank => 'Agradecer';
+
+  @override
+  String get giftersActionMessage => 'Mensaje';
+
+  @override
+  String get giftersActionFollow => 'Seguir';
+
+  @override
+  String get giftersActionFollowing => 'Siguiendo';
+
+  @override
+  String get giftersDetailTotalReceived => 'Total recibido';
+
+  @override
+  String get giftersDetailTotalSent => 'Total enviado';
+
+  @override
+  String get giftersDetailGiftsTitle => 'Regalos';
+
+  @override
+  String get giftersBadgeFollowsYou => 'Te sigue';
+
+  @override
+  String get giftersLoadError => 'No se pudo cargar';
+
+  @override
+  String get giftersFollowError => 'Error al seguir. Inténtalo de nuevo.';
 
   @override
   String walletPackageCoins(String n) {
@@ -2176,17 +2260,17 @@ class SEs extends S {
 
   @override
   String get walletInfoGiftsBody =>
-      'Tus directos reciben regalos de tus seguidores.';
+      'Tus seguidores pueden enviar regalos virtuales durante tus directos.';
 
   @override
-  String get walletInfoUseTitle => 'Usa en directos';
+  String get walletInfoUseTitle => 'Envía regalos';
 
   @override
   String get walletInfoUseBody =>
-      'Envía regalos a tus creadores favoritos en sus directos.';
+      'Usa monedas para enviar regalos virtuales a tus creadores favoritos.';
 
   @override
-  String get walletLoadError => 'No pude cargar tu cartera.';
+  String get walletLoadError => 'No pude cargar tus monedas.';
 
   @override
   String get walletTryAgain => 'Intentar de nuevo';
@@ -2195,10 +2279,10 @@ class SEs extends S {
   String get walletActionAdd => 'Añadir';
 
   @override
-  String get walletActionSend => 'Enviar';
+  String get walletActionSend => 'Enviar regalo';
 
   @override
-  String get walletActionStatement => 'Movimientos';
+  String get walletActionStatement => 'Historial';
 
   @override
   String get walletComingSoon => 'Próximamente.';
@@ -2207,13 +2291,171 @@ class SEs extends S {
   String get walletTxLoadError => 'No se pudo cargar el historial.';
 
   @override
-  String get walletTxEmpty => 'Aún sin movimientos.';
+  String get walletTxEmpty => 'Aún sin regalos.';
 
   @override
   String get walletTxTo => 'Para';
 
   @override
   String get walletTxFrom => 'De';
+
+  @override
+  String get walletIapInfo =>
+      'Compra procesada por la tienda oficial (Google Play / App Store). Las monedas se acreditan automáticamente tras el pago. Las monedas son artículos virtuales no canjeables usados solo para enviar regalos en directos.';
+
+  @override
+  String walletIapBuyFor(String price) {
+    return 'Comprar por $price';
+  }
+
+  @override
+  String get walletIapProcessing => 'Procesando…';
+
+  @override
+  String get walletIapUnavailable => 'No disponible';
+
+  @override
+  String get walletIapPackageUnavailable =>
+      'Paquete no disponible en la tienda. Inténtalo pronto.';
+
+  @override
+  String get walletIapNotSupported =>
+      'Esta plataforma no admite compras dentro de la app.';
+
+  @override
+  String get walletIapStoreUnavailable =>
+      'Compras dentro de la app no disponibles en este dispositivo. Verifica tu cuenta de Google/Apple.';
+
+  @override
+  String get walletIapPaymentPending =>
+      'Pago en proceso. Recibirás las monedas cuando la tienda lo confirme.';
+
+  @override
+  String get walletIapPaymentError =>
+      'No se pudo procesar la compra. Inténtalo de nuevo.';
+
+  @override
+  String walletIapSuccess(String coins) {
+    return '¡Monedas acreditadas con éxito! (+$coins)';
+  }
+
+  @override
+  String get earningsTitle => 'Recompensas de Creador';
+
+  @override
+  String get earningsCurrency => 'Moneda de visualización';
+
+  @override
+  String get earningsCoinsBalance => 'Monedas disponibles';
+
+  @override
+  String get earningsDiamondsBalance => 'Diamantes del Programa de Creador';
+
+  @override
+  String get earningsDiamonds => 'diamantes';
+
+  @override
+  String get earningsTotalSpent => 'Monedas gastadas en regalos';
+
+  @override
+  String get earningsTotalEarned => 'Diamantes recibidos en regalos';
+
+  @override
+  String get earningsAccountNumber => 'Brawe ID';
+
+  @override
+  String get earningsPurchaseHistoryTitle => 'Historial de compras';
+
+  @override
+  String get earningsPurchaseHistorySubtitle =>
+      'Compras de monedas vía App Store / Google Play';
+
+  @override
+  String get earningsGiftHistoryTitle => 'Regalos recibidos';
+
+  @override
+  String get earningsGiftHistorySubtitle =>
+      'Origen de tus diamantes del Programa de Creador';
+
+  @override
+  String get earningsNoPurchases => 'Aún no has comprado monedas.';
+
+  @override
+  String get earningsNoGifts => 'Aún no has recibido regalos.';
+
+  @override
+  String get earningsLoadError => 'No se pudieron cargar tus recompensas.';
+
+  @override
+  String get earningsStatusCompleted => 'Completado';
+
+  @override
+  String get earningsStatusPending => 'Pendiente';
+
+  @override
+  String get earningsStatusFailed => 'Fallido';
+
+  @override
+  String get earningsStatusRefunded => 'Reembolsado';
+
+  @override
+  String get earningsDisclaimerTitle => 'Sobre Monedas y Diamantes';
+
+  @override
+  String get earningsDisclaimerBody =>
+      'Las Monedas y Diamantes Brawe son artículos virtuales no canjeables usados exclusivamente para enviar regalos durante transmisiones en vivo. No constituyen inversión, valores ni dinero electrónico. Los valores en USD/BRL/EUR son meramente referenciales y no representan derecho a retiro o conversión en efectivo.';
+
+  @override
+  String get earningsReferenceValueOnly => 'Valor de referencia';
+
+  @override
+  String get postDetailTitle => 'Publicación';
+
+  @override
+  String get postDetailNotFound =>
+      'No pudimos cargar esta publicación. Es posible que haya sido eliminada.';
+
+  @override
+  String get postDetailGoHome => 'Ir al Inicio';
+
+  @override
+  String get postLikersTitle => 'Me gusta';
+
+  @override
+  String get postLikersEmpty => 'Aún nadie le ha dado me gusta.';
+
+  @override
+  String get postLikersLoadError => 'No se pudieron cargar los me gusta.';
+
+  @override
+  String postLikersTotal(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count me gusta',
+      one: '1 me gusta',
+      zero: 'Sin me gusta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reactionLike => 'Me gusta';
+
+  @override
+  String get reactionLove => 'Me encanta';
+
+  @override
+  String get reactionFire => 'Fuego';
+
+  @override
+  String get reactionLaugh => 'Jaja';
+
+  @override
+  String get reactionWow => 'Wow';
+
+  @override
+  String get reactionSad => 'Triste';
 
   @override
   String get exploreSearchHint => 'Buscar streamers, directos, categorías…';
@@ -3126,4 +3368,619 @@ class SEs extends S {
   String battleGiftReceived(String sender, String gift) {
     return '$sender envió $gift';
   }
+
+  @override
+  String get sharedPostReactionApplied => 'Reacción enviada ✨';
+
+  @override
+  String sharedPostMinutesAgo(int count) {
+    return 'hace $count min';
+  }
+
+  @override
+  String sharedPostHoursAgo(int count) {
+    return 'hace $count h';
+  }
+
+  @override
+  String sharedPostDaysAgo(int count) {
+    return 'hace $count d';
+  }
+
+  @override
+  String get topUpTitle => 'Recargar coins';
+
+  @override
+  String get topUpSubtitle => 'Compra directo por la tienda de tu celular';
+
+  @override
+  String get topUpReasonGift => 'Saldo insuficiente para este regalo';
+
+  @override
+  String get topUpReasonBattle => '¡Sigue en la batalla! Recarga ahora';
+
+  @override
+  String get topUpStoreDisclaimer => 'Pago seguro vía Play Store / App Store';
+
+  @override
+  String get earningsNoPurchasesHint =>
+      'Cuando compres coins por App Store o Google Play, aparecerán aquí.';
+
+  @override
+  String get earningsNoGiftsHint =>
+      'Los diamantes del Creator Program vienen de los regalos que recibes en lives.';
+
+  @override
+  String get creatorProgramTitle => 'Brawe Creator Network';
+
+  @override
+  String get creatorProgramSubtitle =>
+      'Crece tu audiencia. Construye tu comunidad. Forma parte de Brawe.';
+
+  @override
+  String get creatorProgramDescription =>
+      'La Red de Creadores Brawe es el programa oficial para creadores que quieren crecer, ganar visibilidad y construir una comunidad dentro de Brawe.';
+
+  @override
+  String get creatorActionApplyNow => 'Quiero inscribirme';
+
+  @override
+  String get creatorActionViewLevels => 'Ver niveles de creador';
+
+  @override
+  String get creatorActionCheckStatus => 'Ver mi inscripción';
+
+  @override
+  String get creatorBenefitsHeader => 'Lo que ganas';
+
+  @override
+  String get creatorBenefit1 => 'Sé descubierto por nuevas audiencias';
+
+  @override
+  String get creatorBenefit2 => 'Construye tu identidad de creador';
+
+  @override
+  String get creatorBenefit3 => 'Desbloquea badges oficiales';
+
+  @override
+  String get creatorBenefit4 => 'Crece con lives y contenido';
+
+  @override
+  String get creatorBenefit5 => 'Únete a una comunidad premium';
+
+  @override
+  String creatorTotalCreators(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n creadores en la red',
+      one: '1 creador en la red',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorLevelsTitle => 'Niveles de Creador';
+
+  @override
+  String get creatorLevelsSubtitle =>
+      'Cada nivel representa un momento de tu trayectoria.';
+
+  @override
+  String get creatorTierRisingTitle => 'Rising Creator';
+
+  @override
+  String get creatorTierRisingBody =>
+      'Para creadores en crecimiento listos para ser descubiertos.';
+
+  @override
+  String get creatorTierFeaturedTitle => 'Featured Creator';
+
+  @override
+  String get creatorTierFeaturedBody =>
+      'Para creadores activos con contenido sólido y comunidad en potencial.';
+
+  @override
+  String get creatorTierLiveTitle => 'Live Creator';
+
+  @override
+  String get creatorTierLiveBody =>
+      'Para streamers, hosts y creadores enfocados en lives.';
+
+  @override
+  String get creatorTierAmbassadorTitle => 'Ambassador';
+
+  @override
+  String get creatorTierAmbassadorBody =>
+      'Para creadores reconocidos que representan la visión de Brawe.';
+
+  @override
+  String get creatorTierFoundingTitle => 'Founding Creator';
+
+  @override
+  String get creatorTierFoundingBody =>
+      'Para creadores seleccionados que ayudan a moldear el futuro de Brawe.';
+
+  @override
+  String get creatorTierApplyCta => 'Inscribirme como creador';
+
+  @override
+  String get creatorFormTitle => 'Inscríbete en la Red';
+
+  @override
+  String get creatorFormSubtitle => 'Cuéntanos más sobre tu trayectoria.';
+
+  @override
+  String get creatorFormDescription =>
+      'Revisamos cada inscripción con cuidado para entender tu contenido, objetivos y potencial dentro de Brawe.';
+
+  @override
+  String get creatorFormSectionIdentity => 'Identidad';
+
+  @override
+  String get creatorFormSectionContent => 'Contenido';
+
+  @override
+  String get creatorFormSectionSocial => 'Redes sociales';
+
+  @override
+  String get creatorFormSectionAbout => 'Sobre ti';
+
+  @override
+  String get creatorFormFullName => 'Nombre completo';
+
+  @override
+  String get creatorFormUsername => 'Username';
+
+  @override
+  String get creatorFormEmail => 'Correo electrónico';
+
+  @override
+  String get creatorFormPhone => 'Teléfono';
+
+  @override
+  String get creatorFormCountry => 'País';
+
+  @override
+  String get creatorFormCity => 'Ciudad';
+
+  @override
+  String get creatorFormLanguage => 'Idioma principal';
+
+  @override
+  String get creatorFormNiche => 'Nicho de contenido';
+
+  @override
+  String get creatorFormNichePlaceholder =>
+      'Ejemplo: lifestyle, música, games, educación...';
+
+  @override
+  String get creatorFormCategory => 'Categoría de creador';
+
+  @override
+  String get creatorFormSocialLinks => 'Enlaces de redes';
+
+  @override
+  String get creatorFormSocialPlaceholder =>
+      'Pega tu Instagram, TikTok, YouTube...';
+
+  @override
+  String get creatorFormFollowers => 'Seguidores aproximados';
+
+  @override
+  String get creatorFormDoesLive => '¿Haces lives actualmente?';
+
+  @override
+  String get creatorFormBio => 'Cuéntanos sobre ti';
+
+  @override
+  String get creatorFormBioPlaceholder => '¿Quién eres como creador?';
+
+  @override
+  String get creatorFormMotivation => 'Tu motivación';
+
+  @override
+  String get creatorFormMotivationPlaceholder =>
+      '¿Por qué quieres crecer con Brawe?';
+
+  @override
+  String get creatorFormGoals => 'Tus objetivos';
+
+  @override
+  String get creatorFormGoalsPlaceholder => '¿Qué quieres lograr como creador?';
+
+  @override
+  String get creatorFormPortfolio => 'Portfolio (opcional)';
+
+  @override
+  String get creatorFormSubmit => 'Enviar inscripción';
+
+  @override
+  String get creatorFormSaveDraft => 'Guardar borrador';
+
+  @override
+  String get creatorFormCancel => 'Cancelar';
+
+  @override
+  String get creatorFormTermsPrefix => 'He leído y acepto los ';
+
+  @override
+  String get creatorFormTermsLink => 'Términos de Brawe Creator Network';
+
+  @override
+  String get creatorFormTermsSuffix => '.';
+
+  @override
+  String get creatorFormTermsMustAccept =>
+      'Debes aceptar los Términos para inscribirte.';
+
+  @override
+  String get creatorFormTermsOpen => 'Abrir Términos';
+
+  @override
+  String get creatorFormTermsClose => 'Cerrar';
+
+  @override
+  String creatorFormTermsVersion(String version) {
+    return 'Versión $version';
+  }
+
+  @override
+  String get creatorFormValidationRequired => 'Campo obligatorio';
+
+  @override
+  String get creatorFormValidationEmail => 'Correo inválido';
+
+  @override
+  String get creatorFormValidationSocial => 'Añade al menos una red social';
+
+  @override
+  String get creatorFormSubmitting => 'Enviando tu inscripción...';
+
+  @override
+  String get creatorFormSuccess => 'Inscripción enviada con éxito.';
+
+  @override
+  String get creatorFormError =>
+      'No pudimos enviar tu inscripción. Inténtalo de nuevo.';
+
+  @override
+  String get creatorFormAlreadyExists => 'Ya tienes una inscripción activa.';
+
+  @override
+  String get creatorSubmittedTitle => 'Inscripción enviada';
+
+  @override
+  String get creatorSubmittedBody =>
+      'Gracias por inscribirte en Brawe Creator Network. Nuestro equipo revisará tu perfil y te avisaremos cuando haya novedades.';
+
+  @override
+  String get creatorSubmittedStep1 =>
+      'Tu inscripción está pendiente de revisión.';
+
+  @override
+  String get creatorSubmittedStep2 =>
+      'Podemos pedirte más información si es necesario.';
+
+  @override
+  String get creatorSubmittedStep3 =>
+      'Puedes consultar el estado cuando quieras.';
+
+  @override
+  String get creatorSubmittedTrack => 'Ver estado';
+
+  @override
+  String get creatorSubmittedHome => 'Volver al Inicio';
+
+  @override
+  String get creatorStatusPendingTitle => 'Inscripción recibida';
+
+  @override
+  String get creatorStatusPendingBody =>
+      'Tu inscripción ha sido recibida y está esperando revisión.';
+
+  @override
+  String get creatorStatusAnalysisTitle => 'En análisis';
+
+  @override
+  String get creatorStatusAnalysisBody =>
+      'Nuestro equipo está revisando tu perfil de creador.';
+
+  @override
+  String get creatorStatusApprovedTitle => '¡Aprobado!';
+
+  @override
+  String get creatorStatusApprovedBody =>
+      '¡Felicidades! Ya formas parte de Brawe Creator Network.';
+
+  @override
+  String get creatorStatusRejectedTitle => 'Inscripción no aprobada';
+
+  @override
+  String get creatorStatusRejectedBody =>
+      'Tu inscripción no fue aprobada en este momento. Puedes mejorar tu perfil e intentarlo más tarde.';
+
+  @override
+  String get creatorStatusWaitlistTitle => 'Estás en la waitlist';
+
+  @override
+  String get creatorStatusWaitlistBody =>
+      'Tu perfil tiene potencial y podemos invitarte pronto.';
+
+  @override
+  String get creatorStatusNeedsInfoTitle => 'Necesitamos más información';
+
+  @override
+  String get creatorStatusNeedsInfoBody =>
+      'Actualiza tu inscripción con los detalles solicitados.';
+
+  @override
+  String get creatorStatusInvitedAmbassadorTitle => 'Invitación Ambassador';
+
+  @override
+  String get creatorStatusInvitedAmbassadorBody =>
+      'Has sido invitado al programa Brawe Ambassadors.';
+
+  @override
+  String get creatorStatusInvitedFoundingTitle => 'Invitación Founding Creator';
+
+  @override
+  String get creatorStatusInvitedFoundingBody =>
+      'Has sido invitado a ser Brawe Founding Creator.';
+
+  @override
+  String get creatorStatusUpdateApplication => 'Actualizar inscripción';
+
+  @override
+  String get creatorStatusContinue => 'Continuar';
+
+  @override
+  String get creatorStatusStartOnboarding => 'Empezar onboarding';
+
+  @override
+  String get creatorOnboardingTitle => 'Bienvenido a Brawe Creator Network';
+
+  @override
+  String get creatorOnboardingSubtitle =>
+      'Vamos a configurar tu presencia y ayudar a que descubran tu contenido.';
+
+  @override
+  String get creatorOnboardingStart => 'Comenzar setup';
+
+  @override
+  String get creatorOnboardingSkip => 'Saltar por ahora';
+
+  @override
+  String creatorOnboardingProgress(int done, int total) {
+    return '$done de $total completados';
+  }
+
+  @override
+  String get creatorProfileTitle => 'Perfil de Creador';
+
+  @override
+  String get creatorProfileSubtitle => 'Personaliza cómo te ven como creador.';
+
+  @override
+  String get creatorProfileFieldDisplayName => 'Nombre público';
+
+  @override
+  String get creatorProfileFieldBio => 'Bio de creador';
+
+  @override
+  String get creatorProfileFieldCategory => 'Categoría de contenido';
+
+  @override
+  String get creatorProfileFieldSocial => 'Enlaces públicos';
+
+  @override
+  String get creatorProfileFieldBadgeVisibility => 'Mostrar badge en perfil';
+
+  @override
+  String get creatorProfileSave => 'Guardar cambios';
+
+  @override
+  String get creatorProfilePreview => 'Previsualizar perfil';
+
+  @override
+  String get creatorProfileSaved => 'Perfil de creador actualizado.';
+
+  @override
+  String get creatorProfileSaveError =>
+      'No pudimos actualizar el perfil de creador.';
+
+  @override
+  String get creatorBadgeScreenTitle => 'Tu Badge de Creador';
+
+  @override
+  String get creatorBadgeScreenSubtitle =>
+      'Tu badge ayuda a las personas a reconocer tu rol en Brawe Creator Network.';
+
+  @override
+  String get creatorBadgeLocked => 'Bloqueado';
+
+  @override
+  String get creatorBadgeUnlocked => 'Desbloqueado';
+
+  @override
+  String get creatorBadgeViewBenefits => 'Ver beneficios';
+
+  @override
+  String get creatorBadgeBack => 'Volver';
+
+  @override
+  String get creatorDashboardTitle => 'Panel del Creador';
+
+  @override
+  String get creatorDashboardSubtitle =>
+      'Sigue tu crecimiento y gestiona tu presencia.';
+
+  @override
+  String get creatorDashboardCardViews => 'Vistas de perfil';
+
+  @override
+  String get creatorDashboardCardFollowers => 'Crecimiento de seguidores';
+
+  @override
+  String get creatorDashboardCardReach => 'Alcance del contenido';
+
+  @override
+  String get creatorDashboardCardLives => 'Actividad en lives';
+
+  @override
+  String get creatorDashboardCardStatus => 'Estado del creador';
+
+  @override
+  String get creatorDashboardQuickCreatePost => 'Crear post';
+
+  @override
+  String get creatorDashboardQuickGoLive => 'Entrar en vivo';
+
+  @override
+  String get creatorDashboardQuickEditProfile => 'Editar perfil';
+
+  @override
+  String get creatorDashboardQuickViewBadge => 'Ver badge';
+
+  @override
+  String get creatorDashboardQuickInsights => 'Ver insights';
+
+  @override
+  String get adminCreatorAppsTitle => 'Inscripciones de Creadores';
+
+  @override
+  String get adminCreatorAppsFilterAll => 'Todos';
+
+  @override
+  String get adminCreatorAppsFilterPending => 'Pendientes';
+
+  @override
+  String get adminCreatorAppsFilterAnalysis => 'En análisis';
+
+  @override
+  String get adminCreatorAppsFilterApproved => 'Aprobados';
+
+  @override
+  String get adminCreatorAppsFilterRejected => 'Rechazados';
+
+  @override
+  String get adminCreatorAppsFilterWaitlist => 'Waitlist';
+
+  @override
+  String get adminCreatorAppsFilterNeedsInfo => 'Necesita info';
+
+  @override
+  String get adminCreatorAppsReview => 'Revisar';
+
+  @override
+  String get adminCreatorAppsFilter => 'Filtros';
+
+  @override
+  String get adminCreatorAppsExport => 'Exportar';
+
+  @override
+  String get adminCreatorAppsSearchHint => 'Buscar nombre, username o correo';
+
+  @override
+  String get adminCreatorAppsEmpty => 'No se encontraron inscripciones.';
+
+  @override
+  String get adminCreatorAppsLoadError => 'Error al cargar inscripciones.';
+
+  @override
+  String get adminCreatorAppDetailTitle => 'Análisis de Inscripción';
+
+  @override
+  String get adminCreatorSectionInfo => 'Información del creador';
+
+  @override
+  String get adminCreatorSectionSocial => 'Redes sociales';
+
+  @override
+  String get adminCreatorSectionNiche => 'Nicho de contenido';
+
+  @override
+  String get adminCreatorSectionMotivation => 'Motivación';
+
+  @override
+  String get adminCreatorSectionGoals => 'Objetivos';
+
+  @override
+  String get adminCreatorSectionNotes => 'Notas internas';
+
+  @override
+  String get adminCreatorSectionSuggestedTier => 'Tier sugerido';
+
+  @override
+  String get adminCreatorActionApprove => 'Aprobar';
+
+  @override
+  String get adminCreatorActionReject => 'Rechazar';
+
+  @override
+  String get adminCreatorActionWaitlist => 'Mover a waitlist';
+
+  @override
+  String get adminCreatorActionRequestInfo => 'Pedir más información';
+
+  @override
+  String get adminCreatorActionInviteAmbassador => 'Invitar como Ambassador';
+
+  @override
+  String get adminCreatorActionInviteFounding =>
+      'Invitar como Founding Creator';
+
+  @override
+  String get adminCreatorActionSaveNotes => 'Guardar notas';
+
+  @override
+  String get adminCreatorConfirmApprove =>
+      '¿Seguro que quieres aprobar a este creador?';
+
+  @override
+  String get adminCreatorConfirmReject =>
+      '¿Seguro que quieres rechazar esta inscripción?';
+
+  @override
+  String get adminCreatorConfirmRequestInfo =>
+      'Dile al creador qué información falta.';
+
+  @override
+  String get adminCreatorReviewSuccess => 'Decisión registrada.';
+
+  @override
+  String get adminCreatorReviewError => 'No se pudo registrar la decisión.';
+
+  @override
+  String get adminCreatorsTitle => 'Gestión de Creadores';
+
+  @override
+  String get adminCreatorsFilterAll => 'Todos los creadores';
+
+  @override
+  String get adminCreatorsFilterRising => 'Rising';
+
+  @override
+  String get adminCreatorsFilterFeatured => 'Featured';
+
+  @override
+  String get adminCreatorsFilterLive => 'Live';
+
+  @override
+  String get adminCreatorsFilterAmbassadors => 'Ambassadors';
+
+  @override
+  String get adminCreatorsFilterFounding => 'Founding';
+
+  @override
+  String get adminCreatorsActionEdit => 'Editar creador';
+
+  @override
+  String get adminCreatorsActionChangeBadge => 'Cambiar badge';
+
+  @override
+  String get adminCreatorsActionFeature => 'Destacar';
+
+  @override
+  String get adminCreatorsActionDisable => 'Desactivar';
 }

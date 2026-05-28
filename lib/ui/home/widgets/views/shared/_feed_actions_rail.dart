@@ -5,10 +5,12 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../../data/repositories/post_repository.dart';
 import '../../../../../data/repositories/social_repository.dart';
+import '../../../../../data/services/feedback_service.dart';
 import '../../../../../domain/models/feed_item.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../feed/widgets/comments_sheet.dart';
+import '../../../../feed/widgets/reactions_bar.dart';
 import '../../action_rail.dart';
 
 /// Wrapper que conecta o [ActionRail] aos repositórios reais.
@@ -47,6 +49,9 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
   }
 
   Future<void> _onLike() async {
+    // Feedback tátil + sonoro imediato (UX TikTok/Instagram).
+    ref.read(feedbackServiceProvider).like();
+
     // Optimistic toggle.
     final prevLiked = _liked;
     final prevCount = _likesCount;
@@ -91,8 +96,12 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
   }
 
   Future<void> _onShare() async {
-    final base = _isPost ? 'p' : 'live';
-    final url = 'https://brawe.app/connect/$base/${widget.item.id}';
+    ref.read(feedbackServiceProvider).share();
+    // URL canônica para o app abrir (deep link). Posts: /post/:id, lives: /live/:id.
+    // Ambas estão registradas no router e no intent-filter do AndroidManifest.
+    final url = _isPost
+        ? 'https://brawe.app/post/${widget.item.id}'
+        : 'https://brawe.app/live/${widget.item.id}';
     final caption = widget.item.caption.isNotEmpty
         ? widget.item.caption
         : S.of(context).shareCheckBraweConnect;
@@ -111,6 +120,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     if (_busyFollow) return;
     final authorId = widget.item.author.id;
     if (authorId.isEmpty) return;
+    ref.read(feedbackServiceProvider).follow();
     final prev = _following;
     setState(() {
       _following = !_following;
@@ -146,6 +156,25 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     context.push('/profile/$authorId');
   }
 
+  Future<void> _onReact(String reactionType) async {
+    if (!_isPost) return;
+    // Optimistic: marca como liked se ainda não estava.
+    if (!_liked) {
+      setState(() {
+        _liked = true;
+        _likesCount += 1;
+      });
+    }
+    try {
+      await ref.read(postRepositoryProvider).react(widget.item.id, reactionType);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).feedCannotLike)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Reflete estado otimista no item passado para ActionRail.
@@ -158,6 +187,44 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       onFollow: _onFollow,
       onGift: _onGift,
       onProfile: _onProfile,
+      onLikeLongPress: _isPost
+          ? () async {
+              ref.read(feedbackServiceProvider).reaction();
+              // Mostra o reactions bar centrado horizontalmente, à direita
+              // (onde está o rail).
+              final size = MediaQuery.of(context).size;
+              final picked = await showReactionsBar(
+                context,
+                globalPosition: Offset(size.width - 56, size.height * 0.55),
+              );
+              if (picked != null) _onReact(picked.key);
+            }
+          : null,
+      onLikeCountTap: _isPost
+          ? () => context.push('/post/${widget.item.id}/likes')
+          : null,
+      onShareLongPress: _isPost
+          ? () async {
+              ref.read(feedbackServiceProvider).repost();
+              try {
+                await ref
+                    .read(postRepositoryProvider)
+                    .toggleRepost(widget.item.id, false);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(S.of(context).feedReposted),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } catch (_) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(S.of(context).feedCannotShare)),
+                );
+              }
+            }
+          : null,
     );
   }
 

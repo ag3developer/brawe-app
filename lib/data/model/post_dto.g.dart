@@ -24,24 +24,27 @@ Map<String, dynamic> _$AuthorResponseDtoToJson(_AuthorResponseDto instance) =>
       'is_verified': instance.isVerified,
     };
 
-_PostResponseDto _$PostResponseDtoFromJson(Map<String, dynamic> json) =>
-    _PostResponseDto(
-      id: json['id'] as String,
-      content: json['content'] as String,
-      imageUrl: json['image_url'] as String?,
-      likesCount: (json['likes_count'] as num).toInt(),
-      commentsCount: (json['comments_count'] as num).toInt(),
-      repostsCount: (json['reposts_count'] as num).toInt(),
-      viewsCount: (json['views_count'] as num).toInt(),
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
-      author: AuthorResponseDto.fromJson(
-        json['author'] as Map<String, dynamic>,
-      ),
-      userLiked: json['user_liked'] as bool? ?? false,
-      userReposted: json['user_reposted'] as bool? ?? false,
-      userFollowingAuthor: json['user_following_author'] as bool? ?? false,
-    );
+_PostResponseDto _$PostResponseDtoFromJson(
+  Map<String, dynamic> json,
+) => _PostResponseDto(
+  id: json['id'] as String,
+  content: json['content'] as String,
+  imageUrl: json['image_url'] as String?,
+  likesCount: (json['likes_count'] as num).toInt(),
+  commentsCount: (json['comments_count'] as num).toInt(),
+  repostsCount: (json['reposts_count'] as num).toInt(),
+  viewsCount: (json['views_count'] as num).toInt(),
+  createdAt: json['created_at'] as String,
+  updatedAt: json['updated_at'] as String,
+  author: AuthorResponseDto.fromJson(json['author'] as Map<String, dynamic>),
+  userLiked: json['user_liked'] as bool? ?? false,
+  userReposted: json['user_reposted'] as bool? ?? false,
+  userFollowingAuthor: json['user_following_author'] as bool? ?? false,
+  repostedBy: json['reposted_by'] == null
+      ? null
+      : AuthorResponseDto.fromJson(json['reposted_by'] as Map<String, dynamic>),
+  repostCreatedAt: json['repost_created_at'] as String?,
+);
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
     <String, dynamic>{
@@ -58,6 +61,8 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'user_liked': instance.userLiked,
       'user_reposted': instance.userReposted,
       'user_following_author': instance.userFollowingAuthor,
+      'reposted_by': instance.repostedBy,
+      'repost_created_at': instance.repostCreatedAt,
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>

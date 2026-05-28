@@ -2559,6 +2559,24 @@ abstract class S {
   /// **'Repostar'**
   String get feedRepost;
 
+  /// No description provided for @feedReposted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostado para seus seguidores'**
+  String get feedReposted;
+
+  /// No description provided for @shareToFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para seguidores'**
+  String get shareToFollowers;
+
+  /// No description provided for @feedRepostBanner.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} repostou'**
+  String feedRepostBanner(String name);
+
   /// No description provided for @feedQuotePost.
   ///
   /// In pt, this message translates to:
@@ -3960,13 +3978,13 @@ abstract class S {
   /// No description provided for @walletTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Carteira'**
+  /// **'Moedas Brawe'**
   String get walletTitle;
 
   /// No description provided for @walletAvailableBalance.
   ///
   /// In pt, this message translates to:
-  /// **'Saldo disponível'**
+  /// **'Saldo de moedas'**
   String get walletAvailableBalance;
 
   /// No description provided for @walletCoins.
@@ -3984,20 +4002,128 @@ abstract class S {
   /// No description provided for @walletSectionBuySubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Use moedas para enviar gifts em lives'**
+  /// **'Use moedas para enviar presentes virtuais aos criadores nas lives'**
   String get walletSectionBuySubtitle;
 
   /// No description provided for @walletSectionHistoryTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Histórico'**
+  /// **'Histórico de presentes'**
   String get walletSectionHistoryTitle;
 
   /// No description provided for @walletSectionHistorySubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Suas últimas movimentações'**
+  /// **'Presentes enviados e recebidos em lives'**
   String get walletSectionHistorySubtitle;
+
+  /// No description provided for @giftersTabReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebidos'**
+  String get giftersTabReceived;
+
+  /// No description provided for @giftersTabSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviados'**
+  String get giftersTabSent;
+
+  /// No description provided for @giftersEmptyReceivedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda ninguém te presenteou'**
+  String get giftersEmptyReceivedTitle;
+
+  /// No description provided for @giftersEmptyReceivedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando alguém te enviar gifts nas lives, eles vão aparecer agrupados por pessoa aqui.'**
+  String get giftersEmptyReceivedBody;
+
+  /// No description provided for @giftersEmptySentTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não enviou gifts'**
+  String get giftersEmptySentTitle;
+
+  /// No description provided for @giftersEmptySentBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os criadores que você apoiar nas lives vão aparecer agrupados aqui.'**
+  String get giftersEmptySentBody;
+
+  /// No description provided for @giftersInLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{1 live} other{{n} lives}}'**
+  String giftersInLives(int n);
+
+  /// No description provided for @giftersGiftsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{1 presente} other{{n} presentes}}'**
+  String giftersGiftsCount(int n);
+
+  /// No description provided for @giftersActionThank.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agradecer'**
+  String get giftersActionThank;
+
+  /// No description provided for @giftersActionMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem'**
+  String get giftersActionMessage;
+
+  /// No description provided for @giftersActionFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get giftersActionFollow;
+
+  /// No description provided for @giftersActionFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get giftersActionFollowing;
+
+  /// No description provided for @giftersDetailTotalReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total recebido'**
+  String get giftersDetailTotalReceived;
+
+  /// No description provided for @giftersDetailTotalSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total enviado'**
+  String get giftersDetailTotalSent;
+
+  /// No description provided for @giftersDetailGiftsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get giftersDetailGiftsTitle;
+
+  /// No description provided for @giftersBadgeFollowsYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Te segue'**
+  String get giftersBadgeFollowsYou;
+
+  /// No description provided for @giftersLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar'**
+  String get giftersLoadError;
+
+  /// No description provided for @giftersFollowError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao seguir. Tente novamente.'**
+  String get giftersFollowError;
 
   /// No description provided for @walletPackageCoins.
   ///
@@ -4032,7 +4158,7 @@ abstract class S {
   /// No description provided for @walletInfoQuestsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Quests diárias'**
+  /// **'Missões diárias'**
   String get walletInfoQuestsTitle;
 
   /// No description provided for @walletInfoQuestsBody.
@@ -4044,31 +4170,31 @@ abstract class S {
   /// No description provided for @walletInfoGiftsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Receba gifts'**
+  /// **'Receba presentes'**
   String get walletInfoGiftsTitle;
 
   /// No description provided for @walletInfoGiftsBody.
   ///
   /// In pt, this message translates to:
-  /// **'Suas lives recebem gifts dos seus seguidores.'**
+  /// **'Seus seguidores podem enviar presentes virtuais durante suas lives.'**
   String get walletInfoGiftsBody;
 
   /// No description provided for @walletInfoUseTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Use em lives'**
+  /// **'Envie presentes'**
   String get walletInfoUseTitle;
 
   /// No description provided for @walletInfoUseBody.
   ///
   /// In pt, this message translates to:
-  /// **'Envie gifts para creators favoritos durante lives.'**
+  /// **'Use moedas para enviar presentes virtuais aos criadores favoritos.'**
   String get walletInfoUseBody;
 
   /// No description provided for @walletLoadError.
   ///
   /// In pt, this message translates to:
-  /// **'Não consegui carregar sua carteira.'**
+  /// **'Não consegui carregar suas moedas.'**
   String get walletLoadError;
 
   /// No description provided for @walletTryAgain.
@@ -4086,13 +4212,13 @@ abstract class S {
   /// No description provided for @walletActionSend.
   ///
   /// In pt, this message translates to:
-  /// **'Enviar'**
+  /// **'Enviar presente'**
   String get walletActionSend;
 
   /// No description provided for @walletActionStatement.
   ///
   /// In pt, this message translates to:
-  /// **'Extrato'**
+  /// **'Histórico'**
   String get walletActionStatement;
 
   /// No description provided for @walletComingSoon.
@@ -4110,7 +4236,7 @@ abstract class S {
   /// No description provided for @walletTxEmpty.
   ///
   /// In pt, this message translates to:
-  /// **'Sem movimentações ainda.'**
+  /// **'Sem presentes ainda.'**
   String get walletTxEmpty;
 
   /// No description provided for @walletTxTo.
@@ -4124,6 +4250,276 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'De'**
   String get walletTxFrom;
+
+  /// No description provided for @walletIapInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compra processada pela loja oficial (Google Play / App Store). As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados apenas para enviar presentes em lives.'**
+  String get walletIapInfo;
+
+  /// No description provided for @walletIapBuyFor.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar por {price}'**
+  String walletIapBuyFor(String price);
+
+  /// No description provided for @walletIapProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Processando…'**
+  String get walletIapProcessing;
+
+  /// No description provided for @walletIapUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Indisponível'**
+  String get walletIapUnavailable;
+
+  /// No description provided for @walletIapPackageUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pacote indisponível na loja. Tente novamente em breve.'**
+  String get walletIapPackageUnavailable;
+
+  /// No description provided for @walletIapNotSupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Plataforma não suporta compras no app.'**
+  String get walletIapNotSupported;
+
+  /// No description provided for @walletIapStoreUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compras no app indisponíveis neste dispositivo. Verifique se sua conta Google/Apple está configurada.'**
+  String get walletIapStoreUnavailable;
+
+  /// No description provided for @walletIapPaymentPending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento em processamento. Você receberá as moedas assim que for confirmado pela loja.'**
+  String get walletIapPaymentPending;
+
+  /// No description provided for @walletIapPaymentError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao processar a compra. Tente novamente.'**
+  String get walletIapPaymentError;
+
+  /// No description provided for @walletIapSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas creditadas com sucesso! (+{coins})'**
+  String walletIapSuccess(String coins);
+
+  /// No description provided for @earningsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recompensas de Criador'**
+  String get earningsTitle;
+
+  /// No description provided for @earningsCurrency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moeda de exibição'**
+  String get earningsCurrency;
+
+  /// No description provided for @earningsCoinsBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas disponíveis'**
+  String get earningsCoinsBalance;
+
+  /// No description provided for @earningsDiamondsBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes do Programa de Criador'**
+  String get earningsDiamondsBalance;
+
+  /// No description provided for @earningsDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'diamantes'**
+  String get earningsDiamonds;
+
+  /// No description provided for @earningsTotalSpent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas gastas em presentes'**
+  String get earningsTotalSpent;
+
+  /// No description provided for @earningsTotalEarned.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes recebidos de presentes'**
+  String get earningsTotalEarned;
+
+  /// No description provided for @earningsAccountNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe ID'**
+  String get earningsAccountNumber;
+
+  /// No description provided for @earningsPurchaseHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de compras'**
+  String get earningsPurchaseHistoryTitle;
+
+  /// No description provided for @earningsPurchaseHistorySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compras de moedas via App Store / Google Play'**
+  String get earningsPurchaseHistorySubtitle;
+
+  /// No description provided for @earningsGiftHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes recebidos'**
+  String get earningsGiftHistoryTitle;
+
+  /// No description provided for @earningsGiftHistorySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Origem dos seus diamantes do Programa de Criador'**
+  String get earningsGiftHistorySubtitle;
+
+  /// No description provided for @earningsNoPurchases.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não comprou moedas.'**
+  String get earningsNoPurchases;
+
+  /// No description provided for @earningsNoGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não recebeu presentes.'**
+  String get earningsNoGifts;
+
+  /// No description provided for @earningsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar suas recompensas.'**
+  String get earningsLoadError;
+
+  /// No description provided for @earningsStatusCompleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluído'**
+  String get earningsStatusCompleted;
+
+  /// No description provided for @earningsStatusPending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pendente'**
+  String get earningsStatusPending;
+
+  /// No description provided for @earningsStatusFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falhou'**
+  String get earningsStatusFailed;
+
+  /// No description provided for @earningsStatusRefunded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estornado'**
+  String get earningsStatusRefunded;
+
+  /// No description provided for @earningsDisclaimerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre Moedas e Diamantes'**
+  String get earningsDisclaimerTitle;
+
+  /// No description provided for @earningsDisclaimerBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas Brawe e Diamantes são itens virtuais não-resgatáveis usados exclusivamente para enviar presentes em lives. Não constituem investimento, valor mobiliário ou moeda eletrônica. Valores em USD/BRL/EUR são meramente informativos e não representam direito a saque ou conversão em dinheiro.'**
+  String get earningsDisclaimerBody;
+
+  /// No description provided for @earningsReferenceValueOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor de referência'**
+  String get earningsReferenceValueOnly;
+
+  /// No description provided for @postDetailTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicação'**
+  String get postDetailTitle;
+
+  /// No description provided for @postDetailNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos carregar esta publicação. Talvez ela tenha sido removida.'**
+  String get postDetailNotFound;
+
+  /// No description provided for @postDetailGoHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ir para Início'**
+  String get postDetailGoHome;
+
+  /// No description provided for @postLikersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtidas'**
+  String get postLikersTitle;
+
+  /// No description provided for @postLikersEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda ninguém curtiu esta publicação.'**
+  String get postLikersEmpty;
+
+  /// No description provided for @postLikersLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar as curtidas.'**
+  String get postLikersLoadError;
+
+  /// No description provided for @postLikersTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =0{Nenhuma curtida} =1{1 curtida} other{{count} curtidas}}'**
+  String postLikersTotal(int count);
+
+  /// No description provided for @reactionLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir'**
+  String get reactionLike;
+
+  /// No description provided for @reactionLove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Amei'**
+  String get reactionLove;
+
+  /// No description provided for @reactionFire.
+  ///
+  /// In pt, this message translates to:
+  /// **'Top'**
+  String get reactionFire;
+
+  /// No description provided for @reactionLaugh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Haha'**
+  String get reactionLaugh;
+
+  /// No description provided for @reactionWow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uau'**
+  String get reactionWow;
+
+  /// No description provided for @reactionSad.
+  ///
+  /// In pt, this message translates to:
+  /// **'Triste'**
+  String get reactionSad;
 
   /// No description provided for @exploreSearchHint.
   ///
@@ -5726,6 +6122,1128 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'{sender} enviou {gift}'**
   String battleGiftReceived(String sender, String gift);
+
+  /// No description provided for @sharedPostReactionApplied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reação enviada ✨'**
+  String get sharedPostReactionApplied;
+
+  /// No description provided for @sharedPostMinutesAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {count} min'**
+  String sharedPostMinutesAgo(int count);
+
+  /// No description provided for @sharedPostHoursAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {count} h'**
+  String sharedPostHoursAgo(int count);
+
+  /// No description provided for @sharedPostDaysAgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {count} d'**
+  String sharedPostDaysAgo(int count);
+
+  /// No description provided for @topUpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recarregar coins'**
+  String get topUpTitle;
+
+  /// No description provided for @topUpSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compre direto pela loja do seu celular'**
+  String get topUpSubtitle;
+
+  /// No description provided for @topUpReasonGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo insuficiente para este presente'**
+  String get topUpReasonGift;
+
+  /// No description provided for @topUpReasonBattle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continue na batalha! Recarregue agora'**
+  String get topUpReasonBattle;
+
+  /// No description provided for @topUpStoreDisclaimer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento seguro via Play Store / App Store'**
+  String get topUpStoreDisclaimer;
+
+  /// No description provided for @earningsNoPurchasesHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.'**
+  String get earningsNoPurchasesHint;
+
+  /// No description provided for @earningsNoGiftsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os diamantes do Creator Program vêm dos gifts que você recebe em lives.'**
+  String get earningsNoGiftsHint;
+
+  /// No description provided for @creatorProgramTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe Creator Network'**
+  String get creatorProgramTitle;
+
+  /// No description provided for @creatorProgramSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cresça sua audiência. Construa sua comunidade. Faça parte da Brawe.'**
+  String get creatorProgramSubtitle;
+
+  /// No description provided for @creatorProgramDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Rede de Criadores Brawe é o programa oficial para criadores que querem crescer, ganhar visibilidade e construir uma comunidade dentro da Brawe.'**
+  String get creatorProgramDescription;
+
+  /// No description provided for @creatorActionApplyNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quero me inscrever'**
+  String get creatorActionApplyNow;
+
+  /// No description provided for @creatorActionViewLevels.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver níveis de creator'**
+  String get creatorActionViewLevels;
+
+  /// No description provided for @creatorActionCheckStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acompanhar inscrição'**
+  String get creatorActionCheckStatus;
+
+  /// No description provided for @creatorBenefitsHeader.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que você ganha'**
+  String get creatorBenefitsHeader;
+
+  /// No description provided for @creatorBenefit1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seja descoberto por novas audiências'**
+  String get creatorBenefit1;
+
+  /// No description provided for @creatorBenefit2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Construa sua identidade de creator'**
+  String get creatorBenefit2;
+
+  /// No description provided for @creatorBenefit3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloqueie badges oficiais'**
+  String get creatorBenefit3;
+
+  /// No description provided for @creatorBenefit4.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cresça com lives e conteúdo'**
+  String get creatorBenefit4;
+
+  /// No description provided for @creatorBenefit5.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faça parte de uma comunidade premium'**
+  String get creatorBenefit5;
+
+  /// No description provided for @creatorTotalCreators.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{1 creator na rede} other{{n} creators na rede}}'**
+  String creatorTotalCreators(int n);
+
+  /// No description provided for @creatorLevelsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Níveis de Creator'**
+  String get creatorLevelsTitle;
+
+  /// No description provided for @creatorLevelsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cada nível representa um momento da sua jornada.'**
+  String get creatorLevelsSubtitle;
+
+  /// No description provided for @creatorTierRisingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rising Creator'**
+  String get creatorTierRisingTitle;
+
+  /// No description provided for @creatorTierRisingBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para creators em crescimento que querem oportunidade real de alcance.'**
+  String get creatorTierRisingBody;
+
+  /// No description provided for @creatorTierFeaturedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Featured Creator'**
+  String get creatorTierFeaturedTitle;
+
+  /// No description provided for @creatorTierFeaturedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para creators ativos com conteúdo consistente e potencial editorial.'**
+  String get creatorTierFeaturedBody;
+
+  /// No description provided for @creatorTierLiveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live Creator'**
+  String get creatorTierLiveTitle;
+
+  /// No description provided for @creatorTierLiveBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para streamers, hosts e creators focados em lives e batalhas.'**
+  String get creatorTierLiveBody;
+
+  /// No description provided for @creatorTierAmbassadorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ambassador'**
+  String get creatorTierAmbassadorTitle;
+
+  /// No description provided for @creatorTierAmbassadorBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para creators reconhecidos que representam a visão da Brawe.'**
+  String get creatorTierAmbassadorBody;
+
+  /// No description provided for @creatorTierFoundingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Founding Creator'**
+  String get creatorTierFoundingTitle;
+
+  /// No description provided for @creatorTierFoundingBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para creators selecionados que ajudam a moldar o futuro da Brawe.'**
+  String get creatorTierFoundingBody;
+
+  /// No description provided for @creatorTierApplyCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrever-se como creator'**
+  String get creatorTierApplyCta;
+
+  /// No description provided for @creatorFormTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrever-se na Rede'**
+  String get creatorFormTitle;
+
+  /// No description provided for @creatorFormSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte mais sobre sua jornada como creator.'**
+  String get creatorFormSubtitle;
+
+  /// No description provided for @creatorFormDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Analisamos cada inscrição com cuidado para entender seu conteúdo, objetivos e potencial dentro da Brawe.'**
+  String get creatorFormDescription;
+
+  /// No description provided for @creatorFormSectionIdentity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Identidade'**
+  String get creatorFormSectionIdentity;
+
+  /// No description provided for @creatorFormSectionContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo'**
+  String get creatorFormSectionContent;
+
+  /// No description provided for @creatorFormSectionSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redes sociais'**
+  String get creatorFormSectionSocial;
+
+  /// No description provided for @creatorFormSectionAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre você'**
+  String get creatorFormSectionAbout;
+
+  /// No description provided for @creatorFormFullName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo'**
+  String get creatorFormFullName;
+
+  /// No description provided for @creatorFormUsername.
+  ///
+  /// In pt, this message translates to:
+  /// **'Username'**
+  String get creatorFormUsername;
+
+  /// No description provided for @creatorFormEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get creatorFormEmail;
+
+  /// No description provided for @creatorFormPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Telefone'**
+  String get creatorFormPhone;
+
+  /// No description provided for @creatorFormCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País'**
+  String get creatorFormCountry;
+
+  /// No description provided for @creatorFormCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get creatorFormCity;
+
+  /// No description provided for @creatorFormLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma principal'**
+  String get creatorFormLanguage;
+
+  /// No description provided for @creatorFormNiche.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nicho de conteúdo'**
+  String get creatorFormNiche;
+
+  /// No description provided for @creatorFormNichePlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: lifestyle, música, games, educação...'**
+  String get creatorFormNichePlaceholder;
+
+  /// No description provided for @creatorFormCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria de creator'**
+  String get creatorFormCategory;
+
+  /// No description provided for @creatorFormSocialLinks.
+  ///
+  /// In pt, this message translates to:
+  /// **'Links de redes sociais'**
+  String get creatorFormSocialLinks;
+
+  /// No description provided for @creatorFormSocialPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cole seu Instagram, TikTok, YouTube...'**
+  String get creatorFormSocialPlaceholder;
+
+  /// No description provided for @creatorFormFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores aproximados'**
+  String get creatorFormFollowers;
+
+  /// No description provided for @creatorFormDoesLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você faz lives atualmente?'**
+  String get creatorFormDoesLive;
+
+  /// No description provided for @creatorFormBio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte sua história'**
+  String get creatorFormBio;
+
+  /// No description provided for @creatorFormBioPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte quem é você como creator'**
+  String get creatorFormBioPlaceholder;
+
+  /// No description provided for @creatorFormMotivation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua motivação'**
+  String get creatorFormMotivation;
+
+  /// No description provided for @creatorFormMotivationPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que quer crescer com a Brawe?'**
+  String get creatorFormMotivationPlaceholder;
+
+  /// No description provided for @creatorFormGoals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus objetivos'**
+  String get creatorFormGoals;
+
+  /// No description provided for @creatorFormGoalsPlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que quer alcançar como creator?'**
+  String get creatorFormGoalsPlaceholder;
+
+  /// No description provided for @creatorFormPortfolio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Portfólio (opcional)'**
+  String get creatorFormPortfolio;
+
+  /// No description provided for @creatorFormSubmit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar inscrição'**
+  String get creatorFormSubmit;
+
+  /// No description provided for @creatorFormSaveDraft.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar rascunho'**
+  String get creatorFormSaveDraft;
+
+  /// No description provided for @creatorFormCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get creatorFormCancel;
+
+  /// No description provided for @creatorFormTermsPrefix.
+  ///
+  /// In pt, this message translates to:
+  /// **'Li e aceito os '**
+  String get creatorFormTermsPrefix;
+
+  /// No description provided for @creatorFormTermsLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos do Brawe Creator Network'**
+  String get creatorFormTermsLink;
+
+  /// No description provided for @creatorFormTermsSuffix.
+  ///
+  /// In pt, this message translates to:
+  /// **'.'**
+  String get creatorFormTermsSuffix;
+
+  /// No description provided for @creatorFormTermsMustAccept.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você precisa aceitar os Termos para se inscrever.'**
+  String get creatorFormTermsMustAccept;
+
+  /// No description provided for @creatorFormTermsOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir Termos'**
+  String get creatorFormTermsOpen;
+
+  /// No description provided for @creatorFormTermsClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get creatorFormTermsClose;
+
+  /// No description provided for @creatorFormTermsVersion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Versão {version}'**
+  String creatorFormTermsVersion(String version);
+
+  /// No description provided for @creatorFormValidationRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Campo obrigatório'**
+  String get creatorFormValidationRequired;
+
+  /// No description provided for @creatorFormValidationEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail inválido'**
+  String get creatorFormValidationEmail;
+
+  /// No description provided for @creatorFormValidationSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione pelo menos uma rede social'**
+  String get creatorFormValidationSocial;
+
+  /// No description provided for @creatorFormSubmitting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviando sua inscrição...'**
+  String get creatorFormSubmitting;
+
+  /// No description provided for @creatorFormSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição enviada com sucesso.'**
+  String get creatorFormSuccess;
+
+  /// No description provided for @creatorFormError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar sua inscrição. Tente novamente.'**
+  String get creatorFormError;
+
+  /// No description provided for @creatorFormAlreadyExists.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já tem uma inscrição ativa.'**
+  String get creatorFormAlreadyExists;
+
+  /// No description provided for @creatorSubmittedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição enviada'**
+  String get creatorSubmittedTitle;
+
+  /// No description provided for @creatorSubmittedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigado por se inscrever na Brawe Creator Network. Nossa equipe vai revisar seu perfil e avisaremos quando houver atualização.'**
+  String get creatorSubmittedBody;
+
+  /// No description provided for @creatorSubmittedStep1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua inscrição está aguardando revisão.'**
+  String get creatorSubmittedStep1;
+
+  /// No description provided for @creatorSubmittedStep2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Podemos pedir mais informações se necessário.'**
+  String get creatorSubmittedStep2;
+
+  /// No description provided for @creatorSubmittedStep3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode acompanhar o status quando quiser.'**
+  String get creatorSubmittedStep3;
+
+  /// No description provided for @creatorSubmittedTrack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acompanhar inscrição'**
+  String get creatorSubmittedTrack;
+
+  /// No description provided for @creatorSubmittedHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar pro Início'**
+  String get creatorSubmittedHome;
+
+  /// No description provided for @creatorStatusPendingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição recebida'**
+  String get creatorStatusPendingTitle;
+
+  /// No description provided for @creatorStatusPendingBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua inscrição foi recebida e está aguardando revisão.'**
+  String get creatorStatusPendingBody;
+
+  /// No description provided for @creatorStatusAnalysisTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em análise'**
+  String get creatorStatusAnalysisTitle;
+
+  /// No description provided for @creatorStatusAnalysisBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nossa equipe está revisando seu perfil de creator.'**
+  String get creatorStatusAnalysisBody;
+
+  /// No description provided for @creatorStatusApprovedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você foi aprovado!'**
+  String get creatorStatusApprovedTitle;
+
+  /// No description provided for @creatorStatusApprovedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Parabéns! Você agora faz parte da Brawe Creator Network.'**
+  String get creatorStatusApprovedBody;
+
+  /// No description provided for @creatorStatusRejectedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição não aprovada'**
+  String get creatorStatusRejectedTitle;
+
+  /// No description provided for @creatorStatusRejectedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua inscrição não foi aprovada neste momento. Você pode melhorar seu perfil e tentar novamente mais tarde.'**
+  String get creatorStatusRejectedBody;
+
+  /// No description provided for @creatorStatusWaitlistTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está na waitlist'**
+  String get creatorStatusWaitlistTitle;
+
+  /// No description provided for @creatorStatusWaitlistBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu perfil tem potencial e podemos convidá-lo em breve.'**
+  String get creatorStatusWaitlistBody;
+
+  /// No description provided for @creatorStatusNeedsInfoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisamos de mais informações'**
+  String get creatorStatusNeedsInfoTitle;
+
+  /// No description provided for @creatorStatusNeedsInfoBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualize sua inscrição com os detalhes solicitados.'**
+  String get creatorStatusNeedsInfoBody;
+
+  /// No description provided for @creatorStatusInvitedAmbassadorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite Ambassador'**
+  String get creatorStatusInvitedAmbassadorTitle;
+
+  /// No description provided for @creatorStatusInvitedAmbassadorBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você foi convidado para o programa Brawe Ambassadors.'**
+  String get creatorStatusInvitedAmbassadorBody;
+
+  /// No description provided for @creatorStatusInvitedFoundingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite Founding Creator'**
+  String get creatorStatusInvitedFoundingTitle;
+
+  /// No description provided for @creatorStatusInvitedFoundingBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você foi convidado para ser Brawe Founding Creator.'**
+  String get creatorStatusInvitedFoundingBody;
+
+  /// No description provided for @creatorStatusUpdateApplication.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualizar inscrição'**
+  String get creatorStatusUpdateApplication;
+
+  /// No description provided for @creatorStatusContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get creatorStatusContinue;
+
+  /// No description provided for @creatorStatusStartOnboarding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar onboarding'**
+  String get creatorStatusStartOnboarding;
+
+  /// No description provided for @creatorOnboardingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bem-vindo à Brawe Creator Network'**
+  String get creatorOnboardingTitle;
+
+  /// No description provided for @creatorOnboardingSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vamos configurar sua presença e ajudar pessoas a descobrirem seu conteúdo.'**
+  String get creatorOnboardingSubtitle;
+
+  /// No description provided for @creatorOnboardingStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar setup'**
+  String get creatorOnboardingStart;
+
+  /// No description provided for @creatorOnboardingSkip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular por enquanto'**
+  String get creatorOnboardingSkip;
+
+  /// No description provided for @creatorOnboardingProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{done} de {total} concluído'**
+  String creatorOnboardingProgress(int done, int total);
+
+  /// No description provided for @creatorProfileTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil de Creator'**
+  String get creatorProfileTitle;
+
+  /// No description provided for @creatorProfileSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Personalize como você aparece como creator.'**
+  String get creatorProfileSubtitle;
+
+  /// No description provided for @creatorProfileFieldDisplayName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome público'**
+  String get creatorProfileFieldDisplayName;
+
+  /// No description provided for @creatorProfileFieldBio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bio de creator'**
+  String get creatorProfileFieldBio;
+
+  /// No description provided for @creatorProfileFieldCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria de conteúdo'**
+  String get creatorProfileFieldCategory;
+
+  /// No description provided for @creatorProfileFieldSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Links públicos'**
+  String get creatorProfileFieldSocial;
+
+  /// No description provided for @creatorProfileFieldBadgeVisibility.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar badge no perfil'**
+  String get creatorProfileFieldBadgeVisibility;
+
+  /// No description provided for @creatorProfileSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar alterações'**
+  String get creatorProfileSave;
+
+  /// No description provided for @creatorProfilePreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualizar perfil'**
+  String get creatorProfilePreview;
+
+  /// No description provided for @creatorProfileSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil de creator atualizado.'**
+  String get creatorProfileSaved;
+
+  /// No description provided for @creatorProfileSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível atualizar o perfil de creator.'**
+  String get creatorProfileSaveError;
+
+  /// No description provided for @creatorBadgeScreenTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu Badge de Creator'**
+  String get creatorBadgeScreenTitle;
+
+  /// No description provided for @creatorBadgeScreenSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu badge ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.'**
+  String get creatorBadgeScreenSubtitle;
+
+  /// No description provided for @creatorBadgeLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloqueado'**
+  String get creatorBadgeLocked;
+
+  /// No description provided for @creatorBadgeUnlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloqueado'**
+  String get creatorBadgeUnlocked;
+
+  /// No description provided for @creatorBadgeViewBenefits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver benefícios'**
+  String get creatorBadgeViewBenefits;
+
+  /// No description provided for @creatorBadgeBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get creatorBadgeBack;
+
+  /// No description provided for @creatorDashboardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Painel do Creator'**
+  String get creatorDashboardTitle;
+
+  /// No description provided for @creatorDashboardSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acompanhe seu crescimento e gerencie sua presença.'**
+  String get creatorDashboardSubtitle;
+
+  /// No description provided for @creatorDashboardCardViews.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualizações de perfil'**
+  String get creatorDashboardCardViews;
+
+  /// No description provided for @creatorDashboardCardFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crescimento de seguidores'**
+  String get creatorDashboardCardFollowers;
+
+  /// No description provided for @creatorDashboardCardReach.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alcance de conteúdo'**
+  String get creatorDashboardCardReach;
+
+  /// No description provided for @creatorDashboardCardLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atividade em lives'**
+  String get creatorDashboardCardLives;
+
+  /// No description provided for @creatorDashboardCardStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Status de creator'**
+  String get creatorDashboardCardStatus;
+
+  /// No description provided for @creatorDashboardQuickCreatePost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar post'**
+  String get creatorDashboardQuickCreatePost;
+
+  /// No description provided for @creatorDashboardQuickGoLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar ao vivo'**
+  String get creatorDashboardQuickGoLive;
+
+  /// No description provided for @creatorDashboardQuickEditProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar perfil'**
+  String get creatorDashboardQuickEditProfile;
+
+  /// No description provided for @creatorDashboardQuickViewBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver badge'**
+  String get creatorDashboardQuickViewBadge;
+
+  /// No description provided for @creatorDashboardQuickInsights.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver insights'**
+  String get creatorDashboardQuickInsights;
+
+  /// No description provided for @adminCreatorAppsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrições de Creators'**
+  String get adminCreatorAppsTitle;
+
+  /// No description provided for @adminCreatorAppsFilterAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get adminCreatorAppsFilterAll;
+
+  /// No description provided for @adminCreatorAppsFilterPending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pendentes'**
+  String get adminCreatorAppsFilterPending;
+
+  /// No description provided for @adminCreatorAppsFilterAnalysis.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em análise'**
+  String get adminCreatorAppsFilterAnalysis;
+
+  /// No description provided for @adminCreatorAppsFilterApproved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovados'**
+  String get adminCreatorAppsFilterApproved;
+
+  /// No description provided for @adminCreatorAppsFilterRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rejeitados'**
+  String get adminCreatorAppsFilterRejected;
+
+  /// No description provided for @adminCreatorAppsFilterWaitlist.
+  ///
+  /// In pt, this message translates to:
+  /// **'Waitlist'**
+  String get adminCreatorAppsFilterWaitlist;
+
+  /// No description provided for @adminCreatorAppsFilterNeedsInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisa info'**
+  String get adminCreatorAppsFilterNeedsInfo;
+
+  /// No description provided for @adminCreatorAppsReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisar'**
+  String get adminCreatorAppsReview;
+
+  /// No description provided for @adminCreatorAppsFilter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Filtros'**
+  String get adminCreatorAppsFilter;
+
+  /// No description provided for @adminCreatorAppsExport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Exportar'**
+  String get adminCreatorAppsExport;
+
+  /// No description provided for @adminCreatorAppsSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar nome, username ou e-mail'**
+  String get adminCreatorAppsSearchHint;
+
+  /// No description provided for @adminCreatorAppsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma inscrição encontrada.'**
+  String get adminCreatorAppsEmpty;
+
+  /// No description provided for @adminCreatorAppsLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar inscrições.'**
+  String get adminCreatorAppsLoadError;
+
+  /// No description provided for @adminCreatorAppDetailTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análise da Inscrição'**
+  String get adminCreatorAppDetailTitle;
+
+  /// No description provided for @adminCreatorSectionInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informações do creator'**
+  String get adminCreatorSectionInfo;
+
+  /// No description provided for @adminCreatorSectionSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redes sociais'**
+  String get adminCreatorSectionSocial;
+
+  /// No description provided for @adminCreatorSectionNiche.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nicho de conteúdo'**
+  String get adminCreatorSectionNiche;
+
+  /// No description provided for @adminCreatorSectionMotivation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivação'**
+  String get adminCreatorSectionMotivation;
+
+  /// No description provided for @adminCreatorSectionGoals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Objetivos'**
+  String get adminCreatorSectionGoals;
+
+  /// No description provided for @adminCreatorSectionNotes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notas internas'**
+  String get adminCreatorSectionNotes;
+
+  /// No description provided for @adminCreatorSectionSuggestedTier.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tier sugerido'**
+  String get adminCreatorSectionSuggestedTier;
+
+  /// No description provided for @adminCreatorActionApprove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovar'**
+  String get adminCreatorActionApprove;
+
+  /// No description provided for @adminCreatorActionReject.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rejeitar'**
+  String get adminCreatorActionReject;
+
+  /// No description provided for @adminCreatorActionWaitlist.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mover para waitlist'**
+  String get adminCreatorActionWaitlist;
+
+  /// No description provided for @adminCreatorActionRequestInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir mais informações'**
+  String get adminCreatorActionRequestInfo;
+
+  /// No description provided for @adminCreatorActionInviteAmbassador.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convidar como Ambassador'**
+  String get adminCreatorActionInviteAmbassador;
+
+  /// No description provided for @adminCreatorActionInviteFounding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convidar como Founding Creator'**
+  String get adminCreatorActionInviteFounding;
+
+  /// No description provided for @adminCreatorActionSaveNotes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar notas'**
+  String get adminCreatorActionSaveNotes;
+
+  /// No description provided for @adminCreatorConfirmApprove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que quer aprovar este creator?'**
+  String get adminCreatorConfirmApprove;
+
+  /// No description provided for @adminCreatorConfirmReject.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tem certeza que quer rejeitar esta inscrição?'**
+  String get adminCreatorConfirmReject;
+
+  /// No description provided for @adminCreatorConfirmRequestInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diga ao creator quais informações estão faltando.'**
+  String get adminCreatorConfirmRequestInfo;
+
+  /// No description provided for @adminCreatorReviewSuccess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Decisão registrada.'**
+  String get adminCreatorReviewSuccess;
+
+  /// No description provided for @adminCreatorReviewError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível registrar a decisão.'**
+  String get adminCreatorReviewError;
+
+  /// No description provided for @adminCreatorsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gerenciar Creators'**
+  String get adminCreatorsTitle;
+
+  /// No description provided for @adminCreatorsFilterAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos os creators'**
+  String get adminCreatorsFilterAll;
+
+  /// No description provided for @adminCreatorsFilterRising.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rising'**
+  String get adminCreatorsFilterRising;
+
+  /// No description provided for @adminCreatorsFilterFeatured.
+  ///
+  /// In pt, this message translates to:
+  /// **'Featured'**
+  String get adminCreatorsFilterFeatured;
+
+  /// No description provided for @adminCreatorsFilterLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live'**
+  String get adminCreatorsFilterLive;
+
+  /// No description provided for @adminCreatorsFilterAmbassadors.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ambassadors'**
+  String get adminCreatorsFilterAmbassadors;
+
+  /// No description provided for @adminCreatorsFilterFounding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Founding'**
+  String get adminCreatorsFilterFounding;
+
+  /// No description provided for @adminCreatorsActionEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar creator'**
+  String get adminCreatorsActionEdit;
+
+  /// No description provided for @adminCreatorsActionChangeBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mudar badge'**
+  String get adminCreatorsActionChangeBadge;
+
+  /// No description provided for @adminCreatorsActionFeature.
+  ///
+  /// In pt, this message translates to:
+  /// **'Destacar'**
+  String get adminCreatorsActionFeature;
+
+  /// No description provided for @adminCreatorsActionDisable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desativar'**
+  String get adminCreatorsActionDisable;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

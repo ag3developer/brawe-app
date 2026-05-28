@@ -8,12 +8,30 @@ part of 'top_gifters_view_model.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+///
+/// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+/// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+/// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+/// (ranking real considera `is_processed` + agregação por `sender_id`).
 
 @ProviderFor(TopGiftersViewModel)
 final topGiftersViewModelProvider = TopGiftersViewModelFamily._();
 
+/// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+///
+/// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+/// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+/// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+/// (ranking real considera `is_processed` + agregação por `sender_id`).
 final class TopGiftersViewModelProvider
     extends $AsyncNotifierProvider<TopGiftersViewModel, List<Gifter>> {
+  /// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+  ///
+  /// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+  /// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+  /// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+  /// (ranking real considera `is_processed` + agregação por `sender_id`).
   TopGiftersViewModelProvider._({
     required TopGiftersViewModelFamily super.from,
     required String super.argument,
@@ -51,7 +69,14 @@ final class TopGiftersViewModelProvider
 }
 
 String _$topGiftersViewModelHash() =>
-    r'faa053852fa4a7a15cb19e7b5ee69e55c3482cca';
+    r'1ea82f74291a9785820ffa7e109fa34bec5063ad';
+
+/// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+///
+/// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+/// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+/// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+/// (ranking real considera `is_processed` + agregação por `sender_id`).
 
 final class TopGiftersViewModelFamily extends $Family
     with
@@ -71,12 +96,26 @@ final class TopGiftersViewModelFamily extends $Family
         isAutoDispose: true,
       );
 
+  /// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+  ///
+  /// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+  /// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+  /// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+  /// (ranking real considera `is_processed` + agregação por `sender_id`).
+
   TopGiftersViewModelProvider call(String roomId) =>
       TopGiftersViewModelProvider._(argument: roomId, from: this);
 
   @override
   String toString() => r'topGiftersViewModelProvider';
 }
+
+/// 🏆 Top‑gifters do MVP (pódio 1‑2‑3 no header da live).
+///
+/// Em tempo real: ao receber um novo `gift_received` via Socket.IO, aplicamos
+/// um *patch otimista* (soma direto no ranking local sem ida ao backend) e
+/// agendamos um refetch de fundo a cada 8s para reconciliar com o servidor
+/// (ranking real considera `is_processed` + agregação por `sender_id`).
 
 abstract class _$TopGiftersViewModel extends $AsyncNotifier<List<Gifter>> {
   late final _$args = ref.$arg as String;

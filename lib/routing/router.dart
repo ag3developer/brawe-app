@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import 'transitions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../config/feature_flags.dart';
 import '../data/repositories/auth_state_provider.dart';
@@ -15,6 +17,9 @@ import '../ui/auth/widgets/reset_password_screen.dart';
 import '../ui/settings/widgets/change_password_screen.dart';
 import '../ui/settings/widgets/delete_account_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
+import '../ui/feed/widgets/post_detail_screen.dart';
+import '../ui/feed/widgets/post_likers_screen.dart';
+import '../ui/feed/widgets/video_fullscreen_screen.dart';
 import '../ui/home/widgets/home_screen.dart';
 import '../ui/home/widgets/for_you_screen.dart';
 import '../ui/live_feed/widgets/for_you_live_list_screen.dart';
@@ -30,12 +35,25 @@ import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/quests/widgets/quests_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
+import '../ui/wallet/widgets/earnings_screen.dart';
 import '../ui/notifications/widgets/notifications_screen.dart';
 import '../ui/follows/widgets/follows_screen.dart';
 import '../ui/edit_profile/widgets/edit_profile_screen.dart';
 import '../ui/explore/widgets/explore_screen.dart';
 import '../ui/follows/view_models/follows_view_model.dart';
 import '../ui/home/widgets/home_bottom_nav.dart';
+import '../ui/creator/widgets/creator_program_intro_screen.dart';
+import '../ui/creator/widgets/creator_levels_screen.dart';
+import '../ui/creator/widgets/creator_application_form_screen.dart';
+import '../ui/creator/widgets/creator_application_submitted_screen.dart';
+import '../ui/creator/widgets/creator_application_status_screen.dart';
+import '../ui/creator/widgets/creator_onboarding_screen.dart';
+import '../ui/creator/widgets/creator_profile_settings_screen.dart';
+import '../ui/creator/widgets/creator_badge_screen.dart';
+import '../ui/creator/widgets/creator_dashboard_screen.dart';
+import '../ui/creator/widgets/admin_creator_applications_screen.dart';
+import '../ui/creator/widgets/admin_creator_application_detail_screen.dart';
+import '../ui/creator/widgets/admin_creators_management_screen.dart';
 
 part 'router.g.dart';
 
@@ -48,7 +66,8 @@ GoRouter router(Ref ref) {
     refreshListenable: RouterRefreshListenable(ref),
     redirect: (context, state) {
       final isLoading = authState.isLoading;
-      final isAuth = authState.asData?.value != null;
+      final user = authState.asData?.value;
+      final isAuth = user != null;
       final isLoggingIn =
           state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
@@ -64,6 +83,17 @@ GoRouter router(Ref ref) {
 
       if (isLoggingIn) {
         return '/home';
+      }
+
+      // ── Onboarding obrigatório de avatar ──────────────────────────────
+      // Sem foto de perfil o usuário fica preso em /edit-profile. Isso é
+      // requisito do gate de Live (e melhora qualidade geral da rede).
+      final avatar = user.avatarUrl?.trim() ?? '';
+      final needsAvatar = avatar.isEmpty;
+      final isOnEditProfile = state.matchedLocation == '/edit-profile';
+      final isOnSettings = state.matchedLocation.startsWith('/settings');
+      if (needsAvatar && !isOnEditProfile && !isOnSettings) {
+        return '/edit-profile';
       }
 
       return null;
@@ -119,6 +149,52 @@ GoRouter router(Ref ref) {
             path: '/feed',
             builder: (context, state) => const FeedScreen(),
           ),
+          // Deep link de uma publicação individual.
+          // Aceita /post/:id (rota canônica) e /connect/p/:id (legacy/web).
+          GoRoute(
+            path: '/post/:postId',
+            pageBuilder: (context, state) {
+              final postId = state.pathParameters['postId'] ?? '';
+              return BraweTransitions.fadeUp(
+                key: state.pageKey,
+                child: PostDetailScreen(postId: postId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/post/:postId/likes',
+            pageBuilder: (context, state) {
+              final postId = state.pathParameters['postId'] ?? '';
+              return BraweTransitions.fadeUp(
+                key: state.pageKey,
+                child: PostLikersScreen(postId: postId),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/post/:postId/video',
+            pageBuilder: (context, state) {
+              final postId = state.pathParameters['postId'] ?? '';
+              final initialUrl = state.uri.queryParameters['url'];
+              return BraweTransitions.scaleFade(
+                key: state.pageKey,
+                child: VideoFullscreenScreen(
+                  postId: postId,
+                  initialUrl: initialUrl,
+                ),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/connect/p/:postId',
+            pageBuilder: (context, state) {
+              final postId = state.pathParameters['postId'] ?? '';
+              return BraweTransitions.fadeUp(
+                key: state.pageKey,
+                child: PostDetailScreen(postId: postId),
+              );
+            },
+          ),
           GoRoute(
             path: '/live',
             builder: (context, state) =>
@@ -171,6 +247,11 @@ GoRouter router(Ref ref) {
             builder: (context, state) => const WalletScreen(),
           ),
           GoRoute(
+            path: '/earnings',
+            redirect: (_, __) => kEnableMonetization ? null : '/',
+            builder: (context, state) => const EarningsScreen(),
+          ),
+          GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationsScreen(),
           ),
@@ -192,6 +273,69 @@ GoRouter router(Ref ref) {
                   : FollowsTab.followers;
               return FollowsScreen(userId: userId, initialTab: tab);
             },
+          ),
+          // ── Brawe Creator Network ─────────────────────────────────
+          GoRoute(
+            path: '/creator',
+            redirect: (_, __) => '/creator/intro',
+          ),
+          GoRoute(
+            path: '/creator/intro',
+            builder: (context, state) => const CreatorProgramIntroScreen(),
+          ),
+          GoRoute(
+            path: '/creator/levels',
+            builder: (context, state) => const CreatorLevelsScreen(),
+          ),
+          GoRoute(
+            path: '/creator/apply',
+            builder: (context, state) =>
+                const CreatorApplicationFormScreen(),
+          ),
+          GoRoute(
+            path: '/creator/submitted',
+            builder: (context, state) =>
+                const CreatorApplicationSubmittedScreen(),
+          ),
+          GoRoute(
+            path: '/creator/status',
+            builder: (context, state) =>
+                const CreatorApplicationStatusScreen(),
+          ),
+          GoRoute(
+            path: '/creator/onboarding',
+            builder: (context, state) => const CreatorOnboardingScreen(),
+          ),
+          GoRoute(
+            path: '/creator/profile-settings',
+            builder: (context, state) =>
+                const CreatorProfileSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/creator/badge',
+            builder: (context, state) => const CreatorBadgeScreen(),
+          ),
+          GoRoute(
+            path: '/creator/dashboard',
+            builder: (context, state) => const CreatorDashboardScreen(),
+          ),
+          // ── Admin ───────────────────────────────────────────────
+          GoRoute(
+            path: '/admin/creator/applications',
+            builder: (context, state) =>
+                const AdminCreatorApplicationsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/creator/applications/:id',
+            builder: (context, state) =>
+                AdminCreatorApplicationDetailScreen(
+              id: state.pathParameters['id']!,
+            ),
+          ),
+          GoRoute(
+            path: '/admin/creator/creators',
+            builder: (context, state) =>
+                const AdminCreatorsManagementScreen(),
           ),
         ],
       ),

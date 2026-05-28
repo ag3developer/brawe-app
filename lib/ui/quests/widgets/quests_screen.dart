@@ -1103,6 +1103,19 @@ class _QuestImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mapeia para ilustrações 3D oficiais quando disponíveis
+    final mapped = _mapToBraweIllustration(assetName);
+    if (mapped != null) {
+      return Image.asset(
+        mapped,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        errorBuilder: (_, e, s) =>
+            Icon(fallbackIcon, color: fallbackColor, size: size * 0.75),
+      );
+    }
     return Image.asset(
       'assets/images/quests/$assetName',
       width: size,
@@ -1111,6 +1124,21 @@ class _QuestImage extends StatelessWidget {
       errorBuilder: (_, e, s) =>
           Icon(fallbackIcon, color: fallbackColor, size: size * 0.75),
     );
+  }
+
+  static String? _mapToBraweIllustration(String name) {
+    switch (name) {
+      case 'trophy.png':
+        return 'assets/images/illustrations/trophy_3d.png';
+      case 'coin_brc.png':
+        return 'assets/images/illustrations/coin_3d.png';
+      case 'reward_chest.png':
+        return 'assets/images/illustrations/package_3d.png';
+      case 'empty_state.png':
+        return 'assets/images/illustrations/master_3d.png';
+      default:
+        return null;
+    }
   }
 }
 

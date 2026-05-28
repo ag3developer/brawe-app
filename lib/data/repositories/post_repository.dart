@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/post.dart';
+import '../../domain/models/post_liker.dart';
 import '../services/post_service.dart';
 import '../model/post_dto.dart';
 import '../../domain/models/failure.dart';
@@ -57,11 +58,34 @@ class PostRepository {
     }
   }
 
+  /// Reage a um post (ou troca a reação existente).
+  /// Tipos válidos: like, love, fire, laugh, wow, sad.
+  Future<void> react(String postId, String reactionType) async {
+    try {
+      await _postService.likePost(postId, reactionType: reactionType);
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<void> incrementView(String postId) async {
     try {
       await _postService.incrementView(postId);
     } catch (_) {
       // Silently fail view increments or log it
+    }
+  }
+
+  /// Toggle repost (idempotente). [isReposted] = estado atual.
+  Future<void> toggleRepost(String postId, bool isReposted) async {
+    try {
+      if (isReposted) {
+        await _postService.unrepost(postId);
+      } else {
+        await _postService.repost(postId);
+      }
+    } catch (_) {
+      throw const Failure.unknown();
     }
   }
 
@@ -147,6 +171,22 @@ class PostRepository {
         offset: offset,
       );
       return responseDto.posts.map((dto) => dto.toDomain()).toList();
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Lista quem curtiu um post (com breakdown por reação).
+  /// Tela: PostLikersScreen.
+  Future<PostLikesPage> getLikers(
+    String postId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      return await _postService.getLikers(postId, limit: limit, offset: offset);
     } on DioException catch (_) {
       throw const Failure.network();
     } catch (_) {

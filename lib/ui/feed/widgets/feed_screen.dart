@@ -11,11 +11,13 @@ import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/social_repository.dart';
+import '../../../data/services/feedback_service.dart';
 import '../../../data/services/social_actions_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/feed_view_model.dart';
 import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
+import 'reactions_bar.dart';
 import 'story_composer_screen.dart';
 import 'share_to_chat_sheet.dart';
 import 'stories_rail.dart';
@@ -732,12 +734,12 @@ class _PostCardState extends ConsumerState<PostCard>
       ref.read(feedViewModelProvider.notifier).toggleLike(widget.post.id);
     }
     setState(() => _showHeart = true);
-    HapticFeedback.mediumImpact();
+    ref.read(feedbackServiceProvider).like();
     _heartController.forward();
   }
 
   void _toggleSave() {
-    HapticFeedback.lightImpact();
+    ref.read(feedbackServiceProvider).follow();
     setState(() => _saved = !_saved);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -750,7 +752,7 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   Future<void> _sharePost() async {
-    HapticFeedback.selectionClick();
+    ref.read(feedbackServiceProvider).share();
     final post = widget.post;
     await ShareToChatSheet.show(
       context,
@@ -800,6 +802,10 @@ class _PostCardState extends ConsumerState<PostCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+            // Banner "X repostou" — só aparece quando o item é fruto de
+            // um repost de alguém (geralmente um usuário seguido).
+            if (post.repostedBy != null)
+              _RepostBanner(reposter: post.repostedBy!),
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 8, 12),
@@ -885,7 +891,9 @@ class _PostCardState extends ConsumerState<PostCard>
             if (post.imageUrl != null)
               GestureDetector(
                 onTap: () => _isVideoUrl(post.imageUrl!)
-                    ? null
+                    ? context.push(
+                        '/post/${post.id}/video?url=${Uri.encodeQueryComponent(post.imageUrl!)}',
+                      )
                     : _openImageLightbox(context, post.imageUrl!),
                 onDoubleTap: _doubleTapLike,
                 child: Stack(
@@ -965,21 +973,29 @@ class _PostCardState extends ConsumerState<PostCard>
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
               child: Row(
                 children: [
-                  _ActionPill(
-                    icon: post.userLiked
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_outline_rounded,
-                    label: _formatCount(post.likesCount),
-                    color: post.userLiked
-                        ? _FeedTokens.likeRed
-                        : context.colors.textSecondary,
-                    active: post.userLiked,
-                    activeBg: _FeedTokens.likeRed.withValues(alpha: 0.14),
+                  _LikeReactionPill(
+                    post: post,
                     onTap: () {
-                      HapticFeedback.lightImpact();
+                      ref.read(feedbackServiceProvider).like();
                       ref
                           .read(feedViewModelProvider.notifier)
                           .toggleLike(post.id);
+                    },
+                    onPickReaction: (reaction) async {
+                      ref.read(feedbackServiceProvider).reaction();
+                      try {
+                        await ref
+                            .read(feedViewModelProvider.notifier)
+                            .reactToPost(post.id, reaction.key);
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(S.of(context).feedCannotLike)),
+                        );
+                      }
+                    },
+                    onOpenLikers: () {
+                      context.push('/post/${post.id}/likes');
                     },
                   ),
                   _ActionPill(
@@ -987,7 +1003,7 @@ class _PostCardState extends ConsumerState<PostCard>
                     label: _formatCount(post.commentsCount),
                     color: context.colors.textSecondary,
                     onTap: () {
-                      HapticFeedback.selectionClick();
+                      ref.read(feedbackServiceProvider).share();
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
@@ -1282,14 +1298,49 @@ class _PostCardState extends ConsumerState<PostCard>
               iconColor: _FeedTokens.repostGreen,
               iconBg: _FeedTokens.repostGreen.withValues(alpha: 0.18),
               label: post.userReposted ? S.of(context).feedRepostUndo : S.of(context).feedRepost,
-              onTap: () => Navigator.pop(context),
+              onTap: () async {
+                Navigator.pop(context);
+                ref.read(feedbackServiceProvider).repost();
+                try {
+                  await ref
+                      .read(feedViewModelProvider.notifier)
+                      .toggleRepost(post.id);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        post.userReposted
+                            ? S.of(context).feedRepostUndo
+                            : S.of(context).feedReposted,
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } catch (_) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(S.of(context).feedCannotShare)),
+                  );
+                }
+              },
             ),
             _SheetTile(
-              icon: Icons.edit_rounded,
+              icon: Icons.send_rounded,
               iconColor: context.colors.textPrimary,
               iconBg: Colors.white12,
-              label: S.of(context).feedQuotePost,
-              onTap: () => Navigator.pop(context),
+              label: S.of(context).shareToFollowers,
+              onTap: () {
+                Navigator.pop(context);
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => ShareToChatSheet(
+                    postId: post.id,
+                    postCaption: post.content,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 8),
           ],
@@ -1314,7 +1365,47 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 }
 
-/// ─── Author avatar with gradient ring (when verified) ────────────────────
+/// ─── Banner discreto exibido no topo do card quando o post aparece no feed
+/// como resultado de um repost de alguém seguido.
+class _RepostBanner extends StatelessWidget {
+  const _RepostBanner({required this.reposter});
+  final PostAuthor reposter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+      child: GestureDetector(
+        onTap: () => context.push('/profile/${reposter.id}'),
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          children: [
+            Icon(
+              Icons.repeat_rounded,
+              size: 14,
+              color: _FeedTokens.repostGreen.withValues(alpha: 0.85),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                S.of(context).feedRepostBanner(reposter.name),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _AuthorAvatar extends ConsumerWidget {
   const _AuthorAvatar({
     required this.userId,
@@ -1351,6 +1442,7 @@ class _ActionPill extends StatelessWidget {
     required this.label,
     required this.color,
     required this.onTap,
+    this.onLongPress,
     this.active = false,
     this.activeBg,
   });
@@ -1358,6 +1450,7 @@ class _ActionPill extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final bool active;
   final Color? activeBg;
 
@@ -1369,6 +1462,7 @@ class _ActionPill extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(12),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
@@ -1392,6 +1486,92 @@ class _ActionPill extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pílula composta para o botão de like:
+/// - Tap → toggle like
+/// - Long-press → abre [showReactionsBar] flutuante
+/// - Tap no número de curtidas → abre tela "Quem curtiu"
+class _LikeReactionPill extends StatelessWidget {
+  const _LikeReactionPill({
+    required this.post,
+    required this.onTap,
+    required this.onPickReaction,
+    required this.onOpenLikers,
+  });
+  final Post post;
+  final VoidCallback onTap;
+  final ValueChanged<BraweReaction> onPickReaction;
+  final VoidCallback onOpenLikers;
+
+  static String _fmt(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final liked = post.userLiked;
+    final color =
+        liked ? _FeedTokens.likeRed : context.colors.textSecondary;
+    final activeBg = _FeedTokens.likeRed.withValues(alpha: 0.14);
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+        decoration: BoxDecoration(
+          color: liked ? activeBg : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              onLongPressStart: (d) async {
+                HapticFeedback.mediumImpact();
+                final picked = await showReactionsBar(
+                  context,
+                  globalPosition: d.globalPosition,
+                );
+                if (picked != null) onPickReaction(picked);
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  liked
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_outline_rounded,
+                  color: color,
+                  size: 19,
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: onOpenLikers,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+                child: Text(
+                  _fmt(post.likesCount),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13,
+                    fontWeight: liked ? FontWeight.w700 : FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

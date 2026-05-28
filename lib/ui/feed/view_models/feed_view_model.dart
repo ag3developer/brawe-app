@@ -47,8 +47,57 @@ class FeedViewModel extends _$FeedViewModel {
     }
   }
 
+  /// Aplica uma reação tipada (love/fire/etc.). Se o post ainda não foi
+  /// curtido, marca como curtido + incrementa contador (otimista).
+  Future<void> reactToPost(String postId, String reactionType) async {
+    final posts = state.value;
+    if (posts == null) return;
+    final index = posts.indexWhere((p) => p.id == postId);
+    if (index == -1) return;
+    final post = posts[index];
+    if (!post.userLiked) {
+      final updated = List<Post>.from(posts);
+      updated[index] = post.copyWith(
+        userLiked: true,
+        likesCount: post.likesCount + 1,
+      );
+      state = AsyncData(updated);
+    }
+    try {
+      await ref.read(postRepositoryProvider).react(postId, reactionType);
+    } catch (_) {
+      state = AsyncData(List<Post>.from(posts));
+      rethrow;
+    }
+  }
+
   void onPostViewed(String postId) {
     ref.read(postRepositoryProvider).incrementView(postId);
+  }
+
+  Future<void> toggleRepost(String postId) async {
+    final posts = state.value;
+    if (posts == null) return;
+    final index = posts.indexWhere((p) => p.id == postId);
+    if (index == -1) return;
+    final post = posts[index];
+    final wasReposted = post.userReposted;
+    final updated = List<Post>.from(posts);
+    updated[index] = post.copyWith(
+      userReposted: !wasReposted,
+      repostsCount: wasReposted
+          ? (post.repostsCount - 1).clamp(0, 1 << 30)
+          : post.repostsCount + 1,
+    );
+    state = AsyncData(updated);
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .toggleRepost(postId, wasReposted);
+    } catch (_) {
+      state = AsyncData(List<Post>.from(posts));
+      rethrow;
+    }
   }
 
   Future<bool> deletePost(String postId) async {

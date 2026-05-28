@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../creator/widgets/creator_tier_badge_for_user.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/feature_flags.dart';
@@ -525,6 +526,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 },
               ),
               Divider(color: context.colors.divider, height: 1),
+              ListTile(
+                leading: Icon(Icons.workspace_premium_rounded,
+                    color: context.colors.accentGold),
+                title: Text(
+                  s.creatorProgramTitle,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                trailing: Icon(Icons.chevron_right_rounded,
+                    color: context.colors.textTertiary),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push('/creator/intro');
+                },
+              ),
+              Divider(color: context.colors.divider, height: 1),
               if (kEnableMonetization) ...[
                 ListTile(
                   leading: Icon(Icons.account_balance_wallet_outlined,
@@ -534,6 +553,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   onTap: () {
                     Navigator.of(context).pop();
                     context.push('/wallet');
+                  },
+                ),
+                Divider(color: context.colors.divider, height: 1),
+                ListTile(
+                  leading: Icon(Icons.show_chart_rounded,
+                      color: context.colors.textPrimary),
+                  title: Text(s.earningsTitle,
+                      style: TextStyle(color: context.colors.textPrimary)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/earnings');
                   },
                 ),
                 Divider(color: context.colors.divider, height: 1),
@@ -731,6 +761,7 @@ class _ProfileHeader extends ConsumerWidget {
                     const Icon(Icons.verified,
                         color: AppColors.electricPurple, size: 20),
                   ],
+                  CreatorTierBadgeForUser(userId: profile.id, size: 18),
                 ],
               ),
               const SizedBox(height: 2),

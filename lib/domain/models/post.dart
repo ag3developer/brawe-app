@@ -17,6 +17,10 @@ sealed class Post with _$Post {
     @Default(false) bool userLiked,
     @Default(false) bool userReposted,
     @Default(false) bool userFollowingAuthor,
+    // Quando o item aparece no feed por causa de um repost de alguém,
+    // [repostedBy] traz o autor do repost. Frontend mostra "X repostou".
+    PostAuthor? repostedBy,
+    DateTime? repostCreatedAt,
   }) = _Post;
 }
 

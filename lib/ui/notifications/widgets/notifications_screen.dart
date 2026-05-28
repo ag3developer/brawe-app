@@ -5,6 +5,7 @@ import '../../../domain/models/app_notification.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../shared/widgets/brawe_illustration.dart';
 import '../view_models/notifications_view_model.dart';
 
 class NotificationsScreen extends ConsumerWidget {
@@ -227,29 +228,44 @@ class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return ListView(
+      padding: const EdgeInsets.all(20),
       children: [
-        const SizedBox(height: 100),
-        Icon(
-          Icons.notifications_none_outlined,
-          size: 64,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: Text(
-            s.notificationsEmptyTitle,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        const SizedBox(height: 60),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Theme.of(context).dividerColor),
           ),
-        ),
-        const SizedBox(height: 6),
-        Center(
-          child: Text(
-            s.notificationsEmptySubtitle,
-            style: TextStyle(
-              color:
-                  Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
+          child: Column(
+            children: [
+              const BraweIllustrationView(
+                BraweIllustration.bell,
+                size: 96,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                s.notificationsEmptyTitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                s.notificationsEmptySubtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: scheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ],
           ),
         ),
       ],

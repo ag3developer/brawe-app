@@ -41,7 +41,7 @@ class TopGiftersViewModel extends _$TopGiftersViewModel {
     final spent = (gift.value * gift.quantity).toDouble();
     if (spent <= 0) return;
 
-    final current = state.valueOrNull ?? const <Gifter>[];
+    final current = state.asData?.value ?? const <Gifter>[];
     final idx = current.indexWhere((g) => g.id == gift.senderId);
 
     final List<Gifter> updated;

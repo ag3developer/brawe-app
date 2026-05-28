@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../data/services/iap_service.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/brawe_coin.dart';
 import '../view_models/wallet_view_model.dart';
+import 'earnings_screen.dart';
+import 'gifters_section.dart';
 
 class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
@@ -51,7 +56,7 @@ class WalletScreen extends ConsumerWidget {
                 subtitle: s.walletSectionHistorySubtitle,
               ),
               const SizedBox(height: 12),
-              const _TransactionsList(),
+              const GiftersSection(),
               const SizedBox(height: 20),
               const _InfoCard(),
             ],
@@ -112,7 +117,7 @@ class _BalanceCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Icon(Icons.monetization_on, color: context.colors.textPrimary, size: 36),
+              const BraweCoin(size: 40, glow: true),
               const SizedBox(width: 10),
               Text(
                 _format(wallet.balance),
@@ -223,14 +228,17 @@ class _PackagesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Responsivo: 3 colunas em telas normais, 4 em tablets/landscape
+    final width = MediaQuery.of(context).size.width;
+    final crossAxisCount = width >= 600 ? 4 : 3;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.95,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        childAspectRatio: 0.78,
       ),
       itemCount: packages.length,
       itemBuilder: (_, i) => _PackageCard(
@@ -252,81 +260,88 @@ class _PackageCard extends StatelessWidget {
     final highlight = package.popular || package.bestValue;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: scheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: highlight
                 ? AppColors.electricPurple
                 : Theme.of(context).dividerColor,
-            width: highlight ? 1.5 : 1,
+            width: highlight ? 1.4 : 1,
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (package.label.isNotEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.electricPurple,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  package.label,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+            // Label (popular / best value) ou espaço para alinhar
+            SizedBox(
+              height: 16,
+              child: package.label.isNotEmpty
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.electricPurple,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        package.label,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            // Coin + valor
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const BraweCoin(size: 22, glow: true),
+                const SizedBox(height: 4),
+                Text(
+                  _formatInt(package.coins),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
                   ),
                 ),
-              )
-            else
-              const SizedBox(height: 18),
-            const Spacer(),
-            Row(
-              children: [
-                const Icon(Icons.monetization_on, color: AppColors.electricPurple, size: 24),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _formatInt(package.coins),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
+                Text(
+                  S.of(context).walletCoins,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: scheme.onSurface.withValues(alpha: 0.55),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              S.of(context).walletCoins,
-              style: TextStyle(
-                fontSize: 11,
-                color: scheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 10),
+            // Preço
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.electricPurple.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.electricPurple.withValues(alpha: 0.13),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                S.of(context).walletPriceBRL(_formatInt(package.priceBRL.round())),
+                S.of(context).walletPriceBRL(
+                      _formatInt(package.priceBRL.round()),
+                    ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   color: AppColors.electricPurple,
+                  fontSize: 11,
                 ),
               ),
             ),
@@ -347,12 +362,120 @@ class _PackageCard extends StatelessWidget {
   }
 }
 
-class _PurchaseSheet extends StatelessWidget {
+class _PurchaseSheet extends ConsumerStatefulWidget {
   final CoinPackage package;
   const _PurchaseSheet({required this.package});
 
   @override
+  ConsumerState<_PurchaseSheet> createState() => _PurchaseSheetState();
+}
+
+class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
+  bool _loading = true;
+  bool _purchasing = false;
+  String? _error;
+  ProductDetails? _product;
+
+  /// Mapeia package_id interno → productId da loja (Play/App Store).
+  String? get _iapProductId =>
+      kPackageIdToIapProductId[widget.package.id];
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    final iap = ref.read(iapServiceProvider);
+    if (!iap.supportsIap) {
+      setState(() {
+        _loading = false;
+        _error = S.of(context).walletIapNotSupported;
+      });
+      return;
+    }
+    await iap.init();
+    if (!iap.isAvailable) {
+      setState(() {
+        _loading = false;
+        _error = S.of(context).walletIapStoreUnavailable;
+      });
+      return;
+    }
+    final products = await iap.loadProducts();
+    final productId = _iapProductId;
+    final product = productId == null
+        ? null
+        : products.firstWhere(
+            (p) => p.id == productId,
+            orElse: () => products.isNotEmpty
+                ? products.first
+                : throw StateError('no product'),
+          );
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _product = (productId != null &&
+              products.any((p) => p.id == productId))
+          ? product
+          : null;
+      if (_product == null) {
+        _error = S.of(context).walletIapPackageUnavailable;
+      }
+    });
+  }
+
+  Future<void> _onBuy() async {
+    final productId = _iapProductId;
+    if (productId == null || _purchasing) return;
+    setState(() {
+      _purchasing = true;
+      _error = null;
+    });
+    final iap = ref.read(iapServiceProvider);
+    final result = await iap.buy(productId);
+    if (!mounted) return;
+    setState(() => _purchasing = false);
+
+    switch (result) {
+      case IapBuyResult.success:
+        // Atualiza saldo e fecha o sheet.
+        ref.read(walletViewModelProvider.notifier).refresh();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                S.of(context).walletIapSuccess(
+                      _PackageCard._formatInt(widget.package.coins),
+                    ),
+              ),
+              backgroundColor: AppColors.electricPurple,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+        break;
+      case IapBuyResult.cancelled:
+        setState(() => _error = null); // silencioso
+        break;
+      case IapBuyResult.pending:
+        setState(() => _error = S.of(context).walletIapPaymentPending);
+        break;
+      case IapBuyResult.error:
+        setState(() => _error = S.of(context).walletIapPaymentError);
+        break;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final pkg = widget.package;
+    final priceLabel = _product?.price ??
+        S.of(context).walletPriceBRL(
+              _PackageCard._formatInt(pkg.priceBRL.round()),
+            );
+
     return Padding(
       padding: EdgeInsets.only(
         left: 20,
@@ -375,14 +498,16 @@ class _PurchaseSheet extends StatelessWidget {
           ),
           Row(
             children: [
-              const Icon(Icons.monetization_on, color: AppColors.electricPurple, size: 32),
-              const SizedBox(width: 10),
+              const BraweCoin(size: 44, glow: true),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      S.of(context).walletPackageCoins(_PackageCard._formatInt(package.coins)),
+                      S.of(context).walletPackageCoins(
+                            _PackageCard._formatInt(pkg.coins),
+                          ),
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 20,
@@ -390,7 +515,7 @@ class _PurchaseSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      S.of(context).walletPriceBRL(_PackageCard._formatInt(package.priceBRL.round())),
+                      priceLabel,
                       style: const TextStyle(
                         color: AppColors.electricPurple,
                         fontWeight: FontWeight.w700,
@@ -413,30 +538,95 @@ class _PurchaseSheet extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.electricPurple),
+                const Icon(Icons.info_outline,
+                    color: AppColors.electricPurple),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    S.of(context).walletPurchaseInfo,
+                    S.of(context).walletIapInfo,
                     style: const TextStyle(height: 1.35),
                   ),
                 ),
               ],
             ),
           ),
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline,
+                      color: Colors.red, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: (_loading || _purchasing || _product == null)
+                  ? null
+                  : _onBuy,
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.electricPurple,
                 padding: const EdgeInsets.symmetric(vertical: 14),
+                disabledBackgroundColor:
+                    AppColors.electricPurple.withValues(alpha: 0.4),
               ),
-              child: Text(
-                S.of(context).walletPurchaseUnderstood,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
+              child: _loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : _purchasing
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              S.of(context).walletIapProcessing,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          _product == null
+                              ? S.of(context).walletIapUnavailable
+                              : S.of(context).walletIapBuyFor(priceLabel),
+                          style:
+                              const TextStyle(fontWeight: FontWeight.w700),
+                        ),
             ),
           ),
         ],
@@ -558,16 +748,11 @@ class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    // Nota: compra de coins é via IAP (Google Play / App Store), por isso
+    // não há atalho de "adicionar cartão" — o método de pagamento é
+    // gerenciado pela loja do dispositivo.
     return Row(
       children: [
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.add_card,
-            label: s.walletActionAdd,
-            onTap: () {},
-          ),
-        ),
-        const SizedBox(width: 10),
         Expanded(
           child: _ActionButton(
             icon: Icons.send,
@@ -584,7 +769,13 @@ class _QuickActionsRow extends StatelessWidget {
           child: _ActionButton(
             icon: Icons.history,
             label: s.walletActionStatement,
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const EarningsScreen(),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -636,138 +827,5 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Transactions list
-// ---------------------------------------------------------------------------
-class _TransactionsList extends ConsumerWidget {
-  const _TransactionsList();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(walletTransactionsProvider);
-    final scheme = Theme.of(context).colorScheme;
-    return async.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (_, __) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: scheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).dividerColor),
-        ),
-        child: Text(S.of(context).walletTxLoadError),
-      ),
-      data: (items) {
-        if (items.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 24,
-            ),
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Theme.of(context).dividerColor),
-            ),
-            child: Center(
-              child: Text(
-                S.of(context).walletTxEmpty,
-                style: TextStyle(
-                  color: scheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-          );
-        }
-        return Container(
-          decoration: BoxDecoration(
-            color: scheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              for (int i = 0; i < items.length; i++) ...[
-                _TransactionTile(item: items[i]),
-                if (i < items.length - 1)
-                  Divider(
-                    height: 1,
-                    color: Theme.of(context).dividerColor,
-                  ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _TransactionTile extends StatelessWidget {
-  final WalletTransaction item;
-  const _TransactionTile({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    final isSent = item.type == 'sent';
-    final color = isSent ? Colors.redAccent : Colors.green;
-    final sign = isSent ? '-' : '+';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isSent ? Icons.arrow_upward : Icons.arrow_downward,
-              color: color,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.giftName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${isSent ? S.of(context).walletTxTo : S.of(context).walletTxFrom} ${item.counterpartyName}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '$sign${item.amountCredits.abs()}',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: color,
-              fontSize: 15,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// NOTE: legacy `_TransactionsList` / `_TransactionTile` removidos — substituídos
+// pelo `GiftersSection` (lista social agrupada por pessoa).

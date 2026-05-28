@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
+import '../../domain/models/post_liker.dart';
 import '../model/post_dto.dart';
 
 part 'post_service.g.dart';
@@ -37,8 +38,11 @@ class PostService {
     return PostResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> likePost(String postId) async {
-    await _dio.post('/posts/$postId/like');
+  Future<void> likePost(String postId, {String reactionType = 'like'}) async {
+    await _dio.post(
+      '/posts/$postId/like',
+      data: {'reaction_type': reactionType},
+    );
   }
 
   Future<void> unlikePost(String postId) async {
@@ -47,6 +51,39 @@ class PostService {
 
   Future<void> incrementView(String postId) async {
     await _dio.post('/posts/$postId/view');
+  }
+
+  /// Repost (idempotente no backend).
+  Future<void> repost(String postId) async {
+    await _dio.post('/posts/$postId/repost');
+  }
+
+  Future<void> unrepost(String postId) async {
+    await _dio.delete('/posts/$postId/repost');
+  }
+
+  /// Marca um compartilhamento (DM/link externo) para progresso de quest.
+  /// Best-effort: não bloqueia o fluxo se falhar.
+  Future<void> trackShare(String postId) async {
+    try {
+      await _dio.post('/posts/$postId/share');
+    } catch (_) {
+      // silencioso: não atrapalhar share se o tracking falhar
+    }
+  }
+
+  /// Lista quem curtiu um post com breakdown por reação.
+  /// Backend: GET /posts/{post_id}/likes
+  Future<PostLikesPage> getLikers(
+    String postId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final response = await _dio.get(
+      '/posts/$postId/likes',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return PostLikesPage.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<void> deletePost(String postId) async {

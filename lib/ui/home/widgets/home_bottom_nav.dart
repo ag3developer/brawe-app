@@ -10,6 +10,8 @@ import '../../core/themes/force_dark_theme.dart';
 import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/create_video_sheet.dart';
 import '../../feed/widgets/story_composer_screen.dart';
+import '../../live/widgets/live_gate_sheet.dart';
+import '../../live/view_models/live_eligibility_view_model.dart';
 import '../../core/ui/app_spacing.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -152,14 +154,14 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
 }
 
 // ── Sheet de criar (Brawe Pulse — gradient cards, hero glow) ────────────
-class _CreateSheet extends StatefulWidget {
+class _CreateSheet extends ConsumerStatefulWidget {
   const _CreateSheet();
 
   @override
-  State<_CreateSheet> createState() => _CreateSheetState();
+  ConsumerState<_CreateSheet> createState() => _CreateSheetState();
 }
 
-class _CreateSheetState extends State<_CreateSheet>
+class _CreateSheetState extends ConsumerState<_CreateSheet>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
 
@@ -219,9 +221,15 @@ class _CreateSheetState extends State<_CreateSheet>
     );
   }
 
-  void _openLive() {
-    Navigator.pop(context);
-    context.push('/live/start');
+  void _openLive() async {
+    final navContext = context;
+    // Invalida cache pra sempre pegar estado atual (avatar recém-adicionado
+    // ou inscrição aprovada agora) e dispara a request.
+    final _ = ref.refresh(liveEligibilityProvider);
+    Navigator.pop(navContext);
+    // Mostra um sheet leve enquanto resolve a request — a UX flui sem
+    // bloqueio. `showLiveGateSheet` cuida do loading/erro/ações.
+    await showLiveGateSheet(navContext, ref);
   }
 
   @override

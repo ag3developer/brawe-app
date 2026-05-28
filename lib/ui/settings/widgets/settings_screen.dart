@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -15,6 +16,13 @@ import '../view_models/settings_view_model.dart';
 import '../view_models/theme_view_model.dart';
 import 'language_picker_sheet.dart';
 import 'legal_webview_screen.dart';
+
+/// Lê a versão do app em runtime via package_info_plus.
+/// Formato: "1.0.6+6" (versionName + versionCode/build).
+final _appVersionProvider = FutureProvider<String>((ref) async {
+  final info = await PackageInfo.fromPlatform();
+  return '${info.version}+${info.buildNumber}';
+});
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -167,12 +175,20 @@ class SettingsScreen extends ConsumerWidget {
               leading: const Icon(Icons.support_agent_outlined),
               title: Text(s.settingsSupport),
               trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => _showSupportSheet(context),
+              onTap: () => _showSupportSheet(context, ref),
             ),
             ListTile(
               leading: const Icon(Icons.tag_outlined),
               title: Text(s.settingsVersion),
-              trailing: const Text('1.0.0'),
+              trailing: Consumer(
+                builder: (_, ref, __) {
+                  final v = ref.watch(_appVersionProvider);
+                  return Text(v.maybeWhen(
+                    data: (v) => v,
+                    orElse: () => '…',
+                  ));
+                },
+              ),
             ),
             const SizedBox(height: 24),
             _SectionHeader(
@@ -234,7 +250,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _showSupportSheet(BuildContext context) {
+  void _showSupportSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
@@ -268,12 +284,13 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: const Text(AppConstants.supportEmail),
                 onTap: () async {
                   Navigator.pop(ctx);
+                  final version =
+                      await ref.read(_appVersionProvider.future);
                   final uri = Uri(
                     scheme: 'mailto',
                     path: AppConstants.supportEmail,
                     queryParameters: {
-                      'subject':
-                          s.settingsSupportEmailSubject('1.0.0'),
+                      'subject': s.settingsSupportEmailSubject(version),
                     },
                   );
                   if (!await launchUrl(uri)) {

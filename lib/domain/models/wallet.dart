@@ -105,3 +105,82 @@ class WalletTransaction {
     );
   }
 }
+
+
+/// Saldo consolidado (coins + diamonds) com valor convertido em moeda fiat.
+/// Espelha `GET /credits/earnings` no backend Connect.
+class Earnings {
+  final double coinsBalance;
+  final double diamondsBalance;
+  final double diamondsLifetime;
+  final double coinsSpentLifetime;
+  final String currency; // USD | BRL | EUR
+  final double coinsValueInCurrency;
+  final double diamondsValueInCurrency;
+  final String? accountNumber;
+
+  const Earnings({
+    required this.coinsBalance,
+    required this.diamondsBalance,
+    required this.diamondsLifetime,
+    required this.coinsSpentLifetime,
+    required this.currency,
+    required this.coinsValueInCurrency,
+    required this.diamondsValueInCurrency,
+    this.accountNumber,
+  });
+
+  factory Earnings.fromJson(Map<String, dynamic> json) => Earnings(
+        coinsBalance: (json['coins_balance'] as num?)?.toDouble() ?? 0,
+        diamondsBalance: (json['diamonds_balance'] as num?)?.toDouble() ?? 0,
+        diamondsLifetime: (json['diamonds_lifetime'] as num?)?.toDouble() ?? 0,
+        coinsSpentLifetime:
+            (json['coins_spent_lifetime'] as num?)?.toDouble() ?? 0,
+        currency: (json['currency'] as String?) ?? 'USD',
+        coinsValueInCurrency:
+            (json['coins_value_in_currency'] as num?)?.toDouble() ?? 0,
+        diamondsValueInCurrency:
+            (json['diamonds_value_in_currency'] as num?)?.toDouble() ?? 0,
+        accountNumber: json['account_number'] as String?,
+      );
+}
+
+
+///
+/// Pedido de compra de coins (Wolknow, PIX, IAP Android/iOS).
+/// Espelha `GET /credits/purchase-orders`.
+class PurchaseOrder {
+  final String id;
+  final String packageId;
+  final int coins;
+  final double amount;
+  final String currency;
+  final String method;
+  final String status;
+  final bool credited;
+  final DateTime? createdAt;
+
+  const PurchaseOrder({
+    required this.id,
+    required this.packageId,
+    required this.coins,
+    required this.amount,
+    required this.currency,
+    required this.method,
+    required this.status,
+    required this.credited,
+    this.createdAt,
+  });
+
+  factory PurchaseOrder.fromJson(Map<String, dynamic> json) => PurchaseOrder(
+        id: (json['id'] ?? '').toString(),
+        packageId: (json['package_id'] ?? '').toString(),
+        coins: (json['coins'] as num?)?.toInt() ?? 0,
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+        currency: (json['currency'] as String?) ?? 'USD',
+        method: (json['method'] as String?) ?? '',
+        status: (json['status'] as String?) ?? 'pending',
+        credited: (json['credited'] as bool?) ?? false,
+        createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
+      );
+}
