@@ -28,6 +28,7 @@ import '../../../domain/models/post.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../feed/widgets/comments_sheet.dart';
 import '../../feed/widgets/share_to_chat_sheet.dart';
 
 bool _isVideoUrl(String url) {
@@ -181,25 +182,30 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
     );
   }
 
-  void _openFullPost(Post post) {
-    // Capture o router ANTES do pop — após o pop o BuildContext está
-    // desmontado e `context.push` falha silenciosamente (tela preta).
-    final router = GoRouter.of(context);
-    Navigator.of(context).pop();
-    router.push('/post/${post.id}');
-  }
-
   void _openAuthor(Post post) {
     final router = GoRouter.of(context);
-    Navigator.of(context).pop();
+    final nav = Navigator.of(context);
     router.push('/profile/${post.author.id}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (nav.canPop()) nav.pop();
+    });
   }
 
   void _openComments(Post post) {
-    final router = GoRouter.of(context);
+    // Abre o CommentsSheet DIRETAMENTE — não dependemos da PostDetailScreen.
+    // Fecha primeiro o preview do post compartilhado, depois abre o sheet
+    // de comentários no próximo frame para a animação não colidir.
+    final rootContext = context;
     Navigator.of(context).pop();
-    // O composer de comentário é parte da PostDetailScreen.
-    router.push('/post/${post.id}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showModalBottomSheet(
+        context: rootContext,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        useSafeArea: true,
+        builder: (_) => CommentsSheet(postId: post.id),
+      );
+    });
   }
 
   @override
@@ -231,7 +237,6 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
             onRepostTap: () => _toggleRepost(post),
             onShareTap: () => _shareAgain(post),
             onAuthorTap: () => _openAuthor(post),
-            onOpenFullTap: () => _openFullPost(post),
             onClose: () => Navigator.of(ctx).pop(),
           ),
         ),
@@ -257,7 +262,6 @@ class _SheetContent extends StatelessWidget {
     required this.onRepostTap,
     required this.onShareTap,
     required this.onAuthorTap,
-    required this.onOpenFullTap,
     required this.onClose,
   });
 
@@ -273,7 +277,6 @@ class _SheetContent extends StatelessWidget {
   final VoidCallback onRepostTap;
   final VoidCallback onShareTap;
   final VoidCallback onAuthorTap;
-  final VoidCallback onOpenFullTap;
   final VoidCallback onClose;
 
   @override
@@ -454,27 +457,9 @@ class _SheetContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // ── CTA: abrir publicação completa ───────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: onOpenFullTap,
-                    icon: const Icon(Icons.open_in_new, size: 18),
-                    label: Text(s.chatDetailViewPost),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(
-                          color: context.colors.surfaceElevated, width: 1),
-                      foregroundColor: context.colors.textPrimary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-              ),
+              // (Removido o CTA "Ver publicação": o sheet já É a publicação,
+              // então o botão era redundante. Para acessar a thread completa
+              // de comentários o usuário toca em "Comentar".)
             ],
           ),
         ),

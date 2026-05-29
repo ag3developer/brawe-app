@@ -122,9 +122,38 @@ class _CreatorApplicationFormScreenState
       context.go('/creator/submitted');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).creatorFormError)),
-      );
+      final s = S.of(context);
+      // Failure.validation('creator_application_already_active') vem do
+      // repo quando o backend devolve 409 (já existe inscrição ativa).
+      // Nesse caso invalidamos o cache e levamos o usuário para a tela
+      // de status — onde ele pode acompanhar / editar a inscrição.
+      final msg = e.toString();
+      final alreadyExists =
+          msg.contains('creator_application_already_active');
+      if (alreadyExists) {
+        ref.invalidate(myCreatorApplicationProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.creatorFormAlreadyExists)),
+        );
+        context.go('/creator/status');
+      } else {
+        // Para 422 (validation) ou outro erro, mostra detalhe se houver.
+        final detail = msg.contains('ValidationFailure')
+            ? msg
+                .replaceAll('ValidationFailure(', '')
+                .replaceAll(')', '')
+                .trim()
+            : null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              detail != null && detail.isNotEmpty && detail != 'null'
+                  ? '${s.creatorFormError}\n$detail'
+                  : s.creatorFormError,
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

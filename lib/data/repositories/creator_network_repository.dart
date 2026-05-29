@@ -227,8 +227,17 @@ class CreatorNetworkRepository {
     final code = e.response?.statusCode;
     if (code == 401 || code == 403) return const Failure.unauthorized();
     if (code == 409) {
-      // já existe application ativa pro user
-      return const Failure.unknown();
+      // Já existe inscrição ativa pro user — sinalizamos via mensagem
+      // semântica para que a UI possa redirecionar para /creator/status.
+      return const Failure.validation('creator_application_already_active');
+    }
+    if (code == 422) {
+      // Erro de validação do backend (Pydantic). Expomos o detail bruto
+      // se disponível para facilitar debugging.
+      final detail = e.response?.data is Map
+          ? (e.response!.data as Map)['detail']?.toString()
+          : null;
+      return Failure.validation(detail ?? 'validation_error');
     }
     if (code != null && code >= 500) return const Failure.server();
     return const Failure.network();
