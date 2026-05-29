@@ -130,7 +130,7 @@ class CreatorBadgeScreen extends ConsumerWidget {
                                 .withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: Text('ATIVO',
+                          child: Text(s.creatorBadgeActive,
                               style: TextStyle(
                                 color: context.colors.success,
                                 fontSize: 10,

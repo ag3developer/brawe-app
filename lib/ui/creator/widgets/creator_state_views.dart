@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 
 class CreatorLoadingView extends StatelessWidget {
@@ -100,7 +101,7 @@ class CreatorErrorView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Tentar novamente'),
+                label: Text(S.of(context).commonRetry),
               ),
             ],
           ],

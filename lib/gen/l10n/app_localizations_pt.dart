@@ -3981,4 +3981,58 @@ class SPt extends S {
 
   @override
   String get adminCreatorsActionDisable => 'Desativar';
+
+  @override
+  String get creatorTimelineTitle => 'Linha do tempo';
+
+  @override
+  String get creatorTimelineSubmitted => 'Inscrição enviada';
+
+  @override
+  String get creatorTimelineUnderReview => 'Em análise';
+
+  @override
+  String get creatorTimelineFinalDecision => 'Decisão final';
+
+  @override
+  String get creatorTimelineResult => 'Resultado';
+
+  @override
+  String get creatorYourApplication => 'Sua inscrição';
+
+  @override
+  String get creatorInfoName => 'Nome';
+
+  @override
+  String get creatorInfoUsername => 'Username';
+
+  @override
+  String get creatorInfoCountry => 'País';
+
+  @override
+  String get creatorInfoNiche => 'Nicho';
+
+  @override
+  String get creatorInfoRequestedTier => 'Tier solicitado';
+
+  @override
+  String get creatorInfoFollowers => 'Seguidores';
+
+  @override
+  String get creatorInfoDoesLive => 'Faz lives';
+
+  @override
+  String get creatorQuickShortcuts => 'Atalhos rápidos';
+
+  @override
+  String get creatorBadgeActive => 'ATIVO';
+
+  @override
+  String get commonYes => 'Sim';
+
+  @override
+  String get commonNo => 'Não';
+
+  @override
+  String get commonRetry => 'Tentar novamente';
 }

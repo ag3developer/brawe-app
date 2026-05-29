@@ -182,19 +182,24 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
   }
 
   void _openFullPost(Post post) {
+    // Capture o router ANTES do pop — após o pop o BuildContext está
+    // desmontado e `context.push` falha silenciosamente (tela preta).
+    final router = GoRouter.of(context);
     Navigator.of(context).pop();
-    context.push('/post/${post.id}');
+    router.push('/post/${post.id}');
   }
 
   void _openAuthor(Post post) {
+    final router = GoRouter.of(context);
     Navigator.of(context).pop();
-    context.push('/profile/${post.author.id}');
+    router.push('/profile/${post.author.id}');
   }
 
   void _openComments(Post post) {
+    final router = GoRouter.of(context);
     Navigator.of(context).pop();
     // O composer de comentário é parte da PostDetailScreen.
-    context.push('/post/${post.id}');
+    router.push('/post/${post.id}');
   }
 
   @override

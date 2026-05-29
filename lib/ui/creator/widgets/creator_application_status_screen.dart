@@ -52,11 +52,11 @@ class CreatorApplicationStatusScreen extends ConsumerWidget {
               children: [
                 _StatusHeader(status: app.status),
                 const SizedBox(height: 18),
-                _SectionTitle(label: 'Linha do tempo'),
+                _SectionTitle(label: s.creatorTimelineTitle),
                 const SizedBox(height: 10),
-                CreatorTimeline(steps: _buildTimeline(app)),
+                CreatorTimeline(steps: _buildTimeline(app, s)),
                 const SizedBox(height: 8),
-                _SectionTitle(label: 'Sua inscrição'),
+                _SectionTitle(label: s.creatorYourApplication),
                 const SizedBox(height: 8),
                 _InfoCard(app: app),
                 const SizedBox(height: 18),
@@ -69,17 +69,17 @@ class CreatorApplicationStatusScreen extends ConsumerWidget {
     );
   }
 
-  List<CreatorTimelineStep> _buildTimeline(CreatorApplication app) {
+  List<CreatorTimelineStep> _buildTimeline(CreatorApplication app, S s) {
     final st = app.status;
     return [
       CreatorTimelineStep(
-        title: 'Inscrição enviada',
+        title: s.creatorTimelineSubmitted,
         subtitle: _fmt(app.createdAt),
         icon: Icons.send_rounded,
         completed: true,
       ),
       CreatorTimelineStep(
-        title: 'Em análise',
+        title: s.creatorTimelineUnderReview,
         icon: Icons.search_rounded,
         active: st == ApplicationStatus.underAnalysis ||
             st == ApplicationStatus.pendingReview ||
@@ -90,8 +90,8 @@ class CreatorApplicationStatusScreen extends ConsumerWidget {
       ),
       CreatorTimelineStep(
         title: st == ApplicationStatus.rejected
-            ? 'Decisão final'
-            : 'Resultado',
+            ? s.creatorTimelineFinalDecision
+            : s.creatorTimelineResult,
         icon: st.isPositive
             ? Icons.celebration_rounded
             : st == ApplicationStatus.rejected
@@ -191,6 +191,7 @@ class _InfoCard extends StatelessWidget {
   final CreatorApplication app;
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     Widget row(String k, String v) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Row(
@@ -224,14 +225,14 @@ class _InfoCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          row('Nome', app.fullName),
-          row('Username', '@${app.username}'),
-          row('País', app.country),
-          row('Nicho', app.niche.name),
+          row(s.creatorInfoName, app.fullName),
+          row(s.creatorInfoUsername, '@${app.username}'),
+          row(s.creatorInfoCountry, app.country),
+          row(s.creatorInfoNiche, app.niche.name),
           if (app.requestedTier != null)
-            row('Tier solicitado', app.requestedTier!.name),
-          row('Seguidores', '${app.followersCount}'),
-          row('Faz lives', app.doesLive ? 'Sim' : 'Não'),
+            row(s.creatorInfoRequestedTier, app.requestedTier!.name),
+          row(s.creatorInfoFollowers, '${app.followersCount}'),
+          row(s.creatorInfoDoesLive, app.doesLive ? s.commonYes : s.commonNo),
         ],
       ),
     );

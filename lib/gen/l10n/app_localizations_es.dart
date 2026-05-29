@@ -3983,4 +3983,58 @@ class SEs extends S {
 
   @override
   String get adminCreatorsActionDisable => 'Desactivar';
+
+  @override
+  String get creatorTimelineTitle => 'Cronología';
+
+  @override
+  String get creatorTimelineSubmitted => 'Solicitud enviada';
+
+  @override
+  String get creatorTimelineUnderReview => 'En análisis';
+
+  @override
+  String get creatorTimelineFinalDecision => 'Decisión final';
+
+  @override
+  String get creatorTimelineResult => 'Resultado';
+
+  @override
+  String get creatorYourApplication => 'Tu solicitud';
+
+  @override
+  String get creatorInfoName => 'Nombre';
+
+  @override
+  String get creatorInfoUsername => 'Usuario';
+
+  @override
+  String get creatorInfoCountry => 'País';
+
+  @override
+  String get creatorInfoNiche => 'Nicho';
+
+  @override
+  String get creatorInfoRequestedTier => 'Tier solicitado';
+
+  @override
+  String get creatorInfoFollowers => 'Seguidores';
+
+  @override
+  String get creatorInfoDoesLive => 'Hace lives';
+
+  @override
+  String get creatorQuickShortcuts => 'Accesos rápidos';
+
+  @override
+  String get creatorBadgeActive => 'ACTIVO';
+
+  @override
+  String get commonYes => 'Sí';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
+  String get commonRetry => 'Reintentar';
 }

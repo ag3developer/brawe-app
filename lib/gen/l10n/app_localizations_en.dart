@@ -3966,4 +3966,58 @@ class SEn extends S {
 
   @override
   String get adminCreatorsActionDisable => 'Disable Creator';
+
+  @override
+  String get creatorTimelineTitle => 'Timeline';
+
+  @override
+  String get creatorTimelineSubmitted => 'Application submitted';
+
+  @override
+  String get creatorTimelineUnderReview => 'Under review';
+
+  @override
+  String get creatorTimelineFinalDecision => 'Final decision';
+
+  @override
+  String get creatorTimelineResult => 'Result';
+
+  @override
+  String get creatorYourApplication => 'Your application';
+
+  @override
+  String get creatorInfoName => 'Name';
+
+  @override
+  String get creatorInfoUsername => 'Username';
+
+  @override
+  String get creatorInfoCountry => 'Country';
+
+  @override
+  String get creatorInfoNiche => 'Niche';
+
+  @override
+  String get creatorInfoRequestedTier => 'Requested tier';
+
+  @override
+  String get creatorInfoFollowers => 'Followers';
+
+  @override
+  String get creatorInfoDoesLive => 'Goes live';
+
+  @override
+  String get creatorQuickShortcuts => 'Quick shortcuts';
+
+  @override
+  String get creatorBadgeActive => 'ACTIVE';
+
+  @override
+  String get commonYes => 'Yes';
+
+  @override
+  String get commonNo => 'No';
+
+  @override
+  String get commonRetry => 'Try again';
 }

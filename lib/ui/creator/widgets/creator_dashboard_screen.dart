@@ -101,7 +101,7 @@ class CreatorDashboardScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                Text('Atalhos rápidos',
+                Text(s.creatorQuickShortcuts,
                     style: TextStyle(
                       color: context.colors.textPrimary,
                       fontWeight: FontWeight.w800,

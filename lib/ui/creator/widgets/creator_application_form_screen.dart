@@ -7,6 +7,7 @@ import '../../../data/services/legal_assets_service.dart';
 import '../../../domain/models/creator_network.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/country_picker.dart';
 import '../../core/widgets/simple_markdown_view.dart';
 import '../utils/creator_l10n.dart';
 import '../view_models/creator_network_view_model.dart';
@@ -44,6 +45,7 @@ class _CreatorApplicationFormScreenState
   bool _doesLive = false;
   bool _acceptedTerms = false;
   bool _submitting = false;
+  Country? _selectedCountry;
 
   String _language = 'pt';
 
@@ -71,6 +73,12 @@ class _CreatorApplicationFormScreenState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedCountry == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).creatorFormValidationRequired)),
+      );
+      return;
+    }
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).creatorFormTermsMustAccept)),
@@ -90,7 +98,7 @@ class _CreatorApplicationFormScreenState
             username: _username.text.trim(),
             email: _email.text.trim(),
             phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-            country: _country.text.trim(),
+            country: _selectedCountry!.code,
             city: _city.text.trim().isEmpty ? null : _city.text.trim(),
             language: _language,
             niche: _niche,
@@ -254,7 +262,7 @@ class _CreatorApplicationFormScreenState
             _field(_email, s.creatorFormEmail,
                 required: true, keyboard: TextInputType.emailAddress, isEmail: true),
             _field(_phone, s.creatorFormPhone, keyboard: TextInputType.phone),
-            _field(_country, s.creatorFormCountry, required: true),
+            _countryField(s),
             _field(_city, s.creatorFormCity),
 
             _section(s.creatorFormSectionContent),
@@ -421,6 +429,64 @@ class _CreatorApplicationFormScreenState
               letterSpacing: 0.2,
             )),
       );
+
+  /// Campo de país com bottom sheet picker (bandeira + nome + ISO).
+  /// Envia código ISO-2 ao backend (ex.: "BR"), evitando erro 422 de
+  /// validação (`min_length=2, max_length=3`).
+  Widget _countryField(S s) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          final picked = await showCountryPicker(
+            context,
+            selectedCode: _selectedCountry?.code,
+            title: s.creatorFormCountry,
+          );
+          if (picked != null) {
+            setState(() {
+              _selectedCountry = picked;
+              _country.text = picked.code;
+            });
+          }
+        },
+        child: InputDecorator(
+          decoration: _decoration(s.creatorFormCountry).copyWith(
+            suffixIcon: Icon(Icons.arrow_drop_down_rounded,
+                color: context.colors.textSecondary),
+          ),
+          child: Row(
+            children: [
+              if (_selectedCountry != null) ...[
+                Text(_selectedCountry!.flag,
+                    style: const TextStyle(fontSize: 22)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '${_selectedCountry!.name} (${_selectedCountry!.code})',
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ] else
+                Expanded(
+                  child: Text(
+                    s.creatorFormCountry,
+                    style: TextStyle(
+                      color: context.colors.textTertiary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _field(
     TextEditingController c,

@@ -7244,6 +7244,114 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Desativar'**
   String get adminCreatorsActionDisable;
+
+  /// No description provided for @creatorTimelineTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Linha do tempo'**
+  String get creatorTimelineTitle;
+
+  /// No description provided for @creatorTimelineSubmitted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição enviada'**
+  String get creatorTimelineSubmitted;
+
+  /// No description provided for @creatorTimelineUnderReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em análise'**
+  String get creatorTimelineUnderReview;
+
+  /// No description provided for @creatorTimelineFinalDecision.
+  ///
+  /// In pt, this message translates to:
+  /// **'Decisão final'**
+  String get creatorTimelineFinalDecision;
+
+  /// No description provided for @creatorTimelineResult.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resultado'**
+  String get creatorTimelineResult;
+
+  /// No description provided for @creatorYourApplication.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua inscrição'**
+  String get creatorYourApplication;
+
+  /// No description provided for @creatorInfoName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome'**
+  String get creatorInfoName;
+
+  /// No description provided for @creatorInfoUsername.
+  ///
+  /// In pt, this message translates to:
+  /// **'Username'**
+  String get creatorInfoUsername;
+
+  /// No description provided for @creatorInfoCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País'**
+  String get creatorInfoCountry;
+
+  /// No description provided for @creatorInfoNiche.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nicho'**
+  String get creatorInfoNiche;
+
+  /// No description provided for @creatorInfoRequestedTier.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tier solicitado'**
+  String get creatorInfoRequestedTier;
+
+  /// No description provided for @creatorInfoFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get creatorInfoFollowers;
+
+  /// No description provided for @creatorInfoDoesLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faz lives'**
+  String get creatorInfoDoesLive;
+
+  /// No description provided for @creatorQuickShortcuts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atalhos rápidos'**
+  String get creatorQuickShortcuts;
+
+  /// No description provided for @creatorBadgeActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'ATIVO'**
+  String get creatorBadgeActive;
+
+  /// No description provided for @commonYes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim'**
+  String get commonYes;
+
+  /// No description provided for @commonNo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não'**
+  String get commonNo;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get commonRetry;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
