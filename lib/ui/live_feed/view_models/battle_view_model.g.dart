@@ -10,22 +10,28 @@ part of 'battle_view_model.dart';
 // ignore_for_file: type=lint, type=warning
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///
-/// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-/// Both screens receive the same events — only widget rendering differs.
+/// Single source of truth for both battle overlays — `ViewerBattleHud`
+/// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+/// transmissor). Both receive the same socket events — only widget
+/// rendering differs.
 
 @ProviderFor(BattleViewModel)
 final battleViewModelProvider = BattleViewModelFamily._();
 
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///
-/// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-/// Both screens receive the same events — only widget rendering differs.
+/// Single source of truth for both battle overlays — `ViewerBattleHud`
+/// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+/// transmissor). Both receive the same socket events — only widget
+/// rendering differs.
 final class BattleViewModelProvider
     extends $NotifierProvider<BattleViewModel, AsyncValue<BattleState>> {
   /// Drives all battle-related UI state: scores, timer, phase transitions.
   ///
-  /// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-  /// Both screens receive the same events — only widget rendering differs.
+  /// Single source of truth for both battle overlays — `ViewerBattleHud`
+  /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+  /// transmissor). Both receive the same socket events — only widget
+  /// rendering differs.
   BattleViewModelProvider._({
     required BattleViewModelFamily super.from,
     required String super.argument,
@@ -70,12 +76,14 @@ final class BattleViewModelProvider
   }
 }
 
-String _$battleViewModelHash() => r'198bdc6d4d6a7074dc0ed9011d0383796cb78fe0';
+String _$battleViewModelHash() => r'0ab4891ad47ccbeabd1f0904a877406708b9fb5f';
 
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///
-/// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-/// Both screens receive the same events — only widget rendering differs.
+/// Single source of truth for both battle overlays — `ViewerBattleHud`
+/// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+/// transmissor). Both receive the same socket events — only widget
+/// rendering differs.
 
 final class BattleViewModelFamily extends $Family
     with
@@ -97,8 +105,10 @@ final class BattleViewModelFamily extends $Family
 
   /// Drives all battle-related UI state: scores, timer, phase transitions.
   ///
-  /// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-  /// Both screens receive the same events — only widget rendering differs.
+  /// Single source of truth for both battle overlays — `ViewerBattleHud`
+  /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+  /// transmissor). Both receive the same socket events — only widget
+  /// rendering differs.
 
   BattleViewModelProvider call(String battleId) =>
       BattleViewModelProvider._(argument: battleId, from: this);
@@ -109,8 +119,10 @@ final class BattleViewModelFamily extends $Family
 
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///
-/// Single source of truth for both [ViewerBattleScreen] and [StreamerBattleScreen].
-/// Both screens receive the same events — only widget rendering differs.
+/// Single source of truth for both battle overlays — `ViewerBattleHud`
+/// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
+/// transmissor). Both receive the same socket events — only widget
+/// rendering differs.
 
 abstract class _$BattleViewModel extends $Notifier<AsyncValue<BattleState>> {
   late final _$args = ref.$arg as String;

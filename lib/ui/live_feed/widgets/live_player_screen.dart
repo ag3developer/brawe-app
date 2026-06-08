@@ -14,6 +14,7 @@ import '../../core/view_models/follow_view_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
+import '../../../data/services/battle_service.dart';
 import '../../../data/services/socket_service.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_reaction_event.dart';
@@ -24,6 +25,7 @@ import '../../live/shared/widgets/commerce/commerce.dart';
 import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
+import 'viewer_battle_hud.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
 /// 📺 Tela do espectador (live viewer).
@@ -101,6 +103,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    // Verifica se a live já está em batalha (viewer entrou mid-battle)
+    _checkActiveBattle();
   }
 
   void _unsubscribeFromBattleEvents() {
@@ -108,6 +112,26 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       final socket = ref.read(socketServiceProvider);
       socket.off(AppConstants.eventBattleStarted);
     } catch (_) {}
+  }
+
+  /// Consulta o backend para saber se já existe uma batalha ativa nesta sala.
+  /// Necessário quando o viewer entra na live depois da batalha já ter começado
+  /// (o evento `connect:battle:started` já foi emitido antes da entrada).
+  Future<void> _checkActiveBattle() async {
+    if (!mounted) return;
+    try {
+      final result = await ref
+          .read(battleServiceProvider)
+          .getActiveBattleForRoom(widget.room.id);
+      final battleId = result['battle_id'] as String?;
+      if (battleId != null && battleId.isNotEmpty && mounted) {
+        // Overlay (não navega): a batalha vira uma camada por cima desta
+        // live — vídeo, chat, rosa e presentes continuam vivos atrás.
+        setState(() => _activeBattleId = battleId);
+      }
+    } catch (_) {
+      // 404 = sem batalha ativa — silencioso.
+    }
   }
 
   // ── Realtime reactions ──────────────────────────────────────────────────
@@ -139,8 +163,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (raw is Map<String, dynamic>) data = raw;
     final battleId = data['battle_id'] as String?;
     if (battleId == null) return;
-    // Navegar para a tela de batalha do viewer
-    context.push('/live/battle/$battleId');
+    // Overlay (não navega): mostra o HUD de batalha por cima da live atual.
+    setState(() => _activeBattleId = battleId);
   }
 
   Future<void> _initializePlayer() async {
@@ -237,6 +261,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       context,
       widget.room.id,
       widget.room.streamerId,
+      // Em batalha, o presente pontua no placar (mesmo caminho da rosa).
+      battleId: _activeBattleId,
     );
   }
 
@@ -449,6 +475,21 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               ),
             ),
           ),
+
+          // ── 8. Battle HUD (overlay) — só aparece em batalha ──
+          // Camada LEVE por cima da live: placar dos 2 participantes + timer
+          // + toasts de gift no topo. NÃO substitui a tela: vídeo, chat,
+          // rosa e presentes continuam vivos atrás. Mesmo padrão do streamer
+          // (BroadcasterScreen → StreamerBattleHud).
+          if (_activeBattleId != null)
+            Positioned.fill(
+              child: ViewerBattleHud(
+                battleId: _activeBattleId!,
+                onClose: () {
+                  if (mounted) setState(() => _activeBattleId = null);
+                },
+              ),
+            ),
         ],
       ),
     );

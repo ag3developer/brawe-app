@@ -1812,6 +1812,11 @@
       }
     }
   },
+  "battleMomentum": "PEGANDO FOGO",
+  "battleLeadChange": "VIROU!",
+  "battleFinalStretch": "RETA FINAL",
+  "battleSendToWin": "Mande presentes pra decidir!",
+  "battleMvp": "MVP",
   "sharedPostReactionApplied": "Reação enviada ✨",
   "sharedPostMinutesAgo": "há {count} min",
   "@sharedPostMinutesAgo": {

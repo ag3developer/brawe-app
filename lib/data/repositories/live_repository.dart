@@ -543,6 +543,15 @@ class LiveRepository {
     );
 
     if (statusCode == 401 || statusCode == 403) {
+      // 🎬 Gating de "ir ao vivo": o backend devolve 403 com um payload
+      // estruturado { detail: { code, message, missing } } para casos de
+      // elegibilidade (avatar, creator network, seguidores mínimos). Quando
+      // há essa mensagem amigável, preservamos ela em vez de mostrar o
+      // genérico "sessão expirada" — que confundiria o criador.
+      final eligibilityMessage = _extractEligibilityMessage(exception.response?.data);
+      if (eligibilityMessage != null) {
+        return Failure.validation(eligibilityMessage);
+      }
       return const Failure.unauthorized();
     }
 
@@ -562,6 +571,26 @@ class LiveRepository {
     }
 
     return const Failure.network();
+  }
+
+  /// Extrai a mensagem amigável de elegibilidade de um corpo de erro 403.
+  ///
+  /// O backend de lives devolve `{ detail: { code, missing, message } }`
+  /// quando o criador é bloqueado por uma regra (avatar ausente, conta de
+  /// creator inativa ou seguidores insuficientes). Retornamos a `message`
+  /// pronta para exibição quando presente; caso contrário `null`, para o
+  /// chamador cair no fluxo padrão de "não autorizado".
+  String? _extractEligibilityMessage(dynamic data) {
+    if (data is Map) {
+      final detail = data['detail'];
+      if (detail is Map) {
+        final message = detail['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message;
+        }
+      }
+    }
+    return null;
   }
 
   void _registerSocketHandlers() {

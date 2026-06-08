@@ -24,7 +24,6 @@ import '../ui/home/widgets/home_screen.dart';
 import '../ui/home/widgets/for_you_screen.dart';
 import '../ui/live_feed/widgets/for_you_live_list_screen.dart';
 import '../ui/live_feed/widgets/live_player_screen.dart';
-import '../ui/live_feed/widgets/viewer_battle_screen.dart';
 import '../ui/chat/widgets/chat_list_screen.dart';
 import '../ui/chat/widgets/chat_detail_screen.dart';
 import '../ui/chat/widgets/new_conversation_screen.dart';
@@ -168,6 +167,24 @@ GoRouter router(Ref ref) {
               return BraweTransitions.fadeUp(
                 key: state.pageKey,
                 child: PostLikersScreen(postId: postId),
+              );
+            },
+          ),
+          // Deep link de comentários (push de comentário / resposta / menção).
+          // Abre o post e exibe automaticamente a folha de comentários,
+          // destacando o comentário referenciado (?commentId=...).
+          GoRoute(
+            path: '/post/:postId/comments',
+            pageBuilder: (context, state) {
+              final postId = state.pathParameters['postId'] ?? '';
+              final commentId = state.uri.queryParameters['commentId'];
+              return BraweTransitions.fadeUp(
+                key: state.pageKey,
+                child: PostDetailScreen(
+                  postId: postId,
+                  openComments: true,
+                  highlightCommentId: commentId,
+                ),
               );
             },
           ),
@@ -340,7 +357,10 @@ GoRouter router(Ref ref) {
         ],
       ),
       // ── Rotas fullscreen (sem HomeBottomNav) ─────────────────────────────
-      // Live broadcast, viewer e battle são imersivas fullscreen — sem bottom nav.
+      // Live broadcast e viewer são imersivas fullscreen — sem bottom nav.
+      // (A batalha NÃO tem rota própria: é um overlay `ViewerBattleHud` por
+      // cima da live no `LivePlayerScreen` — vídeo, chat, rosa e presentes
+      // continuam vivos durante a disputa.)
       GoRoute(
         path: '/live/broadcast',
         builder: (context, state) {
@@ -358,15 +378,6 @@ GoRouter router(Ref ref) {
             );
           }
           return const ForceDarkTheme(child: StartLiveScreen());
-        },
-      ),
-      GoRoute(
-        path: '/live/battle/:battleId',
-        builder: (context, state) {
-          final battleId = state.pathParameters['battleId'] ?? '';
-          return ForceDarkTheme(
-            child: ViewerBattleScreen(battleId: battleId),
-          );
         },
       ),
       GoRoute(

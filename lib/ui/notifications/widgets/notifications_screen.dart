@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/services/notification_navigation_service.dart';
 import '../../../domain/models/app_notification.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -64,8 +65,10 @@ class NotificationsScreen extends ConsumerWidget {
                         color: context.colors.danger,
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: Icon(Icons.delete,
-                            color: context.colors.textOnAccent),
+                        child: Icon(
+                          Icons.delete,
+                          color: context.colors.textOnAccent,
+                        ),
                       ),
                       onDismissed: (_) => ref
                           .read(notificationsViewModelProvider.notifier)
@@ -77,6 +80,17 @@ class NotificationsScreen extends ConsumerWidget {
                             ref
                                 .read(notificationsViewModelProvider.notifier)
                                 .markRead(n.id);
+                          }
+                          // Navega para o destino da notificação (post,
+                          // perfil, live, chat...). A rota vem em `data.route`
+                          // (enviada pelo backend) com fallback para `link_url`.
+                          final nav = ref.read(
+                            notificationNavigationServiceProvider,
+                          );
+                          if (n.data != null && n.data!.isNotEmpty) {
+                            nav.handleData(n.data);
+                          } else if (n.linkUrl != null) {
+                            nav.handleRoute(n.linkUrl);
                           }
                         },
                       ),
@@ -92,10 +106,7 @@ class NotificationsScreen extends ConsumerWidget {
 class _NotificationTile extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback onTap;
-  const _NotificationTile({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationTile({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -119,11 +130,13 @@ class _NotificationTile extends StatelessWidget {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: color.withValues(alpha: 0.15),
-                    backgroundImage: (notification.actorAvatar != null &&
+                    backgroundImage:
+                        (notification.actorAvatar != null &&
                             notification.actorAvatar!.isNotEmpty)
                         ? NetworkImage(notification.actorAvatar!)
                         : null,
-                    child: (notification.actorAvatar == null ||
+                    child:
+                        (notification.actorAvatar == null ||
                             notification.actorAvatar!.isEmpty)
                         ? Icon(icon, color: color, size: 22)
                         : null,
@@ -155,8 +168,7 @@ class _NotificationTile extends StatelessWidget {
                     Text(
                       notification.title,
                       style: TextStyle(
-                        fontWeight:
-                            unread ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
                         fontSize: 14,
                       ),
                     ),
@@ -242,10 +254,7 @@ class _EmptyView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              const BraweIllustrationView(
-                BraweIllustration.bell,
-                size: 96,
-              ),
+              const BraweIllustrationView(BraweIllustration.bell, size: 96),
               const SizedBox(height: 12),
               Text(
                 s.notificationsEmptyTitle,

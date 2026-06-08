@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../../domain/models/battle_state.dart';
@@ -80,7 +79,7 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
 
     return asyncState.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (battle) {
         if (battle.isOver) {
           return _ResultBanner(battle: battle, l10n: l10n);

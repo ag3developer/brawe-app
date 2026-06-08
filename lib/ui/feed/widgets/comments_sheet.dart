@@ -9,8 +9,16 @@ import '../view_models/comments_view_model.dart';
 import 'story_ring_avatar.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
-  const CommentsSheet({super.key, required this.postId});
+  const CommentsSheet({
+    super.key,
+    required this.postId,
+    this.highlightCommentId,
+  });
   final String postId;
+
+  /// Comentário a destacar quando a folha é aberta via deep link de
+  /// notificação (comentário / resposta / menção). Opcional.
+  final String? highlightCommentId;
 
   @override
   ConsumerState<CommentsSheet> createState() => _CommentsSheetState();
@@ -96,10 +104,13 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     commentsState.when(
                       data: (comments) => Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color:
-                              AppColors.electricPurple.withValues(alpha: 0.2),
+                          color: AppColors.electricPurple.withValues(
+                            alpha: 0.2,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -124,21 +135,24 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 child: commentsState.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(
-                        color: AppColors.electricPurple),
+                      color: AppColors.electricPurple,
+                    ),
                   ),
-                  error: (_, __) =>  Center(
+                  error: (_, __) => Center(
                     child: Text(
                       s.commentsErrorLoad,
                       style: TextStyle(color: context.colors.textSecondary),
                     ),
                   ),
                   data: (comments) => comments.isEmpty
-                      ?  Center(
+                      ? Center(
                           child: Text(
                             s.commentsEmpty,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                                color: context.colors.textSecondary, fontSize: 14),
+                              color: context.colors.textSecondary,
+                              fontSize: 14,
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -147,13 +161,19 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           itemCount: comments.length,
                           itemBuilder: (_, i) => _CommentTile(
                             comment: comments[i],
+                            highlighted:
+                                widget.highlightCommentId != null &&
+                                comments[i].id == widget.highlightCommentId,
                             onReply: (c) {
                               setState(() => _replyingTo = c);
                               _focusNode.requestFocus();
                             },
                             onLike: (c) => ref
-                                .read(commentsViewModelProvider(widget.postId)
-                                    .notifier)
+                                .read(
+                                  commentsViewModelProvider(
+                                    widget.postId,
+                                  ).notifier,
+                                )
                                 .toggleLike(c),
                           ),
                         ),
@@ -164,24 +184,34 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               if (_replyingTo != null)
                 Container(
                   color: context.colors.surfaceElevated,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.reply,
-                          color: AppColors.electricPurple, size: 16),
+                      const Icon(
+                        Icons.reply,
+                        color: AppColors.electricPurple,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           s.commentsReplyingTo(_replyingTo!.authorUsername),
-                          style:  TextStyle(
-                              color: context.colors.textSecondary, fontSize: 13),
+                          style: TextStyle(
+                            color: context.colors.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                       GestureDetector(
                         onTap: () => setState(() => _replyingTo = null),
-                        child:  Icon(Icons.close,
-                            color: context.colors.textSecondary, size: 18),
+                        child: Icon(
+                          Icons.close,
+                          color: context.colors.textSecondary,
+                          size: 18,
+                        ),
                       ),
                     ],
                   ),
@@ -196,15 +226,20 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                   MediaQuery.of(context).viewInsets.bottom + 12,
                 ),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: context.colors.divider)),
+                  border: Border(
+                    top: BorderSide(color: context.colors.divider),
+                  ),
                 ),
                 child: Row(
                   children: [
-                     CircleAvatar(
+                    CircleAvatar(
                       radius: 16,
                       backgroundColor: context.colors.surfaceElevated,
-                      child: Icon(Icons.person,
-                          color: context.colors.textSecondary, size: 16),
+                      child: Icon(
+                        Icons.person,
+                        color: context.colors.textSecondary,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -216,8 +251,10 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           hintText: _replyingTo != null
                               ? s.commentsHintReply
                               : s.commentsHintAdd,
-                          hintStyle:  TextStyle(
-                              color: context.colors.textSecondary, fontSize: 14),
+                          hintStyle: TextStyle(
+                            color: context.colors.textSecondary,
+                            fontSize: 14,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(20),
                             borderSide: BorderSide.none,
@@ -225,7 +262,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           filled: true,
                           fillColor: context.colors.surfaceElevated,
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                         ),
                         maxLines: null,
                         textInputAction: TextInputAction.send,
@@ -242,8 +281,11 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           color: AppColors.electricPurple,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.send,
-                            color: context.colors.textPrimary, size: 18),
+                        child: Icon(
+                          Icons.send,
+                          color: context.colors.textPrimary,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ],
@@ -262,114 +304,134 @@ class _CommentTile extends StatelessWidget {
     required this.comment,
     required this.onReply,
     required this.onLike,
+    this.highlighted = false,
   });
   final PostComment comment;
   final void Function(PostComment) onReply;
   final void Function(PostComment) onLike;
 
+  /// Realça o comentário aberto via deep link de notificação.
+  final bool highlighted;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              StoryRingAvatar(
-                userId: comment.authorId,
-                avatarUrl: comment.authorAvatarUrl,
-                fallbackText: comment.authorName,
-                radius: 16,
-                onTapWithoutStories: () =>
-                    context.push('/profile/${comment.authorId}'),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          comment.authorName,
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      color: highlighted
+          ? AppColors.electricPurple.withValues(alpha: 0.10)
+          : Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StoryRingAvatar(
+                  userId: comment.authorId,
+                  avatarUrl: comment.authorAvatarUrl,
+                  fallbackText: comment.authorName,
+                  radius: 16,
+                  onTapWithoutStories: () =>
+                      context.push('/profile/${comment.authorId}'),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            comment.authorName,
+                            style: TextStyle(
+                              color: context.colors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
-                        ),
-                        if (comment.authorIsVerified) ...[
-                          const SizedBox(width: 3),
-                          const Icon(Icons.verified,
-                              color: AppColors.electricPurple, size: 13),
-                        ],
-                        const SizedBox(width: 6),
-                        Text(
-                          comment.timeAgo,
-                          style:  TextStyle(
-                              color: context.colors.textSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      comment.content,
-                      style: TextStyle(
-                          color: context.colors.textPrimary, fontSize: 14, height: 1.4),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => onLike(comment),
-                          child: Row(
-                            children: [
-                              Icon(
-                                comment.userLiked
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: comment.userLiked
-                                    ? Colors.red
-                                    : context.colors.textSecondary,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${comment.likesCount}',
-                                style:  TextStyle(
-                                    color: context.colors.textSecondary, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        GestureDetector(
-                          onTap: () => onReply(comment),
-                          child:  Text(
-                            S.of(context).commentsReplyAction,
+                          if (comment.authorIsVerified) ...[
+                            const SizedBox(width: 3),
+                            const Icon(
+                              Icons.verified,
+                              color: AppColors.electricPurple,
+                              size: 13,
+                            ),
+                          ],
+                          const SizedBox(width: 6),
+                          Text(
+                            comment.timeAgo,
                             style: TextStyle(
                               color: context.colors.textSecondary,
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        comment.content,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
+                          fontSize: 14,
+                          height: 1.4,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => onLike(comment),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  comment.userLiked
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: comment.userLiked
+                                      ? Colors.red
+                                      : context.colors.textSecondary,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${comment.likesCount}',
+                                  style: TextStyle(
+                                    color: context.colors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          GestureDetector(
+                            onTap: () => onReply(comment),
+                            child: Text(
+                              S.of(context).commentsReplyAction,
+                              style: TextStyle(
+                                color: context.colors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          // Replies
-          if (comment.replies.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 42, top: 8),
-              child: Column(
-                children: comment.replies
-                    .map((reply) => Padding(
+              ],
+            ),
+            // Replies
+            if (comment.replies.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 42, top: 8),
+                child: Column(
+                  children: comment.replies
+                      .map(
+                        (reply) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +446,9 @@ class _CommentTile extends StatelessWidget {
                                     ? Text(
                                         reply.authorName[0].toUpperCase(),
                                         style: TextStyle(
-                                            color: context.colors.textPrimary, fontSize: 10),
+                                          color: context.colors.textPrimary,
+                                          fontSize: 10,
+                                        ),
                                       )
                                     : null,
                               ),
@@ -404,18 +468,22 @@ class _CommentTile extends StatelessWidget {
                                     Text(
                                       reply.content,
                                       style: TextStyle(
-                                          color: context.colors.textPrimary, fontSize: 13),
+                                        color: context.colors.textPrimary,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                             ],
                           ),
-                        ))
-                    .toList(),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,16 @@
+/// Maior doador (MVP) de um lado da batalha.
+class BattleGifter {
+  const BattleGifter({required this.id, required this.total});
+
+  final String id;
+  final double total;
+
+  factory BattleGifter.fromJson(Map<String, dynamic> json) => BattleGifter(
+        id: json['id'] as String? ?? '',
+        total: (json['total'] as num?)?.toDouble() ?? 0,
+      );
+}
+
 /// Represents the current state of a live battle between two streamers.
 class BattleState {
   const BattleState({
@@ -21,6 +34,10 @@ class BattleState {
     this.giftsCountA = 0,
     this.giftsCountB = 0,
     this.phase = BattlePhase.waiting,
+    this.multiplier = 1.0,
+    this.powerMoment = false,
+    this.topGifterA,
+    this.topGifterB,
   });
 
   final String battleId;
@@ -43,6 +60,16 @@ class BattleState {
   final int giftsCountA;
   final int giftsCountB;
   final BattlePhase phase;
+
+  /// 🔥 Multiplicador do último gift (2.0 durante o Power Moment).
+  final double multiplier;
+
+  /// 🔥 `true` quando a batalha está na janela de Power Moment (reta final).
+  final bool powerMoment;
+
+  /// 🏅 Maior doador (MVP) de cada lado — `null` se ninguém doou ainda.
+  final BattleGifter? topGifterA;
+  final BattleGifter? topGifterB;
 
   double get progressA {
     final total = scoreA + scoreB;
@@ -68,6 +95,10 @@ class BattleState {
     int? giftsCountA,
     int? giftsCountB,
     BattlePhase? phase,
+    double? multiplier,
+    bool? powerMoment,
+    BattleGifter? topGifterA,
+    BattleGifter? topGifterB,
   }) {
     return BattleState(
       battleId: battleId,
@@ -90,6 +121,10 @@ class BattleState {
       giftsCountA: giftsCountA ?? this.giftsCountA,
       giftsCountB: giftsCountB ?? this.giftsCountB,
       phase: phase ?? this.phase,
+      multiplier: multiplier ?? this.multiplier,
+      powerMoment: powerMoment ?? this.powerMoment,
+      topGifterA: topGifterA ?? this.topGifterA,
+      topGifterB: topGifterB ?? this.topGifterB,
     );
   }
 

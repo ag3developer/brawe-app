@@ -3365,6 +3365,21 @@ class SPt extends S {
   }
 
   @override
+  String get battleMomentum => 'PEGANDO FOGO';
+
+  @override
+  String get battleLeadChange => 'VIROU!';
+
+  @override
+  String get battleFinalStretch => 'RETA FINAL';
+
+  @override
+  String get battleSendToWin => 'Mande presentes pra decidir!';
+
+  @override
+  String get battleMvp => 'MVP';
+
+  @override
   String get sharedPostReactionApplied => 'Reação enviada ✨';
 
   @override

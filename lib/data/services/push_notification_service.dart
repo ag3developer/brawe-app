@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/live_dio_provider.dart';
+import 'notification_navigation_service.dart';
 
 part 'push_notification_service.g.dart';
 
@@ -17,7 +20,8 @@ part 'push_notification_service.g.dart';
 /// Designed to fail gracefully when Firebase config files are missing.
 class PushNotificationService {
   final Dio _dio;
-  PushNotificationService(this._dio);
+  final NotificationNavigationService _navigation;
+  PushNotificationService(this._dio, this._navigation);
 
   static const _androidChannel = AndroidNotificationChannel(
     'brawe_high_importance',
@@ -53,28 +57,40 @@ class PushNotificationService {
       // Local notifications (foreground display on Android).
       // Usa o ícone monocromático `ic_stat_notification` (drawable) — exigência
       // do Android para notification bar (colorido só funciona via accent color).
-      const androidInit = AndroidInitializationSettings(
-        'ic_stat_notification',
-      );
+      const androidInit = AndroidInitializationSettings('ic_stat_notification');
       const iosInit = DarwinInitializationSettings();
       await _local.initialize(
-        settings: const InitializationSettings(android: androidInit, iOS: iosInit),
+        settings: const InitializationSettings(
+          android: androidInit,
+          iOS: iosInit,
+        ),
+        onDidReceiveNotificationResponse: _onLocalNotificationTap,
       );
       await _local
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(_androidChannel);
 
       // Foreground message handler.
       FirebaseMessaging.onMessage.listen(_onForegroundMessage);
 
+      // App em background (não terminado) → usuário toca na notificação.
+      FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
+
+      // App terminado → aberto a partir de um toque na notificação.
+      // Atrasa o tratamento para o próximo frame, garantindo que o GoRouter
+      // e a sessão já estejam disponíveis (o destino vira "pendente" se a
+      // sessão ainda não resolveu — ver NotificationNavigationService).
+      unawaited(_handleInitialMessage());
+
       // Configura como exibir notificações em foreground no iOS
       await FirebaseMessaging.instance
           .setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+            alert: true,
+            badge: true,
+            sound: true,
+          );
 
       // Token refresh automático → re-registra no backend
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
@@ -105,10 +121,7 @@ class PushNotificationService {
       if (token == null) return;
       await _dio.post(
         '/devices/register',
-        data: {
-          'token': token,
-          'platform': Platform.isIOS ? 'ios' : 'android',
-        },
+        data: {'token': token, 'platform': Platform.isIOS ? 'ios' : 'android'},
       );
     } catch (e) {
       debugPrint('registerWithBackend failed: $e');
@@ -145,8 +158,41 @@ class PushNotificationService {
         ),
         iOS: const DarwinNotificationDetails(),
       ),
-      payload: message.data.isEmpty ? null : message.data.toString(),
+      // Serializa o `data` em JSON para que o toque na notificação local
+      // (foreground) consiga reconstruir o payload e navegar.
+      payload: message.data.isEmpty ? null : jsonEncode(message.data),
     );
+  }
+
+  /// App em foreground: usuário tocou na notificação local exibida acima.
+  void _onLocalNotificationTap(NotificationResponse response) {
+    final raw = response.payload;
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map) {
+        _navigation.handleData(Map<String, dynamic>.from(decoded));
+      }
+    } catch (e) {
+      debugPrint('Falha ao decodificar payload da notificação local: $e');
+    }
+  }
+
+  /// App em background (vivo): usuário tocou na notificação do sistema.
+  void _onMessageOpenedApp(RemoteMessage message) {
+    _navigation.handleData(message.data);
+  }
+
+  /// App terminado: foi aberto a partir de um toque na notificação.
+  Future<void> _handleInitialMessage() async {
+    try {
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial != null) {
+        _navigation.handleData(initial.data);
+      }
+    } catch (e) {
+      debugPrint('getInitialMessage falhou: $e');
+    }
   }
 }
 
@@ -166,5 +212,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 @riverpod
 PushNotificationService pushNotificationService(Ref ref) {
-  return PushNotificationService(ref.watch(liveDioProvider));
+  return PushNotificationService(
+    ref.watch(liveDioProvider),
+    ref.watch(notificationNavigationServiceProvider),
+  );
 }

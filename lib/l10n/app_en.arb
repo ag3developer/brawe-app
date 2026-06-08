@@ -1549,6 +1549,11 @@
       }
     }
   },
+  "battleMomentum": "ON FIRE",
+  "battleLeadChange": "LEAD CHANGE!",
+  "battleFinalStretch": "FINAL STRETCH",
+  "battleSendToWin": "Send gifts to decide it!",
+  "battleMvp": "MVP",
   "sharedPostReactionApplied": "Reaction sent ✨",
   "sharedPostMinutesAgo": "{count}m ago",
   "@sharedPostMinutesAgo": {

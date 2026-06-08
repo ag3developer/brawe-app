@@ -1549,6 +1549,11 @@
       }
     }
   },
+  "battleMomentum": "EN LLAMAS",
+  "battleLeadChange": "¡CAMBIO DE LÍDER!",
+  "battleFinalStretch": "RECTA FINAL",
+  "battleSendToWin": "¡Envía regalos para decidir!",
+  "battleMvp": "MVP",
   "sharedPostReactionApplied": "Reacción enviada ✨",
   "sharedPostMinutesAgo": "hace {count} min",
   "@sharedPostMinutesAgo": {

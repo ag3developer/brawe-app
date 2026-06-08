@@ -3370,6 +3370,21 @@ class SEs extends S {
   }
 
   @override
+  String get battleMomentum => 'EN LLAMAS';
+
+  @override
+  String get battleLeadChange => '¡CAMBIO DE LÍDER!';
+
+  @override
+  String get battleFinalStretch => 'RECTA FINAL';
+
+  @override
+  String get battleSendToWin => '¡Envía regalos para decidir!';
+
+  @override
+  String get battleMvp => 'MVP';
+
+  @override
   String get sharedPostReactionApplied => 'Reacción enviada ✨';
 
   @override

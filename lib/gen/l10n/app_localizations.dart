@@ -6123,6 +6123,36 @@ abstract class S {
   /// **'{sender} enviou {gift}'**
   String battleGiftReceived(String sender, String gift);
 
+  /// No description provided for @battleMomentum.
+  ///
+  /// In pt, this message translates to:
+  /// **'PEGANDO FOGO'**
+  String get battleMomentum;
+
+  /// No description provided for @battleLeadChange.
+  ///
+  /// In pt, this message translates to:
+  /// **'VIROU!'**
+  String get battleLeadChange;
+
+  /// No description provided for @battleFinalStretch.
+  ///
+  /// In pt, this message translates to:
+  /// **'RETA FINAL'**
+  String get battleFinalStretch;
+
+  /// No description provided for @battleSendToWin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mande presentes pra decidir!'**
+  String get battleSendToWin;
+
+  /// No description provided for @battleMvp.
+  ///
+  /// In pt, this message translates to:
+  /// **'MVP'**
+  String get battleMvp;
+
   /// No description provided for @sharedPostReactionApplied.
   ///
   /// In pt, this message translates to:

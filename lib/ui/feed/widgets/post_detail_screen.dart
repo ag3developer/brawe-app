@@ -7,6 +7,7 @@ import '../../../domain/models/post.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'feed_screen.dart' show PostCard;
+import 'comments_sheet.dart';
 
 /// Tela que abre uma única publicação a partir de um deep link
 /// (`https://brawe.app/post/:id` ou `https://brawe.app/connect/p/:id`).
@@ -14,10 +15,25 @@ import 'feed_screen.dart' show PostCard;
 /// Quando o usuário compartilha um post com um amigo (quest diária ou
 /// botão de compartilhar do feed), o destinatário cai aqui ao tocar
 /// no link — em vez de abrir a Home e perder a publicação.
+///
+/// Quando aberto via deep link de comentário/resposta/menção
+/// (`/post/:id/comments`), [openComments] faz a folha de comentários abrir
+/// automaticamente assim que o post termina de carregar.
 class PostDetailScreen extends ConsumerStatefulWidget {
-  const PostDetailScreen({super.key, required this.postId});
+  const PostDetailScreen({
+    super.key,
+    required this.postId,
+    this.openComments = false,
+    this.highlightCommentId,
+  });
 
   final String postId;
+
+  /// Abre a [CommentsSheet] automaticamente após carregar o post.
+  final bool openComments;
+
+  /// Comentário a destacar dentro da folha de comentários (deep link).
+  final String? highlightCommentId;
 
   @override
   ConsumerState<PostDetailScreen> createState() => _PostDetailScreenState();
@@ -25,6 +41,7 @@ class PostDetailScreen extends ConsumerStatefulWidget {
 
 class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
   late Future<Post> _future;
+  bool _commentsOpened = false;
 
   @override
   void initState() {
@@ -38,6 +55,24 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
   void _retry() {
     setState(() => _future = _load());
+  }
+
+  /// Abre a folha de comentários uma única vez (após o post carregar).
+  void _maybeOpenComments(Post post) {
+    if (!widget.openComments || _commentsOpened) return;
+    _commentsOpened = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CommentsSheet(
+          postId: post.id,
+          highlightCommentId: widget.highlightCommentId,
+        ),
+      );
+    });
   }
 
   @override
@@ -73,6 +108,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
               onHome: () => context.go('/home'),
             );
           }
+          _maybeOpenComments(snap.data!);
           return RefreshIndicator(
             onRefresh: () async {
               setState(() => _future = _load());
@@ -80,9 +116,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             },
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                PostCard(post: snap.data!),
-              ],
+              children: [PostCard(post: snap.data!)],
             ),
           );
         },
@@ -111,8 +145,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.article_outlined,
-              size: 64, color: colors.textSecondary.withValues(alpha: 0.6)),
+          Icon(
+            Icons.article_outlined,
+            size: 64,
+            color: colors.textSecondary.withValues(alpha: 0.6),
+          ),
           const SizedBox(height: 16),
           Text(
             message,
@@ -132,10 +169,7 @@ class _ErrorView extends StatelessWidget {
                 child: Text(s.postDetailGoHome),
               ),
               const SizedBox(width: 12),
-              FilledButton(
-                onPressed: onRetry,
-                child: Text(s.walletTryAgain),
-              ),
+              FilledButton(onPressed: onRetry, child: Text(s.walletTryAgain)),
             ],
           ),
         ],

@@ -3,8 +3,10 @@ import '../../core/themes/app_colors.dart';
 
 /// Alerta de gift da batalha.
 ///
-/// [GiftAlertMode.toast] — compacto, alinhado ao topo → usado na StreamerBattleScreen.
-/// [GiftAlertMode.overlay] — maior, mais visual → usado na ViewerBattleScreen.
+/// [GiftAlertMode.toast] — compacto, alinhado ao topo → usado nos HUDs de
+/// batalha (`StreamerBattleHud` e `ViewerBattleHud`).
+/// [GiftAlertMode.overlay] — variante maior/mais visual, disponível para
+/// destaques pontuais.
 ///
 /// Fecha automaticamente após [displayDuration].
 class BattleGiftAlert extends StatefulWidget {

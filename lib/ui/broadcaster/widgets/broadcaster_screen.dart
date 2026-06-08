@@ -71,6 +71,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   String? _activeBattleId;
   String? _pendingBattleId;
   String? _pendingBattleFromName;
+  Timer? _battleInviteTimeoutTimer;
 
   // Likes (atualizado em tempo real via socket like_count_update)
   // O valor inicial vem de widget.room.totalLikes e é sincronizado pelo LiveRoomCommentsViewModel.
@@ -645,39 +646,33 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   Future<void> _showBattleInviteDialog(String battleId, String fromName) async {
     if (!mounted) return;
     final l10n = S.of(context);
+
+    // Fechar o dialog automaticamente quando o convite expirar no backend (60s).
+    // Usamos uma GlobalKey para poder fechar programaticamente.
+    final dialogKey = GlobalKey();
+    _battleInviteTimeoutTimer?.cancel();
+    _battleInviteTimeoutTimer = Timer(const Duration(seconds: 55), () {
+      if (!mounted) return;
+      // Fecha o dialog se ainda estiver aberto
+      final ctx = dialogKey.currentContext;
+      if (ctx != null && Navigator.of(ctx, rootNavigator: true).canPop()) {
+        Navigator.of(ctx, rootNavigator: true).pop(false);
+      }
+      setState(() => _pendingBattleId = null);
+      AppSnackBar.showError(context, 'Convite de batalha expirou');
+    });
+
     final accepted = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.slate,
-        title: Row(
-          children: [
-            const Icon(Icons.sports_kabaddi, color: AppColors.electricPurple),
-            const SizedBox(width: 10),
-            Text(
-              l10n.battleInviteReceived(fromName),
-              style: const TextStyle(color: Colors.white, fontSize: 15),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              l10n.battleDecline,
-              style: const TextStyle(color: Colors.white54),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.electricPurple,
-            ),
-            child: Text(l10n.battleAccept),
-          ),
-        ],
+      builder: (ctx) => _BattleInviteDialog(
+        key: dialogKey,
+        fromName: fromName,
+        l10n: l10n,
       ),
     );
+
+    _battleInviteTimeoutTimer?.cancel();
 
     if (!mounted) return;
     if (accepted == true) {
@@ -701,6 +696,23 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   Future<void> _showBattleSheet(BuildContext context) async {
     if (_activeBattleId != null) return; // já em batalha
+
+    // Verificar elegibilidade antes de abrir o sheet (UX antecipado)
+    try {
+      final eligResp = await ref.read(battleServiceProvider).checkEligibility();
+      final data = (eligResp['data'] as Map?)?.cast<String, dynamic>() ?? {};
+      final battleData = (data['battle'] as Map?)?.cast<String, dynamic>() ?? {};
+      final eligible = battleData['eligible'] as bool? ?? true;
+      if (!eligible && mounted) {
+        final reason = battleData['reason'] as String? ?? 'Você ainda não pode iniciar batalhas';
+        AppSnackBar.showError(context, reason);
+        return;
+      }
+    } catch (_) {
+      // Se o endpoint falhar, abre o sheet mesmo assim (o backend valida de novo no invite)
+    }
+
+    if (!mounted) return;
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: const Color(0xFF0E0E14),
@@ -898,6 +910,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   @override
   void dispose() {
     _unsubscribeFromBattleEvents();
+    _battleInviteTimeoutTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     _viewerToastTimer?.cancel();
@@ -1189,6 +1202,116 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Battle Invite Dialog ───────────────────────────────────────────────────
+//
+// AlertDialog isolado em StatefulWidget para gerenciar o timer de expiração
+// visual (55 → 0 seg) sem depender do estado pai.
+
+class _BattleInviteDialog extends StatefulWidget {
+  const _BattleInviteDialog({
+    super.key,
+    required this.fromName,
+    required this.l10n,
+  });
+
+  final String fromName;
+  final S l10n;
+
+  @override
+  State<_BattleInviteDialog> createState() => _BattleInviteDialogState();
+}
+
+class _BattleInviteDialogState extends State<_BattleInviteDialog> {
+  static const _totalSeconds = 55;
+  int _remaining = _totalSeconds;
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _remaining--);
+      if (_remaining <= 0) {
+        _tick?.cancel();
+        // Fecha automaticamente como recusa quando expirar
+        if (mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop(false);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = _remaining / _totalSeconds;
+    return AlertDialog(
+      backgroundColor: AppColors.slate,
+      title: Row(
+        children: [
+          const Icon(Icons.sports_kabaddi, color: AppColors.electricPurple),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.l10n.battleInviteReceived(widget.fromName),
+              style: const TextStyle(color: Colors.white, fontSize: 15),
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.white12,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _remaining > 15
+                    ? AppColors.electricPurple
+                    : const Color(0xFFEF4444),
+              ),
+              minHeight: 5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Expira em ${_remaining}s',
+            style: TextStyle(
+              color: _remaining > 15 ? Colors.white38 : const Color(0xFFEF4444),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text(
+            widget.l10n.battleDecline,
+            style: const TextStyle(color: Colors.white54),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.electricPurple,
+          ),
+          child: Text(widget.l10n.battleAccept),
+        ),
+      ],
     );
   }
 }

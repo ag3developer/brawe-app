@@ -3353,6 +3353,21 @@ class SEn extends S {
   }
 
   @override
+  String get battleMomentum => 'ON FIRE';
+
+  @override
+  String get battleLeadChange => 'LEAD CHANGE!';
+
+  @override
+  String get battleFinalStretch => 'FINAL STRETCH';
+
+  @override
+  String get battleSendToWin => 'Send gifts to decide it!';
+
+  @override
+  String get battleMvp => 'MVP';
+
+  @override
   String get sharedPostReactionApplied => 'Reaction sent ✨';
 
   @override
