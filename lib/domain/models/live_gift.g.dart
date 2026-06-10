@@ -27,6 +27,7 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   gifterColor: json['gifterColor'] as String?,
   gifterImageUrl: json['gifterImageUrl'] as String?,
   levelUpgraded: json['levelUpgraded'] as bool? ?? false,
+  battleSide: json['battleSide'] as String?,
 );
 
 Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
@@ -50,4 +51,5 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'gifterColor': instance.gifterColor,
   'gifterImageUrl': instance.gifterImageUrl,
   'levelUpgraded': instance.levelUpgraded,
+  'battleSide': instance.battleSide,
 };

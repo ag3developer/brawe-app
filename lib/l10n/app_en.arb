@@ -418,6 +418,10 @@
     }
   },
   "composerPublishError": "Failed to publish story.",
+  "composerPublishTimeoutMaybe": "Slow connection — check your feed; if the story is there, it's published.",
+  "@composerPublishTimeoutMaybe": {
+    "description": "Warning shown when story upload times out: the backend may have persisted it successfully anyway. Prevents the user from retrying and creating duplicates."
+  },
   "composerRetry": "Try again",
   "composerPreparing": "Preparing to publish…",
   "composerCreateStory": "Create story",
@@ -437,10 +441,41 @@
     }
   },
   "composerCaptionHint": "Add a caption...",
+  "composerYourStory": "Your story",
+  "composerShare": "Share",
   "composerTapOutsideHint": "Tap outside to finish",
   "composerTextHint": "Type something...",
   "composerGuideTop": "safe top",
   "composerGuideBottom": "safe bottom",
+  "composerSaveToDevice": "Save to device",
+  "@composerSaveToDevice": {
+    "description": "Tooltip for the download button on the story editor top bar that saves the edited media to the device gallery/camera roll."
+  },
+  "composerSavedToDevice": "Saved to gallery",
+  "composerSavePermissionDenied": "Gallery access denied.",
+  "composerSaveError": "Could not save.",
+  "trimTitle": "Trim video",
+  "trimSave": "Done",
+  "trimCancel": "Cancel",
+  "trimProcessing": "Saving…",
+  "trimDuration": "{seconds}s",
+  "@trimDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "trimError": "Could not save trimmed video.",
+  "trimHint": "Drag the handles to choose start and end",
+  "giftTierFree": "Vault",
+  "@giftTierFree": {
+    "description": "Tab/category name for the free gift tier (gifts paid with quest coins/XP). Branded as 'Vault' in EN, 'Cofre' in PT and 'Bóveda' in ES — emphasizes that these gifts come from a stash the user earned through activity, not real money."
+  },
+  "giftTierBasic": "Basic",
+  "giftTierPremium": "Premium",
+  "giftTierLuxury": "Luxury",
+  "giftTierLegendary": "Legendary",
   "viewerDeleteStory": "Delete story",
   "viewerUnfollow": "Unfollow",
   "viewerBlockUser": "Block user",
@@ -1784,5 +1819,66 @@
   "creatorBadgeActive": "ACTIVE",
   "commonYes": "Yes",
   "commonNo": "No",
-  "commonRetry": "Try again"
+  "commonRetry": "Try again",
+
+  "editProfileAccountTypeSection": "ACCOUNT TYPE",
+  "editProfileAccountTypeCreator": "Creator",
+  "editProfileAccountTypeMusician": "Musician",
+  "editProfileAccountTypeBusiness": "Business",
+
+  "editProfileMusicianBannerHint": "Create your artist profile on Brawe Sounds and appear in the catalog.",
+  "editProfileMusicianArtistName": "Artist name",
+  "editProfileMusicianArtistNameHint": "How you appear on Brawe Sounds",
+  "editProfileMusicianCity": "City",
+  "editProfileMusicianCityHint": "e.g. New York, NY",
+  "editProfileMusicianSpotify": "Spotify",
+  "editProfileMusicianAppleMusic": "Apple Music",
+  "editProfileMusicianGenres": "GENRES",
+
+  "soundsGenreFunk": "Funk",
+  "soundsGenreSertanejo": "Sertanejo",
+  "soundsGenrePagode": "Pagode",
+  "soundsGenreForro": "Forró",
+  "soundsGenrePop": "Pop",
+  "soundsGenreRap": "Rap",
+  "soundsGenreElectro": "Electronic",
+  "soundsGenreGospel": "Gospel",
+  "soundsGenreRock": "Rock",
+  "soundsGenreMpb": "MPB",
+
+  "soundsArtistTracks": "{count,plural, =1{1 track} other{{count} tracks}}",
+  "@soundsArtistTracks": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "soundsArtistPlays": "{count} plays",
+
+  "soundsTitle": "Brawe Sounds",
+  "soundsTabTrending": "Trending",
+  "soundsTabCatalog": "Catalog",
+  "soundsSearch": "Search tracks or artists...",
+  "soundsGenreAll": "All",
+  "soundsEmptyTrending": "No trending tracks yet",
+  "soundsEmptyCatalog": "No tracks found",
+  "soundsEmptySearch": "No results for \"{query}\"",
+  "@soundsEmptySearch": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "soundsLoadMore": "Load more",
+  "soundsUsedTimes": "{count,plural, =1{used 1 time} other{used {count} times}}",
+  "@soundsUsedTimes": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "soundsSaved": "Saved",
+  "soundsSave": "Save",
+  "soundsUse": "Use",
+  "soundsPlayerLoading": "Loading...",
+  "soundsPlayerError": "Failed to load audio",
+  "navSounds": "Sounds",
+  "createSoundsTitle": "Brawe Sounds",
+  "createSoundsSubtitle": "Add an original track to your post",
+  "postSoundLabel": "Sound: {title}",
+  "@postSoundLabel": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "postSoundRemove": "Remove sound"
 }

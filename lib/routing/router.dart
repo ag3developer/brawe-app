@@ -48,6 +48,7 @@ import '../ui/creator/widgets/creator_application_submitted_screen.dart';
 import '../ui/creator/widgets/creator_application_status_screen.dart';
 import '../ui/creator/widgets/creator_onboarding_screen.dart';
 import '../ui/creator/widgets/creator_profile_settings_screen.dart';
+import '../ui/sounds/widgets/sounds_catalog_screen.dart';
 import '../ui/creator/widgets/creator_badge_screen.dart';
 import '../ui/creator/widgets/creator_dashboard_screen.dart';
 import '../ui/creator/widgets/admin_creator_applications_screen.dart';
@@ -275,6 +276,10 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/edit-profile',
             builder: (context, state) => const EditProfileScreen(),
+          ),
+          GoRoute(
+            path: '/sounds',
+            builder: (context, state) => const SoundsCatalogScreen(),
           ),
           GoRoute(
             path: '/explore',

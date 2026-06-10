@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,6 +73,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   String? _pendingBattleId;
   String? _pendingBattleFromName;
   Timer? _battleInviteTimeoutTimer;
+  // Anti double-click: a UI do dialog de convite tem 2 botões grandes
+  // e o usuário ansioso aperta "Aceitar" 2x rápido → 2 HTTP calls → o
+  // 2º falha com 400 "Este convite já foi respondido". Gate simples.
+  bool _isAcceptingBattle = false;
 
   // Likes (atualizado em tempo real via socket like_count_update)
   // O valor inicial vem de widget.room.totalLikes e é sincronizado pelo LiveRoomCommentsViewModel.
@@ -88,8 +93,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     );
     _initializeController();
     WakelockPlus.enable();
-    // Escutar convites de batalha via Socket.IO
-    WidgetsBinding.instance.addPostFrameCallback((_) => _subscribeToBattleEvents());
+    // 🚀 Battle wiring: garantir conexão + presença na sala socket ANTES de
+    // registrar handlers. Sem isso o `connect:battle:started` chegava antes
+    // do handler estar registrado e o HUD nunca aparecia para o criador.
+    // (ver _bootstrapBattleWiring para os 3 passos atômicos)
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrapBattleWiring());
   }
 
   bool get _hasStreamingCredentials =>
@@ -605,25 +613,107 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   // BATTLE
   // ════════════════════════════════════════════════════════════════
 
+  /// 🔧 Boot atômico do wiring de batalha (executado 1× após o 1º frame).
+  ///
+  /// Fluxo crítico — a ordem importa:
+  ///   1. **Conectar** o socket e **aguardar** a conexão estabelecer.
+  ///      Antes desse fix, `socket.on(...)` rodava com `_socket == null`
+  ///      (registro silenciosamente perdido — `socket_service.dart` faz
+  ///      `_socket?.on(...)`). Resultado: o evento `connect:battle:started`
+  ///      chegava na sala mas o handler não existia → `_activeBattleId`
+  ///      ficava `null` → HUD nunca aparecia para o criador.
+  ///   2. **Entrar na sala socket** `live:{room_id}` via `connectToRoom`.
+  ///      Sem isso, mesmo com o handler registrado o evento nunca seria
+  ///      entregue (o backend só emite para quem fez `join_live`).
+  ///   3. **Registrar handlers** de battle (agora seguro — socket pronto).
+  ///   4. **Fallback REST**: checar se já existe batalha ativa nesta sala
+  ///      (caso o app tenha sido aberto/reaberto no meio de uma batalha).
+  ///      Espelha o que o viewer já faz em `_checkActiveBattle`.
+  Future<void> _bootstrapBattleWiring() async {
+    if (!mounted) return;
+    try {
+      // 1. Garantir socket conectado (await é essencial aqui)
+      await ref.read(socketServiceProvider).connect();
+    } catch (e) {
+      debugPrint('Broadcaster: socket connect failed (will retry on reconnect): $e');
+    }
+    if (!mounted) return;
+
+    // 2. Entrar na sala socket — broadcaster precisa receber eventos da sua
+    //    própria sala (gifts, battle events, etc). O LiveRoomCommentsViewModel
+    //    também faz isso, mas de forma lazy via ref.watch — não confiável
+    //    para eventos críticos como battle.
+    try {
+      await ref.read(liveRepositoryProvider).connectToRoom(_room.id);
+    } catch (e) {
+      debugPrint('Broadcaster: connectToRoom failed: $e');
+    }
+    if (!mounted) return;
+
+    // 3. Registrar handlers (agora o socket existe → `on` realmente registra)
+    _subscribeToBattleEvents();
+
+    // 4. Fallback REST: sincronizar batalha já em curso (idempotente)
+    _checkExistingActiveBattle();
+  }
+
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    // 🔁 Re-anexar handlers automaticamente após reconexões do socket.
+    // O socket interno do socket_io_client é recriado nesses casos, então
+    // qualquer `on(...)` chamado antes vira no-op. Sem este callback uma
+    // queda momentânea de rede deixaria o broadcaster surdo para battle.
+    socket.addReconnectCallback(_reattachBattleHandlers);
+  }
+
+  void _reattachBattleHandlers() {
+    final socket = ref.read(socketServiceProvider);
+    socket.off(AppConstants.eventBattleInvite);
+    socket.off(AppConstants.eventBattleStarted);
+    socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    // Após reconectar também checamos batalha ativa por REST — cobre o caso
+    // de o `started` ter sido emitido enquanto estávamos offline.
+    _checkExistingActiveBattle();
   }
 
   void _unsubscribeFromBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.off(AppConstants.eventBattleInvite);
     socket.off(AppConstants.eventBattleStarted);
+    socket.removeReconnectCallback(_reattachBattleHandlers);
+  }
+
+  /// Fallback REST para descobrir batalha ativa quando o app foi aberto
+  /// (ou recriado) durante uma batalha em andamento. Cobre o caso em que
+  /// `connect:battle:started` foi emitido antes do socket estar pronto.
+  Future<void> _checkExistingActiveBattle() async {
+    if (!mounted || _activeBattleId != null) return;
+    try {
+      final result = await ref
+          .read(battleServiceProvider)
+          .getActiveBattleForRoom(_room.id);
+      final battleId = result['battle_id'] as String?;
+      if (!mounted || battleId == null || battleId.isEmpty) return;
+      setState(() {
+        _activeBattleId = battleId;
+        // Atualiza o liveType em memória — outras telas podem reagir.
+        _room = _room.copyWith(liveType: 'battle');
+      });
+    } catch (_) {
+      // 404 = sem batalha ativa — silencioso.
+    }
   }
 
   void _onBattleInvite(dynamic raw) {
     if (!mounted) return;
-    Map<String, dynamic> data = {};
-    if (raw is Map<String, dynamic>) data = raw;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
     final battleId = data['battle_id'] as String?;
     final fromName = data['from_streamer'] as String?;
-    if (battleId == null) return;
+    if (battleId == null || battleId.isEmpty) return;
     setState(() {
       _pendingBattleId = battleId;
       _pendingBattleFromName = fromName ?? '?';
@@ -633,14 +723,36 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   void _onBattleStarted(dynamic raw) {
     if (!mounted) return;
-    Map<String, dynamic> data = {};
-    if (raw is Map<String, dynamic>) data = raw;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
     final battleId = data['battle_id'] as String?;
-    if (battleId == null) return;
+    if (battleId == null || battleId.isEmpty) return;
     setState(() {
       _activeBattleId = battleId;
       _pendingBattleId = null;
+      // Sincroniza liveType em memória — antes o app continuava achando
+      // que estava em SOLO mesmo após o backend ter virado BATTLE.
+      _room = _room.copyWith(liveType: 'battle');
     });
+  }
+
+  /// Converte o payload bruto do socket em Map.
+  /// O `socket_io_client` pode entregar o evento já decodificado (`Map`)
+  /// ou como `String` JSON — depende do transport (websocket vs polling)
+  /// e do encoding no servidor. Tratamos os 2 casos para nunca perder
+  /// eventos críticos como `connect:battle:started`.
+  Map<String, dynamic>? _parseSocketPayload(dynamic raw) {
+    try {
+      if (raw is Map<String, dynamic>) return raw;
+      if (raw is Map) return Map<String, dynamic>.from(raw);
+      if (raw is String && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      debugPrint('Broadcaster: socket payload parse error: $e (raw=$raw)');
+    }
+    return null;
   }
 
   Future<void> _showBattleInviteDialog(String battleId, String fromName) async {
@@ -676,11 +788,17 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     if (!mounted) return;
     if (accepted == true) {
+      // 🛡️ Gate anti double-click: o dialog não usa await na callback do
+      // botão "Aceitar", então 2 taps rápidos podiam disparar 2 requests.
+      if (_isAcceptingBattle) return;
+      _isAcceptingBattle = true;
       try {
         await ref.read(battleServiceProvider).acceptBattle(battleId);
-        setState(() => _activeBattleId = battleId);
+        if (mounted) setState(() => _activeBattleId = battleId);
       } catch (e) {
         if (mounted) AppSnackBar.showError(context, 'Erro ao aceitar batalha');
+      } finally {
+        _isAcceptingBattle = false;
       }
     } else {
       try {
@@ -1128,6 +1246,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 child: StreamerBattleHud(
                   battleId: _activeBattleId!,
                   myStreamerId: _room.streamerId,
+                  onBattleClosed: () {
+                    // Sair da batalha / fechar banner de resultado:
+                    // volta o broadcaster pra "live normal" sem precisar
+                    // esperar o broadcast socket chegar. Idempotente — se
+                    // o socket vier depois, só vai re-zerar pra null.
+                    if (mounted) setState(() => _activeBattleId = null);
+                  },
                 ),
               ),
 

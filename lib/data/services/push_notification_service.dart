@@ -9,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/live_dio_provider.dart';
+import '../../ui/core/view_models/app_badge_controller.dart';
 import 'notification_navigation_service.dart';
 
 part 'push_notification_service.g.dart';
@@ -21,7 +22,8 @@ part 'push_notification_service.g.dart';
 class PushNotificationService {
   final Dio _dio;
   final NotificationNavigationService _navigation;
-  PushNotificationService(this._dio, this._navigation);
+  final Ref _ref;
+  PushNotificationService(this._dio, this._navigation, this._ref);
 
   static const _androidChannel = AndroidNotificationChannel(
     'brawe_high_importance',
@@ -143,6 +145,10 @@ class PushNotificationService {
   }
 
   Future<void> _onForegroundMessage(RemoteMessage message) async {
+    // Atualiza o badge do ícone (notificações + DMs) assim que o push chega
+    // com o app aberto. O controller recalcula a partir das fontes existentes.
+    _ref.read(appBadgeControllerProvider.notifier).refresh();
+
     final notification = message.notification;
     if (notification == null) return;
     await _local.show(
@@ -215,5 +221,6 @@ PushNotificationService pushNotificationService(Ref ref) {
   return PushNotificationService(
     ref.watch(liveDioProvider),
     ref.watch(notificationNavigationServiceProvider),
+    ref,
   );
 }

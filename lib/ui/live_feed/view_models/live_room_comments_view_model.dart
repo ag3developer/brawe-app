@@ -6,6 +6,8 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_comment.dart';
+import '../../../domain/models/live_gift.dart';
+import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
 
 part 'live_room_comments_view_model.g.dart';
@@ -19,6 +21,8 @@ class LiveRoomCommentsState {
     this.totalGiftsValue = 0,
     this.isSending = false,
     this.errorMessage,
+    this.recentViewerAvatars = const <String>[],
+    this.gifterRanking = const <GifterEntry>[],
   });
 
   final List<LiveComment> comments;
@@ -29,6 +33,12 @@ class LiveRoomCommentsState {
   final double totalGiftsValue;
   final bool isSending;
   final String? errorMessage;
+  /// Avatares reais dos últimos viewers que entraram (máx. 3, FIFO).
+  /// Alimentado pelo evento `viewer_joined` do socket.
+  final List<String> recentViewerAvatars;
+  /// Ranking de presenteadores acumulado em tempo real via socket.
+  /// Ordenado por `totalValue` desc. Máx. 10 entradas (só Top 3 é exibido).
+  final List<GifterEntry> gifterRanking;
 
   LiveRoomCommentsState copyWith({
     List<LiveComment>? comments,
@@ -39,6 +49,8 @@ class LiveRoomCommentsState {
     bool? isSending,
     String? errorMessage,
     bool clearErrorMessage = false,
+    List<String>? recentViewerAvatars,
+    List<GifterEntry>? gifterRanking,
   }) {
     return LiveRoomCommentsState(
       comments: comments ?? this.comments,
@@ -50,8 +62,37 @@ class LiveRoomCommentsState {
       errorMessage: clearErrorMessage
           ? null
           : errorMessage ?? this.errorMessage,
+      recentViewerAvatars: recentViewerAvatars ?? this.recentViewerAvatars,
+      gifterRanking: gifterRanking ?? this.gifterRanking,
     );
   }
+}
+
+/// Entrada no ranking de presenteadores (acumulado em tempo real).
+class GifterEntry {
+  const GifterEntry({
+    required this.userId,
+    required this.name,
+    this.avatarUrl,
+    required this.totalValue,
+    required this.giftCount,
+  });
+
+  final String userId;
+  final String name;
+  final String? avatarUrl;
+  /// Soma total de `value` (coins) dos gifts enviados nesta sessão.
+  final int totalValue;
+  /// Quantidade de gifts enviados.
+  final int giftCount;
+
+  GifterEntry addGift(int value) => GifterEntry(
+        userId: userId,
+        name: name,
+        avatarUrl: avatarUrl,
+        totalValue: totalValue + value,
+        giftCount: giftCount + 1,
+      );
 }
 
 @riverpod
@@ -62,6 +103,8 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<int>? _likeCountSubscription;
   StreamSubscription<int>? _commentCountSubscription;
   StreamSubscription<double>? _giftTotalSubscription;
+  StreamSubscription<LiveViewerEvent>? _viewerEventSubscription;
+  StreamSubscription<LiveGift>? _giftsRankingSubscription;
 
   @override
   LiveRoomCommentsState build(String roomId) {
@@ -74,6 +117,8 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       _likeCountSubscription?.cancel();
       _commentCountSubscription?.cancel();
       _giftTotalSubscription?.cancel();
+      _viewerEventSubscription?.cancel();
+      _giftsRankingSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
 
@@ -109,6 +154,46 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         .watchGiftTotal(roomId)
         .listen((total) => state = state.copyWith(totalGiftsValue: total));
 
+    // Avatares reais dos viewers: mantém os 3 mais recentes (FIFO).
+    // Alimenta o ViewersStack no top bar — substitui os placeholders coloridos.
+    _viewerEventSubscription = repository
+        .watchViewerEvents(roomId)
+        .listen((event) {
+      final avatar = event.viewerAvatar;
+      if (avatar == null || avatar.isEmpty) return;
+      if (!event.joined) return; // só adiciona quando entra
+      final current = List<String>.from(state.recentViewerAvatars);
+      current.remove(avatar); // evita duplicatas se mesmo user reconectar
+      current.insert(0, avatar);
+      if (current.length > 3) current.length = 3;
+      state = state.copyWith(recentViewerAvatars: current);
+    });
+
+    // Ranking de presenteadores: acumula value de cada gift em tempo real.
+    // Ordenado por totalValue desc, mantém máx 10 entradas para não crescer
+    // indefinidamente. O sheet exibe só os Top 3.
+    _giftsRankingSubscription = repository
+        .watchGifts(roomId)
+        .listen((gift) {
+      if (gift.senderId.isEmpty) return;
+      final ranking = List<GifterEntry>.from(state.gifterRanking);
+      final idx = ranking.indexWhere((e) => e.userId == gift.senderId);
+      if (idx >= 0) {
+        ranking[idx] = ranking[idx].addGift(gift.value * gift.quantity);
+      } else {
+        ranking.add(GifterEntry(
+          userId: gift.senderId,
+          name: gift.senderName,
+          avatarUrl: gift.senderAvatarUrl,
+          totalValue: gift.value * gift.quantity,
+          giftCount: gift.quantity,
+        ));
+      }
+      ranking.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+      if (ranking.length > 10) ranking.length = 10;
+      state = state.copyWith(gifterRanking: ranking);
+    });
+
     try {
       await repository.connectToRoom(roomId);
       if (!ref.mounted) {
@@ -128,6 +213,38 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
           likeCount: room.totalLikes,
           totalComments: room.totalMessages,
         );
+      }
+
+      // 🏆 Busca ranking inicial de gifters da API (dados persistidos).
+      // Carrega antes das atualizações em tempo real chegarem pelo socket,
+      // para quem entrou no meio da live já ver o ranking histórico correto.
+      final topGifters = await repository.getTopGifters(roomId, limit: 10);
+      if (!ref.mounted) return;
+      if (topGifters.isNotEmpty) {
+        final initialRanking = topGifters.map((raw) {
+          return GifterEntry(
+            userId: raw['user_id']?.toString() ?? '',
+            name: raw['display_name']?.toString() ??
+                raw['name']?.toString() ?? 'Alguém',
+            avatarUrl: raw['avatar_url']?.toString(),
+            totalValue: (raw['total_coins'] as num?)?.toInt() ??
+                (raw['total_value'] as num?)?.toInt() ?? 0,
+            giftCount: (raw['gift_count'] as num?)?.toInt() ?? 0,
+          );
+        }).where((e) => e.userId.isNotEmpty).toList();
+        // O socket pode já ter adicionado entradas — merge: API tem precedência
+        // para entradas existentes (histórico > streaming parcial).
+        final merged = List<GifterEntry>.from(state.gifterRanking);
+        for (final entry in initialRanking) {
+          final idx = merged.indexWhere((e) => e.userId == entry.userId);
+          if (idx < 0) {
+            merged.add(entry); // novo viewer na lista da API
+          }
+          // Se já existe via socket, mantém o valor do socket (mais atual).
+        }
+        merged.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+        if (merged.length > 10) merged.length = 10;
+        state = state.copyWith(gifterRanking: merged);
       }
     } on Failure catch (failure) {
       if (!ref.mounted) {

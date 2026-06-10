@@ -100,11 +100,17 @@ class StoriesRepository {
 
   /// Cria um story: upload multipart de mídia local.
   /// O backend infere media_type (photo/video) pelo MIME.
+  ///
+  /// [idempotencyKey] (opcional): vai como header `Idempotency-Key`.
+  /// Backend persiste em `stories.idempotency_key` (UNIQUE) e devolve o
+  /// registro existente se a mesma key chegar 2x — evita duplicatas
+  /// quando o usuário toca "Compartilhar" várias vezes em rede lenta.
   Future<void> createStory({
     required String localFilePath,
     String? caption,
     int? durationSeconds,
     String? originPostId,
+    String? idempotencyKey,
   }) async {
     try {
       await _service.createStory(
@@ -112,9 +118,13 @@ class StoriesRepository {
         caption: caption,
         durationSeconds: durationSeconds,
         originPostId: originPostId,
+        idempotencyKey: idempotencyKey,
       );
-    } on DioException catch (_) {
-      throw const Failure.network();
+    } on DioException {
+      // ⚠️ Re-lança o DioException ORIGINAL para o composer poder
+      // diferenciar timeouts (que podem ter sucesso no backend) de
+      // erros 4xx hard. NÃO converter para Failure.network() aqui.
+      rethrow;
     } on Failure {
       rethrow;
     } catch (_) {

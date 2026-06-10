@@ -87,6 +87,18 @@ class BattleViewModel extends _$BattleViewModel {
             ?? nestedB['avatar'] as String?,
         roomAId: battleDetail['room_a_id'] as String?,
         roomBId: battleDetail['room_b_id'] as String?,
+        // 🎬 HLS playback URLs — alimentam o split-screen no viewer.
+        // Backend devolve em campos planos (stream_url_a/b) e também
+        // dentro do objeto aninhado (streamer_a.stream_url) — aceitamos
+        // qualquer um para resiliência.
+        streamUrlA: _nonEmpty(battleDetail['stream_url_a'])
+            ?? _nonEmpty(nestedA['stream_url']),
+        streamUrlB: _nonEmpty(battleDetail['stream_url_b'])
+            ?? _nonEmpty(nestedB['stream_url']),
+        playbackIdA: _nonEmpty(battleDetail['playback_id_a'])
+            ?? _nonEmpty(nestedA['playback_id']),
+        playbackIdB: _nonEmpty(battleDetail['playback_id_b'])
+            ?? _nonEmpty(nestedB['playback_id']),
         phase: _phaseFromStatus(data['status'] as String? ?? ''),
         // 🔥/🏅 Sincroniza Power Moment + MVP ao entrar mid-battle.
         powerMoment: data['power_moment'] as bool? ?? false,
@@ -134,6 +146,14 @@ class BattleViewModel extends _$BattleViewModel {
       timeRemaining: Duration(
         seconds: json['duration_seconds'] as int? ?? 300,
       ),
+      // 🎬 Atualiza URLs do split-screen — fallback caso o REST inicial
+      // tenha sido feito quando a sala ainda não tinha stream provisionado.
+      streamUrlA: _nonEmpty(json['stream_url_a']),
+      streamUrlB: _nonEmpty(json['stream_url_b']),
+      playbackIdA: _nonEmpty(json['playback_id_a']),
+      playbackIdB: _nonEmpty(json['playback_id_b']),
+      roomAId: _nonEmpty(json['room_a_id']),
+      roomBId: _nonEmpty(json['room_b_id']),
     ));
     _startLocalTick();
   }
@@ -241,4 +261,11 @@ class BattleViewModel extends _$BattleViewModel {
     _tickTimer?.cancel();
     _unsubscribeFromSocket();
   }
+}
+
+/// Converte valores opcionais em `String?` tratando strings vazias como `null`
+/// (o backend devolve `""` quando a sala não tem playback URL ainda).
+String? _nonEmpty(dynamic value) {
+  if (value is String && value.isNotEmpty) return value;
+  return null;
 }

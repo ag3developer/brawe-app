@@ -31,6 +31,15 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
     const Color(0xFF7BE0FF), // cyan
   ];
 
+  // 🎯 Paleta dedicada da batalha — alinhada com o `viewer_battle_hud`:
+  //   lado A (esquerda) → roxo
+  //   lado B (direita) → rosa
+  // Sem palette aleatória aqui: a leitura visual é "purple sobe = lado A
+  // está sendo torcido", "pink sobe = lado B". Ajuda o espectador a
+  // entender quem está bombando sem precisar olhar o placar.
+  static const Color _kBattleSideAColor = Color(0xFFB6A6FF); // purple
+  static const Color _kBattleSideBColor = Color(0xFFFF4D8B); // pink
+
   final List<_HeartSpec> _hearts = [];
   final _rand = math.Random();
   int _seq = 0;
@@ -45,7 +54,11 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
   void _subscribe() {
     final repo = ref.read(liveRepositoryProvider);
     repo.watchReactions(widget.roomId).listen((event) {
-      _spawn(event.count, color: _colorFromName(event.color));
+      _spawn(
+        event.count,
+        color: _colorFromName(event.color),
+        battleSide: event.battleSide,
+      );
     });
   }
 
@@ -67,21 +80,54 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
 
   /// Spawna [count] corações localmente. Usado tanto pelo handler do socket
   /// quanto pelo botão "like" (otimista).
-  void spawn(int count, {Color? color}) => _spawn(count, color: color);
+  ///
+  /// [battleSide] (opcional): quando definido (`'a'` ou `'b'`), os corações
+  /// sobem na lateral correspondente do split-screen + cor fixa do lado.
+  /// Sem isso (live solo), mantém o comportamento clássico: faixa direita,
+  /// palette aleatória.
+  void spawn(int count, {Color? color, String? battleSide}) =>
+      _spawn(count, color: color, battleSide: battleSide);
 
-  void _spawn(int count, {Color? color}) {
+  void _spawn(int count, {Color? color, String? battleSide}) {
     if (!mounted) return;
     final clamped = count.clamp(1, 50);
+
+    // Resolve faixa horizontal e cor com base no lado da batalha (se houver).
+    // - Lado A (esquerda): faixa 0.05..0.30 → corações sobem do lado do streamer A
+    // - Lado B (direita): faixa 0.70..0.95 → corações sobem do lado do streamer B
+    // - Live solo: faixa 0.80..0.95 (clássico) + palette aleatória
+    final double startXBase;
+    final double startXRange;
+    final Color? sideColor;
+    switch (battleSide) {
+      case 'a':
+        startXBase = 0.05;
+        startXRange = 0.25;
+        sideColor = _kBattleSideAColor;
+        break;
+      case 'b':
+        startXBase = 0.70;
+        startXRange = 0.25;
+        sideColor = _kBattleSideBColor;
+        break;
+      default:
+        startXBase = 0.80;
+        startXRange = 0.15;
+        sideColor = null;
+    }
+
     setState(() {
       for (int i = 0; i < clamped; i++) {
         _hearts.add(_HeartSpec(
           id: _seq++,
-          // Faixa direita (TikTok-style): ~80%..95% da largura.
-          startX: 0.80 + _rand.nextDouble() * 0.15,
+          // Em batalha cada lado tem sua faixa; em solo, faixa direita.
+          startX: startXBase + _rand.nextDouble() * startXRange,
           // Drift leve para a esquerda/direita, mas sem cruzar a tela.
           drift: (_rand.nextDouble() - 0.5) * 0.10,
           scale: 0.85 + _rand.nextDouble() * 0.55,
-          color: color ?? _palette[_rand.nextInt(_palette.length)],
+          // Prioridade: cor explícita do caller > cor do lado > palette aleatória.
+          // (Em batalha, sideColor sempre vence — vira identidade visual do lado.)
+          color: color ?? sideColor ?? _palette[_rand.nextInt(_palette.length)],
           duration: Duration(milliseconds: 2200 + _rand.nextInt(900)),
           delay: Duration(milliseconds: i * 60),
         ));

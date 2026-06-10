@@ -5,6 +5,7 @@ import '../../../domain/models/post_comment.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/brawe_avatar.dart';
 import '../view_models/comments_view_model.dart';
 import 'story_ring_avatar.dart';
 
@@ -436,21 +437,11 @@ class _CommentTile extends StatelessWidget {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              CircleAvatar(
-                                radius: 13,
-                                backgroundColor: context.colors.surfaceElevated,
-                                backgroundImage: reply.authorAvatarUrl != null
-                                    ? NetworkImage(reply.authorAvatarUrl!)
-                                    : null,
-                                child: reply.authorAvatarUrl == null
-                                    ? Text(
-                                        reply.authorName[0].toUpperCase(),
-                                        style: TextStyle(
-                                          color: context.colors.textPrimary,
-                                          fontSize: 10,
-                                        ),
-                                      )
-                                    : null,
+                              BraweAvatar(
+                                avatarUrl: reply.authorAvatarUrl,
+                                displayName: reply.authorName,
+                                size: 26,
+                                fontSize: 11,
                               ),
                               const SizedBox(width: 8),
                               Expanded(

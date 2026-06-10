@@ -2,12 +2,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../data/repositories/post_repository.dart';
+import '../../../domain/models/sound.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
-import '../view_models/feed_view_model.dart';
+import '../../feed/view_models/feed_view_model.dart';
 import '../../home/view_models/for_you_feed_view_model.dart';
+import '../../sounds/view_models/sound_player_view_model.dart';
+import '../../sounds/widgets/sounds_catalog_screen.dart';
 
 class CreatePostSheet extends ConsumerStatefulWidget {
   const CreatePostSheet({super.key});
@@ -19,6 +23,7 @@ class CreatePostSheet extends ConsumerStatefulWidget {
 class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   final TextEditingController _textController = TextEditingController();
   File? _selectedImage;
+  Sound? _selectedSound;
   bool _isPosting = false;
   String _audience = 'Todos';
 
@@ -74,6 +79,28 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     if (picked != null) {
       setState(() => _selectedImage = File(picked.path));
     }
+  }
+
+  Future<void> _pickSound() async {
+    // Para o player atual antes de abrir o catálogo
+    ref.read(soundPlayerViewModelProvider.notifier).stop();
+
+    final sound = await Navigator.of(context).push<Sound>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const SoundsCatalogScreen(),
+      ),
+    );
+    if (sound != null && mounted) {
+      setState(() => _selectedSound = sound);
+      // Inicia preview do som selecionado
+      ref.read(soundPlayerViewModelProvider.notifier).play(sound);
+    }
+  }
+
+  void _removeSound() {
+    ref.read(soundPlayerViewModelProvider.notifier).stop();
+    setState(() => _selectedSound = null);
   }
 
   String _audienceLabel(S s, String value) => switch (value) {
@@ -254,6 +281,15 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           ),
                         ],
                       ),
+
+                    // Chip do som selecionado
+                    if (_selectedSound != null) ...[
+                      const SizedBox(height: 10),
+                      _SelectedSoundChip(
+                        sound: _selectedSound!,
+                        onRemove: _removeSound,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -261,8 +297,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
             // Bottom toolbar
             Container(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.white10)),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: context.colors.border)),
               ),
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
               child: Row(
@@ -287,6 +323,12 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     icon: Icons.location_on_outlined,
                     onTap: () {},
                   ),
+                  _ToolbarBtn(
+                    icon: LucideIcons.music,
+                    onTap: _pickSound,
+                    active: _selectedSound != null,
+                    activeColor: const Color(0xFFE11D48),
+                  ),
                   const Spacer(),
                   // Char counter
                   if (_charCount > 0)
@@ -299,7 +341,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           CircularProgressIndicator(
                             value: _charCount / _maxChars,
                             strokeWidth: 2.5,
-                            backgroundColor: Colors.white10,
+                            backgroundColor: context.colors.border,
                             color: _charCount > _maxChars * 0.9
                                 ? Colors.orange
                                 : AppColors.electricPurple,
@@ -397,15 +439,120 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 }
 
 class _ToolbarBtn extends StatelessWidget {
-  const _ToolbarBtn({required this.icon, required this.onTap});
+  const _ToolbarBtn({
+    required this.icon,
+    required this.onTap,
+    this.active = false,
+    this.activeColor,
+  });
   final IconData icon;
   final VoidCallback onTap;
+  final bool active;
+  final Color? activeColor;
 
   @override
   Widget build(BuildContext context) {
+    final color = active
+        ? (activeColor ?? AppColors.electricPurple)
+        : AppColors.electricPurple;
     return IconButton(
-      icon: Icon(icon, color: AppColors.electricPurple, size: 22),
+      icon: Icon(icon, color: color, size: 22),
       onPressed: onTap,
+    );
+  }
+}
+
+class _SelectedSoundChip extends StatelessWidget {
+  const _SelectedSoundChip({required this.sound, required this.onRemove});
+  final Sound sound;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE11D48).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Cover thumbnail
+          if (sound.coverUrl != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                sound.coverUrl!,
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallbackIcon(),
+              ),
+            )
+          else
+            _fallbackIcon(),
+          const SizedBox(width: 8),
+          // Info
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  sound.title,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  sound.artist.artistName,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Remove button
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(
+              LucideIcons.x,
+              size: 16,
+              color: context.colors.textTertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fallbackIcon() {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: const Color(0xFFE11D48).withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Image.asset(
+          'assets/images/brawe_sounds_icon.png',
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 }

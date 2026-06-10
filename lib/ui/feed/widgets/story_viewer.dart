@@ -14,6 +14,8 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
+import '../../core/widgets/brawe_avatar.dart';
+import '../../core/widgets/brawe_story_media.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
 import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
@@ -126,6 +128,31 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       _progressController.duration = _imageDuration;
       _progressController.forward();
       _timer = Timer(_imageDuration, _nextStory);
+    }
+
+    // 🚀 Pré-cache do próximo story em background — quando o usuário
+    // avançar, a próxima mídia já estará no cache (ou pelo menos com
+    // DNS+TLS aquecidos para vídeo). Best-effort, ignora falhas.
+    _precacheNeighbors();
+  }
+
+  /// Pré-baixa silenciosamente o story imediatamente seguinte (e o
+  /// anterior, p/ usuários que voltam) para tornar a navegação fluida.
+  void _precacheNeighbors() {
+    // i+1 é o caso comum (usuário sempre avança).
+    final next = _currentIndex + 1;
+    if (next < widget.stories.length) {
+      final s = widget.stories[next];
+      if (s.mediaUrl.isNotEmpty) {
+        if (s.isVideo) {
+          // Warm-up assíncrono (DNS+TLS+manifest); não bloqueia UI.
+          unawaited(StoryMediaPrecache.warmUpVideo(s.mediaUrl));
+        } else if (mounted) {
+          unawaited(
+            StoryMediaPrecache.precacheStoryImage(context, s.mediaUrl),
+          );
+        }
+      }
     }
   }
 
@@ -443,11 +470,35 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   @override
   Widget build(BuildContext context) {
     final story = _story;
-    final isVideo =
-        story.isVideo && _videoController?.value.isInitialized == true;
 
-    return Scaffold(
+    // ── AnnotatedRegion ────────────────────────────────────────────────
+    // Mesmo com `SystemUiMode.immersiveSticky` definido em `story_ring_avatar.dart`,
+    // o usuário pode trazer a status/nav bar com swipe da borda (Android)
+    // ou top edge (iOS). Quando reaparecerem, queremos que fiquem:
+    //   • Status bar: transparente, ícones BRANCOS (sobre fundo escuro do story)
+    //   • Nav bar Android: transparente, ícones BRANCOS
+    // Sem AnnotatedRegion, o sistema usa o estilo herdado do Scaffold pai,
+    // que no nosso app é light (ícones pretos sobre fundo claro) — ficariam
+    // invisíveis sobre o fundo preto do story. Padrão Instagram/TikTok.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark, // iOS
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+      child: Scaffold(
       backgroundColor: Colors.black,
+      // ── Imersivo: estende corpo atrás de status bar e nav bar ─────
+      // Sem `extendBody*` o Scaffold reservaria padding pras barras
+      // do sistema (mesmo elas estando escondidas), criando uma faixa
+      // preta no topo/rodapé do story de 24-48px. Como o nosso story
+      // já trata `MediaQuery.padding` internamente para posicionar
+      // header/footer, extender o corpo é seguro.
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       resizeToAvoidBottomInset: false,
       body: GestureDetector(
         onTapDown: (details) {
@@ -479,22 +530,20 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Media
-            if (isVideo)
-              Center(
-                child: AspectRatio(
-                  aspectRatio: _videoController!.value.aspectRatio,
-                  child: VideoPlayer(_videoController!),
-                ),
-              )
-            else if (story.mediaUrl.isNotEmpty)
-              Image.network(
-                story.mediaUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(story),
-              )
-            else
-              _placeholder(story),
+            // Mídia (imagem ou vídeo) — usa BraweStoryMedia para um
+            // loading profissional sem expor a "letra inicial gigante"
+            // enquanto o vídeo está inicializando ou a imagem baixando.
+            // Ver `lib/ui/core/widgets/brawe_story_media.dart`.
+            BraweStoryMedia(
+              isVideo: story.isVideo,
+              mediaUrl: story.mediaUrl,
+              videoController: _videoController,
+              authorName: story.authorName.isNotEmpty
+                  ? story.authorName
+                  : story.authorUsername,
+              authorAvatarUrl: story.authorAvatarUrl,
+              onRetry: _startStory,
+            ),
 
             // Gradient overlay
             Container(
@@ -555,23 +604,20 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Row(
                           children: [
-                            CircleAvatar(
+                            // Avatar com cache, skeleton e fallback
+                            // determinístico de cor — ver BraweAvatar.
+                            // Substitui o CircleAvatar legado que mostrava
+                            // a letra inicial enquanto baixava.
+                            Padding(
                               key: _creatorAvatarKey,
-                              radius: 18,
-                              backgroundColor: AppColors.slate,
-                              backgroundImage: (story.authorAvatarUrl != null &&
-                                      story.authorAvatarUrl!.isNotEmpty)
-                                  ? NetworkImage(story.authorAvatarUrl!)
-                                  : null,
-                              child: (story.authorAvatarUrl == null ||
-                                      story.authorAvatarUrl!.isEmpty)
-                                  ? Text(
-                                      story.authorName.isNotEmpty
-                                          ? story.authorName[0].toUpperCase()
-                                          : '?',
-                                      style: const TextStyle(color: Colors.white),
-                                    )
-                                  : null,
+                              padding: EdgeInsets.zero,
+                              child: BraweAvatar(
+                                avatarUrl: story.authorAvatarUrl,
+                                displayName: story.authorName.isNotEmpty
+                                    ? story.authorName
+                                    : story.authorUsername,
+                                size: 36,
+                              ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -726,6 +772,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -990,24 +1037,6 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       ),
     );
   }
-
-  Widget _placeholder(Story story) {
-    return Container(
-      color: AppColors.slate,
-      child: Center(
-        child: Text(
-          story.authorName.isNotEmpty
-              ? story.authorName[0].toUpperCase()
-              : '?',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 80,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _StoryViewersSheet extends ConsumerStatefulWidget {
@@ -1123,22 +1152,10 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                             itemBuilder: (_, i) {
                               final v = _viewers[i];
                               return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.slate,
-                                  backgroundImage: (v.avatarUrl != null &&
-                                          v.avatarUrl!.isNotEmpty)
-                                      ? NetworkImage(v.avatarUrl!)
-                                      : null,
-                                  child: (v.avatarUrl == null ||
-                                          v.avatarUrl!.isEmpty)
-                                      ? Text(
-                                          v.name.isNotEmpty
-                                              ? v.name[0].toUpperCase()
-                                              : '?',
-                                          style: const TextStyle(
-                                              color: Colors.white),
-                                        )
-                                      : null,
+                                leading: BraweAvatar(
+                                  avatarUrl: v.avatarUrl,
+                                  displayName: v.name,
+                                  size: 40,
                                 ),
                                 title: Row(
                                   children: [

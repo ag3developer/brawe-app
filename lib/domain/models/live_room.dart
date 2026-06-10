@@ -28,5 +28,13 @@ sealed class LiveRoom with _$LiveRoom {
     String? streamerAvatarUrl,
     String? streamerUsername,
     @Default(false) bool streamerVerified,
+    // ⚔️ Campos opcionais de batalha — preenchidos quando live_type = 'battle'
+    String? battleId,
+    String? opponentId,
+    String? opponentName,
+    String? opponentAvatarUrl,
+    String? opponentRoomId,
+    String? opponentThumbnailUrl,
+    @Default(300) int battleDurationSeconds,
   }) = _LiveRoom;
 }

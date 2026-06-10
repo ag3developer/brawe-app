@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../domain/models/feed_item.dart';
+import '../../../../domain/models/live_room.dart';
 import 'shared/_live_peek.dart';
 
 /// 💬 Card de [LiveChatItem] no For You — "Live Peek".
@@ -19,7 +20,28 @@ class LiveChatView extends StatelessWidget {
   final LiveChatItem item;
   final bool isActive;
 
-  void _enter(BuildContext context) => openLiveRoom(context, item.id);
+  void _enter(BuildContext context) {
+    // Passa a LiveRoom já construída com os dados do feed → sem request HTTP
+    // no tap. A rota usa o `extra` diretamente, igual ao TikTok.
+    final room = LiveRoom(
+      id: item.id,
+      slug: item.slug ?? item.id,
+      title: item.caption,
+      liveType: 'chat',
+      isPrivate: false,
+      status: 'live',
+      viewerCount: item.viewerCount,
+      totalLikes: item.likesCount,
+      thumbnailUrl: item.thumbnailUrl,
+      streamUrl: item.streamUrl,
+      streamerId: item.author.id,
+      streamerName: item.author.name,
+      streamerAvatarUrl: item.author.avatarUrl,
+      streamerUsername: item.author.username,
+      streamerVerified: item.author.isVerified,
+    );
+    openLiveRoom(context, item.id, room);
+  }
   void _openProfile(BuildContext context) {
     if (item.author.id.isEmpty) return;
     context.push('/profile/${item.author.id}');

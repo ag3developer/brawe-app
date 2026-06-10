@@ -418,6 +418,10 @@
     }
   },
   "composerPublishError": "Error al publicar story.",
+  "composerPublishTimeoutMaybe": "Conexión lenta — revisa tu feed; si el story está allí, ya se publicó.",
+  "@composerPublishTimeoutMaybe": {
+    "description": "Aviso cuando la subida del story expira: el backend puede haberlo persistido de todas formas. Evita reintentos que crean duplicados."
+  },
   "composerRetry": "Reintentar",
   "composerPreparing": "Preparando publicación…",
   "composerCreateStory": "Crear story",
@@ -437,10 +441,41 @@
     }
   },
   "composerCaptionHint": "Añade una leyenda...",
+  "composerYourStory": "Tu historia",
+  "composerShare": "Compartir",
   "composerTapOutsideHint": "Toca afuera para terminar",
   "composerTextHint": "Escribe algo...",
   "composerGuideTop": "tope seguro",
   "composerGuideBottom": "base segura",
+  "composerSaveToDevice": "Guardar en el dispositivo",
+  "@composerSaveToDevice": {
+    "description": "Tooltip del botón de descarga en la barra superior del editor de historias que guarda el contenido editado en la galería del dispositivo."
+  },
+  "composerSavedToDevice": "Guardado en la galería",
+  "composerSavePermissionDenied": "Acceso a la galería denegado.",
+  "composerSaveError": "No se pudo guardar.",
+  "trimTitle": "Recortar video",
+  "trimSave": "Listo",
+  "trimCancel": "Cancelar",
+  "trimProcessing": "Guardando…",
+  "trimDuration": "{seconds}s",
+  "@trimDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "trimError": "No se pudo guardar el video recortado.",
+  "trimHint": "Arrastra los controles para elegir inicio y fin",
+  "giftTierFree": "Bóveda",
+  "@giftTierFree": {
+    "description": "Pestaña/categoría del nivel gratuito de regalos (pagados con monedas/XP de quests). Renombrado de 'Free' a 'Bóveda' — transmite que son regalos de una reserva que el usuario acumuló con su actividad, no con dinero real."
+  },
+  "giftTierBasic": "Básico",
+  "giftTierPremium": "Premium",
+  "giftTierLuxury": "Lujo",
+  "giftTierLegendary": "Legendario",
   "viewerDeleteStory": "Eliminar story",
   "viewerUnfollow": "Dejar de seguir",
   "viewerBlockUser": "Bloquear usuario",
@@ -1784,5 +1819,66 @@
   "creatorBadgeActive": "ACTIVO",
   "commonYes": "Sí",
   "commonNo": "No",
-  "commonRetry": "Reintentar"
+  "commonRetry": "Reintentar",
+
+  "editProfileAccountTypeSection": "TIPO DE CUENTA",
+  "editProfileAccountTypeCreator": "Creador",
+  "editProfileAccountTypeMusician": "Músico",
+  "editProfileAccountTypeBusiness": "Empresa",
+
+  "editProfileMusicianBannerHint": "Crea tu perfil de artista en Brawe Sounds y aparece en el catálogo.",
+  "editProfileMusicianArtistName": "Nombre artístico",
+  "editProfileMusicianArtistNameHint": "Cómo apareces en Brawe Sounds",
+  "editProfileMusicianCity": "Ciudad",
+  "editProfileMusicianCityHint": "Ej: Buenos Aires",
+  "editProfileMusicianSpotify": "Spotify",
+  "editProfileMusicianAppleMusic": "Apple Music",
+  "editProfileMusicianGenres": "GÉNEROS",
+
+  "soundsGenreFunk": "Funk",
+  "soundsGenreSertanejo": "Sertanejo",
+  "soundsGenrePagode": "Pagode",
+  "soundsGenreForro": "Forró",
+  "soundsGenrePop": "Pop",
+  "soundsGenreRap": "Rap",
+  "soundsGenreElectro": "Electrónico",
+  "soundsGenreGospel": "Gospel",
+  "soundsGenreRock": "Rock",
+  "soundsGenreMpb": "MPB",
+
+  "soundsArtistTracks": "{count,plural, =1{1 pista} other{{count} pistas}}",
+  "@soundsArtistTracks": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "soundsArtistPlays": "{count} reproducciones",
+
+  "soundsTitle": "Brawe Sounds",
+  "soundsTabTrending": "Tendencias",
+  "soundsTabCatalog": "Catálogo",
+  "soundsSearch": "Buscar canciones o artistas...",
+  "soundsGenreAll": "Todos",
+  "soundsEmptyTrending": "Aún no hay canciones en tendencia",
+  "soundsEmptyCatalog": "No se encontraron canciones",
+  "soundsEmptySearch": "Sin resultados para \"{query}\"",
+  "@soundsEmptySearch": {
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "soundsLoadMore": "Cargar más",
+  "soundsUsedTimes": "{count,plural, =1{usado 1 vez} other{usado {count} veces}}",
+  "@soundsUsedTimes": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "soundsSaved": "Guardado",
+  "soundsSave": "Guardar",
+  "soundsUse": "Usar",
+  "soundsPlayerLoading": "Cargando...",
+  "soundsPlayerError": "Error al cargar audio",
+  "navSounds": "Sounds",
+  "createSoundsTitle": "Brawe Sounds",
+  "createSoundsSubtitle": "Agrega una canción original a tu publicación",
+  "postSoundLabel": "Sonido: {title}",
+  "@postSoundLabel": {
+    "placeholders": { "title": { "type": "String" } }
+  },
+  "postSoundRemove": "Quitar sonido"
 }

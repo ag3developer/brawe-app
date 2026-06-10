@@ -2025,6 +2025,12 @@ abstract class S {
   /// **'Falha ao publicar story.'**
   String get composerPublishError;
 
+  /// Aviso quando o upload de story dá timeout: o backend pode ter persistido com sucesso mesmo assim. Evita o usuário pensar que falhou e tentar de novo, criando duplicatas.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conexão lenta — verifique seu feed; se o story já estiver lá, está publicado.'**
+  String get composerPublishTimeoutMaybe;
+
   /// No description provided for @composerRetry.
   ///
   /// In pt, this message translates to:
@@ -2097,6 +2103,18 @@ abstract class S {
   /// **'Adicione uma legenda...'**
   String get composerCaptionHint;
 
+  /// No description provided for @composerYourStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu story'**
+  String get composerYourStory;
+
+  /// No description provided for @composerShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get composerShare;
+
   /// No description provided for @composerTapOutsideHint.
   ///
   /// In pt, this message translates to:
@@ -2120,6 +2138,102 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'base segura'**
   String get composerGuideBottom;
+
+  /// Tooltip do botão de download na top bar do editor de stories que salva a mídia editada na galeria/rolo da câmera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar no dispositivo'**
+  String get composerSaveToDevice;
+
+  /// No description provided for @composerSavedToDevice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvo na galeria'**
+  String get composerSavedToDevice;
+
+  /// No description provided for @composerSavePermissionDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permissão de acesso à galeria negada.'**
+  String get composerSavePermissionDenied;
+
+  /// No description provided for @composerSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar.'**
+  String get composerSaveError;
+
+  /// No description provided for @trimTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cortar vídeo'**
+  String get trimTitle;
+
+  /// No description provided for @trimSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get trimSave;
+
+  /// No description provided for @trimCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get trimCancel;
+
+  /// No description provided for @trimProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvando…'**
+  String get trimProcessing;
+
+  /// No description provided for @trimDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'{seconds}s'**
+  String trimDuration(String seconds);
+
+  /// No description provided for @trimError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar o vídeo cortado.'**
+  String get trimError;
+
+  /// No description provided for @trimHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arraste as alças para escolher início e fim'**
+  String get trimHint;
+
+  /// Aba/categoria do tier gratuito de presentes (pagos com moedas/XP de quests). Renomeado de 'Free' para 'Cofre' — comunica que são presentes de um baú que o usuário acumulou com atividade, não com dinheiro real.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cofre'**
+  String get giftTierFree;
+
+  /// No description provided for @giftTierBasic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Básico'**
+  String get giftTierBasic;
+
+  /// No description provided for @giftTierPremium.
+  ///
+  /// In pt, this message translates to:
+  /// **'Premium'**
+  String get giftTierPremium;
+
+  /// No description provided for @giftTierLuxury.
+  ///
+  /// In pt, this message translates to:
+  /// **'Luxo'**
+  String get giftTierLuxury;
+
+  /// No description provided for @giftTierLegendary.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lendário'**
+  String get giftTierLegendary;
 
   /// No description provided for @viewerDeleteStory.
   ///
@@ -7382,6 +7496,270 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Tentar novamente'**
   String get commonRetry;
+
+  /// No description provided for @editProfileAccountTypeSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'TIPO DE CONTA'**
+  String get editProfileAccountTypeSection;
+
+  /// No description provided for @editProfileAccountTypeCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criador'**
+  String get editProfileAccountTypeCreator;
+
+  /// No description provided for @editProfileAccountTypeMusician.
+  ///
+  /// In pt, this message translates to:
+  /// **'Músico'**
+  String get editProfileAccountTypeMusician;
+
+  /// No description provided for @editProfileAccountTypeBusiness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa'**
+  String get editProfileAccountTypeBusiness;
+
+  /// No description provided for @editProfileMusicianBannerHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Crie seu perfil de artista no Brawe Sounds e apareça no catálogo.'**
+  String get editProfileMusicianBannerHint;
+
+  /// No description provided for @editProfileMusicianArtistName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome artístico'**
+  String get editProfileMusicianArtistName;
+
+  /// No description provided for @editProfileMusicianArtistNameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como aparece no Brawe Sounds'**
+  String get editProfileMusicianArtistNameHint;
+
+  /// No description provided for @editProfileMusicianCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get editProfileMusicianCity;
+
+  /// No description provided for @editProfileMusicianCityHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: São Paulo, SP'**
+  String get editProfileMusicianCityHint;
+
+  /// No description provided for @editProfileMusicianSpotify.
+  ///
+  /// In pt, this message translates to:
+  /// **'Spotify'**
+  String get editProfileMusicianSpotify;
+
+  /// No description provided for @editProfileMusicianAppleMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apple Music'**
+  String get editProfileMusicianAppleMusic;
+
+  /// No description provided for @editProfileMusicianGenres.
+  ///
+  /// In pt, this message translates to:
+  /// **'GÊNEROS'**
+  String get editProfileMusicianGenres;
+
+  /// No description provided for @soundsGenreFunk.
+  ///
+  /// In pt, this message translates to:
+  /// **'Funk'**
+  String get soundsGenreFunk;
+
+  /// No description provided for @soundsGenreSertanejo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sertanejo'**
+  String get soundsGenreSertanejo;
+
+  /// No description provided for @soundsGenrePagode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagode'**
+  String get soundsGenrePagode;
+
+  /// No description provided for @soundsGenreForro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Forró'**
+  String get soundsGenreForro;
+
+  /// No description provided for @soundsGenrePop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pop'**
+  String get soundsGenrePop;
+
+  /// No description provided for @soundsGenreRap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rap'**
+  String get soundsGenreRap;
+
+  /// No description provided for @soundsGenreElectro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Eletrônico'**
+  String get soundsGenreElectro;
+
+  /// No description provided for @soundsGenreGospel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gospel'**
+  String get soundsGenreGospel;
+
+  /// No description provided for @soundsGenreRock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rock'**
+  String get soundsGenreRock;
+
+  /// No description provided for @soundsGenreMpb.
+  ///
+  /// In pt, this message translates to:
+  /// **'MPB'**
+  String get soundsGenreMpb;
+
+  /// No description provided for @soundsArtistTracks.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count,plural, =1{1 faixa} other{{count} faixas}}'**
+  String soundsArtistTracks(int count);
+
+  /// No description provided for @soundsArtistPlays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} plays'**
+  String soundsArtistPlays(Object count);
+
+  /// No description provided for @soundsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe Sounds'**
+  String get soundsTitle;
+
+  /// No description provided for @soundsTabTrending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em alta'**
+  String get soundsTabTrending;
+
+  /// No description provided for @soundsTabCatalog.
+  ///
+  /// In pt, this message translates to:
+  /// **'Catálogo'**
+  String get soundsTabCatalog;
+
+  /// No description provided for @soundsSearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar músicas ou artistas...'**
+  String get soundsSearch;
+
+  /// No description provided for @soundsGenreAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get soundsGenreAll;
+
+  /// No description provided for @soundsEmptyTrending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma música em alta ainda'**
+  String get soundsEmptyTrending;
+
+  /// No description provided for @soundsEmptyCatalog.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma música encontrada'**
+  String get soundsEmptyCatalog;
+
+  /// No description provided for @soundsEmptySearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem resultados para \"{query}\"'**
+  String soundsEmptySearch(String query);
+
+  /// No description provided for @soundsLoadMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregar mais'**
+  String get soundsLoadMore;
+
+  /// No description provided for @soundsUsedTimes.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count,plural, =1{usado 1 vez} other{usado {count} vezes}}'**
+  String soundsUsedTimes(int count);
+
+  /// No description provided for @soundsSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvo'**
+  String get soundsSaved;
+
+  /// No description provided for @soundsSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get soundsSave;
+
+  /// No description provided for @soundsUse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar'**
+  String get soundsUse;
+
+  /// No description provided for @soundsPlayerLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando...'**
+  String get soundsPlayerLoading;
+
+  /// No description provided for @soundsPlayerError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar áudio'**
+  String get soundsPlayerError;
+
+  /// No description provided for @navSounds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sounds'**
+  String get navSounds;
+
+  /// No description provided for @createSoundsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe Sounds'**
+  String get createSoundsTitle;
+
+  /// No description provided for @createSoundsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione uma música original ao seu post'**
+  String get createSoundsSubtitle;
+
+  /// No description provided for @postSoundLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Som: {title}'**
+  String postSoundLabel(String title);
+
+  /// No description provided for @postSoundRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover som'**
+  String get postSoundRemove;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

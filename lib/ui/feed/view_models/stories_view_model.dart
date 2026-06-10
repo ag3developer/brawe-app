@@ -59,18 +59,25 @@ class StoriesViewModel extends _$StoriesViewModel {
 
   /// Cria um novo story (upload multipart) e recarrega o feed.
   /// O backend deduz o tipo (photo/video) pelo MIME — não precisa enviar mediaType.
+  ///
+  /// [idempotencyKey] (opcional): UUID compartilhado entre todos os
+  /// retries do mesmo upload. Se chegar 2 requests com a mesma key, o
+  /// backend devolve o registro existente em vez de criar duplicata.
+  /// Ver `_StoryComposerScreenState._idempotencyKey`.
   Future<void> createStory({
     required String localFilePath,
     String? mediaType, // mantido para compat; ignorado
     String? caption,
     int? durationSeconds,
     String? originPostId,
+    String? idempotencyKey,
   }) async {
     await ref.read(storiesRepositoryProvider).createStory(
           localFilePath: localFilePath,
           caption: caption,
           durationSeconds: durationSeconds,
           originPostId: originPostId,
+          idempotencyKey: idempotencyKey,
         );
     // Recarrega o feed para mostrar o novo story imediatamente.
     state = const AsyncValue.loading();

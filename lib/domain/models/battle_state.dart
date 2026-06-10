@@ -26,6 +26,10 @@ class BattleState {
     this.streamerBAvatarUrl,
     this.roomAId,
     this.roomBId,
+    this.streamUrlA,
+    this.streamUrlB,
+    this.playbackIdA,
+    this.playbackIdB,
     this.winnerId,
     this.winnerName,
     this.lastGiftSender,
@@ -52,6 +56,21 @@ class BattleState {
   final String? streamerBAvatarUrl;
   final String? roomAId;
   final String? roomBId;
+
+  /// 🎬 HLS playback URL do streamer A (lado esquerdo do split-screen).
+  /// O viewer usa pra montar o vídeo dual. `null` enquanto a sala não
+  /// tem provisionamento de stream.
+  final String? streamUrlA;
+
+  /// 🎬 HLS playback URL do streamer B (lado direito do split-screen).
+  final String? streamUrlB;
+
+  /// 🎬 Mux Playback ID do streamer A (opcional — usado por Mux Data SDK).
+  final String? playbackIdA;
+
+  /// 🎬 Mux Playback ID do streamer B.
+  final String? playbackIdB;
+
   final String? winnerId;
   final String? winnerName;
   final String? lastGiftSender;
@@ -99,6 +118,12 @@ class BattleState {
     bool? powerMoment,
     BattleGifter? topGifterA,
     BattleGifter? topGifterB,
+    String? streamUrlA,
+    String? streamUrlB,
+    String? playbackIdA,
+    String? playbackIdB,
+    String? roomAId,
+    String? roomBId,
   }) {
     return BattleState(
       battleId: battleId,
@@ -108,8 +133,12 @@ class BattleState {
       streamerBName: streamerBName,
       streamerAAvatarUrl: streamerAAvatarUrl,
       streamerBAvatarUrl: streamerBAvatarUrl,
-      roomAId: roomAId,
-      roomBId: roomBId,
+      roomAId: roomAId ?? this.roomAId,
+      roomBId: roomBId ?? this.roomBId,
+      streamUrlA: streamUrlA ?? this.streamUrlA,
+      streamUrlB: streamUrlB ?? this.streamUrlB,
+      playbackIdA: playbackIdA ?? this.playbackIdA,
+      playbackIdB: playbackIdB ?? this.playbackIdB,
       scoreA: scoreA ?? this.scoreA,
       scoreB: scoreB ?? this.scoreB,
       timeRemaining: timeRemaining ?? this.timeRemaining,
@@ -129,6 +158,8 @@ class BattleState {
   }
 
   /// Factory: build initial state from battle invite/API payload.
+  /// Aceita tanto o payload de `connect:battle:invite` quanto de
+  /// `connect:battle:started` (mais campos) — todos opcionais via `??`.
   factory BattleState.fromInviteJson(Map<String, dynamic> json) {
     return BattleState(
       battleId: json['battle_id'] as String? ?? '',
@@ -140,6 +171,10 @@ class BattleState {
       streamerBAvatarUrl: json['streamer_b_avatar'] as String?,
       roomAId: json['room_a_id'] as String?,
       roomBId: json['room_b_id'] as String?,
+      streamUrlA: _nonEmptyString(json['stream_url_a']),
+      streamUrlB: _nonEmptyString(json['stream_url_b']),
+      playbackIdA: _nonEmptyString(json['playback_id_a']),
+      playbackIdB: _nonEmptyString(json['playback_id_b']),
       scoreA: 0,
       scoreB: 0,
       timeRemaining: Duration(
@@ -148,6 +183,13 @@ class BattleState {
       phase: BattlePhase.waiting,
     );
   }
+}
+
+/// Helper para tratar strings vazias do backend como `null` (mais ergonômico
+/// para `streamUrlA != null ? VideoPlayer(...) : Placeholder`).
+String? _nonEmptyString(dynamic value) {
+  if (value is String && value.isNotEmpty) return value;
+  return null;
 }
 
 enum BattlePhase { waiting, countdown, active, finished }

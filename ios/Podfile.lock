@@ -1,4 +1,6 @@
 PODS:
+  - app_badge_plus (1.3.1):
+    - Flutter
   - audio_session (0.0.1):
     - Flutter
   - battery_plus (1.0.0):
@@ -72,6 +74,8 @@ PODS:
     - Flutter
   - flutter_native_splash (2.4.3):
     - Flutter
+  - flutter_native_video_trimmer (1.0.0):
+    - Flutter
   - flutter_secure_storage_darwin (10.0.0):
     - Flutter
     - FlutterMacOS
@@ -79,6 +83,12 @@ PODS:
     - Flutter
     - FlutterMacOS
     - mdk (~> 0.36.0)
+  - gal (1.0.0):
+    - Flutter
+    - FlutterMacOS
+  - get_thumbnail_video (0.0.1):
+    - Flutter
+    - libwebp
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
@@ -116,6 +126,18 @@ PODS:
   - just_audio (0.0.1):
     - Flutter
     - FlutterMacOS
+  - libwebp (1.5.0):
+    - libwebp/demux (= 1.5.0)
+    - libwebp/mux (= 1.5.0)
+    - libwebp/sharpyuv (= 1.5.0)
+    - libwebp/webp (= 1.5.0)
+  - libwebp/demux (1.5.0):
+    - libwebp/webp
+  - libwebp/mux (1.5.0):
+    - libwebp/demux
+  - libwebp/sharpyuv (1.5.0)
+  - libwebp/webp (1.5.0):
+    - libwebp/sharpyuv
   - Logboard (2.1.3)
   - mdk (0.36.0)
   - nanopb (3.30910.0):
@@ -158,6 +180,7 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
+  - app_badge_plus (from `.symlinks/plugins/app_badge_plus/ios`)
   - audio_session (from `.symlinks/plugins/audio_session/ios`)
   - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
@@ -168,8 +191,11 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
+  - flutter_native_video_trimmer (from `.symlinks/plugins/flutter_native_video_trimmer/ios`)
   - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - fvp (from `.symlinks/plugins/fvp/darwin`)
+  - gal (from `.symlinks/plugins/gal/darwin`)
+  - get_thumbnail_video (from `.symlinks/plugins/get_thumbnail_video/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - in_app_purchase_storekit (from `.symlinks/plugins/in_app_purchase_storekit/darwin`)
   - just_audio (from `.symlinks/plugins/just_audio/darwin`)
@@ -200,6 +226,7 @@ SPEC REPOS:
     - GoogleDataTransport
     - GoogleUtilities
     - HaishinKit
+    - libwebp
     - Logboard
     - mdk
     - nanopb
@@ -207,6 +234,8 @@ SPEC REPOS:
     - PromisesSwift
 
 EXTERNAL SOURCES:
+  app_badge_plus:
+    :path: ".symlinks/plugins/app_badge_plus/ios"
   audio_session:
     :path: ".symlinks/plugins/audio_session/ios"
   battery_plus:
@@ -227,10 +256,16 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_native_splash:
     :path: ".symlinks/plugins/flutter_native_splash/ios"
+  flutter_native_video_trimmer:
+    :path: ".symlinks/plugins/flutter_native_video_trimmer/ios"
   flutter_secure_storage_darwin:
     :path: ".symlinks/plugins/flutter_secure_storage_darwin/darwin"
   fvp:
     :path: ".symlinks/plugins/fvp/darwin"
+  gal:
+    :path: ".symlinks/plugins/gal/darwin"
+  get_thumbnail_video:
+    :path: ".symlinks/plugins/get_thumbnail_video/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   in_app_purchase_storekit:
@@ -263,6 +298,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
+  app_badge_plus: 30703d7e5b971046e0d004dcee48b54822f56892
   audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
   battery_plus: b42253f6d2dde71712f8c36fef456d99121c5977
   camera_avfoundation: 968a9a5323c79a99c166ad9d7866bfd2047b5a9b
@@ -282,14 +318,18 @@ SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
+  flutter_native_video_trimmer: 11f6c679971dc3844519b485b9c878df8675ae3a
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   fvp: f8b3b61cf8c696ecaa5608ae0d282ba710e65ae9
+  gal: baecd024ebfd13c441269ca7404792a7152fde89
+  get_thumbnail_video: 1a754d46b860dffefcc57b7290a43089cd5d7e58
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   HaishinKit: d1786896ace24065d466bde02356c5352ac001b0
   image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
   in_app_purchase_storekit: 22cca7d08eebca9babdf4d07d0baccb73325d3c8
   just_audio: 4e391f57b79cad2b0674030a00453ca5ce817eed
+  libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   Logboard: e74ec2d9941abd22f4db3a3ddcd0735011df92c7
   mdk: 3bfb53e0bcc9643180eaa864360051f281e4c17b
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275

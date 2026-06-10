@@ -1038,6 +1038,10 @@ class SEn extends S {
   String get composerPublishError => 'Failed to publish story.';
 
   @override
+  String get composerPublishTimeoutMaybe =>
+      'Slow connection — check your feed; if the story is there, it\'s published.';
+
+  @override
   String get composerRetry => 'Try again';
 
   @override
@@ -1076,6 +1080,12 @@ class SEn extends S {
   String get composerCaptionHint => 'Add a caption...';
 
   @override
+  String get composerYourStory => 'Your story';
+
+  @override
+  String get composerShare => 'Share';
+
+  @override
   String get composerTapOutsideHint => 'Tap outside to finish';
 
   @override
@@ -1086,6 +1096,56 @@ class SEn extends S {
 
   @override
   String get composerGuideBottom => 'safe bottom';
+
+  @override
+  String get composerSaveToDevice => 'Save to device';
+
+  @override
+  String get composerSavedToDevice => 'Saved to gallery';
+
+  @override
+  String get composerSavePermissionDenied => 'Gallery access denied.';
+
+  @override
+  String get composerSaveError => 'Could not save.';
+
+  @override
+  String get trimTitle => 'Trim video';
+
+  @override
+  String get trimSave => 'Done';
+
+  @override
+  String get trimCancel => 'Cancel';
+
+  @override
+  String get trimProcessing => 'Saving…';
+
+  @override
+  String trimDuration(String seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get trimError => 'Could not save trimmed video.';
+
+  @override
+  String get trimHint => 'Drag the handles to choose start and end';
+
+  @override
+  String get giftTierFree => 'Vault';
+
+  @override
+  String get giftTierBasic => 'Basic';
+
+  @override
+  String get giftTierPremium => 'Premium';
+
+  @override
+  String get giftTierLuxury => 'Luxury';
+
+  @override
+  String get giftTierLegendary => 'Legendary';
 
   @override
   String get viewerDeleteStory => 'Delete story';
@@ -4035,4 +4095,160 @@ class SEn extends S {
 
   @override
   String get commonRetry => 'Try again';
+
+  @override
+  String get editProfileAccountTypeSection => 'ACCOUNT TYPE';
+
+  @override
+  String get editProfileAccountTypeCreator => 'Creator';
+
+  @override
+  String get editProfileAccountTypeMusician => 'Musician';
+
+  @override
+  String get editProfileAccountTypeBusiness => 'Business';
+
+  @override
+  String get editProfileMusicianBannerHint =>
+      'Create your artist profile on Brawe Sounds and appear in the catalog.';
+
+  @override
+  String get editProfileMusicianArtistName => 'Artist name';
+
+  @override
+  String get editProfileMusicianArtistNameHint =>
+      'How you appear on Brawe Sounds';
+
+  @override
+  String get editProfileMusicianCity => 'City';
+
+  @override
+  String get editProfileMusicianCityHint => 'e.g. New York, NY';
+
+  @override
+  String get editProfileMusicianSpotify => 'Spotify';
+
+  @override
+  String get editProfileMusicianAppleMusic => 'Apple Music';
+
+  @override
+  String get editProfileMusicianGenres => 'GENRES';
+
+  @override
+  String get soundsGenreFunk => 'Funk';
+
+  @override
+  String get soundsGenreSertanejo => 'Sertanejo';
+
+  @override
+  String get soundsGenrePagode => 'Pagode';
+
+  @override
+  String get soundsGenreForro => 'Forró';
+
+  @override
+  String get soundsGenrePop => 'Pop';
+
+  @override
+  String get soundsGenreRap => 'Rap';
+
+  @override
+  String get soundsGenreElectro => 'Electronic';
+
+  @override
+  String get soundsGenreGospel => 'Gospel';
+
+  @override
+  String get soundsGenreRock => 'Rock';
+
+  @override
+  String get soundsGenreMpb => 'MPB';
+
+  @override
+  String soundsArtistTracks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tracks',
+      one: '1 track',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String soundsArtistPlays(Object count) {
+    return '$count plays';
+  }
+
+  @override
+  String get soundsTitle => 'Brawe Sounds';
+
+  @override
+  String get soundsTabTrending => 'Trending';
+
+  @override
+  String get soundsTabCatalog => 'Catalog';
+
+  @override
+  String get soundsSearch => 'Search tracks or artists...';
+
+  @override
+  String get soundsGenreAll => 'All';
+
+  @override
+  String get soundsEmptyTrending => 'No trending tracks yet';
+
+  @override
+  String get soundsEmptyCatalog => 'No tracks found';
+
+  @override
+  String soundsEmptySearch(String query) {
+    return 'No results for \"$query\"';
+  }
+
+  @override
+  String get soundsLoadMore => 'Load more';
+
+  @override
+  String soundsUsedTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'used $count times',
+      one: 'used 1 time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get soundsSaved => 'Saved';
+
+  @override
+  String get soundsSave => 'Save';
+
+  @override
+  String get soundsUse => 'Use';
+
+  @override
+  String get soundsPlayerLoading => 'Loading...';
+
+  @override
+  String get soundsPlayerError => 'Failed to load audio';
+
+  @override
+  String get navSounds => 'Sounds';
+
+  @override
+  String get createSoundsTitle => 'Brawe Sounds';
+
+  @override
+  String get createSoundsSubtitle => 'Add an original track to your post';
+
+  @override
+  String postSoundLabel(String title) {
+    return 'Sound: $title';
+  }
+
+  @override
+  String get postSoundRemove => 'Remove sound';
 }

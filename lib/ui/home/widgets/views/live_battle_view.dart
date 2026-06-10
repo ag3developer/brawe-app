@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
+import '../../../../domain/models/live_room.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import 'shared/_live_overlay.dart';
+import 'shared/_live_peek.dart';
 
 /// ⚔️ Preview de LiveBattle — split HORIZONTAL, tap para entrar na live.
 /// Só exibe: thumbnails lado a lado, placar VS, timer, tags dos streamers
@@ -16,16 +18,26 @@ class LiveBattleView extends StatelessWidget {
     final battle = item.battleState;
 
     return GestureDetector(
-      // Tap em qualquer lugar entra na live
+      // Tap em qualquer lugar entra na live — passa LiveRoom com os dados do
+      // feed para navegação instantânea (sem request HTTP, igual TikTok).
       onTap: () {
-        // TODO: context.push('/live/${item.id}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context).liveJoining),
-            backgroundColor: AppColors.electricPurple,
-            duration: const Duration(seconds: 1),
-          ),
+        final room = LiveRoom(
+          id: item.id,
+          slug: item.id,
+          title: item.caption,
+          liveType: 'battle',
+          isPrivate: false,
+          status: 'live',
+          viewerCount: item.viewerCount,
+          totalLikes: item.likesCount,
+          thumbnailUrl: item.thumbnailUrlA,
+          streamerId: item.author.id,
+          streamerName: item.author.name,
+          streamerAvatarUrl: item.author.avatarUrl,
+          streamerUsername: item.author.username,
+          streamerVerified: item.author.isVerified,
         );
+        openLiveRoom(context, item.id, room);
       },
       child: Stack(
         fit: StackFit.expand,

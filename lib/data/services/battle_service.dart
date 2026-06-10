@@ -50,6 +50,30 @@ class BattleService {
     return _toMap(response.data);
   }
 
+  /// 🔄 Pedir revanche de uma batalha encerrada.
+  /// Cria um novo convite (status=PENDING) entre os mesmos 2 streamers,
+  /// com a mesma duração da batalha anterior. Pode ser chamado por A ou B.
+  /// Backend: POST /live/battle/{id}/rematch
+  Future<Map<String, dynamic>> requestRematch(String battleId) async {
+    final response = await _dio.post('/live/battle/$battleId/rematch');
+    return _toMap(response.data);
+  }
+
+  /// 🛑 Encerrar batalha antes do tempo (botão "Sair da batalha").
+  /// Funciona para batalhas ACTIVE (encerra agora) e PENDING/ACCEPTED (cancela).
+  /// Só os 2 participantes podem chamar.
+  /// Backend: POST /live/battle/{id}/end
+  /// O backend responde 202 imediatamente e processa em background — o resultado
+  /// real chega via socket `connect:battle:ended`. Por isso usamos receiveTimeout
+  /// curto (8s): se demorar mais, tratamos como fire-and-forget no HUD.
+  Future<Map<String, dynamic>> endBattleEarly(String battleId) async {
+    final response = await _dio.post(
+      '/live/battle/$battleId/end',
+      options: Options(receiveTimeout: const Duration(seconds: 8)),
+    );
+    return _toMap(response.data);
+  }
+
   /// Get live scores — usa o endpoint Redis de baixa latência.
   /// Fallback para o endpoint DB se o Redis não tiver dados ainda.
   Future<Map<String, dynamic>> getLiveScores(String battleId) async {

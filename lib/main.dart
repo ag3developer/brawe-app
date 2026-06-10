@@ -18,6 +18,7 @@ import 'data/services/push_notification_service.dart';
 import 'gen/l10n/app_localizations.dart';
 import 'routing/router.dart';
 import 'ui/core/themes/app_theme.dart';
+import 'ui/core/view_models/app_badge_controller.dart';
 import 'ui/settings/view_models/theme_view_model.dart';
 
 Future<void> main() async {
@@ -104,8 +105,12 @@ class _BraweAppState extends ConsumerState<BraweApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(pushNotificationServiceProvider).init();
+      // Arma o badge do ícone do app: instanciar o controller (keepAlive) faz
+      // ele observar notificações + DMs não lidas e refletir no ícone do SO.
+      ref.read(appBadgeControllerProvider);
       // Inicializa o IAP no boot para capturar compras pendentes
       // (recibos da Play/App Store que ficaram travados sem crédito,
       // ex: rede caiu entre a cobrança e a validação no backend).
@@ -113,6 +118,19 @@ class _BraweAppState extends ConsumerState<BraweApp> {
       ref.read(iapServiceProvider).init();
     });
   }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
+    super.dispose();
+  }
+
+  /// Reavalia o badge sempre que o app volta para o primeiro plano — cobre o
+  /// caso de pushes recebidos em background (que não passam pelo handler de
+  /// foreground) e de notificações lidas em outro dispositivo.
+  late final _AppLifecycleObserver _lifecycleObserver = _AppLifecycleObserver(
+    onResume: () => ref.read(appBadgeControllerProvider.notifier).refresh(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -148,5 +166,20 @@ class _BraweAppState extends ConsumerState<BraweApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
     );
+  }
+}
+
+/// Observer mínimo de ciclo de vida: dispara [onResume] quando o app volta ao
+/// primeiro plano. Mantido fora do State para não poluir o `build`.
+class _AppLifecycleObserver with WidgetsBindingObserver {
+  _AppLifecycleObserver({required this.onResume});
+
+  final VoidCallback onResume;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      onResume();
+    }
   }
 }

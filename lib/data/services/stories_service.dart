@@ -105,11 +105,19 @@ class StoriesService {
 
   /// POST /stories/upload — multipart com `file`, `caption`, `duration_seconds`.
   /// O backend deduz `media_type` (photo/video) pelo content-type do arquivo.
+  ///
+  /// [idempotencyKey]: UUID v4 compartilhado entre todos os retries do
+  /// mesmo upload. Vai como header HTTP `Idempotency-Key`. O backend
+  /// guarda em `stories.idempotency_key` (UNIQUE) — se a mesma key
+  /// chegar 2x, devolve o story já criado sem duplicar (idempotência
+  /// padrão Stripe). Resolve o bug de stories duplicados em uploads
+  /// lentos.
   Future<Map<String, dynamic>> createStory({
     required String filePath,
     String? caption,
     int? durationSeconds,
     String? originPostId,
+    String? idempotencyKey,
   }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
@@ -123,6 +131,10 @@ class StoriesService {
       data: formData,
       options: Options(
         contentType: 'multipart/form-data',
+        headers: {
+          if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+            'Idempotency-Key': idempotencyKey,
+        },
         // Upload de PNG flatten (3-5MB) em 4G/Wi-Fi instável pode demorar
         // mais que o timeout padrão (30s). Sem isso o cliente cai no catch
         // mesmo após o backend ter persistido o story → usuário vê "falha"

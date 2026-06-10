@@ -125,6 +125,11 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;
 
+  /// `true` quando o toast deve aparecer no lado direito da tela (lado B
+  /// da batalha). Calculado uma vez aqui pra os 2 animations + Positioned
+  /// concordarem em direção (entra do mesmo lado em que ancora).
+  bool get _isRightSide => widget.gift.battleSide == 'b';
+
   @override
   void initState() {
     super.initState();
@@ -132,8 +137,16 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
       vsync: this,
       duration: const Duration(milliseconds: 2800),
     );
+    // 🎯 Entra deslizando do lado em que vai ancorar:
+    //   - solo / lado A → entra da esquerda (-1.2 → 0)
+    //   - lado B → entra da direita (+1.2 → 0)
+    // Sem isso o toast do lado B faria "swoosh atravessando a tela",
+    // chamando atenção em cima do streamer A — quebra a leitura.
+    final beginOffset = _isRightSide
+        ? const Offset(1.2, 0)
+        : const Offset(-1.2, 0);
     _slide = Tween<Offset>(
-      begin: const Offset(-1.2, 0),
+      begin: beginOffset,
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _ctrl,
@@ -183,7 +196,11 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
       // O action bar fica em bottom:16 + SafeArea + altura ~120 = ~180-200px,
       // então 220 garante folga.
       bottom: 220,
-      left: 12,
+      // 🎯 TikTok-style PK: o toast ancora no lado do streamer que recebeu
+      // o gift. Sem isso (live solo) cai no canto esquerdo histórico.
+      // Em batalha lado B mirror pra direita; lado A mantém esquerda.
+      left: _isRightSide ? null : 12,
+      right: _isRightSide ? 12 : null,
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Material(

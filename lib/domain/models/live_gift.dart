@@ -27,6 +27,11 @@ sealed class LiveGift with _$LiveGift {
     String? gifterColor, // hex string ex. "#FFD700"
     String? gifterImageUrl, // PNG remoto do pin (CDN ou /static fallback)
     @Default(false) bool levelUpgraded,
+    // 🎯 Lado da batalha que recebeu o gift (`'a'` esquerda, `'b'` direita).
+    // `null` em lives solo. O toast do gift comum usa pra alinhar à lateral
+    // certa do split-screen (lado A → bottom-left, lado B → bottom-right).
+    // Gifts premium ignoram (mantêm burst central fullscreen).
+    String? battleSide,
   }) = _LiveGift;
 
   factory LiveGift.fromJson(Map<String, dynamic> json) => _$LiveGiftFromJson(json);

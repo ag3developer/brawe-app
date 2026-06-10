@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
-// go_router used transitively via _live_peek.openLiveRoom
+import '../../../../domain/models/live_room.dart';
 import '../../../../domain/models/product.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
@@ -30,7 +30,26 @@ class LiveCommerceView extends StatelessWidget {
     );
   }
 
-  void _enter(BuildContext context) => openLiveRoom(context, item.id);
+  void _enter(BuildContext context) {
+    final room = LiveRoom(
+      id: item.id,
+      slug: item.slug ?? item.id,
+      title: item.caption,
+      liveType: 'commerce',
+      isPrivate: false,
+      status: 'live',
+      viewerCount: item.viewerCount,
+      totalLikes: item.likesCount,
+      thumbnailUrl: item.thumbnailUrl,
+      streamUrl: item.streamUrl,
+      streamerId: item.author.id,
+      streamerName: item.author.name,
+      streamerAvatarUrl: item.author.avatarUrl,
+      streamerUsername: item.author.username,
+      streamerVerified: item.author.isVerified,
+    );
+    openLiveRoom(context, item.id, room);
+  }
 
   @override
   Widget build(BuildContext context) {

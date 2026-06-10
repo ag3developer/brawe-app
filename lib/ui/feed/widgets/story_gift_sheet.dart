@@ -14,6 +14,7 @@ import '../../../data/repositories/gift_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
+import '../../../core/utils/gift_tier_names.dart';
 import '../../live_feed/view_models/gift_catalog_view_model.dart';
 
 class StoryGiftResult {
@@ -197,7 +198,9 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                           ),
                           tabs: [
                             for (final t in tiers)
-                              Tab(text: _capitalize(t.name)),
+                              // Localizado via GiftTierNames — "free" vira
+                              // "Cofre" (PT) / "Vault" (EN) / "Bóveda" (ES).
+                              Tab(text: GiftTierNames.of(context, t.name)),
                           ],
                         ),
                         const SizedBox(height: 6),
@@ -595,6 +598,3 @@ class _QtyChip extends StatelessWidget {
     );
   }
 }
-
-String _capitalize(String s) =>
-    s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';

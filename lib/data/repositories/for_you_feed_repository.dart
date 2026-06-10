@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/models/battle_state.dart';
 import '../../domain/models/failure.dart';
 import '../../domain/models/feed_item.dart';
 import '../../domain/models/live_room.dart';
@@ -140,8 +141,53 @@ class ForYouFeedRepository {
       isVerified: room.streamerVerified,
     );
 
-    final isCommerce = (room.liveType).toLowerCase() == 'commerce' ||
-        (room.category ?? '').toLowerCase().contains('shop');
+    final type = (room.liveType).toLowerCase();
+    final isCommerce =
+        type == 'commerce' || (room.category ?? '').toLowerCase().contains('shop');
+    final isBattle = type == 'battle';
+
+    if (isBattle) {
+      // Usa dados do oponente vindos do backend (quando disponíveis).
+      // O backend enriquece o item de batalha com opponent_name/avatar/thumbnail.
+      // Se ausentes (sala recém-entrou em batalha e cache ainda não propagou),
+      // usamos placeholder — o BattleViewModel preenche ao entrar na live.
+      final hasOpponent = (room.opponentName?.isNotEmpty ?? false);
+      final opponent = FeedAuthor(
+        id: room.opponentId ?? '',
+        name: room.opponentName ?? '',
+        username: '',
+        avatarUrl: room.opponentAvatarUrl,
+      );
+      return LiveBattleItem(
+        id: room.id,
+        author: author,
+        likesCount: room.totalLikes,
+        commentsCount: 0,
+        sharesCount: 0,
+        userLiked: false,
+        userFollowingAuthor: false,
+        caption: room.title,
+        viewerCount: room.viewerCount,
+        opponent: opponent,
+        thumbnailUrlA: room.thumbnailUrl ?? '',
+        thumbnailUrlB: hasOpponent
+            ? (room.opponentThumbnailUrl ?? room.thumbnailUrl ?? '')
+            : (room.thumbnailUrl ?? ''),
+        battleState: BattleState(
+          battleId: room.battleId ?? '',
+          scoreA: 0,
+          scoreB: 0,
+          timeRemaining: Duration(seconds: room.battleDurationSeconds),
+          streamerAId: room.streamerId,
+          streamerAName: room.streamerName,
+          streamerBId: room.opponentId ?? '',
+          streamerBName: room.opponentName ?? '',
+          streamerAAvatarUrl: room.streamerAvatarUrl,
+          streamerBAvatarUrl: room.opponentAvatarUrl,
+          phase: BattlePhase.active,
+        ),
+      );
+    }
 
     if (isCommerce) {
       // Sem produtos reais ainda: lista vazia (UI já trata)

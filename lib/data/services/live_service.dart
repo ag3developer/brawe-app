@@ -192,6 +192,7 @@ class LiveService {
     required String receiverId,
     int quantity = 1,
     String? battleId,
+    String? idempotencyKey,
   }) async {
     final response = await _dio.post(
       '/live/gifts/send-gift',
@@ -202,8 +203,33 @@ class LiveService {
         'quantity': quantity,
         if (battleId != null) 'battle_id': battleId,
       },
+      options: idempotencyKey != null
+          ? Options(headers: {'Idempotency-Key': idempotencyKey})
+          : null,
     );
     return _toMap(response.data);
+  }
+
+  /// 🏆 Top gifters de uma sala (dados persistidos no backend).
+  /// Retorna lista de `{ user_id, display_name, avatar_url, total_coins, gift_count }`.
+  Future<List<Map<String, dynamic>>> getTopGifters(
+    String roomId, {
+    int limit = 10,
+  }) async {
+    final response = await _dio.get(
+      '/live/gifts/top-gifters/$roomId',
+      queryParameters: {'limit': limit},
+    );
+    final data = response.data;
+    // API retorna { "top_gifters": [...] } ou lista direta.
+    final raw = data is Map ? (data['top_gifters'] ?? data['data'] ?? data) : data;
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    return [];
   }
 
   Map<String, dynamic> _toMap(dynamic data) {

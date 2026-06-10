@@ -65,8 +65,8 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
           child: SizedBox(
             height: 56,
             child: Row(
-              children: List.generate(destinations.length, (i) {
-                // Center item = post button
+              children: List.generate(destinations.length + 1, (i) {
+                // índice 2 = botão + central
                 if (i == 2) {
                   return Expanded(
                     child: Center(
@@ -100,13 +100,15 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                   );
                 }
 
-                final dest = destinations[i];
-                final isSelected = _selected == i;
+                // índices 0,1 → destinations[0,1]; 3,4,5 → destinations[2,3,4]
+                final destIdx = i < 2 ? i : i - 1;
+                final dest = destinations[destIdx];
+                final isSelected = _selected == destIdx;
 
                 return Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => _onTap(i, dest.route, user?.id),
+                    onTap: () => _onTap(destIdx, dest.route, user?.id),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -230,6 +232,11 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
     // Mostra um sheet leve enquanto resolve a request — a UX flui sem
     // bloqueio. `showLiveGateSheet` cuida do loading/erro/ações.
     await showLiveGateSheet(navContext, ref);
+  }
+
+  void _openSounds() {
+    Navigator.pop(context);
+    context.push('/sounds');
   }
 
   @override
@@ -394,6 +401,26 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
                             onTap: _openPost,
                           ),
                         ),
+                        const SizedBox(height: 12),
+                        _AnimatedSlide(
+                          animation: _stagger(4),
+                          child: _CreateCard(
+                            icon: LucideIcons.music,
+                            iconWidget: Image.asset(
+                              'assets/images/brawe_sounds_icon.png',
+                              width: 30,
+                              height: 30,
+                              fit: BoxFit.contain,
+                            ),
+                            title: s.createSoundsTitle,
+                            subtitle: s.createSoundsSubtitle,
+                            gradient: const [
+                              Color(0xFFE11D48),
+                              Color(0xFFFF6B6B),
+                            ],
+                            onTap: _openSounds,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -464,12 +491,14 @@ class _CreateCard extends StatefulWidget {
     required this.subtitle,
     required this.gradient,
     required this.onTap,
+    this.iconWidget,
     this.badge,
     this.badgePulse = false,
     this.iconSpin = false,
   });
 
   final IconData icon;
+  final Widget? iconWidget;   // substitui o Icon quando fornecido
   final String title;
   final String subtitle;
   final List<Color> gradient;
@@ -565,10 +594,13 @@ class _CreateCardState extends State<_CreateCard>
                 child: widget.iconSpin
                     ? RotationTransition(
                         turns: _spin,
-                        child: Icon(widget.icon,
-                            color: context.colors.textPrimary, size: 24),
+                        child: widget.iconWidget ??
+                            Icon(widget.icon,
+                                color: context.colors.textPrimary, size: 24),
                       )
-                    : Icon(widget.icon, color: context.colors.textPrimary, size: 24),
+                    : widget.iconWidget ??
+                        Icon(widget.icon,
+                            color: context.colors.textPrimary, size: 24),
               ),
               const SizedBox(width: 14),
               Expanded(

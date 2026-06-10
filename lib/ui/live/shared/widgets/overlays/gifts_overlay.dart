@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/ui/app_spacing.dart';
+import '../../../../../core/utils/gift_tier_names.dart';
 import '../../../../live_feed/view_models/gift_catalog_view_model.dart';
 import '../../../../live_feed/view_models/send_gift_view_model.dart';
 import '../../../../live_feed/view_models/gifter_level_view_model.dart';
@@ -203,7 +204,12 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                   letterSpacing: 0.3,
                 ),
                 tabs: tiers
-                    .map<Widget>((t) => Tab(text: t.name.toUpperCase()))
+                    .map<Widget>(
+                      // Localizado via GiftTierNames — "free" vira
+                      // "COFRE" (PT) / "VAULT" (EN) / "BÓVEDA" (ES). UPPER
+                      // pra manter o estilo TikTok dos tabs da live.
+                      (t) => Tab(text: GiftTierNames.ofUpper(context, t.name)),
+                    )
                     .toList(),
               ),
             Expanded(

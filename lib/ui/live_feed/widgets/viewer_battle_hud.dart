@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,12 +7,48 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../data/services/socket_service.dart';
 import '../../../domain/models/battle_state.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/battle_view_model.dart';
 import 'battle_gift_alert.dart';
 import 'battle_score_bar.dart';
 import 'battle_timer.dart';
+
+// ─── Layout constants ─────────────────────────────────────────────────────
+// Faixas verticais do HUD, medidas a partir do SafeArea top do
+// `LivePlayerScreen`. Manter centralizado aqui evita "magic numbers" e
+// dependência implícita de mudanças no `LiveTopBar`.
+//
+// `LiveTopBar` (lib/ui/live/shared/widgets/hud/live_top_bar.dart) tem
+// 2 linhas:
+//   • Linha 1 (close + identidade + viewers + ⋯) ≈ 36px
+//   • Gap                                          8px
+//   • Linha 2 (pílulas LIVE · views · likes)      ≈ 28px
+//   • Padding superior do container                8px
+//   ───────────────────────────────────────────────────
+//   Total                                         ≈ 80px (abaixo do SafeArea)
+//
+// O painel de battle ENCOSTA na borda inferior do top bar (com 8px de
+// respiro) — igual ao TikTok PK, onde o placar fica colado ao header.
+const double _kLiveTopBarHeight = 80;
+const double _kPanelTopOffset = _kLiveTopBarHeight + 8; // 88
+// Altura estimada do `_ScorePanel`: padding (8+8) + nameRow (~16) + gap (2)
+// + scoreText (~18) + gap (8) + BattleScoreBar compact (~12) ≈ 72.
+// Se mudar o painel, ajustar aqui.
+const double _kPanelHeight = 72;
+const double _kTimerTopOffset = _kPanelTopOffset + _kPanelHeight + 6; // 166
+const double _kTimerHeight = 32; // BattleTimer não-compact (fontSize 18 + pad)
+// Power Moment vem LOGO abaixo do timer central (banner de urgência —
+// precisa estar visível). Os toasts vêm depois, pra não roubar atenção.
+const double _kPowerMomentTopOffset = _kTimerTopOffset + _kTimerHeight + 8; // 206
+const double _kPowerMomentHeight = 50;
+const double _kToastsTopOffset =
+    _kPowerMomentTopOffset + _kPowerMomentHeight + 8; // 264
+// Momentum: empurrado pra abaixo do timer central pra não competir visualmente
+// (antes ficava na mesma faixa — riscava na borda em telas estreitas).
+const double _kMomentumTopOffset = _kTimerTopOffset + _kTimerHeight + 8; // 206
 
 /// 🥊 HUD de batalha do ESPECTADOR — sobreposto à live (não é tela separada).
 ///
@@ -21,27 +58,28 @@ import 'battle_timer.dart';
 /// renderizamos a camada de batalha:
 ///
 /// - **Painel de placar** (topo, abaixo do top bar): os DOIS participantes
-///   (avatar + nome + score) com o timer no centro e a barra de vantagem
-///   roxo↔rosa embaixo. Score aparece UMA vez (sem a duplicação da tela antiga).
+///   com o timer no centro e a barra de vantagem roxo↔rosa embaixo.
 /// - **Gift toasts**: quem mandou o quê, caindo logo abaixo do painel.
 /// - **Countdown** 3·2·1 ao iniciar.
-/// - **Banner de resultado** compacto ao terminar (a live continua atrás;
-///   auto-dismiss em ~8s ou toque no X).
+/// - **Banner de resultado** com score final ao terminar (auto-dismiss 12s).
 ///
-/// Gamificação leve (barata): 👑 coroa + glow no líder e haptic na virada
-/// de liderança — feedback tátil que deixa a disputa "viva".
-///
-/// `onClose` é chamado quando o resultado é dispensado → o pai faz
-/// `setState(_activeBattleId = null)` e volta pra live normal.
+/// `onClose` → pai faz `_activeBattleId = null` e volta pra live normal.
+/// `onRematch(newBattleId)` → pai troca `_activeBattleId` pela revanche.
 class ViewerBattleHud extends ConsumerStatefulWidget {
   const ViewerBattleHud({
     super.key,
     required this.battleId,
+    required this.roomId,
     required this.onClose,
+    this.onRematch,
   });
 
   final String battleId;
+  /// ID da sala que o viewer está assistindo — usado para detectar revanche.
+  final String roomId;
   final VoidCallback onClose;
+  /// Chamado quando uma revanche começa: `newBattleId` é o novo ID.
+  final void Function(String newBattleId)? onRematch;
 
   @override
   ConsumerState<ViewerBattleHud> createState() => _ViewerBattleHudState();
@@ -56,23 +94,61 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
   /// 'a' | 'b' | null — usado pra disparar haptic só na MUDANÇA de líder.
   String? _lastLeader;
 
-  // ── Momentum (🔥 rajada de presentes) ──────────────────────────────────
-  // Conta gifts consecutivos do MESMO lado. Quando passa do limiar, mostra
-  // o badge "EM CHAMAS xN" do lado quente. Reseta quando o outro lado pontua
-  // ou após uma janela de silêncio. 100% derivado de `updated_side` (dado
-  // que já chega por gift) — gamificação honesta, sem inventar número.
+  // ── Momentum ────────────────────────────────────────────────────────────
   static const int _momentumThreshold = 3;
-  String? _momentumSide; // lado da rajada atual
+  String? _momentumSide;
   int _momentumCount = 0;
   Timer? _momentumDecay;
 
-  // ── Lead change (💥 "VIROU!") ──────────────────────────────────────────
-  // Flash rápido quando a liderança troca de lado. Acompanha o haptic.
+  // ── Lead change ─────────────────────────────────────────────────────────
   String? _leadFlashSide;
   Timer? _leadFlashClear;
 
   @override
+  void initState() {
+    super.initState();
+    // Ouvir nova batalha (revanche) que envolva esta sala.
+    // Quando os streamers aceitam revanche, `connect:battle:started` chega
+    // com `room_a_id` ou `room_b_id` = widget.roomId e um novo `battle_id`.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final socket = ref.read(socketServiceProvider);
+      socket.on(AppConstants.eventBattleStarted, _onRematchStarted);
+    });
+  }
+
+  void _onRematchStarted(dynamic raw) {
+    if (!mounted) return;
+    try {
+      Map<String, dynamic> data;
+      if (raw is Map<String, dynamic>) {
+        data = raw;
+      } else if (raw is String) {
+        data = Map<String, dynamic>.from(
+            const JsonDecoder().convert(raw) as Map);
+      } else {
+        return;
+      }
+      final newBattleId = data['battle_id'] as String?;
+      if (newBattleId == null || newBattleId == widget.battleId) return;
+      final roomA = data['room_a_id'] as String? ?? '';
+      final roomB = data['room_b_id'] as String? ?? '';
+      // Só nos importa se esta sala está na nova batalha
+      if (roomA != widget.roomId && roomB != widget.roomId) return;
+      // Cancelar auto-close do resultado anterior
+      _autoCloseTimer?.cancel();
+      _autoCloseTimer = null;
+      widget.onRematch?.call(newBattleId);
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
+    // Remover handler de revanche — evita processar evento após dispose
+    try {
+      final socket = ref.read(socketServiceProvider);
+      socket.off(AppConstants.eventBattleStarted);
+    } catch (_) {}
     _countdownClear?.cancel();
     _autoCloseTimer?.cancel();
     _momentumDecay?.cancel();
@@ -157,9 +233,12 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
           }
           _maybeLeadChange(s);
           // Terminou → agenda auto-close (uma vez só).
+          // Se vier uma revanche (novo battleId), o pai vai trocar o widget
+          // inteiro — este timer cancela no dispose. Não é problema.
           if (s.isOver && _autoCloseTimer == null) {
             HapticFeedback.heavyImpact();
-            _autoCloseTimer = Timer(const Duration(seconds: 8), () {
+            // Auto-close de 12s para dar tempo de ver o resultado
+            _autoCloseTimer = Timer(const Duration(seconds: 12), () {
               if (mounted) widget.onClose();
             });
           }
@@ -173,8 +252,10 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
       data: (battle) {
         return Stack(
           children: [
-            // ── Painel de placar (topo, abaixo do LiveTopBar de 2 linhas) ──
-            // Quando termina, o painel some e dá lugar ao banner de resultado.
+            // ── Barra de vantagem colada no topo do vídeo (TikTok PK style) ──
+            // Apenas a barra roxo↔rosa de fora a fora — sem painel escuro,
+            // sem nomes, sem scores no HUD. Os nomes já aparecem diretamente
+            // sobre o vídeo de cada streamer (live_top_bar / streamer_identity).
             if (!battle.isOver)
               Positioned(
                 top: 0,
@@ -183,13 +264,48 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 84, 12, 0),
-                    child: _ScorePanel(battle: battle),
+                    padding: EdgeInsets.only(top: _kPanelTopOffset),
+                    child: BattleScoreBar(
+                      progressA: battle.progressA,
+                      scoreA: battle.scoreA,
+                      scoreB: battle.scoreB,
+                      compact: true,
+                    ),
                   ),
                 ),
               ),
 
-            // ── Gift toasts (logo abaixo do painel) ──
+            // ── ⏱️ Timer central flutuante (sobre a divisória do split-screen) ──
+            // Centralizado horizontalmente — assina visualmente o "centro" da
+            // batalha (Bigo/TikTok style). Posicionado logo abaixo do
+            // `_ScorePanel`. Pulsa vermelho nos últimos 30s (lógica do próprio
+            // `BattleTimer`).
+            if (!battle.isOver)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        0, _kTimerTopOffset, 0, 0),
+                    child: IgnorePointer(
+                      child: Center(
+                        child: BattleTimer(
+                          timeRemaining: battle.timeRemaining,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // ── Gift toasts (Bigo/TikTok PK style) ──
+            // Estratégia: gift pro lado A → toast renderiza no lado B (e
+            // vice-versa). Cria a sensação "o presente está passando do
+            // público para o destinatário" + não cobre a cara do streamer
+            // que recebeu. IgnorePointer pra não bloquear toque no vídeo.
             if (_toasts.isNotEmpty && !battle.isOver)
               Positioned(
                 top: 0,
@@ -198,21 +314,56 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 158, 12, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: _toasts
-                          .take(3)
-                          .map((t) => Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: BattleGiftAlert(
-                                  senderName: t.sender,
-                                  giftName: t.gift,
-                                  side: t.side,
-                                  mode: GiftAlertMode.toast,
-                                ),
-                              ))
-                          .toList(),
+                    padding: const EdgeInsets.fromLTRB(
+                        0, _kToastsTopOffset, 0, 0),
+                    child: IgnorePointer(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Coluna esquerda: toasts dos gifts que foram pro
+                          // streamer B (B está no vídeo direito → toast
+                          // aparece na esquerda, "voando" em direção a ele).
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: _toasts
+                                  .where((t) => t.side == 'b')
+                                  .take(2)
+                                  .map((t) => Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 4),
+                                        child: BattleGiftAlert(
+                                          senderName: t.sender,
+                                          giftName: t.gift,
+                                          side: t.side,
+                                          mode: GiftAlertMode.toast,
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                          // Coluna direita: gifts pro lado A.
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: _toasts
+                                  .where((t) => t.side == 'a')
+                                  .take(2)
+                                  .map((t) => Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 4),
+                                        child: BattleGiftAlert(
+                                          senderName: t.sender,
+                                          giftName: t.gift,
+                                          side: t.side,
+                                          mode: GiftAlertMode.toast,
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -225,8 +376,9 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
               ),
 
             // ── 🔥 Momentum badge (rajada de presentes de um lado) ──
-            // Aparece à esquerda (lado A) ou direita (lado B), abaixo do
-            // painel. IgnorePointer: é só feedback, não recebe toque.
+            // Aparece à esquerda (lado A) ou direita (lado B), na mesma faixa
+            // vertical do timer central (mas nas bordas). IgnorePointer: é só
+            // feedback, não recebe toque.
             if (_momentumActive && !battle.isOver)
               Positioned(
                 top: 0,
@@ -235,7 +387,8 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 150, 12, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                        12, _kMomentumTopOffset, 12, 0),
                     child: IgnorePointer(
                       child: Align(
                         alignment: _momentumSide == 'a'
@@ -268,7 +421,8 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 196, 12, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                        12, _kPowerMomentTopOffset, 12, 0),
                     child: IgnorePointer(
                       child: Center(
                         child: _FinalStretchBanner(
@@ -304,7 +458,8 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 84, 12, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                        12, _kPanelTopOffset, 12, 0),
                     child: _ResultBanner(
                       battle: battle,
                       l10n: l10n,
@@ -317,222 +472,6 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
         );
       },
     );
-  }
-}
-
-// ─── Score panel ────────────────────────────────────────────────────────────
-
-/// Painel glass com os dois participantes + timer central + barra de vantagem.
-class _ScorePanel extends StatelessWidget {
-  const _ScorePanel({required this.battle});
-  final BattleState battle;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = S.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.32),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _SideTag(
-                      name: battle.streamerAName,
-                      avatarUrl: battle.streamerAAvatarUrl,
-                      score: battle.scoreA,
-                      color: AppColors.electricPurple,
-                      leading: battle.isLeadingA,
-                      alignEnd: false,
-                      // 🏅 MVP REAL: maior doador do lado A (vem do backend).
-                      mvp: battle.topGifterA != null,
-                      mvpLabel: l10n.battleMvp,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: BattleTimer(
-                      timeRemaining: battle.timeRemaining,
-                      compact: true,
-                    ),
-                  ),
-                  Expanded(
-                    child: _SideTag(
-                      name: battle.streamerBName,
-                      avatarUrl: battle.streamerBAvatarUrl,
-                      score: battle.scoreB,
-                      color: AppColors.hotPink,
-                      leading: battle.isLeadingB,
-                      alignEnd: true,
-                      // 🏅 MVP REAL: maior doador do lado B (vem do backend).
-                      mvp: battle.topGifterB != null,
-                      mvpLabel: l10n.battleMvp,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Barra de vantagem (compact = só a barra fina, sem labels —
-              // os scores já aparecem nos _SideTag, então zero duplicação).
-              BattleScoreBar(
-                progressA: battle.progressA,
-                scoreA: battle.scoreA,
-                scoreB: battle.scoreB,
-                compact: true,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Avatar + nome + score de um lado. 👑 + glow quando está liderando.
-/// 🏅 chip de MVP quando há um top-gifter real naquele lado (vem do backend).
-class _SideTag extends StatelessWidget {
-  const _SideTag({
-    required this.name,
-    required this.avatarUrl,
-    required this.score,
-    required this.color,
-    required this.leading,
-    required this.alignEnd,
-    this.mvp = false,
-    this.mvpLabel = 'MVP',
-  });
-
-  final String name;
-  final String? avatarUrl;
-  final double score;
-  final Color color;
-  final bool leading;
-  final bool alignEnd;
-  final bool mvp;
-  final String mvpLabel;
-
-  String _fmt(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final avatar = Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: leading ? color : Colors.white24,
-          width: leading ? 2 : 1,
-        ),
-        boxShadow: leading
-            ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8)]
-            : null,
-      ),
-      child: ClipOval(
-        child: avatarUrl != null
-            ? Image.network(
-                avatarUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const Icon(Icons.person, size: 18, color: Colors.white54),
-              )
-            : const Icon(Icons.person, size: 18, color: Colors.white54),
-      ),
-    );
-
-    final nameRow = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (leading && alignEnd) ...[
-          const Text('👑', style: TextStyle(fontSize: 11)),
-          const SizedBox(width: 3),
-        ],
-        Flexible(
-          child: Text(
-            name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 12,
-              shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (leading && !alignEnd) ...[
-          const SizedBox(width: 3),
-          const Text('👑', style: TextStyle(fontSize: 11)),
-        ],
-      ],
-    );
-
-    final texts = Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        nameRow,
-        const SizedBox(height: 1),
-        Text(
-          _fmt(score),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-            shadows: const [Shadow(blurRadius: 4, color: Colors.black54)],
-          ),
-        ),
-        // 🏅 Chip de MVP — premia o maior doador do lado (dado REAL do backend).
-        if (mvp) ...[
-          const SizedBox(height: 3),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(7),
-              border: Border.all(color: color.withValues(alpha: 0.55)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🏅', style: TextStyle(fontSize: 9)),
-                const SizedBox(width: 3),
-                Text(
-                  mvpLabel,
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 9,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-
-    final children = alignEnd
-        ? [Expanded(child: texts), const SizedBox(width: 8), avatar]
-        : [avatar, const SizedBox(width: 8), Expanded(child: texts)];
-
-    return Row(mainAxisSize: MainAxisSize.min, children: children);
   }
 }
 
@@ -592,8 +531,9 @@ class _CountdownState extends State<_Countdown>
 
 // ─── Result banner ──────────────────────────────────────────────────────────
 
-/// Banner compacto de resultado (NÃO é fullscreen — a live continua atrás).
-class _ResultBanner extends StatelessWidget {
+/// Banner de resultado do ESPECTADOR (a live continua atrás).
+/// Mostra vencedor + score final + botão fechar. Auto-fecha em 12s.
+class _ResultBanner extends StatefulWidget {
   const _ResultBanner({
     required this.battle,
     required this.l10n,
@@ -605,69 +545,194 @@ class _ResultBanner extends StatelessWidget {
   final VoidCallback onClose;
 
   @override
+  State<_ResultBanner> createState() => _ResultBannerState();
+}
+
+class _ResultBannerState extends State<_ResultBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  String _fmt(double v) =>
+      v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}K' : v.toStringAsFixed(0);
+
+  @override
   Widget build(BuildContext context) {
+    final battle = widget.battle;
     final isDraw = battle.isDraw;
     final winnerName = battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
     final winnerColor =
         battle.isLeadingA ? AppColors.electricPurple : AppColors.hotPink;
+    final aColor = AppColors.electricPurple;
+    final bColor = AppColors.hotPink;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.42),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDraw
-                  ? Colors.white24
-                  : winnerColor.withValues(alpha: 0.6),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                isDraw ? Icons.handshake_outlined : Icons.workspace_premium,
-                color: isDraw ? Colors.white54 : winnerColor,
-                size: 28,
+    return ScaleTransition(
+      scale: _scale,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDraw
+                    ? Colors.white24
+                    : winnerColor.withValues(alpha: 0.7),
+                width: 1.5,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Título ──
+                Row(
                   children: [
                     Text(
-                      l10n.battleEnded,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 11,
+                      isDraw ? '🤝' : '🏆',
+                      style: const TextStyle(fontSize: 26),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            widget.l10n.battleEnded,
+                            style: const TextStyle(
+                                color: Colors.white54, fontSize: 11),
+                          ),
+                          Text(
+                            isDraw
+                                ? widget.l10n.battleDraw
+                                : '${widget.l10n.battleWinner}: $winnerName',
+                            style: TextStyle(
+                              color: isDraw ? Colors.white70 : winnerColor,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      isDraw
-                          ? l10n.battleDraw
-                          : '${l10n.battleWinner}: $winnerName',
-                      style: TextStyle(
-                        color: isDraw ? Colors.white70 : winnerColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded,
+                          color: Colors.white54, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: widget.onClose,
                     ),
                   ],
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded,
-                    color: Colors.white70, size: 22),
-                onPressed: onClose,
-              ),
-            ],
+                const SizedBox(height: 12),
+                // ── Score final ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            battle.streamerAName,
+                            style: TextStyle(
+                              color: aColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _fmt(battle.scoreA),
+                            style: TextStyle(
+                              color: isDraw ? Colors.white70 : (battle.isLeadingA ? aColor : Colors.white38),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                            ),
+                          ),
+                          Text(
+                            '${battle.giftsCountA} presentes',
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 50,
+                      color: Colors.white12,
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            battle.streamerBName,
+                            style: TextStyle(
+                              color: bColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _fmt(battle.scoreB),
+                            style: TextStyle(
+                              color: isDraw ? Colors.white70 : (battle.isLeadingB ? bColor : Colors.white38),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                            ),
+                          ),
+                          Text(
+                            '${battle.giftsCountB} presentes',
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // ── Botão fechar ──
+                OutlinedButton.icon(
+                  onPressed: widget.onClose,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  icon: const Icon(Icons.close_rounded, size: 16),
+                  label: const Text('Fechar', style: TextStyle(fontSize: 13)),
+                ),
+              ],
+            ),
           ),
         ),
       ),

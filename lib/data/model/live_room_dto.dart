@@ -33,6 +33,14 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'ingest_url') String? ingestUrl,
     @JsonKey(name: 'started_at') String? startedAt,
     @JsonKey(name: 'created_at') String? createdAt,
+    // ⚔️ Campos de batalha — presentes quando live_type = 'battle'
+    @JsonKey(name: 'battle_id') String? battleId,
+    @JsonKey(name: 'opponent_id') String? opponentId,
+    @JsonKey(name: 'opponent_name') String? opponentName,
+    @JsonKey(name: 'opponent_avatar') String? opponentAvatar,
+    @JsonKey(name: 'opponent_room_id') String? opponentRoomId,
+    @JsonKey(name: 'opponent_thumbnail_url') String? opponentThumbnailUrl,
+    @JsonKey(name: 'battle_duration_seconds') int? battleDurationSeconds,
   }) = _LiveRoomDto;
 
   factory LiveRoomDto.fromJson(Map<String, dynamic> json) =>
@@ -96,6 +104,13 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       streamerAvatarUrl: host?.avatarUrl ?? streamerAvatar,
       streamerUsername: streamerUsername,
       streamerVerified: isVerified,
+      battleId: battleId,
+      opponentId: opponentId,
+      opponentName: opponentName,
+      opponentAvatarUrl: opponentAvatar,
+      opponentRoomId: opponentRoomId,
+      opponentThumbnailUrl: opponentThumbnailUrl,
+      battleDurationSeconds: battleDurationSeconds ?? 300,
     );
   }
 }

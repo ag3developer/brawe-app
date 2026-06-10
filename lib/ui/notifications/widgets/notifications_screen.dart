@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -127,19 +128,36 @@ class _NotificationTile extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundColor: color.withValues(alpha: 0.15),
-                    backgroundImage:
-                        (notification.actorAvatar != null &&
-                            notification.actorAvatar!.isNotEmpty)
-                        ? NetworkImage(notification.actorAvatar!)
-                        : null,
-                    child:
-                        (notification.actorAvatar == null ||
-                            notification.actorAvatar!.isEmpty)
-                        ? Icon(icon, color: color, size: 22)
-                        : null,
+                  // Avatar do ator com cache em disco. Quando não há
+                  // avatar, mostra o ícone do tipo de notificação (mais
+                  // contextual que uma inicial — sabemos que foi curtida
+                  // ou comentário).
+                  ClipOval(
+                    child: SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: (notification.actorAvatar != null &&
+                              notification.actorAvatar!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: notification.actorAvatar!,
+                              fit: BoxFit.cover,
+                              fadeInDuration:
+                                  const Duration(milliseconds: 150),
+                              placeholder: (_, __) => Container(
+                                color: color.withValues(alpha: 0.15),
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                color: color.withValues(alpha: 0.15),
+                                alignment: Alignment.center,
+                                child: Icon(icon, color: color, size: 22),
+                              ),
+                            )
+                          : Container(
+                              color: color.withValues(alpha: 0.15),
+                              alignment: Alignment.center,
+                              child: Icon(icon, color: color, size: 22),
+                            ),
+                    ),
                   ),
                   if (unread)
                     Positioned(

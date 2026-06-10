@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../../../../data/repositories/live_repository.dart';
 import '../../../../../data/repositories/profile_repository.dart';
 import '../../../../../domain/models/live_comment.dart';
+import '../../../../../domain/models/live_room.dart';
 import '../../../../../domain/models/profile.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
@@ -606,12 +607,16 @@ class StreamerIdentity extends ConsumerWidget {
 }
 
 /// Helper de navegação para a live (extraído pra consistência).
-void openLiveRoom(BuildContext context, String roomId) {
+///
+/// Passa [room] como `extra` quando disponível → a rota usa diretamente
+/// o objeto já carregado, sem fazer nova chamada HTTP ao entrar na live.
+/// Se [room] for null, cai no `_LiveRoomResolver` (deep link / push notif).
+void openLiveRoom(BuildContext context, String roomId, [LiveRoom? room]) {
   if (roomId.isEmpty || roomId == 'missing_id') {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Live indisponível')),
     );
     return;
   }
-  context.push('/live/$roomId');
+  context.push('/live/$roomId', extra: room);
 }

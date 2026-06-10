@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/live_room.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
+import '../sheets/gifter_ranking_sheet.dart';
 import '../sheets/sheets.dart';
 import 'live_likes_pill.dart';
 import 'live_pill.dart';
@@ -25,6 +27,8 @@ class LiveTopBar extends StatelessWidget {
     required this.roomId,
     required this.onBack,
     required this.onShare,
+    this.recentViewerAvatars = const [],
+    this.gifterRanking = const [],
   });
   final LiveRoom room;
   final int viewerCount;
@@ -32,6 +36,10 @@ class LiveTopBar extends StatelessWidget {
   final String roomId;
   final VoidCallback onBack;
   final VoidCallback onShare;
+  /// Avatares reais dos viewers mais recentes (do socket `viewer_joined`).
+  final List<String> recentViewerAvatars;
+  /// Ranking de presenteadores — passado ao sheet ao tocar nos avatares.
+  final List<GifterEntry> gifterRanking;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +65,15 @@ class LiveTopBar extends StatelessWidget {
             Expanded(child: StreamerIdentityBar(room: room)),
             const SizedBox(width: 8),
             // Stack de avatares de viewers + total (350+ etc.)
-            ViewersStack(viewerCount: viewerCount),
+            // Toque abre o ranking de presenteadores da live.
+            ViewersStack(
+              viewerCount: viewerCount,
+              avatarUrls: recentViewerAvatars,
+              onTap: () => GifterRankingSheet.show(
+                context,
+                ranking: gifterRanking,
+              ),
+            ),
             const SizedBox(width: 8),
             // More menu (⋯)
             TopHudCircleIcon(

@@ -1,12 +1,16 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/badge_count.dart';
+import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../data/repositories/auth_state_provider.dart';
@@ -14,6 +18,8 @@ import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/feedback_service.dart';
 import '../../../data/services/social_actions_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../chat/view_models/unread_count_provider.dart';
+import '../../notifications/view_models/notifications_view_model.dart';
 import '../view_models/feed_view_model.dart';
 import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
@@ -197,7 +203,7 @@ class _Orb extends StatelessWidget {
 }
 
 /// ─── Top Bar (glass + blur on scroll) ─────────────────────────────────────
-class _GlassTopBar extends StatelessWidget {
+class _GlassTopBar extends ConsumerWidget {
   const _GlassTopBar({
     required this.blur,
     required this.onSearch,
@@ -210,7 +216,12 @@ class _GlassTopBar extends StatelessWidget {
   final VoidCallback onNotifications;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Contadores reativos (reúsa os providers globais — sem contadores novos).
+    final notifications =
+        ref.watch(notificationsUnreadCountProvider).asData?.value ?? 0;
+    final messages = ref.watch(unreadCountProvider);
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
@@ -229,14 +240,18 @@ class _GlassTopBar extends StatelessWidget {
             children: [
               const BraweLogo(iconSize: 44),
               const Spacer(),
-              _IconChip(icon: Icons.search_rounded, onTap: onSearch),
-              const SizedBox(width: 6),
-              _IconChip(icon: Icons.send_rounded, onTap: onMessages),
+              _IconChip(icon: LucideIcons.search, onTap: onSearch),
               const SizedBox(width: 6),
               _IconChip(
-                icon: Icons.notifications_none_rounded,
+                icon: LucideIcons.send,
+                onTap: onMessages,
+                count: messages,
+              ),
+              const SizedBox(width: 6),
+              _IconChip(
+                icon: LucideIcons.bell,
                 onTap: onNotifications,
-                badge: true,
+                count: notifications,
               ),
             ],
           ),
@@ -247,13 +262,19 @@ class _GlassTopBar extends StatelessWidget {
 }
 
 class _IconChip extends StatelessWidget {
-  const _IconChip({required this.icon, required this.onTap, this.badge = false});
+  const _IconChip({required this.icon, required this.onTap, this.count = 0});
   final IconData icon;
   final VoidCallback onTap;
-  final bool badge;
+
+  /// Quantidade de itens não lidos. `0` esconde o badge; `> 0` mostra a bolha
+  /// numérica (até "9+"). Substitui o antigo `badge` booleano hardcoded.
+  final int count;
 
   @override
   Widget build(BuildContext context) {
+    final showBadge = BadgeCount.isVisible(count);
+    final label = BadgeCount.label(count);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -274,17 +295,31 @@ class _IconChip extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Icon(icon, color: context.colors.textPrimary, size: 20),
-              if (badge)
+              if (showBadge)
                 Positioned(
-                  top: 9,
-                  right: 10,
+                  top: 4,
+                  right: 4,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
                     decoration: BoxDecoration(
                       gradient: _FeedTokens.brandGradient,
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: context.colors.surface, width: 1.5),
+                    ),
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -910,36 +945,36 @@ class _PostCardState extends ConsumerState<PostCard>
                             ),
                             child: _isVideoUrl(post.imageUrl!)
                                 ? _FeedVideoTile(url: post.imageUrl!)
-                                : Image.network(
-                              post.imageUrl!,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (ctx, child, progress) {
-                                if (progress == null) return child;
-                                return AspectRatio(
-                                  aspectRatio: 4 / 5,
-                                  child: Container(
-                                    color: context.colors.surfaceElevated,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFFA855F7),
+                                : CachedNetworkImage(
+                                    imageUrl: post.imageUrl!,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    fadeInDuration:
+                                        const Duration(milliseconds: 180),
+                                    placeholder: (ctx, _) => AspectRatio(
+                                      aspectRatio: 4 / 5,
+                                      child: Container(
+                                        color:
+                                            context.colors.surfaceElevated,
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Color(0xFFA855F7),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (_, __, ___) => Container(
+                                      height: 200,
+                                      color: context.colors.surfaceElevated,
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.broken_image_rounded,
+                                          color: context.colors.textTertiary,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                );
-                              },
-                              errorBuilder: (_, __, ___) => Container(
-                                height: 200,
-                                color: context.colors.surfaceElevated,
-                                child: Center(
-                                  child: Icon(
-                                    Icons.broken_image_rounded,
-                                    color: context.colors.textTertiary,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ),
                         ),
                       ),
@@ -1950,9 +1985,24 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                     child: FittedBox(
                       fit: BoxFit.contain,
                       alignment: Alignment.center,
-                      child: Image.network(
-                        widget.imageUrl,
-                        errorBuilder: (_, __, ___) => Icon(
+                      child: CachedNetworkImage(
+                        imageUrl: widget.imageUrl,
+                        fadeInDuration: const Duration(milliseconds: 150),
+                        placeholder: (_, __) => Container(
+                          width: 200,
+                          height: 200,
+                          color: Colors.transparent,
+                          alignment: Alignment.center,
+                          child: const SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (_, __, ___) => Icon(
                           Icons.broken_image_rounded,
                           color: context.colors.textTertiary,
                           size: 80,
@@ -2018,23 +2068,10 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                     icon: Icon(Icons.close_rounded, color: context.colors.textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: context.colors.surface,
-                    backgroundImage: (widget.authorAvatarUrl != null &&
-                            widget.authorAvatarUrl!.isNotEmpty)
-                        ? NetworkImage(widget.authorAvatarUrl!)
-                        : null,
-                    child: (widget.authorAvatarUrl == null ||
-                            widget.authorAvatarUrl!.isEmpty)
-                        ? Text(
-                            widget.authorName.isNotEmpty
-                                ? widget.authorName[0].toUpperCase()
-                                : '?',
-                            style: TextStyle(
-                                color: context.colors.textPrimary, fontSize: 12),
-                          )
-                        : null,
+                  BraweAvatar(
+                    avatarUrl: widget.authorAvatarUrl,
+                    displayName: widget.authorName,
+                    size: 32,
                   ),
                   const SizedBox(width: 10),
                   Expanded(

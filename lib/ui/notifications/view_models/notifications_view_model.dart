@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/notifications_repository.dart';
 import '../../../domain/models/app_notification.dart';
+import '../../core/view_models/app_badge_controller.dart';
 
 part 'notifications_view_model.g.dart';
 
@@ -38,6 +39,8 @@ class NotificationsViewModel extends _$NotificationsViewModel {
 
     try {
       await ref.read(notificationsRepositoryProvider).markRead(id);
+      // Atualiza o badge do ícone (a contagem global vem de um provider à parte).
+      ref.read(appBadgeControllerProvider.notifier).refresh();
     } catch (_) {
       state = AsyncValue.data(current);
     }
@@ -57,6 +60,7 @@ class NotificationsViewModel extends _$NotificationsViewModel {
     );
     try {
       await ref.read(notificationsRepositoryProvider).markAllRead();
+      ref.read(appBadgeControllerProvider.notifier).refresh();
     } catch (_) {
       state = AsyncValue.data(current);
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,13 +7,14 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import '../view_models/live_room_comments_view_model.dart';
 import '../view_models/live_room_gifts_view_model.dart';
-import '../view_models/send_gift_view_model.dart';
 import '../../core/view_models/follow_view_model.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../data/repositories/gift_repository.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/services/battle_service.dart';
 import '../../../data/services/socket_service.dart';
@@ -26,6 +28,8 @@ import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
 import 'viewer_battle_hud.dart';
+import 'dual_hls_player.dart';
+import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
 /// 📺 Tela do espectador (live viewer).
@@ -57,11 +61,19 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   Timer? _reactionFlushTimer;
   int _pendingReactions = 0;
 
+  // 🌹 Rose batching — igual às reactions, agrega taps em 400ms e envia
+  // 1 request com quantity=N. Evita estouro do rate limit (30/min) quando
+  // o usuário clica em combo rápido (TikTok-style).
+  Timer? _roseFlushTimer;
+  int _pendingRoses = 0;
+
   // Realtime reactions (corações de outros viewers + contador global)
   StreamSubscription<LiveReactionEvent>? _reactionSub;
 
   // Battle
   String? _activeBattleId;
+  // Live ended flag — controla overlay de "Live encerrada"
+  bool _liveEnded = false;
 
   // Floating hearts overlay key (para spawn local imediato)
   final GlobalKey<FloatingHeartsOverlayState> _heartsKey =
@@ -75,6 +87,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void initState() {
     super.initState();
     _likesCount = widget.room.totalLikes;
+    // ⚡ Se o room já veio com battleId (live_type=battle + dados enriquecidos
+    // pelo backend), seta o HUD imediatamente — sem nenhum roundtrip extra.
+    // Isso elimina a tela de loading dupla ao entrar em live de batalha.
+    if (widget.room.liveType == 'battle' &&
+        widget.room.battleId != null &&
+        widget.room.battleId!.isNotEmpty) {
+      _activeBattleId = widget.room.battleId;
+    }
     _initializePlayer();
     // Refresh follow state on entry (avoids stale cache from previous session)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -89,6 +109,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void dispose() {
     _reactionFlushTimer?.cancel();
     _flushReactions(force: true);
+    _roseFlushTimer?.cancel();
+    _flushRoses(force: true);
     _reactionSub?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
@@ -103,7 +125,21 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    // 🔁 Re-anexar handler em reconexões (idêntico ao broadcaster).
+    socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
+    _checkActiveBattle();
+  }
+
+  void _reattachBattleHandlers() {
+    final socket = ref.read(socketServiceProvider);
+    socket.off(AppConstants.eventBattleStarted);
+    socket.off(AppConstants.eventLiveEnded);
+    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    // Após reconectar, valida via REST se uma batalha começou durante
+    // a queda de conexão.
     _checkActiveBattle();
   }
 
@@ -111,14 +147,33 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     try {
       final socket = ref.read(socketServiceProvider);
       socket.off(AppConstants.eventBattleStarted);
+      socket.off(AppConstants.eventLiveEnded);
+      socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
+  }
+
+  void _onLiveEnded(dynamic raw) {
+    if (!mounted) return;
+    // Encerrar batalha imediatamente + mostrar overlay "Live encerrada"
+    setState(() {
+      _activeBattleId = null;
+      _liveEnded = true;
+    });
+    // Auto-pop após 4s para não prender o usuário na tela
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) context.pop();
+    });
   }
 
   /// Consulta o backend para saber se já existe uma batalha ativa nesta sala.
   /// Necessário quando o viewer entra na live depois da batalha já ter começado
   /// (o evento `connect:battle:started` já foi emitido antes da entrada).
+  /// SKIP: se o room já veio com battleId (enriquecido pelo backend), não há
+  /// necessidade de roundtrip — o battleId foi setado no initState.
   Future<void> _checkActiveBattle() async {
     if (!mounted) return;
+    // Se o battleId já foi carregado via room detail (backend enriched), skip.
+    if (_activeBattleId != null && _activeBattleId!.isNotEmpty) return;
     try {
       final result = await ref
           .read(battleServiceProvider)
@@ -159,12 +214,33 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   void _onBattleStarted(dynamic raw) {
     if (!mounted) return;
-    Map<String, dynamic> data = {};
-    if (raw is Map<String, dynamic>) data = raw;
+    // 🛡️ Parse defensivo: o socket pode entregar Map OU String JSON
+    // (depende de transport/encoding). Sem isso, eventos válidos eram
+    // descartados silenciosamente.
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
     final battleId = data['battle_id'] as String?;
-    if (battleId == null) return;
+    if (battleId == null || battleId.isEmpty) return;
     // Overlay (não navega): mostra o HUD de batalha por cima da live atual.
     setState(() => _activeBattleId = battleId);
+  }
+
+  /// Converte o payload bruto do socket em Map.
+  /// O `socket_io_client` às vezes entrega o evento já decodificado (`Map`)
+  /// e às vezes como `String` JSON — depende do transport (websocket vs polling)
+  /// e do middleware no servidor. Tratamos os 2 casos.
+  Map<String, dynamic>? _parseSocketPayload(dynamic raw) {
+    try {
+      if (raw is Map<String, dynamic>) return raw;
+      if (raw is Map) return Map<String, dynamic>.from(raw);
+      if (raw is String && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      }
+    } catch (e) {
+      debugPrint('LivePlayer: socket payload parse error: $e (raw=$raw)');
+    }
+    return null;
   }
 
   Future<void> _initializePlayer() async {
@@ -305,39 +381,44 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   /// 🌹 Atalho rápido — envia 1 rosa direto, sem abrir o catálogo.
   ///
-  /// **Mesmo caminho da rosa dentro da sacola** (`gifts_overlay.dart`):
-  ///   1. Cada tap dispara 1 request em paralelo via `unawaited` —
-  ///      NÃO bloqueia próximos taps (combo TikTok-style, igual sacola).
-  ///   2. Usa o slug `rose` + envia `battleId` quando ativo (assim a
-  ///      rosa pontua no placar da batalha, igual a sacola faz).
-  ///   3. Animação chega via Socket.IO (`gift_received`) — mesmo
-  ///      caminho visual do catálogo formal.
-  ///   4. Só mostra SnackBar de erro se request falhar (saldo, etc.).
+  /// **Batch TikTok-style**: agrega taps em 400ms e envia 1 request
+  /// com `quantity=N`. Isso elimina o 429 (rate limit 30/min) quando o
+  /// usuário clica em combo rápido — antes cada tap era 1 request.
+  ///
+  /// Animação: o spawn local do coração é IMEDIATO (sem esperar o flush).
+  /// O backend confirma via socket `gift_received` após o batch.
   void _sendRose() {
     HapticFeedback.lightImpact();
-    unawaited(_fireRoseRequest());
+    _heartsKey.currentState?.spawn(1);  // feedback visual imediato
+    _pendingRoses += 1;
+    _roseFlushTimer?.cancel();
+    _roseFlushTimer = Timer(const Duration(milliseconds: 400), _flushRoses);
   }
 
-  Future<void> _fireRoseRequest() async {
+  void _flushRoses({bool force = false}) {
+    if (_pendingRoses <= 0) return;
+    final qty = _pendingRoses;
+    _pendingRoses = 0;
+    unawaited(_fireRoseRequest(quantity: qty));
+  }
+
+  Future<void> _fireRoseRequest({int quantity = 1}) async {
+    // Captura o repository ANTES do await — ref não pode ser lido
+    // depois que o widget foi disposed.
+    final repo = ref.read(giftRepositoryProvider);
+    // 🛡️ Idempotency-Key: UUID v4 único por batch. Se a request tiver
+    // timeout e o cliente retentar, o servidor detecta a key repetida
+    // e NÃO debita de novo — devolve a mesma resposta.
+    final idemKey = const Uuid().v4();
     try {
-      final ok = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
-            roomId: widget.room.id,
-            giftId: 'rose',
-            receiverId: widget.room.streamerId,
-            quantity: 1,
-            battleId: _activeBattleId,
-          );
-      if (!mounted || ok) return;
-      final err = ref.read(sendGiftViewModelProvider).error;
-      final msg = err == null
-          ? 'Não foi possível enviar a rosa.'
-          : err.toString().replaceFirst('Exception: ', '');
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(msg),
-          duration: const Duration(seconds: 2),
-        ));
+      await repo.sendGift(
+        roomId: widget.room.id,
+        giftId: 'rose',
+        receiverId: widget.room.streamerId,
+        quantity: quantity,
+        battleId: _activeBattleId,
+        idempotencyKey: idemKey,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
@@ -409,6 +490,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                   roomId: widget.room.id,
                   onBack: () => context.pop(),
                   onShare: _onTapShare,
+                  recentViewerAvatars: commentsState.recentViewerAvatars,
+                  gifterRanking: commentsState.gifterRanking,
                 ),
               ),
             ),
@@ -477,17 +560,51 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           ),
 
           // ── 8. Battle HUD (overlay) — só aparece em batalha ──
-          // Camada LEVE por cima da live: placar dos 2 participantes + timer
-          // + toasts de gift no topo. NÃO substitui a tela: vídeo, chat,
-          // rosa e presentes continuam vivos atrás. Mesmo padrão do streamer
-          // (BroadcasterScreen → StreamerBattleHud).
           if (_activeBattleId != null)
             Positioned.fill(
               child: ViewerBattleHud(
+                key: ValueKey(_activeBattleId), // reconstrói ao trocar battleId
                 battleId: _activeBattleId!,
+                roomId: widget.room.id,
                 onClose: () {
                   if (mounted) setState(() => _activeBattleId = null);
                 },
+                onRematch: (newBattleId) {
+                  // Revanche aceita: trocar battleId → ViewerBattleHud reconstrói
+                  // com key nova (ValueKey acima) e BattleViewModel novo.
+                  if (mounted) setState(() => _activeBattleId = newBattleId);
+                },
+              ),
+            ),
+
+          // ── 9. Live encerrada (overlay fullscreen) ──
+          // Aparece quando o streamer encerra a live — fecha automaticamente
+          // em 4s ou ao tocar. Garante que o espectador saia da tela de batalha.
+          if (_liveEnded)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () { if (mounted) context.pop(); },
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.82),
+                  child: const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.live_tv_outlined, color: Colors.white54, size: 64),
+                        SizedBox(height: 16),
+                        Text(
+                          'Live encerrada',
+                          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'O streamer encerrou a transmissão',
+                          style: TextStyle(color: Colors.white54, fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
         ],
@@ -496,6 +613,75 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   Widget _buildVideoLayer() {
+    // 🎬 BATTLE MODE — renderiza split-screen 50/50 numa faixa central,
+    // exatamente como TikTok/Bigo PK: fundo preto total, vídeos entre o
+    // top bar e o chat (NÃO de fora a fora).
+    if (_activeBattleId != null) {
+      final asyncBattle =
+          ref.watch(battleViewModelProvider(_activeBattleId!));
+      final battle = asyncBattle.value;
+      if (battle != null &&
+          (battle.streamUrlA != null || battle.streamUrlB != null)) {
+        // Pausar o single-controller pra não competir por áudio/CPU.
+        if (_controller?.value.isInitialized == true &&
+            _controller!.value.isPlaying) {
+          _controller!.pause();
+          _controller!.setVolume(0.0);
+        }
+
+        // TikTok PK layout: fundo preto ocupa 100% da tela; o DualHlsPlayer
+        // fica numa faixa vertical restrita entre o top bar e o bottom bar.
+        //
+        //  ┌─────────────────────────────────┐  ← topo da tela
+        //  │  SafeArea.top + LiveTopBar ~80px │  (preto / gradiente)
+        //  ├─────────────────────────────────┤
+        //  │  ← DualHlsPlayer (split 50/50)  │  ← videoH = ~55% da tela
+        //  ├─────────────────────────────────┤
+        //  │  Chat + ações  ~140px + bottom  │  (preto)
+        //  └─────────────────────────────────┘
+        final mq = MediaQuery.of(context);
+        const kTopBarH = 80.0;   // altura estimada do LiveTopBar (abaixo SafeArea)
+        const kBottomBarH = 140.0; // LiveBottomBar + padding inferior
+        final topOffset = mq.padding.top + kTopBarH;
+        final bottomOffset = mq.padding.bottom + kBottomBarH;
+        final videoH = (mq.size.height - topOffset - bottomOffset)
+            .clamp(200.0, mq.size.height * 0.62);
+
+        return Container(
+          color: Colors.black,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: topOffset),
+              SizedBox(
+                height: videoH,
+                child: DualHlsPlayer(
+                  streamUrlA: battle.streamUrlA,
+                  streamUrlB: battle.streamUrlB,
+                  streamerAName: battle.streamerAName,
+                  streamerBName: battle.streamerBName,
+                ),
+              ),
+              // Espaço restante fica preto — chat e ações vivem aqui como
+              // overlay (camadas superiores do Stack pai).
+            ],
+          ),
+        );
+      }
+      // Fallback: batalha ativa mas URLs ainda não chegaram (raríssimo —
+      // backend já envia tudo no `started`). Cai pro single-controller
+      // do streamer dono dessa sala enquanto o REST/socket sincroniza.
+    } else {
+      // Voltou pro modo solo: garantir que o single-controller esteja
+      // tocando com áudio (caso tenha sido pausado durante a batalha).
+      if (_controller?.value.isInitialized == true &&
+          !_controller!.value.isPlaying) {
+        _controller!.play();
+        _controller!.setVolume(1.0);
+      }
+    }
+
+    // ── Modo SOLO (default) ──
     if (_isInitialized && _controller != null) {
       return SizedBox.expand(
         child: FittedBox(

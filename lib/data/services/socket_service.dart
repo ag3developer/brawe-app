@@ -24,6 +24,13 @@ class SocketService {
   // so chat / gifts / viewer count keep flowing without the user noticing.
   final Set<String> _joinedRooms = <String>{};
 
+  // 🔁 Callbacks executados APÓS cada (re)conexão bem sucedida — depois de
+  // autenticar e re-joinar as salas. Telas usam isso para re-anexar listeners
+  // de eventos (ex.: `connect:battle:started`) que foram perdidos com a
+  // desconexão. SEM isso, uma queda momentânea de rede quebrava a entrega
+  // de eventos críticos como início de batalha para o broadcaster.
+  final Set<VoidCallback> _onReconnectCallbacks = <VoidCallback>{};
+
   SocketService(this._storageService);
 
   Future<void> connect() async {
@@ -63,6 +70,17 @@ class SocketService {
       for (final roomId in _joinedRooms.toList()) {
         _emitWithUserProfile(AppConstants.eventJoinRoom, {'room_id': roomId});
       }
+      // 🔁 Notificar telas para re-anexarem listeners de eventos custom
+      // (battle, gifts, etc). O socket interno é recriado em reconexões,
+      // então qualquer `on(...)` chamado antes está apontando para um socket
+      // morto. Cada callback deve re-registrar suas próprias subscriptions.
+      for (final cb in _onReconnectCallbacks.toList()) {
+        try {
+          cb();
+        } catch (e) {
+          debugPrint('Socket.IO: reconnect callback failed: $e');
+        }
+      }
       if (!completer.isCompleted) {
         completer.complete();
       }
@@ -100,6 +118,7 @@ class SocketService {
 
   void disconnect() {
     _joinedRooms.clear();
+    _onReconnectCallbacks.clear();
     _socket?.disconnect();
     _socket = null;
     _currentUser = null;
@@ -109,6 +128,18 @@ class SocketService {
     _joinedRooms.add(roomId);
     _emitWithUserProfile(AppConstants.eventJoinRoom, {'room_id': roomId});
     debugPrint('Socket.IO: Joining room $roomId');
+  }
+
+  /// Registra um callback executado APÓS toda (re)conexão bem sucedida.
+  /// Use para re-anexar listeners de eventos (`on(...)`) que são perdidos
+  /// quando o socket interno é recriado em reconexões. Lembrar de chamar
+  /// [removeReconnectCallback] no `dispose` da tela para evitar vazamentos.
+  void addReconnectCallback(VoidCallback cb) {
+    _onReconnectCallbacks.add(cb);
+  }
+
+  void removeReconnectCallback(VoidCallback cb) {
+    _onReconnectCallbacks.remove(cb);
   }
 
   void leaveRoom(String roomId) {

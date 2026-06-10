@@ -20,7 +20,11 @@ mixin _$LiveGift {
  String? get gifterLabel;// "Fã", "Guardião", "Lenda", etc.
  String? get gifterColor;// hex string ex. "#FFD700"
  String? get gifterImageUrl;// PNG remoto do pin (CDN ou /static fallback)
- bool get levelUpgraded;
+ bool get levelUpgraded;// 🎯 Lado da batalha que recebeu o gift (`'a'` esquerda, `'b'` direita).
+// `null` em lives solo. O toast do gift comum usa pra alinhar à lateral
+// certa do split-screen (lado A → bottom-left, lado B → bottom-right).
+// Gifts premium ignoram (mantêm burst central fullscreen).
+ String? get battleSide;
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -33,16 +37,16 @@ $LiveGiftCopyWith<LiveGift> get copyWith => _$LiveGiftCopyWithImpl<LiveGift>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded]);
+int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide]);
 
 @override
 String toString() {
-  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded)';
+  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide)';
 }
 
 
@@ -53,7 +57,7 @@ abstract mixin class $LiveGiftCopyWith<$Res>  {
   factory $LiveGiftCopyWith(LiveGift value, $Res Function(LiveGift) _then) = _$LiveGiftCopyWithImpl;
 @useResult
 $Res call({
- String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded
+ String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide
 });
 
 
@@ -70,7 +74,7 @@ class _$LiveGiftCopyWithImpl<$Res>
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -92,7 +96,8 @@ as String?,gifterLabel: freezed == gifterLabel ? _self.gifterLabel : gifterLabel
 as String?,gifterColor: freezed == gifterColor ? _self.gifterColor : gifterColor // ignore: cast_nullable_to_non_nullable
 as String?,gifterImageUrl: freezed == gifterImageUrl ? _self.gifterImageUrl : gifterImageUrl // ignore: cast_nullable_to_non_nullable
 as String?,levelUpgraded: null == levelUpgraded ? _self.levelUpgraded : levelUpgraded // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,battleSide: freezed == battleSide ? _self.battleSide : battleSide // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -174,10 +179,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveGift() when $default != null:
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded);case _:
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide);case _:
   return orElse();
 
 }
@@ -195,10 +200,10 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide)  $default,) {final _that = this;
 switch (_that) {
 case _LiveGift():
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded);}
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -212,10 +217,10 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveGift() when $default != null:
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded);case _:
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide);case _:
   return null;
 
 }
@@ -227,7 +232,7 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 @JsonSerializable()
 
 class _LiveGift implements LiveGift {
-  const _LiveGift({required this.id, required this.senderId, required this.senderName, this.senderAvatarUrl, required this.giftId, required this.giftName, this.giftIconUrl, this.animationUrl, this.animationType, this.isFullscreen = false, this.emoji, required this.quantity, this.value = 0, required this.timestamp, this.gifterLevel = 1, this.gifterBadge, this.gifterLabel, this.gifterColor, this.gifterImageUrl, this.levelUpgraded = false});
+  const _LiveGift({required this.id, required this.senderId, required this.senderName, this.senderAvatarUrl, required this.giftId, required this.giftName, this.giftIconUrl, this.animationUrl, this.animationType, this.isFullscreen = false, this.emoji, required this.quantity, this.value = 0, required this.timestamp, this.gifterLevel = 1, this.gifterBadge, this.gifterLabel, this.gifterColor, this.gifterImageUrl, this.levelUpgraded = false, this.battleSide});
   factory _LiveGift.fromJson(Map<String, dynamic> json) => _$LiveGiftFromJson(json);
 
 @override final  String id;
@@ -255,6 +260,11 @@ class _LiveGift implements LiveGift {
 @override final  String? gifterImageUrl;
 // PNG remoto do pin (CDN ou /static fallback)
 @override@JsonKey() final  bool levelUpgraded;
+// 🎯 Lado da batalha que recebeu o gift (`'a'` esquerda, `'b'` direita).
+// `null` em lives solo. O toast do gift comum usa pra alinhar à lateral
+// certa do split-screen (lado A → bottom-left, lado B → bottom-right).
+// Gifts premium ignoram (mantêm burst central fullscreen).
+@override final  String? battleSide;
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
@@ -269,16 +279,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded]);
+int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide]);
 
 @override
 String toString() {
-  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded)';
+  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide)';
 }
 
 
@@ -289,7 +299,7 @@ abstract mixin class _$LiveGiftCopyWith<$Res> implements $LiveGiftCopyWith<$Res>
   factory _$LiveGiftCopyWith(_LiveGift value, $Res Function(_LiveGift) _then) = __$LiveGiftCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded
+ String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide
 });
 
 
@@ -306,7 +316,7 @@ class __$LiveGiftCopyWithImpl<$Res>
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,}) {
   return _then(_LiveGift(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -328,7 +338,8 @@ as String?,gifterLabel: freezed == gifterLabel ? _self.gifterLabel : gifterLabel
 as String?,gifterColor: freezed == gifterColor ? _self.gifterColor : gifterColor // ignore: cast_nullable_to_non_nullable
 as String?,gifterImageUrl: freezed == gifterImageUrl ? _self.gifterImageUrl : gifterImageUrl // ignore: cast_nullable_to_non_nullable
 as String?,levelUpgraded: null == levelUpgraded ? _self.levelUpgraded : levelUpgraded // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,battleSide: freezed == battleSide ? _self.battleSide : battleSide // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -516,6 +516,21 @@ class LiveRepository {
     return controller.stream;
   }
 
+  /// 🏆 Busca o ranking de top gifters da sala no backend.
+  /// Retorna lista já mapeada para [GifterEntry] (importado de live_room_comments_view_model).
+  /// Falhas são silenciosas — o ranking local via socket continua como fallback.
+  Future<List<Map<String, dynamic>>> getTopGifters(
+    String roomId, {
+    int limit = 10,
+  }) async {
+    try {
+      return await _liveService.getTopGifters(roomId, limit: limit);
+    } catch (e) {
+      debugPrint('LiveRepository: getTopGifters Error: $e');
+      return [];
+    }
+  }
+
   Future<void> sendComment({
     required String roomId,
     required String message,
@@ -739,10 +754,16 @@ class LiveRepository {
       final msgRoomId = payload['room_id']?.toString();
       final count = int.tryParse(payload['count']?.toString() ?? '1') ?? 1;
       if (count <= 0) return;
+      // 🎯 battle_side: backend só envia quando a sala está em batalha
+      // (valor 'a' ou 'b'). Em lives solo é null e o overlay cai no
+      // comportamento clássico (faixa direita, cor aleatória).
+      final rawSide = payload['battle_side']?.toString();
+      final battleSide = (rawSide == 'a' || rawSide == 'b') ? rawSide : null;
       final event = LiveReactionEvent(
         userId: payload['user_id']?.toString() ?? '',
         count: count,
         color: payload['color']?.toString(),
+        battleSide: battleSide,
         timestamp: DateTime.tryParse(payload['timestamp']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
       );
       _dispatchToControllers(_reactionControllers, event, roomId: msgRoomId);
@@ -904,7 +925,24 @@ class LiveRepository {
       gifterColor: payload['gifter_color']?.toString(),
       gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
       levelUpgraded: payload['level_upgraded'] == true,
+      // 🎯 Lado da batalha (vem do backend quando há `battle_id`).
+      // O overlay usa pra ancorar o toast no lado certo do split-screen.
+      battleSide: _parseBattleSide(payload),
     );
+  }
+
+  /// Extrai `battle_side` do payload de gift.
+  /// Backend pode mandar como `battle_side` no nível raiz OU como
+  /// `updated_side` dentro de `battle_scores` (formato antigo).
+  String? _parseBattleSide(Map<String, dynamic> payload) {
+    final direct = payload['battle_side']?.toString();
+    if (direct == 'a' || direct == 'b') return direct;
+    final scores = payload['battle_scores'];
+    if (scores is Map) {
+      final inner = scores['updated_side']?.toString();
+      if (inner == 'a' || inner == 'b') return inner;
+    }
+    return null;
   }
 
   /// Choose a renderable static icon URL.
