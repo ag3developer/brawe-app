@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/feature_flags.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../data/services/socket_service.dart';
 import '../../../domain/models/feed_item.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -31,6 +33,18 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Escuta live_ended via socket — invalida o feed imediatamente quando
+    // uma live encerra, sem esperar o timer de 30s.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final socket = ref.read(socketServiceProvider);
+      socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    });
+  }
+
+  void _onLiveEnded(dynamic _) {
+    // Live encerrou — refresh silencioso remove a live do feed sem flicker
+    ref.read(forYouFeedViewModelProvider.notifier).refresh(silent: true);
+    ref.read(followingForYouFeedViewModelProvider.notifier).refresh(silent: true);
   }
 
   @override
@@ -48,6 +62,8 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Remove o listener de socket para evitar vazamento de memória
+    ref.read(socketServiceProvider).off(AppConstants.eventLiveEnded, _onLiveEnded);
     _ctrl.dispose();
     super.dispose();
   }

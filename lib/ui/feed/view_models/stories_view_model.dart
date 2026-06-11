@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
@@ -6,9 +7,25 @@ part 'stories_view_model.g.dart';
 
 @riverpod
 class StoriesViewModel extends _$StoriesViewModel {
+  Timer? _refreshTimer;
+
   @override
   FutureOr<List<UserStoriesGroup>> build() async {
+    // Auto-refresh a cada 30s — remove o anel "ao vivo" do avatar
+    // quando o streamer encerra a live, sem precisar de ação do usuário.
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      _silentRefresh();
+    });
+    ref.onDispose(() => _refreshTimer?.cancel());
     return ref.watch(storiesRepositoryProvider).getFeed();
+  }
+
+  Future<void> _silentRefresh() async {
+    final result = await AsyncValue.guard(
+      () => ref.read(storiesRepositoryProvider).getFeed(),
+    );
+    if (result.hasValue) state = result;
   }
 
   Future<void> refresh() async {

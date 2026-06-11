@@ -84,7 +84,12 @@ class ForYouFeedRepository {
   Future<List<FeedItem>> _safeLives({int limit = 10}) async {
     try {
       final rooms = await _liveRepo.getLiveFeed(limit: limit);
-      return rooms.map(_mapLive).toList();
+      // Filtra localmente — garante que lives encerradas nunca entram no feed
+      // mesmo que o backend demore a remover ou o cache local esteja stale.
+      return rooms
+          .where((r) => r.status == 'live')
+          .map(_mapLive)
+          .toList();
     } catch (_) {
       return const [];
     }

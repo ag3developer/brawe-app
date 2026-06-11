@@ -34,7 +34,7 @@ final class ForYouFeedViewModelProvider
 }
 
 String _$forYouFeedViewModelHash() =>
-    r'a147c6834632bdfed40e1bf78d0584f47624447e';
+    r'dd83125569def2c9ef8ad2c0ef54e49552f87a70';
 
 abstract class _$ForYouFeedViewModel extends $AsyncNotifier<List<FeedItem>> {
   FutureOr<List<FeedItem>> build();
@@ -81,7 +81,7 @@ final class FollowingForYouFeedViewModelProvider
 }
 
 String _$followingForYouFeedViewModelHash() =>
-    r'f2342dfd678ef22980267f08cfd4348acd8572f7';
+    r'069a04830ac649ffa8adf074cae1f2608d7a591c';
 
 abstract class _$FollowingForYouFeedViewModel
     extends $AsyncNotifier<List<FeedItem>> {
