@@ -53,7 +53,6 @@ class GiftRepository {
     required String receiverId,
     int quantity = 1,
     String? battleId,
-    String? idempotencyKey,
   }) async {
     try {
       await _liveService.sendGift(
@@ -62,7 +61,6 @@ class GiftRepository {
         receiverId: receiverId,
         quantity: quantity,
         battleId: battleId,
-        idempotencyKey: idempotencyKey,
       );
     } on DioException catch (e) {
       throw _mapFailure(e);

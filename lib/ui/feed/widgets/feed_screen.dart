@@ -21,6 +21,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../chat/view_models/unread_count_provider.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
 import '../view_models/feed_view_model.dart';
+import '../view_models/stories_view_model.dart';
 import 'comments_sheet.dart';
 import 'create_post_sheet.dart';
 import 'reactions_bar.dart';
@@ -69,7 +70,7 @@ class FeedScreen extends ConsumerStatefulWidget {
 }
 
 class _FeedScreenState extends ConsumerState<FeedScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0;
@@ -77,6 +78,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 2, vsync: this);
     _scrollController.addListener(() {
       final off = _scrollController.offset.clamp(0.0, 80.0);
@@ -87,7 +89,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(storiesViewModelProvider.notifier).refresh();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
     _scrollController.dispose();
     super.dispose();

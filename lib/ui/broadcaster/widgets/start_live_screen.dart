@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +21,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/model/create_live_room_request_dto.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../live/view_models/live_eligibility_view_model.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/ui/app_spacing.dart';
@@ -309,9 +312,72 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     context.go('/live/broadcast', extra: room);
   }
 
+  void _showCategorySheet(BuildContext context, StartLiveState state) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF12121A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36, height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ...AppConstants.categories.map((cat) {
+                final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
+                final selected = state.category == cat;
+                return ListTile(
+                  leading: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: (selected ? AppColors.electricPurple : Colors.white)
+                          .withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon,
+                        color: selected ? AppColors.electricPurple : Colors.white70,
+                        size: 18),
+                  ),
+                  title: Text(
+                    _CategoryChips.categoryLabel(S.of(context), cat),
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600),
+                  ),
+                  trailing: selected
+                      ? const Icon(Icons.check_rounded,
+                          color: AppColors.electricPurple)
+                      : null,
+                  onTap: () {
+                    ref
+                        .read(startLiveViewModelProvider.notifier)
+                        .updateCategory(cat);
+                    _refreshSuggestions();
+                    Navigator.pop(ctx);
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(startLiveViewModelProvider);
+    final eligAsync = ref.watch(liveEligibilityProvider);
+    final isLoading = state.status.isLoading;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -319,45 +385,58 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // ── Camera preview fullscreen ──
           _buildPreview(),
-          // Gradient escuro para dar contraste à UI sobreposta.
+
+          // ── Gradient overlay ──
           const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0x99000000),
-                  Color(0x33000000),
-                  Color(0xCC000000),
+                  Color(0xBB000000),
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0xEE000000),
                 ],
-                stops: [0.0, 0.4, 1.0],
+                stops: [0.0, 0.2, 0.55, 1.0],
               ),
             ),
             child: SizedBox.expand(),
           ),
+
           SafeArea(
             child: Column(
               children: [
-                _TopBar(
+                // ── TOP BAR ──
+                _TikTokTopBar(
                   onClose: () => context.pop(),
-                  onFlip: _cameras.length > 1 ? _flipCamera : null,
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: VibeCheckBar(),
-                  ),
+                  onAddSound: () {},
                 ),
                 const Spacer(),
-                _BottomSheet(
+
+                // ── RIGHT SIDE CONTROLS ──
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _RightSideBar(
+                      canFlip: _cameras.length > 1,
+                      onFlip: _flipCamera,
+                      onThumbnail: _pickThumbnailFromGallery,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                // ── BOTTOM AREA ──
+                _TikTokBottomArea(
                   state: state,
-                  thumbnailPath: state.thumbnailUrl,
                   titleController: _titleCtrl,
                   titleSuggestions: _titleSuggestions,
+                  isLoading: isLoading,
                   onTitleChanged: ref
                       .read(startLiveViewModelProvider.notifier)
                       .updateTitle,
@@ -366,32 +445,25 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                     _titleCtrl.selection = TextSelection.fromPosition(
                       TextPosition(offset: s.length),
                     );
-                    ref
-                        .read(startLiveViewModelProvider.notifier)
-                        .updateTitle(s);
+                    ref.read(startLiveViewModelProvider.notifier).updateTitle(s);
                   },
-                  onCategoryChanged: (c) {
+                  onCategoryChanged: (cat) {
                     ref
                         .read(startLiveViewModelProvider.notifier)
-                        .updateCategory(c);
+                        .updateCategory(cat);
                     _refreshSuggestions();
                   },
-                  onVisibilityChanged: ref
+                  onBattleTap: () => ref
                       .read(startLiveViewModelProvider.notifier)
-                      .updateVisibility,
-                  onNotifyChanged: ref
+                      .toggleBattleMode(!state.battleModeEnabled),
+                  onGiftsTap: () => ref
                       .read(startLiveViewModelProvider.notifier)
-                      .toggleNotifyFollowers,
-                  onBattleModeChanged: ref
+                      .toggleGifts(!state.giftsEnabled),
+                  onNotifyTap: () => ref
                       .read(startLiveViewModelProvider.notifier)
-                      .toggleBattleMode,
-                  onGiftsChanged: ref
-                      .read(startLiveViewModelProvider.notifier)
-                      .toggleGifts,
-                  onTapFeaturedProduct: () {
-                    // TODO: abrir seletor de produto
-                  },
-                  onTapThumbnail: _openThumbnailSheet,
+                      .toggleNotifyFollowers(!state.notifyFollowers),
+                  onThumbnailTap: _pickThumbnailFromGallery,
+                  onThumbnailLongPress: _captureThumbnailFromCamera,
                   onSubmit: state.canSubmit ? _onStartLive : null,
                 ),
               ],
@@ -403,6 +475,61 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               onComplete: _goToBroadcaster,
               onCancel: () => setState(() => _showWarmup = false),
             ),
+          // Eligibility overlay — cobre câmera quando não apto ou carregando
+          eligAsync.when(
+            loading: () => const _EligibilityLoadingOverlay(),
+            error: (e, _) => _EligibilityBlockedOverlay(
+              icon: Icons.cloud_off_rounded,
+              title: 'Não foi possível verificar',
+              subtitle: 'Verifique sua conexão e tente novamente.',
+              ctaLabel: 'Tentar novamente',
+              onCta: () => ref.invalidate(liveEligibilityProvider),
+              onClose: () => context.pop(),
+              gradient: const [Color(0xFF64748B), Color(0xFF475569)],
+            ),
+            data: (elig) {
+              if (elig.canGoLive) return const SizedBox.shrink();
+              if (elig.needsAvatar) {
+                return _EligibilityBlockedOverlay(
+                  icon: Icons.account_circle_outlined,
+                  title: 'Adicione uma foto de perfil',
+                  subtitle:
+                      'Lives só podem ser iniciadas por usuários com foto de perfil.',
+                  ctaLabel: 'Adicionar foto agora',
+                  ctaIcon: Icons.camera_alt_rounded,
+                  onCta: () {
+                    invalidateLiveEligibilityCache();
+                    context.pop();
+                    context.push('/edit-profile');
+                  },
+                  onClose: () => context.pop(),
+                  gradient: const [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                );
+              }
+              if (elig.needsCreator) {
+                return _EligibilityBlockedOverlay(
+                  icon: Icons.workspace_premium_rounded,
+                  title: 'Live é exclusivo do Creator Network',
+                  subtitle:
+                      'Transmissões ao vivo são liberadas após aprovação no programa. É grátis e leva poucos minutos.',
+                  ctaLabel: 'Inscrever-se no programa',
+                  ctaIcon: Icons.rocket_launch_rounded,
+                  onCta: () {
+                    invalidateLiveEligibilityCache();
+                    context.pop();
+                    context.push('/creator/intro');
+                  },
+                  onClose: () => context.pop(),
+                  gradient: const [
+                    Color(0xFFA855F7),
+                    Color(0xFFEC4899),
+                    Color(0xFFF59E0B),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
     );
@@ -455,20 +582,36 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onClose, this.onFlip});
-
+  const _TopBar({required this.onClose});
   final VoidCallback onClose;
-  final VoidCallback? onFlip;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          _GlassButton(icon: Icons.close, onTap: onClose),
+          // Close
+          GestureDetector(
+            onTap: onClose,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  ),
+                  child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
-          // Badge de conexão
+          // Connection badge
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
             child: BackdropFilter(
@@ -478,13 +621,13 @@ class _TopBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 7, height: 7,
+                      width: 6, height: 6,
                       decoration: const BoxDecoration(
                         color: Color(0xFF4ADE80),
                         shape: BoxShape.circle,
@@ -496,23 +639,44 @@ class _TopBar extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.chevron_right_rounded, size: 14, color: Colors.white.withValues(alpha: 0.5)),
                   ],
                 ),
               ),
             ),
           ),
           const Spacer(),
-          if (onFlip != null)
-            _GlassButton(
-              icon: Icons.flip_camera_ios_outlined,
-              onTap: onFlip!,
-              label: 'Inverter',
+          // LIVE badge
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.mutedRed.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.radio, color: Colors.white, size: 13),
+                    SizedBox(width: 5),
+                    Text('LIVE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
         ],
       ),
     );
@@ -595,158 +759,163 @@ class _BottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLoading = state.status.isLoading;
+    final s = S.of(context);
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF0E0E14).withValues(alpha: 0.92),
+            color: const Color(0xFF0A0A10).withValues(alpha: 0.94),
             border: Border(
-              top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
             ),
           ),
           padding: EdgeInsets.fromLTRB(
-            20,
-            20,
-            20,
+            20, 14, 20,
             20 + MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Drag handle ──
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
+              ),
 
-                // ── Título ──
-                _CompactTitleField(
-                  controller: titleController,
-                  onChanged: onTitleChanged,
-                  enabled: !isLoading,
-                ),
-                if (titleSuggestions.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _TitleSuggestions(
-                    suggestions: titleSuggestions,
-                    onTap: onSuggestionTap,
-                    enabled: !isLoading,
+              // ── Thumbnail + Título ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: isLoading ? null : onTapThumbnail,
+                    child: Container(
+                      width: 52, height: 52,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white.withValues(alpha: 0.07),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
+                        image: thumbnailPath != null
+                            ? DecorationImage(
+                                image: FileImage(File(thumbnailPath!)),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: thumbnailPath == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(LucideIcons.image,
+                                    color: Colors.white38, size: 18),
+                                const SizedBox(height: 2),
+                                const Text('Capa',
+                                    style: TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            )
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _CompactTitleField(
+                      controller: titleController,
+                      onChanged: onTitleChanged,
+                      enabled: !isLoading,
+                    ),
                   ),
                 ],
-                const SizedBox(height: 16),
+              ),
 
-                // ── Categoria + Visibilidade inline ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: _InlineDropdown(
-                        icon: Icons.category_outlined,
-                        label: state.category.isEmpty
-                            ? S.of(context).startLiveCategoryLabel
-                            : _CategoryChips.categoryLabel(S.of(context), state.category),
-                        onTap: () => _showCategorySheet(context),
-                        enabled: !isLoading,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _InlineDropdown(
-                        icon: Icons.public_outlined,
-                        label: _visLabel(S.of(context), state.visibility),
-                        onTap: () => _showVisibilitySheet(context),
-                        enabled: !isLoading,
-                      ),
-                    ),
-                  ],
-                ),
+              // Title suggestions
+              if (titleSuggestions.isNotEmpty) ...[
                 const SizedBox(height: 8),
-
-                // ── Avisar seguidores ──
-                _SlimToggleRow(
-                  icon: Icons.notifications_active_outlined,
-                  iconColor: const Color(0xFF4ADE80),
-                  label: S.of(context).startLiveNotifyFollowers,
-                  value: state.notifyFollowers,
-                  onChanged: onNotifyChanged,
+                _TitleSuggestions(
+                  suggestions: titleSuggestions,
+                  onTap: onSuggestionTap,
                   enabled: !isLoading,
-                ),
-                const SizedBox(height: 6),
-
-                // ── Divisor ──
-                Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
-
-                // ── Feature tiles compactos ──
-                _FeatureTile(
-                  icon: Icons.sports_kabaddi_outlined,
-                  iconColor: AppColors.electricPurple,
-                  title: 'Modo batalha',
-                  subtitle: 'Permitir desafios e batalhas com outros criadores',
-                  trailing: Switch.adaptive(
-                    value: state.battleModeEnabled,
-                    onChanged: isLoading ? null : onBattleModeChanged,
-                    activeColor: AppColors.electricPurple,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                _FeatureTile(
-                  icon: Icons.card_giftcard_outlined,
-                  iconColor: const Color(0xFFEC4899),
-                  title: 'Gifts',
-                  subtitle: 'Receba presentes dos espectadores',
-                  trailing: Switch.adaptive(
-                    value: state.giftsEnabled,
-                    onChanged: isLoading ? null : onGiftsChanged,
-                    activeColor: const Color(0xFFEC4899),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                _FeatureTile(
-                  icon: Icons.shopping_bag_outlined,
-                  iconColor: const Color(0xFFF59E0B),
-                  title: 'Produto em destaque',
-                  subtitle: 'Selecione um produto para promover na live',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.white38, size: 20),
-                  onTap: onTapFeaturedProduct,
-                ),
-                const SizedBox(height: 20),
-
-                // ── Erro ──
-                if (state.errorMessage != null) ...[
-                  Text(
-                    state.displayError(S.of(context)) ?? state.errorMessage!,
-                    style: const TextStyle(color: AppColors.mutedRed),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // ── Botão ENTRAR AO VIVO ──
-                _GoLiveButton(onPressed: onSubmit, isLoading: isLoading),
-                const SizedBox(height: 6),
-                Center(
-                  child: TextButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.help_outline, size: 14, color: Colors.white38),
-                    label: const Text(
-                      'Dicas para uma boa live',
-                      style: TextStyle(color: Colors.white38, fontSize: 12),
-                    ),
-                  ),
                 ),
               ],
-            ),
+
+              const SizedBox(height: 14),
+              Divider(color: Colors.white.withValues(alpha: 0.07), height: 1),
+              const SizedBox(height: 14),
+
+              // ── Categorias ──
+              _CompactCategoryRow(
+                value: state.category,
+                onChanged: onCategoryChanged,
+                onShowAll: () => _showCategorySheet(context),
+                enabled: !isLoading,
+              ),
+
+              const SizedBox(height: 14),
+              Divider(color: Colors.white.withValues(alpha: 0.07), height: 1),
+              const SizedBox(height: 16),
+
+              // ── Feature circles row ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _FeatureCircle(
+                    icon: LucideIcons.swords,
+                    label: 'Batalha',
+                    active: state.battleModeEnabled,
+                    color: AppColors.electricPurple,
+                    onTap: isLoading ? null : () => onBattleModeChanged(!state.battleModeEnabled),
+                  ),
+                  _FeatureCircle(
+                    icon: LucideIcons.gift,
+                    label: 'Gifts',
+                    active: state.giftsEnabled,
+                    color: const Color(0xFFEC4899),
+                    onTap: isLoading ? null : () => onGiftsChanged(!state.giftsEnabled),
+                  ),
+                  _FeatureCircle(
+                    icon: LucideIcons.bell,
+                    label: 'Notificar',
+                    active: state.notifyFollowers,
+                    color: const Color(0xFF4ADE80),
+                    onTap: isLoading ? null : () => onNotifyChanged(!state.notifyFollowers),
+                  ),
+                  _FeatureCircle(
+                    icon: _visIcon(state.visibility),
+                    label: _visShortLabel(s, state.visibility),
+                    active: false,
+                    color: Colors.white54,
+                    onTap: isLoading ? null : () => _showVisibilitySheet(context),
+                    showChevron: true,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Error ──
+              if (state.errorMessage != null) ...[
+                Text(
+                  state.displayError(s) ?? state.errorMessage!,
+                  style: const TextStyle(color: AppColors.mutedRed, fontSize: 13),
+                ),
+                const SizedBox(height: 10),
+              ],
+
+              // ── GO LIVE button ──
+              _GoLiveButton(onPressed: onSubmit, isLoading: isLoading),
+            ],
           ),
         ),
       ),
@@ -758,6 +927,22 @@ class _BottomSheet extends StatelessWidget {
       case LiveVisibility.public: return s.liveVisibilityPublic;
       case LiveVisibility.followers: return s.liveVisibilityFollowers;
       case LiveVisibility.private: return s.liveVisibilityPrivate;
+    }
+  }
+
+  String _visShortLabel(S s, LiveVisibility v) {
+    switch (v) {
+      case LiveVisibility.public: return 'Público';
+      case LiveVisibility.followers: return 'Seguidores';
+      case LiveVisibility.private: return 'Privado';
+    }
+  }
+
+  IconData _visIcon(LiveVisibility v) {
+    switch (v) {
+      case LiveVisibility.public: return LucideIcons.user;
+      case LiveVisibility.followers: return LucideIcons.heart;
+      case LiveVisibility.private: return LucideIcons.lock;
     }
   }
 
@@ -784,9 +969,16 @@ class _BottomSheet extends StatelessWidget {
                   ),
                 ),
                 ...AppConstants.categories.map((cat) {
-                  final emoji = _CategoryChips._emojis[cat] ?? '•';
+                  final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
                   return ListTile(
-                    leading: Text(emoji, style: const TextStyle(fontSize: 20)),
+                    leading: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: (state.category == cat ? AppColors.electricPurple : Colors.white).withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: state.category == cat ? AppColors.electricPurple : Colors.white70, size: 18),
+                    ),
                     title: Text(
                       _CategoryChips.categoryLabel(S.of(context), cat),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -1160,19 +1352,19 @@ class _CategoryChips extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final bool enabled;
 
-  static const Map<String, String> _emojis = {
-    'Shopping': '🛍️',
-    'Gaming': '🎮',
-    'Talk Show': '🎙️',
-    'Música': '🎵',
-    'Educação': '📚',
-    'Fitness': '💪',
-    'Culinária': '🍳',
-    'Beleza': '💄',
-    'Tecnologia': '💻',
-    'Esportes': '⚽',
-    'Entretenimento': '🎉',
-    'Outro': '✨',
+  static const Map<String, IconData> _icons = {
+    'Shopping':       LucideIcons.shoppingBag,   // sacola de compras ✓
+    'Gaming':         Icons.sports_esports,       // controle de videogame ✓
+    'Talk Show':      LucideIcons.mic2,           // microfone ✓
+    'Música':         LucideIcons.music,          // nota musical ✓
+    'Educação':       LucideIcons.bookMarked,     // livro ✓
+    'Fitness':        Icons.fitness_center,       // haltere ✓
+    'Culinária':      Icons.restaurant,           // garfo e faca ✓
+    'Beleza':         LucideIcons.sparkles,       // brilho ✓
+    'Tecnologia':     Icons.developer_mode,       // código/tech ✓
+    'Esportes':       LucideIcons.trophy,         // troféu ✓
+    'Entretenimento': LucideIcons.disc3,          // disco ✓
+    'Outro':          LucideIcons.plus,           // genérico ✓
   };
 
   static String categoryLabel(S s, String id) {
@@ -1266,7 +1458,7 @@ class _CategoryChips extends StatelessWidget {
               itemBuilder: (context, index) {
                 final category = AppConstants.categories[index];
                 final selected = value == category;
-                final emoji = _emojis[category] ?? '•';
+                final icon = _icons[category] ?? LucideIcons.helpCircle;
                 return GestureDetector(
                   onTap: enabled
                       ? () => onChanged(selected ? '' : category)
@@ -1310,7 +1502,7 @@ class _CategoryChips extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(emoji, style: const TextStyle(fontSize: 15)),
+                        Icon(icon, color: Colors.white, size: 14),
                         const SizedBox(width: 6),
                         Text(
                           categoryLabel(s, category),
@@ -1610,6 +1802,968 @@ class _TitleSuggestions extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ELIGIBILITY OVERLAYS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Spinner de carregamento sobre o preview da câmera.
+class _EligibilityLoadingOverlay extends StatelessWidget {
+  const _EligibilityLoadingOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.65),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.5,
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Verificando permissões…',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Overlay de bloqueio — câmera visível atrás com blur + mensagem centralizada.
+class _EligibilityBlockedOverlay extends StatelessWidget {
+  const _EligibilityBlockedOverlay({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.ctaLabel,
+    required this.onCta,
+    required this.onClose,
+    required this.gradient,
+    this.ctaIcon,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String ctaLabel;
+  final IconData? ctaIcon;
+  final VoidCallback onCta;
+  final VoidCallback onClose;
+  final List<Color> gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.72),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Close button top-right
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12, right: 16),
+                  child: GestureDetector(
+                    onTap: onClose,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      child: const Icon(Icons.close,
+                          color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              // Icon with gradient glow
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: gradient.first.withValues(alpha: 0.5),
+                      blurRadius: 32,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: Colors.white, size: 48),
+              ),
+              const SizedBox(height: 28),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 36),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: onCta,
+                    icon: Icon(ctaIcon ?? Icons.arrow_forward, size: 18),
+                    label: Text(
+                      ctaLabel,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: gradient.first,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: onClose,
+                child: Text(
+                  'Agora não',
+                  style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 13.5),
+                ),
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW CAMERA-STYLE WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Circular side control (flip/thumbnail) — floats on the right of the camera.
+class _SideCircleButton extends StatelessWidget {
+  const _SideCircleButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipOval(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact horizontal category row with icon chips.
+class _CompactCategoryRow extends StatelessWidget {
+  const _CompactCategoryRow({
+    required this.value,
+    required this.onChanged,
+    required this.onShowAll,
+    this.enabled = true,
+  });
+
+  final String value;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onShowAll;
+  final bool enabled;
+
+  static const List<String> _quick = [
+    'Gaming', 'Música', 'Talk Show', 'Fitness', 'Entretenimento',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          ..._quick.map((cat) {
+            final selected = value == cat;
+            final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
+            return GestureDetector(
+              onTap: enabled ? () => onChanged(selected ? '' : cat) : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? AppColors.electricPurple.withValues(alpha: 0.9)
+                      : Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: selected
+                        ? AppColors.electricPurple
+                        : Colors.white.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: Colors.white, size: 13),
+                    const SizedBox(width: 5),
+                    Text(
+                      _CategoryChips.categoryLabel(s, cat),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight:
+                            selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+          // "Mais" button
+          GestureDetector(
+            onTap: enabled ? onShowAll : null,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.15), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.helpCircle,
+                      color: Colors.white54, size: 13),
+                  const SizedBox(width: 5),
+                  const Text('Mais',
+                      style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Feature toggle circle with label — compact camera-style control.
+class _FeatureCircle extends StatelessWidget {
+  const _FeatureCircle({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.color,
+    required this.onTap,
+    this.showChevron = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final Color color;
+  final VoidCallback? onTap;
+  final bool showChevron;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: active
+                  ? color.withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.07),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: active
+                    ? color.withValues(alpha: 0.7)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: active ? 1.5 : 1,
+              ),
+              boxShadow: active
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                      )
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(icon,
+                    color: active ? color : Colors.white54, size: 22),
+                if (showChevron)
+                  Positioned(
+                    bottom: 6,
+                    right: 6,
+                    child: Icon(Icons.keyboard_arrow_down,
+                        color: Colors.white38, size: 12),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: active ? color : Colors.white54,
+              fontSize: 10,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// TIKTOK-STYLE WIDGETS
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ── Top Bar ───────────────────────────────────────────────────────────────────
+class _TikTokTopBar extends StatelessWidget {
+  const _TikTokTopBar({required this.onClose, required this.onAddSound});
+  final VoidCallback onClose;
+  final VoidCallback onAddSound;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // Close button
+          GestureDetector(
+            onTap: onClose,
+            child: ClipOval(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  width: 36, height: 36,
+                  color: Colors.black.withValues(alpha: 0.45),
+                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Add sound pill
+          GestureDetector(
+            onTap: onAddSound,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  color: Colors.black.withValues(alpha: 0.5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.music, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Adicionar som',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          // LIVE badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            child: const Text(
+              'LIVE',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Right Side Bar ────────────────────────────────────────────────────────────
+class _RightSideBar extends StatelessWidget {
+  const _RightSideBar({
+    required this.canFlip,
+    required this.onFlip,
+    required this.onThumbnail,
+  });
+  final bool canFlip;
+  final VoidCallback onFlip;
+  final VoidCallback onThumbnail;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <({IconData icon, String label, VoidCallback? onTap})>[
+      if (canFlip) (icon: LucideIcons.refreshCw, label: 'Virar', onTap: onFlip),
+      (icon: LucideIcons.sparkles, label: 'Beleza', onTap: null),
+      (icon: LucideIcons.aperture, label: 'Filtros', onTap: null),
+      (icon: LucideIcons.share2, label: 'Compartilhar', onTap: null),
+      (icon: LucideIcons.image, label: 'Capa', onTap: onThumbnail),
+    ];
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: GestureDetector(
+            onTap: item.onTap,
+            child: Opacity(
+              opacity: item.onTap != null ? 1.0 : 0.4,
+              child: Column(
+                children: [
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    child: Icon(item.icon, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ── Bottom Area (TikTok style) ────────────────────────────────────────────────
+class _TikTokBottomArea extends StatelessWidget {
+  const _TikTokBottomArea({
+    required this.state,
+    required this.titleController,
+    required this.titleSuggestions,
+    required this.isLoading,
+    required this.onTitleChanged,
+    required this.onSuggestionTap,
+    required this.onCategoryChanged,
+    required this.onBattleTap,
+    required this.onGiftsTap,
+    required this.onNotifyTap,
+    required this.onThumbnailTap,
+    required this.onThumbnailLongPress,
+    required this.onSubmit,
+  });
+
+  final StartLiveState state;
+  final TextEditingController titleController;
+  final List<String> titleSuggestions;
+  final bool isLoading;
+  final ValueChanged<String> onTitleChanged;
+  final ValueChanged<String> onSuggestionTap;
+  final ValueChanged<String> onCategoryChanged;
+  final VoidCallback onBattleTap;
+  final VoidCallback onGiftsTap;
+  final VoidCallback onNotifyTap;
+  final VoidCallback onThumbnailTap;
+  final VoidCallback onThumbnailLongPress;
+  final VoidCallback? onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16, 0, 16,
+        16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          // ── Thumbnail + Title ──
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Thumbnail
+              GestureDetector(
+                onTap: isLoading ? null : onThumbnailTap,
+                onLongPress: isLoading ? null : onThumbnailLongPress,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 50, height: 50,
+                    child: state.thumbnailUrl != null
+                        ? Image.file(File(state.thumbnailUrl!), fit: BoxFit.cover)
+                        : Container(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(LucideIcons.image,
+                                    color: Colors.white60, size: 18),
+                                const SizedBox(height: 2),
+                                const Text('Alterar',
+                                    style: TextStyle(
+                                        color: Colors.white60, fontSize: 9)),
+                              ],
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Title field
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: titleController,
+                            onChanged: onTitleChanged,
+                            enabled: !isLoading,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLength: 100,
+                            decoration: InputDecoration(
+                              hintText: 'Adicionar um título',
+                              hintStyle: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.4),
+                                  fontSize: 15),
+                              border: InputBorder.none,
+                              counterText: '',
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              filled: true,
+                              fillColor: Colors.transparent,
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white30),
+                              ),
+                              focusedBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.white70),
+                              ),
+                            ),
+                          ),
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: titleController,
+                          builder: (_, val, _) => Text(
+                            '${val.text.length}/100',
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // ── Category grid inline ──
+          _InlineCategoryGrid(
+            selected: state.category,
+            onChanged: isLoading ? null : onCategoryChanged,
+          ),
+          const SizedBox(height: 16),
+
+          // ── Actions row ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _ActionCircle(
+                icon: LucideIcons.swords,
+                label: 'Batalha',
+                active: state.battleModeEnabled,
+                onTap: isLoading ? null : onBattleTap,
+              ),
+              _ActionCircle(
+                icon: LucideIcons.gift,
+                label: 'Presentes',
+                active: state.giftsEnabled,
+                onTap: isLoading ? null : onGiftsTap,
+              ),
+              _ActionCircle(
+                icon: LucideIcons.bell,
+                label: 'Notificar',
+                active: state.notifyFollowers,
+                onTap: isLoading ? null : onNotifyTap,
+              ),
+              _ActionCircle(
+                icon: LucideIcons.user,
+                label: 'Convidados',
+                active: false,
+                onTap: null,
+                dimmed: true,
+              ),
+              _ActionCircle(
+                icon: LucideIcons.zap,
+                label: 'Promover',
+                active: false,
+                onTap: null,
+                dimmed: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // ── Error ──
+          if (state.errorMessage != null) ...[
+            Text(
+              state.errorMessage!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // ── Go Live button ──
+          SizedBox(
+            width: double.infinity,
+            height: 58,
+            child: _GoLiveButton(
+              onPressed: onSubmit,
+              isLoading: isLoading,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // ── Safety text ──
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield_outlined, color: Colors.white38, size: 12),
+                const SizedBox(width: 4),
+                const Text(
+                  'Sua LIVE será pública',
+                  style: TextStyle(color: Colors.white38, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Mode selector ──
+          const SizedBox(height: 16),
+          const _ModeSelector(),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Action Circle ─────────────────────────────────────────────────────────────
+class _ActionCircle extends StatelessWidget {
+  const _ActionCircle({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.dimmed = false,
+  });
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback? onTap;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Opacity(
+        opacity: dimmed ? 0.35 : 1.0,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: active
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.1),
+                border: Border.all(
+                  color: active
+                      ? Colors.white.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.2),
+                  width: active ? 1.5 : 1,
+                ),
+              ),
+              child: Icon(icon,
+                  color: active ? Colors.white : Colors.white70, size: 22),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: active ? Colors.white : Colors.white54,
+                fontSize: 10,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Mode Selector (TikTok bottom nav) ────────────────────────────────────────
+class _ModeSelector extends StatelessWidget {
+  const _ModeSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    const modes = ['Câmera', 'LIVE', 'Modelo', 'MV'];
+    const activeIndex = 1; // LIVE always selected
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: modes.asMap().entries.map((e) {
+        final isActive = e.key == activeIndex;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                e.value,
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.white38,
+                  fontSize: isActive ? 14 : 13,
+                  fontWeight:
+                      isActive ? FontWeight.w700 : FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (isActive)
+                Container(
+                  width: 20, height: 2,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                )
+              else
+                const SizedBox(height: 2),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ── Inline Category Grid ──────────────────────────────────────────────────────
+class _InlineCategoryGrid extends StatelessWidget {
+  const _InlineCategoryGrid({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final String selected;
+  final ValueChanged<String>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final categories = AppConstants.categories;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: categories.map((cat) {
+        final isSelected = selected == cat;
+        final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
+
+        return GestureDetector(
+          onTap: onChanged != null
+              ? () => onChanged!(isSelected ? '' : cat)
+              : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Colors.white.withValues(alpha: 0.22)
+                  : Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.15),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: isSelected ? Colors.white : Colors.white60,
+                  size: 13,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  _CategoryChips.categoryLabel(s, cat),
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white60,
+                    fontSize: 12,
+                    fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

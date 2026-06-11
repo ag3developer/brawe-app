@@ -218,12 +218,7 @@ GoRouter router(Ref ref) {
             builder: (context, state) =>
                 const ForceDarkTheme(child: ForYouLiveListScreen()),
           ),
-          // /live/start fica dentro do shell (tem bottom nav — tela de setup).
-          GoRoute(
-            path: '/live/start',
-            builder: (context, state) =>
-                const ForceDarkTheme(child: StartLiveScreen()),
-          ),
+
           GoRoute(
             path: '/chat',
             builder: (context, state) => const ChatListScreen(),
@@ -366,6 +361,11 @@ GoRouter router(Ref ref) {
       // (A batalha NÃO tem rota própria: é um overlay `ViewerBattleHud` por
       // cima da live no `LivePlayerScreen` — vídeo, chat, rosa e presentes
       // continuam vivos durante a disputa.)
+      GoRoute(
+        path: '/live/start',
+        builder: (context, state) =>
+            const ForceDarkTheme(child: StartLiveScreen()),
+      ),
       GoRoute(
         path: '/live/broadcast',
         builder: (context, state) {

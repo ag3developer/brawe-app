@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../creator/widgets/creator_tier_badge_for_user.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -799,13 +798,6 @@ class _ProfileHeader extends ConsumerWidget {
               if (stats != null) ...[
                 const SizedBox(height: 10),
                 _CompactStats(stats: stats, userId: userId),
-              ],
-
-              // ── Chip de artista Brawe Sounds (apenas músicos) ─────────
-              if (profile.accountType == AccountType.musician &&
-                  (profile.artistName != null || (profile.artistGenres?.isNotEmpty ?? false))) ...[
-                const SizedBox(height: 10),
-                _ArtistChip(profile: profile),
               ],
 
               if (profile.bio != null && profile.bio!.isNotEmpty) ...[
@@ -2419,126 +2411,4 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
-}
-
-// ── Chip de Artista Brawe Sounds ─────────────────────────────────────────────
-/// Exibido no perfil quando accountType == musician.
-/// Mostra gêneros com ícones Lucide + contadores de faixas/plays.
-class _ArtistChip extends StatelessWidget {
-  final Profile profile;
-  const _ArtistChip({required this.profile});
-
-  static IconData _genreIcon(String genre) {
-    switch (genre.toLowerCase()) {
-      case 'funk':       return LucideIcons.music2;
-      case 'sertanejo':  return LucideIcons.music4;
-      case 'pagode':     return LucideIcons.music3;
-      case 'forró':      return LucideIcons.music4;
-      case 'rap':        return LucideIcons.mic2;
-      case 'eletrônico': return LucideIcons.radio;
-      case 'gospel':     return LucideIcons.heart;
-      case 'rock':       return LucideIcons.zap;
-      case 'mpb':        return LucideIcons.sparkles;
-      default:           return LucideIcons.music;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final genres = profile.artistGenres ?? const [];
-    final name   = profile.artistName ?? profile.displayName ?? '';
-    final tracks = profile.artistTotalTracks;
-    final plays  = profile.artistTotalPlays;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colors.border.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cabeçalho
-          Row(children: [
-            const Icon(LucideIcons.music, size: 14, color: AppColors.mutedRed),
-            const SizedBox(width: 6),
-            const Text(
-              'Brawe Sounds',
-              style: TextStyle(
-                color: AppColors.mutedRed,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              ),
-            ),
-            if (name.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              Text('· $name',
-                  style: TextStyle(color: context.colors.textSecondary, fontSize: 11)),
-            ],
-          ]),
-          if (genres.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: genres.take(4).map((g) => _GenreTag(genre: g, icon: _genreIcon(g))).toList(),
-            ),
-          ],
-          if (tracks > 0 || plays > 0) ...[
-            const SizedBox(height: 8),
-            Row(children: [
-              if (tracks > 0) ...[
-                Icon(LucideIcons.disc3, size: 12, color: context.colors.textTertiary),
-                const SizedBox(width: 4),
-                Text(S.of(context).soundsArtistTracks(tracks),
-                    style: TextStyle(color: context.colors.textTertiary, fontSize: 12)),
-                const SizedBox(width: 12),
-              ],
-              if (plays > 0) ...[
-                Icon(LucideIcons.headphones, size: 12, color: context.colors.textTertiary),
-                const SizedBox(width: 4),
-                Text(S.of(context).soundsArtistPlays(_formatCount(plays)),
-                    style: TextStyle(color: context.colors.textTertiary, fontSize: 12)),
-              ],
-            ]),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
-    return n.toString();
-  }
-}
-
-class _GenreTag extends StatelessWidget {
-  final String genre;
-  final IconData icon;
-  const _GenreTag({required this.genre, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceHighest.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: context.colors.border.withValues(alpha: 0.2)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 11, color: context.colors.textSecondary),
-        const SizedBox(width: 4),
-        Text(
-          genre,
-          style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
-        ),
-      ]),
-    );
-  }
 }

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:uuid/uuid.dart';
 
 import '../view_models/live_room_comments_view_model.dart';
 import '../view_models/live_room_gifts_view_model.dart';
@@ -72,8 +71,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   // Battle
   String? _activeBattleId;
-  // Live ended flag — controla overlay de "Live encerrada"
-  bool _liveEnded = false;
 
   // Floating hearts overlay key (para spawn local imediato)
   final GlobalKey<FloatingHeartsOverlayState> _heartsKey =
@@ -125,7 +122,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
-    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
     // 🔁 Re-anexar handler em reconexões (idêntico ao broadcaster).
     socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
@@ -135,9 +131,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _reattachBattleHandlers() {
     final socket = ref.read(socketServiceProvider);
     socket.off(AppConstants.eventBattleStarted);
-    socket.off(AppConstants.eventLiveEnded);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
-    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
     // Após reconectar, valida via REST se uma batalha começou durante
     // a queda de conexão.
     _checkActiveBattle();
@@ -147,22 +141,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     try {
       final socket = ref.read(socketServiceProvider);
       socket.off(AppConstants.eventBattleStarted);
-      socket.off(AppConstants.eventLiveEnded);
       socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
-  }
-
-  void _onLiveEnded(dynamic raw) {
-    if (!mounted) return;
-    // Encerrar batalha imediatamente + mostrar overlay "Live encerrada"
-    setState(() {
-      _activeBattleId = null;
-      _liveEnded = true;
-    });
-    // Auto-pop após 4s para não prender o usuário na tela
-    Future.delayed(const Duration(seconds: 4), () {
-      if (mounted) context.pop();
-    });
   }
 
   /// Consulta o backend para saber se já existe uma batalha ativa nesta sala.
@@ -406,10 +386,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // Captura o repository ANTES do await — ref não pode ser lido
     // depois que o widget foi disposed.
     final repo = ref.read(giftRepositoryProvider);
-    // 🛡️ Idempotency-Key: UUID v4 único por batch. Se a request tiver
-    // timeout e o cliente retentar, o servidor detecta a key repetida
-    // e NÃO debita de novo — devolve a mesma resposta.
-    final idemKey = const Uuid().v4();
     try {
       await repo.sendGift(
         roomId: widget.room.id,
@@ -417,7 +393,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         receiverId: widget.room.streamerId,
         quantity: quantity,
         battleId: _activeBattleId,
-        idempotencyKey: idemKey,
       );
     } catch (e) {
       if (!mounted) return;
@@ -560,51 +535,17 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           ),
 
           // ── 8. Battle HUD (overlay) — só aparece em batalha ──
+          // Camada LEVE por cima da live: placar dos 2 participantes + timer
+          // + toasts de gift no topo. NÃO substitui a tela: vídeo, chat,
+          // rosa e presentes continuam vivos atrás. Mesmo padrão do streamer
+          // (BroadcasterScreen → StreamerBattleHud).
           if (_activeBattleId != null)
             Positioned.fill(
               child: ViewerBattleHud(
-                key: ValueKey(_activeBattleId), // reconstrói ao trocar battleId
                 battleId: _activeBattleId!,
-                roomId: widget.room.id,
                 onClose: () {
                   if (mounted) setState(() => _activeBattleId = null);
                 },
-                onRematch: (newBattleId) {
-                  // Revanche aceita: trocar battleId → ViewerBattleHud reconstrói
-                  // com key nova (ValueKey acima) e BattleViewModel novo.
-                  if (mounted) setState(() => _activeBattleId = newBattleId);
-                },
-              ),
-            ),
-
-          // ── 9. Live encerrada (overlay fullscreen) ──
-          // Aparece quando o streamer encerra a live — fecha automaticamente
-          // em 4s ou ao tocar. Garante que o espectador saia da tela de batalha.
-          if (_liveEnded)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () { if (mounted) context.pop(); },
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.82),
-                  child: const Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.live_tv_outlined, color: Colors.white54, size: 64),
-                        SizedBox(height: 16),
-                        Text(
-                          'Live encerrada',
-                          style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'O streamer encerrou a transmissão',
-                          style: TextStyle(color: Colors.white54, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ),
             ),
         ],

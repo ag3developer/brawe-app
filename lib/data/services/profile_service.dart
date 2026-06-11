@@ -74,13 +74,11 @@ class ProfileService {
     String? displayName,
     String? bio,
     Map<String, String>? socialLinks,
-    String? accountType,
   }) async {
     final body = <String, dynamic>{};
     if (displayName != null) body['display_name'] = displayName;
     if (bio != null) body['bio'] = bio;
     if (socialLinks != null) body['social_links'] = socialLinks;
-    if (accountType != null) body['account_type'] = accountType;
     final response = await _dio.put('/profile/me', data: body);
     return response.data['data'] ?? response.data;
   }

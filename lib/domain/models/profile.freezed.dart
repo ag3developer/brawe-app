@@ -15,8 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Profile {
 
- String get id;@JsonKey(name: 'display_name') String? get displayName; String? get username; String? get bio;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'banner_url') String? get bannerUrl;@JsonKey(name: 'is_verified') bool get isVerified;@JsonKey(name: 'social_links') Map<String, String>? get socialLinks;@JsonKey(name: 'account_type') AccountType get accountType;// Campos de artista — populados quando accountType == musician
-@JsonKey(name: 'artist_id') String? get artistId;@JsonKey(name: 'artist_name') String? get artistName;@JsonKey(name: 'artist_genres') List<String>? get artistGenres;@JsonKey(name: 'artist_city') String? get artistCity;@JsonKey(name: 'artist_country') String? get artistCountry;@JsonKey(name: 'artist_total_tracks') int get artistTotalTracks;@JsonKey(name: 'artist_total_plays') int get artistTotalPlays;
+ String get id;@JsonKey(name: 'display_name') String? get displayName; String? get username; String? get bio;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'banner_url') String? get bannerUrl;@JsonKey(name: 'is_verified') bool get isVerified;@JsonKey(name: 'social_links') Map<String, String>? get socialLinks;
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +28,16 @@ $ProfileCopyWith<Profile> get copyWith => _$ProfileCopyWithImpl<Profile>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&const DeepCollectionEquality().equals(other.socialLinks, socialLinks)&&(identical(other.accountType, accountType) || other.accountType == accountType)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.artistName, artistName) || other.artistName == artistName)&&const DeepCollectionEquality().equals(other.artistGenres, artistGenres)&&(identical(other.artistCity, artistCity) || other.artistCity == artistCity)&&(identical(other.artistCountry, artistCountry) || other.artistCountry == artistCountry)&&(identical(other.artistTotalTracks, artistTotalTracks) || other.artistTotalTracks == artistTotalTracks)&&(identical(other.artistTotalPlays, artistTotalPlays) || other.artistTotalPlays == artistTotalPlays));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&const DeepCollectionEquality().equals(other.socialLinks, socialLinks));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,username,bio,avatarUrl,bannerUrl,isVerified,const DeepCollectionEquality().hash(socialLinks),accountType,artistId,artistName,const DeepCollectionEquality().hash(artistGenres),artistCity,artistCountry,artistTotalTracks,artistTotalPlays);
+int get hashCode => Object.hash(runtimeType,id,displayName,username,bio,avatarUrl,bannerUrl,isVerified,const DeepCollectionEquality().hash(socialLinks));
 
 @override
 String toString() {
-  return 'Profile(id: $id, displayName: $displayName, username: $username, bio: $bio, avatarUrl: $avatarUrl, bannerUrl: $bannerUrl, isVerified: $isVerified, socialLinks: $socialLinks, accountType: $accountType, artistId: $artistId, artistName: $artistName, artistGenres: $artistGenres, artistCity: $artistCity, artistCountry: $artistCountry, artistTotalTracks: $artistTotalTracks, artistTotalPlays: $artistTotalPlays)';
+  return 'Profile(id: $id, displayName: $displayName, username: $username, bio: $bio, avatarUrl: $avatarUrl, bannerUrl: $bannerUrl, isVerified: $isVerified, socialLinks: $socialLinks)';
 }
 
 
@@ -49,7 +48,7 @@ abstract mixin class $ProfileCopyWith<$Res>  {
   factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) = _$ProfileCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'display_name') String? displayName, String? username, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'social_links') Map<String, String>? socialLinks,@JsonKey(name: 'account_type') AccountType accountType,@JsonKey(name: 'artist_id') String? artistId,@JsonKey(name: 'artist_name') String? artistName,@JsonKey(name: 'artist_genres') List<String>? artistGenres,@JsonKey(name: 'artist_city') String? artistCity,@JsonKey(name: 'artist_country') String? artistCountry,@JsonKey(name: 'artist_total_tracks') int artistTotalTracks,@JsonKey(name: 'artist_total_plays') int artistTotalPlays
+ String id,@JsonKey(name: 'display_name') String? displayName, String? username, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'social_links') Map<String, String>? socialLinks
 });
 
 
@@ -66,7 +65,7 @@ class _$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = freezed,Object? username = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? bannerUrl = freezed,Object? isVerified = null,Object? socialLinks = freezed,Object? accountType = null,Object? artistId = freezed,Object? artistName = freezed,Object? artistGenres = freezed,Object? artistCity = freezed,Object? artistCountry = freezed,Object? artistTotalTracks = null,Object? artistTotalPlays = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = freezed,Object? username = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? bannerUrl = freezed,Object? isVerified = null,Object? socialLinks = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
@@ -76,15 +75,7 @@ as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // igno
 as String?,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
 as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
 as bool,socialLinks: freezed == socialLinks ? _self.socialLinks : socialLinks // ignore: cast_nullable_to_non_nullable
-as Map<String, String>?,accountType: null == accountType ? _self.accountType : accountType // ignore: cast_nullable_to_non_nullable
-as AccountType,artistId: freezed == artistId ? _self.artistId : artistId // ignore: cast_nullable_to_non_nullable
-as String?,artistName: freezed == artistName ? _self.artistName : artistName // ignore: cast_nullable_to_non_nullable
-as String?,artistGenres: freezed == artistGenres ? _self.artistGenres : artistGenres // ignore: cast_nullable_to_non_nullable
-as List<String>?,artistCity: freezed == artistCity ? _self.artistCity : artistCity // ignore: cast_nullable_to_non_nullable
-as String?,artistCountry: freezed == artistCountry ? _self.artistCountry : artistCountry // ignore: cast_nullable_to_non_nullable
-as String?,artistTotalTracks: null == artistTotalTracks ? _self.artistTotalTracks : artistTotalTracks // ignore: cast_nullable_to_non_nullable
-as int,artistTotalPlays: null == artistTotalPlays ? _self.artistTotalPlays : artistTotalPlays // ignore: cast_nullable_to_non_nullable
-as int,
+as Map<String, String>?,
   ));
 }
 
@@ -166,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks, @JsonKey(name: 'account_type')  AccountType accountType, @JsonKey(name: 'artist_id')  String? artistId, @JsonKey(name: 'artist_name')  String? artistName, @JsonKey(name: 'artist_genres')  List<String>? artistGenres, @JsonKey(name: 'artist_city')  String? artistCity, @JsonKey(name: 'artist_country')  String? artistCountry, @JsonKey(name: 'artist_total_tracks')  int artistTotalTracks, @JsonKey(name: 'artist_total_plays')  int artistTotalPlays)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks,_that.accountType,_that.artistId,_that.artistName,_that.artistGenres,_that.artistCity,_that.artistCountry,_that.artistTotalTracks,_that.artistTotalPlays);case _:
+return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks);case _:
   return orElse();
 
 }
@@ -187,10 +178,10 @@ return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatar
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks, @JsonKey(name: 'account_type')  AccountType accountType, @JsonKey(name: 'artist_id')  String? artistId, @JsonKey(name: 'artist_name')  String? artistName, @JsonKey(name: 'artist_genres')  List<String>? artistGenres, @JsonKey(name: 'artist_city')  String? artistCity, @JsonKey(name: 'artist_country')  String? artistCountry, @JsonKey(name: 'artist_total_tracks')  int artistTotalTracks, @JsonKey(name: 'artist_total_plays')  int artistTotalPlays)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks)  $default,) {final _that = this;
 switch (_that) {
 case _Profile():
-return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks,_that.accountType,_that.artistId,_that.artistName,_that.artistGenres,_that.artistCity,_that.artistCountry,_that.artistTotalTracks,_that.artistTotalPlays);}
+return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,10 +195,10 @@ return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatar
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks, @JsonKey(name: 'account_type')  AccountType accountType, @JsonKey(name: 'artist_id')  String? artistId, @JsonKey(name: 'artist_name')  String? artistName, @JsonKey(name: 'artist_genres')  List<String>? artistGenres, @JsonKey(name: 'artist_city')  String? artistCity, @JsonKey(name: 'artist_country')  String? artistCountry, @JsonKey(name: 'artist_total_tracks')  int artistTotalTracks, @JsonKey(name: 'artist_total_plays')  int artistTotalPlays)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'display_name')  String? displayName,  String? username,  String? bio, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'social_links')  Map<String, String>? socialLinks)?  $default,) {final _that = this;
 switch (_that) {
 case _Profile() when $default != null:
-return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks,_that.accountType,_that.artistId,_that.artistName,_that.artistGenres,_that.artistCity,_that.artistCountry,_that.artistTotalTracks,_that.artistTotalPlays);case _:
+return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatarUrl,_that.bannerUrl,_that.isVerified,_that.socialLinks);case _:
   return null;
 
 }
@@ -219,7 +210,7 @@ return $default(_that.id,_that.displayName,_that.username,_that.bio,_that.avatar
 @JsonSerializable()
 
 class _Profile implements Profile {
-  const _Profile({required this.id, @JsonKey(name: 'display_name') this.displayName, this.username, this.bio, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'banner_url') this.bannerUrl, @JsonKey(name: 'is_verified') this.isVerified = false, @JsonKey(name: 'social_links') final  Map<String, String>? socialLinks, @JsonKey(name: 'account_type') this.accountType = AccountType.consumer, @JsonKey(name: 'artist_id') this.artistId, @JsonKey(name: 'artist_name') this.artistName, @JsonKey(name: 'artist_genres') final  List<String>? artistGenres, @JsonKey(name: 'artist_city') this.artistCity, @JsonKey(name: 'artist_country') this.artistCountry, @JsonKey(name: 'artist_total_tracks') this.artistTotalTracks = 0, @JsonKey(name: 'artist_total_plays') this.artistTotalPlays = 0}): _socialLinks = socialLinks,_artistGenres = artistGenres;
+  const _Profile({required this.id, @JsonKey(name: 'display_name') this.displayName, this.username, this.bio, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'banner_url') this.bannerUrl, @JsonKey(name: 'is_verified') this.isVerified = false, @JsonKey(name: 'social_links') final  Map<String, String>? socialLinks}): _socialLinks = socialLinks;
   factory _Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
 
 @override final  String id;
@@ -238,23 +229,6 @@ class _Profile implements Profile {
   return EqualUnmodifiableMapView(value);
 }
 
-@override@JsonKey(name: 'account_type') final  AccountType accountType;
-// Campos de artista — populados quando accountType == musician
-@override@JsonKey(name: 'artist_id') final  String? artistId;
-@override@JsonKey(name: 'artist_name') final  String? artistName;
- final  List<String>? _artistGenres;
-@override@JsonKey(name: 'artist_genres') List<String>? get artistGenres {
-  final value = _artistGenres;
-  if (value == null) return null;
-  if (_artistGenres is EqualUnmodifiableListView) return _artistGenres;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(value);
-}
-
-@override@JsonKey(name: 'artist_city') final  String? artistCity;
-@override@JsonKey(name: 'artist_country') final  String? artistCountry;
-@override@JsonKey(name: 'artist_total_tracks') final  int artistTotalTracks;
-@override@JsonKey(name: 'artist_total_plays') final  int artistTotalPlays;
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
@@ -269,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&const DeepCollectionEquality().equals(other._socialLinks, _socialLinks)&&(identical(other.accountType, accountType) || other.accountType == accountType)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.artistName, artistName) || other.artistName == artistName)&&const DeepCollectionEquality().equals(other._artistGenres, _artistGenres)&&(identical(other.artistCity, artistCity) || other.artistCity == artistCity)&&(identical(other.artistCountry, artistCountry) || other.artistCountry == artistCountry)&&(identical(other.artistTotalTracks, artistTotalTracks) || other.artistTotalTracks == artistTotalTracks)&&(identical(other.artistTotalPlays, artistTotalPlays) || other.artistTotalPlays == artistTotalPlays));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.username, username) || other.username == username)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&const DeepCollectionEquality().equals(other._socialLinks, _socialLinks));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,displayName,username,bio,avatarUrl,bannerUrl,isVerified,const DeepCollectionEquality().hash(_socialLinks),accountType,artistId,artistName,const DeepCollectionEquality().hash(_artistGenres),artistCity,artistCountry,artistTotalTracks,artistTotalPlays);
+int get hashCode => Object.hash(runtimeType,id,displayName,username,bio,avatarUrl,bannerUrl,isVerified,const DeepCollectionEquality().hash(_socialLinks));
 
 @override
 String toString() {
-  return 'Profile(id: $id, displayName: $displayName, username: $username, bio: $bio, avatarUrl: $avatarUrl, bannerUrl: $bannerUrl, isVerified: $isVerified, socialLinks: $socialLinks, accountType: $accountType, artistId: $artistId, artistName: $artistName, artistGenres: $artistGenres, artistCity: $artistCity, artistCountry: $artistCountry, artistTotalTracks: $artistTotalTracks, artistTotalPlays: $artistTotalPlays)';
+  return 'Profile(id: $id, displayName: $displayName, username: $username, bio: $bio, avatarUrl: $avatarUrl, bannerUrl: $bannerUrl, isVerified: $isVerified, socialLinks: $socialLinks)';
 }
 
 
@@ -289,7 +263,7 @@ abstract mixin class _$ProfileCopyWith<$Res> implements $ProfileCopyWith<$Res> {
   factory _$ProfileCopyWith(_Profile value, $Res Function(_Profile) _then) = __$ProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'display_name') String? displayName, String? username, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'social_links') Map<String, String>? socialLinks,@JsonKey(name: 'account_type') AccountType accountType,@JsonKey(name: 'artist_id') String? artistId,@JsonKey(name: 'artist_name') String? artistName,@JsonKey(name: 'artist_genres') List<String>? artistGenres,@JsonKey(name: 'artist_city') String? artistCity,@JsonKey(name: 'artist_country') String? artistCountry,@JsonKey(name: 'artist_total_tracks') int artistTotalTracks,@JsonKey(name: 'artist_total_plays') int artistTotalPlays
+ String id,@JsonKey(name: 'display_name') String? displayName, String? username, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'social_links') Map<String, String>? socialLinks
 });
 
 
@@ -306,7 +280,7 @@ class __$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = freezed,Object? username = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? bannerUrl = freezed,Object? isVerified = null,Object? socialLinks = freezed,Object? accountType = null,Object? artistId = freezed,Object? artistName = freezed,Object? artistGenres = freezed,Object? artistCity = freezed,Object? artistCountry = freezed,Object? artistTotalTracks = null,Object? artistTotalPlays = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? displayName = freezed,Object? username = freezed,Object? bio = freezed,Object? avatarUrl = freezed,Object? bannerUrl = freezed,Object? isVerified = null,Object? socialLinks = freezed,}) {
   return _then(_Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,displayName: freezed == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
@@ -316,15 +290,7 @@ as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // igno
 as String?,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
 as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
 as bool,socialLinks: freezed == socialLinks ? _self._socialLinks : socialLinks // ignore: cast_nullable_to_non_nullable
-as Map<String, String>?,accountType: null == accountType ? _self.accountType : accountType // ignore: cast_nullable_to_non_nullable
-as AccountType,artistId: freezed == artistId ? _self.artistId : artistId // ignore: cast_nullable_to_non_nullable
-as String?,artistName: freezed == artistName ? _self.artistName : artistName // ignore: cast_nullable_to_non_nullable
-as String?,artistGenres: freezed == artistGenres ? _self._artistGenres : artistGenres // ignore: cast_nullable_to_non_nullable
-as List<String>?,artistCity: freezed == artistCity ? _self.artistCity : artistCity // ignore: cast_nullable_to_non_nullable
-as String?,artistCountry: freezed == artistCountry ? _self.artistCountry : artistCountry // ignore: cast_nullable_to_non_nullable
-as String?,artistTotalTracks: null == artistTotalTracks ? _self.artistTotalTracks : artistTotalTracks // ignore: cast_nullable_to_non_nullable
-as int,artistTotalPlays: null == artistTotalPlays ? _self.artistTotalPlays : artistTotalPlays // ignore: cast_nullable_to_non_nullable
-as int,
+as Map<String, String>?,
   ));
 }
 

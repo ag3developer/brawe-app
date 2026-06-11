@@ -192,7 +192,6 @@ class LiveService {
     required String receiverId,
     int quantity = 1,
     String? battleId,
-    String? idempotencyKey,
   }) async {
     final response = await _dio.post(
       '/live/gifts/send-gift',
@@ -203,9 +202,6 @@ class LiveService {
         'quantity': quantity,
         if (battleId != null) 'battle_id': battleId,
       },
-      options: idempotencyKey != null
-          ? Options(headers: {'Idempotency-Key': idempotencyKey})
-          : null,
     );
     return _toMap(response.data);
   }

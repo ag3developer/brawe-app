@@ -21,13 +21,33 @@ class ForYouScreen extends ConsumerStatefulWidget {
   ConsumerState<ForYouScreen> createState() => _ForYouScreenState();
 }
 
-class _ForYouScreenState extends ConsumerState<ForYouScreen> {
+class _ForYouScreenState extends ConsumerState<ForYouScreen>
+    with WidgetsBindingObserver {
   final _ctrl = PageController();
   String _tab = 'forYou';
   int _currentIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshLive();
+    }
+  }
+
+  void _refreshLive() {
+    ref.read(forYouFeedViewModelProvider.notifier).refresh();
+    ref.read(followingForYouFeedViewModelProvider.notifier).refresh();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ctrl.dispose();
     super.dispose();
   }

@@ -73,14 +73,15 @@ class PostService {
   }
 
   /// Lista quem curtiu um post com breakdown por reação.
-  /// Backend: GET /posts/{post_id}/likes
+  /// Backend: GET /media/{media_id}/likes
+  /// O post_id é o mesmo que media_id no backend (criados juntos).
   Future<PostLikesPage> getLikers(
     String postId, {
     int limit = 50,
     int offset = 0,
   }) async {
     final response = await _dio.get(
-      '/posts/$postId/likes',
+      '/media/$postId/likes',
       queryParameters: {'limit': limit, 'offset': offset},
     );
     return PostLikesPage.fromJson(response.data as Map<String, dynamic>);

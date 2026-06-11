@@ -46,4 +46,4 @@ final class LiveEligibilityProvider
   }
 }
 
-String _$liveEligibilityHash() => r'ea111576f1059d8203a7d9cfc3c240495fd6b717';
+String _$liveEligibilityHash() => r'e3899e88d4c59ef5ed865559da39c2410ab72cbc';

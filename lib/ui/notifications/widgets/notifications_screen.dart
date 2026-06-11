@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../data/services/notification_navigation_service.dart';
 import '../../../domain/models/app_notification.dart';
@@ -34,7 +35,7 @@ class NotificationsScreen extends ConsumerWidget {
                   )
                 : const SizedBox.shrink(),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
         ],
       ),
@@ -52,7 +53,7 @@ class NotificationsScreen extends ConsumerWidget {
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: page.items.length,
-                  separatorBuilder: (_, __) => Divider(
+                  separatorBuilder: (_, _) => Divider(
                     height: 1,
                     color: Theme.of(context).dividerColor,
                     indent: 72,
@@ -143,10 +144,10 @@ class _NotificationTile extends StatelessWidget {
                               fit: BoxFit.cover,
                               fadeInDuration:
                                   const Duration(milliseconds: 150),
-                              placeholder: (_, __) => Container(
+                              placeholder: (_, _) => Container(
                                 color: color.withValues(alpha: 0.15),
                               ),
-                              errorWidget: (_, __, ___) => Container(
+                              errorWidget: (_, _, _) => Container(
                                 color: color.withValues(alpha: 0.15),
                                 alignment: Alignment.center,
                                 child: Icon(icon, color: color, size: 22),
@@ -224,22 +225,44 @@ class _NotificationTile extends StatelessWidget {
   (IconData, Color) _iconFor(String type) {
     switch (type) {
       case 'follow':
-        return (Icons.person_add_alt_1, AppColors.electricPurple);
+        return (LucideIcons.userPlus, AppColors.electricPurple);
       case 'like':
-        return (Icons.favorite, AppColors.mutedRed);
+      case 'post_liked':
+        return (LucideIcons.heart, AppColors.mutedRed);
       case 'comment':
+      case 'post_commented':
+        return (LucideIcons.messageCircle, AppColors.coolCyan);
       case 'reply':
-        return (Icons.chat_bubble_outline, AppColors.coolCyan);
+      case 'comment_replied':
+        return (LucideIcons.cornerUpLeft, AppColors.coolCyan);
       case 'gift':
-        return (Icons.card_giftcard, Colors.amber);
+      case 'gift_received':
+        return (LucideIcons.gift, Colors.amber);
       case 'live_start':
-        return (Icons.live_tv, AppColors.mutedRed);
+      case 'live_started':
+        return (LucideIcons.radio, AppColors.mutedRed);
+      case 'live_starting':
+        return (LucideIcons.clock, AppColors.mutedRed);
       case 'message':
-        return (Icons.mail_outline, AppColors.coolCyan);
+      case 'new_message':
+        return (LucideIcons.messageSquare, AppColors.coolCyan);
       case 'quest':
-        return (Icons.emoji_events, AppColors.electricPurple);
+      case 'quest_completed':
+        return (LucideIcons.trophy, AppColors.electricPurple);
+      case 'quest_reminder':
+        return (LucideIcons.target, AppColors.electricPurple);
+      case 'new_post':
+        return (LucideIcons.image, AppColors.electricPurple);
+      case 'purchase':
+        return (LucideIcons.shoppingBag, Colors.green);
+      case 'battle_invite':
+        return (LucideIcons.swords, AppColors.mutedRed);
+      case 'creator_approved':
+        return (LucideIcons.badgeCheck, AppColors.electricPurple);
+      case 'creator_level_up':
+        return (LucideIcons.trendingUp, AppColors.electricPurple);
       default:
-        return (Icons.notifications, AppColors.electricPurple);
+        return (LucideIcons.bell, AppColors.electricPurple);
     }
   }
 

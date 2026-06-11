@@ -5,11 +5,41 @@ import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
-class ForYouLiveListScreen extends ConsumerWidget {
+class ForYouLiveListScreen extends ConsumerStatefulWidget {
   const ForYouLiveListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ForYouLiveListScreen> createState() =>
+      _ForYouLiveListScreenState();
+}
+
+class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Sempre busca dados frescos ao abrir a tela
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(liveFeedViewModelProvider.notifier).refresh();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(liveFeedViewModelProvider.notifier).refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = S.of(context);
     final liveFeedState = ref.watch(liveFeedViewModelProvider);
 

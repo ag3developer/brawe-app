@@ -49,6 +49,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     with TickerProviderStateMixin {
   late TabController _tabController;
   Gift? _selectedGift;
+  bool _isSending = false; // debounce — evita múltiplos POSTs simultâneos
 
   @override
   void initState() {
@@ -63,16 +64,15 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
   }
 
   Future<void> _handleSend() async {
-    if (_selectedGift == null) return;
+    if (_selectedGift == null || _isSending) return;
+
+    final gift = _selectedGift!;
     final s = S.of(context);
-    final giftName = _selectedGift!.name;
 
     // Verifica saldo ANTES de tentar enviar — se insuficiente abre top-up
-    // (gifts FREE não precisam de saldo de coins compradas)
-    if (_selectedGift!.isMonetary) {
-      final balance =
-          ref.read(creditsViewModelProvider).value?.toInt() ?? 0;
-      final cost = _selectedGift!.priceCredits.ceil();
+    if (gift.isMonetary) {
+      final balance = ref.read(creditsViewModelProvider).value?.toInt() ?? 0;
+      final cost = gift.priceCredits.ceil();
       if (balance < cost) {
         await TopUpCoinsSheet.show(
           context,
@@ -82,18 +82,46 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
       }
     }
 
+    // Debounce — bloqueia novos taps enquanto este request está em voo
+    setState(() => _isSending = true);
+
+    // ── POP OTIMISTA: fecha a tela imediatamente ──
+    // A animação do gift já disparou via socket assim que o backend
+    // processa — o usuário não precisa esperar a resposta HTTP.
+    if (mounted) Navigator.of(context).pop();
+
+    // Envia em background; resultado chega via snackbar no contexto pai
+    final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
     final success = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
-          roomId: widget.roomId,
-          giftId: _selectedGift!.id,
-          receiverId: widget.streamerId,
-          battleId: widget.battleId,
-        );
-    if (success && mounted) {
+      roomId: widget.roomId,
+      giftId: gift.id,
+      receiverId: widget.streamerId,
+      battleId: widget.battleId,
+    );
+
+    if (!mounted) {
+      // Tela já foi descartada — atualiza saldo em background mesmo assim
+      if (success) {
+        ref.read(creditsViewModelProvider.notifier).refresh();
+        ref.read(gifterLevelViewModelProvider.notifier).refresh();
+      }
+      return;
+    }
+
+    setState(() => _isSending = false);
+
+    if (success) {
       ref.read(creditsViewModelProvider.notifier).refresh();
       ref.read(gifterLevelViewModelProvider.notifier).refresh();
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.giftsSent(giftName))),
+      scaffoldMessenger?.showSnackBar(
+        SnackBar(content: Text(s.giftsSent(gift.name))),
+      );
+    } else {
+      scaffoldMessenger?.showSnackBar(
+        SnackBar(
+          content: Text(s.giftsError('Tente novamente')),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
     }
   }
@@ -231,7 +259,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                     ),
             ),
             _BalanceFooter(
-              isSending: sendState is AsyncLoading,
+              isSending: _isSending,
               canSend: _selectedGift != null,
               onSend: _handleSend,
             ),

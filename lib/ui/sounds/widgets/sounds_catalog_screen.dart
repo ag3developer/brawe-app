@@ -70,12 +70,10 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-
     return Scaffold(
       backgroundColor: context.colors.background,
       body: NestedScrollView(
-        headerSliverBuilder: (_, __) => [
+        headerSliverBuilder: (_, _) => [
           _SoundsAppBar(
             tabs: _tabs,
             searchCtrl: _searchCtrl,
@@ -178,7 +176,7 @@ class _SoundsAppBar extends StatelessWidget {
                   prefixIcon: Icon(Icons.search, color: context.colors.textSecondary, size: 20),
                   suffixIcon: ValueListenableBuilder(
                     valueListenable: searchCtrl,
-                    builder: (_, val, __) => val.text.isNotEmpty
+                    builder: (_, val, _) => val.text.isNotEmpty
                         ? IconButton(
                             icon: Icon(Icons.close, size: 18, color: context.colors.textSecondary),
                             onPressed: onClearSearch,
@@ -229,7 +227,7 @@ class _TrendingTab extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.mutedRed),
       ),
-      error: (_, __) => Center(
+      error: (_, _) => Center(
         child: Text(s.soundsEmptyTrending,
             style: TextStyle(color: context.colors.textSecondary)),
       ),
@@ -294,7 +292,7 @@ class _CatalogTab extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             itemCount: _genreKeys.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
             itemBuilder: (_, i) {
               final key = _genreKeys[i];
               final selected = state.genre == key;

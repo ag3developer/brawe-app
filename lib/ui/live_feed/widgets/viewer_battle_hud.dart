@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -7,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/app_colors.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../data/services/socket_service.dart';
 import '../../../domain/models/battle_state.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/battle_view_model.dart';
@@ -58,28 +55,27 @@ const double _kMomentumTopOffset = _kTimerTopOffset + _kTimerHeight + 8; // 206
 /// renderizamos a camada de batalha:
 ///
 /// - **Painel de placar** (topo, abaixo do top bar): os DOIS participantes
-///   com o timer no centro e a barra de vantagem roxo↔rosa embaixo.
+///   (avatar + nome + score) com o timer no centro e a barra de vantagem
+///   roxo↔rosa embaixo. Score aparece UMA vez (sem a duplicação da tela antiga).
 /// - **Gift toasts**: quem mandou o quê, caindo logo abaixo do painel.
 /// - **Countdown** 3·2·1 ao iniciar.
-/// - **Banner de resultado** com score final ao terminar (auto-dismiss 12s).
+/// - **Banner de resultado** compacto ao terminar (a live continua atrás;
+///   auto-dismiss em ~8s ou toque no X).
 ///
-/// `onClose` → pai faz `_activeBattleId = null` e volta pra live normal.
-/// `onRematch(newBattleId)` → pai troca `_activeBattleId` pela revanche.
+/// Gamificação leve (barata): 👑 coroa + glow no líder e haptic na virada
+/// de liderança — feedback tátil que deixa a disputa "viva".
+///
+/// `onClose` é chamado quando o resultado é dispensado → o pai faz
+/// `setState(_activeBattleId = null)` e volta pra live normal.
 class ViewerBattleHud extends ConsumerStatefulWidget {
   const ViewerBattleHud({
     super.key,
     required this.battleId,
-    required this.roomId,
     required this.onClose,
-    this.onRematch,
   });
 
   final String battleId;
-  /// ID da sala que o viewer está assistindo — usado para detectar revanche.
-  final String roomId;
   final VoidCallback onClose;
-  /// Chamado quando uma revanche começa: `newBattleId` é o novo ID.
-  final void Function(String newBattleId)? onRematch;
 
   @override
   ConsumerState<ViewerBattleHud> createState() => _ViewerBattleHudState();
@@ -94,61 +90,23 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
   /// 'a' | 'b' | null — usado pra disparar haptic só na MUDANÇA de líder.
   String? _lastLeader;
 
-  // ── Momentum ────────────────────────────────────────────────────────────
+  // ── Momentum (🔥 rajada de presentes) ──────────────────────────────────
+  // Conta gifts consecutivos do MESMO lado. Quando passa do limiar, mostra
+  // o badge "EM CHAMAS xN" do lado quente. Reseta quando o outro lado pontua
+  // ou após uma janela de silêncio. 100% derivado de `updated_side` (dado
+  // que já chega por gift) — gamificação honesta, sem inventar número.
   static const int _momentumThreshold = 3;
-  String? _momentumSide;
+  String? _momentumSide; // lado da rajada atual
   int _momentumCount = 0;
   Timer? _momentumDecay;
 
-  // ── Lead change ─────────────────────────────────────────────────────────
+  // ── Lead change (💥 "VIROU!") ──────────────────────────────────────────
+  // Flash rápido quando a liderança troca de lado. Acompanha o haptic.
   String? _leadFlashSide;
   Timer? _leadFlashClear;
 
   @override
-  void initState() {
-    super.initState();
-    // Ouvir nova batalha (revanche) que envolva esta sala.
-    // Quando os streamers aceitam revanche, `connect:battle:started` chega
-    // com `room_a_id` ou `room_b_id` = widget.roomId e um novo `battle_id`.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final socket = ref.read(socketServiceProvider);
-      socket.on(AppConstants.eventBattleStarted, _onRematchStarted);
-    });
-  }
-
-  void _onRematchStarted(dynamic raw) {
-    if (!mounted) return;
-    try {
-      Map<String, dynamic> data;
-      if (raw is Map<String, dynamic>) {
-        data = raw;
-      } else if (raw is String) {
-        data = Map<String, dynamic>.from(
-            const JsonDecoder().convert(raw) as Map);
-      } else {
-        return;
-      }
-      final newBattleId = data['battle_id'] as String?;
-      if (newBattleId == null || newBattleId == widget.battleId) return;
-      final roomA = data['room_a_id'] as String? ?? '';
-      final roomB = data['room_b_id'] as String? ?? '';
-      // Só nos importa se esta sala está na nova batalha
-      if (roomA != widget.roomId && roomB != widget.roomId) return;
-      // Cancelar auto-close do resultado anterior
-      _autoCloseTimer?.cancel();
-      _autoCloseTimer = null;
-      widget.onRematch?.call(newBattleId);
-    } catch (_) {}
-  }
-
-  @override
   void dispose() {
-    // Remover handler de revanche — evita processar evento após dispose
-    try {
-      final socket = ref.read(socketServiceProvider);
-      socket.off(AppConstants.eventBattleStarted);
-    } catch (_) {}
     _countdownClear?.cancel();
     _autoCloseTimer?.cancel();
     _momentumDecay?.cancel();
@@ -233,12 +191,9 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
           }
           _maybeLeadChange(s);
           // Terminou → agenda auto-close (uma vez só).
-          // Se vier uma revanche (novo battleId), o pai vai trocar o widget
-          // inteiro — este timer cancela no dispose. Não é problema.
           if (s.isOver && _autoCloseTimer == null) {
             HapticFeedback.heavyImpact();
-            // Auto-close de 12s para dar tempo de ver o resultado
-            _autoCloseTimer = Timer(const Duration(seconds: 12), () {
+            _autoCloseTimer = Timer(const Duration(seconds: 8), () {
               if (mounted) widget.onClose();
             });
           }
@@ -531,9 +486,8 @@ class _CountdownState extends State<_Countdown>
 
 // ─── Result banner ──────────────────────────────────────────────────────────
 
-/// Banner de resultado do ESPECTADOR (a live continua atrás).
-/// Mostra vencedor + score final + botão fechar. Auto-fecha em 12s.
-class _ResultBanner extends StatefulWidget {
+/// Banner compacto de resultado (NÃO é fullscreen — a live continua atrás).
+class _ResultBanner extends StatelessWidget {
   const _ResultBanner({
     required this.battle,
     required this.l10n,
@@ -545,194 +499,69 @@ class _ResultBanner extends StatefulWidget {
   final VoidCallback onClose;
 
   @override
-  State<_ResultBanner> createState() => _ResultBannerState();
-}
-
-class _ResultBannerState extends State<_ResultBanner>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 400));
-    _scale = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack);
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  String _fmt(double v) =>
-      v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}K' : v.toStringAsFixed(0);
-
-  @override
   Widget build(BuildContext context) {
-    final battle = widget.battle;
     final isDraw = battle.isDraw;
     final winnerName = battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
     final winnerColor =
         battle.isLeadingA ? AppColors.electricPurple : AppColors.hotPink;
-    final aColor = AppColors.electricPurple;
-    final bColor = AppColors.hotPink;
 
-    return ScaleTransition(
-      scale: _scale,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.55),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDraw
-                    ? Colors.white24
-                    : winnerColor.withValues(alpha: 0.7),
-                width: 1.5,
-              ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.42),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDraw
+                  ? Colors.white24
+                  : winnerColor.withValues(alpha: 0.6),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Título ──
-                Row(
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isDraw ? Icons.handshake_outlined : Icons.workspace_premium,
+                color: isDraw ? Colors.white54 : winnerColor,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isDraw ? '🤝' : '🏆',
-                      style: const TextStyle(fontSize: 26),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.l10n.battleEnded,
-                            style: const TextStyle(
-                                color: Colors.white54, fontSize: 11),
-                          ),
-                          Text(
-                            isDraw
-                                ? widget.l10n.battleDraw
-                                : '${widget.l10n.battleWinner}: $winnerName',
-                            style: TextStyle(
-                              color: isDraw ? Colors.white70 : winnerColor,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                      l10n.battleEnded,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded,
-                          color: Colors.white54, size: 20),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: widget.onClose,
+                    Text(
+                      isDraw
+                          ? l10n.battleDraw
+                          : '${l10n.battleWinner}: $winnerName',
+                      style: TextStyle(
+                        color: isDraw ? Colors.white70 : winnerColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // ── Score final ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            battle.streamerAName,
-                            style: TextStyle(
-                              color: aColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _fmt(battle.scoreA),
-                            style: TextStyle(
-                              color: isDraw ? Colors.white70 : (battle.isLeadingA ? aColor : Colors.white38),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                            ),
-                          ),
-                          Text(
-                            '${battle.giftsCountA} presentes',
-                            style: const TextStyle(
-                                color: Colors.white38, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 50,
-                      color: Colors.white12,
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            battle.streamerBName,
-                            style: TextStyle(
-                              color: bColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _fmt(battle.scoreB),
-                            style: TextStyle(
-                              color: isDraw ? Colors.white70 : (battle.isLeadingB ? bColor : Colors.white38),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 22,
-                            ),
-                          ),
-                          Text(
-                            '${battle.giftsCountB} presentes',
-                            style: const TextStyle(
-                                color: Colors.white38, fontSize: 10),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // ── Botão fechar ──
-                OutlinedButton.icon(
-                  onPressed: widget.onClose,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Fechar', style: TextStyle(fontSize: 13)),
-                ),
-              ],
-            ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded,
+                    color: Colors.white70, size: 22),
+                onPressed: onClose,
+              ),
+            ],
           ),
         ),
       ),

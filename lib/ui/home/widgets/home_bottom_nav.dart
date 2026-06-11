@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,9 +11,6 @@ import '../../core/themes/force_dark_theme.dart';
 import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/create_video_sheet.dart';
 import '../../feed/widgets/story_composer_screen.dart';
-import '../../live/widgets/live_gate_sheet.dart';
-import '../../live/view_models/live_eligibility_view_model.dart';
-import '../../core/ui/app_spacing.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
@@ -29,7 +27,6 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
   List<_NavDestination> _buildDestinations(S s) => [
     _NavDestination(icon: Icons.home_filled, label: s.navHome, route: '/home'),
     _NavDestination(icon: Icons.newspaper, label: s.navFeed, route: '/feed'),
-    _NavDestination(icon: Icons.sensors, label: s.navLives, route: '/live'),
     _NavDestination(
         icon: Icons.chat_bubble_outline, label: s.navChat, route: '/chat'),
     _NavDestination(icon: Icons.person_outline, label: s.navProfile, route: null),
@@ -37,7 +34,7 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
 
   void _onTap(int index, String? route, String? userId) {
     setState(() => _selected = index);
-    if (index == 4 && userId != null) {
+    if (route == null && userId != null) {
       context.go('/profile/$userId');
     } else if (route != null) {
       context.go(route);
@@ -105,6 +102,9 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                 final dest = destinations[destIdx];
                 final isSelected = _selected == destIdx;
 
+                // Profile tab: show avatar instead of icon
+                final isProfile = dest.route == null;
+
                 return Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -112,13 +112,20 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          dest.icon,
-                          color: isSelected
-                              ? colors.accentPrimary
-                              : colors.textSecondary,
-                          size: 24,
-                        ),
+                        if (isProfile)
+                          _AvatarIcon(
+                            avatarUrl: user?.avatarUrl,
+                            isSelected: isSelected,
+                            accentColor: colors.accentPrimary,
+                          )
+                        else
+                          Icon(
+                            dest.icon,
+                            color: isSelected
+                                ? colors.accentPrimary
+                                : colors.textSecondary,
+                            size: 24,
+                          ),
                         const SizedBox(height: 2),
                         Text(
                           dest.label,
@@ -145,25 +152,34 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
   }
 
   void _showCreateOptions(BuildContext context) {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (_) => const _CreateSheet(),
+      barrierDismissible: true,
+      barrierLabel: 'create',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 280),
+      transitionBuilder: (_, anim, _, child) => FadeTransition(
+        opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+        child: child,
+      ),
+      pageBuilder: (ctx, _, _) => const _CreateOverlay(),
     );
   }
 }
 
-// ── Sheet de criar (Brawe Pulse — gradient cards, hero glow) ────────────
-class _CreateSheet extends ConsumerStatefulWidget {
-  const _CreateSheet();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CREATE OVERLAY — TikTok-style fullscreen
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CreateOverlay extends ConsumerStatefulWidget {
+  const _CreateOverlay();
 
   @override
-  ConsumerState<_CreateSheet> createState() => _CreateSheetState();
+  ConsumerState<_CreateOverlay> createState() => _CreateOverlayState();
 }
 
-class _CreateSheetState extends ConsumerState<_CreateSheet>
+class _CreateOverlayState extends ConsumerState<_CreateOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
 
@@ -172,7 +188,7 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
     super.initState();
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 480),
+      duration: const Duration(milliseconds: 420),
     )..forward();
   }
 
@@ -182,17 +198,16 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
     super.dispose();
   }
 
-  Animation<double> _stagger(int i) {
-    final start = 0.15 + i * 0.10;
-    return CurvedAnimation(
-      parent: _c,
-      curve: Interval(start, (start + 0.55).clamp(0.0, 1.0),
-          curve: Curves.easeOutCubic),
-    );
-  }
+  Animation<double> _stagger(int i) => CurvedAnimation(
+        parent: _c,
+        curve: Interval(0.05 + i * 0.08, (0.4 + i * 0.08).clamp(0, 1),
+            curve: Curves.easeOutBack),
+      );
+
+  void _close() => Navigator.of(context).pop();
 
   void _openPost() {
-    Navigator.pop(context);
+    _close();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -202,7 +217,7 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
   }
 
   void _openVideo() {
-    Navigator.pop(context);
+    _close();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -214,7 +229,7 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
   }
 
   void _openStory() {
-    Navigator.pop(context);
+    _close();
     Navigator.of(context).push(
       MaterialPageRoute(
         fullscreenDialog: true,
@@ -223,503 +238,199 @@ class _CreateSheetState extends ConsumerState<_CreateSheet>
     );
   }
 
-  void _openLive() async {
-    final navContext = context;
-    // Invalida cache pra sempre pegar estado atual (avatar recém-adicionado
-    // ou inscrição aprovada agora) e dispara a request.
-    final _ = ref.refresh(liveEligibilityProvider);
-    Navigator.pop(navContext);
-    // Mostra um sheet leve enquanto resolve a request — a UX flui sem
-    // bloqueio. `showLiveGateSheet` cuida do loading/erro/ações.
-    await showLiveGateSheet(navContext, ref);
+  void _openLive() {
+    _close();
+    context.push('/live/start');
   }
 
   void _openSounds() {
-    Navigator.pop(context);
+    _close();
     context.push('/sounds');
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     final s = S.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        0,
-        AppSpacing.md,
-        AppSpacing.md,
-      ),
-      child: SafeArea(
-        top: false,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.surface.withValues(alpha: 0.9),
-                    colors.surfaceElevated.withValues(alpha: 0.5),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: colors.border,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.overlay.withValues(alpha: 0.5),
-                    blurRadius: 50,
-                    offset: const Offset(0, 22),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(top: 10, bottom: 18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [
-                          colors.accentPrimary,
-                          colors.accentSecondary,
-                        ]),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg,
-                      0,
-                      AppSpacing.lg,
-                      AppSpacing.lg,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (b) => LinearGradient(colors: [
-                            colors.textPrimary,
-                            colors.accentSecondary,
-                          ]).createShader(b),
-                          child: Text(
-                            s.createSheetTitle,
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          s.createSheetSubtitle,
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 13.5,
-                            height: 1.35,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      0,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                    ),
-                    child: Column(
-                      children: [
-                        _AnimatedSlide(
-                          animation: _stagger(0),
-                          child: _CreateCard(
-                            icon: LucideIcons.aperture,
-                            title: s.createStoryTitle,
-                            subtitle: s.createStorySubtitle,
-                            iconSpin: true,
-                            gradient: const [
-                              Color(0xFF7C3AED),
-                              Color(0xFF22D3EE),
-                            ],
-                            onTap: _openStory,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _AnimatedSlide(
-                          animation: _stagger(1),
-                          child: _CreateCard(
-                            icon: LucideIcons.video,
-                            title: s.createVideoTitle,
-                            subtitle: s.createVideoSubtitle,
-                            gradient: const [
-                              Color(0xFFEC4899),
-                              Color(0xFF8B5CF6),
-                            ],
-                            onTap: _openVideo,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _AnimatedSlide(
-                          animation: _stagger(2),
-                          child: _CreateCard(
-                            icon: LucideIcons.radio,
-                            title: s.createLiveTitle,
-                            subtitle: s.createLiveSubtitle,
-                            badge: s.liveBadge,
-                            badgePulse: true,
-                            gradient: const [
-                              Color(0xFFEF4444),
-                              Color(0xFFF97316),
-                            ],
-                            onTap: _openLive,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _AnimatedSlide(
-                          animation: _stagger(3),
-                          child: _CreateCard(
-                            icon: LucideIcons.edit3,
-                            title: s.createPostTitle,
-                            subtitle: s.createPostSubtitle,
-                            gradient: const [
-                              Color(0xFF6366F1),
-                              Color(0xFF8B5CF6),
-                            ],
-                            onTap: _openPost,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _AnimatedSlide(
-                          animation: _stagger(4),
-                          child: _CreateCard(
-                            icon: LucideIcons.music,
-                            iconWidget: Image.asset(
-                              'assets/images/brawe_sounds_icon.png',
-                              width: 30,
-                              height: 30,
-                              fit: BoxFit.contain,
-                            ),
-                            title: s.createSoundsTitle,
-                            subtitle: s.createSoundsSubtitle,
-                            gradient: const [
-                              Color(0xFFE11D48),
-                              Color(0xFFFF6B6B),
-                            ],
-                            onTap: _openSounds,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      0,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: colors.textSecondary,
-                          backgroundColor:
-                              colors.surfaceHighest,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          s.actionClose,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AnimatedSlide extends StatelessWidget {
-  const _AnimatedSlide({required this.animation, required this.child});
-  final Animation<double> animation;
-  final Widget child;
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (_, c) => Opacity(
-        opacity: animation.value.clamp(0, 1),
-        child: Transform.translate(
-          offset: Offset(0, (1 - animation.value) * 18),
-          child: c,
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _CreateCard extends StatefulWidget {
-  const _CreateCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.gradient,
-    required this.onTap,
-    this.iconWidget,
-    this.badge,
-    this.badgePulse = false,
-    this.iconSpin = false,
-  });
-
-  final IconData icon;
-  final Widget? iconWidget;   // substitui o Icon quando fornecido
-  final String title;
-  final String subtitle;
-  final List<Color> gradient;
-  final VoidCallback onTap;
-  final String? badge;
-  final bool badgePulse;
-  final bool iconSpin;
-
-  @override
-  State<_CreateCard> createState() => _CreateCardState();
-}
-
-class _CreateCardState extends State<_CreateCard>
-    with TickerProviderStateMixin {
-  late final AnimationController _pulse;
-  late final AnimationController _spin;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    );
-    if (widget.badgePulse) _pulse.repeat(reverse: true);
-    _spin = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    );
-    if (widget.iconSpin) _spin.repeat();
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    _spin.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(20),
-        splashColor: widget.gradient.first.withValues(alpha: 0.25),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                widget.gradient.first.withValues(alpha: 0.16),
-                widget.gradient.last.withValues(alpha: 0.05),
-              ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Backdrop blur + dark tint
+          GestureDetector(
+            onTap: _close,
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+              child: Container(color: Colors.black.withValues(alpha: 0.72)),
             ),
-            border: Border.all(
-              color: widget.gradient.first.withValues(alpha: 0.35),
-              width: 1.1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.gradient.first.withValues(alpha: 0.20),
-                blurRadius: 18,
-                spreadRadius: -2,
-                offset: const Offset(0, 8),
-              ),
-            ],
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: widget.gradient,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.gradient.first.withValues(alpha: 0.55),
-                      blurRadius: 16,
-                      spreadRadius: -1,
+
+          // Close button top-right
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, right: 16),
+                child: GestureDetector(
+                  onTap: _close,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2)),
                     ),
-                  ],
+                    child: const Icon(Icons.close,
+                        color: Colors.white, size: 18),
+                  ),
                 ),
-                child: widget.iconSpin
-                    ? RotationTransition(
-                        turns: _spin,
-                        child: widget.iconWidget ??
-                            Icon(widget.icon,
-                                color: context.colors.textPrimary, size: 24),
-                      )
-                    : widget.iconWidget ??
-                        Icon(widget.icon,
-                            color: context.colors.textPrimary, size: 24),
               ),
-              const SizedBox(width: 14),
-              Expanded(
+            ),
+          ),
+
+          // Action grid — anchored to bottom
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 0, 32, 32),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Row 1
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Flexible(
-                          child: Text(
-                            widget.title,
-                            style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        _OverlayItem(
+                          anim: _stagger(0),
+                          icon: Icons.auto_stories_outlined,
+                          label: s.createStoryTitle,
+                          onTap: _openStory,
                         ),
-                        if (widget.badge != null) ...[
-                          const SizedBox(width: 8),
-                          _BadgeChip(
-                            label: widget.badge!,
-                            pulse: widget.badgePulse,
-                            pulseAnim: _pulse,
-                            color: widget.gradient.first,
-                          ),
-                        ],
+                        _OverlayItem(
+                          anim: _stagger(1),
+                          icon: LucideIcons.video,
+                          label: s.createVideoTitle,
+                          onTap: _openVideo,
+                        ),
+                        _OverlayItem(
+                          anim: _stagger(2),
+                          icon: LucideIcons.radio,
+                          label: s.createLiveTitle,
+                          onTap: _openLive,
+                          accent: true,
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.subtitle,
-                      style: TextStyle(
-                        color: context.colors.textSecondary,
-                        fontSize: 12.5,
-                        height: 1.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 24),
+                    // Row 2
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _OverlayItem(
+                          anim: _stagger(3),
+                          icon: LucideIcons.edit3,
+                          label: s.createPostTitle,
+                          onTap: _openPost,
+                        ),
+                        _OverlayItem(
+                          anim: _stagger(4),
+                          iconWidget: Image.asset(
+                            'assets/images/brawe_sounds_icon.png',
+                            width: 26,
+                            height: 26,
+                            color: Colors.white,
+                          ),
+                          label: s.createSoundsTitle,
+                          onTap: _openSounds,
+                        ),
+                        // Spacer para manter grid equilibrado
+                        const SizedBox(width: 72),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Icon(
-                LucideIcons.chevronRight,
-                color: context.colors.textTertiary,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BadgeChip extends StatelessWidget {
-  const _BadgeChip({
-    required this.label,
-    required this.pulse,
-    required this.pulseAnim,
-    required this.color,
-  });
-
-  final String label;
-  final bool pulse;
-  final AnimationController pulseAnim;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.20),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.65)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (pulse) ...[
-            AnimatedBuilder(
-              animation: pulseAnim,
-              builder: (_, _) {
-                final v = pulseAnim.value;
-                return Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.45 + v * 0.45),
-                        blurRadius: 4 + v * 4,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(width: 5),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.6,
             ),
           ),
         ],
       ),
     );
-    return chip;
+  }
+}
+
+class _OverlayItem extends StatelessWidget {
+  const _OverlayItem({
+    required this.anim,
+    required this.label,
+    required this.onTap,
+    this.icon,
+    this.iconWidget,
+    this.accent = false,
+  });
+
+  final Animation<double> anim;
+  final String label;
+  final VoidCallback onTap;
+  final IconData? icon;
+  final Widget? iconWidget;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: anim,
+      builder: (_, child) => Opacity(
+        opacity: anim.value.clamp(0.0, 1.0),
+        child: Transform.scale(scale: anim.value.clamp(0.0, 1.0), child: child),
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: SizedBox(
+          width: 72,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: accent
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: accent
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : Colors.white.withValues(alpha: 0.2),
+                    width: accent ? 1.5 : 1,
+                  ),
+                ),
+                child: Center(
+                  child: iconWidget ??
+                      Icon(icon, color: Colors.white, size: 24),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -727,26 +438,60 @@ class _NavDestination {
   const _NavDestination({
     required this.icon,
     required this.label,
-    this.route,
+    required this.route,
   });
   final IconData icon;
   final String label;
   final String? route;
 }
 
-// Keep old NavBarItem for backward compat
-class NavBarItem extends StatelessWidget {
-  const NavBarItem({super.key, required this.icon, this.onTap});
+class _AvatarIcon extends StatelessWidget {
+  const _AvatarIcon({
+    required this.avatarUrl,
+    required this.isSelected,
+    required this.accentColor,
+  });
 
-  final IconData icon;
-  final VoidCallback? onTap;
+  final String? avatarUrl;
+  final bool isSelected;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Icon(icon, color: context.colors.textPrimary, size: 28),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isSelected ? accentColor : Colors.transparent,
+          width: 2,
+        ),
+      ),
+      child: ClipOval(
+        child: avatarUrl != null && avatarUrl!.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: avatarUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, _) => _fallback(context),
+                errorWidget: (_, _, _) => _fallback(context),
+              )
+            : _fallback(context),
+      ),
+    );
+  }
+
+  Widget _fallback(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.person_outline,
+        size: 16,
+        color: isSelected
+            ? accentColor
+            : Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }

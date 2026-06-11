@@ -2,7 +2,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/profile_repository.dart';
-import '../../../data/repositories/sound_repository.dart';
 import '../../../domain/models/profile.dart';
 
 part 'edit_profile_view_model.g.dart';
@@ -30,11 +29,12 @@ class EditProfileState {
   final bool savedOnce;
   // Username-specific
   final bool isCheckingUsername;
+  /// `null` = OK. When set, the widget should display the corresponding
+  /// localized message. `usernameErrorMessage` carries the backend-provided
+  /// message when the error is not an `EditProfileErrorCode`.
   final EditProfileErrorCode? usernameError;
   final String? usernameErrorMessage;
   final bool usernameAvailable;
-  // Tipo de conta (editado localmente antes de salvar)
-  final AccountType? pendingAccountType;
 
   const EditProfileState({
     this.profile,
@@ -47,12 +47,7 @@ class EditProfileState {
     this.usernameError,
     this.usernameErrorMessage,
     this.usernameAvailable = false,
-    this.pendingAccountType,
   });
-
-  /// Tipo de conta efetivo: pendingAccountType ?? profile.accountType
-  AccountType get effectiveAccountType =>
-      pendingAccountType ?? profile?.accountType ?? AccountType.consumer;
 
   EditProfileState copyWith({
     Profile? profile,
@@ -67,8 +62,6 @@ class EditProfileState {
     String? usernameErrorMessage,
     bool clearUsernameError = false,
     bool? usernameAvailable,
-    AccountType? pendingAccountType,
-    bool clearPendingAccountType = false,
   }) {
     return EditProfileState(
       profile: profile ?? this.profile,
@@ -84,9 +77,6 @@ class EditProfileState {
           ? null
           : (usernameErrorMessage ?? this.usernameErrorMessage),
       usernameAvailable: usernameAvailable ?? this.usernameAvailable,
-      pendingAccountType: clearPendingAccountType
-          ? null
-          : (pendingAccountType ?? this.pendingAccountType),
     );
   }
 }
@@ -104,7 +94,6 @@ class EditProfileViewModel extends _$EditProfileViewModel {
     required String displayName,
     required String bio,
     required Map<String, String> socialLinks,
-    AccountType? accountType,
   }) async {
     final current = state.value;
     if (current == null) return false;
@@ -116,13 +105,11 @@ class EditProfileViewModel extends _$EditProfileViewModel {
         displayName: displayName.trim().isEmpty ? null : displayName.trim(),
         bio: bio,
         socialLinks: socialLinks,
-        accountType: accountType ?? current.pendingAccountType,
       );
       state = AsyncValue.data(current.copyWith(
         profile: updated,
         isSaving: false,
         savedOnce: true,
-        clearPendingAccountType: true,
       ));
       return true;
     } catch (e) {
@@ -131,38 +118,6 @@ class EditProfileViewModel extends _$EditProfileViewModel {
         error: EditProfileErrorCode.saveFailed,
       ));
       return false;
-    }
-  }
-
-  /// Atualiza o tipo de conta localmente (antes de salvar).
-  void setAccountType(AccountType type) {
-    final current = state.value;
-    if (current == null) return;
-    state = AsyncValue.data(current.copyWith(pendingAccountType: type));
-  }
-
-  /// Registra/atualiza o perfil de artista no Brawe Sounds.
-  /// Chamado pelo widget de edição após salvar o perfil com tipo == musician.
-  Future<void> registerArtistIfNeeded({
-    required String artistName,
-    String? city,
-    String? spotifyUrl,
-    String? appleMusicUrl,
-    List<String> genres = const [],
-  }) async {
-    if (artistName.trim().isEmpty) return;
-    try {
-      final repo = ref.read(soundRepositoryProvider);
-      await repo.registerArtist(
-        artistName: artistName.trim(),
-        city: city?.trim().isEmpty == true ? null : city?.trim(),
-        spotifyUrl: spotifyUrl?.trim().isEmpty == true ? null : spotifyUrl?.trim(),
-        appleMusicUrl: appleMusicUrl?.trim().isEmpty == true ? null : appleMusicUrl?.trim(),
-        genres: genres,
-        countryCode: 'BR', // padrão Brasil; pode ser configurável no futuro
-      );
-    } catch (_) {
-      // Silencioso — perfil principal já foi salvo, artista pode ser criado depois
     }
   }
 

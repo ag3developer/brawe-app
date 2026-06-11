@@ -512,7 +512,7 @@ class _SelectedSoundChip extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  sound.artist.artistName,
+                  sound.artist?.artistName ?? '',
                   style: TextStyle(
                     color: context.colors.textSecondary,
                     fontSize: 11,
