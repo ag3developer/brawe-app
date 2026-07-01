@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Child Safety Standards — Brawe Connect</title>
+  <meta name="description" content="Brawe Connect Child Safety Standards. Brawe Digital Hub has a zero-tolerance policy toward Child Sexual Abuse and Exploitation (CSAE)." />
+  <meta name="robots" content="index, follow" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0d0d0d;
+      color: #e0e0e0;
+      line-height: 1.7;
+    }
+    header {
+      background: #111;
+      border-bottom: 1px solid #1e1e1e;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header img { height: 36px; }
+    header span {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 32px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge i { width: 14px; height: 14px; stroke: #6c63ff; flex-shrink: 0; }
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .contact-row i { width: 15px; height: 15px; stroke: #a29bfe; flex-shrink: 0; }
+    .section-icon {
+      width: 16px;
+      height: 16px;
+      stroke: #6c63ff;
+      flex-shrink: 0;
+      vertical-align: middle;
+      margin-right: 6px;
+      position: relative;
+      top: -1px;
+    }
+    .alert-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-box i { width: 18px; height: 18px; stroke: #fc8181; flex-shrink: 0; margin-top: 1px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .meta {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 40px;
+    }
+    .meta a { color: #888; text-decoration: none; }
+    .meta a:hover { color: #ccc; }
+    .contact-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-left: 3px solid #6c63ff;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+    .contact-card p { font-size: 14px; color: #aaa; margin-bottom: 8px; }
+    .contact-card a {
+      color: #a29bfe;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contact-card a:hover { text-decoration: underline; }
+    .section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    p { margin-bottom: 14px; color: #c0c0c0; font-size: 15px; }
+    ul {
+      margin: 0 0 14px 20px;
+      color: #c0c0c0;
+      font-size: 15px;
+    }
+    li { margin-bottom: 6px; }
+    strong { color: #ffffff; }
+    .alert-box {
+      background: #1a0a0a;
+      border: 1px solid #3d1010;
+      border-left: 3px solid #e53e3e;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      color: #fc8181;
+    }
+    .alert-box-text { flex: 1; }
+    .lang-switcher {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .lang-switcher a {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-decoration: none;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      transition: background 0.2s;
+    }
+    .lang-switcher a.active, .lang-switcher a:hover {
+      background: #2a2a2a;
+      color: #fff;
+    }
+    footer {
+      border-top: 1px solid #1a1a1a;
+      padding: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: #555;
+    }
+    footer a { color: #777; text-decoration: none; }
+    footer a:hover { color: #aaa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span>Brawe Connect</span>
+</header>
+
+<div class="container">
+
+  <div class="badge"><i data-lucide="shield-check"></i> Child Safety Standards</div>
+
+  <!-- Language switcher (optional — link to /pt/child-safety etc.) -->
+  <div class="lang-switcher">
+    <a href="/child-safety" class="active">English</a>
+    <a href="/pt/child-safety">Português</a>
+    <a href="/es/child-safety">Español</a>
+  </div>
+
+  <h1>Child Safety Standards</h1>
+  <p class="meta">
+    Developer: <strong>Brawe Digital Hub</strong> &nbsp;|&nbsp;
+    App: <strong>Brawe Connect (app.brawe.connect)</strong> &nbsp;|&nbsp;
+    Last updated: <strong>July 2026</strong>
+  </p>
+
+  <div class="contact-card">
+    <p><strong>Designated Child Safety Contact Point</strong></p>
+    <p style="font-size:13px; color:#777; margin-bottom:10px;">
+      This is the designated contact point for child safety issues at Brawe Digital Hub,
+      including notifications from Google Play regarding CSAE content found in Brawe Connect.
+      This representative is authorized to discuss our review and restriction procedures and to take
+      immediate action when required.
+    </p>
+    <p class="contact-row"><i data-lucide="mail"></i> <a href="mailto:safety@brawe.app">safety@brawe.app</a></p>
+    <p class="contact-row" style="margin:0; font-size:13px; color:#555;"><i data-lucide="clock" style="width:13px;height:13px;stroke:#555;"></i> Reports are reviewed within 24 hours. CSAM reports are escalated immediately.</p>
+  </div>
+
+  <!-- Section 1 -->
+  <div class="section">
+    <h2><i data-lucide="heart-handshake" class="section-icon"></i>1. Our Commitment</h2>
+    <p>
+      Brawe Connect, developed by <strong>Brawe Digital Hub</strong>, is committed to providing a safe
+      platform for all users. We maintain a <strong>strict zero-tolerance policy</strong> toward any
+      content, behavior, or activity that exploits, harms, or endangers children.
+    </p>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="section">
+    <h2><i data-lucide="ban" class="section-icon"></i>2. Prohibition of Child Sexual Abuse and Exploitation (CSAE)</h2>
+    <div class="alert-box">
+      <i data-lucide="octagon-alert"></i>
+      <span class="alert-box-text">Brawe Connect strictly and explicitly prohibits all forms of Child Sexual Abuse and Exploitation (CSAE).</span>
+    </div>
+    <p>This includes, but is not limited to:</p>
+    <ul>
+      <li><strong>Child Sexual Abuse Material (CSAM)</strong> — any image, video, audio, text, or other content that sexually exploits minors;</li>
+      <li><strong>Grooming</strong> — attempting to befriend or establish trust with a minor for the purpose of sexual exploitation;</li>
+      <li><strong>Solicitation</strong> — requesting sexual content from or about minors, or arranging sexual encounters with minors;</li>
+      <li><strong>Trafficking</strong> — facilitating or promoting the trafficking of minors for sexual purposes;</li>
+      <li><strong>Non-consensual sexualization of minors</strong> — any content that sexualizes minors without consent or in a harmful manner.</li>
+    </ul>
+    <p>
+      Users who violate this policy will be <strong>immediately and permanently banned</strong> from
+      Brawe Connect, and the content will be reported to the appropriate law enforcement agencies,
+      including the National Center for Missing &amp; Exploited Children (NCMEC).
+    </p>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="section">
+    <h2><i data-lucide="user-check" class="section-icon"></i>3. Age Requirements</h2>
+    <ul>
+      <li>Users must be at least <strong>18 years old</strong> to create an account on Brawe Connect.</li>
+      <li>Brawe Connect is not intended for users under the age of 18.</li>
+      <li>We reserve the right to terminate accounts we have reason to believe belong to minors.</li>
+    </ul>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="section">
+    <h2><i data-lucide="flag" class="section-icon"></i>4. In-App User Reporting Mechanism</h2>
+    <p>Brawe Connect provides in-app tools to report harmful content or behavior:</p>
+    <ul>
+      <li><strong>Report button</strong> — available on every post, profile, and live stream;</li>
+      <li><strong>Direct email</strong> — <a href="mailto:safety@brawe.app" style="color:#a29bfe;">safety@brawe.app</a> for urgent child safety reports;</li>
+      <li>Reports are reviewed by our Trust &amp; Safety team within <strong>24 hours</strong>.</li>
+    </ul>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="section">
+    <h2><i data-lucide="alert-triangle" class="section-icon"></i>5. Handling of Child Sexual Abuse Material (CSAM)</h2>
+    <p>Upon detection of CSAM — through reports, automated systems, or proactive review:</p>
+    <ol style="margin: 0 0 14px 20px; color: #c0c0c0; font-size: 15px;">
+      <li style="margin-bottom:6px;">Content is <strong>immediately removed</strong> from the platform;</li>
+      <li style="margin-bottom:6px;">The responsible account is <strong>immediately suspended</strong>;</li>
+      <li style="margin-bottom:6px;">A report is filed with <strong>NCMEC</strong> via <a href="https://www.missingkids.org/gethelpnow/cybertipline" target="_blank" rel="noopener" style="color:#a29bfe;">CyberTipline</a>;</li>
+      <li style="margin-bottom:6px;">All data is preserved and provided to <strong>law enforcement</strong> upon request;</li>
+      <li style="margin-bottom:6px;">The incident is logged for internal audit and compliance review.</li>
+    </ol>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="section">
+    <h2><i data-lucide="scale" class="section-icon"></i>6. Legal Compliance</h2>
+    <p>Brawe Connect complies with all applicable child safety laws and regulations, including:</p>
+    <ul>
+      <li>The <strong>Brazilian Statute of the Child and Adolescent (ECA)</strong> — Lei nº 8.069/1990;</li>
+      <li>The <strong>PROTECT Our Children Act</strong> (United States);</li>
+      <li>The <strong>EU Directive 2011/93/EU</strong> on combating sexual abuse and exploitation of children;</li>
+      <li>Any other applicable national and international regulations.</li>
+    </ul>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="section">
+    <h2><i data-lucide="gavel" class="section-icon"></i>7. Policy Enforcement</h2>
+    <p>Violations of these Child Safety Standards will result in:</p>
+    <ul>
+      <li>Immediate content removal;</li>
+      <li>Permanent account termination;</li>
+      <li>Reporting to NCMEC and law enforcement when required by law;</li>
+      <li>Legal action where applicable.</li>
+    </ul>
+  </div>
+
+</div>
+
+<footer>
+  <p>
+    &copy; 2026 <strong>Brawe Digital Hub</strong> — All rights reserved. &nbsp;|&nbsp;
+    <a href="/legal">Legal</a> &nbsp;|&nbsp;
+    <a href="/privacy">Privacy Policy</a> &nbsp;|&nbsp;
+    <a href="mailto:safety@brawe.app">safety@brawe.app</a>
+  </p>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
