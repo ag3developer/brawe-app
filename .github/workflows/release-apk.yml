@@ -1,0 +1,96 @@
+name: Release APK → Cloudflare R2
+
+on:
+  push:
+    tags:
+      - 'v*'          # Dispara em: git tag v1.0.2 && git push --tags
+  workflow_dispatch:  # Permite rodar manualmente pelo GitHub UI
+
+jobs:
+  build-and-upload:
+    name: Build APK & Upload to R2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: stable
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Read version from pubspec.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
+          BUILD=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "apk_name=brawe-v${VERSION}.apk" >> $GITHUB_OUTPUT
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Upload to Cloudflare R2
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: https://bdde56b8577854fbb26253f4cdd89771.r2.cloudflarestorage.com
+          R2_BUCKET: brawe-media
+          CDN_BASE: https://cdn.brawe.io
+          VERSION: ${{ steps.version.outputs.version }}
+          APK_NAME: ${{ steps.version.outputs.apk_name }}
+          BUILD_NUM: ${{ steps.version.outputs.build }}
+        run: |
+          pip install awscli --quiet
+
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+
+          _upload() {
+            aws s3 cp "$APK_PATH" "s3://$R2_BUCKET/$1" \
+              --endpoint-url "$R2_ENDPOINT" \
+              --region auto \
+              --content-type "application/vnd.android.package-archive" \
+              --content-disposition "attachment; filename=\"$APK_NAME\"" \
+              --no-progress
+            echo "✅ $CDN_BASE/$1"
+          }
+
+          # Backup permanente com versão
+          _upload "downloads/android/$APK_NAME"
+
+          # Atualizar latest
+          _upload "downloads/android/brawe-latest.apk"
+
+          # Atualizar version.json
+          echo "{\"version\":\"$VERSION\",\"build\":\"$BUILD_NUM\",\"apk\":\"$CDN_BASE/downloads/android/$APK_NAME\",\"latest\":\"$CDN_BASE/downloads/android/brawe-latest.apk\",\"updatedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" | \
+            aws s3 cp - "s3://$R2_BUCKET/downloads/android/version.json" \
+              --endpoint-url "$R2_ENDPOINT" \
+              --region auto \
+              --content-type "application/json" \
+              --no-progress
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          name: "Brawe Connect ${{ steps.version.outputs.version }}"
+          body: |
+            ## Brawe Connect v${{ steps.version.outputs.version }}
+
+            📦 **Download APK:** ${{ env.CDN_BASE }}/downloads/android/brawe-v${{ steps.version.outputs.version }}.apk
+
+            > APK também disponível em: https://brawe.app/downloads/android/brawe-latest.apk

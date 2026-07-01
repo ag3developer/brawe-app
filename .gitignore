@@ -56,3 +56,4 @@ app.*.map.json
 AGENTS.md
 GEMINI.md
 /docs/live_feature_tracking.md
+.env.r2
