@@ -76,3 +76,4 @@ ios/Flutter/
 *.xcodeproj/xcshareddata/xcschemes/
 *.pbxproj
 releases/
+.env.r2
