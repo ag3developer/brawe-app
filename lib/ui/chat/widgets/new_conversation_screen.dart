@@ -24,7 +24,9 @@ class FollowingQuery extends _$FollowingQuery {
   void set(String q) => state = q;
 }
 
-final _followingListProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+final _followingListProvider = FutureProvider<List<Map<String, dynamic>>>((
+  ref,
+) {
   final query = ref.watch(followingQueryProvider);
   return ref.read(chatRepositoryProvider).getFollowingForDm(query: query);
 });
@@ -71,7 +73,10 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
       context.go(
         '/chat/$convId',
         extra: {
-          'participantName': user['display_name'] ?? user['username'] ?? S.of(context).chatFallbackName,
+          'participantName':
+              user['display_name'] ??
+              user['username'] ??
+              S.of(context).chatFallbackName,
           'participantAvatarUrl': user['avatar_url'],
           'participantId': userId,
         },
@@ -97,7 +102,8 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/chat'),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/chat'),
         ),
         title: Text(
           S.of(context).chatNewMessageTitle,
@@ -130,25 +136,32 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                 controller: _searchCtrl,
                 autofocus: true,
                 onChanged: _onSearch,
-                style: TextStyle(color: context.colors.textPrimary, fontSize: 14),
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   hintText: S.of(context).chatSearchHint,
                   hintStyle: TextStyle(
                     color: context.colors.textSecondary.withValues(alpha: 0.6),
                     fontSize: 14,
                   ),
-                  prefixIcon:  Icon(Icons.search,
-                      color: context.colors.textSecondary, size: 20),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: context.colors.textSecondary,
+                    size: 20,
+                  ),
                   suffixIcon: _searchCtrl.text.isEmpty
                       ? null
                       : IconButton(
-                          icon:  Icon(Icons.close,
-                              color: context.colors.textSecondary, size: 18),
+                          icon: Icon(
+                            Icons.close,
+                            color: context.colors.textSecondary,
+                            size: 18,
+                          ),
                           onPressed: () {
                             _searchCtrl.clear();
-                            ref
-                                .read(followingQueryProvider.notifier)
-                                .state = '';
+                            ref.read(followingQueryProvider.notifier).set('');
                           },
                         ),
                   filled: false,
@@ -189,12 +202,13 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
             child: usersAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(
-                    color: AppColors.electricPurple),
+                  color: AppColors.electricPurple,
+                ),
               ),
               error: (e, _) => Center(
                 child: Text(
                   S.of(context).chatLoadError(e),
-                  style:  TextStyle(color: context.colors.textSecondary),
+                  style: TextStyle(color: context.colors.textSecondary),
                 ),
               ),
               data: (users) {
@@ -202,8 +216,10 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                   return const _EmptySearchState();
                 }
                 return ListView.separated(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   itemCount: users.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 2),
                   itemBuilder: (ctx, i) {
@@ -266,10 +282,9 @@ class _UserTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: isLive
-                          ? const LinearGradient(colors: [
-                              Colors.red,
-                              Colors.orange,
-                            ])
+                          ? const LinearGradient(
+                              colors: [Colors.red, Colors.orange],
+                            )
                           : null,
                     ),
                     padding: EdgeInsets.all(isLive ? 2.2 : 0),
@@ -296,12 +311,16 @@ class _UserTile extends StatelessWidget {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
-                              color: context.colors.background, width: 1.5),
+                            color: context.colors.background,
+                            width: 1.5,
+                          ),
                         ),
                         child: Text(
                           S.of(context).chatLiveBadge,
@@ -338,8 +357,11 @@ class _UserTile extends StatelessWidget {
                         ),
                         if (isVerified) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.verified,
-                              color: AppColors.coolCyan, size: 14),
+                          const Icon(
+                            Icons.verified,
+                            color: AppColors.coolCyan,
+                            size: 14,
+                          ),
                         ],
                       ],
                     ),
@@ -348,7 +370,9 @@ class _UserTile extends StatelessWidget {
                       Text(
                         '@$username',
                         style: TextStyle(
-                          color: context.colors.textSecondary.withValues(alpha: 0.7),
+                          color: context.colors.textSecondary.withValues(
+                            alpha: 0.7,
+                          ),
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -364,12 +388,15 @@ class _UserTile extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(colors: [
-                    AppColors.electricPurple,
-                    AppColors.coolCyan,
-                  ]),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                  ),
                 ),
-                child: Icon(Icons.send, color: context.colors.textPrimary, size: 16),
+                child: Icon(
+                  Icons.send,
+                  color: context.colors.textPrimary,
+                  size: 16,
+                ),
               ),
             ],
           ),
@@ -400,8 +427,11 @@ class _EmptySearchState extends StatelessWidget {
                 ],
               ),
             ),
-            child: Icon(Icons.person_search,
-                size: 48, color: context.colors.textSecondary),
+            child: Icon(
+              Icons.person_search,
+              size: 48,
+              color: context.colors.textSecondary,
+            ),
           ),
           const SizedBox(height: 16),
           Text(

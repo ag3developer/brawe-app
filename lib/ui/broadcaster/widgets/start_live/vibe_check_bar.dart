@@ -6,8 +6,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/themes/app_colors.dart';
-import '../../../core/ui/app_radius.dart';
-import '../../../core/ui/app_spacing.dart';
+
 import '../../../../gen/l10n/app_localizations.dart';
 
 enum VibeStatus { good, warning, bad }
@@ -27,8 +26,10 @@ class VibeSnapshot {
   final int batteryLevel;
 
   VibeStatus get overall {
-    if (network == VibeStatus.bad || battery == VibeStatus.bad) return VibeStatus.bad;
-    if (network == VibeStatus.warning || battery == VibeStatus.warning) return VibeStatus.warning;
+    if (network == VibeStatus.bad || battery == VibeStatus.bad)
+      return VibeStatus.bad;
+    if (network == VibeStatus.warning || battery == VibeStatus.warning)
+      return VibeStatus.warning;
     return VibeStatus.good;
   }
 }
@@ -65,7 +66,10 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
     _updateNetwork(results);
     _connSub = _connectivity.onConnectivityChanged.listen(_updateNetwork);
     await _refreshBattery();
-    _batteryTimer = Timer.periodic(const Duration(seconds: 30), (_) => _refreshBattery());
+    _batteryTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _refreshBattery(),
+    );
   }
 
   void _updateNetwork(List<ConnectivityResult> results) {
@@ -84,12 +88,14 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
       status = VibeStatus.bad;
       kind = NetworkKind.none;
     }
-    _emit(VibeSnapshot(
-      network: status,
-      battery: _snapshot.battery,
-      networkKind: kind,
-      batteryLevel: _snapshot.batteryLevel,
-    ));
+    _emit(
+      VibeSnapshot(
+        network: status,
+        battery: _snapshot.battery,
+        networkKind: kind,
+        batteryLevel: _snapshot.batteryLevel,
+      ),
+    );
   }
 
   Future<void> _refreshBattery() async {
@@ -98,12 +104,14 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
       final status = level >= 40
           ? VibeStatus.good
           : (level >= 20 ? VibeStatus.warning : VibeStatus.bad);
-      _emit(VibeSnapshot(
-        network: _snapshot.network,
-        battery: status,
-        networkKind: _snapshot.networkKind,
-        batteryLevel: level,
-      ));
+      _emit(
+        VibeSnapshot(
+          network: _snapshot.network,
+          battery: status,
+          networkKind: _snapshot.networkKind,
+          batteryLevel: level,
+        ),
+      );
     } catch (_) {}
   }
 
@@ -121,23 +129,23 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
   }
 
   Color _colorFor(VibeStatus s) => switch (s) {
-        VibeStatus.good => const Color(0xFF34D399),
-        VibeStatus.warning => const Color(0xFFFBBF24),
-        VibeStatus.bad => AppColors.mutedRed,
-      };
+    VibeStatus.good => const Color(0xFF34D399),
+    VibeStatus.warning => const Color(0xFFFBBF24),
+    VibeStatus.bad => AppColors.mutedRed,
+  };
 
   String _label(S s) => switch (_snapshot.overall) {
-        VibeStatus.good => s.vibeStatusGood,
-        VibeStatus.warning => s.vibeStatusWarning,
-        VibeStatus.bad => s.vibeStatusBad,
-      };
+    VibeStatus.good => s.vibeStatusGood,
+    VibeStatus.warning => s.vibeStatusWarning,
+    VibeStatus.bad => s.vibeStatusBad,
+  };
 
   String _networkLabelText(S s) => switch (_snapshot.networkKind) {
-        NetworkKind.wifi => s.vibeNetworkWifi,
-        NetworkKind.mobile => s.vibeNetworkMobile,
-        NetworkKind.ethernet => s.vibeNetworkEthernet,
-        NetworkKind.none => s.vibeNetworkNone,
-      };
+    NetworkKind.wifi => s.vibeNetworkWifi,
+    NetworkKind.mobile => s.vibeNetworkMobile,
+    NetworkKind.ethernet => s.vibeNetworkEthernet,
+    NetworkKind.none => s.vibeNetworkNone,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -158,10 +166,20 @@ class _VibeCheckBarState extends State<VibeCheckBar> {
                 : const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.50),
-              border: Border.all(color: overallColor.withValues(alpha: 0.5), width: 1),
+              border: Border.all(
+                color: overallColor.withValues(alpha: 0.5),
+                width: 1,
+              ),
               borderRadius: BorderRadius.circular(_expanded ? 14 : 50),
             ),
-            child: _expanded ? _ExpandedContent(snapshot: _snapshot, colorFor: _colorFor, networkLabelText: _networkLabelText(s), l10n: s) : _Dot(color: overallColor),
+            child: _expanded
+                ? _ExpandedContent(
+                    snapshot: _snapshot,
+                    colorFor: _colorFor,
+                    networkLabelText: _networkLabelText(s),
+                    l10n: s,
+                  )
+                : _Dot(color: overallColor),
           ),
         ),
       ),
@@ -182,7 +200,13 @@ class _Dot extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.7), blurRadius: 6, spreadRadius: 1)],
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.7),
+            blurRadius: 6,
+            spreadRadius: 1,
+          ),
+        ],
       ),
     );
   }
@@ -210,8 +234,14 @@ class _ExpandedContent extends StatelessWidget {
         // Rede
         Icon(Icons.wifi, color: colorFor(snapshot.network), size: 13),
         const SizedBox(width: 4),
-        Text(networkLabelText,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+        Text(
+          networkLabelText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         const SizedBox(width: 10),
         // Bateria
         Icon(
@@ -220,8 +250,14 @@ class _ExpandedContent extends StatelessWidget {
           size: 13,
         ),
         const SizedBox(width: 4),
-        Text('${snapshot.batteryLevel}%',
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w500)),
+        Text(
+          '${snapshot.batteryLevel}%',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ],
     );
   }

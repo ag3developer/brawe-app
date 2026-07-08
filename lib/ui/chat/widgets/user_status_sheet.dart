@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../data/repositories/chat_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -85,7 +84,9 @@ class _UserStatusSheet extends ConsumerWidget {
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: context.colors.surfaceHighest.withValues(alpha: 0.06)),
+        border: Border.all(
+          color: context.colors.surfaceHighest.withValues(alpha: 0.06),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -101,7 +102,9 @@ class _UserStatusSheet extends ConsumerWidget {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: context.colors.surfaceHighest.withValues(alpha: 0.15),
+                    color: context.colors.surfaceHighest.withValues(
+                      alpha: 0.15,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -133,25 +136,29 @@ class _UserStatusSheet extends ConsumerWidget {
                 final selected = current == status;
                 return GestureDetector(
                   onTap: () {
-                    ref
-                        .read(userStatusProvider.notifier)
-                        .setStatus(status);
+                    ref.read(userStatusProvider.notifier).setStatus(status);
                     Navigator.pop(context);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: selected
                           ? AppColors.electricPurple.withValues(alpha: 0.15)
-                          : context.colors.surfaceHighest.withValues(alpha: 0.03),
+                          : context.colors.surfaceHighest.withValues(
+                              alpha: 0.03,
+                            ),
                       border: Border.all(
                         color: selected
                             ? AppColors.electricPurple.withValues(alpha: 0.55)
-                            : context.colors.surfaceHighest.withValues(alpha: 0.06),
+                            : context.colors.surfaceHighest.withValues(
+                                alpha: 0.06,
+                              ),
                         width: 1.5,
                       ),
                     ),
@@ -166,8 +173,9 @@ class _UserStatusSheet extends ConsumerWidget {
                             boxShadow: selected
                                 ? [
                                     BoxShadow(
-                                      color: status.color
-                                          .withValues(alpha: 0.5),
+                                      color: status.color.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       blurRadius: 8,
                                     ),
                                   ]
@@ -179,7 +187,9 @@ class _UserStatusSheet extends ConsumerWidget {
                           child: Text(
                             status.localizedLabel(context),
                             style: TextStyle(
-                              color: selected ? context.colors.textPrimary : context.colors.textSecondary,
+                              color: selected
+                                  ? context.colors.textPrimary
+                                  : context.colors.textSecondary,
                               fontSize: 15,
                               fontWeight: selected
                                   ? FontWeight.w700
@@ -200,8 +210,11 @@ class _UserStatusSheet extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            child: Icon(Icons.check,
-                                color: context.colors.textPrimary, size: 14),
+                            child: Icon(
+                              Icons.check,
+                              color: context.colors.textPrimary,
+                              size: 14,
+                            ),
                           ),
                       ],
                     ),

@@ -7,9 +7,7 @@ import '../../../domain/models/conversation.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/chat_list_view_model.dart';
 import '../view_models/presence_provider.dart';
-import '../../home/widgets/home_bottom_nav.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
-import 'new_conversation_screen.dart';
 import 'user_status_sheet.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
@@ -43,9 +41,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
     final showArchived = _tabController.index == 2;
     final current = ref.read(chatListViewModelProvider).showArchived;
     if (current != showArchived) {
-      ref
-          .read(chatListViewModelProvider.notifier)
-          .toggleArchived(showArchived);
+      ref.read(chatListViewModelProvider.notifier).toggleArchived(showArchived);
     }
   }
 
@@ -83,13 +79,17 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
     final filtered = _searchQuery.isEmpty
         ? conversations
         : conversations
-            .where((c) => c.participantName
-                .toLowerCase()
-                .contains(_searchQuery.toLowerCase()))
-            .toList();
+              .where(
+                (c) => c.participantName.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList();
 
     final totalUnread = conversations.fold<int>(
-        0, (sum, c) => sum + c.unreadCount);
+      0,
+      (sum, c) => sum + c.unreadCount,
+    );
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -118,18 +118,15 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
             if (totalUnread > 0) ...[
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [
-                    AppColors.electricPurple,
-                    AppColors.coolCyan,
-                  ]),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                  ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          AppColors.electricPurple.withValues(alpha: 0.55),
+                      color: AppColors.electricPurple.withValues(alpha: 0.55),
                       blurRadius: 10,
                     ),
                   ],
@@ -157,13 +154,20 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                   onTap: () => showUserStatusSheet(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     margin: const EdgeInsets.only(right: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: context.colors.surfaceHighest.withValues(alpha: 0.05),
+                      color: context.colors.surfaceHighest.withValues(
+                        alpha: 0.05,
+                      ),
                       border: Border.all(
-                          color: context.colors.surfaceHighest.withValues(alpha: 0.1)),
+                        color: context.colors.surfaceHighest.withValues(
+                          alpha: 0.1,
+                        ),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -180,9 +184,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                         Text(
                           status.localizedLabel(context),
                           style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600),
+                            color: context.colors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -208,34 +213,46 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                       ],
                     ),
                     border: Border.all(
-                      color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+                      color: context.colors.surfaceHighest.withValues(
+                        alpha: 0.08,
+                      ),
                     ),
                   ),
                   child: TextField(
                     controller: _searchController,
                     onChanged: (v) => setState(() => _searchQuery = v),
-                    style: TextStyle(color: context.colors.textPrimary, fontSize: 14),
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 14,
+                    ),
                     decoration: InputDecoration(
                       hintText: S.of(context).chatListSearchHint,
                       hintStyle: TextStyle(
-                        color: context.colors.textSecondary.withValues(alpha: 0.6),
+                        color: context.colors.textSecondary.withValues(
+                          alpha: 0.6,
+                        ),
                         fontSize: 14,
                       ),
-                      prefixIcon:  Icon(Icons.search,
-                          color: context.colors.textSecondary, size: 20),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: context.colors.textSecondary,
+                        size: 20,
+                      ),
                       suffixIcon: _searchQuery.isEmpty
                           ? null
                           : IconButton(
-                              icon:  Icon(Icons.close,
-                                  color: context.colors.textSecondary, size: 18),
+                              icon: Icon(
+                                Icons.close,
+                                color: context.colors.textSecondary,
+                                size: 18,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
                               },
                             ),
                       filled: false,
-                      contentPadding:
-                          const EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -249,18 +266,18 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                   controller: _tabController,
                   labelColor: context.colors.textPrimary,
                   unselectedLabelColor: context.colors.textSecondary,
-                  indicatorPadding:
-                      const EdgeInsets.symmetric(vertical: 6, horizontal: -8),
+                  indicatorPadding: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: -8,
+                  ),
                   indicator: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(colors: [
-                      AppColors.electricPurple,
-                      AppColors.coolCyan,
-                    ]),
+                    gradient: const LinearGradient(
+                      colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.electricPurple
-                            .withValues(alpha: 0.45),
+                        color: AppColors.electricPurple.withValues(alpha: 0.45),
                         blurRadius: 10,
                       ),
                     ],
@@ -300,27 +317,37 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                       color: Colors.red.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.35)),
+                        color: Colors.red.withValues(alpha: 0.35),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline,
-                            color: Colors.redAccent, size: 18),
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             chatState.errorMessage!,
                             style: TextStyle(
-                                color: context.colors.textPrimary, fontSize: 12),
+                              color: context.colors.textPrimary,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                         TextButton(
                           onPressed: () => ref
                               .read(chatListViewModelProvider.notifier)
                               .refresh(),
-                          child: Text(S.of(context).chatListRetry,
-                              style: const TextStyle(
-                                  color: AppColors.coolCyan, fontSize: 12)),
+                          child: Text(
+                            S.of(context).chatListRetry,
+                            style: const TextStyle(
+                              color: AppColors.coolCyan,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -379,8 +406,11 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           tooltip: S.of(context).chatListNewTooltip,
-          child: Icon(Icons.add_comment_outlined,
-              color: context.colors.textPrimary, size: 24),
+          child: Icon(
+            Icons.add_comment_outlined,
+            color: context.colors.textPrimary,
+            size: 24,
+          ),
         ),
       ),
       // bottomNavigationBar removido — HomeBottomNav gerenciado pelo ShellRoute
@@ -418,8 +448,11 @@ class _ConversationList extends StatelessWidget {
                   ],
                 ),
               ),
-              child: Icon(Icons.forum_outlined,
-                  size: 56, color: context.colors.textSecondary),
+              child: Icon(
+                Icons.forum_outlined,
+                size: 56,
+                color: context.colors.textSecondary,
+              ),
             ),
             const SizedBox(height: 18),
             Text(
@@ -484,8 +517,8 @@ class _ConversationTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final presence = ref.watch(presenceCacheProvider);
-    final isOnline = presence[conversation.participantId]?.isOnline ??
-        conversation.isOnline;
+    final isOnline =
+        presence[conversation.participantId]?.isOnline ?? conversation.isOnline;
     final hasUnread = conversation.unreadCount > 0;
 
     return Padding(
@@ -504,8 +537,7 @@ class _ConversationTile extends ConsumerWidget {
             },
           ),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
               color: hasUnread
@@ -530,8 +562,7 @@ class _ConversationTile extends ConsumerWidget {
                     '/chat/${conversation.id}',
                     extra: {
                       'participantName': conversation.participantName,
-                      'participantAvatarUrl':
-                          conversation.participantAvatarUrl,
+                      'participantAvatarUrl': conversation.participantAvatarUrl,
                       'participantId': conversation.participantId,
                     },
                   ),
@@ -593,20 +624,24 @@ class _ConversationTile extends ConsumerWidget {
                           if (hasUnread) ...[
                             const SizedBox(width: 8),
                             Container(
-                              constraints:
-                                  const BoxConstraints(minWidth: 22),
+                              constraints: const BoxConstraints(minWidth: 22),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 7, vertical: 2),
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [
-                                  AppColors.electricPurple,
-                                  AppColors.coolCyan,
-                                ]),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    AppColors.electricPurple,
+                                    AppColors.coolCyan,
+                                  ],
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.electricPurple
-                                        .withValues(alpha: 0.55),
+                                    color: AppColors.electricPurple.withValues(
+                                      alpha: 0.55,
+                                    ),
                                     blurRadius: 8,
                                   ),
                                 ],
@@ -638,7 +673,6 @@ class _ConversationTile extends ConsumerWidget {
   }
 }
 
-
 class _SwipeableConversationTile extends ConsumerWidget {
   const _SwipeableConversationTile({
     required this.conversation,
@@ -659,11 +693,17 @@ class _SwipeableConversationTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
-            Icon(archivedMode ? Icons.unarchive : Icons.archive,
-                color: context.colors.textPrimary),
+            Icon(
+              archivedMode ? Icons.unarchive : Icons.archive,
+              color: context.colors.textPrimary,
+            ),
             const SizedBox(width: 8),
-            Text(archivedMode ? S.of(context).chatListUnarchive : S.of(context).chatListArchive,
-                style: TextStyle(color: context.colors.textPrimary)),
+            Text(
+              archivedMode
+                  ? S.of(context).chatListUnarchive
+                  : S.of(context).chatListArchive,
+              style: TextStyle(color: context.colors.textPrimary),
+            ),
           ],
         ),
       ),
@@ -674,7 +714,10 @@ class _SwipeableConversationTile extends ConsumerWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text(S.of(context).chatListDelete, style: TextStyle(color: context.colors.textPrimary)),
+            Text(
+              S.of(context).chatListDelete,
+              style: TextStyle(color: context.colors.textPrimary),
+            ),
             const SizedBox(width: 8),
             Icon(Icons.delete, color: context.colors.textPrimary),
           ],
@@ -686,21 +729,28 @@ class _SwipeableConversationTile extends ConsumerWidget {
               context: context,
               builder: (ctx) => AlertDialog(
                 backgroundColor: context.colors.surfaceElevated,
-                title: Text(S.of(context).chatListDeleteConfirmTitle,
-                    style: TextStyle(color: context.colors.textPrimary)),
+                title: Text(
+                  S.of(context).chatListDeleteConfirmTitle,
+                  style: TextStyle(color: context.colors.textPrimary),
+                ),
                 content: Text(
-                    S.of(context).chatListDeleteConfirmBody,
-                    style: TextStyle(color: context.colors.textSecondary)),
+                  S.of(context).chatListDeleteConfirmBody,
+                  style: TextStyle(color: context.colors.textSecondary),
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(S.of(context).chatListCancel,
-                        style: TextStyle(color: context.colors.textSecondary)),
+                    child: Text(
+                      S.of(context).chatListCancel,
+                      style: TextStyle(color: context.colors.textSecondary),
+                    ),
                   ),
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(S.of(context).chatListDelete,
-                        style: const TextStyle(color: AppColors.mutedRed)),
+                    child: Text(
+                      S.of(context).chatListDelete,
+                      style: const TextStyle(color: AppColors.mutedRed),
+                    ),
                   ),
                 ],
               ),

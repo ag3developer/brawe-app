@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../../domain/models/battle_state.dart';
@@ -101,11 +100,16 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                   filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.38),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -162,15 +166,17 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _toasts
                         .take(2)
-                        .map((t) => Padding(
-                              padding: const EdgeInsets.only(bottom: 3),
-                              child: BattleGiftAlert(
-                                senderName: t.sender,
-                                giftName: t.gift,
-                                side: t.side,
-                                mode: GiftAlertMode.toast,
-                              ),
-                            ))
+                        .map(
+                          (t) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: BattleGiftAlert(
+                              senderName: t.sender,
+                              giftName: t.gift,
+                              side: t.side,
+                              mode: GiftAlertMode.toast,
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -194,10 +200,12 @@ class _ResultBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDraw = battle.isDraw;
-    final winnerName = battle.winnerName ??
+    final winnerName =
+        battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
-    final winnerColor =
-        battle.isLeadingA ? AppColors.electricPurple : AppColors.hotPink;
+    final winnerColor = battle.isLeadingA
+        ? AppColors.electricPurple
+        : AppColors.hotPink;
 
     return SafeArea(
       child: ClipRRect(
@@ -211,39 +219,46 @@ class _ResultBanner extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDraw ? Colors.white24 : winnerColor.withValues(alpha: 0.6),
+                color: isDraw
+                    ? Colors.white24
+                    : winnerColor.withValues(alpha: 0.6),
               ),
             ),
-        child: Row(
-          children: [
-            Icon(
-              isDraw ? Icons.handshake_outlined : Icons.workspace_premium,
-              color: isDraw ? Colors.white54 : winnerColor,
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.battleEnded,
-                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+            child: Row(
+              children: [
+                Icon(
+                  isDraw ? Icons.handshake_outlined : Icons.workspace_premium,
+                  color: isDraw ? Colors.white54 : winnerColor,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.battleEnded,
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 11,
+                        ),
+                      ),
+                      Text(
+                        isDraw
+                            ? l10n.battleDraw
+                            : '${l10n.battleWinner}: $winnerName',
+                        style: TextStyle(
+                          color: isDraw ? Colors.white70 : winnerColor,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    isDraw ? l10n.battleDraw : '${l10n.battleWinner}: $winnerName',
-                    style: TextStyle(
-                      color: isDraw ? Colors.white70 : winnerColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
           ),
         ),
       ),

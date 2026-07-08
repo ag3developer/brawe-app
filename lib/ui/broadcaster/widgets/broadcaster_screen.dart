@@ -14,7 +14,6 @@ import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
-import '../../live_feed/view_models/battle_view_model.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live_feed/widgets/gift_animation_overlay.dart';
@@ -89,7 +88,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     _initializeController();
     WakelockPlus.enable();
     // Escutar convites de batalha via Socket.IO
-    WidgetsBinding.instance.addPostFrameCallback((_) => _subscribeToBattleEvents());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _subscribeToBattleEvents(),
+    );
   }
 
   bool get _hasStreamingCredentials =>
@@ -117,8 +118,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
         if (mounted) {
-          AppSnackBar.showError(
-              context, S.of(context).broadcasterNoCamera);
+          AppSnackBar.showError(context, S.of(context).broadcasterNoCamera);
           _closeBroadcaster();
         }
         return;
@@ -142,7 +142,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterInitCameraError(e.toString()));
+          context,
+          S.of(context).broadcasterInitCameraError(e.toString()),
+        );
         _closeBroadcaster();
       }
     }
@@ -201,7 +203,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       debugPrint('Failed to initialize camera controller: $e');
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterInitCameraFailed);
+          context,
+          S.of(context).broadcasterInitCameraFailed,
+        );
       }
     }
   }
@@ -255,15 +259,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   void _startHeartbeat() {
     _stopHeartbeat();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (
+      timer,
+    ) async {
       if (!mounted || !_isStreaming) {
         _stopHeartbeat();
         return;
       }
 
       try {
-        final response =
-            await ref.read(liveRepositoryProvider).sendHeartbeat(_room.id);
+        final response = await ref
+            .read(liveRepositoryProvider)
+            .sendHeartbeat(_room.id);
         final data = response['data'];
         if (data is Map<String, dynamic>) {
           final count = data['viewer_count'];
@@ -314,8 +321,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (_hasStreamingCredentials || _isResolvingRoom) return;
     setState(() => _isResolvingRoom = true);
     try {
-      final freshRoom =
-          await ref.read(liveRepositoryProvider).getRoom(_room.id);
+      final freshRoom = await ref
+          .read(liveRepositoryProvider)
+          .getRoom(_room.id);
       if (!mounted || freshRoom == null) return;
       setState(() => _room = _mergeRoom(_room, freshRoom));
     } on Failure catch (failure) {
@@ -323,7 +331,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (error) {
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterRoomUpdateFailed(error.toString()));
+          context,
+          S.of(context).broadcasterRoomUpdateFailed(error.toString()),
+        );
       }
     } finally {
       if (mounted) setState(() => _isResolvingRoom = false);
@@ -381,7 +391,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final rtmpUrl = _room.rtmpUrl?.trim();
       final streamKey = _room.streamKey?.trim();
 
-      if (rtmpUrl == null || rtmpUrl.isEmpty || streamKey == null || streamKey.isEmpty) {
+      if (rtmpUrl == null ||
+          rtmpUrl.isEmpty ||
+          streamKey == null ||
+          streamKey.isEmpty) {
         setState(() => _isTogglingStream = false);
         if (mounted) {
           AppSnackBar.showError(
@@ -403,7 +416,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         });
         _startHeartbeat();
         _startLiveElapsedTicker();
-        AppSnackBar.showSuccess(context, S.of(context).broadcasterConnectedLive);
+        AppSnackBar.showSuccess(
+          context,
+          S.of(context).broadcasterConnectedLive,
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -412,7 +428,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           _isTogglingStream = false;
         });
         AppSnackBar.showError(
-            context, S.of(context).broadcasterStreamStartError(error.toString()));
+          context,
+          S.of(context).broadcasterStreamStartError(error.toString()),
+        );
       }
       try {
         await ref.read(liveRepositoryProvider).endLive(_room.id);
@@ -435,7 +453,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           await _refreshRoomCredentialsIfNeeded();
           final rtmpUrl = _room.rtmpUrl?.trim();
           final streamKey = _room.streamKey?.trim();
-          if (rtmpUrl != null && rtmpUrl.isNotEmpty && streamKey != null && streamKey.isNotEmpty) {
+          if (rtmpUrl != null &&
+              rtmpUrl.isNotEmpty &&
+              streamKey != null &&
+              streamKey.isNotEmpty) {
             final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
             await _controller?.startVideoStreaming(fullUrl);
           }
@@ -448,7 +469,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           });
           _startHeartbeat();
           _startLiveElapsedTicker();
-          AppSnackBar.showSuccess(context, S.of(context).broadcasterLiveResumed);
+          AppSnackBar.showSuccess(
+            context,
+            S.of(context).broadcasterLiveResumed,
+          );
         }
       } else {
         if (!_isStreaming) return;
@@ -462,7 +486,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (error) {
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterPauseToggleError(error.toString()));
+          context,
+          S.of(context).broadcasterPauseToggleError(error.toString()),
+        );
       }
     } finally {
       if (mounted) setState(() => _isTogglingPause = false);
@@ -504,20 +530,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.slate,
-          title: Text(s.broadcasterDiscardTitle,
-              style: const TextStyle(color: Colors.white)),
+          title: Text(
+            s.broadcasterDiscardTitle,
+            style: const TextStyle(color: Colors.white),
+          ),
           content: Text(
             s.broadcasterDiscardMessage,
             style: const TextStyle(color: AppColors.coolGray),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(s.broadcasterCancel)),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.broadcasterCancel),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(s.broadcasterDiscard,
-                  style: const TextStyle(color: AppColors.mutedRed)),
+              child: Text(
+                s.broadcasterDiscard,
+                style: const TextStyle(color: AppColors.mutedRed),
+              ),
             ),
           ],
         ),
@@ -529,20 +560,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.slate,
-        title: Text(s.broadcasterEndTitle,
-            style: const TextStyle(color: Colors.white)),
+        title: Text(
+          s.broadcasterEndTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
           s.broadcasterEndMessage,
           style: const TextStyle(color: AppColors.coolGray),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(s.broadcasterContinueLive)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.broadcasterContinueLive),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(s.broadcasterEnd,
-                style: const TextStyle(color: AppColors.mutedRed)),
+            child: Text(
+              s.broadcasterEnd,
+              style: const TextStyle(color: AppColors.mutedRed),
+            ),
           ),
         ],
       ),
@@ -694,11 +730,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         onInvite: (targetRoomId, durationSeconds) async {
           Navigator.pop(ctx);
           try {
-            await ref.read(battleServiceProvider).inviteBattle(
-              roomId: _room.id,
-              targetRoomId: targetRoomId,
-              durationSeconds: durationSeconds,
-            );
+            await ref
+                .read(battleServiceProvider)
+                .inviteBattle(
+                  roomId: _room.id,
+                  targetRoomId: targetRoomId,
+                  durationSeconds: durationSeconds,
+                );
             if (mounted) {
               AppSnackBar.showSuccess(context, 'Convite de batalha enviado!');
             }
@@ -734,7 +772,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
               children: [
                 Center(
                   child: Container(
-                    width: 36, height: 4,
+                    width: 36,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(2),
@@ -750,17 +789,31 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.people_alt_rounded,
-                          color: Color(0xFF0EA5E9), size: 22),
+                      child: const Icon(
+                        Icons.people_alt_rounded,
+                        color: Color(0xFF0EA5E9),
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Convidar Co-host',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                        Text('Transmita junto com outro criador',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
+                        const Text(
+                          'Convidar Co-host',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          'Transmita junto com outro criador',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -772,30 +825,52 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   decoration: BoxDecoration(
                     color: const Color(0xFF0EA5E9).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Como funciona:',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                      const Text(
+                        'Como funciona:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       ...[
                         '📲 O co-host recebe uma notificação',
                         '🎥 A tela divide automaticamente',
                         '💬 Vocês compartilham o chat ao vivo',
                         '⏱ Sem limite de tempo',
-                      ].map((t) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(t, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
-                      )),
+                      ].map(
+                        (t) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            t,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Seguidores online (placeholder)
-                Text('Seguidores online',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  'Seguidores online',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 72,
@@ -807,16 +882,27 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       child: Column(
                         children: [
                           Container(
-                            width: 44, height: 44,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.08),
                               border: Border.all(color: Colors.white12),
                             ),
-                            child: const Icon(Icons.person_outline, color: Colors.white38, size: 22),
+                            child: const Icon(
+                              Icons.person_outline,
+                              color: Colors.white38,
+                              size: 22,
+                            ),
                           ),
                           const SizedBox(height: 4),
-                          Text('• • •', style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 10)),
+                          Text(
+                            '• • •',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -834,7 +920,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFF0EA5E9,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -853,14 +941,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.link_rounded, color: Colors.white, size: 18),
+                              Icon(
+                                Icons.link_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                               SizedBox(width: 8),
-                              Text('Enviar Convite de Co-host',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                  )),
+                              Text(
+                                'Enviar Convite de Co-host',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -933,8 +1027,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ),
                 _MoreOptionTile(
-                  icon: _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                  iconColor: _isPaused ? const Color(0xFF22C55E) : Colors.orange,
+                  icon: _isPaused
+                      ? Icons.play_arrow_rounded
+                      : Icons.pause_rounded,
+                  iconColor: _isPaused
+                      ? const Color(0xFF22C55E)
+                      : Colors.orange,
                   title: _isPaused
                       ? s.broadcasterMoreResumeLive
                       : s.broadcasterMorePauseBrb,
@@ -1058,7 +1156,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black87, Colors.transparent, Colors.transparent, Colors.black87],
+                  colors: [
+                    Colors.black87,
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black87,
+                  ],
                   stops: [0.0, 0.18, 0.55, 1.0],
                 ),
               ),
@@ -1100,7 +1203,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             // ===== UI Layers =====
             // Top bar (HUD) — floating
             Positioned(
-              top: 0, left: 0, right: 0,
+              top: 0,
+              left: 0,
+              right: 0,
               child: SafeArea(
                 bottom: false,
                 child: Padding(
@@ -1118,7 +1223,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         elapsedLabel: _formatDuration(_liveElapsed),
                         countFormatter: _formatCount,
                         onClose: _closeBroadcaster,
-                        onSwitchCamera: _cameras.length > 1 ? _switchCamera : null,
+                        onSwitchCamera: _cameras.length > 1
+                            ? _switchCamera
+                            : null,
                       ),
                       const SizedBox(height: 6),
                       if (viewerEvent != null)
@@ -1134,13 +1241,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
             // Comments overlay — left-bottom floating
             Positioned(
-              left: 14, right: 80, bottom: 90,
-              child: _isStreaming || _isPaused || commentsState.comments.isNotEmpty
+              left: 14,
+              right: 80,
+              bottom: 90,
+              child:
+                  _isStreaming || _isPaused || commentsState.comments.isNotEmpty
                   ? LiveCommentsOverlay(
                       comments: commentsState.comments,
                       isSending: commentsState.isSending,
                       onSendComment: (message) => ref
-                          .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+                          .read(
+                            liveRoomCommentsViewModelProvider(
+                              widget.room.id,
+                            ).notifier,
+                          )
                           .sendComment(message),
                     )
                   : const SizedBox.shrink(),
@@ -1149,7 +1263,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             // Bottom action bar — floating glass pill
             if (!_showCountdown && (_isStreaming || _isPaused))
               Positioned(
-                left: 14, right: 14, bottom: 16,
+                left: 14,
+                right: 14,
+                bottom: 16,
                 child: SafeArea(
                   top: false,
                   child: _LiveActionBar(
@@ -1224,7 +1340,10 @@ class _TopBar extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  _InlineStat(icon: Icons.visibility, label: countFormatter(viewerCount)),
+                  _InlineStat(
+                    icon: Icons.visibility,
+                    label: countFormatter(viewerCount),
+                  ),
                   const SizedBox(width: 6),
                   _InlineStat(
                     icon: Icons.diamond_outlined,
@@ -1232,9 +1351,16 @@ class _TopBar extends StatelessWidget {
                     iconColor: const Color(0xFF7DD3FC),
                   ),
                   const SizedBox(width: 6),
-                  _InlineStat(icon: Icons.favorite, label: countFormatter(likes), iconColor: Colors.redAccent),
+                  _InlineStat(
+                    icon: Icons.favorite,
+                    label: countFormatter(likes),
+                    iconColor: Colors.redAccent,
+                  ),
                   const SizedBox(width: 6),
-                  _InlineStat(icon: Icons.chat_bubble_outline, label: countFormatter(messages)),
+                  _InlineStat(
+                    icon: Icons.chat_bubble_outline,
+                    label: countFormatter(messages),
+                  ),
                   const SizedBox(width: 6),
                   _InlineStat(icon: Icons.timer_outlined, label: elapsedLabel),
                 ],
@@ -1245,7 +1371,10 @@ class _TopBar extends StatelessWidget {
           const Spacer(),
         const SizedBox(width: 6),
         if (onSwitchCamera != null)
-          _CircleIconButton(icon: Icons.flip_camera_ios_outlined, onTap: onSwitchCamera!),
+          _CircleIconButton(
+            icon: Icons.flip_camera_ios_outlined,
+            onTap: onSwitchCamera!,
+          ),
       ],
     );
   }
@@ -1325,7 +1454,9 @@ class _LiveOrPausedBadge extends StatelessWidget {
 
     final s = S.of(context);
     final color = showPaused ? Colors.orange : Colors.red;
-    final label = showPaused ? s.broadcasterBadgePaused : s.broadcasterBadgeLive;
+    final label = showPaused
+        ? s.broadcasterBadgePaused
+        : s.broadcasterBadgeLive;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1394,13 +1525,23 @@ class _ViewerJoinedToast extends StatelessWidget {
                 CircleAvatar(
                   radius: 11,
                   backgroundColor: Colors.white24,
-                  backgroundImage: (event.viewerAvatar != null && event.viewerAvatar!.isNotEmpty)
+                  backgroundImage:
+                      (event.viewerAvatar != null &&
+                          event.viewerAvatar!.isNotEmpty)
                       ? NetworkImage(event.viewerAvatar!)
                       : null,
-                  child: (event.viewerAvatar == null || event.viewerAvatar!.isEmpty)
+                  child:
+                      (event.viewerAvatar == null ||
+                          event.viewerAvatar!.isEmpty)
                       ? Text(
-                          event.viewerName.isEmpty ? '?' : event.viewerName[0].toUpperCase(),
-                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                          event.viewerName.isEmpty
+                              ? '?'
+                              : event.viewerName[0].toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
                         )
                       : null,
                 ),
@@ -1467,49 +1608,49 @@ class _LiveActionBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-          // Pause / Resume
-          _ActionBtn(
-            icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-            label: isPaused ? 'Retomar' : 'Pausar',
-            color: isPaused ? const Color(0xFF22C55E) : Colors.orange,
-            loading: isTogglingPause,
-            onTap: onPauseResume,
+              // Pause / Resume
+              _ActionBtn(
+                icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                label: isPaused ? 'Retomar' : 'Pausar',
+                color: isPaused ? const Color(0xFF22C55E) : Colors.orange,
+                loading: isTogglingPause,
+                onTap: onPauseResume,
+              ),
+              // ⚔ Batalha — destaque especial
+              _ActionBtn(
+                icon: Icons.sports_kabaddi_rounded,
+                label: hasBattle ? 'Em batalha' : 'Batalha',
+                color: AppColors.electricPurple,
+                glow: !hasBattle,
+                badge: hasBattle ? '⚔' : null,
+                onTap: hasBattle ? null : onBattle,
+              ),
+              // 👥 Co-host
+              _ActionBtn(
+                icon: Icons.people_alt_rounded,
+                label: 'Co-host',
+                color: const Color(0xFF0EA5E9),
+                onTap: onCoHost,
+              ),
+              // ···
+              _ActionBtn(
+                icon: Icons.more_horiz_rounded,
+                label: 'Mais',
+                color: Colors.white24,
+                onTap: onMoreOptions,
+                flat: true,
+              ),
+              // ⏹ Encerrar
+              _ActionBtn(
+                icon: Icons.stop_rounded,
+                label: 'Encerrar',
+                color: const Color(0xFFEF4444),
+                glow: true,
+                loading: isTogglingStream,
+                onTap: onEnd,
+              ),
+            ],
           ),
-          // ⚔ Batalha — destaque especial
-          _ActionBtn(
-            icon: Icons.sports_kabaddi_rounded,
-            label: hasBattle ? 'Em batalha' : 'Batalha',
-            color: AppColors.electricPurple,
-            glow: !hasBattle,
-            badge: hasBattle ? '⚔' : null,
-            onTap: hasBattle ? null : onBattle,
-          ),
-          // 👥 Co-host
-          _ActionBtn(
-            icon: Icons.people_alt_rounded,
-            label: 'Co-host',
-            color: const Color(0xFF0EA5E9),
-            onTap: onCoHost,
-          ),
-          // ···
-          _ActionBtn(
-            icon: Icons.more_horiz_rounded,
-            label: 'Mais',
-            color: Colors.white24,
-            onTap: onMoreOptions,
-            flat: true,
-          ),
-          // ⏹ Encerrar
-          _ActionBtn(
-            icon: Icons.stop_rounded,
-            label: 'Encerrar',
-            color: const Color(0xFFEF4444),
-            glow: true,
-            loading: isTogglingStream,
-            onTap: onEnd,
-          ),
-        ],
-      ),
         ),
       ),
     );
@@ -1554,7 +1695,9 @@ class _ActionBtn extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: flat ? Colors.black.withValues(alpha: 0.4) : color.withValues(alpha: 0.9),
+                    color: flat
+                        ? Colors.black.withValues(alpha: 0.4)
+                        : color.withValues(alpha: 0.9),
                     shape: BoxShape.circle,
                     border: flat ? Border.all(color: Colors.white24) : null,
                     boxShadow: glow && !disabled
@@ -1570,8 +1713,12 @@ class _ActionBtn extends StatelessWidget {
                   child: loading
                       ? const Center(
                           child: SizedBox(
-                            width: 20, height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           ),
                         )
                       : Icon(icon, color: Colors.white, size: 22),
@@ -1641,7 +1788,9 @@ class _BottomActionBar extends StatelessWidget {
             color: isPaused ? const Color(0xFF22C55E) : Colors.orange.shade600,
             loading: isTogglingPause,
             onTap: onPauseResume,
-            tooltip: isPaused ? s.broadcasterTooltipResume : s.broadcasterTooltipPause,
+            tooltip: isPaused
+                ? s.broadcasterTooltipResume
+                : s.broadcasterTooltipPause,
           ),
           const SizedBox(width: 10),
           _CompactRoundButton(
@@ -1705,7 +1854,11 @@ class _CompactRoundButton extends StatelessWidget {
                   ),
                 ]
               : const [
-                  BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 3)),
+                  BoxShadow(
+                    color: Colors.black38,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
                 ],
         ),
         child: loading
@@ -1713,7 +1866,10 @@ class _CompactRoundButton extends StatelessWidget {
                 child: SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
               )
             : Icon(icon, color: Colors.white, size: 22),
@@ -1725,7 +1881,6 @@ class _CompactRoundButton extends StatelessWidget {
     return btn;
   }
 }
-
 
 class _MoreOptionTile extends StatelessWidget {
   const _MoreOptionTile({
@@ -1775,10 +1930,7 @@ class _MoreOptionTile extends StatelessWidget {
 // Battle Invite Sheet — real live-room search
 // ──────────────────────────────────────────────────────────────────────────────
 class _BattleInviteSheet extends ConsumerStatefulWidget {
-  const _BattleInviteSheet({
-    required this.myRoomId,
-    required this.onInvite,
-  });
+  const _BattleInviteSheet({required this.myRoomId, required this.onInvite});
 
   final String myRoomId;
   final void Function(String targetRoomId, int durationSeconds) onInvite;
@@ -1811,9 +1963,14 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
   }
 
   Future<void> _loadFeed() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final rooms = await ref.read(liveRepositoryProvider).getLiveFeed(limit: 20);
+      final rooms = await ref
+          .read(liveRepositoryProvider)
+          .getLiveFeed(limit: 20);
       if (mounted) {
         setState(() {
           _rooms = rooms.where((r) => r.id != widget.myRoomId).toList();
@@ -1821,7 +1978,11 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Não foi possível carregar criadores ao vivo'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = 'Não foi possível carregar criadores ao vivo';
+          _loading = false;
+        });
     }
   }
 
@@ -1836,28 +1997,41 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
   }
 
   Future<void> _search(String q) async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final results = await ref.read(exploreRepositoryProvider).search(q);
       // Convert live-type results to LiveRoom objects
       final liveRooms = results
           .where((r) => r.type == 'live' && r.id != widget.myRoomId)
-          .map((r) => LiveRoom(
-                id: r.id,
-                slug: r.id,
-                title: r.title,
-                liveType: 'live',
-                isPrivate: false,
-                status: 'live',
-                streamerId: (r.metadata['streamer_id'] ?? r.id).toString(),
-                streamerName: r.subtitle ?? r.title,
-                streamerAvatarUrl: r.thumbnail,
-                viewerCount: (r.metadata['viewer_count'] as num?)?.toInt() ?? 0,
-              ))
+          .map(
+            (r) => LiveRoom(
+              id: r.id,
+              slug: r.id,
+              title: r.title,
+              liveType: 'live',
+              isPrivate: false,
+              status: 'live',
+              streamerId: (r.metadata['streamer_id'] ?? r.id).toString(),
+              streamerName: r.subtitle ?? r.title,
+              streamerAvatarUrl: r.thumbnail,
+              viewerCount: (r.metadata['viewer_count'] as num?)?.toInt() ?? 0,
+            ),
+          )
           .toList();
-      if (mounted) setState(() { _rooms = liveRooms; _loading = false; });
+      if (mounted)
+        setState(() {
+          _rooms = liveRooms;
+          _loading = false;
+        });
     } catch (e) {
-      if (mounted) setState(() { _error = 'Erro na busca'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = 'Erro na busca';
+          _loading = false;
+        });
     }
   }
 
@@ -1880,7 +2054,8 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
               const SizedBox(height: 12),
               Center(
                 child: Container(
-                  width: 36, height: 4,
+                  width: 36,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(2),
@@ -1899,17 +2074,31 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
                         color: AppColors.electricPurple.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.sports_kabaddi_rounded,
-                          color: AppColors.electricPurple, size: 22),
+                      child: const Icon(
+                        Icons.sports_kabaddi_rounded,
+                        color: AppColors.electricPurple,
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Iniciar Batalha',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                        Text('Escolha um criador ao vivo',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
+                        const Text(
+                          'Iniciar Batalha',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          'Escolha um criador ao vivo',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -1924,24 +2113,41 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Buscar criador...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: Colors.white54,
+                    ),
                     suffixIcon: _searchCtrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, color: Colors.white38, size: 18),
-                            onPressed: () { _searchCtrl.clear(); },
+                            icon: const Icon(
+                              Icons.clear_rounded,
+                              color: Colors.white38,
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                            },
                           )
                         : null,
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.07),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.electricPurple, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppColors.electricPurple,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -1952,35 +2158,54 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    Text('Duração:',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13)),
+                    Text(
+                      'Duração:',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        fontSize: 13,
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((opt) {
+                    ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((
+                      opt,
+                    ) {
                       final selected = _durationSeconds == opt.$2;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: GestureDetector(
-                          onTap: () => setState(() => _durationSeconds = opt.$2),
+                          onTap: () =>
+                              setState(() => _durationSeconds = opt.$2),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: selected
-                                  ? AppColors.electricPurple.withValues(alpha: 0.25)
+                                  ? AppColors.electricPurple.withValues(
+                                      alpha: 0.25,
+                                    )
                                   : Colors.white.withValues(alpha: 0.07),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: selected
-                                    ? AppColors.electricPurple.withValues(alpha: 0.7)
+                                    ? AppColors.electricPurple.withValues(
+                                        alpha: 0.7,
+                                      )
                                     : Colors.white.withValues(alpha: 0.1),
                               ),
                             ),
-                            child: Text(opt.$1,
-                                style: TextStyle(
-                                  color: selected ? AppColors.electricPurple : Colors.white60,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                )),
+                            child: Text(
+                              opt.$1,
+                              style: TextStyle(
+                                color: selected
+                                    ? AppColors.electricPurple
+                                    : Colors.white60,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -1993,175 +2218,271 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
               // Rooms list
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.electricPurple))
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.electricPurple,
+                        ),
+                      )
                     : _error != null
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.wifi_off_rounded, color: Colors.white38, size: 36),
-                                const SizedBox(height: 8),
-                                Text(_error!, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-                                const SizedBox(height: 12),
-                                TextButton(onPressed: _loadFeed, child: const Text('Tentar novamente',
-                                    style: TextStyle(color: AppColors.electricPurple))),
-                              ],
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.wifi_off_rounded,
+                              color: Colors.white38,
+                              size: 36,
                             ),
-                          )
-                        : _rooms.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.live_tv_rounded, color: Colors.white24, size: 40),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _searchCtrl.text.isNotEmpty
-                                          ? 'Nenhum criador ao vivo encontrado'
-                                          : 'Nenhum criador ao vivo agora',
-                                      style: const TextStyle(color: Colors.white38, fontSize: 13),
-                                    ),
-                                  ],
+                            const SizedBox(height: 8),
+                            Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton(
+                              onPressed: _loadFeed,
+                              child: const Text(
+                                'Tentar novamente',
+                                style: TextStyle(
+                                  color: AppColors.electricPurple,
                                 ),
-                              )
-                            : ListView.builder(
-                                controller: scrollCtrl,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                itemCount: _rooms.length,
-                                itemBuilder: (_, i) {
-                                  final room = _rooms[i];
-                                  final isSelected = _selected?.id == room.id;
-                                  return GestureDetector(
-                                    onTap: () => setState(() =>
-                                        _selected = isSelected ? null : room),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      margin: const EdgeInsets.symmetric(vertical: 4),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.electricPurple.withValues(alpha: 0.15)
-                                            : Colors.white.withValues(alpha: 0.04),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppColors.electricPurple.withValues(alpha: 0.5)
-                                              : Colors.white.withValues(alpha: 0.07),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // Avatar with live badge
-                                          Stack(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 24,
-                                                backgroundColor: AppColors.electricPurple.withValues(alpha: 0.3),
-                                                backgroundImage: room.streamerAvatarUrl != null
-                                                    ? NetworkImage(room.streamerAvatarUrl!)
-                                                    : null,
-                                                child: room.streamerAvatarUrl == null
-                                                    ? Text(
-                                                        room.streamerName.isNotEmpty
-                                                            ? room.streamerName[0].toUpperCase()
-                                                            : '?',
-                                                        style: const TextStyle(
-                                                            color: Colors.white, fontWeight: FontWeight.w700))
-                                                    : null,
-                                              ),
-                                              Positioned(
-                                                bottom: 0, right: 0,
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.red,
-                                                    borderRadius: BorderRadius.circular(6),
-                                                    border: Border.all(color: const Color(0xFF0E0E14), width: 1.5),
-                                                  ),
-                                                  child: const Text('AO VIVO',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 7,
-                                                          fontWeight: FontWeight.w900,
-                                                          letterSpacing: 0.3)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : _rooms.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.live_tv_rounded,
+                              color: Colors.white24,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _searchCtrl.text.isNotEmpty
+                                  ? 'Nenhum criador ao vivo encontrado'
+                                  : 'Nenhum criador ao vivo agora',
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        itemCount: _rooms.length,
+                        itemBuilder: (_, i) {
+                          final room = _rooms[i];
+                          final isSelected = _selected?.id == room.id;
+                          return GestureDetector(
+                            onTap: () => setState(
+                              () => _selected = isSelected ? null : room,
+                            ),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.electricPurple.withValues(
+                                        alpha: 0.15,
+                                      )
+                                    : Colors.white.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.electricPurple.withValues(
+                                          alpha: 0.5,
+                                        )
+                                      : Colors.white.withValues(alpha: 0.07),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Avatar with live badge
+                                  Stack(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: AppColors
+                                            .electricPurple
+                                            .withValues(alpha: 0.3),
+                                        backgroundImage:
+                                            room.streamerAvatarUrl != null
+                                            ? NetworkImage(
+                                                room.streamerAvatarUrl!,
+                                              )
+                                            : null,
+                                        child: room.streamerAvatarUrl == null
+                                            ? Text(
+                                                room.streamerName.isNotEmpty
+                                                    ? room.streamerName[0]
+                                                          .toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w700,
                                                 ),
-                                              ),
-                                            ],
+                                              )
+                                            : null,
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 1,
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(room.streamerName,
-                                                    style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w700,
-                                                        fontSize: 14),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis),
-                                                const SizedBox(height: 2),
-                                                if (room.title.isNotEmpty)
-                                                  Text(room.title,
-                                                      style: TextStyle(
-                                                          color: Colors.white.withValues(alpha: 0.45),
-                                                          fontSize: 12),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis),
-                                              ],
+                                          decoration: BoxDecoration(
+                                            color: Colors.red,
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            border: Border.all(
+                                              color: const Color(0xFF0E0E14),
+                                              width: 1.5,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Icon(Icons.remove_red_eye_rounded,
-                                                      color: Colors.white38, size: 12),
-                                                  const SizedBox(width: 3),
-                                                  Text('${room.viewerCount}',
-                                                      style: const TextStyle(
-                                                          color: Colors.white38,
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.w600)),
-                                                ],
+                                          child: const Text(
+                                            'AO VIVO',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 7,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          room.streamerName,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        if (room.title.isNotEmpty)
+                                          Text(
+                                            room.title,
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.45,
                                               ),
-                                              if (isSelected)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Icon(Icons.check_circle_rounded,
-                                                      color: AppColors.electricPurple, size: 18),
-                                                ),
-                                            ],
+                                              fontSize: 12,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.remove_red_eye_rounded,
+                                            color: Colors.white38,
+                                            size: 12,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            '${room.viewerCount}',
+                                            style: const TextStyle(
+                                              color: Colors.white38,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  );
-                                },
+                                      if (isSelected)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 4,
+                                          ),
+                                          child: Icon(
+                                            Icons.check_circle_rounded,
+                                            color: AppColors.electricPurple,
+                                            size: 18,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
                               ),
+                            ),
+                          );
+                        },
+                      ),
               ),
               // Invite button
               Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 16),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  MediaQuery.of(context).padding.bottom + 16,
+                ),
                 child: SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: _selected != null
-                          ? const LinearGradient(colors: [Color(0xFF7C3AED), AppColors.electricPurple])
+                          ? const LinearGradient(
+                              colors: [
+                                Color(0xFF7C3AED),
+                                AppColors.electricPurple,
+                              ],
+                            )
                           : null,
-                      color: _selected == null ? Colors.white.withValues(alpha: 0.07) : null,
+                      color: _selected == null
+                          ? Colors.white.withValues(alpha: 0.07)
+                          : null,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: _selected != null
-                          ? [BoxShadow(
-                              color: AppColors.electricPurple.withValues(alpha: 0.35),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            )]
+                          ? [
+                              BoxShadow(
+                                color: AppColors.electricPurple.withValues(
+                                  alpha: 0.35,
+                                ),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
                           : null,
                     ),
                     child: Material(
@@ -2170,20 +2491,30 @@ class _BattleInviteSheetState extends ConsumerState<_BattleInviteSheet> {
                         borderRadius: BorderRadius.circular(14),
                         onTap: _selected == null
                             ? null
-                            : () => widget.onInvite(_selected!.id, _durationSeconds),
+                            : () => widget.onInvite(
+                                _selected!.id,
+                                _durationSeconds,
+                              ),
                         child: Center(
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.send_rounded,
-                                  color: _selected != null ? Colors.white : Colors.white30, size: 18),
+                              Icon(
+                                Icons.send_rounded,
+                                color: _selected != null
+                                    ? Colors.white
+                                    : Colors.white30,
+                                size: 18,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 _selected != null
                                     ? 'Convidar ${_selected!.streamerName}'
                                     : 'Selecione um criador',
                                 style: TextStyle(
-                                  color: _selected != null ? Colors.white : Colors.white30,
+                                  color: _selected != null
+                                      ? Colors.white
+                                      : Colors.white30,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 15,
                                   letterSpacing: 0.3,

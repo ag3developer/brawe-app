@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +15,9 @@ part 'suggested_users_rail.g.dart';
 @riverpod
 Future<List<Map<String, dynamic>>> suggestedUsers(Ref ref) async {
   try {
-    final result = await ref.watch(socialServiceProvider).getSuggestions(limit: 14);
+    final result = await ref
+        .watch(socialServiceProvider)
+        .getSuggestions(limit: 14);
     return result;
   } catch (e, st) {
     // ignore: avoid_print
@@ -109,8 +109,11 @@ class _RailContent extends ConsumerWidget {
                 // Sparkle icon with gradient
                 ShaderMask(
                   shaderCallback: (b) => _T.brand.createShader(b),
-                  child: const Icon(Icons.auto_awesome_rounded,
-                      color: Colors.white, size: 17),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 17,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -272,8 +275,11 @@ class _UserCardState extends ConsumerState<_UserCard>
                     const SizedBox(width: 3),
                     ShaderMask(
                       shaderCallback: (b) => _T.brand.createShader(b),
-                      child: const Icon(Icons.verified_rounded,
-                          color: Colors.white, size: 13),
+                      child: const Icon(
+                        Icons.verified_rounded,
+                        color: Colors.white,
+                        size: 13,
+                      ),
                     ),
                   ],
                 ],
@@ -319,7 +325,9 @@ class _UserCardState extends ConsumerState<_UserCard>
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      followed ? S.of(context).suggestedFollowing : S.of(context).suggestedFollow,
+                      followed
+                          ? S.of(context).suggestedFollowing
+                          : S.of(context).suggestedFollow,
                       style: TextStyle(
                         color: followed ? colors.textSecondary : Colors.white,
                         fontSize: 12,
@@ -405,11 +413,7 @@ class _AvatarStack extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         avatar,
-        if (isLive)
-          Positioned(
-            bottom: showRing ? -2 : -4,
-            child: _LiveBadge(),
-          ),
+        if (isLive) Positioned(bottom: showRing ? -2 : -4, child: _LiveBadge()),
       ],
     );
   }
@@ -446,11 +450,7 @@ class _LiveBadgeState extends State<_LiveBadge>
       builder: (_, __) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         decoration: BoxDecoration(
-          color: Color.lerp(
-            _T.live,
-            const Color(0xFFFF6B35),
-            _pulse.value,
-          ),
+          color: Color.lerp(_T.live, const Color(0xFFFF6B35), _pulse.value),
           borderRadius: BorderRadius.circular(6),
           boxShadow: [
             BoxShadow(

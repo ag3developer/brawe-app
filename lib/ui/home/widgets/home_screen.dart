@@ -12,7 +12,6 @@ import '../../core/view_models/profile_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/user.dart';
 import '../view_models/top_streamers_view_model.dart';
-import 'home_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -39,9 +38,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.lg),
                   _StreamCard(),
                   const SizedBox(height: AppSpacing.lg),
-                  if (kEnableMonetization) ...[
-                    _LiveCommerceSection(),
-                  ],
+                  if (kEnableMonetization) ...[_LiveCommerceSection()],
                   // Extra space for the floating bottom navigation
                   const SizedBox(height: 100),
                 ],
@@ -100,7 +97,11 @@ class _HomeTopBar extends ConsumerWidget {
                           ? NetworkImage(user.avatarUrl!)
                           : null,
                       child: user.avatarUrl == null
-                          ? Icon(Icons.person, color: context.colors.textPrimary, size: 40)
+                          ? Icon(
+                              Icons.person,
+                              color: context.colors.textPrimary,
+                              size: 40,
+                            )
                           : null,
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -114,7 +115,7 @@ class _HomeTopBar extends ConsumerWidget {
                     ),
                     Text(
                       '@${user.displayId}',
-                      style:  TextStyle(
+                      style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 14,
                       ),
@@ -140,9 +141,8 @@ class _HomeTopBar extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (_, _) => Text(
                         S.of(context).homeErrorLoadingStats,
                         style: TextStyle(color: context.colors.textPrimary),
@@ -160,7 +160,9 @@ class _HomeTopBar extends ConsumerWidget {
                         color: AppColors.electricPurple.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(
-                          color: AppColors.electricPurple.withValues(alpha: 0.5),
+                          color: AppColors.electricPurple.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                       child: Text(
@@ -183,7 +185,10 @@ class _HomeTopBar extends ConsumerWidget {
                         side: BorderSide(color: context.colors.border),
                         minimumSize: const Size(double.infinity, 44),
                       ),
-                      child: Text(s.profileViewFull, style: TextStyle(color: context.colors.textPrimary)),
+                      child: Text(
+                        s.profileViewFull,
+                        style: TextStyle(color: context.colors.textPrimary),
+                      ),
                     ),
 
                     const SizedBox(height: AppSpacing.xl),
@@ -203,9 +208,11 @@ class _HomeTopBar extends ConsumerWidget {
                     profileState.lives.when(
                       data: (lives) {
                         if (lives.isEmpty) {
-                          return  Text(
+                          return Text(
                             S.of(context).homeEmptyPastLives,
-                            style: TextStyle(color: context.colors.textSecondary),
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
+                            ),
                           );
                         }
                         return SizedBox(
@@ -224,7 +231,9 @@ class _HomeTopBar extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                   image: live.thumbnailUrl != null
                                       ? DecorationImage(
-                                          image: NetworkImage(live.thumbnailUrl!),
+                                          image: NetworkImage(
+                                            live.thumbnailUrl!,
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
@@ -267,9 +276,8 @@ class _HomeTopBar extends ConsumerWidget {
                           ),
                         );
                       },
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (_, _) => Text(
                         S.of(context).homeErrorLoadingLives,
                         style: TextStyle(color: context.colors.textPrimary),
@@ -278,7 +286,10 @@ class _HomeTopBar extends ConsumerWidget {
 
                     const SizedBox(height: AppSpacing.xl),
                     ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.redAccent),
+                      leading: const Icon(
+                        Icons.logout,
+                        color: Colors.redAccent,
+                      ),
                       title: Text(
                         s.settingsLogout,
                         style: const TextStyle(color: Colors.redAccent),
@@ -333,7 +344,10 @@ class _HomeTopBar extends ConsumerWidget {
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(Icons.notifications_none, color: context.colors.textPrimary),
+          icon: Icon(
+            Icons.notifications_none,
+            color: context.colors.textPrimary,
+          ),
         ),
       ],
     );
@@ -425,7 +439,10 @@ class _LiveBattlesSection extends StatelessWidget {
                 Positioned(
                   bottom: 12,
                   right: 12,
-                  child: _BattleInfo(label: S.of(context).homeBattleLabel, time: '08:52'),
+                  child: _BattleInfo(
+                    label: S.of(context).homeBattleLabel,
+                    time: '08:52',
+                  ),
                 ),
               ],
             ),
@@ -471,7 +488,7 @@ class _BattleProfile extends StatelessWidget {
                   : [AppColors.electricPurple, Colors.transparent],
             ),
           ),
-          child:  CircleAvatar(
+          child: CircleAvatar(
             radius: 30,
             backgroundColor: context.colors.surfaceElevated,
           ),
@@ -595,7 +612,10 @@ class _TopStreamersSection extends ConsumerWidget {
                                     ? NetworkImage(profile.avatarUrl!)
                                     : null,
                                 child: profile.avatarUrl == null
-                                    ? Icon(Icons.person, color: context.colors.textPrimary)
+                                    ? Icon(
+                                        Icons.person,
+                                        color: context.colors.textPrimary,
+                                      )
                                     : null,
                               ),
                             ),
@@ -696,12 +716,18 @@ class _CategoriesSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       border: Border.all(color: Colors.white10),
                     ),
-                    child: Icon(icons[index], color: context.colors.textSecondary),
+                    child: Icon(
+                      icons[index],
+                      color: context.colors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     categories[index],
-                    style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.colors.textSecondary,
+                    ),
                   ),
                 ],
               );
@@ -738,10 +764,13 @@ class _StreamCard extends StatelessWidget {
               height: 220,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                gradient:  LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [context.colors.surfaceElevated, context.colors.background],
+                  colors: [
+                    context.colors.surfaceElevated,
+                    context.colors.background,
+                  ],
                 ),
               ),
               child: Stack(
@@ -840,7 +869,9 @@ class _StreamCard extends StatelessWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: context.colors.surfaceHighest.withValues(alpha: 0.15),
+                        color: context.colors.surfaceHighest.withValues(
+                          alpha: 0.15,
+                        ),
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         border: Border.all(color: context.colors.border),
                       ),
@@ -911,7 +942,7 @@ class _LiveCommerceSection extends StatelessWidget {
               children: [
                 Container(
                   width: 100,
-                  decoration:  BoxDecoration(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(AppRadius.md),
                       bottomLeft: Radius.circular(AppRadius.md),
@@ -1033,10 +1064,7 @@ class _StatItem extends StatelessWidget {
         ),
         Text(
           label,
-          style:  TextStyle(
-            color: context.colors.textSecondary,
-            fontSize: 12,
-          ),
+          style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
         ),
       ],
     );

@@ -31,16 +31,33 @@ class BattleViewModel extends _$BattleViewModel {
 
   Future<void> _init() async {
     try {
-      final json = await ref.read(battleServiceProvider).getLiveScores(battleId);
+      final json = await ref
+          .read(battleServiceProvider)
+          .getLiveScores(battleId);
       final data = (json['data'] as Map<String, dynamic>?) ?? json;
       // We build an initial BattleState from the live-scores response.
       // The live-scores endpoint returns: status, score_a, score_b, time_remaining_seconds, etc.
       // Streamer info lives in the battle detail endpoint.
       Map<String, dynamic> battleDetail = {};
       try {
-        battleDetail = await ref.read(battleServiceProvider).getBattle(battleId);
-        battleDetail = (battleDetail['data'] as Map<String, dynamic>?) ?? battleDetail;
+        battleDetail = await ref
+            .read(battleServiceProvider)
+            .getBattle(battleId);
+        battleDetail =
+            (battleDetail['data'] as Map<String, dynamic>?) ?? battleDetail;
       } catch (_) {}
+
+      // Parse top gifters do estado inicial
+      final topGiftersA =
+          (data['top_gifters_a'] as List?)
+              ?.map((e) => TopGifter.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
+      final topGiftersB =
+          (data['top_gifters_b'] as List?)
+              ?.map((e) => TopGifter.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
 
       final initial = BattleState(
         battleId: battleId,
@@ -60,6 +77,8 @@ class BattleViewModel extends _$BattleViewModel {
         roomAId: battleDetail['room_a_id'] as String?,
         roomBId: battleDetail['room_b_id'] as String?,
         phase: _phaseFromStatus(data['status'] as String? ?? ''),
+        topGiftersA: topGiftersA,
+        topGiftersB: topGiftersB,
       );
 
       state = AsyncValue.data(initial);
@@ -92,12 +111,14 @@ class BattleViewModel extends _$BattleViewModel {
   void _onStarted(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
-    _update((s) => s.copyWith(
-      phase: BattlePhase.active,
-      timeRemaining: Duration(
-        seconds: json['duration_seconds'] as int? ?? 300,
+    _update(
+      (s) => s.copyWith(
+        phase: BattlePhase.active,
+        timeRemaining: Duration(
+          seconds: json['duration_seconds'] as int? ?? 300,
+        ),
       ),
-    ));
+    );
     _startLocalTick();
   }
 
@@ -110,30 +131,51 @@ class BattleViewModel extends _$BattleViewModel {
   void _onScoreUpdate(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
-    _update((s) => s.copyWith(
-      scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
-      scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
-      giftsCountA: json['gifts_count_a'] as int? ?? s.giftsCountA,
-      giftsCountB: json['gifts_count_b'] as int? ?? s.giftsCountB,
-      timeRemaining: Duration(seconds: json['time_remaining'] as int? ?? s.timeRemaining.inSeconds),
-      lastGiftSender: json['last_gift_sender'] as String?,
-      lastGiftName: json['last_gift_name'] as String?,
-      lastUpdatedSide: json['updated_side'] as String?,
-    ));
+
+    // Parse top gifters (top 3 MVP para cada lado)
+    final topGiftersA =
+        (json['top_gifters_a'] as List?)
+            ?.map((e) => TopGifter.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+    final topGiftersB =
+        (json['top_gifters_b'] as List?)
+            ?.map((e) => TopGifter.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    _update(
+      (s) => s.copyWith(
+        scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
+        scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
+        giftsCountA: json['gifts_count_a'] as int? ?? s.giftsCountA,
+        giftsCountB: json['gifts_count_b'] as int? ?? s.giftsCountB,
+        timeRemaining: Duration(
+          seconds: json['time_remaining'] as int? ?? s.timeRemaining.inSeconds,
+        ),
+        lastGiftSender: json['last_gift_sender'] as String?,
+        lastGiftName: json['last_gift_name'] as String?,
+        lastUpdatedSide: json['updated_side'] as String?,
+        topGiftersA: topGiftersA.isNotEmpty ? topGiftersA : s.topGiftersA,
+        topGiftersB: topGiftersB.isNotEmpty ? topGiftersB : s.topGiftersB,
+      ),
+    );
   }
 
   void _onEnded(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
     _tickTimer?.cancel();
-    _update((s) => s.copyWith(
-      phase: BattlePhase.finished,
-      scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
-      scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
-      winnerId: json['winner_id'] as String?,
-      winnerName: json['winner_name'] as String?,
-      timeRemaining: Duration.zero,
-    ));
+    _update(
+      (s) => s.copyWith(
+        phase: BattlePhase.finished,
+        scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
+        scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
+        winnerId: json['winner_id'] as String?,
+        winnerName: json['winner_name'] as String?,
+        timeRemaining: Duration.zero,
+      ),
+    );
   }
 
   // ── Local countdown tick ──────────────────────────────────────────────────

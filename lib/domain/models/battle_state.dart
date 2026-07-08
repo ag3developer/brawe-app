@@ -1,3 +1,27 @@
+/// Top gifter/MVP info
+class TopGifter {
+  const TopGifter({
+    required this.id,
+    required this.total,
+    this.username,
+    this.avatarUrl,
+  });
+
+  final String id;
+  final double total;
+  final String? username;
+  final String? avatarUrl;
+
+  factory TopGifter.fromJson(Map<String, dynamic> json) {
+    return TopGifter(
+      id: json['id'] as String? ?? '',
+      total: (json['total'] as num?)?.toDouble() ?? 0.0,
+      username: json['username'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+    );
+  }
+}
+
 /// Represents the current state of a live battle between two streamers.
 class BattleState {
   const BattleState({
@@ -21,6 +45,8 @@ class BattleState {
     this.giftsCountA = 0,
     this.giftsCountB = 0,
     this.phase = BattlePhase.waiting,
+    this.topGiftersA = const [],
+    this.topGiftersB = const [],
   });
 
   final String battleId;
@@ -43,6 +69,8 @@ class BattleState {
   final int giftsCountA;
   final int giftsCountB;
   final BattlePhase phase;
+  final List<TopGifter> topGiftersA;
+  final List<TopGifter> topGiftersB;
 
   double get progressA {
     final total = scoreA + scoreB;
@@ -68,6 +96,8 @@ class BattleState {
     int? giftsCountA,
     int? giftsCountB,
     BattlePhase? phase,
+    List<TopGifter>? topGiftersA,
+    List<TopGifter>? topGiftersB,
   }) {
     return BattleState(
       battleId: battleId,
@@ -90,6 +120,8 @@ class BattleState {
       giftsCountA: giftsCountA ?? this.giftsCountA,
       giftsCountB: giftsCountB ?? this.giftsCountB,
       phase: phase ?? this.phase,
+      topGiftersA: topGiftersA ?? this.topGiftersA,
+      topGiftersB: topGiftersB ?? this.topGiftersB,
     );
   }
 
@@ -107,9 +139,7 @@ class BattleState {
       roomBId: json['room_b_id'] as String?,
       scoreA: 0,
       scoreB: 0,
-      timeRemaining: Duration(
-        seconds: json['duration_seconds'] as int? ?? 300,
-      ),
+      timeRemaining: Duration(seconds: json['duration_seconds'] as int? ?? 300),
       phase: BattlePhase.waiting,
     );
   }

@@ -5,7 +5,6 @@ import '../../../domain/models/feed_item.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/for_you_feed_view_model.dart';
-import 'home_bottom_nav.dart';
 import 'views/live_commerce_view.dart';
 import 'views/live_battle_view.dart';
 import 'views/live_chat_view.dart';
@@ -36,24 +35,25 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
     return switch (item) {
       // v1.0: monetização desativada — lives de commerce renderizam
       // como live-chat comum (sem botão de compra/produtos).
-      LiveCommerceItem() => kEnableMonetization
-          ? LiveCommerceView(item: item, isActive: isActive)
-          : LiveChatView(
-              isActive: isActive,
-              item: LiveChatItem(
-                id: item.id,
-                author: item.author,
-                likesCount: item.likesCount,
-                commentsCount: item.commentsCount,
-                sharesCount: item.sharesCount,
-                userLiked: item.userLiked,
-                userFollowingAuthor: item.userFollowingAuthor,
-                caption: item.caption,
-                thumbnailUrl: item.thumbnailUrl,
-                viewerCount: item.viewerCount,
-                topic: '',
+      LiveCommerceItem() =>
+        kEnableMonetization
+            ? LiveCommerceView(item: item, isActive: isActive)
+            : LiveChatView(
+                isActive: isActive,
+                item: LiveChatItem(
+                  id: item.id,
+                  author: item.author,
+                  likesCount: item.likesCount,
+                  commentsCount: item.commentsCount,
+                  sharesCount: item.sharesCount,
+                  userLiked: item.userLiked,
+                  userFollowingAuthor: item.userFollowingAuthor,
+                  caption: item.caption,
+                  thumbnailUrl: item.thumbnailUrl,
+                  viewerCount: item.viewerCount,
+                  topic: '',
+                ),
               ),
-            ),
       LiveBattleItem() => LiveBattleView(item: item),
       LiveChatItem() => LiveChatView(item: item, isActive: isActive),
       VideoFeedItem() => VideoView(item: item, isActive: isActive),
@@ -80,9 +80,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
         children: [
           asyncItems.when(
             loading: () => const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.electricPurple,
-              ),
+              child: CircularProgressIndicator(color: AppColors.electricPurple),
             ),
             error: (_, __) => Center(
               child: Padding(
@@ -90,8 +88,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.wifi_off,
-                        color: Colors.white54, size: 48),
+                    const Icon(Icons.wifi_off, color: Colors.white54, size: 48),
                     const SizedBox(height: 12),
                     Text(
                       s.feedLoadError,
@@ -120,32 +117,43 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.play_circle_outline,
-                            color: Colors.white24, size: 64),
+                        const Icon(
+                          Icons.play_circle_outline,
+                          color: Colors.white24,
+                          size: 64,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           s.feedEmptyVideoTitle,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white70,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           s.feedEmptyVideoSubtitle,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                              color: Colors.white38, fontSize: 13),
+                            color: Colors.white38,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         TextButton.icon(
                           onPressed: onRefresh,
-                          icon: const Icon(Icons.refresh,
-                              color: AppColors.electricPurple),
-                          label: Text(s.actionRefresh,
-                              style: const TextStyle(
-                                  color: AppColors.electricPurple)),
+                          icon: const Icon(
+                            Icons.refresh,
+                            color: AppColors.electricPurple,
+                          ),
+                          label: Text(
+                            s.actionRefresh,
+                            style: const TextStyle(
+                              color: AppColors.electricPurple,
+                            ),
+                          ),
                         ),
                       ],
                     ),
