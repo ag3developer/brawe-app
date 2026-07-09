@@ -15,6 +15,7 @@ sealed class Post with _$Post {
     required DateTime createdAt,
     required PostAuthor author,
     @Default(false) bool userLiked,
+    @JsonKey(name: 'user_reaction_type') String? userReactionType,
     @Default(false) bool userReposted,
     @Default(false) bool userFollowingAuthor,
     // Quando o item aparece no feed por causa de um repost de alguém,

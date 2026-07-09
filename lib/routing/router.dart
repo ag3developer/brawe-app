@@ -33,6 +33,7 @@ import '../ui/core/themes/force_dark_theme.dart';
 import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/quests/widgets/quests_screen.dart';
+import '../ui/edit_profile/widgets/artist_profile_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
 import '../ui/wallet/widgets/earnings_screen.dart';
 import '../ui/notifications/widgets/notifications_screen.dart';
@@ -273,6 +274,10 @@ GoRouter router(Ref ref) {
             builder: (context, state) => const EditProfileScreen(),
           ),
           GoRoute(
+            path: '/artist-profile',
+            builder: (context, state) => const ArtistProfileScreen(),
+          ),
+          GoRoute(
             path: '/sounds',
             builder: (context, state) => const SoundsCatalogScreen(),
           ),
@@ -292,10 +297,7 @@ GoRouter router(Ref ref) {
             },
           ),
           // ── Brawe Creator Network ─────────────────────────────────
-          GoRoute(
-            path: '/creator',
-            redirect: (_, __) => '/creator/intro',
-          ),
+          GoRoute(path: '/creator', redirect: (_, __) => '/creator/intro'),
           GoRoute(
             path: '/creator/intro',
             builder: (context, state) => const CreatorProgramIntroScreen(),
@@ -306,8 +308,7 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/creator/apply',
-            builder: (context, state) =>
-                const CreatorApplicationFormScreen(),
+            builder: (context, state) => const CreatorApplicationFormScreen(),
           ),
           GoRoute(
             path: '/creator/submitted',
@@ -316,8 +317,7 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/creator/status',
-            builder: (context, state) =>
-                const CreatorApplicationStatusScreen(),
+            builder: (context, state) => const CreatorApplicationStatusScreen(),
           ),
           GoRoute(
             path: '/creator/onboarding',
@@ -325,8 +325,7 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/creator/profile-settings',
-            builder: (context, state) =>
-                const CreatorProfileSettingsScreen(),
+            builder: (context, state) => const CreatorProfileSettingsScreen(),
           ),
           GoRoute(
             path: '/creator/badge',
@@ -339,20 +338,17 @@ GoRouter router(Ref ref) {
           // ── Admin ───────────────────────────────────────────────
           GoRoute(
             path: '/admin/creator/applications',
-            builder: (context, state) =>
-                const AdminCreatorApplicationsScreen(),
+            builder: (context, state) => const AdminCreatorApplicationsScreen(),
           ),
           GoRoute(
             path: '/admin/creator/applications/:id',
-            builder: (context, state) =>
-                AdminCreatorApplicationDetailScreen(
+            builder: (context, state) => AdminCreatorApplicationDetailScreen(
               id: state.pathParameters['id']!,
             ),
           ),
           GoRoute(
             path: '/admin/creator/creators',
-            builder: (context, state) =>
-                const AdminCreatorsManagementScreen(),
+            builder: (context, state) => const AdminCreatorsManagementScreen(),
           ),
         ],
       ),
@@ -444,7 +440,6 @@ class RouterRefreshListenable extends ChangeNotifier {
   }
 }
 
-
 /// Helper que resolve um LiveRoom a partir do ID/slug quando o `extra` é null
 /// (deep links, push notifications ou navegação simples por
 /// `context.push('/live/<id>')`).
@@ -483,9 +478,7 @@ class _LiveRoomResolverState extends ConsumerState<_LiveRoomResolver> {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: Colors.black,
-            body: Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
           );
         }
         final room = snap.data;
@@ -498,8 +491,11 @@ class _LiveRoomResolverState extends ConsumerState<_LiveRoomResolver> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.live_tv_outlined,
-                        color: Colors.white54, size: 64),
+                    const Icon(
+                      Icons.live_tv_outlined,
+                      color: Colors.white54,
+                      size: 64,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Live indisponível',
@@ -527,7 +523,8 @@ class _LiveRoomResolverState extends ConsumerState<_LiveRoomResolver> {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.white,
                             side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.3)),
+                              color: Colors.white.withValues(alpha: 0.3),
+                            ),
                           ),
                           child: const Text('Voltar'),
                         ),
@@ -549,4 +546,3 @@ class _LiveRoomResolverState extends ConsumerState<_LiveRoomResolver> {
     );
   }
 }
-

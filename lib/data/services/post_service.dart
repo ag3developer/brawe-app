@@ -24,7 +24,10 @@ class PostService {
     return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<PostFeedResponseDto> getFollowingFeed({int limit = 20, int offset = 0}) async {
+  Future<PostFeedResponseDto> getFollowingFeed({
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final response = await _dio.get(
       '/posts/following',
       queryParameters: {'limit': limit, 'offset': offset},
@@ -73,15 +76,14 @@ class PostService {
   }
 
   /// Lista quem curtiu um post com breakdown por reação.
-  /// Backend: GET /media/{media_id}/likes
-  /// O post_id é o mesmo que media_id no backend (criados juntos).
+  /// Backend: GET /posts/{post_id}/likes
   Future<PostLikesPage> getLikers(
     String postId, {
     int limit = 50,
     int offset = 0,
   }) async {
     final response = await _dio.get(
-      '/media/$postId/likes',
+      '/posts/$postId/likes',
       queryParameters: {'limit': limit, 'offset': offset},
     );
     return PostLikesPage.fromJson(response.data as Map<String, dynamic>);
@@ -108,10 +110,10 @@ class PostService {
     String? imageUrl,
     String? audience, // mantido por compat — ignorado pelo backend atual
   }) async {
-    await _dio.post('/posts', data: {
-      'content': content,
-      if (imageUrl != null) 'image_url': imageUrl,
-    });
+    await _dio.post(
+      '/posts',
+      data: {'content': content, if (imageUrl != null) 'image_url': imageUrl},
+    );
   }
 
   /// Upload de imagem para post.

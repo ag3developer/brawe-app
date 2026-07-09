@@ -40,7 +40,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     if (_textController.text.trim().isEmpty) return;
     setState(() => _isPosting = true);
     try {
-      await ref.read(postRepositoryProvider).createPost(
+      await ref
+          .read(postRepositoryProvider)
+          .createPost(
             content: _textController.text.trim(),
             imageLocalPath: _selectedImage?.path,
             audience: _audience,
@@ -104,10 +106,10 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   String _audienceLabel(S s, String value) => switch (value) {
-        'Seguidores' => s.audienceFollowers,
-        'Apenas eu' => s.audienceOnlyMe,
-        _ => s.audienceAll,
-      };
+    'Seguidores' => s.audienceFollowers,
+    'Apenas eu' => s.audienceOnlyMe,
+    _ => s.audienceAll,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -149,11 +151,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 children: [
-                   CircleAvatar(
+                  CircleAvatar(
                     radius: 18,
                     backgroundColor: context.colors.surfaceElevated,
-                    child: Icon(Icons.person,
-                        color: context.colors.textSecondary, size: 18),
+                    child: Icon(
+                      Icons.person,
+                      color: context.colors.textSecondary,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   // Audience selector
@@ -161,10 +166,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     onTap: _showAudiencePicker,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: AppColors.electricPurple.withValues(alpha: 0.5),
+                          color: AppColors.electricPurple.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -180,8 +189,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.keyboard_arrow_down,
-                              color: AppColors.electricPurple, size: 14),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.electricPurple,
+                            size: 14,
+                          ),
                         ],
                       ),
                     ),
@@ -194,7 +206,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           ? AppColors.electricPurple
                           : context.colors.surfaceElevated,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -235,7 +249,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         fontSize: 16,
                         height: 1.5,
                       ),
-                      decoration:  InputDecoration(
+                      decoration: InputDecoration(
                         hintText: s.postHintWhatsHappening,
                         hintStyle: TextStyle(
                           color: context.colors.textSecondary,
@@ -274,8 +288,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.close,
-                                    color: context.colors.textPrimary, size: 16),
+                                child: Icon(
+                                  Icons.close,
+                                  color: context.colors.textPrimary,
+                                  size: 16,
+                                ),
                               ),
                             ),
                           ),
@@ -303,26 +320,11 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
               child: Row(
                 children: [
-                  _ToolbarBtn(
-                    icon: Icons.image_outlined,
-                    onTap: _pickImage,
-                  ),
-                  _ToolbarBtn(
-                    icon: Icons.gif_outlined,
-                    onTap: () {},
-                  ),
-                  _ToolbarBtn(
-                    icon: Icons.poll_outlined,
-                    onTap: () {},
-                  ),
-                  _ToolbarBtn(
-                    icon: Icons.tag,
-                    onTap: () {},
-                  ),
-                  _ToolbarBtn(
-                    icon: Icons.location_on_outlined,
-                    onTap: () {},
-                  ),
+                  _ToolbarBtn(icon: Icons.image_outlined, onTap: _pickImage),
+                  _ToolbarBtn(icon: Icons.gif_outlined, onTap: () {}),
+                  _ToolbarBtn(icon: Icons.poll_outlined, onTap: () {}),
+                  _ToolbarBtn(icon: Icons.tag, onTap: () {}),
+                  _ToolbarBtn(icon: Icons.location_on_outlined, onTap: () {}),
                   _ToolbarBtn(
                     icon: LucideIcons.music,
                     onTap: _pickSound,
@@ -405,8 +407,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   option == 'Todos'
                       ? Icons.public
                       : option == 'Seguidores'
-                          ? Icons.people
-                          : Icons.lock,
+                      ? Icons.people
+                      : Icons.lock,
                   color: _audience == option
                       ? AppColors.electricPurple
                       : Colors.white,
@@ -454,7 +456,7 @@ class _ToolbarBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active
         ? (activeColor ?? AppColors.electricPurple)
-        : AppColors.electricPurple;
+        : context.colors.textSecondary;
     return IconButton(
       icon: Icon(icon, color: color, size: 22),
       onPressed: onTap,
@@ -475,7 +477,9 @@ class _SelectedSoundChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE11D48).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: const Color(0xFFE11D48).withValues(alpha: 0.4),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

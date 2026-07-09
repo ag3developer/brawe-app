@@ -44,8 +44,11 @@ sealed class PostResponseDto with _$PostResponseDto {
     @JsonKey(name: 'updated_at') required String updatedAt,
     required AuthorResponseDto author,
     @JsonKey(name: 'user_liked') @Default(false) bool userLiked,
+    @JsonKey(name: 'user_reaction_type') String? userReactionType,
     @JsonKey(name: 'user_reposted') @Default(false) bool userReposted,
-    @JsonKey(name: 'user_following_author') @Default(false) bool userFollowingAuthor,
+    @JsonKey(name: 'user_following_author')
+    @Default(false)
+    bool userFollowingAuthor,
     @JsonKey(name: 'reposted_by') AuthorResponseDto? repostedBy,
     @JsonKey(name: 'repost_created_at') String? repostCreatedAt,
   }) = _PostResponseDto;
@@ -67,11 +70,13 @@ extension PostResponseDtoMapper on PostResponseDto {
       createdAt: DateTime.parse(createdAt),
       author: author.toDomain(),
       userLiked: userLiked,
+      userReactionType: userReactionType,
       userReposted: userReposted,
       userFollowingAuthor: userFollowingAuthor,
       repostedBy: repostedBy?.toDomain(),
-      repostCreatedAt:
-          repostCreatedAt != null ? DateTime.tryParse(repostCreatedAt!) : null,
+      repostCreatedAt: repostCreatedAt != null
+          ? DateTime.tryParse(repostCreatedAt!)
+          : null,
     );
   }
 }

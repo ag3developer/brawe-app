@@ -21,19 +21,14 @@ class WalletScreen extends ConsumerWidget {
     final async = ref.watch(walletViewModelProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.walletTitle),
-        leading: const BackButton(),
-      ),
+      appBar: AppBar(title: Text(s.walletTitle), leading: const BackButton()),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(
-          onRetry: () =>
-              ref.read(walletViewModelProvider.notifier).refresh(),
+          onRetry: () => ref.read(walletViewModelProvider.notifier).refresh(),
         ),
         data: (wallet) => RefreshIndicator(
-          onRefresh: () =>
-              ref.read(walletViewModelProvider.notifier).refresh(),
+          onRefresh: () => ref.read(walletViewModelProvider.notifier).refresh(),
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -101,7 +96,7 @@ class _BalanceCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.account_balance_wallet_outlined,
-                color: context.colors.textPrimary,
+                color: Colors.white,
                 size: 22,
               ),
               const SizedBox(width: 8),
@@ -111,7 +106,8 @@ class _BalanceCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w600,
                 ),
-              ),            ],
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Row(
@@ -122,7 +118,7 @@ class _BalanceCard extends StatelessWidget {
               Text(
                 _format(wallet.balance),
                 style: TextStyle(
-                  color: context.colors.textPrimary,
+                  color: Colors.white,
                   fontSize: 38,
                   fontWeight: FontWeight.w800,
                   height: 1,
@@ -144,10 +140,7 @@ class _BalanceCard extends StatelessWidget {
           if (wallet.accountNumber != null) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: context.colors.surfaceHighest.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
@@ -155,16 +148,12 @@ class _BalanceCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.tag,
-                    color: context.colors.textPrimary,
-                    size: 14,
-                  ),
+                  Icon(Icons.tag, color: Colors.white, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     wallet.accountNumber!,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -203,10 +192,7 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -292,8 +278,8 @@ class _PackageCard extends StatelessWidget {
                       ),
                       child: Text(
                         package.label,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                           height: 1,
@@ -334,9 +320,9 @@ class _PackageCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                S.of(context).walletPriceBRL(
-                      _formatInt(package.priceBRL.round()),
-                    ),
+                S
+                    .of(context)
+                    .walletPriceBRL(_formatInt(package.priceBRL.round())),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
@@ -377,8 +363,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
   ProductDetails? _product;
 
   /// Mapeia package_id interno → productId da loja (Play/App Store).
-  String? get _iapProductId =>
-      kPackageIdToIapProductId[widget.package.id];
+  String? get _iapProductId => kPackageIdToIapProductId[widget.package.id];
 
   @override
   void initState() {
@@ -416,8 +401,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
     if (!mounted) return;
     setState(() {
       _loading = false;
-      _product = (productId != null &&
-              products.any((p) => p.id == productId))
+      _product = (productId != null && products.any((p) => p.id == productId))
           ? product
           : null;
       if (_product == null) {
@@ -446,7 +430,9 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                S.of(context).walletIapSuccess(
+                S
+                    .of(context)
+                    .walletIapSuccess(
                       _PackageCard._formatInt(widget.package.coins),
                     ),
               ),
@@ -471,10 +457,11 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
   @override
   Widget build(BuildContext context) {
     final pkg = widget.package;
-    final priceLabel = _product?.price ??
-        S.of(context).walletPriceBRL(
-              _PackageCard._formatInt(pkg.priceBRL.round()),
-            );
+    final priceLabel =
+        _product?.price ??
+        S
+            .of(context)
+            .walletPriceBRL(_PackageCard._formatInt(pkg.priceBRL.round()));
 
     return Padding(
       padding: EdgeInsets.only(
@@ -505,7 +492,9 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      S.of(context).walletPackageCoins(
+                      S
+                          .of(context)
+                          .walletPackageCoins(
                             _PackageCard._formatInt(pkg.coins),
                           ),
                       style: const TextStyle(
@@ -538,8 +527,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline,
-                    color: AppColors.electricPurple),
+                const Icon(Icons.info_outline, color: AppColors.electricPurple),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -557,21 +545,16 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
               decoration: BoxDecoration(
                 color: Colors.red.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.4)),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline,
-                      color: Colors.red, size: 18),
+                  const Icon(Icons.error_outline, color: Colors.red, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
                     ),
                   ),
                 ],
@@ -588,8 +571,9 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.electricPurple,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                disabledBackgroundColor:
-                    AppColors.electricPurple.withValues(alpha: 0.4),
+                disabledBackgroundColor: AppColors.electricPurple.withValues(
+                  alpha: 0.4,
+                ),
               ),
               child: _loading
                   ? const SizedBox(
@@ -601,32 +585,30 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
                       ),
                     )
                   : _purchasing
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              S.of(context).walletIapProcessing,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          _product == null
-                              ? S.of(context).walletIapUnavailable
-                              : S.of(context).walletIapBuyFor(priceLabel),
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w700),
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         ),
+                        const SizedBox(width: 10),
+                        Text(
+                          S.of(context).walletIapProcessing,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      _product == null
+                          ? S.of(context).walletIapUnavailable
+                          : S.of(context).walletIapBuyFor(priceLabel),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
             ),
           ),
         ],
@@ -643,21 +625,13 @@ class _InfoCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
     final items = <(IconData, String, String)>[
-      (
-        Icons.bolt_outlined,
-        s.walletInfoQuestsTitle,
-        s.walletInfoQuestsBody,
-      ),
+      (Icons.bolt_outlined, s.walletInfoQuestsTitle, s.walletInfoQuestsBody),
       (
         Icons.card_giftcard_outlined,
         s.walletInfoGiftsTitle,
         s.walletInfoGiftsBody,
       ),
-      (
-        Icons.shopping_bag_outlined,
-        s.walletInfoUseTitle,
-        s.walletInfoUseBody,
-      ),
+      (Icons.shopping_bag_outlined, s.walletInfoUseTitle, s.walletInfoUseBody),
     ];
     return Container(
       padding: const EdgeInsets.all(16),
@@ -688,9 +662,7 @@ class _InfoCard extends StatelessWidget {
                       children: [
                         Text(
                           it.$2,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -728,16 +700,12 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(s.walletLoadError),
           const SizedBox(height: 12),
-          FilledButton(
-            onPressed: onRetry,
-            child: Text(s.walletTryAgain),
-          ),
+          FilledButton(onPressed: onRetry, child: Text(s.walletTryAgain)),
         ],
       ),
     );
   }
 }
-
 
 // ---------------------------------------------------------------------------
 // Quick actions row
@@ -758,9 +726,9 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.send,
             label: s.walletActionSend,
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(s.walletComingSoon)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(s.walletComingSoon)));
             },
           ),
         ),
@@ -770,11 +738,9 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.history,
             label: s.walletActionStatement,
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const EarningsScreen(),
-                ),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const EarningsScreen()));
             },
           ),
         ),

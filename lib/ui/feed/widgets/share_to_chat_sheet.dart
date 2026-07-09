@@ -105,12 +105,12 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
 
     final followingFuture = (me != null)
         ? socialRepo
-            .getUserFollowing(me.id, page: 1, limit: 50)
-            .then<List<FollowUser>>((r) => r.items)
-            .catchError((e, st) {
-              debugPrint('[ShareToChatSheet] getUserFollowing failed: $e');
-              return <FollowUser>[];
-            })
+              .getUserFollowing(me.id, page: 1, limit: 50)
+              .then<List<FollowUser>>((r) => r.items)
+              .catchError((e, st) {
+                debugPrint('[ShareToChatSheet] getUserFollowing failed: $e');
+                return <FollowUser>[];
+              })
         : Future.value(<FollowUser>[]);
 
     try {
@@ -142,8 +142,9 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
   }
 
   List<Conversation> get _filteredRecent => _recent
-      .where((c) =>
-          _matches(_query, a: c.participantName, b: c.participantUsername))
+      .where(
+        (c) => _matches(_query, a: c.participantName, b: c.participantUsername),
+      )
       .toList(growable: false);
 
   List<FollowUser> get _filteredFollowing => _following
@@ -201,9 +202,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
     Navigator.of(context).pop();
     // Quest progress: share_1_post (best-effort, não bloqueia UX)
     if (sent > 0) {
-      unawaited(
-        ref.read(postServiceProvider).trackShare(widget.postId),
-      );
+      unawaited(ref.read(postServiceProvider).trackShare(widget.postId));
     }
     final s = S.of(context);
     final msg = failures.isEmpty
@@ -219,10 +218,10 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
     try {
       await Share.share(text);
       // Quest progress: share_1_post (best-effort)
-      unawaited(
-        ref.read(postServiceProvider).trackShare(widget.postId),
-      );
-    } catch (_) {/* ignore */}
+      unawaited(ref.read(postServiceProvider).trackShare(widget.postId));
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   @override
@@ -237,7 +236,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
         expand: false,
         builder: (context, scrollController) {
           return Container(
-            decoration:  BoxDecoration(
+            decoration: BoxDecoration(
               color: context.colors.background,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
@@ -255,8 +254,8 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
                           ),
                         )
                       : _error != null
-                          ? _errorState()
-                          : _list(scrollController),
+                      ? _errorState()
+                      : _list(scrollController),
                 ),
                 if (_selectedUserIds.isNotEmpty) _commentBar(),
                 _bottomActions(),
@@ -269,29 +268,29 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
   }
 
   Widget _grabber() => Container(
-        margin: const EdgeInsets.only(top: 8),
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: context.colors.textSecondary.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
+    margin: const EdgeInsets.only(top: 8),
+    width: 40,
+    height: 4,
+    decoration: BoxDecoration(
+      color: context.colors.textSecondary.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 
   Widget _header() => Padding(
-        padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            S.of(context).shareTitle,
-            style: TextStyle(
-              color: context.colors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+    padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        S.of(context).shareTitle,
+        style: TextStyle(
+          color: context.colors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _postPreview() {
     return Container(
@@ -308,8 +307,8 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
             child: SizedBox(
               width: 44,
               height: 44,
-              child: widget.postImageUrl != null &&
-                      widget.postImageUrl!.isNotEmpty
+              child:
+                  widget.postImageUrl != null && widget.postImageUrl!.isNotEmpty
                   ? Image.network(
                       widget.postImageUrl!,
                       fit: BoxFit.cover,
@@ -338,7 +337,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
                       : S.of(context).sharePostFallback,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:  TextStyle(
+                  style: TextStyle(
                     color: context.colors.textSecondary,
                     fontSize: 12,
                   ),
@@ -352,10 +351,13 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
   }
 
   Widget _previewFallback() => Container(
-        color: AppColors.deepBlue,
-        child: Icon(Icons.image_outlined,
-            color: context.colors.textTertiary, size: 20),
-      );
+    color: AppColors.deepBlue,
+    child: Icon(
+      Icons.image_outlined,
+      color: context.colors.textTertiary,
+      size: 20,
+    ),
+  );
 
   Widget _searchField() {
     return Padding(
@@ -365,8 +367,8 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
         style: TextStyle(color: context.colors.textPrimary),
         decoration: InputDecoration(
           hintText: S.of(context).shareSearchHint,
-          hintStyle:  TextStyle(color: context.colors.textSecondary),
-          prefixIcon:  Icon(Icons.search, color: context.colors.textSecondary),
+          hintStyle: TextStyle(color: context.colors.textSecondary),
+          prefixIcon: Icon(Icons.search, color: context.colors.textSecondary),
           filled: true,
           fillColor: context.colors.surfaceElevated,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -384,10 +386,15 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_error ?? S.of(context).shareErrorGeneric,
-              style:  TextStyle(color: context.colors.textSecondary)),
+          Text(
+            _error ?? S.of(context).shareErrorGeneric,
+            style: TextStyle(color: context.colors.textSecondary),
+          ),
           const SizedBox(height: 8),
-          TextButton(onPressed: _load, child: Text(S.of(context).shareTryAgain)),
+          TextButton(
+            onPressed: _load,
+            child: Text(S.of(context).shareTryAgain),
+          ),
         ],
       ),
     );
@@ -404,7 +411,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
       controller: controller,
       slivers: [
         if (recents.isNotEmpty) ...[
-           SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
               child: Text(
@@ -440,7 +447,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
           ),
         ],
         if (filteredFollowing.isNotEmpty) ...[
-           SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
               child: Text(
@@ -462,7 +469,9 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
               return _RecipientTile(
                 name: (p.displayName != null && p.displayName!.isNotEmpty)
                     ? p.displayName!
-                    : (p.username.isNotEmpty ? p.username : S.of(context).shareUserFallback),
+                    : (p.username.isNotEmpty
+                          ? p.username
+                          : S.of(context).shareUserFallback),
                 username: p.username.isNotEmpty ? p.username : null,
                 avatarUrl: p.avatarUrl,
                 isVerified: p.isVerified,
@@ -474,7 +483,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
           ),
         ],
         if (recents.isEmpty && filteredFollowing.isEmpty)
-           SliverFillRemaining(
+          SliverFillRemaining(
             hasScrollBody: false,
             child: Center(
               child: Padding(
@@ -501,11 +510,13 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
         minLines: 1,
         decoration: InputDecoration(
           hintText: S.of(context).shareCommentHint,
-          hintStyle:  TextStyle(color: context.colors.textSecondary),
+          hintStyle: TextStyle(color: context.colors.textSecondary),
           filled: true,
           fillColor: context.colors.surfaceElevated,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -547,8 +558,9 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
                 onPressed: hasSelection && !_sending ? _send : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.electricPurple,
-                  disabledBackgroundColor:
-                      AppColors.electricPurple.withValues(alpha: 0.3),
+                  disabledBackgroundColor: AppColors.electricPurple.withValues(
+                    alpha: 0.3,
+                  ),
                   foregroundColor: context.colors.textPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -565,7 +577,9 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
                         ),
                       )
                     : Text(
-                        hasSelection ? S.of(context).shareSendWithCount(count) : S.of(context).shareSend,
+                        hasSelection
+                            ? S.of(context).shareSendWithCount(count)
+                            : S.of(context).shareSend,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
               ),
@@ -618,11 +632,14 @@ class _QuickRecipient extends StatelessWidget {
                     backgroundColor: context.colors.surfaceElevated,
                     backgroundImage:
                         (avatarUrl != null && avatarUrl!.isNotEmpty)
-                            ? NetworkImage(avatarUrl!)
-                            : null,
+                        ? NetworkImage(avatarUrl!)
+                        : null,
                     child: (avatarUrl == null || avatarUrl!.isEmpty)
-                        ? Icon(Icons.person,
-                            color: context.colors.textTertiary, size: 24)
+                        ? Icon(
+                            Icons.person,
+                            color: context.colors.textTertiary,
+                            size: 24,
+                          )
                         : null,
                   ),
                 ),
@@ -636,8 +653,11 @@ class _QuickRecipient extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       padding: const EdgeInsets.all(2),
-                      child: Icon(Icons.check,
-                          color: context.colors.textPrimary, size: 12),
+                      child: Icon(
+                        Icons.check,
+                        color: context.colors.textPrimary,
+                        size: 12,
+                      ),
                     ),
                   ),
               ],
@@ -648,10 +668,7 @@ class _QuickRecipient extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.colors.textPrimary,
-                fontSize: 11,
-              ),
+              style: TextStyle(color: context.colors.textPrimary, fontSize: 11),
             ),
           ],
         ),
@@ -701,11 +718,16 @@ class _RecipientTile extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 22,
                     backgroundColor: context.colors.surfaceElevated,
-                    backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
+                    backgroundImage:
+                        (avatarUrl != null && avatarUrl!.isNotEmpty)
                         ? NetworkImage(avatarUrl!)
                         : null,
                     child: (avatarUrl == null || avatarUrl!.isEmpty)
-                        ? Icon(Icons.person, color: context.colors.textTertiary, size: 22)
+                        ? Icon(
+                            Icons.person,
+                            color: context.colors.textTertiary,
+                            size: 22,
+                          )
                         : null,
                   ),
                 ),
@@ -717,7 +739,9 @@ class _RecipientTile extends StatelessWidget {
                     child: Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.mutedRed,
                           borderRadius: BorderRadius.circular(4),
@@ -770,7 +794,7 @@ class _RecipientTile extends StatelessWidget {
                       '@$username',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:  TextStyle(
+                      style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 12,
                       ),
@@ -804,9 +828,7 @@ class _Checkmark extends StatelessWidget {
           width: 1.6,
         ),
       ),
-      child: selected
-          ? Icon(Icons.check, size: 16, color: context.colors.textPrimary)
-          : null,
+      child: selected ? Icon(Icons.check, size: 16, color: Colors.white) : null,
     );
   }
 }

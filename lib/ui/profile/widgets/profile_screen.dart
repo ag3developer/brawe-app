@@ -99,8 +99,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   List<Product> _products = [];
-  bool _isSeller = false;
-  // Abas base: Posts, Vídeos, Galeria, Lives. +1 se for vendedor (Loja).
+  // Abas: Posts, Vídeos, Galeria, Vitrine
   int _tabCount = 4;
 
   @override
@@ -111,26 +110,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   Future<void> _loadProducts() async {
-    // Loja desativada na v1.0 enquanto IAP não estiver implementado.
-    if (!kEnableMonetization) return;
     try {
       final products = await ref
           .read(productRepositoryProvider)
           .getUserProducts(widget.userId);
       if (!mounted) return;
-      final isSeller = products.isNotEmpty;
-      final newCount = isSeller ? 5 : 4;
       setState(() {
         _products = products;
-        _isSeller = isSeller;
-        if (_tabCount != newCount) {
-          _tabCount = newCount;
-          _tabController?.dispose();
-          _tabController = TabController(length: _tabCount, vsync: this);
-        }
       });
     } catch (_) {
-      // Mantém _isSeller = false e _products = [] silenciosamente
+      // Silencioso — vitrine fica vazia
     }
   }
 
@@ -162,14 +151,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         text: s.profileTabGallery,
       ),
       Tab(
-        icon: const Icon(Icons.live_tv_outlined, size: 20),
-        text: s.profileTabLives,
+        icon: const Icon(Icons.storefront_outlined, size: 20),
+        text: 'Vitrine',
       ),
-      if (_isSeller)
-        Tab(
-          icon: const Icon(Icons.shopping_bag_outlined, size: 20),
-          text: s.profileTabShop,
-        ),
     ];
 
     return Scaffold(
@@ -201,7 +185,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               orElse: () => const SizedBox.shrink(),
             ),
             actions: [
-              if (_isSeller)
+              if (products.isNotEmpty)
                 IconButton(
                   icon: Icon(
                     Icons.storefront,
@@ -296,7 +280,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 _ProfileHeader(
                   userId: widget.userId,
                   isMe: isMe,
-                  isSeller: _isSeller,
+                  isSeller: products.isNotEmpty,
                   productsCount: products.length,
                   profileState: profileState,
                 ),
@@ -336,8 +320,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 postsState: profileState.posts,
               ),
               ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
-              _LivesGrid(livesState: profileState.lives),
-              if (_isSeller) _ProductsGrid(products: products),
+              _AffiliateStorefront(
+                userId: widget.userId,
+                isMe: isMe,
+                products: products,
+              ),
             ],
           ),
         ),
@@ -2202,6 +2189,106 @@ class _LivesGrid extends StatelessWidget {
       error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
         message: S.of(context).profileLivesLoadError,
+      ),
+    );
+  }
+}
+
+// ── VITRINE DE AFILIADOS ─────────────────────────────────────────────────────
+/// Vitrine de produtos afiliados do usuário.
+/// Exibe os produtos que o criador promove e ganha comissão.
+/// Quando vazia (sem afiliações), mostra CTA para aderir ao programa.
+class _AffiliateStorefront extends StatelessWidget {
+  final String userId;
+  final bool isMe;
+  final List<Product> products;
+  const _AffiliateStorefront({
+    required this.userId,
+    required this.isMe,
+    required this.products,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (products.isEmpty) {
+      return _EmptyStorefront(isMe: isMe);
+    }
+    return _ProductsGrid(products: products);
+  }
+}
+
+/// Estado vazio da vitrine — convida o criador a se afiliar.
+class _EmptyStorefront extends StatelessWidget {
+  final bool isMe;
+  const _EmptyStorefront({required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.electricPurple, AppColors.hotPink],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.storefront_outlined,
+                color: Colors.white,
+                size: 36,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              isMe ? 'Sua vitrine está vazia' : 'Nenhum produto ainda',
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isMe
+                  ? 'Afilie-se a marcas e ganhe comissão\npor cada venda realizada pelo seu link.'
+                  : 'Este criador ainda não adicionou\nprodutos à vitrine.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            if (isMe) ...[
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () => context.push('/creator/intro'),
+                icon: const Icon(Icons.rocket_launch, size: 18),
+                label: const Text('Aderir ao Creator Network'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.electricPurple,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

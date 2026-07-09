@@ -64,9 +64,13 @@ class StoriesRail extends ConsumerWidget {
   Widget _buildError(BuildContext context, WidgetRef ref) {
     return Center(
       child: TextButton.icon(
-        icon:  Icon(Icons.refresh, color: context.colors.textSecondary, size: 18),
+        icon: Icon(
+          Icons.refresh,
+          color: context.colors.textSecondary,
+          size: 18,
+        ),
         onPressed: () => ref.read(storiesViewModelProvider.notifier).refresh(),
-        label:  Text(
+        label: Text(
           S.of(context).storiesReload,
           style: TextStyle(color: context.colors.textSecondary),
         ),
@@ -83,7 +87,10 @@ class StoriesRail extends ConsumerWidget {
     final currentUserId = ref.watch(authStateProvider).asData?.value?.id;
     final mine = currentUserId == null
         ? null
-        : groups.where((g) => g.userId == currentUserId).cast<UserStoriesGroup?>().firstWhere((_) => true, orElse: () => null);
+        : groups
+              .where((g) => g.userId == currentUserId)
+              .cast<UserStoriesGroup?>()
+              .firstWhere((_) => true, orElse: () => null);
     final others = currentUserId == null
         ? groups
         : groups.where((g) => g.userId != currentUserId).toList();
@@ -100,7 +107,9 @@ class StoriesRail extends ConsumerWidget {
             radius: _radius,
             myGroup: mine,
             onTap: () => _openCreate(context),
-            onTapMy: mine == null ? null : () => _openViewer(context, ref, mine),
+            onTapMy: mine == null
+                ? null
+                : () => _openViewer(context, ref, mine),
           );
         }
         final g = others[index - 1];
@@ -214,7 +223,10 @@ class _CreateTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(radius),
                     gradient: LinearGradient(
-                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.65)],
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.65),
+                      ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
@@ -235,16 +247,18 @@ class _CreateTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.electricPurple,
                         shape: BoxShape.circle,
-                        border: Border.all(color: context.colors.textPrimary, width: 2.5),
+                        border: Border.all(color: Colors.white, width: 2.5),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.electricPurple.withValues(alpha: 0.6),
+                            color: AppColors.electricPurple.withValues(
+                              alpha: 0.6,
+                            ),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
                         ],
                       ),
-                      child: Icon(Icons.add, color: context.colors.textPrimary, size: 18),
+                      child: Icon(Icons.add, color: Colors.white, size: 18),
                     ),
                   ),
                 ),
@@ -255,15 +269,15 @@ class _CreateTile extends StatelessWidget {
                 right: 6,
                 bottom: 8,
                 child: Text(
-                  hasMine ? S.of(context).storiesYour : S.of(context).storiesCreate,
+                  hasMine
+                      ? S.of(context).storiesYour
+                      : S.of(context).storiesCreate,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: context.colors.textPrimary,
+                    color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    shadows: [
-                      Shadow(blurRadius: 4, color: Colors.black54),
-                    ],
+                    shadows: [Shadow(blurRadius: 4, color: Colors.black54)],
                   ),
                 ),
               ),
@@ -331,7 +345,8 @@ class _StoryTileState extends State<_StoryTile>
   Widget build(BuildContext context) {
     final g = widget.group;
     final preview = g.stories.first;
-    final name = g.username ?? g.displayName ?? S.of(context).storiesFallbackUser;
+    final name =
+        g.username ?? g.displayName ?? S.of(context).storiesFallbackUser;
     final unviewed = g.hasUnviewed;
     final isLive = g.isLive;
 
@@ -372,23 +387,17 @@ class _StoryTileState extends State<_StoryTile>
               borderRadius: BorderRadius.circular(widget.radius + 2),
               gradient: isLive
                   ? const LinearGradient(
-                      colors: [
-                        AppColors.mutedRed,
-                        AppColors.electricPurple,
-                      ],
+                      colors: [AppColors.mutedRed, AppColors.electricPurple],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : unviewed
-                      ? const LinearGradient(
-                          colors: [
-                            AppColors.electricPurple,
-                            AppColors.coolCyan,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        )
-                      : null,
+                  ? const LinearGradient(
+                      colors: [AppColors.electricPurple, AppColors.coolCyan],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
               color: (isLive || unviewed) ? null : Colors.transparent,
             ),
             child: ClipRRect(
@@ -467,9 +476,7 @@ class _StoryTileState extends State<_StoryTile>
                         color: context.colors.textPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(blurRadius: 4, color: Colors.black87),
-                        ],
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black87)],
                       ),
                     ),
                   ),
@@ -535,19 +542,19 @@ class _AvatarMini extends StatelessWidget {
   }
 
   Widget _initialFallback(BuildContext context) => Container(
-        width: 26,
-        height: 26,
-        alignment: Alignment.center,
-        color: context.colors.surfaceElevated,
-        child: Text(
-          initial,
-          style: TextStyle(
-            color: context.colors.textPrimary,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      );
+    width: 26,
+    height: 26,
+    alignment: Alignment.center,
+    color: context.colors.surfaceElevated,
+    child: Text(
+      initial,
+      style: TextStyle(
+        color: context.colors.textPrimary,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 }
 
 /// Preview do conteúdo do story.
@@ -610,7 +617,8 @@ class _NetworkImage extends StatelessWidget {
       url,
       fit: BoxFit.cover,
       gaplessPlayback: true,
-      errorBuilder: (_, _, _) => Container(color: context.colors.surfaceElevated),
+      errorBuilder: (_, _, _) =>
+          Container(color: context.colors.surfaceElevated),
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return Container(
@@ -734,10 +742,7 @@ class _LiveBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Color(0xFFFF3344),
-                  AppColors.mutedRed,
-                ],
+                colors: [Color(0xFFFF3344), AppColors.mutedRed],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

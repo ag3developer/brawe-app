@@ -38,6 +38,7 @@ _PostResponseDto _$PostResponseDtoFromJson(
   updatedAt: json['updated_at'] as String,
   author: AuthorResponseDto.fromJson(json['author'] as Map<String, dynamic>),
   userLiked: json['user_liked'] as bool? ?? false,
+  userReactionType: json['user_reaction_type'] as String?,
   userReposted: json['user_reposted'] as bool? ?? false,
   userFollowingAuthor: json['user_following_author'] as bool? ?? false,
   repostedBy: json['reposted_by'] == null
@@ -59,6 +60,7 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'updated_at': instance.updatedAt,
       'author': instance.author,
       'user_liked': instance.userLiked,
+      'user_reaction_type': instance.userReactionType,
       'user_reposted': instance.userReposted,
       'user_following_author': instance.userFollowingAuthor,
       'reposted_by': instance.repostedBy,

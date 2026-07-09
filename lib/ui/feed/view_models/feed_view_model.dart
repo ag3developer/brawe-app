@@ -59,8 +59,14 @@ class FeedViewModel extends _$FeedViewModel {
       final updated = List<Post>.from(posts);
       updated[index] = post.copyWith(
         userLiked: true,
+        userReactionType: reactionType,
         likesCount: post.likesCount + 1,
       );
+      state = AsyncData(updated);
+    } else {
+      // Já curtido — apenas atualiza o tipo de reação
+      final updated = List<Post>.from(posts);
+      updated[index] = post.copyWith(userReactionType: reactionType);
       state = AsyncData(updated);
     }
     try {
@@ -91,9 +97,7 @@ class FeedViewModel extends _$FeedViewModel {
     );
     state = AsyncData(updated);
     try {
-      await ref
-          .read(postRepositoryProvider)
-          .toggleRepost(postId, wasReposted);
+      await ref.read(postRepositoryProvider).toggleRepost(postId, wasReposted);
     } catch (_) {
       state = AsyncData(List<Post>.from(posts));
       rethrow;
