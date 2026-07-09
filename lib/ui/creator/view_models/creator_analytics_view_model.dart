@@ -104,17 +104,17 @@ class LiveHistoryItem {
   }
 
   factory LiveHistoryItem.fromJson(Map<String, dynamic> j) => LiveHistoryItem(
-        id: (j['id'] ?? '').toString(),
-        title: (j['title'] ?? '').toString(),
-        category: j['category']?.toString(),
-        viewerCount: (j['viewer_count'] as num?)?.toInt() ?? 0,
-        peakViewers: (j['peak_viewers'] as num?)?.toInt() ?? 0,
-        giftsValue: (j['gifts_value'] as num?)?.toDouble() ?? 0,
-        productsSold: (j['products_sold'] as num?)?.toInt() ?? 0,
-        durationMinutes: (j['duration_minutes'] as num?)?.toDouble() ?? 0,
-        startedAt: DateTime.tryParse(j['started_at']?.toString() ?? ''),
-        playbackUrl: j['playback_url']?.toString(),
-      );
+    id: (j['id'] ?? '').toString(),
+    title: (j['title'] ?? '').toString(),
+    category: j['category']?.toString(),
+    viewerCount: (j['viewer_count'] as num?)?.toInt() ?? 0,
+    peakViewers: (j['peak_viewers'] as num?)?.toInt() ?? 0,
+    giftsValue: (j['gifts_value'] as num?)?.toDouble() ?? 0,
+    productsSold: (j['products_sold'] as num?)?.toInt() ?? 0,
+    durationMinutes: (j['duration_minutes'] as num?)?.toDouble() ?? 0,
+    startedAt: DateTime.tryParse(j['started_at']?.toString() ?? ''),
+    playbackUrl: j['playback_url']?.toString(),
+  );
 }
 
 // ─── Providers ────────────────────────────────────────────────────────────────
@@ -139,10 +139,7 @@ Future<Map<String, dynamic>> creatorSocialStats(Ref ref) async {
 
 /// Série histórica de viewers por período.
 @riverpod
-Future<List<AnalyticsDataPoint>> viewersHistory(
-  Ref ref,
-  String period,
-) async {
+Future<List<AnalyticsDataPoint>> viewersHistory(Ref ref, String period) async {
   final service = ref.watch(analyticsServiceProvider);
   final raw = await service.getViewersHistory(period: period);
   return raw.map(AnalyticsDataPoint.fromViewers).toList();
@@ -167,7 +164,8 @@ Future<({List<LiveHistoryItem> items, int total})> liveHistoryPage(
       Future.value(<Map<String, dynamic>>[]),
   ]);
 
-  final analytics = results[0] as ({List<Map<String, dynamic>> items, int total});
+  final analytics =
+      results[0] as ({List<Map<String, dynamic>> items, int total});
   final profileLives = results[1] as List<Map<String, dynamic>>;
 
   // Merge: associar playback_url do profile à live analytics por ID
@@ -199,4 +197,19 @@ class AnalyticsPeriod extends _$AnalyticsPeriod {
   String build() => '30d';
 
   void set(String period) => state = period;
+}
+
+/// Histórico de ganhos por período (para Reach/Monetização).
+@riverpod
+Future<List<AnalyticsDataPoint>> earningsHistory(Ref ref, String period) async {
+  final service = ref.watch(analyticsServiceProvider);
+  final raw = await service.getEarnings(period: period);
+  return raw.map(AnalyticsDataPoint.fromEarnings).toList();
+}
+
+/// Top gifts recebidos.
+@riverpod
+Future<List<Map<String, dynamic>>> topGifts(Ref ref, {int limit = 10}) async {
+  final service = ref.watch(analyticsServiceProvider);
+  return service.getTopGifts(limit: limit);
 }

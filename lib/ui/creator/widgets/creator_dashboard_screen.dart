@@ -53,8 +53,11 @@ class CreatorDashboardScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(LucideIcons.settings,
-                size: 20, color: context.colors.textSecondary),
+            icon: Icon(
+              LucideIcons.settings,
+              size: 20,
+              color: context.colors.textSecondary,
+            ),
             onPressed: () => context.push('/creator/profile-settings'),
           ),
         ],
@@ -85,7 +88,8 @@ class CreatorDashboardScreen extends ConsumerWidget {
             },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics()),
+                parent: BouncingScrollPhysics(),
+              ),
               padding: EdgeInsets.only(
                 top: MediaQuery.of(context).padding.top + kToolbarHeight + 12,
                 left: 16,
@@ -142,7 +146,10 @@ class CreatorDashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
                 Center(
                   child: CreatorTierBadge(
-                      tier: profile.tier, size: 22, showLabel: true),
+                    tier: profile.tier,
+                    size: 22,
+                    showLabel: true,
+                  ),
                 ),
               ],
             ),
@@ -181,7 +188,8 @@ class _AnalyticsGrid extends ConsumerWidget {
                   error: (_, __) => '—',
                 ),
                 subtitle: kpisAsync.maybeWhen(
-                  data: (k) => '${_formatCount(k.avgViewersPerLive.toInt())} '
+                  data: (k) =>
+                      '${_formatCount(k.avgViewersPerLive.toInt())} '
                       'méd./live',
                   orElse: () => null,
                 ),
@@ -196,7 +204,8 @@ class _AnalyticsGrid extends ConsumerWidget {
                 label: s.creatorDashboardCardFollowers,
                 valueAsync: socialAsync.when(
                   data: (d) => _formatCount(
-                      (d['followers_count'] as num?)?.toInt() ?? 0),
+                    (d['followers_count'] as num?)?.toInt() ?? 0,
+                  ),
                   loading: () => null,
                   error: (_, __) => '—',
                 ),
@@ -219,7 +228,8 @@ class _AnalyticsGrid extends ConsumerWidget {
                   loading: () => null,
                   error: (_, __) => '—',
                 ),
-                subtitle: '${kpisAsync.maybeWhen(data: (k) => k.totalGiftsReceived, orElse: () => 0)} gifts',
+                subtitle:
+                    '${kpisAsync.maybeWhen(data: (k) => k.totalGiftsReceived, orElse: () => 0)} gifts',
                 onTap: () => context.push('/creator/analytics/reach'),
               ),
             ),
@@ -310,8 +320,11 @@ class _AnalyticsCard extends StatelessWidget {
                   child: Icon(icon, size: 16, color: color),
                 ),
                 if (onTap != null)
-                  Icon(LucideIcons.chevronRight,
-                      size: 14, color: context.colors.textTertiary),
+                  Icon(
+                    LucideIcons.chevronRight,
+                    size: 14,
+                    color: context.colors.textTertiary,
+                  ),
               ],
             ),
             const SizedBox(height: 10),
@@ -404,8 +417,11 @@ class _QuickAction extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(LucideIcons.chevronRight,
-                  size: 16, color: context.colors.textTertiary),
+              Icon(
+                LucideIcons.chevronRight,
+                size: 16,
+                color: context.colors.textTertiary,
+              ),
             ],
           ),
         ),

@@ -100,7 +100,7 @@ final class CreatorSocialStatsProvider
 }
 
 String _$creatorSocialStatsHash() =>
-    r'3a84dc030fe48d56075584f0b2ae61bccde1309f';
+    r'e53570be4ee00379311189b3c8d7e3e7d8619d74';
 
 /// Série histórica de viewers por período.
 
@@ -249,7 +249,7 @@ final class LiveHistoryPageProvider
   }
 }
 
-String _$liveHistoryPageHash() => r'9828616b53219708a8efb311136b4a93dea65ca8';
+String _$liveHistoryPageHash() => r'312bf9f37ef31682b0e4ae82e32b7c11acc83a4e';
 
 /// Histórico de lives paginado.
 
@@ -333,4 +333,176 @@ abstract class _$AnalyticsPeriod extends $Notifier<String> {
             >;
     element.handleCreate(ref, build);
   }
+}
+
+/// Histórico de ganhos por período (para Reach/Monetização).
+
+@ProviderFor(earningsHistory)
+final earningsHistoryProvider = EarningsHistoryFamily._();
+
+/// Histórico de ganhos por período (para Reach/Monetização).
+
+final class EarningsHistoryProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AnalyticsDataPoint>>,
+          List<AnalyticsDataPoint>,
+          FutureOr<List<AnalyticsDataPoint>>
+        >
+    with
+        $FutureModifier<List<AnalyticsDataPoint>>,
+        $FutureProvider<List<AnalyticsDataPoint>> {
+  /// Histórico de ganhos por período (para Reach/Monetização).
+  EarningsHistoryProvider._({
+    required EarningsHistoryFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'earningsHistoryProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$earningsHistoryHash();
+
+  @override
+  String toString() {
+    return r'earningsHistoryProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AnalyticsDataPoint>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AnalyticsDataPoint>> create(Ref ref) {
+    final argument = this.argument as String;
+    return earningsHistory(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EarningsHistoryProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$earningsHistoryHash() => r'9a64f87299ff02e7c7d3603717f2c7b3d3aef9ae';
+
+/// Histórico de ganhos por período (para Reach/Monetização).
+
+final class EarningsHistoryFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<AnalyticsDataPoint>>, String> {
+  EarningsHistoryFamily._()
+    : super(
+        retry: null,
+        name: r'earningsHistoryProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Histórico de ganhos por período (para Reach/Monetização).
+
+  EarningsHistoryProvider call(String period) =>
+      EarningsHistoryProvider._(argument: period, from: this);
+
+  @override
+  String toString() => r'earningsHistoryProvider';
+}
+
+/// Top gifts recebidos.
+
+@ProviderFor(topGifts)
+final topGiftsProvider = TopGiftsFamily._();
+
+/// Top gifts recebidos.
+
+final class TopGiftsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Map<String, dynamic>>>,
+          List<Map<String, dynamic>>,
+          FutureOr<List<Map<String, dynamic>>>
+        >
+    with
+        $FutureModifier<List<Map<String, dynamic>>>,
+        $FutureProvider<List<Map<String, dynamic>>> {
+  /// Top gifts recebidos.
+  TopGiftsProvider._({
+    required TopGiftsFamily super.from,
+    required int super.argument,
+  }) : super(
+         retry: null,
+         name: r'topGiftsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$topGiftsHash();
+
+  @override
+  String toString() {
+    return r'topGiftsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Map<String, dynamic>>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Map<String, dynamic>>> create(Ref ref) {
+    final argument = this.argument as int;
+    return topGifts(ref, limit: argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TopGiftsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$topGiftsHash() => r'57b632c940d9adb1cda90858a670a80456a1f08e';
+
+/// Top gifts recebidos.
+
+final class TopGiftsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Map<String, dynamic>>>, int> {
+  TopGiftsFamily._()
+    : super(
+        retry: null,
+        name: r'topGiftsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Top gifts recebidos.
+
+  TopGiftsProvider call({int limit = 10}) =>
+      TopGiftsProvider._(argument: limit, from: this);
+
+  @override
+  String toString() => r'topGiftsProvider';
 }

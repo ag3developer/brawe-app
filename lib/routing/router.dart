@@ -56,6 +56,10 @@ import '../ui/creator/widgets/creator_dashboard_screen.dart';
 import '../ui/creator/widgets/admin_creator_applications_screen.dart';
 import '../ui/creator/widgets/admin_creator_application_detail_screen.dart';
 import '../ui/creator/widgets/admin_creators_management_screen.dart';
+import '../ui/creator/widgets/analytics_viewers_screen.dart';
+import '../ui/creator/widgets/analytics_followers_screen.dart';
+import '../ui/creator/widgets/analytics_lives_screen.dart';
+import '../ui/creator/widgets/analytics_reach_screen.dart';
 
 part 'router.g.dart';
 
@@ -339,6 +343,22 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/creator/dashboard',
             builder: (context, state) => const CreatorDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/creator/analytics/viewers',
+            builder: (context, state) => const AnalyticsViewersScreen(),
+          ),
+          GoRoute(
+            path: '/creator/analytics/followers',
+            builder: (context, state) => const AnalyticsFollowersScreen(),
+          ),
+          GoRoute(
+            path: '/creator/analytics/lives',
+            builder: (context, state) => const AnalyticsLivesScreen(),
+          ),
+          GoRoute(
+            path: '/creator/analytics/reach',
+            builder: (context, state) => const AnalyticsReachScreen(),
           ),
           // ── Admin ───────────────────────────────────────────────
           GoRoute(
