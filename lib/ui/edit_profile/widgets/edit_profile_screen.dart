@@ -618,11 +618,26 @@ class _AccountTypeCard extends StatelessWidget {
   const _AccountTypeCard({required this.accountType});
 
   @override
+  String? _routeFor(AccountType type) {
+    switch (type) {
+      case AccountType.musician:
+        return '/artist-profile';
+      case AccountType.business:
+        return '/business-profile';
+      case AccountType.creator:
+        return '/creator/profile-settings';
+      case AccountType.consumer:
+        return '/creator/intro';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final config = _accountConfig(accountType, s);
+    final route = _routeFor(accountType);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -650,9 +665,7 @@ class _AccountTypeCard extends StatelessWidget {
           ),
           // Card
           GestureDetector(
-            onTap: accountType == AccountType.consumer
-                ? () => context.push('/creator/intro')
-                : null,
+            onTap: route != null ? () => context.push(route) : null,
             child: Container(
               decoration: BoxDecoration(
                 color: config.color.withValues(alpha: isDark ? 0.12 : 0.07),
@@ -695,10 +708,11 @@ class _AccountTypeCard extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: config.color
-                                        .withValues(alpha: 0.15),
+                                    color: config.color.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -725,10 +739,12 @@ class _AccountTypeCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Chevron apenas para consumer (upgrade)
-                    if (accountType == AccountType.consumer)
-                      Icon(LucideIcons.chevronRight,
-                          size: 18, color: config.color),
+                    // Chevron para todos — consumer=upgrade, outros=editar perfil
+                    Icon(
+                      LucideIcons.chevronRight,
+                      size: 18,
+                      color: config.color,
+                    ),
                   ],
                 ),
               ),

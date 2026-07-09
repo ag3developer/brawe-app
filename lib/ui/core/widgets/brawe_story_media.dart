@@ -205,14 +205,20 @@ class _ImageSurface extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.desktop_windows_outlined,
-                      color: Colors.white70, size: 11),
+                  const Icon(
+                    Icons.desktop_windows_outlined,
+                    color: Colors.white70,
+                    size: 11,
+                  ),
                   const SizedBox(width: 4),
-                  const Text('Web',
-                      style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Web',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -34,6 +34,7 @@ import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/quests/widgets/quests_screen.dart';
 import '../ui/edit_profile/widgets/artist_profile_screen.dart';
+import '../ui/edit_profile/widgets/business_profile_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
 import '../ui/wallet/widgets/earnings_screen.dart';
 import '../ui/notifications/widgets/notifications_screen.dart';
@@ -276,6 +277,10 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/artist-profile',
             builder: (context, state) => const ArtistProfileScreen(),
+          ),
+          GoRoute(
+            path: '/business-profile',
+            builder: (context, state) => const BusinessProfileScreen(),
           ),
           GoRoute(
             path: '/sounds',

@@ -93,7 +93,10 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     widget.onStoryViewed?.call(storyId);
     // Persiste no backend (fire-and-forget; ignora falhas silenciosamente).
     // Backend não conta view do próprio autor, então é seguro chamar sempre.
-    ref.read(storiesRepositoryProvider).markAsViewed(storyId).catchError((_) {});
+    ref
+        .read(storiesRepositoryProvider)
+        .markAsViewed(storyId)
+        .catchError((_) {});
   }
 
   Future<void> _startStory() async {
@@ -148,9 +151,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           // Warm-up assíncrono (DNS+TLS+manifest); não bloqueia UI.
           unawaited(StoryMediaPrecache.warmUpVideo(s.mediaUrl));
         } else if (mounted) {
-          unawaited(
-            StoryMediaPrecache.precacheStoryImage(context, s.mediaUrl),
-          );
+          unawaited(StoryMediaPrecache.precacheStoryImage(context, s.mediaUrl));
         }
       }
     }
@@ -227,29 +228,45 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 ),
                 if (isOwn)
                   ListTile(
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
-                    title: Text(S.of(sheetCtx).viewerDeleteStory,
-                        style: const TextStyle(color: Colors.red)),
+                    leading: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                    ),
+                    title: Text(
+                      S.of(sheetCtx).viewerDeleteStory,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                     onTap: () => Navigator.pop(sheetCtx, 'delete'),
                   )
                 else ...[
                   ListTile(
-                    leading: Icon(Icons.person_off_outlined,
-                        color: sheetCtx.colors.textPrimary),
-                    title: Text(S.of(sheetCtx).viewerUnfollow,
-                        style: TextStyle(color: sheetCtx.colors.textPrimary)),
+                    leading: Icon(
+                      Icons.person_off_outlined,
+                      color: sheetCtx.colors.textPrimary,
+                    ),
+                    title: Text(
+                      S.of(sheetCtx).viewerUnfollow,
+                      style: TextStyle(color: sheetCtx.colors.textPrimary),
+                    ),
                     onTap: () => Navigator.pop(sheetCtx, 'unfollow'),
                   ),
                   ListTile(
-                    leading: Icon(Icons.block, color: sheetCtx.colors.textPrimary),
-                    title: Text(S.of(sheetCtx).viewerBlockUser,
-                        style: TextStyle(color: sheetCtx.colors.textPrimary)),
+                    leading: Icon(
+                      Icons.block,
+                      color: sheetCtx.colors.textPrimary,
+                    ),
+                    title: Text(
+                      S.of(sheetCtx).viewerBlockUser,
+                      style: TextStyle(color: sheetCtx.colors.textPrimary),
+                    ),
                     onTap: () => Navigator.pop(sheetCtx, 'block'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                    title: Text(S.of(sheetCtx).viewerReport,
-                        style: const TextStyle(color: Colors.red)),
+                    title: Text(
+                      S.of(sheetCtx).viewerReport,
+                      style: const TextStyle(color: Colors.red),
+                    ),
                     onTap: () => Navigator.pop(sheetCtx, 'report'),
                   ),
                 ],
@@ -288,19 +305,28 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       barrierDismissible: false, // evita fechar por toque fora
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.slate,
-        title: Text(S.of(context).viewerDeleteStory,
-            style: const TextStyle(color: Colors.white)),
-        content: Text(S.of(context).viewerDeleteConfirm,
-            style: const TextStyle(color: Colors.white70)),
+        title: Text(
+          S.of(context).viewerDeleteStory,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          S.of(context).viewerDeleteConfirm,
+          style: const TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(S.of(context).viewerCancel,
-                style: const TextStyle(color: Colors.white70)),
+            child: Text(
+              S.of(context).viewerCancel,
+              style: const TextStyle(color: Colors.white70),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(S.of(context).viewerDelete, style: const TextStyle(color: Colors.red)),
+            child: Text(
+              S.of(context).viewerDelete,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -310,16 +336,14 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       return;
     }
     try {
-      await ref
-          .read(storiesViewModelProvider.notifier)
-          .deleteStory(_story.id);
+      await ref.read(storiesViewModelProvider.notifier).deleteStory(_story.id);
       // Invalida também o cache do anel de stories do perfil — sem isso o
       // anel colorido continua aparecendo e o usuário acha que "não deletou".
       ref.invalidate(userStoriesProvider(_story.authorId));
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerStoryDeleted)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerStoryDeleted)));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -335,7 +359,9 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       await ref.read(socialRepositoryProvider).unfollowUser(_story.authorId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerUnfollowed(_story.authorUsername))),
+        SnackBar(
+          content: Text(S.of(context).viewerUnfollowed(_story.authorUsername)),
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -351,8 +377,10 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.colors.surface,
-        title: Text(S.of(ctx).viewerBlockUser,
-            style: TextStyle(color: ctx.colors.textPrimary)),
+        title: Text(
+          S.of(ctx).viewerBlockUser,
+          style: TextStyle(color: ctx.colors.textPrimary),
+        ),
         content: Text(
           S.of(ctx).viewerBlockConfirm(_story.authorUsername),
           style: TextStyle(color: ctx.colors.textSecondary),
@@ -360,12 +388,17 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.of(ctx).viewerCancel,
-                style: TextStyle(color: ctx.colors.textSecondary)),
+            child: Text(
+              S.of(ctx).viewerCancel,
+              style: TextStyle(color: ctx.colors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.of(ctx).viewerBlock, style: const TextStyle(color: Colors.red)),
+            child: Text(
+              S.of(ctx).viewerBlock,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -375,22 +408,26 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       return;
     }
     try {
-      await ref.read(socialActionsServiceProvider).blockUser(
+      await ref
+          .read(socialActionsServiceProvider)
+          .blockUser(
             _story.authorUsername.isNotEmpty
                 ? _story.authorUsername
                 : _story.authorId,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerBlocked(_story.authorUsername))),
+        SnackBar(
+          content: Text(S.of(context).viewerBlocked(_story.authorUsername)),
+        ),
       );
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
       _resume();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerBlockError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerBlockError)));
     }
   }
 
@@ -425,16 +462,36 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(S.of(sheetCtx).viewerReportPrompt,
-                        style: TextStyle(
-                            color: sheetCtx.colors.textSecondary, fontSize: 13)),
+                    child: Text(
+                      S.of(sheetCtx).viewerReportPrompt,
+                      style: TextStyle(
+                        color: sheetCtx.colors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
                 _reasonTile(sheetCtx, 'spam', S.of(sheetCtx).viewerReportSpam),
-                _reasonTile(sheetCtx, 'harassment', S.of(sheetCtx).viewerReportHarassment),
-                _reasonTile(sheetCtx, 'inappropriate', S.of(sheetCtx).viewerReportInappropriate),
-                _reasonTile(sheetCtx, 'impersonation', S.of(sheetCtx).viewerReportImpersonation),
-                _reasonTile(sheetCtx, 'other', S.of(sheetCtx).viewerReportOther),
+                _reasonTile(
+                  sheetCtx,
+                  'harassment',
+                  S.of(sheetCtx).viewerReportHarassment,
+                ),
+                _reasonTile(
+                  sheetCtx,
+                  'inappropriate',
+                  S.of(sheetCtx).viewerReportInappropriate,
+                ),
+                _reasonTile(
+                  sheetCtx,
+                  'impersonation',
+                  S.of(sheetCtx).viewerReportImpersonation,
+                ),
+                _reasonTile(
+                  sheetCtx,
+                  'other',
+                  S.of(sheetCtx).viewerReportOther,
+                ),
                 const SizedBox(height: 8),
               ],
             ),
@@ -444,28 +501,26 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     );
     if (reason == null) return;
     try {
-      await ref.read(socialActionsServiceProvider).report(
-            targetType: 'story',
-            targetId: _story.id,
-            reason: reason,
-          );
+      await ref
+          .read(socialActionsServiceProvider)
+          .report(targetType: 'story', targetId: _story.id, reason: reason);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerReportSent)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerReportSent)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerReportError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerReportError)));
     }
   }
 
   Widget _reasonTile(BuildContext ctx, String r, String label) => ListTile(
-        title: Text(label, style: TextStyle(color: ctx.colors.textPrimary)),
-        trailing: Icon(Icons.chevron_right, color: ctx.colors.textTertiary),
-        onTap: () => Navigator.pop(ctx, r),
-      );
+    title: Text(label, style: TextStyle(color: ctx.colors.textPrimary)),
+    trailing: Icon(Icons.chevron_right, color: ctx.colors.textTertiary),
+    onTap: () => Navigator.pop(ctx, r),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -490,257 +545,211 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-      backgroundColor: Colors.black,
-      // ── Imersivo: estende corpo atrás de status bar e nav bar ─────
-      // Sem `extendBody*` o Scaffold reservaria padding pras barras
-      // do sistema (mesmo elas estando escondidas), criando uma faixa
-      // preta no topo/rodapé do story de 24-48px. Como o nosso story
-      // já trata `MediaQuery.padding` internamente para posicionar
-      // header/footer, extender o corpo é seguro.
-      extendBodyBehindAppBar: true,
-      extendBody: true,
-      resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTapDown: (details) {
-          final width = MediaQuery.of(context).size.width;
-          if (details.globalPosition.dx < width / 3) {
-            _prevStory();
-          } else if (details.globalPosition.dx > width * 2 / 3) {
-            _nextStory();
-          }
-        },
-        onLongPressStart: (_) {
-          // Segurar abre o menu de ações imediatamente (com vibração).
-          // `_openMenu` já pausa o story e o retoma quando o sheet fecha.
-          HapticFeedback.mediumImpact();
-          _menuOpenedByLongPress = true;
-          _openMenu();
-        },
-        onLongPress: () {
-          // Já tratado em onLongPressStart; mantido vazio para suprimir
-          // o comportamento padrão.
-        },
-        onLongPressEnd: (_) {
-          if (_menuOpenedByLongPress) {
-            _menuOpenedByLongPress = false;
-            return;
-          }
-          _resume();
-        },
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // Mídia (imagem ou vídeo) — usa BraweStoryMedia para um
-            // loading profissional sem expor a "letra inicial gigante"
-            // enquanto o vídeo está inicializando ou a imagem baixando.
-            // Ver `lib/ui/core/widgets/brawe_story_media.dart`.
-            BraweStoryMedia(
-              isVideo: story.isVideo,
-              mediaUrl: story.mediaUrl,
-              videoController: _videoController,
-              authorName: story.authorName.isNotEmpty
-                  ? story.authorName
-                  : story.authorUsername,
-              authorAvatarUrl: story.authorAvatarUrl,
-              onRetry: _startStory,
-              // Dimensões reais da mídia — disponíveis quando publicado via web.
-              // Permitem detectar imagens landscape e aplicar contain + fundo blur
-              // em vez de cover (que cortaria a imagem de forma indesejada).
-              mediaWidth: story.mediaWidth,
-              mediaHeight: story.mediaHeight,
-            ),
-
-            // Gradient overlay
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black54, Colors.transparent, Colors.black45],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  stops: [0.0, 0.3, 1.0],
-                ),
+        backgroundColor: Colors.black,
+        // ── Imersivo: estende corpo atrás de status bar e nav bar ─────
+        // Sem `extendBody*` o Scaffold reservaria padding pras barras
+        // do sistema (mesmo elas estando escondidas), criando uma faixa
+        // preta no topo/rodapé do story de 24-48px. Como o nosso story
+        // já trata `MediaQuery.padding` internamente para posicionar
+        // header/footer, extender o corpo é seguro.
+        extendBodyBehindAppBar: true,
+        extendBody: true,
+        resizeToAvoidBottomInset: false,
+        body: GestureDetector(
+          onTapDown: (details) {
+            final width = MediaQuery.of(context).size.width;
+            if (details.globalPosition.dx < width / 3) {
+              _prevStory();
+            } else if (details.globalPosition.dx > width * 2 / 3) {
+              _nextStory();
+            }
+          },
+          onLongPressStart: (_) {
+            // Segurar abre o menu de ações imediatamente (com vibração).
+            // `_openMenu` já pausa o story e o retoma quando o sheet fecha.
+            HapticFeedback.mediumImpact();
+            _menuOpenedByLongPress = true;
+            _openMenu();
+          },
+          onLongPress: () {
+            // Já tratado em onLongPressStart; mantido vazio para suprimir
+            // o comportamento padrão.
+          },
+          onLongPressEnd: (_) {
+            if (_menuOpenedByLongPress) {
+              _menuOpenedByLongPress = false;
+              return;
+            }
+            _resume();
+          },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Mídia (imagem ou vídeo) — usa BraweStoryMedia para um
+              // loading profissional sem expor a "letra inicial gigante"
+              // enquanto o vídeo está inicializando ou a imagem baixando.
+              // Ver `lib/ui/core/widgets/brawe_story_media.dart`.
+              BraweStoryMedia(
+                isVideo: story.isVideo,
+                mediaUrl: story.mediaUrl,
+                videoController: _videoController,
+                authorName: story.authorName.isNotEmpty
+                    ? story.authorName
+                    : story.authorUsername,
+                authorAvatarUrl: story.authorAvatarUrl,
+                onRetry: _startStory,
+                // Dimensões reais da mídia — disponíveis quando publicado via web.
+                // Permitem detectar imagens landscape e aplicar contain + fundo blur
+                // em vez de cover (que cortaria a imagem de forma indesejada).
+                mediaWidth: story.mediaWidth,
+                mediaHeight: story.mediaHeight,
               ),
-            ),
 
-            // Header top
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: List.generate(widget.stories.length, (i) {
-                          return Expanded(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: SizedBox(
-                                  height: 3,
-                                  child: i < _currentIndex
-                                      ? Container(color: Colors.white)
-                                      : i == _currentIndex
-                                          ? AnimatedBuilder(
-                                              animation: _progressController,
-                                              builder: (_, __) =>
-                                                  LinearProgressIndicator(
-                                                value: _progressController.value,
-                                                backgroundColor: Colors.white30,
-                                                color: Colors.white,
-                                                minHeight: 3,
-                                              ),
-                                            )
-                                          : Container(color: Colors.white30),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          children: [
-                            // Avatar com cache, skeleton e fallback
-                            // determinístico de cor — ver BraweAvatar.
-                            // Substitui o CircleAvatar legado que mostrava
-                            // a letra inicial enquanto baixava.
-                            Padding(
-                              key: _creatorAvatarKey,
-                              padding: EdgeInsets.zero,
-                              child: BraweAvatar(
-                                avatarUrl: story.authorAvatarUrl,
-                                displayName: story.authorName.isNotEmpty
-                                    ? story.authorName
-                                    : story.authorUsername,
-                                size: 36,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          story.authorName.isNotEmpty
-                                              ? story.authorName
-                                              : story.authorUsername,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      if (story.isVerified) ...[
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.verified,
-                                          color: AppColors.electricPurple,
-                                          size: 14,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  Text(
-                                    story.timeAgo,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (story.isVideo)
-                              IconButton(
-                                icon: Icon(
-                                  _muted
-                                      ? Icons.volume_off
-                                      : Icons.volume_up,
-                                  color: Colors.white,
-                                ),
-                                onPressed: _toggleMute,
-                              ),
-                            IconButton(
-                              icon: const Icon(Icons.more_vert,
-                                  color: Colors.white),
-                              onPressed: _openMenu,
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, color: Colors.white),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                      ),
+              // Gradient overlay
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black54,
+                      Colors.transparent,
+                      Colors.black45,
                     ],
-                  ),
-                ),
-              ),
-            ),
-
-            if (story.caption != null)
-              Positioned(
-                bottom: 80,
-                left: 16,
-                right: 16,
-                child: Text(
-                  story.caption!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.0, 0.3, 1.0],
                   ),
                 ),
               ),
 
-            // Chip "Ver post original" quando o story é um repost
-            if (story.originPostId != null && story.originPostId!.isNotEmpty)
+              // Header top
               Positioned(
-                bottom: story.caption != null ? 120 : 80,
-                left: 16,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    // TODO: navegar para post detail quando a rota existir.
-                    // Por ora, fecha o viewer para o usuário voltar ao feed.
-                    Navigator.of(context).maybePop();
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25)),
-                    ),
-                    child: Row(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                    child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.open_in_new,
-                            size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          S.of(context).viewerSeeOriginalPost,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        Row(
+                          children: List.generate(widget.stories.length, (i) {
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 2,
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(2),
+                                  child: SizedBox(
+                                    height: 3,
+                                    child: i < _currentIndex
+                                        ? Container(color: Colors.white)
+                                        : i == _currentIndex
+                                        ? AnimatedBuilder(
+                                            animation: _progressController,
+                                            builder: (_, __) =>
+                                                LinearProgressIndicator(
+                                                  value:
+                                                      _progressController.value,
+                                                  backgroundColor:
+                                                      Colors.white30,
+                                                  color: Colors.white,
+                                                  minHeight: 3,
+                                                ),
+                                          )
+                                        : Container(color: Colors.white30),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            children: [
+                              // Avatar com cache, skeleton e fallback
+                              // determinístico de cor — ver BraweAvatar.
+                              // Substitui o CircleAvatar legado que mostrava
+                              // a letra inicial enquanto baixava.
+                              Padding(
+                                key: _creatorAvatarKey,
+                                padding: EdgeInsets.zero,
+                                child: BraweAvatar(
+                                  avatarUrl: story.authorAvatarUrl,
+                                  displayName: story.authorName.isNotEmpty
+                                      ? story.authorName
+                                      : story.authorUsername,
+                                  size: 36,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            story.authorName.isNotEmpty
+                                                ? story.authorName
+                                                : story.authorUsername,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (story.isVerified) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.verified,
+                                            color: AppColors.electricPurple,
+                                            size: 14,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    Text(
+                                      story.timeAgo,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (story.isVideo)
+                                IconButton(
+                                  icon: Icon(
+                                    _muted ? Icons.volume_off : Icons.volume_up,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: _toggleMute,
+                                ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.more_vert,
+                                  color: Colors.white,
+                                ),
+                                onPressed: _openMenu,
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -749,35 +758,100 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 ),
               ),
 
-            // Reaction flash overlay (animação ❤ ao reagir)
-            if (_reactionFlash)
-              const Center(
-                child: Icon(
-                  Icons.favorite,
-                  size: 140,
-                  color: Color(0xFFFF3B7E),
+              if (story.caption != null)
+                Positioned(
+                  bottom: 80,
+                  left: 16,
+                  right: 16,
+                  child: Text(
+                    story.caption!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+                    ),
+                  ),
                 ),
-              ),
 
-            // Reply bar / viewers indicator
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Padding(
-                  padding:
-                      EdgeInsets.fromLTRB(16, 8, 16,
-                          8 + MediaQuery.of(context).viewInsets.bottom),
-                  child: _isOwn
-                      ? _buildOwnerFooter(story)
-                      : _buildReplyBar(story),
+              // Chip "Ver post original" quando o story é um repost
+              if (story.originPostId != null && story.originPostId!.isNotEmpty)
+                Positioned(
+                  bottom: story.caption != null ? 120 : 80,
+                  left: 16,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      // TODO: navegar para post detail quando a rota existir.
+                      // Por ora, fecha o viewer para o usuário voltar ao feed.
+                      Navigator.of(context).maybePop();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.open_in_new,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            S.of(context).viewerSeeOriginalPost,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Reaction flash overlay (animação ❤ ao reagir)
+              if (_reactionFlash)
+                const Center(
+                  child: Icon(
+                    Icons.favorite,
+                    size: 140,
+                    color: Color(0xFFFF3B7E),
+                  ),
+                ),
+
+              // Reply bar / viewers indicator
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      8,
+                      16,
+                      8 + MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: _isOwn
+                        ? _buildOwnerFooter(story)
+                        : _buildReplyBar(story),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -832,14 +906,14 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       if (!mounted) return;
       _replyController.clear();
       _replyFocus.unfocus();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerReplySent)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerReplySent)));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).viewerReplyError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).viewerReplyError)));
     } finally {
       if (mounted) setState(() => _sendingReply = false);
       _resume();
@@ -942,10 +1016,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         ),
         const SizedBox(width: 8),
         // Botão de presente — chip glass.
-        _StoryActionChip(
-          icon: Icons.card_giftcard,
-          onTap: _openGiftSheet,
-        ),
+        _StoryActionChip(icon: Icons.card_giftcard, onTap: _openGiftSheet),
         const SizedBox(width: 6),
         // Botão de coração — chip glass. Long-press abre picker de 6 reações.
         _StoryActionChip(
@@ -984,8 +1055,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.send_rounded,
-                    color: Colors.white, size: 20),
+                : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
           ),
         ),
       ],
@@ -1032,9 +1102,17 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                S.of(context).viewerGiftSent(result.giftName, result.quantity, result.totalCredits),
+                S
+                    .of(context)
+                    .viewerGiftSent(
+                      result.giftName,
+                      result.quantity,
+                      result.totalCredits,
+                    ),
                 style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.w700),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -1048,8 +1126,7 @@ class _StoryViewersSheet extends ConsumerStatefulWidget {
   const _StoryViewersSheet({required this.storyId});
   final String storyId;
   @override
-  ConsumerState<_StoryViewersSheet> createState() =>
-      _StoryViewersSheetState();
+  ConsumerState<_StoryViewersSheet> createState() => _StoryViewersSheetState();
 }
 
 class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
@@ -1115,17 +1192,17 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
-                const Icon(Icons.visibility,
-                    color: Colors.white, size: 18),
+                const Icon(Icons.visibility, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   _loading
                       ? S.of(context).viewerLoading
                       : S.of(context).viewerViewsCount(_total),
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600),
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -1135,71 +1212,69 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
             child: _loading
                 ? const Center(
                     child: CircularProgressIndicator(
-                        color: AppColors.electricPurple),
+                      color: AppColors.electricPurple,
+                    ),
                   )
                 : _error != null
-                    ? Center(
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(color: Colors.white70),
+                ? Center(
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  )
+                : _viewers.isEmpty
+                ? Center(
+                    child: Text(
+                      S.of(context).viewerNoViewers,
+                      style: const TextStyle(color: Colors.white54),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: controller,
+                    itemCount: _viewers.length,
+                    itemBuilder: (_, i) {
+                      final v = _viewers[i];
+                      return ListTile(
+                        leading: BraweAvatar(
+                          avatarUrl: v.avatarUrl,
+                          displayName: v.name,
+                          size: 40,
                         ),
-                      )
-                    : _viewers.isEmpty
-                        ? Center(
-                            child: Text(
-                              S.of(context).viewerNoViewers,
-                              style: const TextStyle(color: Colors.white54),
+                        title: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                v.name.isNotEmpty ? v.name : v.username,
+                                style: const TextStyle(color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          )
-                        : ListView.builder(
-                            controller: controller,
-                            itemCount: _viewers.length,
-                            itemBuilder: (_, i) {
-                              final v = _viewers[i];
-                              return ListTile(
-                                leading: BraweAvatar(
-                                  avatarUrl: v.avatarUrl,
-                                  displayName: v.name,
-                                  size: 40,
-                                ),
-                                title: Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        v.name.isNotEmpty
-                                            ? v.name
-                                            : v.username,
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    if (v.isVerified) ...[
-                                      const SizedBox(width: 4),
-                                      const Icon(
-                                        Icons.verified,
-                                        color: AppColors.electricPurple,
-                                        size: 14,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                subtitle: Text(
-                                  '@${v.username} · ${_relative(context, v.viewedAt)}',
-                                  style: const TextStyle(
-                                      color: Colors.white54, fontSize: 12),
-                                ),
-                                trailing: v.reaction != null &&
-                                        v.reaction!.isNotEmpty
-                                    ? Text(
-                                        v.reaction!,
-                                        style:
-                                            const TextStyle(fontSize: 20),
-                                      )
-                                    : null,
-                              );
-                            },
+                            if (v.isVerified) ...[
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.verified,
+                                color: AppColors.electricPurple,
+                                size: 14,
+                              ),
+                            ],
+                          ],
+                        ),
+                        subtitle: Text(
+                          '@${v.username} · ${_relative(context, v.viewedAt)}',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
                           ),
+                        ),
+                        trailing: v.reaction != null && v.reaction!.isNotEmpty
+                            ? Text(
+                                v.reaction!,
+                                style: const TextStyle(fontSize: 20),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -1318,4 +1393,3 @@ class _ReactionEmojiButtonState extends State<_ReactionEmojiButton> {
     );
   }
 }
-
