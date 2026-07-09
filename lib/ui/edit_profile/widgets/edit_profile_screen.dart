@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -12,6 +14,27 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
 
+extension _ErrorCodeLabel on EditProfileErrorCode {
+  String label(S s) {
+    switch (this) {
+      case EditProfileErrorCode.saveFailed:
+        return s.editProfileLoadError;
+      case EditProfileErrorCode.usernameTooShort:
+        return s.editProfileUsernameTooShort;
+      case EditProfileErrorCode.usernameCheckFailed:
+      case EditProfileErrorCode.usernameSaveFailed:
+        return s.editProfileSavedUsernameFailed;
+      case EditProfileErrorCode.usernameInUse:
+        return s.editProfileSavedUsernameFailed;
+      default:
+        return s.editProfileLoadError;
+    }
+  }
+}
+
+// Chave global para campos de músico (compatibilidade)
+final musicianFieldsKey = GlobalKey<_MusicianFieldsState>();
+
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -19,7 +42,8 @@ class EditProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _usernameCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
@@ -71,7 +95,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final v = c.text.trim();
       if (v.isNotEmpty) socialLinks[key] = v;
     }
-
     add('instagram', _instaCtrl);
     add('twitter', _twitterCtrl);
     add('tiktok', _tiktokCtrl);
@@ -82,242 +105,276 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           displayName: _nameCtrl.text,
           bio: _bioCtrl.text,
           socialLinks: socialLinks,
-          accountType: ref.read(editProfileViewModelProvider).value?.effectiveAccountType,
+          accountType:
+              ref.read(editProfileViewModelProvider).value?.effectiveAccountType,
         );
     if (!mounted) return;
 
-    // Se salvou como músico → registrar artista no Brawe Sounds
-    final savedType = ref.read(editProfileViewModelProvider).value?.effectiveAccountType;
-    if (ok && savedType == AccountType.musician) {
-      final mf = musicianFieldsKey.currentState;
-      if (mf != null) {
-        await ref.read(editProfileViewModelProvider.notifier).registerArtistIfNeeded(
-          artistName: mf.artistName,
-          city: mf.city.isEmpty ? null : mf.city,
-          spotifyUrl: mf.spotifyUrl.isEmpty ? null : mf.spotifyUrl,
-          appleMusicUrl: mf.appleMusicUrl.isEmpty ? null : mf.appleMusicUrl,
-          genres: mf.selectedGenres.toList(),
-        );
-      }
-    }
-
-    // Salva username separadamente se foi alterado
-    final vmState = ref.read(editProfileViewModelProvider).value;
-    final currentUsername = vmState?.profile?.username?.toLowerCase() ?? '';
-    final newUsername = _usernameCtrl.text.trim().toLowerCase();
-    if (ok && newUsername.isNotEmpty && newUsername != currentUsername) {
-      final usernameOk = await ref
-          .read(editProfileViewModelProvider.notifier)
-          .saveUsername(newUsername);
-      if (!mounted) return;
-      if (!usernameOk) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context).editProfileSavedUsernameFailed),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-    }
     if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context).editProfileSaved),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      final vmState = ref.read(editProfileViewModelProvider).value;
+      final currentUsername = vmState?.profile?.username?.toLowerCase() ?? '';
+      final newUsername = _usernameCtrl.text.trim().toLowerCase();
+      if (newUsername.isNotEmpty && newUsername != currentUsername) {
+        final usernameOk = await ref
+            .read(editProfileViewModelProvider.notifier)
+            .saveUsername(newUsername);
+        if (!mounted) return;
+        if (!usernameOk) {
+          _showSnack(S.of(context).editProfileSavedUsernameFailed, isError: true);
+          return;
+        }
+      }
+
+      if (ok) {
+        final mf = musicianFieldsKey.currentState;
+        if (mf != null) {
+          await ref
+              .read(editProfileViewModelProvider.notifier)
+              .registerArtistIfNeeded(
+                artistName: mf.artistName,
+                city: mf.city.isEmpty ? null : mf.city,
+                spotifyUrl: mf.spotifyUrl.isEmpty ? null : mf.spotifyUrl,
+                appleMusicUrl: mf.appleMusicUrl.isEmpty ? null : mf.appleMusicUrl,
+                genres: mf.selectedGenres.toList(),
+              );
+        }
+      }
+
+      _showSnack(S.of(context).editProfileSaved);
     }
+  }
+
+  void _showSnack(String msg, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(children: [
+          Icon(isError ? LucideIcons.alertCircle : LucideIcons.checkCircle,
+              color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          Expanded(child: Text(msg)),
+        ]),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
     final async = ref.watch(editProfileViewModelProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: context.colors.background,
-      appBar: AppBar(
-        backgroundColor: context.colors.background,
-        foregroundColor: context.colors.textPrimary,
-        elevation: 0,
-        title: Text(s.editProfileTitle),
-        actions: [
-          TextButton(
-            onPressed: async.value?.isSaving == true ? null : _onSave,
-            child: async.value?.isSaving == true
-                ? SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: context.colors.textPrimary,
-                    ),
-                  )
-                : Text(
-                    s.editProfileSave,
-                    style: const TextStyle(
-                      color: AppColors.mutedRed,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-          ),
-        ],
-      ),
+      extendBodyBehindAppBar: true,
+      appBar: _buildAppBar(s, async, isDark),
       body: async.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.mutedRed),
-        ),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              s.editProfileLoadError,
-              style: TextStyle(color: context.colors.textSecondary),
-            ),
-          ),
-        ),
+            child: CircularProgressIndicator(color: AppColors.mutedRed)),
+        error: (e, _) => _ErrorView(message: s.editProfileLoadError),
         data: (state) {
           _hydrate(state);
-          return SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 32),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _BannerEditor(state: state),
-                  const SizedBox(height: 60),
-                  _AvatarEditor(state: state),
-                  const SizedBox(height: 24),
-                  if (state.error != null)
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(_errorMessage(s, state.error!),
-                          style: TextStyle(color: context.colors.textPrimary)),
-                    ),
-                  _SectionLabel(s.editProfileSectionInfo),
-                  // ── Tipo de conta ──────────────────────────────────────
-                  _AccountTypeSelector(state: state),
-                  _UsernameField(
-                    controller: _usernameCtrl,
-                    state: state,
-                    onChanged: (val) {
-                      _usernameDebounce?.cancel();
-                      _usernameDebounce = Timer(
-                        const Duration(milliseconds: 600),
-                        () => ref
-                            .read(editProfileViewModelProvider.notifier)
-                            .checkUsername(val),
-                      );
-                    },
-                  ),
-                  _Field(
-                    controller: _nameCtrl,
-                    label: s.editProfileFieldName,
-                    maxLength: 50,
-                    validator: (v) {
-                      if ((v ?? '').trim().isEmpty) {
-                        return s.editProfileFieldNameRequired;
-                      }
-                      return null;
-                    },
-                  ),
-                  _Field(
-                    controller: _bioCtrl,
-                    label: s.editProfileFieldBio,
-                    maxLength: 500,
-                    maxLines: 4,
-                    hint: s.editProfileFieldBioHint,
-                  ),
-                  _SectionLabel(s.editProfileSectionSocial),
-                  _Field(
-                    controller: _instaCtrl,
-                    label: s.editProfileSocialInstagram,
-                    prefixIcon: Icons.camera_alt_outlined,
-                    hint: s.editProfileSocialUserHint,
-                  ),
-                  _Field(
-                    controller: _tiktokCtrl,
-                    label: s.editProfileSocialTikTok,
-                    prefixIcon: Icons.music_note,
-                    hint: s.editProfileSocialUserHint,
-                  ),
-                  _Field(
-                    controller: _twitterCtrl,
-                    label: s.editProfileSocialTwitter,
-                    prefixIcon: Icons.alternate_email,
-                    hint: s.editProfileSocialUserHint,
-                  ),
-                  _Field(
-                    controller: _ytCtrl,
-                    label: s.editProfileSocialYouTube,
-                    prefixIcon: Icons.play_circle_outline,
-                    hint: s.editProfileSocialChannelHint,
-                  ),
-                  _Field(
-                    controller: _siteCtrl,
-                    label: s.editProfileSocialWebsite,
-                    prefixIcon: Icons.link,
-                    hint: s.editProfileSocialUrlHint,
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildBody(state, s, isDark);
         },
       ),
     );
   }
 
-  String _errorMessage(S s, EditProfileErrorCode code) {
-    switch (code) {
-      case EditProfileErrorCode.saveFailed:
-        return s.editProfileErrorSaveFailed;
-      case EditProfileErrorCode.usernameTooShort:
-        return s.editProfileUsernameTooShort;
-      case EditProfileErrorCode.usernameCheckFailed:
-        return s.editProfileErrorUsernameCheck;
-      case EditProfileErrorCode.usernameInUse:
-        return s.editProfileErrorUsernameInUse;
-      case EditProfileErrorCode.usernameSaveFailed:
-        return s.editProfileErrorUsernameSaveFailed;
-      case EditProfileErrorCode.avatarUploadFailed:
-        return s.editProfileErrorAvatarUpload;
-      case EditProfileErrorCode.bannerUploadFailed:
-        return s.editProfileErrorBannerUpload;
-      case EditProfileErrorCode.avatarRemoveFailed:
-        return s.editProfileErrorAvatarRemove;
-      case EditProfileErrorCode.bannerRemoveFailed:
-        return s.editProfileErrorBannerRemove;
-    }
+  PreferredSizeWidget _buildAppBar(
+      S s, AsyncValue<EditProfileState> async, bool isDark) {
+    final isSaving = async.value?.isSaving == true;
+    return AppBar(
+      backgroundColor: context.colors.background.withValues(alpha: 0.85),
+      foregroundColor: context.colors.textPrimary,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: const SizedBox.expand(),
+        ),
+      ),
+      leading: IconButton(
+        icon: const Icon(LucideIcons.chevronLeft, size: 22),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      title: Text(
+        s.editProfileTitle,
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: context.colors.textPrimary,
+          letterSpacing: -0.3,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: FilledButton(
+            onPressed: isSaving ? null : _onSave,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.mutedRed,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              minimumSize: Size.zero,
+            ),
+            child: isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : Text(s.editProfileSave,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(EditProfileState state, S s, bool isDark) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _HeroMediaEditor(state: state),
+            const SizedBox(height: 20),
+            if (state.error != null)
+              _ErrorBanner(message: state.error!.label(s)),
+
+            // Seção Informações
+            _SectionCard(
+              icon: LucideIcons.user,
+              title: s.editProfileSectionInfo,
+              children: [
+                _FieldRow(
+                  icon: LucideIcons.atSign,
+                  label: s.editProfileUsernameLabel,
+                  child: _UsernameField(
+                    controller: _usernameCtrl,
+                    state: state,
+                    onChanged: (val) {
+                      _usernameDebounce?.cancel();
+                      _usernameDebounce =
+                          Timer(const Duration(milliseconds: 600), () {
+                        if (val.length >= 3) {
+                          ref
+                              .read(editProfileViewModelProvider.notifier)
+                              .checkUsername(val.trim());
+                        }
+                      });
+                    },
+                  ),
+                ),
+                _RowDivider(),
+                _FieldRow(
+                  icon: LucideIcons.type,
+                  label: s.editProfileFieldName,
+                  child: _CompactTextField(
+                    controller: _nameCtrl,
+                    hint: s.editProfileFieldName,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? s.editProfileFieldNameRequired
+                        : null,
+                  ),
+                ),
+                _RowDivider(),
+                _FieldRow(
+                  icon: LucideIcons.alignLeft,
+                  label: s.editProfileFieldBio,
+                  child: _CompactTextField(
+                    controller: _bioCtrl,
+                    hint: s.editProfileFieldBioHint,
+                    maxLines: 3,
+                    maxLength: 160,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Seção Links Sociais
+            _SectionCard(
+              icon: LucideIcons.link,
+              title: s.editProfileSectionSocial,
+              children: [
+                _SocialRow(
+                    icon: LucideIcons.instagram,
+                    color: const Color(0xFFE1306C),
+                    label: 'Instagram',
+                    controller: _instaCtrl,
+                    hint: s.editProfileSocialUserHint),
+                _RowDivider(),
+                _SocialRow(
+                    icon: LucideIcons.twitter,
+                    color: const Color(0xFF1DA1F2),
+                    label: 'X / Twitter',
+                    controller: _twitterCtrl,
+                    hint: s.editProfileSocialUserHint),
+                _RowDivider(),
+                _SocialRow(
+                    icon: LucideIcons.music2,
+                    color: const Color(0xFF010101),
+                    label: 'TikTok',
+                    controller: _tiktokCtrl,
+                    hint: s.editProfileSocialUserHint),
+                _RowDivider(),
+                _SocialRow(
+                    icon: LucideIcons.youtube,
+                    color: const Color(0xFFFF0000),
+                    label: 'YouTube',
+                    controller: _ytCtrl,
+                    hint: s.editProfileSocialChannelHint),
+                _RowDivider(),
+                _SocialRow(
+                    icon: LucideIcons.globe,
+                    color: AppColors.mutedRed,
+                    label: 'Website',
+                    controller: _siteCtrl,
+                    hint: s.editProfileSocialUrlHint),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-class _BannerEditor extends ConsumerWidget {
-  final EditProfileState state;
-  const _BannerEditor({required this.state});
+// ══════════════════════════════════════════════════════════
+// HERO: Banner + Avatar
+// ══════════════════════════════════════════════════════════
 
-  Future<void> _pickAndPositionBanner(
-      BuildContext context, WidgetRef ref) async {
+class _HeroMediaEditor extends ConsumerWidget {
+  final EditProfileState state;
+  const _HeroMediaEditor({required this.state});
+
+  Future<void> _pickBanner(BuildContext ctx, WidgetRef ref) async {
     final vm = ref.read(editProfileViewModelProvider.notifier);
-    final picked = await vm.pickImageFromGallery(imageQuality: 95);
-    if (picked == null || !context.mounted) return;
-    final cropped = await Navigator.of(context).push<String>(
+    final picked = await vm.pickImageFromGallery(imageQuality: 90);
+    if (picked == null || !ctx.mounted) return;
+    final cropped = await Navigator.of(ctx).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ImagePositionEditor(
           sourcePath: picked,
-          aspectRatio: 3.0,
+          aspectRatio: 16 / 5,
           circle: false,
-          title: S.of(context).editProfileBannerPosition,
+          title: S.of(ctx).editProfileBannerPosition,
           outputWidth: 1500,
         ),
       ),
@@ -326,85 +383,18 @@ class _BannerEditor extends ConsumerWidget {
     await vm.uploadBannerFromPath(cropped);
   }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final url = state.profile?.bannerUrl;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        GestureDetector(
-          onTap: () => _pickAndPositionBanner(context, ref),
-          child: Container(
-            height: 160,
-            width: double.infinity,
-            color: Colors.white10,
-            child: url == null || url.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.image_outlined,
-                            size: 40, color: context.colors.textTertiary),
-                        SizedBox(height: 6),
-                        Text(S.of(context).editProfileBannerAdd,
-                            style: TextStyle(color: context.colors.textTertiary)),
-                      ],
-                    ),
-                  )
-                : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover),
-          ),
-        ),
-        if (state.isUploadingBanner)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black54,
-              child: Center(
-                child: CircularProgressIndicator(color: context.colors.textPrimary),
-              ),
-            ),
-          ),
-        Positioned(
-          right: 12,
-          bottom: 12,
-          child: Row(
-            children: [
-              if (url != null && url.isNotEmpty)
-                _RoundIconBtn(
-                  icon: Icons.delete_outline,
-                  onTap: () => ref
-                      .read(editProfileViewModelProvider.notifier)
-                      .removeBanner(),
-                ),
-              const SizedBox(width: 8),
-              _RoundIconBtn(
-                icon: Icons.camera_alt,
-                onTap: () => _pickAndPositionBanner(context, ref),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AvatarEditor extends ConsumerWidget {
-  final EditProfileState state;
-  const _AvatarEditor({required this.state});
-
-  Future<void> _pickAndPositionAvatar(
-      BuildContext context, WidgetRef ref) async {
+  Future<void> _pickAvatar(BuildContext ctx, WidgetRef ref) async {
     final vm = ref.read(editProfileViewModelProvider.notifier);
     final picked = await vm.pickImageFromGallery(imageQuality: 95);
-    if (picked == null || !context.mounted) return;
-    final cropped = await Navigator.of(context).push<String>(
+    if (picked == null || !ctx.mounted) return;
+    final cropped = await Navigator.of(ctx).push<String>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ImagePositionEditor(
           sourcePath: picked,
           aspectRatio: 1.0,
           circle: true,
-          title: S.of(context).editProfileAvatarPosition,
+          title: S.of(ctx).editProfileAvatarPosition,
           outputWidth: 1024,
         ),
       ),
@@ -415,78 +405,292 @@ class _AvatarEditor extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final url = state.profile?.avatarUrl;
-    return Center(
-      child: Transform.translate(
-        offset: const Offset(0, -60),
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            GestureDetector(
-              onTap: () => _pickAndPositionAvatar(context, ref),
+    final bannerUrl = state.profile?.bannerUrl;
+    final avatarUrl = state.profile?.avatarUrl;
+    final topPad = MediaQuery.of(context).padding.top + kToolbarHeight;
+
+    return SizedBox(
+      height: topPad + 130,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Banner
+          GestureDetector(
+            onTap: () => _pickBanner(context, ref),
+            child: Container(
+              height: topPad + 90,
+              width: double.infinity,
+              color: context.colors.divider,
+              child: bannerUrl != null && bannerUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: bannerUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity)
+                  : Center(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: topPad),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.image,
+                                size: 26,
+                                color: context.colors.textTertiary
+                                    .withValues(alpha: 0.4)),
+                            const SizedBox(height: 4),
+                            Text(
+                              S.of(context).editProfileBannerAdd,
+                              style: TextStyle(
+                                  color: context.colors.textTertiary
+                                      .withValues(alpha: 0.5),
+                                  fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+
+          if (state.isUploadingBanner)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: topPad + 90,
               child: Container(
-                width: 120,
-                height: 120,
+                color: Colors.black.withValues(alpha: 0.5),
+                child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white)),
+              ),
+            ),
+
+          // Botões de editar banner
+          Positioned(
+            right: 10,
+            top: topPad + 54,
+            child: Row(
+              children: [
+                if (bannerUrl != null && bannerUrl.isNotEmpty) ...[
+                  _GlassCircleBtn(
+                    icon: LucideIcons.trash2,
+                    size: 30,
+                    iconSize: 13,
+                    onTap: () => ref
+                        .read(editProfileViewModelProvider.notifier)
+                        .removeBanner(),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                _GlassCircleBtn(
+                  icon: LucideIcons.camera,
+                  size: 30,
+                  iconSize: 13,
+                  onTap: () => _pickBanner(context, ref),
+                ),
+              ],
+            ),
+          ),
+
+          // Avatar
+          Positioned(
+            left: 16,
+            bottom: 0,
+            child: GestureDetector(
+              onTap: () => _pickAvatar(context, ref),
+              child: Container(
+                width: 88,
+                height: 88,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 4),
-                  color: context.colors.divider,
+                  border: Border.all(
+                      color: context.colors.background, width: 3),
                 ),
                 child: ClipOval(
-                  child: url == null || url.isEmpty
-                      ? Icon(Icons.person,
-                          size: 64, color: context.colors.textTertiary)
-                      : CachedNetworkImage(
-                          imageUrl: url,
-                          fit: BoxFit.cover,
-                          width: 120,
-                          height: 120,
-                        ),
+                  child: state.isUploadingAvatar
+                      ? Container(
+                          color: Colors.black54,
+                          child: const Center(
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2)),
+                        )
+                      : (avatarUrl != null && avatarUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: avatarUrl,
+                              fit: BoxFit.cover,
+                              width: 88,
+                              height: 88)
+                          : Container(
+                              color: context.colors.divider,
+                              child: Icon(LucideIcons.user,
+                                  size: 40,
+                                  color: context.colors.textTertiary),
+                            )),
                 ),
               ),
             ),
-            if (state.isUploadingAvatar)
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.black54,
-                  ),
-                  child: Center(
-                    child: CircularProgressIndicator(color: context.colors.textPrimary),
-                  ),
-                ),
-              )
-            else
-              _RoundIconBtn(
-                icon: Icons.camera_alt,
-                onTap: () => _pickAndPositionAvatar(context, ref),
+          ),
+
+          if (!state.isUploadingAvatar)
+            Positioned(
+              left: 78,
+              bottom: 0,
+              child: _GlassCircleBtn(
+                icon: LucideIcons.camera,
+                size: 28,
+                iconSize: 12,
+                onTap: () => _pickAvatar(context, ref),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _RoundIconBtn extends StatelessWidget {
+// ══════════════════════════════════════════════════════════
+// SECTION CARD
+// ══════════════════════════════════════════════════════════
+
+class _SectionCard extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
-  const _RoundIconBtn({required this.icon, required this.onTap});
+  final String title;
+  final List<Widget> children;
+
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.mutedRed,
-      shape: const CircleBorder(),
-      elevation: 2,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: context.colors.textPrimary, size: 18),
-        ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                Icon(icon, size: 13, color: AppColors.mutedRed),
+                const SizedBox(width: 6),
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: context.colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
+            ),
+            child: Column(children: children),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FieldRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  const _FieldRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Icon(icon, size: 16, color: context.colors.textTertiary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: context.colors.textTertiary,
+                        letterSpacing: 0.2)),
+                const SizedBox(height: 2),
+                child,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SocialRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+
+  const _SocialRow({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.controller,
+    required this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 15, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _CompactTextField(
+              controller: controller,
+              hint: hint,
+              prefixText: label == 'Website' ? null : '$label · ',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -506,230 +710,202 @@ class _UsernameField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    Widget? suffixIcon;
-    String? helperText;
-    Color helperColor = Colors.white54;
-
-    if (state.isCheckingUsername) {
-      suffixIcon =  Padding(
-        padding: EdgeInsets.all(12),
-        child: SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: context.colors.textSecondary,
-          ),
-        ),
-      );
-    } else if (state.usernameAvailable) {
-      suffixIcon =
-          const Icon(Icons.check_circle, color: Colors.greenAccent, size: 20);
-      helperText = s.editProfileUsernameAvailable;
-      helperColor = Colors.greenAccent;
-    } else if (state.usernameError != null ||
-        state.usernameErrorMessage != null) {
-      suffixIcon = const Icon(Icons.cancel, color: Colors.redAccent, size: 20);
-      helperText = state.usernameError != null
-          ? _usernameErrorText(s, state.usernameError!)
-          : state.usernameErrorMessage;
-      helperColor = Colors.redAccent;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: TextFormField(
-        controller: controller,
-        maxLength: 30,
-        onChanged: onChanged,
-        style: TextStyle(color: context.colors.textPrimary),
-        validator: (v) {
-          final val = (v ?? '').trim();
-          if (val.isEmpty) return null;
-          if (val.length < 3) return s.editProfileUsernameTooShort;
-          final re = RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*$');
-          if (!re.hasMatch(val)) {
-            return s.editProfileUsernameInvalid;
-          }
-          return null;
-        },
-        decoration: InputDecoration(
-          labelText: s.editProfileUsernameLabel,
-          hintText: s.editProfileUsernameHint,
-          labelStyle:  TextStyle(color: context.colors.textSecondary),
-          hintStyle: TextStyle(color: context.colors.border),
-          prefixIcon:  Icon(
-            Icons.alternate_email,
-            color: context.colors.textSecondary,
-            size: 20,
-          ),
-          suffixIcon: suffixIcon,
-          helperText: helperText,
-          helperStyle: TextStyle(color: helperColor),
-          filled: true,
-          fillColor: Colors.white10,
-          counterStyle:  TextStyle(color: context.colors.textSecondary),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                const BorderSide(color: AppColors.mutedRed, width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                const BorderSide(color: Colors.redAccent, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _usernameErrorText(S s, EditProfileErrorCode code) {
-    switch (code) {
-      case EditProfileErrorCode.usernameTooShort:
-        return s.editProfileUsernameTooShort;
-      case EditProfileErrorCode.usernameCheckFailed:
-        return s.editProfileErrorUsernameCheck;
-      case EditProfileErrorCode.usernameInUse:
-        return s.editProfileErrorUsernameInUse;
-      case EditProfileErrorCode.usernameSaveFailed:
-        return s.editProfileErrorUsernameSaveFailed;
-      default:
-        return s.editProfileErrorUsernameCheck;
-    }
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      child: Text(
-        text.toUpperCase(),
-        style:  TextStyle(
-          color: context.colors.textSecondary,
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
-  }
-}
-
-// ── Seletor de Tipo de Conta ─────────────────────────────────────────────────
-class _AccountTypeSelector extends ConsumerWidget {
-  final EditProfileState state;
-  const _AccountTypeSelector({required this.state});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = S.of(context);
-    final current = state.effectiveAccountType;
-    final isMusician = current == AccountType.musician;
-
-    // Construído no build para usar S.of(context)
-    final types = [
-      (AccountType.creator,  LucideIcons.video,     s.editProfileAccountTypeCreator),
-      (AccountType.musician, LucideIcons.music,     s.editProfileAccountTypeMusician),
-      (AccountType.business, LucideIcons.building2, s.editProfileAccountTypeBusiness),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(
-            s.editProfileAccountTypeSection,
-            style: TextStyle(
-              color: context.colors.textSecondary,
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              letterSpacing: 0.6,
-            ),
+        Expanded(
+          child: _CompactTextField(
+            controller: controller,
+            hint: s.editProfileUsernameHint,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9._]')),
+            ],
+            validator: (v) {
+              if (v == null || v.isEmpty) return null;
+              if (v.length < 3) return s.editProfileUsernameTooShort;
+              if (!RegExp(r'^[a-zA-Z0-9._]+$').hasMatch(v)) {
+                return s.editProfileUsernameInvalid;
+              }
+              return null;
+            },
+            onChanged: onChanged,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: types.map((t) {
-              final selected = current == t.$1;
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: t.$1 != AccountType.business ? 8 : 0),
-                  child: _AccountTypeChip(
-                    icon: t.$2,
-                    label: t.$3,
-                    selected: selected,
-                    onTap: () => ref
-                        .read(editProfileViewModelProvider.notifier)
-                        .setAccountType(t.$1),
-                  ),
-                ),
-              );
-            }).toList(),
+        if (state.isCheckingUsername)
+          const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2)),
+          )
+        else if (state.usernameAvailable == true)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Icon(LucideIcons.checkCircle,
+                size: 16, color: Colors.green.shade500),
+          )
+        else if (state.usernameAvailable == false)
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Icon(LucideIcons.xCircle,
+                size: 16, color: Colors.red.shade400),
           ),
-        ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: SizeTransition(sizeFactor: anim, child: child),
-          ),
-          child: isMusician
-              ? _MusicianExtraFields(key: musicianFieldsKey)
-              : const SizedBox.shrink(),
-        ),
       ],
     );
   }
 }
 
-class _AccountTypeChip extends StatelessWidget {
+class _CompactTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final int maxLines;
+  final int? maxLength;
+  final String? prefixText;
+  final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
+
+  const _CompactTextField({
+    required this.controller,
+    required this.hint,
+    this.maxLines = 1,
+    this.maxLength,
+    this.prefixText,
+    this.validator,
+    this.onChanged,
+    this.inputFormatters,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      maxLength: maxLength,
+      onChanged: onChanged,
+      validator: validator,
+      inputFormatters: inputFormatters,
+      style: TextStyle(
+          fontSize: 15,
+          color: context.colors.textPrimary,
+          fontWeight: FontWeight.w400),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixText: prefixText,
+        prefixStyle: TextStyle(
+            fontSize: 14,
+            color: context.colors.textTertiary,
+            fontWeight: FontWeight.w500),
+        hintStyle: TextStyle(
+            fontSize: 15,
+            color: context.colors.textTertiary.withValues(alpha: 0.5)),
+        counterText: '',
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        errorStyle: const TextStyle(fontSize: 11),
+      ),
+    );
+  }
+}
+
+class _RowDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      indent: 42,
+      color: context.colors.divider.withValues(alpha: 0.5),
+    );
+  }
+}
+
+class _GlassCircleBtn extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final bool selected;
+  final double size;
+  final double iconSize;
   final VoidCallback onTap;
-  const _AccountTypeChip({required this.icon, required this.label, required this.selected, required this.onTap});
+
+  const _GlassCircleBtn({
+    required this.icon,
+    required this.size,
+    required this.iconSize,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.mutedRed.withValues(alpha: 0.15)
-              : context.colors.surfaceHighest.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: selected ? AppColors.mutedRed : context.colors.border,
-            width: 1.5,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.45),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2), width: 1),
+            ),
+            child: Icon(icon, size: iconSize, color: Colors.white),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBanner extends StatelessWidget {
+  final String message;
+  const _ErrorBanner({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.alertCircle, color: Colors.red, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+              child: Text(message,
+                  style: const TextStyle(color: Colors.red, fontSize: 13))),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final String message;
+  const _ErrorView({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20,
-                color: selected ? AppColors.mutedRed : context.colors.textSecondary),
-            const SizedBox(height: 4),
-            Text(label,
+            Icon(LucideIcons.wifiOff,
+                size: 40, color: context.colors.textTertiary),
+            const SizedBox(height: 12),
+            Text(message,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.mutedRed : context.colors.textSecondary,
-                )),
+                    color: context.colors.textSecondary, fontSize: 15)),
           ],
         ),
       ),
@@ -737,192 +913,20 @@ class _AccountTypeChip extends StatelessWidget {
   }
 }
 
-// ── Campos extras Músico ─────────────────────────────────────────────────────
-/// Chave global exposta para que o pai leia os dados antes de salvar.
-final musicianFieldsKey = GlobalKey<_MusicianExtraFieldsState>();
+// Stub para compatibilidade com ViewModel de músico
+class _MusicianFieldsState extends State<_MusicianFields> {
+  String artistName = '';
+  String city = '';
+  String spotifyUrl = '';
+  String appleMusicUrl = '';
+  Set<String> selectedGenres = {};
 
-class _MusicianExtraFields extends StatefulWidget {
-  const _MusicianExtraFields({super.key});
   @override
-  State<_MusicianExtraFields> createState() => _MusicianExtraFieldsState();
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
-class _MusicianExtraFieldsState extends State<_MusicianExtraFields> {
-  final _artistNameCtrl = TextEditingController();
-  final _cityCtrl       = TextEditingController();
-  final _spotifyCtrl    = TextEditingController();
-  final _appleMusicCtrl = TextEditingController();
-
-  // Getters públicos para leitura pelo widget pai via GlobalKey
-  String get artistName   => _artistNameCtrl.text.trim();
-  String get city         => _cityCtrl.text.trim();
-  String get spotifyUrl   => _spotifyCtrl.text.trim();
-  String get appleMusicUrl => _appleMusicCtrl.text.trim();
-  Set<String> get selectedGenres => Set.unmodifiable(_selectedGenres);
-
-  static const _genreKeys = [
-    ('funk',       LucideIcons.music2),
-    ('sertanejo',  LucideIcons.music4),
-    ('pagode',     LucideIcons.music3),
-    ('forró',      LucideIcons.music2),
-    ('pop',        LucideIcons.star),
-    ('rap',        LucideIcons.mic2),
-    ('eletrônico', LucideIcons.radio),
-    ('gospel',     LucideIcons.heart),
-    ('rock',       LucideIcons.zap),
-    ('mpb',        LucideIcons.sparkles),
-  ];
-  final Set<String> _selectedGenres = {};
-
-  /// Traduz a chave de gênero usando S.of(context).
-  String _genreLabel(BuildContext context, String key) {
-    final s = S.of(context);
-    switch (key) {
-      case 'funk':       return s.soundsGenreFunk;
-      case 'sertanejo':  return s.soundsGenreSertanejo;
-      case 'pagode':     return s.soundsGenrePagode;
-      case 'forró':      return s.soundsGenreForro;
-      case 'pop':        return s.soundsGenrePop;
-      case 'rap':        return s.soundsGenreRap;
-      case 'eletrônico': return s.soundsGenreElectro;
-      case 'gospel':     return s.soundsGenreGospel;
-      case 'rock':       return s.soundsGenreRock;
-      case 'mpb':        return s.soundsGenreMpb;
-      default:           return key;
-    }
-  }
-
+class _MusicianFields extends StatefulWidget {
+  const _MusicianFields({super.key});
   @override
-  void dispose() {
-    _artistNameCtrl.dispose();
-    _cityCtrl.dispose();
-    _spotifyCtrl.dispose();
-    _appleMusicCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 4),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.mutedRed.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.mutedRed.withValues(alpha: 0.25)),
-          ),
-          child: Row(children: [
-            const Icon(LucideIcons.music, size: 16, color: AppColors.mutedRed),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                s.editProfileMusicianBannerHint,
-                style: TextStyle(color: context.colors.textSecondary, fontSize: 12, height: 1.4),
-              ),
-            ),
-          ]),
-        ),
-        _Field(controller: _artistNameCtrl, label: s.editProfileMusicianArtistName,
-            prefixIcon: LucideIcons.mic2, hint: s.editProfileMusicianArtistNameHint, maxLength: 100),
-        _Field(controller: _cityCtrl, label: s.editProfileMusicianCity,
-            prefixIcon: LucideIcons.mapPin, hint: s.editProfileMusicianCityHint, maxLength: 80),
-        _Field(controller: _spotifyCtrl, label: s.editProfileMusicianSpotify,
-            prefixIcon: LucideIcons.music, hint: 'https://open.spotify.com/artist/...'),
-        _Field(controller: _appleMusicCtrl, label: s.editProfileMusicianAppleMusic,
-            prefixIcon: LucideIcons.music2, hint: 'https://music.apple.com/...'),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-          child: Text(s.editProfileMusicianGenres,
-              style: TextStyle(color: context.colors.textSecondary,
-                  fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6)),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Wrap(
-            spacing: 8, runSpacing: 8,
-            children: _genreKeys.map((g) {
-              final selected = _selectedGenres.contains(g.$1);
-              final label = _genreLabel(context, g.$1);
-              return FilterChip(
-                avatar: Icon(g.$2, size: 13,
-                    color: selected ? context.colors.textOnAccent : context.colors.textSecondary),
-                label: Text(label),
-                selected: selected,
-                onSelected: (v) => setState(() =>
-                    v ? _selectedGenres.add(g.$1) : _selectedGenres.remove(g.$1)),
-                selectedColor: AppColors.mutedRed,
-                checkmarkColor: context.colors.textOnAccent,
-                labelStyle: TextStyle(
-                    color: selected ? context.colors.textOnAccent : context.colors.textSecondary,
-                    fontSize: 12),
-                backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.08),
-                side: BorderSide(color: context.colors.border.withValues(alpha: 0.3)),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-class _Field extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String? hint;
-  final int? maxLength;
-  final int maxLines;
-  final IconData? prefixIcon;
-  final FormFieldValidator<String>? validator;
-
-  const _Field({
-    required this.controller,
-    required this.label,
-    this.hint,
-    this.maxLength,
-    this.maxLines = 1,
-    this.prefixIcon,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: TextFormField(
-        controller: controller,
-        maxLength: maxLength,
-        maxLines: maxLines,
-        validator: validator,
-        style: TextStyle(color: context.colors.textPrimary),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          labelStyle:  TextStyle(color: context.colors.textSecondary),
-          hintStyle: TextStyle(color: context.colors.border),
-          prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: context.colors.textSecondary, size: 20)
-              : null,
-          filled: true,
-          fillColor: Colors.white10,
-          counterStyle:  TextStyle(color: context.colors.textSecondary),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: AppColors.mutedRed, width: 1.5),
-          ),
-        ),
-      ),
-    );
-  }
+  State<_MusicianFields> createState() => _MusicianFieldsState();
 }
