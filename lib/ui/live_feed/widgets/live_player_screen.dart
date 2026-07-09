@@ -31,6 +31,30 @@ import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
+// ── Qualidade de stream ───────────────────────────────────────────────────────
+
+enum StreamQuality {
+  auto('Auto', null),
+  p480('480p', '480p'),
+  p720('720p HD', '720p'),
+  p1080('1080p Full HD', '1080p');
+
+  const StreamQuality(this.label, this.maxResolution);
+
+  /// Label exibido para o usuário.
+  final String label;
+
+  /// Valor do parâmetro `max_resolution` para a Mux CDN. null = sem restrição.
+  final String? maxResolution;
+
+  /// Constrói a URL HLS com o parâmetro correto.
+  String buildUrl(String playbackId) {
+    final base = 'https://stream.mux.com/$playbackId.m3u8';
+    if (maxResolution == null) return base; // auto: sem restrição
+    return '$base?max_resolution=$maxResolution';
+  }
+}
+
 /// 📺 Tela do espectador (live viewer).
 ///
 /// Layout TikTok-style com:
@@ -55,6 +79,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   bool _isInitialized = false;
   bool _isLiked = false;
   int _likesCount = 0;
+
+  /// Qualidade selecionada pelo usuário. Padrão: Auto.
+  StreamQuality _quality = StreamQuality.auto;
 
   // Reaction batching (TikTok-style: agrega N toques em 250ms)
   Timer? _reactionFlushTimer;
@@ -237,21 +264,27 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     return null;
   }
 
-  Future<void> _initializePlayer() async {
-    if (_controller != null) return;
-    final streamUrl = widget.room.streamUrl;
+  Future<void> _initializePlayer({StreamQuality? quality}) async {
+    if (_controller != null && quality == null) return;
+    final playbackId = widget.room.playbackId;
+    final q = quality ?? _quality;
+
+    // Determinar URL com base na qualidade selecionada.
+    // Se temos o playbackId, construímos a URL com o parâmetro correto.
+    // Caso contrário, usamos a streamUrl que já vem do DTO.
+    final String? streamUrl = playbackId != null
+        ? q.buildUrl(playbackId)
+        : widget.room.streamUrl;
+
     if (streamUrl == null || streamUrl.isEmpty) return;
+
     _controller = VideoPlayerController.networkUrl(
       Uri.parse(streamUrl),
       videoPlayerOptions: VideoPlayerOptions(
         // Permite que SFX/gifts toquem junto com o áudio da live.
         mixWithOthers: true,
-        // ⭐ Mantém o áudio rolando em segundo plano (avFoundation) quando o
-        // app perde foco momentâneo (notificação, alarme). Reduz cortes.
         allowBackgroundPlayback: false,
       ),
-      // Cabeçalhos para o HLS da Mux — User-Agent identifica o app no
-      // analytics e ajuda em CDN-edge caching.
       httpHeaders: const {'User-Agent': 'BraweApp/1.0 (HLS-Live)'},
     );
     try {
@@ -276,6 +309,36 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     } catch (e) {
       debugPrint('LivePlayer: video init error: $e');
     }
+  }
+
+  // ────────────────────── Quality control ──────────────────────
+
+  /// Troca a qualidade do stream ao vivo.
+  /// Descarta o controller atual, cria um novo com a URL correta e reinicia.
+  Future<void> _changeQuality(StreamQuality q) async {
+    if (q == _quality) return;
+    setState(() {
+      _quality = q;
+      _isInitialized = false;
+    });
+    final old = _controller;
+    _controller = null;
+    old?.dispose();
+    await _initializePlayer(quality: q);
+  }
+
+  void _showQualitySelector() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _QualitySheet(
+        current: _quality,
+        onSelect: (q) {
+          Navigator.pop(context);
+          _changeQuality(q);
+        },
+      ),
+    );
   }
 
   // ────────────────────── Interaction handlers ──────────────────────
@@ -540,6 +603,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             child: PinnedProductBar(roomId: widget.room.id),
           ),
 
+          // ── 6.7. Botão de qualidade (canto superior direito, abaixo do top bar) ──
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 56,
+            right: 12,
+            child: _QualityButton(
+              quality: _quality,
+              onTap: _showQualitySelector,
+            ),
+          ),
+
           // ── 7. Bottom bar: chat input + ações inline (TikTok Live style) ──
           Positioned(
             left: 12,
@@ -711,3 +784,180 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 // ⚠️ _PinnedProduct + _PinnedProductBar migrados para
 //    lib/ui/live/shared/widgets/commerce/pinned_product_bar.dart
 //    (renomeados para PinnedProduct/PinnedProductBar públicos).
+
+// ── Seletor de qualidade de stream ───────────────────────────────────────────
+
+/// Botão compacto que exibe a qualidade atual e abre o seletor.
+class _QualityButton extends StatelessWidget {
+  final StreamQuality quality;
+  final VoidCallback onTap;
+
+  const _QualityButton({required this.quality, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.settings, color: Colors.white, size: 13),
+            const SizedBox(width: 4),
+            Text(
+              quality.label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet para selecionar qualidade do stream.
+class _QualitySheet extends StatelessWidget {
+  final StreamQuality current;
+  final ValueChanged<StreamQuality> onSelect;
+
+  const _QualitySheet({required this.current, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A1A),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            child: Row(
+              children: [
+                const Icon(Icons.hd, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text(
+                  'Qualidade do vídeo',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Nota sobre FPS
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'FPS: definido pelo streamer (geralmente 30fps)',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 11),
+            ),
+          ),
+          const Divider(color: Colors.white12, height: 1),
+          ...StreamQuality.values.map((q) => _QualityTile(
+                quality: q,
+                isSelected: q == current,
+                onTap: () => onSelect(q),
+              )),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _QualityTile extends StatelessWidget {
+  final StreamQuality quality;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _QualityTile({
+    required this.quality,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            // Ícone de qualidade
+            Icon(
+              _iconFor(quality),
+              color: isSelected ? const Color(0xFFE91E8C) : Colors.white54,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    quality.label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white70,
+                      fontSize: 15,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    _descriptionFor(quality),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              const Icon(Icons.check_circle, color: Color(0xFFE91E8C), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _iconFor(StreamQuality q) => switch (q) {
+        StreamQuality.auto => Icons.auto_awesome,
+        StreamQuality.p480 => Icons.sd,
+        StreamQuality.p720 => Icons.hd,
+        StreamQuality.p1080 => Icons.high_quality,
+      };
+
+  String _descriptionFor(StreamQuality q) => switch (q) {
+        StreamQuality.auto => 'Ajusta automaticamente conforme sua conexão',
+        StreamQuality.p480 => 'Menor consumo de dados',
+        StreamQuality.p720 => 'Boa qualidade, recomendado',
+        StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
+      };
+}
