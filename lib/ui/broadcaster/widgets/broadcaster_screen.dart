@@ -26,7 +26,9 @@ import '../../../data/services/battle_service.dart';
 import '../../../data/services/socket_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/services/broadcast_audio_session.dart';
+import '../../../core/services/broadcast_audio_processing.dart';
 import '../../live/streamer/widgets/widgets.dart';
+import 'audio_processor_panel.dart';
 
 class BroadcasterScreen extends ConsumerStatefulWidget {
   const BroadcasterScreen({super.key, required this.room});
@@ -1292,6 +1294,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ),
                       );
                     }
+                  },
+                ),
+                // ── Processador de Áudio (EQ + Compressor) ─────────────────
+                MoreOptionTile(
+                  icon: Icons.graphic_eq_rounded,
+                  iconColor: Colors.pink.shade300,
+                  title: '🎛️ Audio Processor',
+                  subtitle:
+                      'EQ profissional + Compressor — ${BroadcastAudioProcessing.currentPreset.name}',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.transparent,
+                      isScrollControlled: true,
+                      builder: (bCtx) => AudioProcessorPanel(
+                        onClose: () => Navigator.pop(bCtx),
+                      ),
+                    );
                   },
                 ),
                 MoreOptionTile(

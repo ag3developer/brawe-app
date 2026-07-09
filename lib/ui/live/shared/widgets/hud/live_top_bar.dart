@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/live_room.dart';
-import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
 import '../sheets/gifter_ranking_sheet.dart';
 import '../sheets/sheets.dart';
-import 'live_likes_pill.dart';
-import 'live_pill.dart';
 import 'metric_pill.dart';
 import 'streamer_identity_bar.dart';
 import 'top_hud_circle_icon.dart';
@@ -61,86 +58,92 @@ class LiveTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // ─── Linha 1: identidade + viewers stack + more ───────────────
-        Row(
-          children: [
-            // X close
-            GestureDetector(
-              onTap: onBack,
-              child: const SizedBox(
-                width: 36,
-                height: 36,
-                child: Icon(Icons.close_rounded, color: Colors.white, size: 26),
-              ),
-            ),
-            const SizedBox(width: 4),
-            // Identity pill (avatar + nome + verified + follow)
-            Expanded(child: StreamerIdentityBar(room: room)),
-            const SizedBox(width: 8),
-            // Stack de avatares de viewers + total (350+ etc.)
-            // Toque abre o ranking de presenteadores da live.
-            ViewersStack(
-              viewerCount: viewerCount,
-              avatarUrls: recentViewerAvatars,
-              onTap: () =>
-                  GifterRankingSheet.show(context, ranking: gifterRanking),
-            ),
-            const SizedBox(width: 8),
-            // Indicador de qualidade minimalista (opcional)
-            if (qualityLabel != null && onQualityTap != null) ...[
-              GestureDetector(
-                onTap: onQualityTap,
-                child: Text(
-                  qualityLabel!,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
-            // More menu (⋯)
-            TopHudCircleIcon(
-              icon: Icons.more_horiz_rounded,
-              onTap: () => MoreSheet.show(context, onShare: onShare),
-            ),
-          ],
+        // X close
+        GestureDetector(
+          onTap: onBack,
+          child: const SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(Icons.close_rounded, color: Colors.white, size: 26),
+          ),
         ),
-        const SizedBox(height: 8),
-        // ─── Linha 2: pílulas LIVE · views · likes ───────────────────
-        Padding(
-          padding: const EdgeInsets.only(left: 36),
-          child: Row(
+        const SizedBox(width: 4),
+
+        // ── Identidade + métricas abaixo (TikTok style) ──────────────
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              LivePill(label: s.liveFeedBadgeLive),
-              // Ícone de qualidade ao lado do AO VIVO
-              if (onQualityTap != null) ...[
-                const SizedBox(width: 6),
-                GestureDetector(
-                  onTap: onQualityTap,
-                  child: Icon(
-                    _qualityIcon(qualityLabel),
-                    color: Colors.white60,
-                    size: 16,
+              StreamerIdentityBar(room: room),
+              const SizedBox(height: 4),
+              // ❤️ likes · 👁 viewers — abaixo do nome
+              Row(
+                children: [
+                  const Icon(
+                    Icons.favorite_rounded,
+                    color: Color(0xFFFF3D6E),
+                    size: 13,
                   ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              MetricPill(
-                icon: Icons.visibility_rounded,
-                value: MetricPill.formatCount(viewerCount),
+                  const SizedBox(width: 3),
+                  Text(
+                    MetricPill.formatCount(likesCount),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(
+                    Icons.visibility_rounded,
+                    color: Colors.white54,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    MetricPill.formatCount(viewerCount),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              LiveLikesPill(roomId: roomId, initial: likesCount),
             ],
           ),
+        ),
+        const SizedBox(width: 8),
+
+        // Stack de avatares de viewers + total
+        ViewersStack(
+          viewerCount: viewerCount,
+          avatarUrls: recentViewerAvatars,
+          onTap: () => GifterRankingSheet.show(context, ranking: gifterRanking),
+        ),
+        const SizedBox(width: 8),
+
+        // Ícone de qualidade (só se disponível)
+        if (onQualityTap != null) ...[
+          GestureDetector(
+            onTap: onQualityTap,
+            child: Icon(
+              _qualityIcon(qualityLabel),
+              color: Colors.white60,
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+
+        // More menu (⋯)
+        TopHudCircleIcon(
+          icon: Icons.more_horiz_rounded,
+          onTap: () => MoreSheet.show(context, onShare: onShare),
         ),
       ],
     );
