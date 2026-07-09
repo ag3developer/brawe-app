@@ -97,7 +97,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // registrar handlers. Sem isso o `connect:battle:started` chegava antes
     // do handler estar registrado e o HUD nunca aparecia para o criador.
     // (ver _bootstrapBattleWiring para os 3 passos atômicos)
-    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrapBattleWiring());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _bootstrapBattleWiring(),
+    );
   }
 
   bool get _hasStreamingCredentials =>
@@ -125,8 +127,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       _cameras = await availableCameras();
       if (_cameras.isEmpty) {
         if (mounted) {
-          AppSnackBar.showError(
-              context, S.of(context).broadcasterNoCamera);
+          AppSnackBar.showError(context, S.of(context).broadcasterNoCamera);
           _closeBroadcaster();
         }
         return;
@@ -150,7 +151,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       debugPrint('Stack trace: $stackTrace');
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterInitCameraError(e.toString()));
+          context,
+          S.of(context).broadcasterInitCameraError(e.toString()),
+        );
         _closeBroadcaster();
       }
     }
@@ -202,11 +205,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // estar capada em 720p (sensor menor, sem OIS). Adaptamos o preset por
     // câmera para extrair o máximo de cada uma sem forçar um modo que ela
     // não suporta (o que causaria fallback silencioso para resolução menor).
-    final isRearCamera =
-        description.lensDirection == CameraLensDirection.back;
+    final isRearCamera = description.lensDirection == CameraLensDirection.back;
     final preset = isRearCamera
-        ? ResolutionPreset.veryHigh // 1080p na traseira (melhor sensor)
-        : ResolutionPreset.high;    // 720p na frontal (limite típico)
+        ? ResolutionPreset
+              .veryHigh // 1080p na traseira (melhor sensor)
+        : ResolutionPreset.high; // 720p na frontal (limite típico)
 
     final controller = CameraController(
       description,
@@ -229,7 +232,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       debugPrint('Failed to initialize camera controller: $e');
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterInitCameraFailed);
+          context,
+          S.of(context).broadcasterInitCameraFailed,
+        );
       }
     }
   }
@@ -283,15 +288,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   void _startHeartbeat() {
     _stopHeartbeat();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) async {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (
+      timer,
+    ) async {
       if (!mounted || !_isStreaming) {
         _stopHeartbeat();
         return;
       }
 
       try {
-        final response =
-            await ref.read(liveRepositoryProvider).sendHeartbeat(_room.id);
+        final response = await ref
+            .read(liveRepositoryProvider)
+            .sendHeartbeat(_room.id);
         final data = response['data'];
         if (data is Map<String, dynamic>) {
           final count = data['viewer_count'];
@@ -342,8 +350,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (_hasStreamingCredentials || _isResolvingRoom) return;
     setState(() => _isResolvingRoom = true);
     try {
-      final freshRoom =
-          await ref.read(liveRepositoryProvider).getRoom(_room.id);
+      final freshRoom = await ref
+          .read(liveRepositoryProvider)
+          .getRoom(_room.id);
       if (!mounted || freshRoom == null) return;
       setState(() => _room = _mergeRoom(_room, freshRoom));
     } on Failure catch (failure) {
@@ -351,7 +360,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (error) {
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterRoomUpdateFailed(error.toString()));
+          context,
+          S.of(context).broadcasterRoomUpdateFailed(error.toString()),
+        );
       }
     } finally {
       if (mounted) setState(() => _isResolvingRoom = false);
@@ -384,6 +395,19 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     return '$normalizedUrl/$normalizedKey';
   }
 
+  /// Bitrate de acordo com a câmera ativa.
+  /// Traseira (1080p): 4.5 Mbps — frontal (720p): 2.5 Mbps.
+  /// Valores abaixo de 1.2 Mbps (default) geravam vídeo borrado no iOS.
+  int get _streamBitrate {
+    final isRear =
+        _cameras.isNotEmpty &&
+        _cameras[_currentCameraIndex].lensDirection == CameraLensDirection.back;
+    return isRear
+        ? 4500 *
+              1024 // 4.5 Mbps para 1080p
+        : 2500 * 1024; // 2.5 Mbps para 720p frontal
+  }
+
   Future<void> _toggleStreaming() async {
     if (!_isInitialized || _controller == null || _isTogglingStream) return;
     setState(() => _isTogglingStream = true);
@@ -409,7 +433,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final rtmpUrl = _room.rtmpUrl?.trim();
       final streamKey = _room.streamKey?.trim();
 
-      if (rtmpUrl == null || rtmpUrl.isEmpty || streamKey == null || streamKey.isEmpty) {
+      if (rtmpUrl == null ||
+          rtmpUrl.isEmpty ||
+          streamKey == null ||
+          streamKey.isEmpty) {
         setState(() => _isTogglingStream = false);
         if (mounted) {
           AppSnackBar.showError(
@@ -421,7 +448,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       }
 
       final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
-      await _controller?.startVideoStreaming(fullUrl);
+      await _controller?.startVideoStreaming(
+        fullUrl,
+        bitrate: _streamBitrate,
+        androidUseOpenGL: true,
+      );
 
       if (mounted) {
         setState(() {
@@ -431,7 +462,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         });
         _startHeartbeat();
         _startLiveElapsedTicker();
-        AppSnackBar.showSuccess(context, S.of(context).broadcasterConnectedLive);
+        AppSnackBar.showSuccess(
+          context,
+          S.of(context).broadcasterConnectedLive,
+        );
       }
     } catch (error) {
       if (mounted) {
@@ -440,7 +474,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           _isTogglingStream = false;
         });
         AppSnackBar.showError(
-            context, S.of(context).broadcasterStreamStartError(error.toString()));
+          context,
+          S.of(context).broadcasterStreamStartError(error.toString()),
+        );
       }
       try {
         await ref.read(liveRepositoryProvider).endLive(_room.id);
@@ -463,9 +499,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           await _refreshRoomCredentialsIfNeeded();
           final rtmpUrl = _room.rtmpUrl?.trim();
           final streamKey = _room.streamKey?.trim();
-          if (rtmpUrl != null && rtmpUrl.isNotEmpty && streamKey != null && streamKey.isNotEmpty) {
+          if (rtmpUrl != null &&
+              rtmpUrl.isNotEmpty &&
+              streamKey != null &&
+              streamKey.isNotEmpty) {
             final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
-            await _controller?.startVideoStreaming(fullUrl);
+            await _controller?.startVideoStreaming(
+              fullUrl,
+              bitrate: _streamBitrate,
+              androidUseOpenGL: true,
+            );
           }
         }
         await ref.read(liveRepositoryProvider).resumeLive(_room.id);
@@ -476,7 +519,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           });
           _startHeartbeat();
           _startLiveElapsedTicker();
-          AppSnackBar.showSuccess(context, S.of(context).broadcasterLiveResumed);
+          AppSnackBar.showSuccess(
+            context,
+            S.of(context).broadcasterLiveResumed,
+          );
         }
       } else {
         if (!_isStreaming) return;
@@ -490,7 +536,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (error) {
       if (mounted) {
         AppSnackBar.showError(
-            context, S.of(context).broadcasterPauseToggleError(error.toString()));
+          context,
+          S.of(context).broadcasterPauseToggleError(error.toString()),
+        );
       }
     } finally {
       if (mounted) setState(() => _isTogglingPause = false);
@@ -532,20 +580,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.slate,
-          title: Text(s.broadcasterDiscardTitle,
-              style: const TextStyle(color: Colors.white)),
+          title: Text(
+            s.broadcasterDiscardTitle,
+            style: const TextStyle(color: Colors.white),
+          ),
           content: Text(
             s.broadcasterDiscardMessage,
             style: const TextStyle(color: AppColors.coolGray),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(s.broadcasterCancel)),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.broadcasterCancel),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(s.broadcasterDiscard,
-                  style: const TextStyle(color: AppColors.mutedRed)),
+              child: Text(
+                s.broadcasterDiscard,
+                style: const TextStyle(color: AppColors.mutedRed),
+              ),
             ),
           ],
         ),
@@ -557,20 +610,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.slate,
-        title: Text(s.broadcasterEndTitle,
-            style: const TextStyle(color: Colors.white)),
+        title: Text(
+          s.broadcasterEndTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
           s.broadcasterEndMessage,
           style: const TextStyle(color: AppColors.coolGray),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(s.broadcasterContinueLive)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.broadcasterContinueLive),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(s.broadcasterEnd,
-                style: const TextStyle(color: AppColors.mutedRed)),
+            child: Text(
+              s.broadcasterEnd,
+              style: const TextStyle(color: AppColors.mutedRed),
+            ),
           ),
         ],
       ),
@@ -635,7 +693,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       // 1. Garantir socket conectado (await é essencial aqui)
       await ref.read(socketServiceProvider).connect();
     } catch (e) {
-      debugPrint('Broadcaster: socket connect failed (will retry on reconnect): $e');
+      debugPrint(
+        'Broadcaster: socket connect failed (will retry on reconnect): $e',
+      );
     }
     if (!mounted) return;
 
@@ -777,11 +837,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final accepted = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => _BattleInviteDialog(
-        key: dialogKey,
-        fromName: fromName,
-        l10n: l10n,
-      ),
+      builder: (ctx) =>
+          _BattleInviteDialog(key: dialogKey, fromName: fromName, l10n: l10n),
     );
 
     _battleInviteTimeoutTimer?.cancel();
@@ -819,10 +876,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     try {
       final eligResp = await ref.read(battleServiceProvider).checkEligibility();
       final data = (eligResp['data'] as Map?)?.cast<String, dynamic>() ?? {};
-      final battleData = (data['battle'] as Map?)?.cast<String, dynamic>() ?? {};
+      final battleData =
+          (data['battle'] as Map?)?.cast<String, dynamic>() ?? {};
       final eligible = battleData['eligible'] as bool? ?? true;
       if (!eligible && mounted) {
-        final reason = battleData['reason'] as String? ?? 'Você ainda não pode iniciar batalhas';
+        final reason =
+            battleData['reason'] as String? ??
+            'Você ainda não pode iniciar batalhas';
         AppSnackBar.showError(context, reason);
         return;
       }
@@ -843,11 +903,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         onInvite: (targetRoomId, durationSeconds) async {
           Navigator.pop(ctx);
           try {
-            await ref.read(battleServiceProvider).inviteBattle(
-              roomId: _room.id,
-              targetRoomId: targetRoomId,
-              durationSeconds: durationSeconds,
-            );
+            await ref
+                .read(battleServiceProvider)
+                .inviteBattle(
+                  roomId: _room.id,
+                  targetRoomId: targetRoomId,
+                  durationSeconds: durationSeconds,
+                );
             if (mounted) {
               AppSnackBar.showSuccess(context, 'Convite de batalha enviado!');
             }
@@ -883,7 +945,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
               children: [
                 Center(
                   child: Container(
-                    width: 36, height: 4,
+                    width: 36,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(2),
@@ -899,17 +962,31 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.people_alt_rounded,
-                          color: Color(0xFF0EA5E9), size: 22),
+                      child: const Icon(
+                        Icons.people_alt_rounded,
+                        color: Color(0xFF0EA5E9),
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Convidar Co-host',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                        Text('Transmita junto com outro criador',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
+                        const Text(
+                          'Convidar Co-host',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        Text(
+                          'Transmita junto com outro criador',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -921,30 +998,52 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   decoration: BoxDecoration(
                     color: const Color(0xFF0EA5E9).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Como funciona:',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                      const Text(
+                        'Como funciona:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       ...[
                         '📲 O co-host recebe uma notificação',
                         '🎥 A tela divide automaticamente',
                         '💬 Vocês compartilham o chat ao vivo',
                         '⏱ Sem limite de tempo',
-                      ].map((t) => Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(t, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
-                      )),
+                      ].map(
+                        (t) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            t,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Seguidores online (placeholder)
-                Text('Seguidores online',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(
+                  'Seguidores online',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 72,
@@ -956,16 +1055,27 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       child: Column(
                         children: [
                           Container(
-                            width: 44, height: 44,
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.08),
                               border: Border.all(color: Colors.white12),
                             ),
-                            child: const Icon(Icons.person_outline, color: Colors.white38, size: 22),
+                            child: const Icon(
+                              Icons.person_outline,
+                              color: Colors.white38,
+                              size: 22,
+                            ),
                           ),
                           const SizedBox(height: 4),
-                          Text('• • •', style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 10)),
+                          Text(
+                            '• • •',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -983,7 +1093,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0EA5E9).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFF0EA5E9,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -1002,14 +1114,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.link_rounded, color: Colors.white, size: 18),
+                              Icon(
+                                Icons.link_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
                               SizedBox(width: 8),
-                              Text('Enviar Convite de Co-host',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                  )),
+                              Text(
+                                'Enviar Convite de Co-host',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -1085,8 +1203,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ),
                 MoreOptionTile(
-                  icon: _isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                  iconColor: _isPaused ? const Color(0xFF22C55E) : Colors.orange,
+                  icon: _isPaused
+                      ? Icons.play_arrow_rounded
+                      : Icons.pause_rounded,
+                  iconColor: _isPaused
+                      ? const Color(0xFF22C55E)
+                      : Colors.orange,
                   title: _isPaused
                       ? s.broadcasterMoreResumeLive
                       : s.broadcasterMorePauseBrb,
@@ -1210,7 +1332,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black87, Colors.transparent, Colors.transparent, Colors.black87],
+                  colors: [
+                    Colors.black87,
+                    Colors.transparent,
+                    Colors.transparent,
+                    Colors.black87,
+                  ],
                   stops: [0.0, 0.18, 0.55, 1.0],
                 ),
               ),
@@ -1259,7 +1386,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             // ===== UI Layers =====
             // Top bar (HUD) — floating
             Positioned(
-              top: 0, left: 0, right: 0,
+              top: 0,
+              left: 0,
+              right: 0,
               child: SafeArea(
                 bottom: false,
                 child: Padding(
@@ -1277,7 +1406,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         elapsedLabel: _formatDuration(_liveElapsed),
                         countFormatter: _formatCount,
                         onClose: _closeBroadcaster,
-                        onSwitchCamera: _cameras.length > 1 ? _switchCamera : null,
+                        onSwitchCamera: _cameras.length > 1
+                            ? _switchCamera
+                            : null,
                       ),
                       const SizedBox(height: 6),
                       if (viewerEvent != null)
@@ -1293,13 +1424,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
             // Comments overlay — left-bottom floating
             Positioned(
-              left: 14, right: 80, bottom: 90,
-              child: _isStreaming || _isPaused || commentsState.comments.isNotEmpty
+              left: 14,
+              right: 80,
+              bottom: 90,
+              child:
+                  _isStreaming || _isPaused || commentsState.comments.isNotEmpty
                   ? LiveCommentsOverlay(
                       comments: commentsState.comments,
                       isSending: commentsState.isSending,
                       onSendComment: (message) => ref
-                          .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+                          .read(
+                            liveRoomCommentsViewModelProvider(
+                              widget.room.id,
+                            ).notifier,
+                          )
                           .sendComment(message),
                     )
                   : const SizedBox.shrink(),
@@ -1308,7 +1446,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             // Bottom action bar — floating glass pill
             if (!_showCountdown && (_isStreaming || _isPaused))
               Positioned(
-                left: 14, right: 14, bottom: 16,
+                left: 14,
+                right: 14,
+                bottom: 16,
                 child: SafeArea(
                   top: false,
                   child: LiveActionBar(
