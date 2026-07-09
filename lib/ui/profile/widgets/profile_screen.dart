@@ -48,17 +48,21 @@ String? _realHandle(String? raw) {
 }
 
 /// Stories ativos de um usuário (vazio se não houver / 404).
-final userStoriesProvider =
-    FutureProvider.autoDispose.family<List<Story>, String>((ref, userId) async {
-  final repo = ref.watch(storiesRepositoryProvider);
-  try {
-    return await repo.getUserStories(userId);
-  } catch (_) {
-    return const <Story>[];
-  }
-});
+final userStoriesProvider = FutureProvider.autoDispose
+    .family<List<Story>, String>((ref, userId) async {
+      final repo = ref.watch(storiesRepositoryProvider);
+      try {
+        return await repo.getUserStories(userId);
+      } catch (_) {
+        return const <Story>[];
+      }
+    });
 
-void _openStoryViewer(BuildContext context, WidgetRef ref, List<Story> stories) {
+void _openStoryViewer(
+  BuildContext context,
+  WidgetRef ref,
+  List<Story> stories,
+) {
   if (stories.isEmpty) return;
   // Abre no primeiro story não-visto, ou no primeiro caso todos vistos.
   final firstUnseen = stories.indexWhere((s) => !s.isSeen);
@@ -145,14 +149,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     final s = S.of(context);
     final tabs = <Tab>[
-      Tab(icon: const Icon(Icons.article_outlined, size: 20), text: s.profileTabPosts),
-      Tab(icon: const Icon(Icons.play_circle_outline, size: 20), text: s.profileTabVideos),
-      Tab(icon: const Icon(Icons.grid_on_outlined, size: 20), text: s.profileTabGallery),
-      Tab(icon: const Icon(Icons.live_tv_outlined, size: 20), text: s.profileTabLives),
+      Tab(
+        icon: const Icon(Icons.article_outlined, size: 20),
+        text: s.profileTabPosts,
+      ),
+      Tab(
+        icon: const Icon(Icons.play_circle_outline, size: 20),
+        text: s.profileTabVideos,
+      ),
+      Tab(
+        icon: const Icon(Icons.grid_on_outlined, size: 20),
+        text: s.profileTabGallery,
+      ),
+      Tab(
+        icon: const Icon(Icons.live_tv_outlined, size: 20),
+        text: s.profileTabLives,
+      ),
       if (_isSeller)
         Tab(
-            icon: const Icon(Icons.shopping_bag_outlined, size: 20),
-            text: s.profileTabShop),
+          icon: const Icon(Icons.shopping_bag_outlined, size: 20),
+          text: s.profileTabShop,
+        ),
     ];
 
     return Scaffold(
@@ -165,7 +182,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             pinned: true,
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-              onPressed: () => context.pop(),
+              onPressed: () =>
+                  context.canPop() ? context.pop() : context.go('/home'),
             ),
             title: profileState.profile.maybeWhen(
               data: (p) {
@@ -185,7 +203,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             actions: [
               if (_isSeller)
                 IconButton(
-                  icon: Icon(Icons.storefront, color: context.colors.textPrimary),
+                  icon: Icon(
+                    Icons.storefront,
+                    color: context.colors.textPrimary,
+                  ),
                   tooltip: s.profileTooltipShop,
                   onPressed: () => _tabController?.animateTo(3),
                 ),
@@ -201,7 +222,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               if (isMe)
                 Consumer(
                   builder: (context, ref, _) {
-                    final unread = ref
+                    final unread =
+                        ref
                             .watch(notificationsUnreadCountProvider)
                             .asData
                             ?.value ??
@@ -222,16 +244,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             right: 6,
                             top: 8,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 16,
+                                minHeight: 16,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.redAccent,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.black, width: 1),
+                                border: Border.all(
+                                  color: Colors.black,
+                                  width: 1,
+                                ),
                               ),
                               child: Text(
                                 unread > 99 ? '99+' : unread.toString(),
-                                style: TextStyle(color: context.colors.textPrimary, fontSize: 9, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: context.colors.textPrimary,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -324,7 +359,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   // ---- Sprint 3: Share / Block / Report --------------------------------
   Future<void> _shareProfile(BuildContext context) async {
-    final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
+    final profile = ref
+        .read(profileViewModelProvider(widget.userId))
+        .profile
+        .value;
     final handle = _realHandle(profile?.username) ?? widget.userId;
     final name = profile?.displayName ?? handle;
     final url = 'https://brawe.app/connect/u/$handle';
@@ -334,25 +372,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       await Share.share(text, subject: name);
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).profileShareFail)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).profileShareFail)));
     }
   }
 
   Future<void> _copyProfileLink(BuildContext context) async {
-    final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
+    final profile = ref
+        .read(profileViewModelProvider(widget.userId))
+        .profile
+        .value;
     final handle = _realHandle(profile?.username) ?? widget.userId;
     final url = 'https://brawe.app/connect/u/$handle';
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(S.of(context).profileLinkCopied)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(S.of(context).profileLinkCopied)));
   }
 
   Future<void> _confirmBlock(BuildContext context) async {
-    final profile = ref.read(profileViewModelProvider(widget.userId)).profile.value;
+    final profile = ref
+        .read(profileViewModelProvider(widget.userId))
+        .profile
+        .value;
     final name = profile?.displayName ?? S.of(context).profileFallbackUser;
     final ok = await showDialog<bool>(
       context: context,
@@ -374,8 +418,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
     if (ok != true || !context.mounted) return;
     try {
-      final slug = _realHandle(
-              ref.read(profileViewModelProvider(widget.userId)).profile.value?.username) ??
+      final slug =
+          _realHandle(
+            ref
+                .read(profileViewModelProvider(widget.userId))
+                .profile
+                .value
+                ?.username,
+          ) ??
           widget.userId;
       await ref.read(socialActionsServiceProvider).blockUser(slug);
       if (!context.mounted) return;
@@ -423,7 +473,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             ),
             for (final r in reasons)
               ListTile(
-                title: Text(r.$2, style: TextStyle(color: context.colors.textPrimary)),
+                title: Text(
+                  r.$2,
+                  style: TextStyle(color: context.colors.textPrimary),
+                ),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _submitReport(context, r.$1);
@@ -438,24 +491,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _submitReport(BuildContext context, String reason) async {
     try {
-      await ref.read(socialActionsServiceProvider).report(
-            targetType: 'user',
-            targetId: widget.userId,
-            reason: reason,
-          );
+      await ref
+          .read(socialActionsServiceProvider)
+          .report(targetType: 'user', targetId: widget.userId, reason: reason);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).profileReportSent)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).profileReportSent)));
     } catch (_) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).profileReportError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).profileReportError)));
     }
   }
 
-    void _showOptions(BuildContext context, bool isMe) {
+  void _showOptions(BuildContext context, bool isMe) {
     showModalBottomSheet(
       context: context,
       backgroundColor: context.colors.surfaceElevated,
@@ -465,150 +516,187 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       builder: (ctx) {
         final s = S.of(ctx);
         return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: context.colors.border,
-                borderRadius: BorderRadius.circular(2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: context.colors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            if (!isMe) ...[
-              ListTile(
-                leading: Icon(Icons.share_outlined, color: context.colors.textPrimary),
-                title: Text(s.profileOptionShareProfile,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _shareProfile(context);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.link, color: context.colors.textPrimary),
-                title: Text(s.profileOptionCopyLink,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _copyProfileLink(context);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.block, color: context.colors.textPrimary),
-                title: Text(s.profileBlockTitle,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _confirmBlock(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                title: Text(s.profileOptionReport,
-                    style: const TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showReportSheet(context);
-                },
-              ),
-            ] else ...[
-              ListTile(
-                leading: Icon(Icons.emoji_events_outlined,
-                    color: context.colors.textPrimary),
-                title: Text(s.profileOptionDailyQuests,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.push('/quests');
-                },
-              ),
-              Divider(color: context.colors.divider, height: 1),
-              ListTile(
-                leading: Icon(Icons.workspace_premium_rounded,
-                    color: context.colors.accentGold),
-                title: Text(
-                  s.creatorProgramTitle,
-                  style: TextStyle(
+              if (!isMe) ...[
+                ListTile(
+                  leading: Icon(
+                    Icons.share_outlined,
                     color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                trailing: Icon(Icons.chevron_right_rounded,
-                    color: context.colors.textTertiary),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.push('/creator/intro');
-                },
-              ),
-              Divider(color: context.colors.divider, height: 1),
-              if (kEnableMonetization) ...[
-                ListTile(
-                  leading: Icon(Icons.account_balance_wallet_outlined,
-                      color: context.colors.textPrimary),
-                  title: Text(s.profileOptionWallet,
-                      style: TextStyle(color: context.colors.textPrimary)),
+                  title: Text(
+                    s.profileOptionShareProfile,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
-                    context.push('/wallet');
+                    _shareProfile(context);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.link, color: context.colors.textPrimary),
+                  title: Text(
+                    s.profileOptionCopyLink,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _copyProfileLink(context);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.block, color: context.colors.textPrimary),
+                  title: Text(
+                    s.profileBlockTitle,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _confirmBlock(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.flag_outlined, color: Colors.red),
+                  title: Text(
+                    s.profileOptionReport,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _showReportSheet(context);
+                  },
+                ),
+              ] else ...[
+                ListTile(
+                  leading: Icon(
+                    Icons.emoji_events_outlined,
+                    color: context.colors.textPrimary,
+                  ),
+                  title: Text(
+                    s.profileOptionDailyQuests,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/quests');
                   },
                 ),
                 Divider(color: context.colors.divider, height: 1),
                 ListTile(
-                  leading: Icon(Icons.show_chart_rounded,
-                      color: context.colors.textPrimary),
-                  title: Text(s.earningsTitle,
-                      style: TextStyle(color: context.colors.textPrimary)),
+                  leading: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: context.colors.accentGold,
+                  ),
+                  title: Text(
+                    s.creatorProgramTitle,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: context.colors.textTertiary,
+                  ),
                   onTap: () {
                     Navigator.of(context).pop();
-                    context.push('/earnings');
+                    context.push('/creator/intro');
                   },
                 ),
                 Divider(color: context.colors.divider, height: 1),
-              ],
-              ListTile(
-                leading: Icon(Icons.notifications_outlined,
-                    color: context.colors.textPrimary),
-                title: Text(s.profileOptionNotifications,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.push('/notifications');
-                },
-              ),
-              Divider(color: context.colors.divider, height: 1),
-              ListTile(
-                leading: Icon(Icons.settings_outlined,
-                    color: context.colors.textPrimary),
-                title: Text(s.profileOptionSettings,
-                    style: TextStyle(color: context.colors.textPrimary)),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  context.push('/settings');
-                },
-              ),
-              Divider(color: context.colors.divider, height: 1),
-              ListTile(
-                leading: const Icon(Icons.logout_rounded,
-                    color: AppColors.mutedRed),
-                title: Text(
-                  s.profileOptionLogout,
-                  style: const TextStyle(
+                if (kEnableMonetization) ...[
+                  ListTile(
+                    leading: Icon(
+                      Icons.account_balance_wallet_outlined,
+                      color: context.colors.textPrimary,
+                    ),
+                    title: Text(
+                      s.profileOptionWallet,
+                      style: TextStyle(color: context.colors.textPrimary),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push('/wallet');
+                    },
+                  ),
+                  Divider(color: context.colors.divider, height: 1),
+                  ListTile(
+                    leading: Icon(
+                      Icons.show_chart_rounded,
+                      color: context.colors.textPrimary,
+                    ),
+                    title: Text(
+                      s.earningsTitle,
+                      style: TextStyle(color: context.colors.textPrimary),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.push('/earnings');
+                    },
+                  ),
+                  Divider(color: context.colors.divider, height: 1),
+                ],
+                ListTile(
+                  leading: Icon(
+                    Icons.notifications_outlined,
+                    color: context.colors.textPrimary,
+                  ),
+                  title: Text(
+                    s.profileOptionNotifications,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/notifications');
+                  },
+                ),
+                Divider(color: context.colors.divider, height: 1),
+                ListTile(
+                  leading: Icon(
+                    Icons.settings_outlined,
+                    color: context.colors.textPrimary,
+                  ),
+                  title: Text(
+                    s.profileOptionSettings,
+                    style: TextStyle(color: context.colors.textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    context.push('/settings');
+                  },
+                ),
+                Divider(color: context.colors.divider, height: 1),
+                ListTile(
+                  leading: const Icon(
+                    Icons.logout_rounded,
                     color: AppColors.mutedRed,
-                    fontWeight: FontWeight.w600,
                   ),
+                  title: Text(
+                    s.profileOptionLogout,
+                    style: const TextStyle(
+                      color: AppColors.mutedRed,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _confirmLogout(context);
+                  },
                 ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _confirmLogout(context);
-                },
-              ),
+              ],
+              const SizedBox(height: 8),
             ],
-            const SizedBox(height: 8),
-          ],
-        ),
+          ),
         );
       },
     );
@@ -619,9 +707,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.colors.surfaceElevated,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           S.of(ctx).profileLogoutTitle,
           style: TextStyle(
@@ -641,9 +727,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.mutedRed,
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.mutedRed),
             child: Text(
               S.of(ctx).profileLogoutConfirm,
               style: const TextStyle(fontWeight: FontWeight.w700),
@@ -698,9 +782,8 @@ class _ProfileHeader extends ConsumerWidget {
       error: (_, __) => fallbackProfile != null
           ? _buildFull(context, ref, fallbackProfile)
           : _HeaderError(
-              onRetry: () => ref
-                  .read(profileViewModelProvider(userId).notifier)
-                  .refresh(),
+              onRetry: () =>
+                  ref.read(profileViewModelProvider(userId).notifier).refresh(),
             ),
     );
   }
@@ -713,25 +796,27 @@ class _ProfileHeader extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Banner / Capa ──────────────────────────────────────────────
-        Builder(builder: (context) {
-          final storiesAsync = ref.watch(userStoriesProvider(userId));
-          final stories = storiesAsync.asData?.value ?? const <Story>[];
-          final hasStories = stories.isNotEmpty;
-          final hasUnviewed = stories.any((s) => !s.isSeen);
-          return _BannerSection(
-            bannerUrl: profile.bannerUrl,
-            avatarUrl: profile.avatarUrl,
-            initials: _initialsFor(profile),
-            isMe: isMe,
-            onEditProfile: () => context.push('/edit-profile'),
-            onSettings: () => context.push('/settings'),
-            hasStories: hasStories,
-            hasUnviewedStories: hasUnviewed,
-            onAvatarTap: hasStories
-                ? () => _openStoryViewer(context, ref, stories)
-                : null,
-          );
-        }),
+        Builder(
+          builder: (context) {
+            final storiesAsync = ref.watch(userStoriesProvider(userId));
+            final stories = storiesAsync.asData?.value ?? const <Story>[];
+            final hasStories = stories.isNotEmpty;
+            final hasUnviewed = stories.any((s) => !s.isSeen);
+            return _BannerSection(
+              bannerUrl: profile.bannerUrl,
+              avatarUrl: profile.avatarUrl,
+              initials: _initialsFor(profile),
+              isMe: isMe,
+              onEditProfile: () => context.push('/edit-profile'),
+              onSettings: () => context.push('/settings'),
+              hasStories: hasStories,
+              hasUnviewedStories: hasUnviewed,
+              onAvatarTap: hasStories
+                  ? () => _openStoryViewer(context, ref, stories)
+                  : null,
+            );
+          },
+        ),
 
         // Espaço reservado para o avatar sobreposto (Positioned bottom: -48)
         // + espaçamento até o nome, evitando que o nome se sobreponha à foto.
@@ -747,7 +832,9 @@ class _ProfileHeader extends ConsumerWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      profile.displayName ?? profile.username ?? S.of(context).profileUserFallback,
+                      profile.displayName ??
+                          profile.username ??
+                          S.of(context).profileUserFallback,
                       style: TextStyle(
                         color: context.colors.textPrimary,
                         fontSize: 22,
@@ -758,8 +845,11 @@ class _ProfileHeader extends ConsumerWidget {
                   ),
                   if (profile.isVerified) ...[
                     const SizedBox(width: 6),
-                    const Icon(Icons.verified,
-                        color: AppColors.electricPurple, size: 20),
+                    const Icon(
+                      Icons.verified,
+                      color: AppColors.electricPurple,
+                      size: 20,
+                    ),
                   ],
                   CreatorTierBadgeForUser(userId: profile.id, size: 18),
                 ],
@@ -771,23 +861,34 @@ class _ProfileHeader extends ConsumerWidget {
                   if (_realHandle(profile.username) != null)
                     Text(
                       '@${_realHandle(profile.username)}',
-                      style:  TextStyle(
-                          color: context.colors.textSecondary, fontSize: 14),
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                   if (_realHandle(profile.username) != null && joinedAt != null)
-                     Text('  ·  ',
-                        style: TextStyle(
-                            color: context.colors.textSecondary, fontSize: 14)),
+                    Text(
+                      '  ·  ',
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
                   if (joinedAt != null)
                     Row(
                       children: [
-                         Icon(Icons.calendar_today_outlined,
-                            color: context.colors.textSecondary, size: 12),
+                        Icon(
+                          Icons.calendar_today_outlined,
+                          color: context.colors.textSecondary,
+                          size: 12,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           joinedAt,
-                          style:  TextStyle(
-                              color: context.colors.textSecondary, fontSize: 13),
+                          style: TextStyle(
+                            color: context.colors.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -805,7 +906,10 @@ class _ProfileHeader extends ConsumerWidget {
                 Text(
                   profile.bio!,
                   style: TextStyle(
-                      color: context.colors.textSecondary, fontSize: 14, height: 1.4),
+                    color: context.colors.textSecondary,
+                    fontSize: 14,
+                    height: 1.4,
+                  ),
                 ),
               ],
 
@@ -862,14 +966,20 @@ class _ProfileHeader extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.message_outlined,
-                      color: context.colors.textPrimary, size: 16),
+                  Icon(
+                    Icons.message_outlined,
+                    color: context.colors.textPrimary,
+                    size: 16,
+                  ),
                   SizedBox(width: 6),
-                  Text(S.of(context).profileMessageButton,
-                      style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    S.of(context).profileMessageButton,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -880,7 +990,10 @@ class _ProfileHeader extends ConsumerWidget {
   }
 
   Future<void> _openConversation(
-      BuildContext context, WidgetRef ref, Profile profile) async {
+    BuildContext context,
+    WidgetRef ref,
+    Profile profile,
+  ) async {
     // Mostra um spinner discreto enquanto resolve/cria a conversa.
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -892,7 +1005,9 @@ class _ProfileHeader extends ConsumerWidget {
         '/chat/$convId',
         extra: {
           'participantName':
-              profile.displayName ?? profile.username ?? S.of(context).profileChatFallback,
+              profile.displayName ??
+              profile.username ??
+              S.of(context).profileChatFallback,
           'participantAvatarUrl': profile.avatarUrl,
           'participantId': profile.id,
         },
@@ -910,8 +1025,18 @@ class _ProfileHeader extends ConsumerWidget {
     try {
       final dt = DateTime.parse(user.createdAt);
       const months = [
-        'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-        'jul', 'ago', 'set', 'out', 'nov', 'dez'
+        'jan',
+        'fev',
+        'mar',
+        'abr',
+        'mai',
+        'jun',
+        'jul',
+        'ago',
+        'set',
+        'out',
+        'nov',
+        'dez',
       ];
       return '${months[dt.month - 1]}. de ${dt.year}';
     } catch (_) {
@@ -1022,12 +1147,12 @@ class _BannerSection extends StatelessWidget {
                     color: hasUnviewedStories
                         ? null
                         : hasStories
-                            ? Colors.white24
-                            : Colors.transparent,
+                        ? Colors.white24
+                        : Colors.transparent,
                   ),
                   child: Container(
                     padding: const EdgeInsets.all(2),
-                    decoration:  BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: context.colors.background,
                     ),
@@ -1052,7 +1177,9 @@ class _BannerSection extends StatelessWidget {
                     color: const Color(0xFF4CAF50),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: context.colors.background, width: 2),
+                      color: context.colors.background,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -1159,15 +1286,19 @@ class _InlineStat extends StatelessWidget {
     final row = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value,
-            style: TextStyle(
-                color: valueColor ?? context.colors.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor ?? context.colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(width: 4),
-        Text(label,
-            style:  TextStyle(
-                color: context.colors.textSecondary, fontSize: 13)),
+        Text(
+          label,
+          style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
+        ),
       ],
     );
     if (onTap == null) return row;
@@ -1195,7 +1326,9 @@ class _StatsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.colors.surfaceHighest.withValues(alpha: 0.06)),
+        border: Border.all(
+          color: context.colors.surfaceHighest.withValues(alpha: 0.06),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1225,10 +1358,10 @@ class _StatsCard extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 1,
-        height: 28,
-        color: context.colors.surfaceHighest.withValues(alpha: 0.08),
-      );
+    width: 1,
+    height: 28,
+    color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+  );
 }
 
 class _StatsCol extends StatelessWidget {
@@ -1247,15 +1380,19 @@ class _StatsCol extends StatelessWidget {
   Widget build(BuildContext context) {
     final col = Column(
       children: [
-        Text(value,
-            style: TextStyle(
-                color: valueColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueColor,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(label,
-            style:  TextStyle(
-                color: context.colors.textSecondary, fontSize: 11)),
+        Text(
+          label,
+          style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+        ),
       ],
     );
     if (onTap == null) return col;
@@ -1280,36 +1417,135 @@ class _SocialLinks extends StatelessWidget {
   // Para as marcas (Instagram, X, YouTube, etc.) usamos FontAwesomeIcons
   // que entrega o logotipo oficial mais reconhecível.
   static final Map<String, _SocialLinkStyle> _config = {
-    'website':   _SocialLinkStyle(color: const Color(0xFF1A1428), border: const Color(0xFFB39DDB), label: 'Website',   icon: Icons.public,                 isNative: true),
-    'site':      _SocialLinkStyle(color: const Color(0xFF1A1428), border: const Color(0xFFB39DDB), label: 'Site',      icon: Icons.public,                 isNative: true),
-    'email':     _SocialLinkStyle(color: const Color(0xFF2A2010), border: const Color(0xFFFFB74D), label: 'Email',     icon: Icons.mail_outline,           isNative: true),
-    'instagram': _SocialLinkStyle(color: const Color(0xFF2A1020), border: const Color(0xFFE1306C), label: 'Instagram', icon: FontAwesomeIcons.instagram),
-    'twitter':   _SocialLinkStyle(color: const Color(0xFF0E0E0E), border: const Color(0xFFFFFFFF), label: 'X',         icon: FontAwesomeIcons.xTwitter),
-    'x':         _SocialLinkStyle(color: const Color(0xFF0E0E0E), border: const Color(0xFFFFFFFF), label: 'X',         icon: FontAwesomeIcons.xTwitter),
-    'youtube':   _SocialLinkStyle(color: const Color(0xFF2A0A0A), border: const Color(0xFFFF0000), label: 'YouTube',   icon: FontAwesomeIcons.youtube),
-    'tiktok':    _SocialLinkStyle(color: const Color(0xFF1A1A1A), border: const Color(0xFFFFFFFF), label: 'TikTok',    icon: FontAwesomeIcons.tiktok),
-    'telegram':  _SocialLinkStyle(color: const Color(0xFF0A1A2A), border: const Color(0xFF2AABEE), label: 'Telegram',  icon: FontAwesomeIcons.telegram),
-    'whatsapp':  _SocialLinkStyle(color: const Color(0xFF0A3A1A), border: const Color(0xFF25D366), label: 'WhatsApp',  icon: FontAwesomeIcons.whatsapp),
-    'twitch':    _SocialLinkStyle(color: const Color(0xFF1A0A2A), border: const Color(0xFF9146FF), label: 'Twitch',    icon: FontAwesomeIcons.twitch),
-    'kick':      _SocialLinkStyle(color: const Color(0xFF0A2A14), border: const Color(0xFF53FC18), label: 'Kick',      icon: Icons.sports_esports,         isNative: true),
-    'spotify':   _SocialLinkStyle(color: const Color(0xFF0A1F0E), border: const Color(0xFF1DB954), label: 'Spotify',   icon: FontAwesomeIcons.spotify),
-    'linkedin':  _SocialLinkStyle(color: const Color(0xFF0A1F2A), border: const Color(0xFF0A66C2), label: 'LinkedIn',  icon: FontAwesomeIcons.linkedinIn),
-    'github':    _SocialLinkStyle(color: const Color(0xFF14141A), border: const Color(0xFFCCCCCC), label: 'GitHub',    icon: FontAwesomeIcons.github),
-    'threads':   _SocialLinkStyle(color: const Color(0xFF14141A), border: const Color(0xFFFFFFFF), label: 'Threads',   icon: FontAwesomeIcons.threads),
-    'snapchat':  _SocialLinkStyle(color: const Color(0xFF2A2A0A), border: const Color(0xFFFFFC00), label: 'Snapchat',  icon: FontAwesomeIcons.snapchat),
-    'discord':   _SocialLinkStyle(color: const Color(0xFF14142A), border: const Color(0xFF5865F2), label: 'Discord',   icon: FontAwesomeIcons.discord),
-    'facebook':  _SocialLinkStyle(color: const Color(0xFF0A1A3A), border: const Color(0xFF1877F2), label: 'Facebook',  icon: FontAwesomeIcons.facebook),
+    'website': _SocialLinkStyle(
+      color: const Color(0xFF1A1428),
+      border: const Color(0xFFB39DDB),
+      label: 'Website',
+      icon: Icons.public,
+      isNative: true,
+    ),
+    'site': _SocialLinkStyle(
+      color: const Color(0xFF1A1428),
+      border: const Color(0xFFB39DDB),
+      label: 'Site',
+      icon: Icons.public,
+      isNative: true,
+    ),
+    'email': _SocialLinkStyle(
+      color: const Color(0xFF2A2010),
+      border: const Color(0xFFFFB74D),
+      label: 'Email',
+      icon: Icons.mail_outline,
+      isNative: true,
+    ),
+    'instagram': _SocialLinkStyle(
+      color: const Color(0xFF2A1020),
+      border: const Color(0xFFE1306C),
+      label: 'Instagram',
+      icon: FontAwesomeIcons.instagram,
+    ),
+    'twitter': _SocialLinkStyle(
+      color: const Color(0xFF0E0E0E),
+      border: const Color(0xFFFFFFFF),
+      label: 'X',
+      icon: FontAwesomeIcons.xTwitter,
+    ),
+    'x': _SocialLinkStyle(
+      color: const Color(0xFF0E0E0E),
+      border: const Color(0xFFFFFFFF),
+      label: 'X',
+      icon: FontAwesomeIcons.xTwitter,
+    ),
+    'youtube': _SocialLinkStyle(
+      color: const Color(0xFF2A0A0A),
+      border: const Color(0xFFFF0000),
+      label: 'YouTube',
+      icon: FontAwesomeIcons.youtube,
+    ),
+    'tiktok': _SocialLinkStyle(
+      color: const Color(0xFF1A1A1A),
+      border: const Color(0xFFFFFFFF),
+      label: 'TikTok',
+      icon: FontAwesomeIcons.tiktok,
+    ),
+    'telegram': _SocialLinkStyle(
+      color: const Color(0xFF0A1A2A),
+      border: const Color(0xFF2AABEE),
+      label: 'Telegram',
+      icon: FontAwesomeIcons.telegram,
+    ),
+    'whatsapp': _SocialLinkStyle(
+      color: const Color(0xFF0A3A1A),
+      border: const Color(0xFF25D366),
+      label: 'WhatsApp',
+      icon: FontAwesomeIcons.whatsapp,
+    ),
+    'twitch': _SocialLinkStyle(
+      color: const Color(0xFF1A0A2A),
+      border: const Color(0xFF9146FF),
+      label: 'Twitch',
+      icon: FontAwesomeIcons.twitch,
+    ),
+    'kick': _SocialLinkStyle(
+      color: const Color(0xFF0A2A14),
+      border: const Color(0xFF53FC18),
+      label: 'Kick',
+      icon: Icons.sports_esports,
+      isNative: true,
+    ),
+    'spotify': _SocialLinkStyle(
+      color: const Color(0xFF0A1F0E),
+      border: const Color(0xFF1DB954),
+      label: 'Spotify',
+      icon: FontAwesomeIcons.spotify,
+    ),
+    'linkedin': _SocialLinkStyle(
+      color: const Color(0xFF0A1F2A),
+      border: const Color(0xFF0A66C2),
+      label: 'LinkedIn',
+      icon: FontAwesomeIcons.linkedinIn,
+    ),
+    'github': _SocialLinkStyle(
+      color: const Color(0xFF14141A),
+      border: const Color(0xFFCCCCCC),
+      label: 'GitHub',
+      icon: FontAwesomeIcons.github,
+    ),
+    'threads': _SocialLinkStyle(
+      color: const Color(0xFF14141A),
+      border: const Color(0xFFFFFFFF),
+      label: 'Threads',
+      icon: FontAwesomeIcons.threads,
+    ),
+    'snapchat': _SocialLinkStyle(
+      color: const Color(0xFF2A2A0A),
+      border: const Color(0xFFFFFC00),
+      label: 'Snapchat',
+      icon: FontAwesomeIcons.snapchat,
+    ),
+    'discord': _SocialLinkStyle(
+      color: const Color(0xFF14142A),
+      border: const Color(0xFF5865F2),
+      label: 'Discord',
+      icon: FontAwesomeIcons.discord,
+    ),
+    'facebook': _SocialLinkStyle(
+      color: const Color(0xFF0A1A3A),
+      border: const Color(0xFF1877F2),
+      label: 'Facebook',
+      icon: FontAwesomeIcons.facebook,
+    ),
   };
 
   /// Estilo neutro para chaves desconhecidas ou links customizados sem ícone:
   /// usa globo Material (Icons.public) — comportamento de link de site externo.
   static _SocialLinkStyle _fallbackStyle(String label) => _SocialLinkStyle(
-        color: const Color(0xFF1A1A2E),
-        border: const Color(0xFFB39DDB),
-        label: label,
-        icon: Icons.public,
-        isNative: true,
-      );
+    color: const Color(0xFF1A1A2E),
+    border: const Color(0xFFB39DDB),
+    label: label,
+    icon: Icons.public,
+    isNative: true,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -1350,6 +1586,7 @@ class _SocialLinkStyle {
   final Color border;
   final String label;
   final IconData icon;
+
   /// `true` → renderiza com `Icon()` (Material); `false` → renderiza com `FaIcon()`.
   final bool isNative;
   const _SocialLinkStyle({
@@ -1365,7 +1602,11 @@ class _CustomLink {
   final String title;
   final String url;
   final String icon;
-  const _CustomLink({required this.title, required this.url, required this.icon});
+  const _CustomLink({
+    required this.title,
+    required this.url,
+    required this.icon,
+  });
 }
 
 List<_CustomLink> _parseCustomLinks(String? raw) {
@@ -1375,11 +1616,13 @@ List<_CustomLink> _parseCustomLinks(String? raw) {
     if (decoded is! List) return const [];
     return decoded
         .whereType<Map>()
-        .map((m) => _CustomLink(
-              title: (m['title'] ?? '').toString().trim(),
-              url: (m['url'] ?? '').toString().trim(),
-              icon: (m['icon'] ?? 'Globe').toString(),
-            ))
+        .map(
+          (m) => _CustomLink(
+            title: (m['title'] ?? '').toString().trim(),
+            url: (m['url'] ?? '').toString().trim(),
+            icon: (m['icon'] ?? 'Globe').toString(),
+          ),
+        )
         .where((c) => c.url.isNotEmpty)
         .toList();
   } catch (_) {
@@ -1391,30 +1634,49 @@ List<_CustomLink> _parseCustomLinks(String? raw) {
 /// (`CUSTOM_ICON_PALETTE`). Usa Material Icons (nativos).
 IconData _customIconFor(String name) {
   switch (name) {
-    case 'ShoppingBag':    return Icons.shopping_bag_outlined;
-    case 'Briefcase':      return Icons.work_outline;
-    case 'Heart':          return Icons.favorite_border;
-    case 'Star':           return Icons.star_outline;
-    case 'Music':          return Icons.music_note_outlined;
-    case 'Book':           return Icons.menu_book_outlined;
-    case 'Coffee':         return Icons.local_cafe_outlined;
-    case 'Award':          return Icons.emoji_events_outlined;
-    case 'Zap':            return Icons.flash_on_outlined;
-    case 'Mic':            return Icons.mic_none_outlined;
-    case 'Tv':             return Icons.tv_outlined;
-    case 'Calendar':       return Icons.calendar_today_outlined;
-    case 'Mail':           return Icons.mail_outline;
-    case 'Phone':          return Icons.phone_outlined;
-    case 'MessageSquare':  return Icons.chat_bubble_outline;
-    case 'MessageCircle':  return Icons.chat_outlined;
-    case 'DollarSign':     return Icons.attach_money_outlined;
-    case 'CreditCard':     return Icons.credit_card_outlined;
-    case 'LinkIcon':       return Icons.link_rounded;
+    case 'ShoppingBag':
+      return Icons.shopping_bag_outlined;
+    case 'Briefcase':
+      return Icons.work_outline;
+    case 'Heart':
+      return Icons.favorite_border;
+    case 'Star':
+      return Icons.star_outline;
+    case 'Music':
+      return Icons.music_note_outlined;
+    case 'Book':
+      return Icons.menu_book_outlined;
+    case 'Coffee':
+      return Icons.local_cafe_outlined;
+    case 'Award':
+      return Icons.emoji_events_outlined;
+    case 'Zap':
+      return Icons.flash_on_outlined;
+    case 'Mic':
+      return Icons.mic_none_outlined;
+    case 'Tv':
+      return Icons.tv_outlined;
+    case 'Calendar':
+      return Icons.calendar_today_outlined;
+    case 'Mail':
+      return Icons.mail_outline;
+    case 'Phone':
+      return Icons.phone_outlined;
+    case 'MessageSquare':
+      return Icons.chat_bubble_outline;
+    case 'MessageCircle':
+      return Icons.chat_outlined;
+    case 'DollarSign':
+      return Icons.attach_money_outlined;
+    case 'CreditCard':
+      return Icons.credit_card_outlined;
+    case 'LinkIcon':
+      return Icons.link_rounded;
     case 'Globe':
-    default:               return Icons.public;
+    default:
+      return Icons.public;
   }
 }
-
 
 /// Resolve o valor salvo no perfil (handle/@user/URL) em uma URL utilizável
 /// para a rede social informada e abre no app nativo.
@@ -1483,7 +1745,9 @@ Future<void> _launchSocial(String network, String raw) async {
         url = 'https://snapchat.com/add/$handle';
         break;
       case 'discord':
-        url = handle.startsWith('discord.gg/') || handle.startsWith('discord.com/')
+        url =
+            handle.startsWith('discord.gg/') ||
+                handle.startsWith('discord.com/')
             ? 'https://$handle'
             : 'https://discord.com/users/$handle';
         break;
@@ -1502,7 +1766,11 @@ Future<void> _launchSocial(String network, String raw) async {
 }
 
 class _SocialPill extends StatelessWidget {
-  const _SocialPill({required this.network, required this.style, required this.url});
+  const _SocialPill({
+    required this.network,
+    required this.style,
+    required this.url,
+  });
   final String network;
   final _SocialLinkStyle style;
   final String url;
@@ -1632,13 +1900,13 @@ class _HeaderSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget bar({double w = 120, double h = 14}) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: context.colors.surfaceHighest.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: context.colors.surfaceHighest.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -1709,21 +1977,23 @@ class _HeaderError extends StatelessWidget {
           const SizedBox(height: 14),
           OutlinedButton.icon(
             onPressed: onRetry,
-            icon: Icon(Icons.refresh_rounded,
-                size: 18, color: context.colors.textPrimary),
+            icon: Icon(
+              Icons.refresh_rounded,
+              size: 18,
+              color: context.colors.textPrimary,
+            ),
             label: Text(
               S.of(context).profileRetry,
               style: TextStyle(color: context.colors.textPrimary),
             ),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: context.colors.surfaceHighest.withValues(alpha: 0.2)),
+              side: BorderSide(
+                color: context.colors.surfaceHighest.withValues(alpha: 0.2),
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
           ),
         ],
@@ -1756,7 +2026,7 @@ class _SellerBadge extends StatelessWidget {
         children: [
           const Icon(Icons.storefront, color: Color(0xFFFF9500), size: 20),
           const SizedBox(width: 10),
-           Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1770,7 +2040,10 @@ class _SellerBadge extends StatelessWidget {
                 ),
                 Text(
                   S.of(context).profileSellerSubtitle,
-                  style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -1817,9 +2090,11 @@ class _PostsGrid extends StatelessWidget {
         }
 
         final textual = posts
-            .where((p) =>
-                (p.imageUrl == null || p.imageUrl!.isEmpty) &&
-                !_isVideo(p.imageUrl))
+            .where(
+              (p) =>
+                  (p.imageUrl == null || p.imageUrl!.isEmpty) &&
+                  !_isVideo(p.imageUrl),
+            )
             .toList();
 
         if (textual.isEmpty) {
@@ -1890,22 +2165,30 @@ class _LivesGrid extends StatelessWidget {
                     left: 4,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.mutedRed,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(S.of(context).profileLiveBadge,
-                          style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold)),
+                      child: Text(
+                        S.of(context).profileLiveBadge,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                   if (live.thumbnailUrl == null)
                     Center(
-                      child: Icon(Icons.play_circle_outline,
-                          color: context.colors.border, size: 32),
+                      child: Icon(
+                        Icons.play_circle_outline,
+                        color: context.colors.border,
+                        size: 32,
+                      ),
                     ),
                 ],
               ),
@@ -1949,8 +2232,11 @@ class _ProductsGrid extends StatelessWidget {
             sliver: SliverToBoxAdapter(
               child: Row(
                 children: [
-                  const Icon(Icons.local_fire_department,
-                      color: Color(0xFFFF9500), size: 20),
+                  const Icon(
+                    Icons.local_fire_department,
+                    color: Color(0xFFFF9500),
+                    size: 20,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     S.of(context).profileShopFeatured,
@@ -2043,8 +2329,10 @@ class _ProductCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
                       color: context.colors.background,
-                      child:  Icon(Icons.image_outlined,
-                          color: context.colors.textSecondary),
+                      child: Icon(
+                        Icons.image_outlined,
+                        color: context.colors.textSecondary,
+                      ),
                     ),
                   ),
                   if (product.hasDiscount)
@@ -2053,7 +2341,9 @@ class _ProductCard extends StatelessWidget {
                       left: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.mutedRed,
                           borderRadius: BorderRadius.circular(6),
@@ -2087,7 +2377,9 @@ class _ProductCard extends StatelessWidget {
                       left: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF9500),
                           borderRadius: BorderRadius.circular(6),
@@ -2137,7 +2429,7 @@ class _ProductCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style:  TextStyle(
+                          style: TextStyle(
                             color: context.colors.textSecondary,
                             fontSize: 10,
                             decoration: TextDecoration.lineThrough,
@@ -2149,7 +2441,7 @@ class _ProductCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     S.of(context).profileProductSoldCount(product.soldCount),
-                    style:  TextStyle(
+                    style: TextStyle(
                       color: context.colors.textSecondary,
                       fontSize: 10,
                     ),
@@ -2184,7 +2476,7 @@ class _ProductDetailSheet extends StatelessWidget {
       maxChildSize: 0.95,
       minChildSize: 0.4,
       builder: (_, controller) => Container(
-        decoration:  BoxDecoration(
+        decoration: BoxDecoration(
           color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -2240,7 +2532,7 @@ class _ProductDetailSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style:  TextStyle(
+                          style: TextStyle(
                             color: context.colors.textSecondary,
                             fontSize: 14,
                             decoration: TextDecoration.lineThrough,
@@ -2249,7 +2541,9 @@ class _ProductDetailSheet extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.mutedRed,
                             borderRadius: BorderRadius.circular(6),
@@ -2283,8 +2577,12 @@ class _ProductDetailSheet extends StatelessWidget {
                         product.isSoldOut
                             ? S.of(context).profileProductSoldOut
                             : product.isLowStock
-                                ? S.of(context).profileProductLowStock(product.stock)
-                                : S.of(context).profileProductInStock(product.stock),
+                            ? S
+                                  .of(context)
+                                  .profileProductLowStock(product.stock)
+                            : S
+                                  .of(context)
+                                  .profileProductInStock(product.stock),
                         style: TextStyle(
                           color: product.isSoldOut
                               ? AppColors.mutedRed
@@ -2294,9 +2592,13 @@ class _ProductDetailSheet extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        S.of(context).profileProductSoldCount(product.soldCount),
-                        style:  TextStyle(
-                            color: context.colors.textSecondary, fontSize: 12),
+                        S
+                            .of(context)
+                            .profileProductSoldCount(product.soldCount),
+                        style: TextStyle(
+                          color: context.colors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -2304,15 +2606,19 @@ class _ProductDetailSheet extends StatelessWidget {
                   Text(
                     S.of(context).profileProductAbout,
                     style: TextStyle(
-                        color: context.colors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
+                      color: context.colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     S.of(context).profileProductDescription,
                     style: TextStyle(
-                        color: context.colors.textSecondary, fontSize: 13, height: 1.5),
+                      color: context.colors.textSecondary,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -2384,10 +2690,16 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 56, color: context.colors.textSecondary.withValues(alpha: 0.4)),
+          Icon(
+            icon,
+            size: 56,
+            color: context.colors.textSecondary.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 12),
-          Text(message,
-              style:  TextStyle(color: context.colors.textSecondary, fontSize: 14)),
+          Text(
+            message,
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -2405,7 +2717,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(color: context.colors.background, child: _tabBar);
   }
 
