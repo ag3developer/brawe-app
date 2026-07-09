@@ -72,7 +72,11 @@ class StoriesRepository {
     int offset = 0,
   }) async {
     try {
-      final raw = await _service.getViewers(storyId, limit: limit, offset: offset);
+      final raw = await _service.getViewers(
+        storyId,
+        limit: limit,
+        offset: offset,
+      );
       final list = (raw['viewers'] as List<dynamic>? ?? [])
           .map((e) => StoryViewerInfo.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -145,14 +149,16 @@ class StoriesRepository {
       final isVerified = (author['is_verified'] ?? false) as bool;
       final list = (raw['stories'] as List<dynamic>? ?? []);
       return list
-          .map((s) => _storyFromJson(
-                s as Map<String, dynamic>,
-                authorId: userId,
-                authorName: authorName,
-                authorUsername: authorUsername,
-                authorAvatarUrl: authorAvatarUrl,
-                isVerified: isVerified,
-              ))
+          .map(
+            (s) => _storyFromJson(
+              s as Map<String, dynamic>,
+              authorId: userId,
+              authorName: authorName,
+              authorUsername: authorUsername,
+              authorAvatarUrl: authorAvatarUrl,
+              isVerified: isVerified,
+            ),
+          )
           .toList();
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return const [];
@@ -204,14 +210,16 @@ class StoriesRepository {
     final isLive = (json['is_live'] ?? false) as bool;
     final liveRoomId = json['live_room_id'] as String?;
     final stories = ((json['stories'] as List<dynamic>?) ?? [])
-        .map((s) => _storyFromJson(
-              s as Map<String, dynamic>,
-              authorId: userId,
-              authorName: displayName ?? username ?? 'Usuário',
-              authorUsername: username ?? userId,
-              authorAvatarUrl: avatarUrl,
-              isVerified: isVerified,
-            ))
+        .map(
+          (s) => _storyFromJson(
+            s as Map<String, dynamic>,
+            authorId: userId,
+            authorName: displayName ?? username ?? 'Usuário',
+            authorUsername: username ?? userId,
+            authorAvatarUrl: avatarUrl,
+            isVerified: isVerified,
+          ),
+        )
         .toList();
     return UserStoriesGroup(
       userId: userId,
@@ -245,9 +253,12 @@ class StoriesRepository {
       thumbnailUrl: json['thumbnail_url'] as String?,
       caption: json['caption'] as String?,
       durationSeconds: json['duration_seconds'] as int?,
+      mediaWidth: json['width'] as int?,
+      mediaHeight: json['height'] as int?,
       viewsCount: (json['views_count'] ?? 0) as int,
       reactionsCount: (json['reactions_count'] ?? 0) as int,
-      createdAt: DateTime.tryParse((json['created_at'] ?? '') as String) ??
+      createdAt:
+          DateTime.tryParse((json['created_at'] ?? '') as String) ??
           DateTime.now(),
       expiresAt: json['expires_at'] != null
           ? DateTime.tryParse(json['expires_at'] as String)

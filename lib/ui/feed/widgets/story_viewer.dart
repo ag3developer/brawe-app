@@ -543,6 +543,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   : story.authorUsername,
               authorAvatarUrl: story.authorAvatarUrl,
               onRetry: _startStory,
+              // Dimensões reais da mídia — disponíveis quando publicado via web.
+              // Permitem detectar imagens landscape e aplicar contain + fundo blur
+              // em vez de cover (que cortaria a imagem de forma indesejada).
+              mediaWidth: story.mediaWidth,
+              mediaHeight: story.mediaHeight,
             ),
 
             // Gradient overlay

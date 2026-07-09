@@ -20,6 +20,8 @@
 // inicial — a inicial só aparece se a URL do avatar do header tb falhar.
 // ============================================================================
 
+import 'dart:ui';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -56,6 +58,11 @@ class BraweStoryMedia extends StatelessWidget {
   /// de erro. Pode ser null para esconder o botão.
   final VoidCallback? onRetry;
 
+  /// Dimensões originais da mídia (do campo width/height da API).
+  /// Usado para decidir o fit correto quando publicado via web.
+  final int? mediaWidth;
+  final int? mediaHeight;
+
   const BraweStoryMedia({
     super.key,
     required this.isVideo,
@@ -64,6 +71,8 @@ class BraweStoryMedia extends StatelessWidget {
     required this.authorName,
     this.authorAvatarUrl,
     this.onRetry,
+    this.mediaWidth,
+    this.mediaHeight,
   });
 
   @override
@@ -85,12 +94,31 @@ class BraweStoryMedia extends StatelessWidget {
       );
     }
 
+    // Calcular o fit correto baseado nas dimensões da mídia.
+    // Stories publicados via web tendem a ter aspect ratio != 9:16.
+    final BoxFit imageFit = _fitForDimensions(mediaWidth, mediaHeight);
+
     return _ImageSurface(
       url: mediaUrl,
       authorName: authorName,
       authorAvatarUrl: authorAvatarUrl,
       onRetry: onRetry,
+      fit: imageFit,
+      mediaWidth: mediaWidth,
+      mediaHeight: mediaHeight,
     );
+  }
+
+  /// Decide o BoxFit ideal baseado nas dimensões reais da mídia:
+  /// - Sem dimensões (app nativo) → cover (assume 9:16)
+  /// - Portrait nativo (ar ≤ 0.8) → cover (preenche tela)
+  /// - Quadrado (0.8 < ar ≤ 1.2) → contain com fundo blur
+  /// - Landscape (ar > 1.2) → contain com fundo desfocado
+  static BoxFit _fitForDimensions(int? w, int? h) {
+    if (w == null || h == null || h == 0) return BoxFit.cover;
+    final ar = w / h;
+    if (ar <= 0.8) return BoxFit.cover; // portrait: preenche normalmente
+    return BoxFit.contain; // landscape/quadrado: mostra tudo
   }
 }
 
@@ -101,21 +129,102 @@ class _ImageSurface extends StatelessWidget {
   final String authorName;
   final String? authorAvatarUrl;
   final VoidCallback? onRetry;
+  final BoxFit fit;
+  final int? mediaWidth;
+  final int? mediaHeight;
 
   const _ImageSurface({
     required this.url,
     required this.authorName,
     required this.authorAvatarUrl,
     required this.onRetry,
+    this.fit = BoxFit.cover,
+    this.mediaWidth,
+    this.mediaHeight,
   });
+
+  bool get _needsBlurBackground => fit == BoxFit.contain;
 
   @override
   Widget build(BuildContext context) {
+    // Para imagens landscape/quadradas (publicadas via web), mostramos:
+    // Camada 1: a mesma imagem desfocada + escurecida como fundo (preenche as bordas)
+    // Camada 2: a imagem real com contain (sem corte, respeitando aspect ratio)
+    if (_needsBlurBackground) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fundo: imagem desfocada para preencher as bordas pretas
+          CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            fadeInDuration: Duration.zero,
+            placeholder: (_, __) => _LoadingBackdrop(
+              authorName: authorName,
+              authorAvatarUrl: authorAvatarUrl,
+            ),
+            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            imageBuilder: (_, provider) => Stack(
+              fit: StackFit.expand,
+              children: [
+                Image(image: provider, fit: BoxFit.cover),
+                // Escurecer + desfocar o fundo
+                Container(color: Colors.black.withValues(alpha: 0.55)),
+                // Blur sobre o fundo
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: const SizedBox.expand(),
+                ),
+              ],
+            ),
+          ),
+          // Frente: imagem real com contain (sem corte)
+          CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.contain,
+            fadeInDuration: const Duration(milliseconds: 150),
+            fadeOutDuration: const Duration(milliseconds: 80),
+            placeholder: (_, __) => const SizedBox.shrink(),
+            errorWidget: (_, __, ___) => _ErrorBackdrop(
+              authorName: authorName,
+              authorAvatarUrl: authorAvatarUrl,
+              message: 'Falha ao carregar a imagem',
+              onRetry: onRetry,
+            ),
+          ),
+          // Badge indicando que a imagem foi publicada via web (tamanho não-nativo)
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.desktop_windows_outlined,
+                      color: Colors.white70, size: 11),
+                  const SizedBox(width: 4),
+                  const Text('Web',
+                      style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Imagem portrait nativa — comportamento padrão com cover
     return CachedNetworkImage(
       imageUrl: url,
-      fit: BoxFit.cover,
-      // Fades curtos: se a imagem JÁ ESTÁ no cache (usuário voltando),
-      // a transição é quase imperceptível.
+      fit: fit,
       fadeInDuration: const Duration(milliseconds: 150),
       fadeOutDuration: const Duration(milliseconds: 80),
       placeholder: (_, __) => _LoadingBackdrop(
@@ -292,8 +401,11 @@ class _ErrorBackdrop extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.cloud_off_rounded,
-                    color: Colors.white70, size: 48),
+                const Icon(
+                  Icons.cloud_off_rounded,
+                  color: Colors.white70,
+                  size: 48,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   message,
