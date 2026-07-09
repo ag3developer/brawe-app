@@ -205,6 +205,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // causado pelo modo default `voiceChat`/AGC agressivo do iOS.
     await BroadcastAudioSession.activate(mode: _audioMode);
 
+    // 🎛️ Inicializa o processador de áudio nativo (EQ + Compressor + Limiter)
+    // e aplica o preset salvo pelo streamer antes de iniciar a câmera.
+    await BroadcastAudioProcessing.initialize();
+    await BroadcastAudioProcessing.setPreset(
+      BroadcastAudioProcessing.currentPreset,
+    );
+
     // Câmera traseira tem sensor melhor e suporta 1080p; a frontal costuma
     // estar capada em 720p (sensor menor, sem OIS). Adaptamos o preset por
     // câmera para extrair o máximo de cada uma sem forçar um modo que ela
