@@ -138,6 +138,39 @@ class AnalyticsService {
     return [];
   }
 
+  // ─── Replay on-demand ───────────────────────────────────────────────
+
+  /// Busca a URL HLS de replay de uma live pelo room_id.
+  ///
+  /// Retorna:
+  ///   { success, data: { recording_url, thumbnail_url, duration_seconds } }
+  ///   ou { success: false, error: "replay_expired" | "replay_not_available" }
+  Future<Map<String, dynamic>> getLiveReplay(String roomId) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/analytics/live-history/$roomId/replay',
+    );
+    return r.data ?? {};
+  }
+
+  // ─── Download MP4 ───────────────────────────────────────────────────
+
+  /// Retorna URL de download MP4 de uma live gravada.
+  ///
+  /// [quality]: "high" (1080p) | "medium" (720p) | "low" (480p)
+  ///
+  /// Retorna:
+  ///   { success, data: { download_url, filename, resolution } }
+  Future<Map<String, dynamic>> getLiveDownload(
+    String roomId, {
+    String quality = 'high',
+  }) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/analytics/live-history/$roomId/download',
+      queryParameters: {'quality': quality},
+    );
+    return r.data ?? {};
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────
 
   static dynamic _unwrap(Map<String, dynamic> raw) {

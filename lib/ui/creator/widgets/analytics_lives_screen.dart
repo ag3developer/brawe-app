@@ -2,10 +2,12 @@ import 'dart:ui';
 
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../data/services/analytics_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -343,8 +345,9 @@ class _LiveTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Replay badge
-                if (item.hasReplay && item.isReplayAvailable)
+                // Replay badge — mostra para lives com replay pronto OU pendente de processamento
+                if ((item.hasReplay && item.isReplayAvailable) ||
+                    item.replayMayBePending)
                   _ReplayBadge(item: item),
               ],
             ),
@@ -409,14 +412,88 @@ class _MetricChip extends StatelessWidget {
   }
 }
 
-class _ReplayBadge extends StatelessWidget {
+class _ReplayBadge extends ConsumerStatefulWidget {
   final LiveHistoryItem item;
   const _ReplayBadge({required this.item});
 
   @override
+  ConsumerState<_ReplayBadge> createState() => _ReplayBadgeState();
+}
+
+class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
+  bool _loading = false;
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
+
+    // ── Tem URL direto → botão de Play imediato ─────────────────────
+    if (item.hasReplay && item.isReplayAvailable) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildPlayButton(context, item.replayUrl!, loading: false),
+          const SizedBox(width: 6),
+          _buildDownloadButton(context, item),
+        ],
+      );
+    }
+
+    // ── Replay pode estar sendo processado → botão "Carregar" ────────
+    if (item.replayMayBePending) {
+      return _loading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF8B5CF6),
+              ),
+            )
+          : GestureDetector(
+              onTap: _fetchReplay,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.refreshCw,
+                      size: 10,
+                      color: Color(0xFF8B5CF6),
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Ver replay',
+                      style: TextStyle(
+                        color: Color(0xFF8B5CF6),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildPlayButton(
+    BuildContext context,
+    String url, {
+    bool loading = false,
+  }) {
     return GestureDetector(
-      onTap: () => _openReplay(context, item),
+      onTap: loading ? null : () => _openPlayer(context, url),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
@@ -444,12 +521,92 @@ class _ReplayBadge extends StatelessWidget {
     );
   }
 
-  void _openReplay(BuildContext context, LiveHistoryItem item) {
+  Widget _buildDownloadButton(BuildContext context, LiveHistoryItem item) {
+    return GestureDetector(
+      onTap: () => _showDownloadSheet(context, item),
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.4),
+          ),
+        ),
+        child: const Icon(
+          LucideIcons.download,
+          size: 12,
+          color: Color(0xFF10B981),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _fetchReplay() async {
+    setState(() => _loading = true);
+    try {
+      final service = ref.read(analyticsServiceProvider);
+      final result = await service.getLiveReplay(widget.item.id);
+      if (!mounted) return;
+
+      final success = result['success'] == true;
+      final data = result['data'] as Map<String, dynamic>?;
+      final error = result['error']?.toString();
+
+      if (success && data != null) {
+        final url = data['recording_url']?.toString() ?? '';
+        if (url.isNotEmpty) {
+          _openPlayer(context, url);
+        }
+      } else if (error == 'replay_expired') {
+        _showSnack(
+          context,
+          S.of(context).analyticsLivesReplayExpired,
+          isError: true,
+        );
+      } else {
+        _showSnack(
+          context,
+          S.of(context).analyticsLivesReplayExpiredSub,
+          isError: false,
+        );
+      }
+    } catch (e) {
+      if (mounted) _showSnack(context, 'Erro ao buscar replay', isError: true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _openPlayer(BuildContext context, String url) {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
-        builder: (_) => _LiveReplayPlayer(item: item),
+        builder: (_) => _LiveReplayPlayer(item: widget.item, overrideUrl: url),
         fullscreenDialog: true,
       ),
+    );
+  }
+
+  void _showSnack(BuildContext context, String msg, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError
+            ? Colors.red.shade700
+            : const Color(0xFF8B5CF6),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showDownloadSheet(BuildContext context, LiveHistoryItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _DownloadSheet(item: item),
     );
   }
 }
@@ -458,7 +615,9 @@ class _ReplayBadge extends StatelessWidget {
 
 class _LiveReplayPlayer extends StatefulWidget {
   final LiveHistoryItem item;
-  const _LiveReplayPlayer({required this.item});
+  final String overrideUrl; // URL já resolvida (do endpoint /replay ou direto)
+
+  const _LiveReplayPlayer({required this.item, required this.overrideUrl});
 
   @override
   State<_LiveReplayPlayer> createState() => _LiveReplayPlayerState();
@@ -468,6 +627,7 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
   VideoPlayerController? _vpc;
   ChewieController? _chewie;
   bool _error = false;
+  String? _errorMsg;
 
   @override
   void initState() {
@@ -477,9 +637,7 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
 
   Future<void> _init() async {
     try {
-      _vpc = VideoPlayerController.networkUrl(
-        Uri.parse(widget.item.playbackUrl!),
-      );
+      _vpc = VideoPlayerController.networkUrl(Uri.parse(widget.overrideUrl));
       await _vpc!.initialize();
       _chewie = ChewieController(
         videoPlayerController: _vpc!,
@@ -496,7 +654,11 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
       );
       if (mounted) setState(() {});
     } catch (e) {
-      if (mounted) setState(() => _error = true);
+      if (mounted)
+        setState(() {
+          _error = true;
+          _errorMsg = e.toString();
+        });
     }
   }
 
@@ -509,6 +671,7 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -519,7 +682,7 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
         ),
         title: Text(
           widget.item.title.isEmpty
-              ? S.of(context).analyticsLivesReplayLabel
+              ? s.analyticsLivesReplayLabel
               : widget.item.title,
           style: const TextStyle(
             color: Colors.white,
@@ -528,6 +691,21 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
           ),
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [
+          // Copiar URL para debug
+          IconButton(
+            icon: const Icon(LucideIcons.copy, color: Colors.white54, size: 18),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: widget.overrideUrl));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('URL copiada'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: _error
@@ -541,14 +719,28 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    S.of(context).analyticsLivesReplayExpired,
+                    s.analyticsLivesReplayExpired,
                     style: const TextStyle(color: Colors.white70, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    S.of(context).analyticsLivesReplayExpiredSub,
+                    s.analyticsLivesReplayExpiredSub,
                     style: const TextStyle(color: Colors.white38, fontSize: 12),
                   ),
+                  if (_errorMsg != null) ...[
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        _errorMsg!,
+                        style: const TextStyle(
+                          color: Colors.white24,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
                 ],
               )
             : _chewie == null
@@ -560,6 +752,216 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
                 aspectRatio: 9 / 16,
                 child: Chewie(controller: _chewie!),
               ),
+      ),
+    );
+  }
+}
+
+// ── Download sheet ────────────────────────────────────────────────────────────
+
+class _DownloadSheet extends ConsumerStatefulWidget {
+  final LiveHistoryItem item;
+  const _DownloadSheet({required this.item});
+
+  @override
+  ConsumerState<_DownloadSheet> createState() => _DownloadSheetState();
+}
+
+class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
+  bool _loading = false;
+  String? _status;
+
+  Future<void> _download(String quality) async {
+    setState(() {
+      _loading = true;
+      _status = 'Preparando download...';
+    });
+    try {
+      final service = ref.read(analyticsServiceProvider);
+      final result = await service.getLiveDownload(
+        widget.item.id,
+        quality: quality,
+      );
+      if (!mounted) return;
+
+      final success = result['success'] == true;
+      final data = result['data'] as Map<String, dynamic>?;
+
+      if (success && data != null) {
+        final url = data['download_url']?.toString() ?? '';
+        final filename = data['filename']?.toString() ?? 'live.mp4';
+        if (url.isNotEmpty) {
+          // Copiar URL para área de transferência — o usuário pode baixar no browser
+          await Clipboard.setData(ClipboardData(text: url));
+          setState(
+            () => _status =
+                '✅ URL copiada! Abra no browser para baixar "$filename"',
+          );
+        }
+      } else {
+        setState(() => _status = '❌ Download não disponível para esta live');
+      }
+    } catch (e) {
+      if (mounted) setState(() => _status = '❌ Erro: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? Colors.white : Colors.black87;
+    final textSec = isDark ? Colors.white54 : Colors.black45;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black26,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(
+                LucideIcons.download,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Baixar Live',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.item.title.isEmpty ? 'Live sem título' : widget.item.title,
+            style: TextStyle(color: textSec, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
+
+          if (_loading)
+            const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF10B981),
+              ),
+            )
+          else if (_status != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _status!,
+                style: TextStyle(color: textPrimary, fontSize: 13),
+              ),
+            ),
+          ] else ...[
+            Text(
+              'Selecione a qualidade:',
+              style: TextStyle(color: textSec, fontSize: 12),
+            ),
+            const SizedBox(height: 10),
+            _QualityButton(
+              label: '1080p (Alta qualidade)',
+              icon: LucideIcons.video,
+              color: const Color(0xFF8B5CF6),
+              onTap: () => _download('high'),
+            ),
+            const SizedBox(height: 8),
+            _QualityButton(
+              label: '720p (Média qualidade)',
+              icon: LucideIcons.video,
+              color: const Color(0xFF3B82F6),
+              onTap: () => _download('medium'),
+            ),
+            const SizedBox(height: 8),
+            _QualityButton(
+              label: '480p (Menor tamanho)',
+              icon: LucideIcons.video,
+              color: const Color(0xFF10B981),
+              onTap: () => _download('low'),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            'O link será copiado para a área de transferência.',
+            style: TextStyle(color: textSec, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QualityButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QualityButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+            const Spacer(),
+            Icon(
+              LucideIcons.chevronRight,
+              color: color.withValues(alpha: 0.5),
+              size: 16,
+            ),
+          ],
+        ),
       ),
     );
   }

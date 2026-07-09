@@ -80,7 +80,11 @@ class LiveHistoryItem {
   final int productsSold;
   final double durationMinutes;
   final DateTime? startedAt;
-  final String? playbackUrl; // Mux HLS — válido por 30 dias
+  final DateTime? endedAt;
+  final String? playbackUrl; // Mux HLS do merge analytics+profile
+  final String? recordingUrl; // Mux HLS direto do campo recording_url
+  final String? thumbnailUrl;
+  final String? playbackId;
 
   const LiveHistoryItem({
     required this.id,
@@ -92,15 +96,30 @@ class LiveHistoryItem {
     this.productsSold = 0,
     this.durationMinutes = 0,
     this.startedAt,
+    this.endedAt,
     this.playbackUrl,
+    this.recordingUrl,
+    this.thumbnailUrl,
+    this.playbackId,
   });
 
-  bool get hasReplay => playbackUrl != null && playbackUrl!.isNotEmpty;
+  /// URL de replay disponível — prefere recordingUrl (vem direto do DB/Mux)
+  String? get replayUrl => recordingUrl ?? playbackUrl;
+
+  bool get hasReplay => replayUrl != null && replayUrl!.isNotEmpty;
 
   /// Replay disponível por 30 dias após o início.
   bool get isReplayAvailable {
-    if (startedAt == null) return false;
+    if (startedAt == null) return hasReplay;
     return DateTime.now().difference(startedAt!).inDays < 30;
+  }
+
+  /// A live pode ter replay (mesmo que ainda não tenha sido processado pelo Mux).
+  bool get replayMayBePending {
+    if (startedAt == null) return false;
+    final age = DateTime.now().difference(startedAt!);
+    // Mux processa VOD em ~2–5 min após o término da live
+    return !hasReplay && age.inDays < 30;
   }
 
   factory LiveHistoryItem.fromJson(Map<String, dynamic> j) => LiveHistoryItem(
@@ -109,11 +128,20 @@ class LiveHistoryItem {
     category: j['category']?.toString(),
     viewerCount: (j['viewer_count'] as num?)?.toInt() ?? 0,
     peakViewers: (j['peak_viewers'] as num?)?.toInt() ?? 0,
-    giftsValue: (j['gifts_value'] as num?)?.toDouble() ?? 0,
+    giftsValue:
+        (j['gifts_value'] as num?)?.toDouble() ??
+        (j['total_gifts_value'] as num?)?.toDouble() ??
+        0,
     productsSold: (j['products_sold'] as num?)?.toInt() ?? 0,
-    durationMinutes: (j['duration_minutes'] as num?)?.toDouble() ?? 0,
+    durationMinutes:
+        (j['duration_minutes'] as num?)?.toDouble() ??
+        ((j['duration_seconds'] as num?)?.toDouble() ?? 0) / 60,
     startedAt: DateTime.tryParse(j['started_at']?.toString() ?? ''),
+    endedAt: DateTime.tryParse(j['ended_at']?.toString() ?? ''),
     playbackUrl: j['playback_url']?.toString(),
+    recordingUrl: j['recording_url']?.toString(),
+    thumbnailUrl: j['thumbnail_url']?.toString(),
+    playbackId: j['playback_id']?.toString(),
   );
 }
 
