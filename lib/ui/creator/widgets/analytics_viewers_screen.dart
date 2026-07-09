@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/creator_analytics_view_model.dart';
 import 'analytics_chart_painter.dart';
@@ -18,6 +19,7 @@ class AnalyticsViewersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final period = ref.watch(analyticsPeriodProvider);
     final pointsAsync = ref.watch(viewersHistoryProvider(period));
     final kpisAsync = ref.watch(creatorDashboardKpisProvider);
@@ -35,11 +37,15 @@ class AnalyticsViewersScreen extends ConsumerWidget {
           ),
         ),
         leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, size: 20, color: context.colors.textPrimary),
+          icon: Icon(
+            LucideIcons.arrowLeft,
+            size: 20,
+            color: context.colors.textPrimary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Audiência',
+          s.analyticsViewersTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -67,24 +73,26 @@ class AnalyticsViewersScreen extends ConsumerWidget {
                 kpisAsync.when(
                   loading: () => const AnalyticsKpiRow(items: null),
                   error: (_, __) => const SizedBox.shrink(),
-                  data: (k) => AnalyticsKpiRow(items: [
-                    AnalyticsKpiItem(
-                      icon: LucideIcons.eye,
-                      color: const Color(0xFF3B82F6),
-                      label: 'Total viewers',
-                      value: analyticsFormatCount(k.totalViewers),
-                    ),
-                    AnalyticsKpiItem(
-                      icon: LucideIcons.trendingUp,
-                      color: const Color(0xFF10B981),
-                      label: 'Média/live',
-                      value: k.avgViewersPerLive.toStringAsFixed(0),
-                    ),
-                  ]),
+                  data: (k) => AnalyticsKpiRow(
+                    items: [
+                      AnalyticsKpiItem(
+                        icon: LucideIcons.eye,
+                        color: const Color(0xFF3B82F6),
+                        label: s.analyticsViewersTotalViewers,
+                        value: analyticsFormatCount(k.totalViewers),
+                      ),
+                      AnalyticsKpiItem(
+                        icon: LucideIcons.trendingUp,
+                        color: const Color(0xFF10B981),
+                        label: s.analyticsViewersAvgPerLive,
+                        value: k.avgViewersPerLive.toStringAsFixed(0),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Visualizações por dia',
+                  s.analyticsViewersChartTitle,
                   style: TextStyle(
                     color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -93,10 +101,16 @@ class AnalyticsViewersScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Row(
-                  children: const [
-                    AnalyticsLegendDot(color: Color(0xFF3B82F6), label: 'Viewers'),
-                    SizedBox(width: 12),
-                    AnalyticsLegendDot(color: Color(0xFFEC4899), label: 'Pico'),
+                  children: [
+                    AnalyticsLegendDot(
+                      color: const Color(0xFF3B82F6),
+                      label: s.analyticsViewersLegendViewers,
+                    ),
+                    const SizedBox(width: 12),
+                    AnalyticsLegendDot(
+                      color: const Color(0xFFEC4899),
+                      label: s.analyticsViewersLegendPeak,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -114,7 +128,7 @@ class AnalyticsViewersScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Melhores dias',
+                  s.analyticsViewersBestDays,
                   style: TextStyle(
                     color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -130,7 +144,7 @@ class AnalyticsViewersScreen extends ConsumerWidget {
                       ..sort((a, b) => b.value.compareTo(a.value));
                     final top = sorted.take(5).toList();
                     if (top.isEmpty) {
-                      return const Center(child: Text('Sem dados'));
+                      return Center(child: Text(s.analyticsViewersNoData));
                     }
                     return Column(
                       children: top.asMap().entries.map((e) {
@@ -176,7 +190,8 @@ class _DayRankTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    final s = S.of(context);
+    final months = s.analyticsLivesMonthsShort.split(',');
     final dateStr = '${date.day} ${months[date.month - 1]}';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -201,7 +216,9 @@ class _DayRankTile extends StatelessWidget {
             child: Text(
               '#$rank',
               style: TextStyle(
-                color: rank == 1 ? const Color(0xFFF59E0B) : context.colors.textTertiary,
+                color: rank == 1
+                    ? const Color(0xFFF59E0B)
+                    : context.colors.textTertiary,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
@@ -243,7 +260,7 @@ class _DayRankTile extends StatelessWidget {
             ),
           ),
           Text(
-            ' viewers',
+            s.analyticsViewersUnit,
             style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
           ),
         ],

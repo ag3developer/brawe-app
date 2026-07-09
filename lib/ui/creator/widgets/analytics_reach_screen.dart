@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/creator_analytics_view_model.dart';
@@ -21,6 +22,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final period = ref.watch(analyticsPeriodProvider);
     final kpisAsync = ref.watch(creatorDashboardKpisProvider);
     final topGiftsAsync = ref.watch(topGiftsProvider());
@@ -48,7 +50,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Alcance e Monetização',
+          s.analyticsReachTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -82,13 +84,13 @@ class AnalyticsReachScreen extends ConsumerWidget {
                       AnalyticsKpiItem(
                         icon: LucideIcons.gift,
                         color: const Color(0xFFF59E0B),
-                        label: 'Gifts recebidos',
+                        label: s.analyticsReachKpiGifts,
                         value: analyticsFormatCount(k.totalGiftsReceived),
                       ),
                       AnalyticsKpiItem(
                         icon: LucideIcons.dollarSign,
                         color: const Color(0xFF10B981),
-                        label: 'Ganhos (USDT)',
+                        label: s.analyticsReachKpiEarnings,
                         value: k.totalEarnings.toStringAsFixed(2),
                       ),
                     ],
@@ -99,7 +101,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
 
                 // Gráfico de ganhos
                 Text(
-                  'Ganhos por dia',
+                  s.analyticsReachEarningsChartTitle,
                   style: TextStyle(
                     color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -107,7 +109,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(children: const [_EarningsLegend()]),
+                Row(children: [_EarningsLegend(s: s)]),
                 const SizedBox(height: 8),
 
                 earningsAsync.when(
@@ -127,7 +129,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
 
                 // Top Gifts
                 Text(
-                  'Top Gifts recebidos',
+                  s.analyticsReachTopGiftsTitle,
                   style: TextStyle(
                     color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -145,7 +147,7 @@ class AnalyticsReachScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Center(
                           child: Text(
-                            'Nenhum gift recebido ainda',
+                            s.analyticsReachNoGifts,
                             style: TextStyle(
                               color: context.colors.textSecondary,
                             ),
@@ -198,15 +200,16 @@ class AnalyticsReachScreen extends ConsumerWidget {
 // ── Widgets ───────────────────────────────────────────────────────────────────
 
 class _EarningsLegend extends StatelessWidget {
-  const _EarningsLegend();
+  final S s;
+  const _EarningsLegend({required this.s});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _Dot(color: const Color(0xFF10B981), label: 'Ganhos USDT'),
+        _Dot(color: const Color(0xFF10B981), label: s.analyticsReachLegendEarnings),
         const SizedBox(width: 12),
-        _Dot(color: const Color(0xFFF59E0B), label: 'Taxa plataforma'),
+        _Dot(color: const Color(0xFFF59E0B), label: s.analyticsReachLegendFee),
       ],
     );
   }
@@ -384,7 +387,7 @@ class _MonetizationSummary extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Monetização total',
+                S.of(context).analyticsReachMonetizationTitle,
                 style: TextStyle(
                   color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
@@ -398,17 +401,17 @@ class _MonetizationSummary extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _MoneyItem(
-                label: 'Total ganho',
+                label: S.of(context).analyticsReachTotalEarned,
                 value: '${kpis.totalEarnings.toStringAsFixed(2)} USDT',
                 color: const Color(0xFF10B981),
               ),
               _MoneyItem(
-                label: 'Gifts totais',
+                label: S.of(context).analyticsReachTotalGifts,
                 value: '${kpis.totalGiftsReceived}',
                 color: const Color(0xFFF59E0B),
               ),
               _MoneyItem(
-                label: 'Ganho/live',
+                label: S.of(context).analyticsReachEarningsPerLive,
                 value: kpis.totalLives > 0
                     ? '${(kpis.totalEarnings / kpis.totalLives).toStringAsFixed(2)} U'
                     : '—',

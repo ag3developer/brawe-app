@@ -4269,4 +4269,195 @@ class SEs extends S {
 
   @override
   String get postSoundRemove => 'Quitar sonido';
+
+  @override
+  String get analyticsViewersTitle => 'Audiencia';
+
+  @override
+  String get analyticsViewersTotalViewers => 'Total de viewers';
+
+  @override
+  String get analyticsViewersAvgPerLive => 'Promedio/live';
+
+  @override
+  String get analyticsViewersChartTitle => 'Vistas por día';
+
+  @override
+  String get analyticsViewersLegendViewers => 'Viewers';
+
+  @override
+  String get analyticsViewersLegendPeak => 'Pico';
+
+  @override
+  String get analyticsViewersBestDays => 'Mejores días';
+
+  @override
+  String get analyticsViewersNoData => 'Sin datos';
+
+  @override
+  String get analyticsViewersUnit => ' viewers';
+
+  @override
+  String get analyticsFollowersTitle => 'Seguidores';
+
+  @override
+  String get analyticsFollowersCount => 'Seguidores';
+
+  @override
+  String get analyticsFollowersFollowing => 'Siguiendo';
+
+  @override
+  String get analyticsFollowersTrendTitle => 'Tendencia de participación';
+
+  @override
+  String get analyticsFollowersTrendSubtitle =>
+      'Audiencia de lives — correlación directa con crecimiento';
+
+  @override
+  String get analyticsFollowersLegendEngagement => 'Participación';
+
+  @override
+  String get analyticsFollowersSummaryTitle => 'Resumen de cuenta';
+
+  @override
+  String get analyticsFollowersSummaryFollowers => 'Seguidores';
+
+  @override
+  String get analyticsFollowersSummaryFollowing => 'Siguiendo';
+
+  @override
+  String get analyticsFollowersSummaryLives => 'Lives realizados';
+
+  @override
+  String get analyticsFollowersSummaryRatio => 'Ratio seguidor/live';
+
+  @override
+  String get analyticsFollowersTipsTitle => 'Consejos para crecer';
+
+  @override
+  String get analyticsFollowersTip1Title => 'Haz lives regularmente';
+
+  @override
+  String get analyticsFollowersTip1Subtitle =>
+      'La consistencia aumenta seguidores en +40%';
+
+  @override
+  String get analyticsFollowersTip2Title => 'Interactúa con tu audiencia';
+
+  @override
+  String get analyticsFollowersTip2Subtitle =>
+      'Responder comentarios aumenta la retención';
+
+  @override
+  String get analyticsFollowersTip3Title => 'Comparte tu contenido';
+
+  @override
+  String get analyticsFollowersTip3Subtitle =>
+      'Stories y posts aumentan el alcance';
+
+  @override
+  String get analyticsLivesTitle => 'Historial de Lives';
+
+  @override
+  String get analyticsLivesErrorLoad => 'Error al cargar lives';
+
+  @override
+  String get analyticsLivesRetry => 'Intentar de nuevo';
+
+  @override
+  String get analyticsLivesKpiTotal => 'Lives';
+
+  @override
+  String get analyticsLivesKpiAvgViewers => 'Viewers prom.';
+
+  @override
+  String get analyticsLivesKpiGifts => 'Gifts (USDT)';
+
+  @override
+  String analyticsLivesDuration(String min) {
+    return '$min min';
+  }
+
+  @override
+  String get analyticsLivesNoTitle => 'Live sin título';
+
+  @override
+  String get analyticsLivesMetricViewers => 'viewers';
+
+  @override
+  String get analyticsLivesMetricPeak => 'pico';
+
+  @override
+  String get analyticsLivesMetricUsdt => 'USDT';
+
+  @override
+  String get analyticsLivesReplayLabel => 'Replay';
+
+  @override
+  String get analyticsLivesReplayExpired => 'Replay no disponible';
+
+  @override
+  String get analyticsLivesReplayExpiredSub =>
+      'El video puede haber expirado (>30 días)';
+
+  @override
+  String get analyticsLivesEmptyTitle => 'Aún no hay lives';
+
+  @override
+  String get analyticsLivesEmptySubtitle =>
+      'Haz tu primer live y ve tus métricas aquí';
+
+  @override
+  String get analyticsLivesMonthsShort =>
+      'Ene,Feb,Mar,Abr,May,Jun,Jul,Ago,Sep,Oct,Nov,Dic';
+
+  @override
+  String get analyticsReachTitle => 'Alcance y Monetización';
+
+  @override
+  String get analyticsReachKpiGifts => 'Gifts recibidos';
+
+  @override
+  String get analyticsReachKpiEarnings => 'Ganancias (USDT)';
+
+  @override
+  String get analyticsReachEarningsChartTitle => 'Ganancias por día';
+
+  @override
+  String get analyticsReachLegendEarnings => 'Ganancias USDT';
+
+  @override
+  String get analyticsReachLegendFee => 'Comisión plataforma';
+
+  @override
+  String get analyticsReachTopGiftsTitle => 'Top Gifts recibidos';
+
+  @override
+  String get analyticsReachNoGifts => 'Aún no has recibido gifts';
+
+  @override
+  String get analyticsReachMonetizationTitle => 'Monetización total';
+
+  @override
+  String get analyticsReachTotalEarned => 'Total ganado';
+
+  @override
+  String get analyticsReachTotalGifts => 'Gifts totales';
+
+  @override
+  String get analyticsReachEarningsPerLive => 'Ganancia/live';
+
+  @override
+  String get analyticsDashboardAvgViewers => 'prom./live';
+
+  @override
+  String get analyticsDashboardSeeGrowth => 'Ver crecimiento';
+
+  @override
+  String get analyticsDashboardGifts => 'gifts';
+
+  @override
+  String analyticsDashboardMinAvg(String min) {
+    return '$min min prom.';
+  }
 }

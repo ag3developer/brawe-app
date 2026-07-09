@@ -105,10 +105,10 @@ class AnalyticsService {
     final raw = r.data ?? {};
     final list = raw['data'] ?? raw['items'] ?? [];
     final total = (raw['total'] as num?)?.toInt() ?? 0;
-    return (
-      items: list is List ? List<Map<String, dynamic>>.from(list) : [],
-      total: total,
-    );
+    final items = list is List
+        ? list.whereType<Map<String, dynamic>>().toList()
+        : <Map<String, dynamic>>[];
+    return (items: items, total: total);
   }
 
   // ─── Social stats (via /social/stats) ───────────────────────────────

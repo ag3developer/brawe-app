@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/creator_analytics_view_model.dart';
@@ -89,7 +90,7 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Histórico de Lives',
+          S.of(context).analyticsLivesTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -111,12 +112,12 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Erro ao carregar lives',
+                S.of(context).analyticsLivesErrorLoad,
                 style: TextStyle(color: context.colors.textSecondary),
               ),
               TextButton(
                 onPressed: () => ref.invalidate(liveHistoryPageProvider),
-                child: const Text('Tentar novamente'),
+                child: Text(S.of(context).analyticsLivesRetry),
               ),
             ],
           ),
@@ -201,15 +202,11 @@ class _LivesKpiRow extends StatelessWidget {
     final totalGifts = items.fold(0.0, (s, e) => s + e.giftsValue);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final s = S.of(context);
     final stats = [
-      (LucideIcons.radio, 'Lives', '$total', const Color(0xFFEC4899)),
-      (LucideIcons.eye, 'Viewers méd.', '$avgViewers', const Color(0xFF3B82F6)),
-      (
-        LucideIcons.gift,
-        'Gifts (USDT)',
-        totalGifts.toStringAsFixed(1),
-        const Color(0xFFF59E0B),
-      ),
+      (LucideIcons.radio, s.analyticsLivesKpiTotal, '$total', const Color(0xFFEC4899)),
+      (LucideIcons.eye, s.analyticsLivesKpiAvgViewers, '$avgViewers', const Color(0xFF3B82F6)),
+      (LucideIcons.gift, s.analyticsLivesKpiGifts, totalGifts.toStringAsFixed(1), const Color(0xFFF59E0B)),
     ];
 
     return Row(
@@ -260,24 +257,12 @@ class _LiveTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final months = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Out',
-      'Nov',
-      'Dez',
-    ];
+    final s = S.of(context);
+    final months = s.analyticsLivesMonthsShort.split(',');
     final date = item.startedAt != null
         ? '${item.startedAt!.day} ${months[item.startedAt!.month - 1]} ${item.startedAt!.year}'
         : '—';
-    final dur = '${item.durationMinutes.toStringAsFixed(0)} min';
+    final dur = s.analyticsLivesDuration(item.durationMinutes.toStringAsFixed(0));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -319,7 +304,7 @@ class _LiveTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title.isEmpty ? 'Live sem título' : item.title,
+                        item.title.isEmpty ? s.analyticsLivesNoTitle : item.title,
                         style: TextStyle(
                           color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
@@ -354,20 +339,20 @@ class _LiveTile extends StatelessWidget {
                 _MetricChip(
                   icon: LucideIcons.eye,
                   value: '${item.viewerCount}',
-                  label: 'viewers',
+                  label: s.analyticsLivesMetricViewers,
                 ),
                 const SizedBox(width: 8),
                 _MetricChip(
                   icon: LucideIcons.trendingUp,
                   value: '${item.peakViewers}',
-                  label: 'pico',
+                  label: s.analyticsLivesMetricPeak,
                 ),
                 const SizedBox(width: 8),
                 if (item.giftsValue > 0)
                   _MetricChip(
                     icon: LucideIcons.gift,
                     value: item.giftsValue.toStringAsFixed(1),
-                    label: 'USDT',
+                    label: s.analyticsLivesMetricUsdt,
                   ),
               ],
             ),
@@ -421,14 +406,14 @@ class _ReplayBadge extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(6),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.play, size: 10, color: Colors.white),
-            SizedBox(width: 4),
+            const Icon(LucideIcons.play, size: 10, color: Colors.white),
+            const SizedBox(width: 4),
             Text(
-              'Replay',
-              style: TextStyle(
+              S.of(context).analyticsLivesReplayLabel,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -514,7 +499,7 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          widget.item.title.isEmpty ? 'Replay' : widget.item.title,
+          widget.item.title.isEmpty ? S.of(context).analyticsLivesReplayLabel : widget.item.title,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 15,
@@ -534,14 +519,14 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
                     size: 48,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Replay não disponível',
-                    style: TextStyle(color: Colors.white70, fontSize: 15),
+                  Text(
+                    S.of(context).analyticsLivesReplayExpired,
+                    style: const TextStyle(color: Colors.white70, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'O vídeo pode ter expirado (>30 dias)',
-                    style: TextStyle(color: Colors.white38, fontSize: 12),
+                    S.of(context).analyticsLivesReplayExpiredSub,
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
                   ),
                 ],
               )
@@ -583,7 +568,7 @@ class _EmptyLives extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Nenhuma live realizada ainda',
+            S.of(context).analyticsLivesEmptyTitle,
             style: TextStyle(
               color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -592,7 +577,7 @@ class _EmptyLives extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Faça sua primeira live e veja as métricas aqui',
+            S.of(context).analyticsLivesEmptySubtitle,
             style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
             textAlign: TextAlign.center,
           ),

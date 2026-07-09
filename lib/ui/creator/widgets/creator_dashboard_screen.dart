@@ -190,7 +190,7 @@ class _AnalyticsGrid extends ConsumerWidget {
                 subtitle: kpisAsync.maybeWhen(
                   data: (k) =>
                       '${_formatCount(k.avgViewersPerLive.toInt())} '
-                      'méd./live',
+                      '${s.analyticsDashboardAvgViewers}',
                   orElse: () => null,
                 ),
                 onTap: () => context.push('/creator/analytics/viewers'),
@@ -209,7 +209,7 @@ class _AnalyticsGrid extends ConsumerWidget {
                   loading: () => null,
                   error: (_, __) => '—',
                 ),
-                subtitle: 'Ver crescimento',
+                subtitle: s.analyticsDashboardSeeGrowth,
                 onTap: () => context.push('/creator/analytics/followers'),
               ),
             ),
@@ -229,7 +229,7 @@ class _AnalyticsGrid extends ConsumerWidget {
                   error: (_, __) => '—',
                 ),
                 subtitle:
-                    '${kpisAsync.maybeWhen(data: (k) => k.totalGiftsReceived, orElse: () => 0)} gifts',
+                    '${kpisAsync.maybeWhen(data: (k) => k.totalGiftsReceived, orElse: () => 0)} ${s.analyticsDashboardGifts}',
                 onTap: () => context.push('/creator/analytics/reach'),
               ),
             ),
@@ -245,8 +245,8 @@ class _AnalyticsGrid extends ConsumerWidget {
                   error: (_, __) => '—',
                 ),
                 subtitle: kpisAsync.maybeWhen(
-                  data: (k) =>
-                      '${k.avgDurationMinutes.toStringAsFixed(0)} min méd.',
+                  data: (k) => s.analyticsDashboardMinAvg(
+                      k.avgDurationMinutes.toStringAsFixed(0)),
                   orElse: () => null,
                 ),
                 onTap: () => context.push('/creator/analytics/lives'),

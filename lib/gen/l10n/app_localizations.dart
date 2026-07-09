@@ -7760,6 +7760,366 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Remover som'**
   String get postSoundRemove;
+
+  /// No description provided for @analyticsViewersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Audiência'**
+  String get analyticsViewersTitle;
+
+  /// No description provided for @analyticsViewersTotalViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total de viewers'**
+  String get analyticsViewersTotalViewers;
+
+  /// No description provided for @analyticsViewersAvgPerLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Média/live'**
+  String get analyticsViewersAvgPerLive;
+
+  /// No description provided for @analyticsViewersChartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualizações por dia'**
+  String get analyticsViewersChartTitle;
+
+  /// No description provided for @analyticsViewersLegendViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Viewers'**
+  String get analyticsViewersLegendViewers;
+
+  /// No description provided for @analyticsViewersLegendPeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pico'**
+  String get analyticsViewersLegendPeak;
+
+  /// No description provided for @analyticsViewersBestDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'Melhores dias'**
+  String get analyticsViewersBestDays;
+
+  /// No description provided for @analyticsViewersNoData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem dados'**
+  String get analyticsViewersNoData;
+
+  /// No description provided for @analyticsViewersUnit.
+  ///
+  /// In pt, this message translates to:
+  /// **' viewers'**
+  String get analyticsViewersUnit;
+
+  /// No description provided for @analyticsFollowersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get analyticsFollowersTitle;
+
+  /// No description provided for @analyticsFollowersCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get analyticsFollowersCount;
+
+  /// No description provided for @analyticsFollowersFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get analyticsFollowersFollowing;
+
+  /// No description provided for @analyticsFollowersTrendTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tendência de engajamento'**
+  String get analyticsFollowersTrendTitle;
+
+  /// No description provided for @analyticsFollowersTrendSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Audiência das lives — correlação direta com crescimento'**
+  String get analyticsFollowersTrendSubtitle;
+
+  /// No description provided for @analyticsFollowersLegendEngagement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Engajamento'**
+  String get analyticsFollowersLegendEngagement;
+
+  /// No description provided for @analyticsFollowersSummaryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo da conta'**
+  String get analyticsFollowersSummaryTitle;
+
+  /// No description provided for @analyticsFollowersSummaryFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get analyticsFollowersSummaryFollowers;
+
+  /// No description provided for @analyticsFollowersSummaryFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get analyticsFollowersSummaryFollowing;
+
+  /// No description provided for @analyticsFollowersSummaryLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives realizadas'**
+  String get analyticsFollowersSummaryLives;
+
+  /// No description provided for @analyticsFollowersSummaryRatio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Taxa seguidor/live'**
+  String get analyticsFollowersSummaryRatio;
+
+  /// No description provided for @analyticsFollowersTipsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dicas para crescer'**
+  String get analyticsFollowersTipsTitle;
+
+  /// No description provided for @analyticsFollowersTip1Title.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faça lives regularmente'**
+  String get analyticsFollowersTip1Title;
+
+  /// No description provided for @analyticsFollowersTip1Subtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Consistência aumenta seguidores em +40%'**
+  String get analyticsFollowersTip1Subtitle;
+
+  /// No description provided for @analyticsFollowersTip2Title.
+  ///
+  /// In pt, this message translates to:
+  /// **'Interaja com a audiência'**
+  String get analyticsFollowersTip2Title;
+
+  /// No description provided for @analyticsFollowersTip2Subtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Responder comentários aumenta retenção'**
+  String get analyticsFollowersTip2Subtitle;
+
+  /// No description provided for @analyticsFollowersTip3Title.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhe seus conteúdos'**
+  String get analyticsFollowersTip3Title;
+
+  /// No description provided for @analyticsFollowersTip3Subtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Stories e posts aumentam o alcance'**
+  String get analyticsFollowersTip3Subtitle;
+
+  /// No description provided for @analyticsLivesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de Lives'**
+  String get analyticsLivesTitle;
+
+  /// No description provided for @analyticsLivesErrorLoad.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao carregar lives'**
+  String get analyticsLivesErrorLoad;
+
+  /// No description provided for @analyticsLivesRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get analyticsLivesRetry;
+
+  /// No description provided for @analyticsLivesKpiTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get analyticsLivesKpiTotal;
+
+  /// No description provided for @analyticsLivesKpiAvgViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Viewers méd.'**
+  String get analyticsLivesKpiAvgViewers;
+
+  /// No description provided for @analyticsLivesKpiGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gifts (USDT)'**
+  String get analyticsLivesKpiGifts;
+
+  /// No description provided for @analyticsLivesDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'{min} min'**
+  String analyticsLivesDuration(String min);
+
+  /// No description provided for @analyticsLivesNoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live sem título'**
+  String get analyticsLivesNoTitle;
+
+  /// No description provided for @analyticsLivesMetricViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'viewers'**
+  String get analyticsLivesMetricViewers;
+
+  /// No description provided for @analyticsLivesMetricPeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'pico'**
+  String get analyticsLivesMetricPeak;
+
+  /// No description provided for @analyticsLivesMetricUsdt.
+  ///
+  /// In pt, this message translates to:
+  /// **'USDT'**
+  String get analyticsLivesMetricUsdt;
+
+  /// No description provided for @analyticsLivesReplayLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Replay'**
+  String get analyticsLivesReplayLabel;
+
+  /// No description provided for @analyticsLivesReplayExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Replay não disponível'**
+  String get analyticsLivesReplayExpired;
+
+  /// No description provided for @analyticsLivesReplayExpiredSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'O vídeo pode ter expirado (>30 dias)'**
+  String get analyticsLivesReplayExpiredSub;
+
+  /// No description provided for @analyticsLivesEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live realizada ainda'**
+  String get analyticsLivesEmptyTitle;
+
+  /// No description provided for @analyticsLivesEmptySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faça sua primeira live e veja as métricas aqui'**
+  String get analyticsLivesEmptySubtitle;
+
+  /// No description provided for @analyticsLivesMonthsShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Jan,Fev,Mar,Abr,Mai,Jun,Jul,Ago,Set,Out,Nov,Dez'**
+  String get analyticsLivesMonthsShort;
+
+  /// No description provided for @analyticsReachTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alcance e Monetização'**
+  String get analyticsReachTitle;
+
+  /// No description provided for @analyticsReachKpiGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gifts recebidos'**
+  String get analyticsReachKpiGifts;
+
+  /// No description provided for @analyticsReachKpiEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos (USDT)'**
+  String get analyticsReachKpiEarnings;
+
+  /// No description provided for @analyticsReachEarningsChartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos por dia'**
+  String get analyticsReachEarningsChartTitle;
+
+  /// No description provided for @analyticsReachLegendEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos USDT'**
+  String get analyticsReachLegendEarnings;
+
+  /// No description provided for @analyticsReachLegendFee.
+  ///
+  /// In pt, this message translates to:
+  /// **'Taxa plataforma'**
+  String get analyticsReachLegendFee;
+
+  /// No description provided for @analyticsReachTopGiftsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Top Gifts recebidos'**
+  String get analyticsReachTopGiftsTitle;
+
+  /// No description provided for @analyticsReachNoGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum gift recebido ainda'**
+  String get analyticsReachNoGifts;
+
+  /// No description provided for @analyticsReachMonetizationTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Monetização total'**
+  String get analyticsReachMonetizationTitle;
+
+  /// No description provided for @analyticsReachTotalEarned.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total ganho'**
+  String get analyticsReachTotalEarned;
+
+  /// No description provided for @analyticsReachTotalGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gifts totais'**
+  String get analyticsReachTotalGifts;
+
+  /// No description provided for @analyticsReachEarningsPerLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganho/live'**
+  String get analyticsReachEarningsPerLive;
+
+  /// No description provided for @analyticsDashboardAvgViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'méd./live'**
+  String get analyticsDashboardAvgViewers;
+
+  /// No description provided for @analyticsDashboardSeeGrowth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver crescimento'**
+  String get analyticsDashboardSeeGrowth;
+
+  /// No description provided for @analyticsDashboardGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'gifts'**
+  String get analyticsDashboardGifts;
+
+  /// No description provided for @analyticsDashboardMinAvg.
+  ///
+  /// In pt, this message translates to:
+  /// **'{min} min méd.'**
+  String analyticsDashboardMinAvg(String min);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

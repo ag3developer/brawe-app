@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import 'dart:math' as math;
 
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/creator_analytics_view_model.dart';
@@ -22,6 +23,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
     final period = ref.watch(analyticsPeriodProvider);
     final socialAsync = ref.watch(creatorSocialStatsProvider);
     final viewersAsync = ref.watch(viewersHistoryProvider(period));
@@ -48,7 +50,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Seguidores',
+          s.analyticsFollowersTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
@@ -102,7 +104,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                 const SizedBox(height: 20),
 
                 Text(
-                  'Tendência de engajamento',
+                  s.analyticsFollowersTrendTitle,
                   style: TextStyle(
                     color: context.colors.textPrimary,
                     fontWeight: FontWeight.w700,
@@ -110,17 +112,14 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  'Audiência das lives — correlação direta com crescimento',
+                  s.analyticsFollowersTrendSubtitle,
                   style: TextStyle(
                     color: context.colors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
                 const SizedBox(height: 10),
-                const AnalyticsLegendDot(
-                  color: Color(0xFF8B5CF6),
-                  label: 'Engajamento',
-                ),
+                AnalyticsLegendDot(color: const Color(0xFF8B5CF6), label: s.analyticsFollowersLegendEngagement),
                 const SizedBox(height: 8),
 
                 viewersAsync.when(
@@ -285,7 +284,7 @@ class _FollowerBreakdown extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Resumo da conta',
+            S.of(context).analyticsFollowersSummaryTitle,
             style: TextStyle(
               color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -294,28 +293,28 @@ class _FollowerBreakdown extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _StatRow(
-            label: 'Seguidores',
+            label: S.of(context).analyticsFollowersSummaryFollowers,
             value: analyticsFormatCount(followers),
             icon: LucideIcons.users,
             color: const Color(0xFF8B5CF6),
           ),
           const Divider(height: 16),
           _StatRow(
-            label: 'Seguindo',
+            label: S.of(context).analyticsFollowersSummaryFollowing,
             value: analyticsFormatCount(following),
             icon: LucideIcons.userCheck,
             color: const Color(0xFF3B82F6),
           ),
           const Divider(height: 16),
           _StatRow(
-            label: 'Lives realizadas',
+            label: S.of(context).analyticsFollowersSummaryLives,
             value: analyticsFormatCount(totalLives),
             icon: LucideIcons.radio,
             color: const Color(0xFFEC4899),
           ),
           const Divider(height: 16),
           _StatRow(
-            label: 'Taxa seguidor/live',
+            label: S.of(context).analyticsFollowersSummaryRatio,
             value: totalLives > 0
                 ? (followers / totalLives).toStringAsFixed(1)
                 : '—',
@@ -378,30 +377,19 @@ class _StatRow extends StatelessWidget {
 class _GrowthTips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tips = [
-      (
-        LucideIcons.radio,
-        'Faça lives regularmente',
-        'Consistência aumenta seguidores em +40%',
-      ),
-      (
-        LucideIcons.messageCircle,
-        'Interaja com a audiência',
-        'Responder comentários aumenta retenção',
-      ),
-      (
-        LucideIcons.share2,
-        'Compartilhe seus conteúdos',
-        'Stories e posts aumentam o alcance',
-      ),
+      (LucideIcons.radio, s.analyticsFollowersTip1Title, s.analyticsFollowersTip1Subtitle),
+      (LucideIcons.messageCircle, s.analyticsFollowersTip2Title, s.analyticsFollowersTip2Subtitle),
+      (LucideIcons.share2, s.analyticsFollowersTip3Title, s.analyticsFollowersTip3Subtitle),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Dicas para crescer',
+          s.analyticsFollowersTipsTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w700,
