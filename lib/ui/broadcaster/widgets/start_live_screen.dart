@@ -193,15 +193,20 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, S.of(context).startLiveThumbCaptureFailed);
+        AppSnackBar.showError(
+          context,
+          S.of(context).startLiveThumbCaptureFailed,
+        );
       }
     }
   }
 
   Future<void> _pickThumbnailFromGallery() async {
     final picker = ImagePicker();
-    final XFile? file =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (file == null) return;
     ref.read(startLiveViewModelProvider.notifier).setThumbnail(file.path);
     if (mounted) {
@@ -222,22 +227,32 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined,
-                  color: AppColors.electricPurple),
-              title: Text(s.startLiveThumbCaptureNow,
-                  style: const TextStyle(color: Colors.white)),
-              subtitle: Text(s.startLiveThumbCaptureNowSubtitle,
-                  style: const TextStyle(color: AppColors.coolGray)),
+              leading: const Icon(
+                Icons.camera_alt_outlined,
+                color: AppColors.electricPurple,
+              ),
+              title: Text(
+                s.startLiveThumbCaptureNow,
+                style: const TextStyle(color: Colors.white),
+              ),
+              subtitle: Text(
+                s.startLiveThumbCaptureNowSubtitle,
+                style: const TextStyle(color: AppColors.coolGray),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _captureThumbnailFromCamera();
               },
             ),
             ListTile(
-              leading: const Icon(Icons.image_outlined,
-                  color: AppColors.electricPurple),
-              title: Text(s.startLiveThumbPickGallery,
-                  style: const TextStyle(color: Colors.white)),
+              leading: const Icon(
+                Icons.image_outlined,
+                color: AppColors.electricPurple,
+              ),
+              title: Text(
+                s.startLiveThumbPickGallery,
+                style: const TextStyle(color: Colors.white),
+              ),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickThumbnailFromGallery();
@@ -245,10 +260,14 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             ),
             if (ref.read(startLiveViewModelProvider).thumbnailUrl != null)
               ListTile(
-                leading: const Icon(Icons.delete_outline,
-                    color: AppColors.mutedRed),
-                title: Text(s.startLiveThumbRemove,
-                    style: const TextStyle(color: AppColors.mutedRed)),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.mutedRed,
+                ),
+                title: Text(
+                  s.startLiveThumbRemove,
+                  style: const TextStyle(color: AppColors.mutedRed),
+                ),
                 onTap: () {
                   ref
                       .read(startLiveViewModelProvider.notifier)
@@ -265,8 +284,9 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
 
   Future<void> _onStartLive() async {
     final s = S.of(context);
-    final success =
-        await ref.read(startLiveViewModelProvider.notifier).submit();
+    final success = await ref
+        .read(startLiveViewModelProvider.notifier)
+        .submit();
     if (!mounted) return;
 
     if (!success) {
@@ -283,18 +303,22 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     }
 
     // Persiste última config para "Re-Live preset" na próxima vez.
-    unawaited(_lastConfig.save(
-      title: state.title,
-      category: state.category,
-      visibility: state.visibility,
-      notifyFollowers: state.notifyFollowers,
-    ));
+    unawaited(
+      _lastConfig.save(
+        title: state.title,
+        category: state.category,
+        visibility: state.visibility,
+        notifyFollowers: state.notifyFollowers,
+      ),
+    );
 
     // Se o usuário pediu para avisar seguidores, abre o warm-up de 30s.
     if (state.notifyFollowers) {
       // Dispara o anúncio (best-effort — se backend não suportar, segue o jogo).
       unawaited(
-        ref.read(liveRepositoryProvider).announceLive(room.id, secondsUntilLive: 30),
+        ref
+            .read(liveRepositoryProvider)
+            .announceLive(room.id, secondsUntilLive: 30),
       );
       setState(() => _showWarmup = true);
       return;
@@ -326,7 +350,8 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 36, height: 4,
+                width: 36,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
                   color: Colors.white24,
@@ -334,28 +359,39 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                 ),
               ),
               ...AppConstants.categories.map((cat) {
-                final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
+                final icon =
+                    _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
                 final selected = state.category == cat;
                 return ListTile(
                   leading: Container(
-                    width: 36, height: 36,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: (selected ? AppColors.electricPurple : Colors.white)
-                          .withValues(alpha: 0.12),
+                      color:
+                          (selected ? AppColors.electricPurple : Colors.white)
+                              .withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon,
-                        color: selected ? AppColors.electricPurple : Colors.white70,
-                        size: 18),
+                    child: Icon(
+                      icon,
+                      color: selected
+                          ? AppColors.electricPurple
+                          : Colors.white70,
+                      size: 18,
+                    ),
                   ),
                   title: Text(
                     _CategoryChips.categoryLabel(S.of(context), cat),
                     style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w600),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   trailing: selected
-                      ? const Icon(Icons.check_rounded,
-                          color: AppColors.electricPurple)
+                      ? const Icon(
+                          Icons.check_rounded,
+                          color: AppColors.electricPurple,
+                        )
                       : null,
                   onTap: () {
                     ref
@@ -410,10 +446,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             child: Column(
               children: [
                 // ── TOP BAR ──
-                _TikTokTopBar(
-                  onClose: () => context.pop(),
-                  onAddSound: () {},
-                ),
+                _TikTokTopBar(onClose: () => context.pop(), onAddSound: () {}),
                 const Spacer(),
 
                 // ── RIGHT SIDE CONTROLS ──
@@ -445,7 +478,9 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                     _titleCtrl.selection = TextSelection.fromPosition(
                       TextPosition(offset: s.length),
                     );
-                    ref.read(startLiveViewModelProvider.notifier).updateTitle(s);
+                    ref
+                        .read(startLiveViewModelProvider.notifier)
+                        .updateTitle(s);
                   },
                   onCategoryChanged: (cat) {
                     ref
@@ -548,8 +583,11 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.videocam_off_outlined,
-                  color: AppColors.coolGray, size: 56),
+              const Icon(
+                Icons.videocam_off_outlined,
+                color: AppColors.coolGray,
+                size: 56,
+              ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 _initError!,
@@ -599,13 +637,20 @@ class _TopBar extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                 child: Container(
-                  width: 38, height: 38,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.45),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
                   ),
-                  child: const Icon(LucideIcons.x, color: Colors.white, size: 18),
+                  child: const Icon(
+                    LucideIcons.x,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ),
@@ -617,17 +662,23 @@ class _TopBar extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.10),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 6, height: 6,
+                      width: 6,
+                      height: 6,
                       decoration: const BoxDecoration(
                         color: Color(0xFF4ADE80),
                         shape: BoxShape.circle,
@@ -654,7 +705,10 @@ class _TopBar extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.mutedRed.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(8),
@@ -664,7 +718,8 @@ class _TopBar extends StatelessWidget {
                   children: [
                     Icon(LucideIcons.radio, color: Colors.white, size: 13),
                     SizedBox(width: 5),
-                    Text('LIVE',
+                    Text(
+                      'LIVE',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -701,13 +756,23 @@ class _GlassButton extends StatelessWidget {
             onTap: onTap,
             child: label != null
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(icon, color: Colors.white, size: 18),
                         const SizedBox(width: 6),
-                        Text(label!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text(
+                          label!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -772,7 +837,9 @@ class _BottomSheet extends StatelessWidget {
             ),
           ),
           padding: EdgeInsets.fromLTRB(
-            20, 14, 20,
+            20,
+            14,
+            20,
             20 + MediaQuery.of(context).viewInsets.bottom,
           ),
           child: Column(
@@ -782,7 +849,8 @@ class _BottomSheet extends StatelessWidget {
               // Drag handle
               Center(
                 child: Container(
-                  width: 36, height: 4,
+                  width: 36,
+                  height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.18),
@@ -798,7 +866,8 @@ class _BottomSheet extends StatelessWidget {
                   GestureDetector(
                     onTap: isLoading ? null : onTapThumbnail,
                     child: Container(
-                      width: 52, height: 52,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(10),
                         color: Colors.white.withValues(alpha: 0.07),
@@ -816,14 +885,20 @@ class _BottomSheet extends StatelessWidget {
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(LucideIcons.image,
-                                    color: Colors.white38, size: 18),
+                                Icon(
+                                  LucideIcons.image,
+                                  color: Colors.white38,
+                                  size: 18,
+                                ),
                                 const SizedBox(height: 2),
-                                const Text('Capa',
-                                    style: TextStyle(
-                                        color: Colors.white38,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600)),
+                                const Text(
+                                  'Capa',
+                                  style: TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ],
                             )
                           : null,
@@ -875,28 +950,36 @@ class _BottomSheet extends StatelessWidget {
                     label: 'Batalha',
                     active: state.battleModeEnabled,
                     color: AppColors.electricPurple,
-                    onTap: isLoading ? null : () => onBattleModeChanged(!state.battleModeEnabled),
+                    onTap: isLoading
+                        ? null
+                        : () => onBattleModeChanged(!state.battleModeEnabled),
                   ),
                   _FeatureCircle(
                     icon: LucideIcons.gift,
                     label: 'Gifts',
                     active: state.giftsEnabled,
                     color: const Color(0xFFEC4899),
-                    onTap: isLoading ? null : () => onGiftsChanged(!state.giftsEnabled),
+                    onTap: isLoading
+                        ? null
+                        : () => onGiftsChanged(!state.giftsEnabled),
                   ),
                   _FeatureCircle(
                     icon: LucideIcons.bell,
                     label: 'Notificar',
                     active: state.notifyFollowers,
                     color: const Color(0xFF4ADE80),
-                    onTap: isLoading ? null : () => onNotifyChanged(!state.notifyFollowers),
+                    onTap: isLoading
+                        ? null
+                        : () => onNotifyChanged(!state.notifyFollowers),
                   ),
                   _FeatureCircle(
                     icon: _visIcon(state.visibility),
                     label: _visShortLabel(s, state.visibility),
                     active: false,
                     color: Colors.white54,
-                    onTap: isLoading ? null : () => _showVisibilitySheet(context),
+                    onTap: isLoading
+                        ? null
+                        : () => _showVisibilitySheet(context),
                     showChevron: true,
                   ),
                 ],
@@ -908,7 +991,10 @@ class _BottomSheet extends StatelessWidget {
               if (state.errorMessage != null) ...[
                 Text(
                   state.displayError(s) ?? state.errorMessage!,
-                  style: const TextStyle(color: AppColors.mutedRed, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.mutedRed,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -924,25 +1010,34 @@ class _BottomSheet extends StatelessWidget {
 
   String _visLabel(S s, LiveVisibility v) {
     switch (v) {
-      case LiveVisibility.public: return s.liveVisibilityPublic;
-      case LiveVisibility.followers: return s.liveVisibilityFollowers;
-      case LiveVisibility.private: return s.liveVisibilityPrivate;
+      case LiveVisibility.public:
+        return s.liveVisibilityPublic;
+      case LiveVisibility.followers:
+        return s.liveVisibilityFollowers;
+      case LiveVisibility.private:
+        return s.liveVisibilityPrivate;
     }
   }
 
   String _visShortLabel(S s, LiveVisibility v) {
     switch (v) {
-      case LiveVisibility.public: return 'Público';
-      case LiveVisibility.followers: return 'Seguidores';
-      case LiveVisibility.private: return 'Privado';
+      case LiveVisibility.public:
+        return 'Público';
+      case LiveVisibility.followers:
+        return 'Seguidores';
+      case LiveVisibility.private:
+        return 'Privado';
     }
   }
 
   IconData _visIcon(LiveVisibility v) {
     switch (v) {
-      case LiveVisibility.public: return LucideIcons.user;
-      case LiveVisibility.followers: return LucideIcons.heart;
-      case LiveVisibility.private: return LucideIcons.lock;
+      case LiveVisibility.public:
+        return LucideIcons.user;
+      case LiveVisibility.followers:
+        return LucideIcons.heart;
+      case LiveVisibility.private:
+        return LucideIcons.lock;
     }
   }
 
@@ -961,7 +1056,8 @@ class _BottomSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 36, height: 4,
+                  width: 36,
+                  height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.white24,
@@ -969,22 +1065,40 @@ class _BottomSheet extends StatelessWidget {
                   ),
                 ),
                 ...AppConstants.categories.map((cat) {
-                  final icon = _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
+                  final icon =
+                      _CategoryChips._icons[cat] ?? LucideIcons.helpCircle;
                   return ListTile(
                     leading: Container(
-                      width: 36, height: 36,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
-                        color: (state.category == cat ? AppColors.electricPurple : Colors.white).withValues(alpha: 0.1),
+                        color:
+                            (state.category == cat
+                                    ? AppColors.electricPurple
+                                    : Colors.white)
+                                .withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: state.category == cat ? AppColors.electricPurple : Colors.white70, size: 18),
+                      child: Icon(
+                        icon,
+                        color: state.category == cat
+                            ? AppColors.electricPurple
+                            : Colors.white70,
+                        size: 18,
+                      ),
                     ),
                     title: Text(
                       _CategoryChips.categoryLabel(S.of(context), cat),
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     trailing: state.category == cat
-                        ? const Icon(Icons.check_rounded, color: AppColors.electricPurple)
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: AppColors.electricPurple,
+                          )
                         : null,
                     onTap: () {
                       onCategoryChanged(cat);
@@ -1010,9 +1124,24 @@ class _BottomSheet extends StatelessWidget {
       builder: (ctx) {
         final s = S.of(context);
         final options = [
-          (LiveVisibility.public, Icons.public_outlined, s.liveVisibilityPublic, 'Qualquer pessoa pode assistir'),
-          (LiveVisibility.followers, Icons.group_outlined, s.liveVisibilityFollowers, 'Apenas seus seguidores'),
-          (LiveVisibility.private, Icons.lock_outline, s.liveVisibilityPrivate, 'Somente com link privado'),
+          (
+            LiveVisibility.public,
+            Icons.public_outlined,
+            s.liveVisibilityPublic,
+            'Qualquer pessoa pode assistir',
+          ),
+          (
+            LiveVisibility.followers,
+            Icons.group_outlined,
+            s.liveVisibilityFollowers,
+            'Apenas seus seguidores',
+          ),
+          (
+            LiveVisibility.private,
+            Icons.lock_outline,
+            s.liveVisibilityPrivate,
+            'Somente com link privado',
+          ),
         ];
         return SafeArea(
           child: Padding(
@@ -1021,25 +1150,43 @@ class _BottomSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 36, height: 4,
+                  width: 36,
+                  height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.white24,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                ...options.map((o) => ListTile(
-                  leading: Icon(o.$2, color: Colors.white70),
-                  title: Text(o.$3, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: Text(o.$4, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                  trailing: state.visibility == o.$1
-                      ? const Icon(Icons.check_rounded, color: AppColors.electricPurple)
-                      : null,
-                  onTap: () {
-                    onVisibilityChanged(o.$1);
-                    Navigator.pop(ctx);
-                  },
-                )),
+                ...options.map(
+                  (o) => ListTile(
+                    leading: Icon(o.$2, color: Colors.white70),
+                    title: Text(
+                      o.$3,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      o.$4,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: state.visibility == o.$1
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: AppColors.electricPurple,
+                          )
+                        : null,
+                    onTap: () {
+                      onVisibilityChanged(o.$1);
+                      Navigator.pop(ctx);
+                    },
+                  ),
+                ),
               ],
             ),
           ),
@@ -1084,7 +1231,12 @@ class _CompactTitleField extends StatelessWidget {
               fontSize: 16,
             ),
             counterText: '',
-            contentPadding: const EdgeInsets.only(left: 16, right: 56, top: 14, bottom: 14),
+            contentPadding: const EdgeInsets.only(
+              left: 16,
+              right: 56,
+              top: 14,
+              bottom: 14,
+            ),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.06),
             border: OutlineInputBorder(
@@ -1093,11 +1245,16 @@ class _CompactTitleField extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+              borderSide: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: AppColors.electricPurple, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.electricPurple,
+                width: 1.5,
+              ),
             ),
           ),
         ),
@@ -1156,7 +1313,11 @@ class _InlineDropdown extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.expand_more_rounded, size: 16, color: Colors.white.withValues(alpha: 0.4)),
+            Icon(
+              Icons.expand_more_rounded,
+              size: 16,
+              color: Colors.white.withValues(alpha: 0.4),
+            ),
           ],
         ),
       ),
@@ -1353,18 +1514,18 @@ class _CategoryChips extends StatelessWidget {
   final bool enabled;
 
   static const Map<String, IconData> _icons = {
-    'Shopping':       LucideIcons.shoppingBag,   // sacola de compras ✓
-    'Gaming':         Icons.sports_esports,       // controle de videogame ✓
-    'Talk Show':      LucideIcons.mic2,           // microfone ✓
-    'Música':         LucideIcons.music,          // nota musical ✓
-    'Educação':       LucideIcons.bookMarked,     // livro ✓
-    'Fitness':        Icons.fitness_center,       // haltere ✓
-    'Culinária':      Icons.restaurant,           // garfo e faca ✓
-    'Beleza':         LucideIcons.sparkles,       // brilho ✓
-    'Tecnologia':     Icons.developer_mode,       // código/tech ✓
-    'Esportes':       LucideIcons.trophy,         // troféu ✓
-    'Entretenimento': LucideIcons.disc3,          // disco ✓
-    'Outro':          LucideIcons.plus,           // genérico ✓
+    'Shopping': LucideIcons.shoppingBag, // sacola de compras ✓
+    'Gaming': Icons.sports_esports, // controle de videogame ✓
+    'Talk Show': LucideIcons.mic2, // microfone ✓
+    'Música': LucideIcons.music, // nota musical ✓
+    'Educação': LucideIcons.bookMarked, // livro ✓
+    'Fitness': Icons.fitness_center, // haltere ✓
+    'Culinária': Icons.restaurant, // garfo e faca ✓
+    'Beleza': LucideIcons.sparkles, // brilho ✓
+    'Tecnologia': Icons.developer_mode, // código/tech ✓
+    'Esportes': LucideIcons.trophy, // troféu ✓
+    'Entretenimento': LucideIcons.disc3, // disco ✓
+    'Outro': LucideIcons.plus, // genérico ✓
   };
 
   static String categoryLabel(S s, String id) {
@@ -1491,8 +1652,9 @@ class _CategoryChips extends StatelessWidget {
                       boxShadow: selected
                           ? [
                               BoxShadow(
-                                color: AppColors.electricPurple
-                                    .withValues(alpha: 0.4),
+                                color: AppColors.electricPurple.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 12,
                                 spreadRadius: -2,
                               ),
@@ -1592,8 +1754,9 @@ class _VisibilityPicker extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1627,8 +1790,11 @@ class _NotifyFollowersToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            const Icon(Icons.notifications_active_outlined,
-                color: Colors.white, size: 20),
+            const Icon(
+              Icons.notifications_active_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
@@ -1668,10 +1834,7 @@ class _GoLiveButton extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFFE91E63),
-              AppColors.electricPurple,
-            ],
+            colors: [Color(0xFFE91E63), AppColors.electricPurple],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
@@ -1703,8 +1866,11 @@ class _GoLiveButton extends StatelessWidget {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.fiber_manual_record,
-                            color: Colors.white, size: 14),
+                        const Icon(
+                          Icons.fiber_manual_record,
+                          color: Colors.white,
+                          size: 14,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           S.of(context).startLiveGoLive,
@@ -1716,8 +1882,11 @@ class _GoLiveButton extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward,
-                            color: Colors.white, size: 18),
+                        const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ],
                     ),
             ),
@@ -1824,10 +1993,7 @@ class _EligibilityLoadingOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2.5,
-              ),
+              CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
               SizedBox(height: 16),
               Text(
                 'Verificando permissões…',
@@ -1890,10 +2056,14 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
                         color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2)),
+                          color: Colors.white.withValues(alpha: 0.2),
+                        ),
                       ),
-                      child: const Icon(Icons.close,
-                          color: Colors.white, size: 18),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -1960,13 +2130,16 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
                     label: Text(
                       ctaLabel,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: gradient.first,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -1977,8 +2150,9 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
                 child: Text(
                   'Agora não',
                   style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 13.5),
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 13.5,
+                  ),
                 ),
               ),
               const Spacer(),
@@ -2023,7 +2197,8 @@ class _SideCircleButton extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2)),
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Icon(icon, color: Colors.white, size: 20),
               ),
@@ -2060,7 +2235,11 @@ class _CompactCategoryRow extends StatelessWidget {
   final bool enabled;
 
   static const List<String> _quick = [
-    'Gaming', 'Música', 'Talk Show', 'Fitness', 'Entretenimento',
+    'Gaming',
+    'Música',
+    'Talk Show',
+    'Fitness',
+    'Entretenimento',
   ];
 
   @override
@@ -2102,8 +2281,9 @@ class _CompactCategoryRow extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                   ],
@@ -2120,19 +2300,23 @@ class _CompactCategoryRow extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15), width: 1),
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.helpCircle,
-                      color: Colors.white54, size: 13),
+                  Icon(LucideIcons.helpCircle, color: Colors.white54, size: 13),
                   const SizedBox(width: 5),
-                  const Text('Mais',
-                      style: TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Mais',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2188,21 +2372,23 @@ class _FeatureCircle extends StatelessWidget {
                       BoxShadow(
                         color: color.withValues(alpha: 0.3),
                         blurRadius: 10,
-                      )
+                      ),
                     ]
                   : null,
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Icon(icon,
-                    color: active ? color : Colors.white54, size: 22),
+                Icon(icon, color: active ? color : Colors.white54, size: 22),
                 if (showChevron)
                   Positioned(
                     bottom: 6,
                     right: 6,
-                    child: Icon(Icons.keyboard_arrow_down,
-                        color: Colors.white38, size: 12),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.white38,
+                      size: 12,
+                    ),
                   ),
               ],
             ),
@@ -2245,7 +2431,8 @@ class _TikTokTopBar extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  width: 36, height: 36,
+                  width: 36,
+                  height: 36,
                   color: Colors.black.withValues(alpha: 0.45),
                   child: const Icon(Icons.close, color: Colors.white, size: 18),
                 ),
@@ -2262,7 +2449,10 @@ class _TikTokTopBar extends StatelessWidget {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
                   color: Colors.black.withValues(alpha: 0.5),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -2343,12 +2533,14 @@ class _RightSideBar extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    width: 44, height: 44,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2)),
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Icon(item.icon, color: Colors.white, size: 20),
                   ),
@@ -2407,17 +2599,23 @@ class _TikTokBottomArea extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    // Reduz espaçamentos em telas com menos de 750pt de altura útil
+    final screenH = MediaQuery.of(context).size.height;
+    final compact = screenH < 750;
+    final gap = compact ? 8.0 : 16.0;
+    final gap2 = compact ? 10.0 : 20.0;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
-        16, 0, 16,
+        16,
+        0,
+        16,
         16 + MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           // ── Thumbnail + Title ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -2429,20 +2627,31 @@ class _TikTokBottomArea extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
-                    width: 50, height: 50,
+                    width: 50,
+                    height: 50,
                     child: state.thumbnailUrl != null
-                        ? Image.file(File(state.thumbnailUrl!), fit: BoxFit.cover)
+                        ? Image.file(
+                            File(state.thumbnailUrl!),
+                            fit: BoxFit.cover,
+                          )
                         : Container(
                             color: Colors.white.withValues(alpha: 0.1),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(LucideIcons.image,
-                                    color: Colors.white60, size: 18),
+                                Icon(
+                                  LucideIcons.image,
+                                  color: Colors.white60,
+                                  size: 18,
+                                ),
                                 const SizedBox(height: 2),
-                                const Text('Alterar',
-                                    style: TextStyle(
-                                        color: Colors.white60, fontSize: 9)),
+                                const Text(
+                                  'Alterar',
+                                  style: TextStyle(
+                                    color: Colors.white60,
+                                    fontSize: 9,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -2471,8 +2680,9 @@ class _TikTokBottomArea extends StatelessWidget {
                             decoration: InputDecoration(
                               hintText: 'Adicionar um título',
                               hintStyle: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.4),
-                                  fontSize: 15),
+                                color: Colors.white.withValues(alpha: 0.4),
+                                fontSize: 15,
+                              ),
                               border: InputBorder.none,
                               counterText: '',
                               isDense: true,
@@ -2493,7 +2703,9 @@ class _TikTokBottomArea extends StatelessWidget {
                           builder: (_, val, _) => Text(
                             '${val.text.length}/100',
                             style: const TextStyle(
-                                color: Colors.white38, fontSize: 10),
+                              color: Colors.white38,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
                       ],
@@ -2503,14 +2715,14 @@ class _TikTokBottomArea extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: gap),
 
           // ── Category grid inline ──
           _InlineCategoryGrid(
             selected: state.category,
             onChanged: isLoading ? null : onCategoryChanged,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: gap),
 
           // ── Actions row ──
           Row(
@@ -2550,7 +2762,7 @@ class _TikTokBottomArea extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: gap2),
 
           // ── Error ──
           if (state.errorMessage != null) ...[
@@ -2564,13 +2776,10 @@ class _TikTokBottomArea extends StatelessWidget {
           // ── Go Live button ──
           SizedBox(
             width: double.infinity,
-            height: 58,
-            child: _GoLiveButton(
-              onPressed: onSubmit,
-              isLoading: isLoading,
-            ),
+            height: compact ? 50 : 58,
+            child: _GoLiveButton(onPressed: onSubmit, isLoading: isLoading),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 6 : 10),
 
           // ── Safety text ──
           Center(
@@ -2622,7 +2831,8 @@ class _ActionCircle extends StatelessWidget {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 48, height: 48,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: active
@@ -2635,8 +2845,11 @@ class _ActionCircle extends StatelessWidget {
                   width: active ? 1.5 : 1,
                 ),
               ),
-              child: Icon(icon,
-                  color: active ? Colors.white : Colors.white70, size: 22),
+              child: Icon(
+                icon,
+                color: active ? Colors.white : Colors.white70,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 5),
             Text(
@@ -2677,14 +2890,14 @@ class _ModeSelector extends StatelessWidget {
                 style: TextStyle(
                   color: isActive ? Colors.white : Colors.white38,
                   fontSize: isActive ? 14 : 13,
-                  fontWeight:
-                      isActive ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
               const SizedBox(height: 4),
               if (isActive)
                 Container(
-                  width: 20, height: 2,
+                  width: 20,
+                  height: 2,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(1),
@@ -2702,10 +2915,7 @@ class _ModeSelector extends StatelessWidget {
 
 // ── Inline Category Grid ──────────────────────────────────────────────────────
 class _InlineCategoryGrid extends StatelessWidget {
-  const _InlineCategoryGrid({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _InlineCategoryGrid({required this.selected, required this.onChanged});
 
   final String selected;
   final ValueChanged<String>? onChanged;
@@ -2755,8 +2965,7 @@ class _InlineCategoryGrid extends StatelessWidget {
                   style: TextStyle(
                     color: isSelected ? Colors.white : Colors.white60,
                     fontSize: 12,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ],
