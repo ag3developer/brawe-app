@@ -51,6 +51,14 @@ class LiveTopBar extends StatelessWidget {
   /// Callback ao tocar no indicador de qualidade.
   final VoidCallback? onQualityTap;
 
+  /// Ícone representando a qualidade atual.
+  static IconData _qualityIcon(String? label) => switch (label) {
+    '480p' => Icons.sd_rounded,
+    '720p HD' => Icons.hd_rounded,
+    '1080p Full HD' => Icons.high_quality_rounded,
+    _ => Icons.hd_outlined, // Auto
+  };
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -112,6 +120,18 @@ class LiveTopBar extends StatelessWidget {
           child: Row(
             children: [
               LivePill(label: s.liveFeedBadgeLive),
+              // Ícone de qualidade ao lado do AO VIVO
+              if (onQualityTap != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onQualityTap,
+                  child: Icon(
+                    _qualityIcon(qualityLabel),
+                    color: Colors.white60,
+                    size: 16,
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               MetricPill(
                 icon: Icons.visibility_rounded,
