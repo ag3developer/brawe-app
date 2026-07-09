@@ -42,6 +42,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
+  bool _isSwitchingCamera = false;
 
   late LiveRoom _room;
   bool _isStreaming = false;
@@ -547,20 +548,46 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   Future<void> _switchCamera() async {
     if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
+    // Evita múltiplos taps enquanto troca
+    if (_isSwitchingCamera) return;
+    setState(() => _isSwitchingCamera = true);
 
     _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
 
     final wasStreaming = _isStreaming;
-    if (_isStreaming) {
-      _stopHeartbeat();
-      await _controller?.stopVideoStreaming();
-      setState(() => _isStreaming = false);
-    }
+    final rtmpUrl = _room.rtmpUrl?.trim();
+    final streamKey = _room.streamKey?.trim();
 
-    await _setupCameraController(_cameras[_currentCameraIndex]);
+    try {
+      // 1. Para RTMP silenciosamente (SEM parar heartbeat — live continua ativa)
+      if (wasStreaming) {
+        try {
+          await _controller?.stopVideoStreaming();
+        } catch (_) {}
+      }
 
-    if (wasStreaming && mounted) {
-      await _toggleStreaming();
+      // 2. Troca o controller para a nova câmera (dispose + init)
+      await _setupCameraController(_cameras[_currentCameraIndex]);
+
+      // 3. Reinicia o RTMP imediatamente com o novo bitrate da câmera
+      if (wasStreaming &&
+          mounted &&
+          rtmpUrl != null &&
+          rtmpUrl.isNotEmpty &&
+          streamKey != null &&
+          streamKey.isNotEmpty) {
+        final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
+        await _controller?.startVideoStreaming(
+          fullUrl,
+          bitrate: _streamBitrate,
+          androidUseOpenGL: true,
+        );
+        if (mounted) setState(() => _isStreaming = true);
+      }
+    } catch (e) {
+      debugPrint('_switchCamera error: $e');
+    } finally {
+      if (mounted) setState(() => _isSwitchingCamera = false);
     }
   }
 
