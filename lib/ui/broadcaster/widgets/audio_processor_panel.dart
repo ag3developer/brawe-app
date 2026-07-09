@@ -1,27 +1,60 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:brawe_app/core/services/broadcast_audio_processing.dart';
 
-/// Painel de controle de processamento de áudio para broadcaster.
-///
-/// Oferece:
-/// - Seletor de presets de EQ profissionais
-/// - Toggle compressor on/off
-/// - Sliders para Master Gain e Limiter
-/// - Visualização de status
+/// Painel de áudio minimalista — design moderno, glassmorphism, ícones Lucide.
 class AudioProcessorPanel extends StatefulWidget {
   final VoidCallback? onClose;
-
   const AudioProcessorPanel({this.onClose, super.key});
 
   @override
   State<AudioProcessorPanel> createState() => _AudioProcessorPanelState();
 }
 
-class _AudioProcessorPanelState extends State<AudioProcessorPanel> {
+class _AudioProcessorPanelState extends State<AudioProcessorPanel>
+    with SingleTickerProviderStateMixin {
   late AudioEQPreset _selectedPreset;
   late bool _compressorEnabled;
   late double _masterGain;
   late double _limiterThreshold;
+  late String _compressorLabel;
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+
+  // Mapa de ícone + label por preset
+  static const _presetMeta = {
+    AudioEQPreset.flat: (
+      icon: LucideIcons.minus,
+      label: 'Flat',
+      sub: 'Sem efeito',
+    ),
+    AudioEQPreset.voiceEnhancement: (
+      icon: LucideIcons.mic,
+      label: 'Voice',
+      sub: 'Voz clara',
+    ),
+    AudioEQPreset.musicBoost: (
+      icon: LucideIcons.music,
+      label: 'Music',
+      sub: 'Bass + Treble',
+    ),
+    AudioEQPreset.gaming: (
+      icon: LucideIcons.gamepad2,
+      label: 'Gaming',
+      sub: 'Diálogos',
+    ),
+    AudioEQPreset.podcast: (
+      icon: LucideIcons.headphones,
+      label: 'Podcast',
+      sub: 'Profissional',
+    ),
+    AudioEQPreset.studio: (
+      icon: LucideIcons.sliders,
+      label: 'Studio',
+      sub: 'Minimalista',
+    ),
+  };
 
   @override
   void initState() {
@@ -30,469 +63,415 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel> {
     _compressorEnabled = BroadcastAudioProcessing.compressorEnabled;
     _masterGain = BroadcastAudioProcessing.masterGain;
     _limiterThreshold = BroadcastAudioProcessing.limiterThreshold;
+    _compressorLabel = _labelForRatio(
+      BroadcastAudioProcessing.compressorConfig.ratio,
+    );
+
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  String _labelForRatio(double ratio) {
+    if (ratio <= 2) return 'Light';
+    if (ratio <= 4) return 'Medium';
+    return 'Aggressive';
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black87,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          border: Border(
-            top: BorderSide(color: Colors.pink.shade300, width: 2),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
-                children: [
-                  const Text(
-                    '🎙️ Audio Processor',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.72),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHandle(),
+                    const SizedBox(height: 12),
+                    _buildHeader(),
+                    const SizedBox(height: 20),
+                    _buildPresetRow(),
+                    const SizedBox(height: 20),
+                    _buildSliderRow(
+                      icon: LucideIcons.volume2,
+                      label: 'Gain',
+                      value: _masterGain,
+                      min: -12,
+                      max: 12,
+                      divisions: 48,
+                      color: const Color(0xFFFF3D6E),
+                      displayValue:
+                          '${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}',
+                      onChanged: (v) {
+                        setState(() => _masterGain = v);
+                        BroadcastAudioProcessing.setMasterGain(v);
+                      },
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70),
-                    onPressed: widget.onClose,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Preset Selector
-              Text(
-                'EQ Preset',
-                style: TextStyle(
-                  color: Colors.grey.shade300,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                    const SizedBox(height: 14),
+                    _buildSliderRow(
+                      icon: LucideIcons.shieldCheck,
+                      label: 'Limiter',
+                      value: _limiterThreshold,
+                      min: -6,
+                      max: 0,
+                      divisions: 12,
+                      color: const Color(0xFFFFB340),
+                      displayValue: '${_limiterThreshold.toStringAsFixed(1)}',
+                      onChanged: (v) {
+                        setState(() => _limiterThreshold = v);
+                        BroadcastAudioProcessing.setLimiterThreshold(v);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    _buildBottomRow(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8),
-              _buildPresetGrid(),
-              const SizedBox(height: 20),
-
-              // Preset Info
-              _buildPresetInfo(),
-              const SizedBox(height: 20),
-
-              // Compressor
-              _buildCompressorSection(),
-              const SizedBox(height: 20),
-
-              // Master Gain
-              _buildMasterGainSlider(),
-              const SizedBox(height: 16),
-
-              // Limiter
-              _buildLimiterSlider(),
-              const SizedBox(height: 20),
-
-              // Status Display
-              _buildStatusCard(),
-              const SizedBox(height: 16),
-
-              // Reset Button
-              ElevatedButton.icon(
-                onPressed: _resetAudio,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reset to Defaults'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade700,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPresetGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      children: AudioEQPreset.values.map((preset) {
-        final isSelected = preset == _selectedPreset;
-        final config = EQPresetConfig.fromPreset(preset);
+  // ── Handle ────────────────────────────────────────────────────────────────
 
-        return GestureDetector(
-          onTap: () => _applyPreset(preset),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.pink.shade600 : Colors.grey.shade800,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? Colors.pink.shade300 : Colors.grey.shade600,
-                width: isSelected ? 2 : 1,
-              ),
+  Widget _buildHandle() => Center(
+    child: Container(
+      width: 36,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Widget _buildHeader() => Row(
+    children: [
+      Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF3D6E).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Icon(
+          LucideIcons.waves,
+          color: Color(0xFFFF3D6E),
+          size: 18,
+        ),
+      ),
+      const SizedBox(width: 10),
+      const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Audio',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(8),
+          ),
+          Text(
+            'EQ · Compressor · Limiter',
+            style: TextStyle(
+              color: Color(0xFF888888),
+              fontSize: 11,
+              height: 1.2,
+            ),
+          ),
+        ],
+      ),
+      const Spacer(),
+      GestureDetector(
+        onTap: widget.onClose,
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(LucideIcons.x, color: Color(0xFF888888), size: 15),
+        ),
+      ),
+    ],
+  );
+
+  // ── Preset Row ────────────────────────────────────────────────────────────
+
+  Widget _buildPresetRow() {
+    return SizedBox(
+      height: 72,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        children: AudioEQPreset.values.map((preset) {
+          final meta = _presetMeta[preset]!;
+          final isSelected = preset == _selectedPreset;
+
+          return GestureDetector(
+            onTap: () => _applyPreset(preset),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              margin: const EdgeInsets.only(right: 8),
+              width: 68,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFFFF3D6E).withValues(alpha: 0.18)
+                    : Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFFFF3D6E).withValues(alpha: 0.7)
+                      : Colors.white.withValues(alpha: 0.07),
+                  width: isSelected ? 1.5 : 1,
+                ),
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(
+                    meta.icon,
+                    size: 20,
+                    color: isSelected
+                        ? const Color(0xFFFF3D6E)
+                        : const Color(0xFF888888),
+                  ),
+                  const SizedBox(height: 5),
                   Text(
-                    config.name,
-                    textAlign: TextAlign.center,
+                    meta.label,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF888888),
+                      fontSize: 10,
                       fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      fontSize: 12,
+                          ? FontWeight.w700
+                          : FontWeight.w400,
+                      letterSpacing: 0.1,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    config.description,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 10),
-                  ),
-                  if (isSelected)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Icon(
-                        Icons.check_circle,
-                        color: Colors.pink.shade200,
-                        size: 16,
-                      ),
-                    ),
                 ],
               ),
             ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildPresetInfo() {
-    final config = BroadcastAudioProcessing.currentPresetConfig;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade700),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            config.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            config.description,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-          ),
-          if (config.bands.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: config.bands.map((band) {
-                return Chip(
-                  label: Text(
-                    '${band.frequency.toStringAsFixed(0)}Hz '
-                    '${band.gain > 0 ? '+' : ''}${band.gain.toStringAsFixed(1)}dB',
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                  backgroundColor: band.gain > 0
-                      ? Colors.green.shade700
-                      : Colors.orange.shade700,
-                  labelStyle: const TextStyle(color: Colors.white),
-                  visualDensity: VisualDensity.compact,
-                );
-              }).toList(),
-            ),
-          ],
-        ],
+          );
+        }).toList(),
       ),
     );
   }
 
-  Widget _buildCompressorSection() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade900,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade700),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // ── Slider Row ────────────────────────────────────────────────────────────
+
+  Widget _buildSliderRow({
+    required IconData icon,
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required Color color,
+    required String displayValue,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF888888),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 2,
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              activeTrackColor: color,
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
+              thumbColor: Colors.white,
+              overlayColor: color.withValues(alpha: 0.15),
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              divisions: divisions,
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 44,
+          child: Text(
+            '$displayValue dB',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Bottom Row: Compressor + Reset ────────────────────────────────────────
+
+  Widget _buildBottomRow() => Row(
+    children: [
+      // Compressor toggle
+      GestureDetector(
+        onTap: () => _toggleCompressor(!_compressorEnabled),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: _compressorEnabled
+                ? const Color(0xFF4FC3F7).withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _compressorEnabled
+                  ? const Color(0xFF4FC3F7).withValues(alpha: 0.5)
+                  : Colors.white.withValues(alpha: 0.07),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '🔧 Compressor',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+              Icon(
+                LucideIcons.activity,
+                size: 14,
+                color: _compressorEnabled
+                    ? const Color(0xFF4FC3F7)
+                    : const Color(0xFF555555),
               ),
-              Switch(
-                value: _compressorEnabled,
-                onChanged: _toggleCompressor,
-                activeThumbColor: Colors.pink.shade300,
+              const SizedBox(width: 6),
+              Text(
+                _compressorEnabled ? _compressorLabel : 'Comp',
+                style: TextStyle(
+                  color: _compressorEnabled
+                      ? const Color(0xFF4FC3F7)
+                      : const Color(0xFF555555),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
-          if (_compressorEnabled) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Configuração: '
-              'Threshold ${BroadcastAudioProcessing.compressorConfig.threshold.toStringAsFixed(0)}dB, '
-              'Ratio ${BroadcastAudioProcessing.compressorConfig.ratio.toStringAsFixed(1)}:1',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                _compressorPresetButton('Light', CompressorConfig.light()),
-                _compressorPresetButton('Medium', CompressorConfig.medium()),
-                _compressorPresetButton(
-                  'Aggressive',
-                  CompressorConfig.aggressive(),
-                ),
-              ],
-            ),
-          ],
-        ],
+        ),
       ),
-    );
-  }
+      const SizedBox(width: 8),
+      // Compressor presets (apenas quando ativo)
+      if (_compressorEnabled) ...[
+        _compChip('L', CompressorConfig.light()),
+        const SizedBox(width: 6),
+        _compChip('M', CompressorConfig.medium()),
+        const SizedBox(width: 6),
+        _compChip('A', CompressorConfig.aggressive()),
+      ],
+      const Spacer(),
+      // Reset
+      GestureDetector(
+        onTap: _resetAudio,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+          ),
+          child: const Icon(
+            LucideIcons.rotateCcw,
+            color: Color(0xFF666666),
+            size: 15,
+          ),
+        ),
+      ),
+    ],
+  );
 
-  Widget _compressorPresetButton(String label, CompressorConfig config) {
+  Widget _compChip(String label, CompressorConfig config) {
     final isActive =
         BroadcastAudioProcessing.compressorConfig.ratio == config.ratio;
-
-    return OutlinedButton(
-      onPressed: _compressorEnabled ? () => _setCompressor(config) : null,
-      style: OutlinedButton.styleFrom(
-        backgroundColor: isActive ? Colors.pink.shade600 : Colors.transparent,
-        side: BorderSide(
-          color: isActive ? Colors.pink.shade300 : Colors.grey.shade600,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? Colors.white : Colors.grey.shade400,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMasterGainSlider() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              '🔊 Master Gain',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-            Text(
-              '${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}dB',
-              style: TextStyle(
-                color: Colors.pink.shade300,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Slider(
-          value: _masterGain,
-          min: -12,
-          max: 12,
-          divisions: 48,
-          activeColor: Colors.pink.shade300,
-          inactiveColor: Colors.grey.shade700,
-          onChanged: (value) {
-            setState(() => _masterGain = value);
-            BroadcastAudioProcessing.setMasterGain(value);
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '-12dB',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-              ),
-              Text(
-                '0dB',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-              ),
-              Text(
-                '+12dB',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () => _setCompressor(config),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF4FC3F7).withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(
+            color: isActive
+                ? const Color(0xFF4FC3F7).withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.07),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildLimiterSlider() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              '🛡️ Limiter (Peak Protection)',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-            Text(
-              '${_limiterThreshold.toStringAsFixed(1)}dB',
-              style: TextStyle(
-                color: Colors.orange.shade300,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Slider(
-          value: _limiterThreshold,
-          min: -6,
-          max: 0,
-          divisions: 12,
-          activeColor: Colors.orange.shade300,
-          inactiveColor: Colors.grey.shade700,
-          onChanged: (value) {
-            setState(() => _limiterThreshold = value);
-            BroadcastAudioProcessing.setLimiterThreshold(value);
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '-6dB',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-              ),
-              Text(
-                '0dB',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusCard() {
-    final preset = BroadcastAudioProcessing.currentPresetConfig;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.pink.shade900.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.pink.shade700.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Current Configuration',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _statusLine('Preset', preset.name),
-          _statusLine(
-            'Compressor',
-            _compressorEnabled
-                ? '${BroadcastAudioProcessing.compressorConfig.ratio.toStringAsFixed(1)}:1'
-                : 'OFF',
-          ),
-          _statusLine(
-            'Master Gain',
-            '${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}dB',
-          ),
-          _statusLine('Limiter', '${_limiterThreshold.toStringAsFixed(1)}dB'),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusLine(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
+        child: Center(
+          child: Text(
             label,
-            style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isActive
+                  ? const Color(0xFF4FC3F7)
+                  : const Color(0xFF555555),
               fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+
+  // ── Actions ───────────────────────────────────────────────────────────────
 
   Future<void> _applyPreset(AudioEQPreset preset) async {
     setState(() => _selectedPreset = preset);
@@ -505,6 +484,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel> {
   }
 
   Future<void> _setCompressor(CompressorConfig config) async {
+    setState(() => _compressorLabel = _labelForRatio(config.ratio));
     await BroadcastAudioProcessing.setCompressor(config);
   }
 
@@ -515,15 +495,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel> {
       _compressorEnabled = BroadcastAudioProcessing.compressorEnabled;
       _masterGain = BroadcastAudioProcessing.masterGain;
       _limiterThreshold = BroadcastAudioProcessing.limiterThreshold;
+      _compressorLabel = 'Medium';
     });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Audio settings reset to defaults'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
   }
 }
