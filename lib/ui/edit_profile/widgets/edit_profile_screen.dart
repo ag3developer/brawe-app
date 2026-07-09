@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../../domain/models/profile.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
@@ -80,8 +82,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           displayName: _nameCtrl.text,
           bio: _bioCtrl.text,
           socialLinks: socialLinks,
+          accountType: ref.read(editProfileViewModelProvider).value?.effectiveAccountType,
         );
     if (!mounted) return;
+
+    // Se salvou como músico → registrar artista no Brawe Sounds
+    final savedType = ref.read(editProfileViewModelProvider).value?.effectiveAccountType;
+    if (ok && savedType == AccountType.musician) {
+      final mf = musicianFieldsKey.currentState;
+      if (mf != null) {
+        await ref.read(editProfileViewModelProvider.notifier).registerArtistIfNeeded(
+          artistName: mf.artistName,
+          city: mf.city.isEmpty ? null : mf.city,
+          spotifyUrl: mf.spotifyUrl.isEmpty ? null : mf.spotifyUrl,
+          appleMusicUrl: mf.appleMusicUrl.isEmpty ? null : mf.appleMusicUrl,
+          genres: mf.selectedGenres.toList(),
+        );
+      }
+    }
 
     // Salva username separadamente se foi alterado
     final vmState = ref.read(editProfileViewModelProvider).value;
@@ -186,6 +204,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           style: TextStyle(color: context.colors.textPrimary)),
                     ),
                   _SectionLabel(s.editProfileSectionInfo),
+                  // ── Tipo de conta ──────────────────────────────────────
+                  _AccountTypeSelector(state: state),
                   _UsernameField(
                     controller: _usernameCtrl,
                     state: state,
@@ -605,6 +625,254 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+// ── Seletor de Tipo de Conta ─────────────────────────────────────────────────
+class _AccountTypeSelector extends ConsumerWidget {
+  final EditProfileState state;
+  const _AccountTypeSelector({required this.state});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    final current = state.effectiveAccountType;
+    final isMusician = current == AccountType.musician;
+
+    // Construído no build para usar S.of(context)
+    final types = [
+      (AccountType.creator,  LucideIcons.video,     s.editProfileAccountTypeCreator),
+      (AccountType.musician, LucideIcons.music,     s.editProfileAccountTypeMusician),
+      (AccountType.business, LucideIcons.building2, s.editProfileAccountTypeBusiness),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            s.editProfileAccountTypeSection,
+            style: TextStyle(
+              color: context.colors.textSecondary,
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: types.map((t) {
+              final selected = current == t.$1;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: t.$1 != AccountType.business ? 8 : 0),
+                  child: _AccountTypeChip(
+                    icon: t.$2,
+                    label: t.$3,
+                    selected: selected,
+                    onTap: () => ref
+                        .read(editProfileViewModelProvider.notifier)
+                        .setAccountType(t.$1),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: SizeTransition(sizeFactor: anim, child: child),
+          ),
+          child: isMusician
+              ? _MusicianExtraFields(key: musicianFieldsKey)
+              : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountTypeChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _AccountTypeChip({required this.icon, required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.mutedRed.withValues(alpha: 0.15)
+              : context.colors.surfaceHighest.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? AppColors.mutedRed : context.colors.border,
+            width: 1.5,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20,
+                color: selected ? AppColors.mutedRed : context.colors.textSecondary),
+            const SizedBox(height: 4),
+            Text(label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? AppColors.mutedRed : context.colors.textSecondary,
+                )),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Campos extras Músico ─────────────────────────────────────────────────────
+/// Chave global exposta para que o pai leia os dados antes de salvar.
+final musicianFieldsKey = GlobalKey<_MusicianExtraFieldsState>();
+
+class _MusicianExtraFields extends StatefulWidget {
+  const _MusicianExtraFields({super.key});
+  @override
+  State<_MusicianExtraFields> createState() => _MusicianExtraFieldsState();
+}
+
+class _MusicianExtraFieldsState extends State<_MusicianExtraFields> {
+  final _artistNameCtrl = TextEditingController();
+  final _cityCtrl       = TextEditingController();
+  final _spotifyCtrl    = TextEditingController();
+  final _appleMusicCtrl = TextEditingController();
+
+  // Getters públicos para leitura pelo widget pai via GlobalKey
+  String get artistName   => _artistNameCtrl.text.trim();
+  String get city         => _cityCtrl.text.trim();
+  String get spotifyUrl   => _spotifyCtrl.text.trim();
+  String get appleMusicUrl => _appleMusicCtrl.text.trim();
+  Set<String> get selectedGenres => Set.unmodifiable(_selectedGenres);
+
+  static const _genreKeys = [
+    ('funk',       LucideIcons.music2),
+    ('sertanejo',  LucideIcons.music4),
+    ('pagode',     LucideIcons.music3),
+    ('forró',      LucideIcons.music2),
+    ('pop',        LucideIcons.star),
+    ('rap',        LucideIcons.mic2),
+    ('eletrônico', LucideIcons.radio),
+    ('gospel',     LucideIcons.heart),
+    ('rock',       LucideIcons.zap),
+    ('mpb',        LucideIcons.sparkles),
+  ];
+  final Set<String> _selectedGenres = {};
+
+  /// Traduz a chave de gênero usando S.of(context).
+  String _genreLabel(BuildContext context, String key) {
+    final s = S.of(context);
+    switch (key) {
+      case 'funk':       return s.soundsGenreFunk;
+      case 'sertanejo':  return s.soundsGenreSertanejo;
+      case 'pagode':     return s.soundsGenrePagode;
+      case 'forró':      return s.soundsGenreForro;
+      case 'pop':        return s.soundsGenrePop;
+      case 'rap':        return s.soundsGenreRap;
+      case 'eletrônico': return s.soundsGenreElectro;
+      case 'gospel':     return s.soundsGenreGospel;
+      case 'rock':       return s.soundsGenreRock;
+      case 'mpb':        return s.soundsGenreMpb;
+      default:           return key;
+    }
+  }
+
+  @override
+  void dispose() {
+    _artistNameCtrl.dispose();
+    _cityCtrl.dispose();
+    _spotifyCtrl.dispose();
+    _appleMusicCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 4),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.mutedRed.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.mutedRed.withValues(alpha: 0.25)),
+          ),
+          child: Row(children: [
+            const Icon(LucideIcons.music, size: 16, color: AppColors.mutedRed),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                s.editProfileMusicianBannerHint,
+                style: TextStyle(color: context.colors.textSecondary, fontSize: 12, height: 1.4),
+              ),
+            ),
+          ]),
+        ),
+        _Field(controller: _artistNameCtrl, label: s.editProfileMusicianArtistName,
+            prefixIcon: LucideIcons.mic2, hint: s.editProfileMusicianArtistNameHint, maxLength: 100),
+        _Field(controller: _cityCtrl, label: s.editProfileMusicianCity,
+            prefixIcon: LucideIcons.mapPin, hint: s.editProfileMusicianCityHint, maxLength: 80),
+        _Field(controller: _spotifyCtrl, label: s.editProfileMusicianSpotify,
+            prefixIcon: LucideIcons.music, hint: 'https://open.spotify.com/artist/...'),
+        _Field(controller: _appleMusicCtrl, label: s.editProfileMusicianAppleMusic,
+            prefixIcon: LucideIcons.music2, hint: 'https://music.apple.com/...'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          child: Text(s.editProfileMusicianGenres,
+              style: TextStyle(color: context.colors.textSecondary,
+                  fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 0.6)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8, runSpacing: 8,
+            children: _genreKeys.map((g) {
+              final selected = _selectedGenres.contains(g.$1);
+              final label = _genreLabel(context, g.$1);
+              return FilterChip(
+                avatar: Icon(g.$2, size: 13,
+                    color: selected ? context.colors.textOnAccent : context.colors.textSecondary),
+                label: Text(label),
+                selected: selected,
+                onSelected: (v) => setState(() =>
+                    v ? _selectedGenres.add(g.$1) : _selectedGenres.remove(g.$1)),
+                selectedColor: AppColors.mutedRed,
+                checkmarkColor: context.colors.textOnAccent,
+                labelStyle: TextStyle(
+                    color: selected ? context.colors.textOnAccent : context.colors.textSecondary,
+                    fontSize: 12),
+                backgroundColor: context.colors.surfaceHighest.withValues(alpha: 0.08),
+                side: BorderSide(color: context.colors.border.withValues(alpha: 0.3)),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 class _Field extends StatelessWidget {
   final TextEditingController controller;
   final String label;

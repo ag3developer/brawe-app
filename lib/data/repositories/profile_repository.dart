@@ -101,12 +101,14 @@ class ProfileRepository {
     String? displayName,
     String? bio,
     Map<String, String>? socialLinks,
+    AccountType? accountType,
   }) async {
     try {
       final data = await _profileService.updateMyProfile(
         displayName: displayName,
         bio: bio,
         socialLinks: socialLinks,
+        accountType: accountType?.name,
       );
       return Profile.fromJson(_normalize(data));
     } on DioException catch (e) {

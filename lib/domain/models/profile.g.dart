@@ -17,6 +17,18 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   socialLinks: (json['social_links'] as Map<String, dynamic>?)?.map(
     (k, e) => MapEntry(k, e as String),
   ),
+  accountType:
+      $enumDecodeNullable(_$AccountTypeEnumMap, json['account_type']) ??
+      AccountType.consumer,
+  artistId: json['artist_id'] as String?,
+  artistName: json['artist_name'] as String?,
+  artistGenres: (json['artist_genres'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
+  artistCity: json['artist_city'] as String?,
+  artistCountry: json['artist_country'] as String?,
+  artistTotalTracks: (json['artist_total_tracks'] as num?)?.toInt() ?? 0,
+  artistTotalPlays: (json['artist_total_plays'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
@@ -28,4 +40,19 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'banner_url': instance.bannerUrl,
   'is_verified': instance.isVerified,
   'social_links': instance.socialLinks,
+  'account_type': _$AccountTypeEnumMap[instance.accountType]!,
+  'artist_id': instance.artistId,
+  'artist_name': instance.artistName,
+  'artist_genres': instance.artistGenres,
+  'artist_city': instance.artistCity,
+  'artist_country': instance.artistCountry,
+  'artist_total_tracks': instance.artistTotalTracks,
+  'artist_total_plays': instance.artistTotalPlays,
+};
+
+const _$AccountTypeEnumMap = {
+  AccountType.consumer: 'consumer',
+  AccountType.creator: 'creator',
+  AccountType.musician: 'musician',
+  AccountType.business: 'business',
 };
