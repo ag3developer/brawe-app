@@ -442,27 +442,23 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             child: SizedBox.expand(),
           ),
 
+          // ── RIGHT SIDE CONTROLS (flutuando no Stack, fora da Column) ──
+          Positioned(
+            right: 12,
+            bottom: MediaQuery.of(context).size.height * 0.32,
+            child: _RightSideBar(
+              canFlip: _cameras.length > 1,
+              onFlip: _flipCamera,
+              onThumbnail: _pickThumbnailFromGallery,
+            ),
+          ),
+
           SafeArea(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // ── TOP BAR ──
                 _TikTokTopBar(onClose: () => context.pop(), onAddSound: () {}),
-                const Spacer(),
-
-                // ── RIGHT SIDE CONTROLS ──
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: _RightSideBar(
-                      canFlip: _cameras.length > 1,
-                      onFlip: _flipCamera,
-                      onThumbnail: _pickThumbnailFromGallery,
-                    ),
-                  ),
-                ),
-
-                const Spacer(),
 
                 // ── BOTTOM AREA ──
                 _TikTokBottomArea(
