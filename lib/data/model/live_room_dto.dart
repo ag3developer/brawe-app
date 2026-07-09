@@ -77,7 +77,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
   LiveRoom toDomain() {
     final effectivePlaybackId = streamConfig?.playbackId;
     final fallbackStreamUrl = effectivePlaybackId != null
-        ? 'https://stream.mux.com/$effectivePlaybackId.m3u8'
+        ? 'https://stream.mux.com/$effectivePlaybackId.m3u8?max_resolution=1080p&rendition_order=desc'
         : null;
 
     return LiveRoom(
@@ -93,7 +93,9 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       totalLikes: totalLikes,
       totalMessages: totalMessages,
       isPaused: isPaused,
-      pausedAt: pausedAt == null ? null : DateTime.tryParse(pausedAt!)?.toLocal(),
+      pausedAt: pausedAt == null
+          ? null
+          : DateTime.tryParse(pausedAt!)?.toLocal(),
       playbackId: effectivePlaybackId,
       streamUrl: playbackUrl ?? streamConfig?.playbackUrl ?? fallbackStreamUrl,
       rtmpUrl: streamConfig?.rtmpUrl ?? streamConfig?.ingestUrl ?? ingestUrl,
