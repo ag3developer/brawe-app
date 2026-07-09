@@ -43,6 +43,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   List<CameraDescription> _cameras = [];
   int _currentCameraIndex = 0;
   bool _isSwitchingCamera = false;
+  BroadcastAudioMode _audioMode = BroadcastAudioMode.quality;
 
   late LiveRoom _room;
   bool _isStreaming = false;
@@ -200,7 +201,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // ⭐ Configura AVAudioSession (iOS) / AudioFocus (Android) em modo
     // `videoRecording` ANTES de inicializar a câmera. Isso elimina o chiado
     // causado pelo modo default `voiceChat`/AGC agressivo do iOS.
-    await BroadcastAudioSession.activate();
+    await BroadcastAudioSession.activate(mode: _audioMode);
 
     // Câmera traseira tem sensor melhor e suporta 1080p; a frontal costuma
     // estar capada em 720p (sensor menor, sem OIS). Adaptamos o preset por
@@ -1258,6 +1259,41 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       _switchCamera();
                     },
                   ),
+                // ── Modo de áudio ──────────────────────────────────────
+                MoreOptionTile(
+                  icon: _audioMode == BroadcastAudioMode.quality
+                      ? Icons.music_note_rounded
+                      : Icons.record_voice_over_rounded,
+                  iconColor: _audioMode == BroadcastAudioMode.quality
+                      ? const Color(0xFFFF3D6E)
+                      : const Color(0xFF4FC3F7),
+                  title: _audioMode == BroadcastAudioMode.quality
+                      ? 'Áudio: Qualidade'
+                      : 'Áudio: Redução de ruído',
+                  subtitle: _audioMode == BroadcastAudioMode.quality
+                      ? 'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.'
+                      : 'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.',
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final newMode = _audioMode == BroadcastAudioMode.quality
+                        ? BroadcastAudioMode.voice
+                        : BroadcastAudioMode.quality;
+                    setState(() => _audioMode = newMode);
+                    await BroadcastAudioSession.activate(mode: newMode);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            newMode == BroadcastAudioMode.voice
+                                ? '🎙️ Redução de ruído ativada'
+                                : '🎵 Modo qualidade ativado',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                ),
                 MoreOptionTile(
                   icon: Icons.share_outlined,
                   iconColor: Colors.white,
