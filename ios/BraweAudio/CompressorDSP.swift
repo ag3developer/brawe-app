@@ -1,159 +1,104 @@
-import AVFoundation
+import Accelerate
 
-/// Implementação de compressor dinâmico via DSP customizado
-/// Aplica redução de ganho baseado em threshold + ratio + envelope
+/// Compressor dinâmico usando vDSP (Accelerate framework) para performance.
+///
+/// Corrigido vs versão anterior:
+/// 1. vDSP_rmsqv para RMS por bloco (em vez de abs() sample-by-sample)
+/// 2. Makeup gain fora do loop de samples (cálculo único, não por sample)
+/// 3. Coeficientes de envelope corretos para taxa de amostragem real
+/// 4. Threshold em amplitude linear (não dB) para evitar log10 por sample
 class CompressorDSP {
-  var threshold: Float = -12.0
+  var threshold: Float = -12.0      // dB
   var ratio: Float = 4.0
-  var attackTime: Float = 5.0
-  var releaseTime: Float = 50.0
-  var makeupGain: Float = 4.0
-  
-  private var gainReduction: Float = 0.0
+  var attackTime: Float = 5.0       // ms
+  var releaseTime: Float = 50.0     // ms
+  var makeupGain: Float = 4.0       // dB
+
   private var envelope: Float = 1.0
-  
-  private let sampleRate = AudioProcessingConstants.sampleRate
-  
-  /// Coeficientes de suavização para attack/release
-  private var attackCoefficient: Float = 0.0
-  private var releaseCoefficient: Float = 0.0
-  
-  /// Flag para indicar se está comprimindo
-  private(set) var isActive: Bool = false
-  
+  private var attackCoeff: Float = 0.0
+  private var releaseCoeff: Float = 0.0
+  private var thresholdLinear: Float = 1.0
+  private var makeupGainLinear: Float = 1.0
+
+  private let sampleRate: Float
+
   init(
     threshold: Float = -12.0,
     ratio: Float = 4.0,
     attackTime: Float = 5.0,
     releaseTime: Float = 50.0,
-    makeupGain: Float = 4.0
+    makeupGain: Float = 4.0,
+    sampleRate: Float = 44100.0
   ) {
+    self.sampleRate = sampleRate
     self.threshold = threshold
     self.ratio = ratio
     self.attackTime = attackTime
     self.releaseTime = releaseTime
     self.makeupGain = makeupGain
-    
     updateCoefficients()
   }
-  
-  /// Atualiza coeficientes de attack/release
+
   private func updateCoefficients() {
-    // Converter tempo (ms) para coeficiente de suavização exponencial
-    // coefficient = exp(-2π * Δf / fs)
-    // onde Δf = 1/(time_ms * 0.001)
-    
-    let attackHz = 1.0 / (Double(attackTime) * 0.001)
-    let releaseHz = 1.0 / (Double(releaseTime) * 0.001)
-    
-    attackCoefficient = Float(exp(-2.0 * .pi * attackHz / sampleRate))
-    releaseCoefficient = Float(exp(-2.0 * .pi * releaseHz / sampleRate))
+    // Coeficiente de suavização exponencial: 1 - exp(-1 / (time_s * sr))
+    let attackSamples  = (attackTime  / 1000.0) * sampleRate
+    let releaseSamples = (releaseTime / 1000.0) * sampleRate
+    attackCoeff  = 1.0 - exp(-1.0 / max(attackSamples,  1.0))
+    releaseCoeff = 1.0 - exp(-1.0 / max(releaseSamples, 1.0))
+
+    // Pre-calculados em linear para evitar pow/log no processamento
+    thresholdLinear = pow(10.0, threshold / 20.0)
+    makeupGainLinear = pow(10.0, makeupGain / 20.0)
   }
-  
-  /// Processa buffer de áudio com compressão
-  /// - Parameter buffer: Buffer de áudio com amostras
-  /// - Returns: Buffer processado com compressão aplicada
-  func process(_ buffer: [Float]) -> [Float] {
-    var output = buffer
-    
-    for i in 0..<buffer.count {
-      let sample = buffer[i]
-      
-      // 1. Detectar nível de entrada (RMS simplificado)
-      let inputLevel = abs(sample)
-      
-      // 2. Converter para dB
-      let inputLevelDb = 20.0 * log10(max(inputLevel, 0.00001))
-      
-      // 3. Calcular redução de ganho
-      let gainReductionDb = calculateGainReduction(inputLevelDb)
-      
-      // 4. Converter de volta para linear
-      let gainReduction = pow(10.0, gainReductionDb / 20.0)
-      
-      // 5. Suavizar envelope (attack/release)
-      if gainReduction < envelope {
-        // Attack (mais rápido)
-        envelope = attackCoefficient * envelope + (1.0 - attackCoefficient) * gainReduction
-      } else {
-        // Release (mais lento)
-        envelope = releaseCoefficient * envelope + (1.0 - releaseCoefficient) * gainReduction
-      }
-      
-      // 6. Aplicar makeup gain
-      let makeupGainLinear = pow(10.0, makeupGain / 20.0)
-      
-      // 7. Output = input * compressor * makeup
-      output[i] = sample * envelope * makeupGainLinear
-      
-      // Indicador de compressão ativa
-      isActive = gainReductionDb < -0.5
+
+  /// Processa buffer in-place usando vDSP para performance máxima.
+  func processInPlace(_ samples: UnsafeMutablePointer<Float>, count: Int) {
+    guard count > 0 else { return }
+
+    // 1. Calcular RMS do bloco via vDSP (uma chamada, sem loop)
+    var rms: Float = 0.0
+    vDSP_rmsqv(samples, 1, &rms, vDSP_Length(count))
+    let level = max(rms, 1e-6)  // evitar log(0)
+
+    // 2. Calcular ganho de compressão (em linear)
+    let gainReduction: Float
+    if level > thresholdLinear {
+      // Quantidade de compressão: (1/ratio - 1) * (level - threshold) em dB
+      let levelDb = 20.0 * log10(level / thresholdLinear)
+      let gainDb  = levelDb * (1.0 / ratio - 1.0)   // negativo = redução
+      gainReduction = pow(10.0, gainDb / 20.0)       // [0..1]
+    } else {
+      gainReduction = 1.0  // abaixo do threshold: sem compressão
     }
-    
-    return output
+
+    // 3. Suavizar envelope (attack quando comprimindo, release quando relaxando)
+    let coeff = gainReduction < envelope ? attackCoeff : releaseCoeff
+    envelope += coeff * (gainReduction - envelope)
+
+    // 4. Ganho final = envelope * makeup, aplicado via vDSP_vsmul (1 call)
+    var finalGain = envelope * makeupGainLinear
+    vDSP_vsmul(samples, 1, &finalGain, samples, 1, vDSP_Length(count))
   }
-  
-  /// Calcula redução de ganho em dB
-  /// - Parameter inputDb: Nível de entrada em dB
-  /// - Returns: Redução de ganho em dB (negativo = redução)
-  private func calculateGainReduction(_ inputDb: Float) -> Float {
-    // Se abaixo do threshold, sem compressão
-    if inputDb < threshold {
-      return 0.0
-    }
-    
-    // Acima do threshold: apply compression ratio
-    let excessDb = inputDb - threshold
-    let compressedExcessDb = excessDb / ratio
-    let gainReductionDb = compressedExcessDb - excessDb
-    
-    return gainReductionDb
-  }
-  
-  /// Atualiza parâmetros do compressor
+
   func updateParameters(
-    threshold: Float,
-    ratio: Float,
-    attackTime: Float,
-    releaseTime: Float,
-    makeupGain: Float
+    threshold: Float, ratio: Float,
+    attackTime: Float, releaseTime: Float, makeupGain: Float
   ) {
-    self.threshold = threshold.clamp(
-      min: AudioProcessingConstants.minCompressorThreshold,
-      max: AudioProcessingConstants.maxCompressorThreshold
-    )
-    self.ratio = ratio.clamp(
-      min: AudioProcessingConstants.minCompressionRatio,
-      max: AudioProcessingConstants.maxCompressionRatio
-    )
-    self.attackTime = attackTime.clamp(
-      min: AudioProcessingConstants.minAttackTime,
-      max: AudioProcessingConstants.maxAttackTime
-    )
-    self.releaseTime = releaseTime.clamp(
-      min: AudioProcessingConstants.minReleaseTime,
-      max: AudioProcessingConstants.maxReleaseTime
-    )
-    self.makeupGain = makeupGain
-    
+    self.threshold   = threshold.clamped(to: -40...0)
+    self.ratio       = ratio.clamped(to: 1...16)
+    self.attackTime  = attackTime.clamped(to: 1...100)
+    self.releaseTime = releaseTime.clamped(to: 10...1000)
+    self.makeupGain  = makeupGain
     updateCoefficients()
   }
-  
-  /// Reset do estado interno
+
   func reset() {
-    gainReduction = 0.0
     envelope = 1.0
-    isActive = false
   }
 }
 
-// MARK: - Helper Extension
-
 extension Float {
-  /// Limita valor entre min e max
-  func clamp(min: Float, max: Float) -> Float {
-    if self < min { return min }
-    if self > max { return max }
-    return self
+  func clamped(to range: ClosedRange<Float>) -> Float {
+    return min(max(self, range.lowerBound), range.upperBound)
   }
 }

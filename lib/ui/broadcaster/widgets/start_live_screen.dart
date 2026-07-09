@@ -2779,26 +2779,26 @@ class _TikTokBottomArea extends StatelessWidget {
             height: compact ? 50 : 58,
             child: _GoLiveButton(onPressed: onSubmit, isLoading: isLoading),
           ),
-          SizedBox(height: compact ? 6 : 10),
+          SizedBox(height: compact ? 4 : 8),
 
-          // ── Safety text ──
-          Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_outlined, color: Colors.white38, size: 12),
-                const SizedBox(width: 4),
-                const Text(
-                  'Sua LIVE será pública',
-                  style: TextStyle(color: Colors.white38, fontSize: 11),
-                ),
-              ],
-            ),
+          // ── Safety text + Mode selector em linha para economizar espaço ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.shield_outlined, color: Colors.white38, size: 11),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'LIVE pública',
+                    style: TextStyle(color: Colors.white38, fontSize: 10),
+                  ),
+                ],
+              ),
+              if (!compact) const _ModeSelector(),
+            ],
           ),
-
-          // ── Mode selector ──
-          const SizedBox(height: 16),
-          const _ModeSelector(),
         ],
       ),
     );

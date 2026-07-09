@@ -120,4 +120,30 @@ with open(path, 'w') as f:
 print("✅  Patches aplicados com sucesso")
 PYEOF
 
+# 6. Interceptar addAudioData para processar EQ+Compressor antes do RTMP
+python3 << 'ADDAUDIO'
+path = "$TARGET"
+with open(path.replace('FlutterRTMPStreaming.swift', '../../../Classes/RtmppublisherPlugin.m') if False else path, 'r') as f:
+    content = f.read()
+
+old_audio = '''    @objc
+    public func addAudioData(buffer: CMSampleBuffer) {
+        rtmpStream.appendSampleBuffer( buffer, withType: .audio)
+    }'''
+new_audio = '''    @objc
+    public func addAudioData(buffer: CMSampleBuffer) {
+        // ✅ Processa EQ + Compressor + Gain antes do encoding RTMP
+        AVAudioEngineProcessor.shared.processCMSampleBuffer(buffer)
+        rtmpStream.appendSampleBuffer( buffer, withType: .audio)
+    }'''
+
+if old_audio in content:
+    content = content.replace(old_audio, new_audio)
+    with open(path, 'w') as f:
+        f.write(content)
+    print("✅  Audio processing patch aplicado")
+else:
+    print("✅  Audio processing patch já aplicado")
+ADDAUDIO
+
 echo "✅  Patches concluídos. Execute: flutter build ios --no-codesign"

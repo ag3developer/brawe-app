@@ -50,10 +50,16 @@ class BroadcastAudioSession {
         AudioSessionConfiguration(
           avAudioSessionCategory: AVAudioSessionCategory.playAndRecord,
           avAudioSessionCategoryOptions:
+              // ✅ allowBluetooth: permite microfone Bluetooth (AirPods, etc.)
               AVAudioSessionCategoryOptions.allowBluetooth |
-              AVAudioSessionCategoryOptions.allowBluetoothA2dp |
-              AVAudioSessionCategoryOptions.defaultToSpeaker |
-              AVAudioSessionCategoryOptions.mixWithOthers,
+              AVAudioSessionCategoryOptions.allowBluetoothA2dp,
+          // ❌ REMOVIDO: defaultToSpeaker — roteava áudio capturado para o
+          //    speaker físico do iPhone criando loop de feedback (microfonia).
+          //    Para streaming, o áudio capturado vai direto para o encoder
+          //    RTMP — nunca deve ser reproduzido pelo speaker.
+          // ❌ REMOVIDO: mixWithOthers — incompatível com captura exclusiva
+          //    do AVCaptureSession. Causava conflito de sessão com o
+          //    rtmp_broadcaster que já tem posse do microfone.
           avAudioSessionMode: avMode,
           avAudioSessionRouteSharingPolicy:
               AVAudioSessionRouteSharingPolicy.defaultPolicy,
