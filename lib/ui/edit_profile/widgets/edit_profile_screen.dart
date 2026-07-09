@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
@@ -95,18 +96,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       final v = c.text.trim();
       if (v.isNotEmpty) socialLinks[key] = v;
     }
+
     add('instagram', _instaCtrl);
     add('twitter', _twitterCtrl);
     add('tiktok', _tiktokCtrl);
     add('youtube', _ytCtrl);
     add('website', _siteCtrl);
 
-    final ok = await ref.read(editProfileViewModelProvider.notifier).save(
+    final ok = await ref
+        .read(editProfileViewModelProvider.notifier)
+        .save(
           displayName: _nameCtrl.text,
           bio: _bioCtrl.text,
           socialLinks: socialLinks,
-          accountType:
-              ref.read(editProfileViewModelProvider).value?.effectiveAccountType,
+          accountType: ref
+              .read(editProfileViewModelProvider)
+              .value
+              ?.effectiveAccountType,
         );
     if (!mounted) return;
 
@@ -120,7 +126,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
             .saveUsername(newUsername);
         if (!mounted) return;
         if (!usernameOk) {
-          _showSnack(S.of(context).editProfileSavedUsernameFailed, isError: true);
+          _showSnack(
+            S.of(context).editProfileSavedUsernameFailed,
+            isError: true,
+          );
           return;
         }
       }
@@ -134,7 +143,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 artistName: mf.artistName,
                 city: mf.city.isEmpty ? null : mf.city,
                 spotifyUrl: mf.spotifyUrl.isEmpty ? null : mf.spotifyUrl,
-                appleMusicUrl: mf.appleMusicUrl.isEmpty ? null : mf.appleMusicUrl,
+                appleMusicUrl: mf.appleMusicUrl.isEmpty
+                    ? null
+                    : mf.appleMusicUrl,
                 genres: mf.selectedGenres.toList(),
               );
         }
@@ -148,12 +159,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(children: [
-          Icon(isError ? LucideIcons.alertCircle : LucideIcons.checkCircle,
-              color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Expanded(child: Text(msg)),
-        ]),
+        content: Row(
+          children: [
+            Icon(
+              isError ? LucideIcons.alertCircle : LucideIcons.checkCircle,
+              color: Colors.white,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(msg)),
+          ],
+        ),
         backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -174,7 +190,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       appBar: _buildAppBar(s, async, isDark),
       body: async.when(
         loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.mutedRed)),
+          child: CircularProgressIndicator(color: AppColors.mutedRed),
+        ),
         error: (e, _) => _ErrorView(message: s.editProfileLoadError),
         data: (state) {
           _hydrate(state);
@@ -185,7 +202,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   }
 
   PreferredSizeWidget _buildAppBar(
-      S s, AsyncValue<EditProfileState> async, bool isDark) {
+    S s,
+    AsyncValue<EditProfileState> async,
+    bool isDark,
+  ) {
     final isSaving = async.value?.isSaving == true;
     return AppBar(
       backgroundColor: context.colors.background.withValues(alpha: 0.85),
@@ -221,7 +241,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
               backgroundColor: AppColors.mutedRed,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
+                borderRadius: BorderRadius.circular(20),
+              ),
               minimumSize: Size.zero,
             ),
             child: isSaving
@@ -229,10 +250,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white))
-                : Text(s.editProfileSave,
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    s.editProfileSave,
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700)),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -265,14 +293,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                     state: state,
                     onChanged: (val) {
                       _usernameDebounce?.cancel();
-                      _usernameDebounce =
-                          Timer(const Duration(milliseconds: 600), () {
-                        if (val.length >= 3) {
-                          ref
-                              .read(editProfileViewModelProvider.notifier)
-                              .checkUsername(val.trim());
-                        }
-                      });
+                      _usernameDebounce = Timer(
+                        const Duration(milliseconds: 600),
+                        () {
+                          if (val.length >= 3) {
+                            ref
+                                .read(editProfileViewModelProvider.notifier)
+                                .checkUsername(val.trim());
+                          }
+                        },
+                      );
                     },
                   ),
                 ),
@@ -304,45 +334,55 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
 
             const SizedBox(height: 12),
 
+            // Seção Tipo de Conta
+            _AccountTypeCard(accountType: state.effectiveAccountType),
+
+            const SizedBox(height: 12),
+
             // Seção Links Sociais
             _SectionCard(
               icon: LucideIcons.link,
               title: s.editProfileSectionSocial,
               children: [
                 _SocialRow(
-                    icon: LucideIcons.instagram,
-                    color: const Color(0xFFE1306C),
-                    label: 'Instagram',
-                    controller: _instaCtrl,
-                    hint: s.editProfileSocialUserHint),
+                  icon: LucideIcons.instagram,
+                  color: const Color(0xFFE1306C),
+                  label: 'Instagram',
+                  controller: _instaCtrl,
+                  hint: s.editProfileSocialUserHint,
+                ),
                 _RowDivider(),
                 _SocialRow(
-                    icon: LucideIcons.twitter,
-                    color: const Color(0xFF1DA1F2),
-                    label: 'X / Twitter',
-                    controller: _twitterCtrl,
-                    hint: s.editProfileSocialUserHint),
+                  icon: LucideIcons.twitter,
+                  color: const Color(0xFF1DA1F2),
+                  label: 'X / Twitter',
+                  controller: _twitterCtrl,
+                  hint: s.editProfileSocialUserHint,
+                ),
                 _RowDivider(),
                 _SocialRow(
-                    icon: LucideIcons.music2,
-                    color: const Color(0xFF010101),
-                    label: 'TikTok',
-                    controller: _tiktokCtrl,
-                    hint: s.editProfileSocialUserHint),
+                  icon: LucideIcons.music2,
+                  color: const Color(0xFF010101),
+                  label: 'TikTok',
+                  controller: _tiktokCtrl,
+                  hint: s.editProfileSocialUserHint,
+                ),
                 _RowDivider(),
                 _SocialRow(
-                    icon: LucideIcons.youtube,
-                    color: const Color(0xFFFF0000),
-                    label: 'YouTube',
-                    controller: _ytCtrl,
-                    hint: s.editProfileSocialChannelHint),
+                  icon: LucideIcons.youtube,
+                  color: const Color(0xFFFF0000),
+                  label: 'YouTube',
+                  controller: _ytCtrl,
+                  hint: s.editProfileSocialChannelHint,
+                ),
                 _RowDivider(),
                 _SocialRow(
-                    icon: LucideIcons.globe,
-                    color: AppColors.mutedRed,
-                    label: 'Website',
-                    controller: _siteCtrl,
-                    hint: s.editProfileSocialUrlHint),
+                  icon: LucideIcons.globe,
+                  color: AppColors.mutedRed,
+                  label: 'Website',
+                  controller: _siteCtrl,
+                  hint: s.editProfileSocialUrlHint,
+                ),
               ],
             ),
 
@@ -425,24 +465,30 @@ class _HeroMediaEditor extends ConsumerWidget {
                   ? CachedNetworkImage(
                       imageUrl: bannerUrl,
                       fit: BoxFit.cover,
-                      width: double.infinity)
+                      width: double.infinity,
+                    )
                   : Center(
                       child: Padding(
                         padding: EdgeInsets.only(top: topPad),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.image,
-                                size: 26,
-                                color: context.colors.textTertiary
-                                    .withValues(alpha: 0.4)),
+                            Icon(
+                              LucideIcons.image,
+                              size: 26,
+                              color: context.colors.textTertiary.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               S.of(context).editProfileBannerAdd,
                               style: TextStyle(
-                                  color: context.colors.textTertiary
-                                      .withValues(alpha: 0.5),
-                                  fontSize: 12),
+                                color: context.colors.textTertiary.withValues(
+                                  alpha: 0.5,
+                                ),
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -460,7 +506,8 @@ class _HeroMediaEditor extends ConsumerWidget {
               child: Container(
                 color: Colors.black.withValues(alpha: 0.5),
                 child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white)),
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
               ),
             ),
 
@@ -503,28 +550,36 @@ class _HeroMediaEditor extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color: context.colors.background, width: 3),
+                    color: context.colors.background,
+                    width: 3,
+                  ),
                 ),
                 child: ClipOval(
                   child: state.isUploadingAvatar
                       ? Container(
                           color: Colors.black54,
                           child: const Center(
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2)),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
                         )
                       : (avatarUrl != null && avatarUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: avatarUrl,
-                              fit: BoxFit.cover,
-                              width: 88,
-                              height: 88)
-                          : Container(
-                              color: context.colors.divider,
-                              child: Icon(LucideIcons.user,
+                            ? CachedNetworkImage(
+                                imageUrl: avatarUrl,
+                                fit: BoxFit.cover,
+                                width: 88,
+                                height: 88,
+                              )
+                            : Container(
+                                color: context.colors.divider,
+                                child: Icon(
+                                  LucideIcons.user,
                                   size: 40,
-                                  color: context.colors.textTertiary),
-                            )),
+                                  color: context.colors.textTertiary,
+                                ),
+                              )),
                 ),
               ),
             ),
@@ -545,6 +600,193 @@ class _HeroMediaEditor extends ConsumerWidget {
       ),
     );
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// ACCOUNT TYPE CARD
+// ══════════════════════════════════════════════════════════
+//
+// UX Decision: o tipo de conta é uma IDENTIDADE, não uma configuração.
+// Por isso fica no EditProfile (próximo ao nome/bio) como indicador de
+// status, não em Settings (que é para preferências técnicas).
+//
+// Consumer → incentivo de upgrade com CTA
+// Creator / Musician / Business → badge de conquista com descrição
+
+class _AccountTypeCard extends StatelessWidget {
+  final AccountType accountType;
+  const _AccountTypeCard({required this.accountType});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final config = _accountConfig(accountType, s);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Label da seção
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Row(
+              children: [
+                Icon(LucideIcons.shieldCheck, size: 13, color: config.color),
+                const SizedBox(width: 6),
+                Text(
+                  'CONTA'.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: context.colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Card
+          GestureDetector(
+            onTap: accountType == AccountType.consumer
+                ? () => context.push('/creator/intro')
+                : null,
+            child: Container(
+              decoration: BoxDecoration(
+                color: config.color.withValues(alpha: isDark ? 0.12 : 0.07),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: config.color.withValues(alpha: isDark ? 0.3 : 0.2),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    // Ícone com fundo
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: config.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(config.icon, size: 20, color: config.color),
+                    ),
+                    const SizedBox(width: 12),
+                    // Textos
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                config.title,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.colors.textPrimary,
+                                ),
+                              ),
+                              if (accountType != AccountType.consumer) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: config.color
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Ativo',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: config.color,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            config.subtitle,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.colors.textSecondary,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Chevron apenas para consumer (upgrade)
+                    if (accountType == AccountType.consumer)
+                      Icon(LucideIcons.chevronRight,
+                          size: 18, color: config.color),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  _AccountTypeConfig _accountConfig(AccountType type, S s) {
+    switch (type) {
+      case AccountType.creator:
+        return _AccountTypeConfig(
+          icon: LucideIcons.award,
+          color: const Color(0xFF8B5CF6), // violeta
+          title: s.creatorProgramTitle,
+          subtitle: 'Lives, monetização e ferramentas de criador.',
+        );
+      case AccountType.musician:
+        return _AccountTypeConfig(
+          icon: LucideIcons.music,
+          color: const Color(0xFFEC4899), // pink
+          title: 'Artista · Brawe Sounds',
+          subtitle: 'Perfil musical, distribuição e royalties.',
+        );
+      case AccountType.business:
+        return _AccountTypeConfig(
+          icon: LucideIcons.briefcase,
+          color: const Color(0xFF3B82F6), // azul
+          title: 'Business',
+          subtitle: 'Ferramentas para marcas e empresas.',
+        );
+      case AccountType.consumer:
+      default:
+        return _AccountTypeConfig(
+          icon: LucideIcons.user,
+          color: const Color(0xFF6B7280), // cinza
+          title: 'Conta básica',
+          subtitle:
+              'Faça upgrade para o Creator Network e comece a transmitir ao vivo.',
+        );
+    }
+  }
+}
+
+class _AccountTypeConfig {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+
+  const _AccountTypeConfig({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -635,12 +877,15 @@ class _FieldRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: context.colors.textTertiary,
-                        letterSpacing: 0.2)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.textTertiary,
+                    letterSpacing: 0.2,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 child,
               ],
@@ -734,21 +979,28 @@ class _UsernameField extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(left: 8),
             child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2)),
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           )
         else if (state.usernameAvailable == true)
           Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Icon(LucideIcons.checkCircle,
-                size: 16, color: Colors.green.shade500),
+            child: Icon(
+              LucideIcons.checkCircle,
+              size: 16,
+              color: Colors.green.shade500,
+            ),
           )
         else if (state.usernameAvailable == false)
           Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: Icon(LucideIcons.xCircle,
-                size: 16, color: Colors.red.shade400),
+            child: Icon(
+              LucideIcons.xCircle,
+              size: 16,
+              color: Colors.red.shade400,
+            ),
           ),
       ],
     );
@@ -786,19 +1038,22 @@ class _CompactTextField extends StatelessWidget {
       validator: validator,
       inputFormatters: inputFormatters,
       style: TextStyle(
-          fontSize: 15,
-          color: context.colors.textPrimary,
-          fontWeight: FontWeight.w400),
+        fontSize: 15,
+        color: context.colors.textPrimary,
+        fontWeight: FontWeight.w400,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         prefixText: prefixText,
         prefixStyle: TextStyle(
-            fontSize: 14,
-            color: context.colors.textTertiary,
-            fontWeight: FontWeight.w500),
+          fontSize: 14,
+          color: context.colors.textTertiary,
+          fontWeight: FontWeight.w500,
+        ),
         hintStyle: TextStyle(
-            fontSize: 15,
-            color: context.colors.textTertiary.withValues(alpha: 0.5)),
+          fontSize: 15,
+          color: context.colors.textTertiary.withValues(alpha: 0.5),
+        ),
         counterText: '',
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -850,7 +1105,9 @@ class _GlassCircleBtn extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
               border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2), width: 1),
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
             child: Icon(icon, size: iconSize, color: Colors.white),
           ),
@@ -879,8 +1136,11 @@ class _ErrorBanner extends StatelessWidget {
           const Icon(LucideIcons.alertCircle, color: Colors.red, size: 16),
           const SizedBox(width: 8),
           Expanded(
-              child: Text(message,
-                  style: const TextStyle(color: Colors.red, fontSize: 13))),
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.red, fontSize: 13),
+            ),
+          ),
         ],
       ),
     );
@@ -899,13 +1159,20 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(LucideIcons.wifiOff,
-                size: 40, color: context.colors.textTertiary),
+            Icon(
+              LucideIcons.wifiOff,
+              size: 40,
+              color: context.colors.textTertiary,
+            ),
             const SizedBox(height: 12),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: context.colors.textSecondary, fontSize: 15)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 15,
+              ),
+            ),
           ],
         ),
       ),
