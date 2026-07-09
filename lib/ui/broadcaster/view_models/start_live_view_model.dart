@@ -40,32 +40,32 @@ class StartLiveState {
       title.trim().length >= 3 && category.isNotEmpty && !status.isLoading;
 
   String? get errorMessage => status.whenOrNull(
-        error: (error, _) => (error as Failure).toDisplayMessage(),
-      );
+    error: (error, _) => (error as Failure).toDisplayMessage(),
+  );
 
   /// Resolve a mensagem de erro localizada. Para erros de validação
   /// client-side, mapeia `StartLiveValidation.<name>` → string i18n.
   /// Para outras falhas, usa `Failure.toDisplayMessage()`.
   String? displayError(S s) => status.whenOrNull(
-        error: (error, _) {
-          if (error is Failure) {
-            return error.maybeWhen(
-              validation: (message) {
-                switch (message) {
-                  case 'titleTooShort':
-                    return s.startLiveErrorTitleTooShort;
-                  case 'categoryRequired':
-                    return s.startLiveErrorCategoryRequired;
-                  default:
-                    return message ?? error.toDisplayMessage();
-                }
-              },
-              orElse: () => error.toDisplayMessage(),
-            );
-          }
-          return error.toString();
-        },
-      );
+    error: (error, _) {
+      if (error is Failure) {
+        return error.maybeWhen(
+          validation: (message) {
+            switch (message) {
+              case 'titleTooShort':
+                return s.startLiveErrorTitleTooShort;
+              case 'categoryRequired':
+                return s.startLiveErrorCategoryRequired;
+              default:
+                return message ?? error.toDisplayMessage();
+            }
+          },
+          orElse: () => error.toDisplayMessage(),
+        );
+      }
+      return error.toString();
+    },
+  );
 
   StartLiveState copyWith({
     String? title,
@@ -124,11 +124,17 @@ class StartLiveViewModel extends _$StartLiveViewModel {
   }
 
   void toggleBattleMode(bool value) {
-    state = state.copyWith(battleModeEnabled: value, status: const AsyncValue.data(null));
+    state = state.copyWith(
+      battleModeEnabled: value,
+      status: const AsyncValue.data(null),
+    );
   }
 
   void toggleGifts(bool value) {
-    state = state.copyWith(giftsEnabled: value, status: const AsyncValue.data(null));
+    state = state.copyWith(
+      giftsEnabled: value,
+      status: const AsyncValue.data(null),
+    );
   }
 
   void toggleNotifyFollowers(bool value) {
@@ -182,10 +188,14 @@ class StartLiveViewModel extends _$StartLiveViewModel {
 
     try {
       // ignore: avoid_print
-      print('[StartLive] �� Sending POST /rooms — title="${request.title}" category="${request.category}"');
+      print(
+        '[StartLive] Sending POST /rooms — title="${request.title}" category="${request.category}"',
+      );
       final room = await ref.read(liveRepositoryProvider).initiateLive(request);
       // ignore: avoid_print
-      print('[StartLive] ✅ Room created — id=${room.id} streamKey=${room.streamKey != null ? "<set>" : "<null>"} rtmp=${room.rtmpUrl != null ? "<set>" : "<null>"}');
+      print(
+        '[StartLive] ✅ Room created — id=${room.id} streamKey=${room.streamKey != null ? "<set>" : "<null>"} rtmp=${room.rtmpUrl != null ? "<set>" : "<null>"}',
+      );
       state = state.copyWith(status: AsyncValue.data(room));
       return true;
     } on Failure catch (error, stackTrace) {
