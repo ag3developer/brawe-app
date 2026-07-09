@@ -257,11 +257,19 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     try {
       await _controller!.initialize();
       if (!mounted) return;
+
+      // Seek para o live edge (último segmento disponível) logo após inicializar.
+      // Sem isso, o player pode começar a reproduzir de um ponto anterior no
+      // buffer HLS, aumentando o delay percebido pelo espectador.
+      final duration = _controller!.value.duration;
+      if (duration > Duration.zero) {
+        await _controller!.seekTo(duration);
+      }
+
       setState(() => _isInitialized = true);
       _controller!
         ..play()
-        // Live HLS NÃO faz loop — é stream contínuo. Loop tentava reiniciar a
-        // playlist a cada segmento perdido, causando "travadinhas". 🐛
+        // Live HLS NÃO faz loop — é stream contínuo.
         ..setLooping(false)
         ..setVolume(1.0);
       WakelockPlus.enable();

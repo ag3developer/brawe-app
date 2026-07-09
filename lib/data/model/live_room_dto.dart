@@ -77,7 +77,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
   LiveRoom toDomain() {
     final effectivePlaybackId = streamConfig?.playbackId;
     final fallbackStreamUrl = effectivePlaybackId != null
-        ? 'https://stream.mux.com/$effectivePlaybackId.m3u8?max_resolution=1080p&rendition_order=desc'
+        ? 'https://stream.mux.com/$effectivePlaybackId.m3u8?max_resolution=1080p'
         : null;
 
     return LiveRoom(
