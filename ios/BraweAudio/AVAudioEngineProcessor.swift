@@ -4,15 +4,16 @@ import AVFoundation
 /// Implementa chain real-time: Entrada → EQ → Compressor → Limiter → Saída
 @objc class AVAudioEngineProcessor: NSObject {
   @objc static let shared = AVAudioEngineProcessor()
-  
+
   private let engine = AVAudioEngine()
-  private let mixer = AVAudioMixerNode()
-  private let eqNode = AVAudioUnitEQ()
+  // AVAudioUnitEQ inicializado com 8 bandas (índices 0-7)
+  private let eqNode = AVAudioUnitEQ(numberOfBands: 8)
   private var compressorDSP: CompressorDSP?
-  
-  private var masterGain: Float = 0.0 // dB
-  private var limiterThreshold: Float = 0.0 // dB
-  
+
+  private var masterGainLinear: Float = 1.0   // amplitude linear (1.0 = 0dB)
+  private var limiterThreshold: Float = 1.0   // amplitude linear (1.0 = 0dB)
+  private var compressorEnabled: Bool = true
+
   private var isSetup = false
   private let lock = NSLock()
   
@@ -22,170 +23,123 @@ import AVFoundation
   
   // MARK: - Setup
   
-  /// Configura o engine de áudio para processamento real-time
+  /// Configura o engine de áudio para processamento real-time.
+  /// Deve ser chamado após a AVAudioSession estar ativa.
   @objc func setupAudioEngine() {
     lock.lock()
     defer { lock.unlock() }
-    
+
     guard !isSetup else { return }
-    
+
+    // 1. Inicializar EQ flat (gain 0 em todas as bandas)
+    setupEQFlat()
+
+    // 2. Inicializar compressor DSP
+    compressorDSP = CompressorDSP(
+      threshold: -12.0,
+      ratio: 4.0,
+      attackTime: 5.0,
+      releaseTime: 50.0,
+      makeupGain: 4.0
+    )
+
+    // 3. Atacher nó EQ ao engine
+    engine.attach(eqNode)
+
+    // 4. Obter o inputNode (microfone) — nunca é nil
+    let inputNode = engine.inputNode
+    let inputFormat = inputNode.outputFormat(forBus: 0)
+
+    // 5. Conectar: inputNode → eqNode → mainMixerNode
+    engine.connect(inputNode, to: eqNode, format: inputFormat)
+    engine.connect(eqNode, to: engine.mainMixerNode, format: inputFormat)
+
+    // 6. Instalar tap no mainMixerNode para compressor + limiter em tempo real
+    let mixerFormat = engine.mainMixerNode.outputFormat(forBus: 0)
+    engine.mainMixerNode.installTap(
+      onBus: 0,
+      bufferSize: AudioProcessingConstants.bufferSize,
+      format: mixerFormat
+    ) { [weak self] buffer, _ in
+      self?.processBuffer(buffer)
+    }
+
+    // 7. Iniciar engine
     do {
-      // 1. Atacher nós ao engine
-      engine.attach(mixer)
-      engine.attach(eqNode)
-      
-      // 2. Configurar EQ com 8 bandas
-      setupEQ()
-      
-      // 3. Inicializar compressor DSP
-      compressorDSP = CompressorDSP(
-        threshold: -12.0,
-        ratio: 4.0,
-        attackTime: 5.0,
-        releaseTime: 50.0,
-        makeupGain: 4.0
-      )
-      
-      // 4. Configurar formato de áudio
-      let format = AVAudioFormat(
-        commonFormat: .pcmFormatFloat32,
-        sampleRate: AudioProcessingConstants.sampleRate,
-        channels: AudioProcessingConstants.channels,
-        interleaved: false
-      )!
-      
-      // 5. Conectar nós
-      // Input → EQ → Mixer → Output
-      engine.connect(eqNode, to: mixer, format: format)
-      engine.connect(mixer, to: engine.mainMixerNode, format: format)
-      
-      // 6. Instalar tap para processamento customizado (compressor + limiter)
-      installProcessingTap(format: format)
-      
-      // 7. Iniciar engine
       try engine.start()
       isSetup = true
-      
-      print("✅ AVAudioEngineProcessor initialized successfully")
+      print("✅ AVAudioEngineProcessor started")
     } catch {
-      print("❌ Error initializing AVAudioEngine: \(error)")
+      print("❌ AVAudioEngine start error: \(error)")
     }
   }
-  
-  /// Configura nós de EQ com 8 bandas
-  private func setupEQ() {
-    eqNode.bands.removeAll()
-    
+
+  /// Configura todas as bandas EQ como flat (gain = 0)
+  private func setupEQFlat() {
     let frequencies: [Float] = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
-    
-    for frequency in frequencies {
-      guard let band = eqNode.bands.first(where: { $0.frequency == frequency }) else {
-        let band = AVAudioUnitEQFilterParameters()
-        band.frequency = frequency
-        band.bandwidth = 1.0
-        band.gain = 0.0
-        band.filterType = .parametric
-        eqNode.bands.append(band)
-        continue
-      }
-      
+    for (i, freq) in frequencies.enumerated() {
+      let band = eqNode.bands[i]
+      band.filterType = .parametric
+      band.frequency = freq
+      band.bandwidth = 1.0
       band.gain = 0.0
+      band.bypass = false
     }
   }
   
-  /// Instala tap para processamento customizado (compressor + limiter)
-  private func installProcessingTap(format: AVAudioFormat) {
-    guard let input = engine.inputNode else { return }
-    
-    input.installTap(onBus: 0, bufferSize: AudioProcessingConstants.bufferSize, format: format) { [weak self] buffer, _ in
-      guard let self = self else { return }
-      
-      self.processBuffer(buffer)
-    }
-  }
-  
-  // MARK: - Processing
-  
-  /// Processa buffer com compressor e limiter
+  // MARK: - Processing (tap callback — render thread)
+
   private func processBuffer(_ buffer: AVAudioPCMBuffer) {
     guard let channelData = buffer.floatChannelData else { return }
     let frames = Int(buffer.frameLength)
-    let channel0 = channelData[0]
-    
-    // Converter para array
-    var samples = Array(UnsafeBufferPointer(start: channel0, count: frames))
-    
-    // 1. Aplicar compressor
-    if let compressor = compressorDSP {
+    let ch = channelData[0]
+
+    // Capturar parâmetros localmente para evitar data-race
+    let gain = masterGainLinear
+    let limit = limiterThreshold
+    let useCompressor = compressorEnabled
+
+    // 1. Compressor DSP
+    if useCompressor, let compressor = compressorDSP {
+      var samples = Array(UnsafeBufferPointer(start: ch, count: frames))
       samples = compressor.process(samples)
+      for i in 0..<frames { ch[i] = samples[i] }
     }
-    
-    // 2. Aplicar limiter (hard knee peak limiting)
-    samples = applyLimiter(samples)
-    
-    // 3. Aplicar master gain
-    if masterGain != 0.0 {
-      let gainLinear = pow(10.0, masterGain / 20.0)
-      for i in 0..<samples.count {
-        samples[i] *= gainLinear
-      }
-    }
-    
-    // Copiar de volta para buffer
+
+    // 2. Master gain + hard limiter (em um único passo)
     for i in 0..<frames {
-      channel0[i] = samples[i]
+      var s = ch[i] * gain
+      if s > limit  { s =  limit }
+      if s < -limit { s = -limit }
+      ch[i] = s
     }
   }
-  
-  /// Aplica limiter (proteção contra clipping)
-  private func applyLimiter(_ samples: [Float]) -> [Float] {
-    let threshold = pow(10.0, limiterThreshold / 20.0)
-    var output = samples
-    
-    for i in 0..<samples.count {
-      let abs = abs(samples[i])
-      if abs > threshold {
-        // Hard clipping
-        output[i] = samples[i] > 0 ? threshold : -threshold
-      }
-    }
-    
-    return output
-  }
-  
-  // MARK: - Public Methods (called from Dart via MethodChannel)
-  
-  /// Aplica preset de EQ
-  @objc func applyEQPreset(
-    preset: String,
-    bands: [[String: NSNumber]]
-  ) {
-    lock.lock()
-    defer { lock.unlock() }
-    
+
+  // MARK: - Public Methods (MethodChannel handlers)
+
+  /// Aplica preset de EQ com lista de bandas { frequency, gain }
+  @objc func applyEQPreset(preset: String, bands: [[String: NSNumber]]) {
+    // Primeiro zera todas as bandas
+    for band in eqNode.bands { band.gain = 0.0 }
+
+    // Aplica cada banda recebida
     for bandData in bands {
       guard let frequency = bandData["frequency"]?.floatValue,
-            let gain = bandData["gain"]?.floatValue else { continue }
-      
-      if let band = eqNode.bands.first(where: { $0.frequency == frequency }) {
-        band.gain = gain.clamp(min: -12, max: 12)
+            let gain      = bandData["gain"]?.floatValue else { continue }
+      // Encontra a banda mais próxima da frequência solicitada
+      if let band = eqNode.bands.min(by: {
+        abs($0.frequency - frequency) < abs($1.frequency - frequency)
+      }) {
+        band.gain = min(max(gain, -12), 12)
       }
     }
-    
-    print("✅ EQ Preset '\(preset)' applied")
+    print("✅ EQ '\(preset)' applied (\(bands.count) bands)")
   }
-  
-  /// Define parâmetros do compressor
+
   @objc func setCompressor(
-    threshold: NSNumber,
-    ratio: NSNumber,
-    attackTime: NSNumber,
-    releaseTime: NSNumber,
-    makeupGain: NSNumber
+    threshold: NSNumber, ratio: NSNumber,
+    attackTime: NSNumber, releaseTime: NSNumber, makeupGain: NSNumber
   ) {
-    lock.lock()
-    defer { lock.unlock() }
-    
     compressorDSP?.updateParameters(
       threshold: threshold.floatValue,
       ratio: ratio.floatValue,
@@ -193,87 +147,43 @@ import AVFoundation
       releaseTime: releaseTime.floatValue,
       makeupGain: makeupGain.floatValue
     )
-    
-    print("✅ Compressor configured")
+    print("✅ Compressor: \(threshold)dB \(ratio):1")
   }
-  
-  /// Define ganho master
+
   @objc func setMasterGain(_ gainDb: NSNumber) {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    masterGain = gainDb.floatValue.clamp(
-      min: AudioProcessingConstants.minMasterGain,
-      max: AudioProcessingConstants.maxMasterGain
-    )
-    
-    print("✅ Master Gain set to \(masterGain)dB")
+    let db = min(max(gainDb.floatValue, -12), 12)
+    masterGainLinear = pow(10.0, db / 20.0)
+    print("✅ Master Gain: \(db)dB → \(masterGainLinear)x")
   }
-  
-  /// Define threshold do limiter
+
   @objc func setLimiterThreshold(_ thresholdDb: NSNumber) {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    limiterThreshold = thresholdDb.floatValue.clamp(
-      min: AudioProcessingConstants.minLimiterGain,
-      max: AudioProcessingConstants.maxLimiterGain
-    )
-    
-    print("✅ Limiter set to \(limiterThreshold)dB")
+    let db = min(max(thresholdDb.floatValue, -6), 0)
+    limiterThreshold = pow(10.0, db / 20.0)
+    print("✅ Limiter: \(db)dB → \(limiterThreshold)x")
   }
-  
-  /// Ativa/desativa compressor
+
   @objc func toggleCompressor(_ enabled: NSNumber) {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    if enabled.boolValue {
-      print("✅ Compressor enabled")
-    } else {
-      compressorDSP?.reset()
-      print("✅ Compressor disabled")
-    }
+    compressorEnabled = enabled.boolValue
+    if !compressorEnabled { compressorDSP?.reset() }
+    print("✅ Compressor: \(compressorEnabled ? "ON" : "OFF")")
   }
-  
-  /// Reset para valores padrão
+
   @objc func resetAudio() {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    // Reset EQ
-    for band in eqNode.bands {
-      band.gain = 0.0
-    }
-    
-    // Reset compressor
+    for band in eqNode.bands { band.gain = 0.0 }
     compressorDSP?.reset()
     compressorDSP?.updateParameters(
-      threshold: -12.0,
-      ratio: 4.0,
-      attackTime: 5.0,
-      releaseTime: 50.0,
-      makeupGain: 4.0
+      threshold: -12, ratio: 4, attackTime: 5, releaseTime: 50, makeupGain: 4
     )
-    
-    // Reset gains
-    masterGain = 0.0
-    limiterThreshold = 0.0
-    
-    print("✅ Audio processor reset to defaults")
+    masterGainLinear = 1.0
+    limiterThreshold = 1.0
+    compressorEnabled = true
+    print("✅ Audio reset to defaults")
   }
-  
-  /// Encerra o processamento
+
   @objc func shutdown() {
-    lock.lock()
-    defer { lock.unlock() }
-    
-    do {
-      try engine.stop()
-      isSetup = false
-      print("✅ AVAudioEngine shutdown")
-    } catch {
-      print("❌ Error shutting down engine: \(error)")
-    }
+    engine.mainMixerNode.removeTap(onBus: 0)
+    engine.stop()
+    isSetup = false
+    print("✅ AVAudioEngine stopped")
   }
 }

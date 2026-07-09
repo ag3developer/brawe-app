@@ -1,14 +1,16 @@
 import Flutter
 import AVFoundation
 
-/// Configuração do MethodChannel para audio processing
-func setupBraweAudioMethodChannel(controller: FlutterViewController) {
-  let audioChannel = FlutterMethodChannel(
-    name: "com.brawe/audioProcessor",
-    binaryMessenger: controller.binaryMessenger
-  )
-  
-  audioChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
+/// Classe helper para configurar o MethodChannel de áudio
+class BraweAudioSetup {
+  /// Configura o MethodChannel para audio processing
+  static func setupAudioChannel(binaryMessenger: FlutterBinaryMessenger) {
+    let audioChannel = FlutterMethodChannel(
+      name: "com.brawe/audioProcessor",
+      binaryMessenger: binaryMessenger
+    )
+    
+    audioChannel.setMethodCallHandler { (call: FlutterMethodCall, result: @escaping FlutterResult) in
     switch call.method {
     case "setupAudioEngine":
       AVAudioEngineProcessor.shared.setupAudioEngine()
@@ -75,6 +77,7 @@ func setupBraweAudioMethodChannel(controller: FlutterViewController) {
       
     default:
       result(FlutterMethodNotImplemented)
+    }
     }
   }
 }
