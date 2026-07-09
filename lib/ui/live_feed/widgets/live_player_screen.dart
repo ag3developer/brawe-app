@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' show max;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -557,7 +558,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                 child: LiveTopBar(
                   room: widget.room,
                   viewerCount: commentsState.viewerCount,
-                  likesCount: _likesCount,
+                  likesCount: max(_likesCount, commentsState.likeCount),
                   roomId: widget.room.id,
                   onBack: () => context.pop(),
                   onShare: _onTapShare,
@@ -617,7 +618,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                 focusNode: _chatFocus,
                 isSending: commentsState.isSending,
                 isLiked: _isLiked,
-                likesCount: _likesCount,
+                likesCount: max(_likesCount, commentsState.likeCount),
                 onSend: _sendComment,
                 onSendRose: _sendRose,
                 onGifts: _openGifts,
