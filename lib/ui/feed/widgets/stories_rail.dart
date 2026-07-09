@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -145,10 +146,15 @@ class StoriesRail extends ConsumerWidget {
     WidgetRef ref,
     UserStoriesGroup group,
   ) {
-    Navigator.push(
-      context,
+    // Modo imersivo — esconde status bar e nav bar do sistema durante o story.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    // rootNavigator: true → sobe para o Navigator raiz (acima do ShellRoute),
+    // cobrindo o BottomNavigationBar por completo — igual ao Instagram Stories.
+    Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: false,
+        fullscreenDialog: true,
         pageBuilder: (_, _, _) => ForceDarkTheme(
           child: StoryViewer(
             stories: group.stories,
@@ -157,6 +163,10 @@ class StoriesRail extends ConsumerWidget {
                 ref.read(storiesViewModelProvider.notifier).markAsViewed(id),
           ),
         ),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 200),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
       ),
     );
   }

@@ -29,7 +29,8 @@ import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter/services.dart'
+    show Clipboard, ClipboardData, SystemChrome, SystemUiMode;
 import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
@@ -67,21 +68,27 @@ void _openStoryViewer(
   // Abre no primeiro story não-visto, ou no primeiro caso todos vistos.
   final firstUnseen = stories.indexWhere((s) => !s.isSeen);
   final initial = firstUnseen >= 0 ? firstUnseen : 0;
-  Navigator.of(context).push(
-    MaterialPageRoute(
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // rootNavigator: true → cobre o BottomNavigationBar (ShellRoute)
+  Navigator.of(context, rootNavigator: true).push(
+    PageRouteBuilder(
+      opaque: true,
       fullscreenDialog: true,
-      builder: (_) => ForceDarkTheme(
+      pageBuilder: (_, __, ___) => ForceDarkTheme(
         child: StoryViewer(
           stories: stories,
           initialIndex: initial,
           onStoryViewed: (storyId) {
-            // Invalida o cache de stories desse usuário ao terminar.
             if (stories.isNotEmpty) {
               ref.invalidate(userStoriesProvider(stories.first.authorId));
             }
           },
         ),
       ),
+      transitionsBuilder: (_, animation, __, child) =>
+          FadeTransition(opacity: animation, child: child),
+      transitionDuration: const Duration(milliseconds: 220),
+      reverseTransitionDuration: const Duration(milliseconds: 180),
     ),
   );
 }
