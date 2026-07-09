@@ -31,13 +31,13 @@ class CreatorNetworkService {
       '/creator/applications',
       data: body,
     );
-    return CreatorApplication.fromJson(r.data!);
+    // Backend pode responder com { "success": true, "data": {...} }
+    // ou diretamente com o objeto. _unwrap lida com ambos os casos.
+    return CreatorApplication.fromJson(_unwrap(r.data!));
   }
 
   Future<String?> getCreatorTermsVersion() async {
-    final r = await _dio.get<Map<String, dynamic>>(
-      '/creator/terms/version',
-    );
+    final r = await _dio.get<Map<String, dynamic>>('/creator/terms/version');
     final v = r.data?['version'];
     return v is String ? v : null;
   }
@@ -48,7 +48,7 @@ class CreatorNetworkService {
         '/creator/applications/me',
       );
       if (r.data == null) return null;
-      return CreatorApplication.fromJson(r.data!);
+      return CreatorApplication.fromJson(_unwrap(r.data!));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;
@@ -62,14 +62,14 @@ class CreatorNetworkService {
       '/creator/applications/me',
       data: body,
     );
-    return CreatorApplication.fromJson(r.data!);
+    return CreatorApplication.fromJson(_unwrap(r.data!));
   }
 
   Future<CreatorProfile?> getMyCreator() async {
     try {
       final r = await _dio.get<Map<String, dynamic>>('/creator/me');
       if (r.data == null) return null;
-      return CreatorProfile.fromJson(r.data!);
+      return CreatorProfile.fromJson(_unwrap(r.data!));
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;
@@ -136,6 +136,31 @@ class CreatorNetworkService {
       '/admin/creator/creators/$userId/move-tier',
       data: {'new_tier': newTier.apiValue},
     );
-    return CreatorProfile.fromJson(r.data!);
+    return CreatorProfile.fromJson(_unwrap(r.data!));
+  }
+
+  /// Desembrulha envelopes de resposta do backend.
+  ///
+  /// O backend Brawe usa dois formatos possíveis:
+  ///   1. Direto:   { "id": "...", "status": "pending_review", ... }
+  ///   2. Envelope: { "success": true, "data": { "id": "...", ... } }
+  ///
+  /// Se não desembrulharmos, o fromJson tentaria parsear o envelope como
+  /// se fosse o objeto, resultando em campos vazios/null sem lançar exception
+  /// (todos os campos têm defaults), fazendo o submit parecer bem-sucedido
+  /// mas entregando um objeto inválido — a UI navega para /creator/submitted
+  /// mas o estado fica corrompido.
+  static Map<String, dynamic> _unwrap(Map<String, dynamic> raw) {
+    // Se tem 'success' + 'data', desembrulha
+    if (raw.containsKey('data') && raw['data'] is Map<String, dynamic>) {
+      return raw['data'] as Map<String, dynamic>;
+    }
+    // Se tem 'application' aninhado
+    if (raw.containsKey('application') &&
+        raw['application'] is Map<String, dynamic>) {
+      return raw['application'] as Map<String, dynamic>;
+    }
+    // Formato direto — retorna como está
+    return raw;
   }
 }
