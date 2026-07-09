@@ -161,8 +161,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                           ),
                           onPressed: () {
                             _searchCtrl.clear();
-                            ref.read(followingQueryProvider.notifier).state =
-                                '';
+                            ref.read(followingQueryProvider.notifier).set('');
                           },
                         ),
                   filled: false,

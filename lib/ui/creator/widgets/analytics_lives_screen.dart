@@ -204,9 +204,24 @@ class _LivesKpiRow extends StatelessWidget {
 
     final s = S.of(context);
     final stats = [
-      (LucideIcons.radio, s.analyticsLivesKpiTotal, '$total', const Color(0xFFEC4899)),
-      (LucideIcons.eye, s.analyticsLivesKpiAvgViewers, '$avgViewers', const Color(0xFF3B82F6)),
-      (LucideIcons.gift, s.analyticsLivesKpiGifts, totalGifts.toStringAsFixed(1), const Color(0xFFF59E0B)),
+      (
+        LucideIcons.radio,
+        s.analyticsLivesKpiTotal,
+        '$total',
+        const Color(0xFFEC4899),
+      ),
+      (
+        LucideIcons.eye,
+        s.analyticsLivesKpiAvgViewers,
+        '$avgViewers',
+        const Color(0xFF3B82F6),
+      ),
+      (
+        LucideIcons.gift,
+        s.analyticsLivesKpiGifts,
+        totalGifts.toStringAsFixed(1),
+        const Color(0xFFF59E0B),
+      ),
     ];
 
     return Row(
@@ -262,7 +277,9 @@ class _LiveTile extends StatelessWidget {
     final date = item.startedAt != null
         ? '${item.startedAt!.day} ${months[item.startedAt!.month - 1]} ${item.startedAt!.year}'
         : '—';
-    final dur = s.analyticsLivesDuration(item.durationMinutes.toStringAsFixed(0));
+    final dur = s.analyticsLivesDuration(
+      item.durationMinutes.toStringAsFixed(0),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -304,7 +321,9 @@ class _LiveTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title.isEmpty ? s.analyticsLivesNoTitle : item.title,
+                        item.title.isEmpty
+                            ? s.analyticsLivesNoTitle
+                            : item.title,
                         style: TextStyle(
                           color: context.colors.textPrimary,
                           fontWeight: FontWeight.w700,
@@ -499,7 +518,9 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          widget.item.title.isEmpty ? S.of(context).analyticsLivesReplayLabel : widget.item.title,
+          widget.item.title.isEmpty
+              ? S.of(context).analyticsLivesReplayLabel
+              : widget.item.title,
           style: const TextStyle(
             color: Colors.white,
             fontSize: 15,

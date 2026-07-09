@@ -781,6 +781,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 // ── Seletor de qualidade de stream ───────────────────────────────────────────
 
 /// Botão compacto que exibe a qualidade atual e abre o seletor.
+  // ignore: unused_element, unused_field, unused_element_parameter
 class _QualityButton extends StatelessWidget {
   final StreamQuality quality;
   final VoidCallback onTap;

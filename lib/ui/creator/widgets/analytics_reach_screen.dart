@@ -207,7 +207,10 @@ class _EarningsLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _Dot(color: const Color(0xFF10B981), label: s.analyticsReachLegendEarnings),
+        _Dot(
+          color: const Color(0xFF10B981),
+          label: s.analyticsReachLegendEarnings,
+        ),
         const SizedBox(width: 12),
         _Dot(color: const Color(0xFFF59E0B), label: s.analyticsReachLegendFee),
       ],

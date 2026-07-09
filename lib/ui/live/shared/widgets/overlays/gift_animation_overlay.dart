@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element_parameter
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,6 +34,7 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   static const int _kDedupCap = 300;
   final Set<String> _shownPremium = <String>{};
   final Set<String> _shownToast = <String>{};
+  // ignore: unused_field
   final List<LiveGift> _activeToasts = [];
 
   void _rememberShown(Set<String> bag, String id) {
@@ -600,6 +602,7 @@ class _AvatarCircle extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _LevelChip extends StatelessWidget {
   const _LevelChip({required this.level, this.badge, this.colorHex, this.imageUrl});
   final int level;

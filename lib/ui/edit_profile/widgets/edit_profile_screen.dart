@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element_parameter
 import 'dart:async';
 import 'dart:ui';
 
@@ -617,7 +618,6 @@ class _AccountTypeCard extends StatelessWidget {
   final AccountType accountType;
   const _AccountTypeCard({required this.accountType});
 
-  @override
   String? _routeFor(AccountType type) {
     switch (type) {
       case AccountType.musician:
@@ -779,7 +779,6 @@ class _AccountTypeCard extends StatelessWidget {
           subtitle: 'Ferramentas para marcas e empresas.',
         );
       case AccountType.consumer:
-      default:
         return _AccountTypeConfig(
           icon: LucideIcons.user,
           color: const Color(0xFF6B7280), // cinza

@@ -226,6 +226,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  // ignore: unused_element, unused_field, unused_element_parameter
   Future<void> _openExternal(BuildContext context, String url) async {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {

@@ -12,7 +12,6 @@ import '../../core/view_models/profile_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/user.dart';
 import '../view_models/top_streamers_view_model.dart';
-import 'home_bottom_nav.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element, unused_element_parameter
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
@@ -14,7 +15,6 @@ import '../../../data/repositories/live_repository.dart';
 
 import '../services/last_live_config_service.dart';
 import '../services/title_suggester.dart';
-import 'start_live/vibe_check_bar.dart';
 import 'start_live/warmup_overlay.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -2594,7 +2594,6 @@ class _TikTokBottomArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
     // Reduz espaçamentos em telas com menos de 750pt de altura útil
     final screenH = MediaQuery.of(context).size.height;
     final compact = screenH < 750;

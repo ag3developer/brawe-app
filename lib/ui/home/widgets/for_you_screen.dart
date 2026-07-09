@@ -7,7 +7,6 @@ import '../../../domain/models/feed_item.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/for_you_feed_view_model.dart';
-import 'home_bottom_nav.dart';
 import 'views/live_commerce_view.dart';
 import 'views/live_battle_view.dart';
 import 'views/live_chat_view.dart';

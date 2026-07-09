@@ -246,7 +246,8 @@ class _AnalyticsGrid extends ConsumerWidget {
                 ),
                 subtitle: kpisAsync.maybeWhen(
                   data: (k) => s.analyticsDashboardMinAvg(
-                      k.avgDurationMinutes.toStringAsFixed(0)),
+                    k.avgDurationMinutes.toStringAsFixed(0),
+                  ),
                   orElse: () => null,
                 ),
                 onTap: () => context.push('/creator/analytics/lives'),

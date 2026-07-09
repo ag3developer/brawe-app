@@ -7,9 +7,7 @@ import '../../../domain/models/conversation.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/chat_list_view_model.dart';
 import '../view_models/presence_provider.dart';
-import '../../home/widgets/home_bottom_nav.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
-import 'new_conversation_screen.dart';
 import 'user_status_sheet.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'dart:math' as math;
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -119,7 +118,10 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                AnalyticsLegendDot(color: const Color(0xFF8B5CF6), label: s.analyticsFollowersLegendEngagement),
+                AnalyticsLegendDot(
+                  color: const Color(0xFF8B5CF6),
+                  label: s.analyticsFollowersLegendEngagement,
+                ),
                 const SizedBox(height: 8),
 
                 viewersAsync.when(
@@ -380,9 +382,21 @@ class _GrowthTips extends StatelessWidget {
     final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tips = [
-      (LucideIcons.radio, s.analyticsFollowersTip1Title, s.analyticsFollowersTip1Subtitle),
-      (LucideIcons.messageCircle, s.analyticsFollowersTip2Title, s.analyticsFollowersTip2Subtitle),
-      (LucideIcons.share2, s.analyticsFollowersTip3Title, s.analyticsFollowersTip3Subtitle),
+      (
+        LucideIcons.radio,
+        s.analyticsFollowersTip1Title,
+        s.analyticsFollowersTip1Subtitle,
+      ),
+      (
+        LucideIcons.messageCircle,
+        s.analyticsFollowersTip2Title,
+        s.analyticsFollowersTip2Subtitle,
+      ),
+      (
+        LucideIcons.share2,
+        s.analyticsFollowersTip3Title,
+        s.analyticsFollowersTip3Subtitle,
+      ),
     ];
 
     return Column(

@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element_parameter
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -34,6 +35,7 @@ import 'suggested_users_rail.dart';
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// Paleta dedicada ao redesign 2026: dark mais profundo, accents premium,
 /// gradientes consistentes com o web.
+// ignore_for_file: unused_field
 class _FeedTokens {
   static const Color bg = Color(0xFF07070C);
   static const Color surface = Color(0xFF101019);

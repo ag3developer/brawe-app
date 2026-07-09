@@ -7,7 +7,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../data/repositories/profile_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────

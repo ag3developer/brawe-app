@@ -74,7 +74,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   // Battle state
   String? _activeBattleId;
+  // ignore: unused_field
   String? _pendingBattleId;
+  // ignore: unused_field
   String? _pendingBattleFromName;
   Timer? _battleInviteTimeoutTimer;
   // Anti double-click: a UI do dialog de convite tem 2 botões grandes

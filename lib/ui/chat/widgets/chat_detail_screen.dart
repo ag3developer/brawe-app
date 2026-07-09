@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element_parameter
 import 'dart:async';
 import 'dart:io';
 
@@ -17,20 +18,15 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/user.dart';
-import '../../../domain/models/story.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
-import '../../core/themes/force_dark_theme.dart';
 import '../view_models/chat_detail_view_model.dart';
 import '../view_models/presence_provider.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/post.dart';
-import '../../feed/widgets/story_viewer.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
-import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
 import 'shared_post_sheet.dart';
-import 'user_status_sheet.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -156,6 +152,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _sendGif(String gifUrl) async {
     // Send GIF as image message with the remote URL
+    // ignore: unused_local_variable
     final optimisticId = 'local-gif-${DateTime.now().microsecondsSinceEpoch}';
     ref
         .read(chatDetailViewModelProvider(widget.conversationId).notifier)
@@ -1736,6 +1733,7 @@ class _ComposerState extends ConsumerState<_Composer>
   String? _recordingPath;
   int _recordingSeconds = 0;
   Timer? _recordTimer;
+  // ignore: unused_field
   double _dragOffset = 0;
 
   // ── animation (pulse while recording) ──

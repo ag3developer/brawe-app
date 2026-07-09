@@ -339,6 +339,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
+  // ignore: unused_element, unused_field, unused_element_parameter
   Future<void> _openCreatePostSheet(BuildContext context) async {
     await showModalBottomSheet(
       context: context,
@@ -1301,6 +1302,7 @@ class _InlineStat extends StatelessWidget {
 }
 
 // ── Stats Card ────────────────────────────────────────────────────────────────
+  // ignore: unused_element, unused_field, unused_element_parameter
 class _StatsCard extends StatelessWidget {
   const _StatsCard({required this.stats, required this.userId});
   final SocialStats stats;
@@ -2117,6 +2119,7 @@ class _PostsGrid extends StatelessWidget {
 }
 
 // ── LIVES GRID ──────────────────────────────────────────────────────────────
+  // ignore: unused_element, unused_field, unused_element_parameter
 class _LivesGrid extends StatelessWidget {
   final AsyncValue<List<LiveRoom>> livesState;
   const _LivesGrid({required this.livesState});
