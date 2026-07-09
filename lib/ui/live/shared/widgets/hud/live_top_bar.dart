@@ -29,6 +29,8 @@ class LiveTopBar extends StatelessWidget {
     required this.onShare,
     this.recentViewerAvatars = const [],
     this.gifterRanking = const [],
+    this.qualityLabel,
+    this.onQualityTap,
   });
   final LiveRoom room;
   final int viewerCount;
@@ -36,10 +38,18 @@ class LiveTopBar extends StatelessWidget {
   final String roomId;
   final VoidCallback onBack;
   final VoidCallback onShare;
+
   /// Avatares reais dos viewers mais recentes (do socket `viewer_joined`).
   final List<String> recentViewerAvatars;
+
   /// Ranking de presenteadores — passado ao sheet ao tocar nos avatares.
   final List<GifterEntry> gifterRanking;
+
+  /// Label da qualidade atual (ex: "Auto", "720p"). null = oculto.
+  final String? qualityLabel;
+
+  /// Callback ao tocar no indicador de qualidade.
+  final VoidCallback? onQualityTap;
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +66,7 @@ class LiveTopBar extends StatelessWidget {
               child: const SizedBox(
                 width: 36,
                 height: 36,
-                child: Icon(Icons.close_rounded,
-                    color: Colors.white, size: 26),
+                child: Icon(Icons.close_rounded, color: Colors.white, size: 26),
               ),
             ),
             const SizedBox(width: 4),
@@ -69,12 +78,26 @@ class LiveTopBar extends StatelessWidget {
             ViewersStack(
               viewerCount: viewerCount,
               avatarUrls: recentViewerAvatars,
-              onTap: () => GifterRankingSheet.show(
-                context,
-                ranking: gifterRanking,
-              ),
+              onTap: () =>
+                  GifterRankingSheet.show(context, ranking: gifterRanking),
             ),
             const SizedBox(width: 8),
+            // Indicador de qualidade minimalista (opcional)
+            if (qualityLabel != null && onQualityTap != null) ...[
+              GestureDetector(
+                onTap: onQualityTap,
+                child: Text(
+                  qualityLabel!,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
             // More menu (⋯)
             TopHudCircleIcon(
               icon: Icons.more_horiz_rounded,

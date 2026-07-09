@@ -563,6 +563,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                   onShare: _onTapShare,
                   recentViewerAvatars: commentsState.recentViewerAvatars,
                   gifterRanking: commentsState.gifterRanking,
+                  qualityLabel: _quality.label,
+                  onQualityTap: _showQualitySelector,
                 ),
               ),
             ),
@@ -601,16 +603,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             right: 0,
             bottom: 250,
             child: PinnedProductBar(roomId: widget.room.id),
-          ),
-
-          // ── 6.7. Botão de qualidade (canto superior direito, abaixo do top bar) ──
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 56,
-            right: 12,
-            child: _QualityButton(
-              quality: _quality,
-              onTap: _showQualitySelector,
-            ),
           ),
 
           // ── 7. Bottom bar: chat input + ações inline (TikTok Live style) ──
@@ -875,15 +867,20 @@ class _QualitySheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
               'FPS: definido pelo streamer (geralmente 30fps)',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 11),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45),
+                fontSize: 11,
+              ),
             ),
           ),
           const Divider(color: Colors.white12, height: 1),
-          ...StreamQuality.values.map((q) => _QualityTile(
-                quality: q,
-                isSelected: q == current,
-                onTap: () => onSelect(q),
-              )),
+          ...StreamQuality.values.map(
+            (q) => _QualityTile(
+              quality: q,
+              isSelected: q == current,
+              onTap: () => onSelect(q),
+            ),
+          ),
           const SizedBox(height: 8),
         ],
       ),
@@ -926,7 +923,9 @@ class _QualityTile extends StatelessWidget {
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.white70,
                       fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w400,
                     ),
                   ),
                   Text(
@@ -940,7 +939,11 @@ class _QualityTile extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: Color(0xFFE91E8C), size: 20),
+              const Icon(
+                Icons.check_circle,
+                color: Color(0xFFE91E8C),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -948,16 +951,16 @@ class _QualityTile extends StatelessWidget {
   }
 
   IconData _iconFor(StreamQuality q) => switch (q) {
-        StreamQuality.auto => Icons.auto_awesome,
-        StreamQuality.p480 => Icons.sd,
-        StreamQuality.p720 => Icons.hd,
-        StreamQuality.p1080 => Icons.high_quality,
-      };
+    StreamQuality.auto => Icons.auto_awesome,
+    StreamQuality.p480 => Icons.sd,
+    StreamQuality.p720 => Icons.hd,
+    StreamQuality.p1080 => Icons.high_quality,
+  };
 
   String _descriptionFor(StreamQuality q) => switch (q) {
-        StreamQuality.auto => 'Ajusta automaticamente conforme sua conexão',
-        StreamQuality.p480 => 'Menor consumo de dados',
-        StreamQuality.p720 => 'Boa qualidade, recomendado',
-        StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
-      };
+    StreamQuality.auto => 'Ajusta automaticamente conforme sua conexão',
+    StreamQuality.p480 => 'Menor consumo de dados',
+    StreamQuality.p720 => 'Boa qualidade, recomendado',
+    StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
+  };
 }
