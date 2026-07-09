@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 /// Presets de equalização profissionais para streaming de áudio.
 enum AudioEQPreset {
@@ -187,11 +188,15 @@ class EQPresetConfig {
 class BroadcastAudioProcessing {
   BroadcastAudioProcessing._();
 
+  /// MethodChannel para comunicação com código nativo (iOS/Android)
+  static const platform = MethodChannel('com.brawe/audioProcessor');
+
   static AudioEQPreset _currentPreset = AudioEQPreset.voiceEnhancement;
-  static CompressorConfig _compressorConfig = CompressorConfig.light();
+  static CompressorConfig _compressorConfig = CompressorConfig.medium();
   static bool _compressorEnabled = true;
   static double _masterGain = 0.0; // dB
   static double _limiterThreshold = 0.0; // dB (-3 a 0)
+  static bool _isInitialized = false;
 
   // Callbacks para UI (usados na visualização em tempo real)
   // ignore: unused_field
@@ -204,9 +209,30 @@ class BroadcastAudioProcessing {
   static bool get compressorEnabled => _compressorEnabled;
   static double get masterGain => _masterGain;
   static double get limiterThreshold => _limiterThreshold;
+  static bool get isInitialized => _isInitialized;
+
+  /// Inicializa o processador de áudio (setup iOS/Android native)
+  static Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    try {
+      await platform.invokeMethod('setupAudioEngine');
+      _isInitialized = true;
+
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ✅ Audio engine initialized');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Init error: $e');
+      }
+    }
+  }
 
   /// Ativa um preset de equalização profissional
   static Future<void> setPreset(AudioEQPreset preset) async {
+    await initialize(); // Garantir que está inicializado
+
     _currentPreset = preset;
     final config = EQPresetConfig.fromPreset(preset);
 
@@ -221,23 +247,47 @@ class BroadcastAudioProcessing {
       }
     }
 
-    // TODO: Enviar configuração para native layer (iOS AVAudioEngine / Android AAudio)
-    // await _applyEQToAudioEngine(config);
+    // Enviar para native layer (iOS/Android)
+    try {
+      final bands = config.bands
+          .map((b) => {'frequency': b.frequency, 'gain': b.gain, 'q': b.q})
+          .toList();
+
+      await platform.invokeMethod('applyEQ', {
+        'preset': preset.name,
+        'bands': bands,
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ EQ error: $e');
+      }
+    }
   }
 
   /// Alterna compressor on/off
   static Future<void> toggleCompressor(bool enabled) async {
+    await initialize();
+
     _compressorEnabled = enabled;
     if (kDebugMode) {
       debugPrint(
         '[BroadcastAudioProcessing] 🔧 Compressor: ${enabled ? 'ON' : 'OFF'}',
       );
     }
-    // TODO: Enviar para native layer
+
+    try {
+      await platform.invokeMethod('toggleCompressor', {'enabled': enabled});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Compressor toggle error: $e');
+      }
+    }
   }
 
   /// Define configuração de compressor (Light/Medium/Aggressive)
   static Future<void> setCompressor(CompressorConfig config) async {
+    await initialize();
+
     _compressorConfig = config;
     if (kDebugMode) {
       debugPrint(
@@ -246,29 +296,62 @@ class BroadcastAudioProcessing {
         'Attack=${config.attackTime}ms, Release=${config.releaseTime}ms',
       );
     }
-    // TODO: Enviar para native layer
+
+    try {
+      await platform.invokeMethod('setCompressor', {
+        'threshold': config.threshold,
+        'ratio': config.ratio,
+        'attackTime': config.attackTime,
+        'releaseTime': config.releaseTime,
+        'makeupGain': config.makeupGain,
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Compressor set error: $e');
+      }
+    }
   }
 
   /// Define o master gain da stream (0 a ±12dB)
   static Future<void> setMasterGain(double gainDb) async {
+    await initialize();
+
     _masterGain = gainDb.clamp(-12.0, 12.0);
     if (kDebugMode) {
       debugPrint(
         '[BroadcastAudioProcessing] 🔊 Master Gain: ${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}dB',
       );
     }
-    // TODO: Enviar para native layer
+
+    try {
+      await platform.invokeMethod('setMasterGain', {'gain': _masterGain});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Master gain error: $e');
+      }
+    }
   }
 
   /// Define limiter de pico para proteção contra clipping (recomendado: -3dB)
   static Future<void> setLimiterThreshold(double thresholdDb) async {
+    await initialize();
+
     _limiterThreshold = thresholdDb.clamp(-6.0, 0.0);
     if (kDebugMode) {
       debugPrint(
         '[BroadcastAudioProcessing] 🛡️ Limiter: ${_limiterThreshold.toStringAsFixed(1)}dB',
       );
     }
-    // TODO: Enviar para native layer
+
+    try {
+      await platform.invokeMethod('setLimiterThreshold', {
+        'threshold': _limiterThreshold,
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Limiter error: $e');
+      }
+    }
   }
 
   /// Registra callback para visualização de espectro em tempo real
@@ -307,13 +390,24 @@ class BroadcastAudioProcessing {
 
   /// Resetar para defaults
   static Future<void> reset() async {
+    await initialize();
+
     _currentPreset = AudioEQPreset.voiceEnhancement;
-    _compressorConfig = CompressorConfig.light();
+    _compressorConfig = CompressorConfig.medium();
     _compressorEnabled = true;
     _masterGain = 0.0;
     _limiterThreshold = 0.0;
+
     if (kDebugMode) {
       debugPrint('[BroadcastAudioProcessing] ♻️ Reset para defaults');
+    }
+
+    try {
+      await platform.invokeMethod('resetAudio');
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[BroadcastAudioProcessing] ⚠️ Reset error: $e');
+      }
     }
   }
 }
