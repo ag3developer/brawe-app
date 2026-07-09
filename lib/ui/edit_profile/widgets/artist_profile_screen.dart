@@ -90,11 +90,37 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
 
   // Gêneros musicais
   static const _genres = [
-    'Funk', 'Sertanejo', 'Pagode', 'Forró', 'Pop', 'Rap', 'Hip-Hop',
-    'Eletrônico', 'Gospel', 'Rock', 'MPB', 'R&B', 'Reggae', 'Axé',
-    'Baile Funk', 'Trap', 'Afrobeats', 'K-Pop', 'Jazz', 'Bossa Nova',
-    'Soul', 'Blues', 'Country', 'Metal', 'Indie', 'Lo-fi', 'Classical',
-    'Salsa', 'Merengue', 'Cumbia', 'Reggaeton',
+    'Funk',
+    'Sertanejo',
+    'Pagode',
+    'Forró',
+    'Pop',
+    'Rap',
+    'Hip-Hop',
+    'Eletrônico',
+    'Gospel',
+    'Rock',
+    'MPB',
+    'R&B',
+    'Reggae',
+    'Axé',
+    'Baile Funk',
+    'Trap',
+    'Afrobeats',
+    'K-Pop',
+    'Jazz',
+    'Bossa Nova',
+    'Soul',
+    'Blues',
+    'Country',
+    'Metal',
+    'Indie',
+    'Lo-fi',
+    'Classical',
+    'Salsa',
+    'Merengue',
+    'Cumbia',
+    'Reggaeton',
   ];
 
   @override
@@ -107,8 +133,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
 
   Future<void> _loadExisting() async {
     try {
-      final raw =
-          await ref.read(soundRepositoryProvider).getMyArtistProfile();
+      final raw = await ref.read(soundRepositoryProvider).getMyArtistProfile();
       if (!mounted) return;
       // getMyArtistProfile pode retornar null se o artista ainda não existe
       final data = (raw ?? const <String, dynamic>{}) as Map<String, dynamic>;
@@ -152,7 +177,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
     try {
-      await ref.read(soundRepositoryProvider).registerArtist(
+      await ref
+          .read(soundRepositoryProvider)
+          .registerArtist(
             artistName: _artistNameCtrl.text.trim(),
             bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
             city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
@@ -168,14 +195,22 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(children: [
-            const Icon(LucideIcons.checkCircle, color: Colors.white, size: 16),
-            const SizedBox(width: 8),
-            Text(S.of(context).editProfileSaved),
-          ]),
+          content: Row(
+            children: [
+              const Icon(
+                LucideIcons.checkCircle,
+                color: Colors.white,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(S.of(context).editProfileSaved),
+            ],
+          ),
           backgroundColor: Colors.green.shade700,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       Navigator.of(context).pop();
@@ -186,7 +221,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
           content: Text('Erro ao salvar: $e'),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } finally {
@@ -221,12 +258,14 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
           children: [
             const Icon(LucideIcons.music, size: 18, color: Color(0xFFEC4899)),
             const SizedBox(width: 8),
-            Text('Brawe Sounds',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: context.colors.textPrimary,
-                )),
+            Text(
+              'Brawe Sounds',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: context.colors.textPrimary,
+              ),
+            ),
           ],
         ),
         centerTitle: true,
@@ -237,10 +276,13 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
               onPressed: _saving ? null : _onSave,
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFEC4899),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 minimumSize: Size.zero,
               ),
               child: _saving
@@ -248,17 +290,25 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
-                  : Text(s.editProfileSave,
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      s.editProfileSave,
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w700)),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
             ),
           ),
         ],
       ),
       body: !_loaded
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFEC4899)))
+              child: CircularProgressIndicator(color: Color(0xFFEC4899)),
+            )
           : Form(
               key: _formKey,
               child: ListView(
@@ -283,8 +333,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                         child: _textField(
                           ctrl: _artistNameCtrl,
                           hint: 'Como você é conhecido',
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Obrigatório'
+                              : null,
                         ),
                       ),
                       _divider(context),
@@ -320,15 +371,21 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           isDark: isDark,
                           value: _selectedCountry,
                           items: _countries
-                              .map((c) => DropdownMenuItem(
-                                    value: c.$1,
-                                    child: Text(c.$2,
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: context.colors.textPrimary)),
-                                  ))
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c.$1,
+                                  child: Text(
+                                    c.$2,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: context.colors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(),
-                          onChanged: (v) => setState(() => _selectedCountry = v),
+                          onChanged: (v) =>
+                              setState(() => _selectedCountry = v),
                           hint: 'Selecione seu país',
                         ),
                       ),
@@ -337,10 +394,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                         context: context,
                         icon: LucideIcons.building,
                         label: 'Cidade',
-                        child: _textField(
-                          ctrl: _cityCtrl,
-                          hint: 'Sua cidade',
-                        ),
+                        child: _textField(ctrl: _cityCtrl, hint: 'Sua cidade'),
                       ),
                       _divider(context),
                       _field(
@@ -352,13 +406,18 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           isDark: isDark,
                           value: _selectedLanguage,
                           items: _languages
-                              .map((l) => DropdownMenuItem(
-                                    value: l.$1,
-                                    child: Text(l.$2,
-                                        style: TextStyle(
-                                            fontSize: 15,
-                                            color: context.colors.textPrimary)),
-                                  ))
+                              .map(
+                                (l) => DropdownMenuItem(
+                                  value: l.$1,
+                                  child: Text(
+                                    l.$2,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      color: context.colors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (v) =>
                               setState(() => _selectedLanguage = v),
@@ -397,11 +456,14 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 7),
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
                               decoration: BoxDecoration(
                                 color: selected
-                                    ? const Color(0xFFEC4899)
-                                        .withValues(alpha: 0.15)
+                                    ? const Color(
+                                        0xFFEC4899,
+                                      ).withValues(alpha: 0.15)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
@@ -510,16 +572,21 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(children: [
-              Icon(icon, size: 13, color: color),
-              const SizedBox(width: 6),
-              Text(title.toUpperCase(),
+            child: Row(
+              children: [
+                Icon(icon, size: 13, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  title.toUpperCase(),
                   style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: context.colors.textTertiary)),
-            ]),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: context.colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
           ),
           Container(
             decoration: BoxDecoration(
@@ -528,9 +595,10 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                   : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.07)
-                      : Colors.black.withValues(alpha: 0.06)),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
             ),
             child: Column(children: children),
           ),
@@ -555,22 +623,31 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(children: [
-              Icon(icon, size: 13, color: color),
-              const SizedBox(width: 6),
-              Text(title.toUpperCase(),
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: context.colors.textTertiary)),
-              if (subtitle != null) ...[
+            child: Row(
+              children: [
+                Icon(icon, size: 13, color: color),
                 const SizedBox(width: 6),
-                Text('· $subtitle',
+                Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: context.colors.textTertiary,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '· $subtitle',
                     style: TextStyle(
-                        fontSize: 11, color: context.colors.textTertiary)),
+                      fontSize: 11,
+                      color: context.colors.textTertiary,
+                    ),
+                  ),
+                ],
               ],
-            ]),
+            ),
           ),
           Container(
             decoration: BoxDecoration(
@@ -579,9 +656,10 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                   : Colors.black.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.07)
-                      : Colors.black.withValues(alpha: 0.06)),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.07)
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
             ),
             child: content,
           ),
@@ -610,12 +688,15 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: context.colors.textTertiary,
-                        letterSpacing: 0.2)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: context.colors.textTertiary,
+                    letterSpacing: 0.2,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 child,
               ],
@@ -649,11 +730,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: _textField(
-              ctrl: ctrl,
-              hint: hint,
-              prefixText: '$label · ',
-            ),
+            child: _textField(ctrl: ctrl, hint: hint, prefixText: '$label · '),
           ),
         ],
       ),
@@ -668,35 +745,42 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     String? prefixText,
     String? Function(String?)? validator,
   }) {
-    return Builder(builder: (context) {
-      return TextFormField(
-        controller: ctrl,
-        maxLines: maxLines,
-        maxLength: maxLength,
-        validator: validator,
-        style: TextStyle(
-            fontSize: 15, color: context.colors.textPrimary, fontWeight: FontWeight.w400),
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixText: prefixText,
-          prefixStyle: TextStyle(
+    return Builder(
+      builder: (context) {
+        return TextFormField(
+          controller: ctrl,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          validator: validator,
+          style: TextStyle(
+            fontSize: 15,
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.w400,
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixText: prefixText,
+            prefixStyle: TextStyle(
               fontSize: 14,
               color: context.colors.textTertiary,
-              fontWeight: FontWeight.w500),
-          hintStyle: TextStyle(
+              fontWeight: FontWeight.w500,
+            ),
+            hintStyle: TextStyle(
               fontSize: 15,
-              color: context.colors.textTertiary.withValues(alpha: 0.5)),
-          counterText: '',
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          errorStyle: const TextStyle(fontSize: 11),
-        ),
-      );
-    });
+              color: context.colors.textTertiary.withValues(alpha: 0.5),
+            ),
+            counterText: '',
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            errorBorder: InputBorder.none,
+            errorStyle: const TextStyle(fontSize: 11),
+          ),
+        );
+      },
+    );
   }
 
   Widget _dropdownField<T>({
@@ -711,30 +795,31 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: isDark
-          ? const Color(0xFF1A1A2E)
-          : Colors.white,
+      dropdownColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
       style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
-            fontSize: 15,
-            color: context.colors.textTertiary.withValues(alpha: 0.5)),
+          fontSize: 15,
+          color: context.colors.textTertiary.withValues(alpha: 0.5),
+        ),
         isDense: true,
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(vertical: 4),
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      icon: Icon(LucideIcons.chevronDown,
-          size: 16, color: context.colors.textTertiary),
+      icon: Icon(
+        LucideIcons.chevronDown,
+        size: 16,
+        color: context.colors.textTertiary,
+      ),
     );
   }
 
   Widget _divider(BuildContext context) => Divider(
-        height: 1,
-        indent: 42,
-        color: context.colors.divider.withValues(alpha: 0.5),
-      );
+    height: 1,
+    indent: 42,
+    color: context.colors.divider.withValues(alpha: 0.5),
+  );
 }
