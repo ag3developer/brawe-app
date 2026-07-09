@@ -64,6 +64,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   // 1 request com quantity=N. Evita estouro do rate limit (30/min) quando
   // o usuário clica em combo rápido (TikTok-style).
   Timer? _roseFlushTimer;
+  Timer? _battleCheckDebounce;
   int _pendingRoses = 0;
 
   // Realtime reactions (corações de outros viewers + contador global)
@@ -109,6 +110,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _roseFlushTimer?.cancel();
     _flushRoses(force: true);
     _reactionSub?.cancel();
+    _battleCheckDebounce?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
     _controller?.dispose();
@@ -129,12 +131,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   void _reattachBattleHandlers() {
+    if (!mounted) return; // widget pode ter sido descartado antes do callback
     final socket = ref.read(socketServiceProvider);
     socket.off(AppConstants.eventBattleStarted);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     // Após reconectar, valida via REST se uma batalha começou durante
-    // a queda de conexão.
-    _checkActiveBattle();
+    // a queda de conexão — com debounce de 5s para evitar spam em
+    // reconexões rápidas (ex: restart do servidor durante deploy).
+    _debouncedCheckActiveBattle();
   }
 
   void _unsubscribeFromBattleEvents() {
@@ -143,6 +147,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       socket.off(AppConstants.eventBattleStarted);
       socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
+  }
+
+  /// Debounce de 5s para evitar spam de chamadas ao /battle/active em
+  /// reconexões rápidas (ex: restart do servidor durante deploy).
+  void _debouncedCheckActiveBattle() {
+    _battleCheckDebounce?.cancel();
+    _battleCheckDebounce = Timer(
+      const Duration(seconds: 5),
+      _checkActiveBattle,
+    );
   }
 
   /// Consulta o backend para saber se já existe uma batalha ativa nesta sala.
@@ -238,9 +252,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       ),
       // Cabeçalhos para o HLS da Mux — User-Agent identifica o app no
       // analytics e ajuda em CDN-edge caching.
-      httpHeaders: const {
-        'User-Agent': 'BraweApp/1.0 (HLS-Live)',
-      },
+      httpHeaders: const {'User-Agent': 'BraweApp/1.0 (HLS-Live)'},
     );
     try {
       await _controller!.initialize();
@@ -283,7 +295,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _heartsKey.currentState?.spawn(1);
     _pendingReactions += 1;
     _reactionFlushTimer?.cancel();
-    _reactionFlushTimer = Timer(const Duration(milliseconds: 250), _flushReactions);
+    _reactionFlushTimer = Timer(
+      const Duration(milliseconds: 250),
+      _flushReactions,
+    );
   }
 
   void _flushReactions({bool force = false}) {
@@ -327,10 +342,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _openStreamerSheet() {
     final room = widget.room;
     final rawName = room.streamerName.trim();
-    final looksGeneric = rawName.isEmpty ||
+    final looksGeneric =
+        rawName.isEmpty ||
         rawName.toLowerCase() == 'streamer' ||
-        RegExp(r'^streamer-?[0-9a-f]{0,8}$', caseSensitive: false)
-            .hasMatch(rawName);
+        RegExp(
+          r'^streamer-?[0-9a-f]{0,8}$',
+          caseSensitive: false,
+        ).hasMatch(rawName);
     String displayName = rawName;
     if (looksGeneric) {
       final username = (room.streamerUsername ?? '').trim();
@@ -369,7 +387,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// O backend confirma via socket `gift_received` após o batch.
   void _sendRose() {
     HapticFeedback.lightImpact();
-    _heartsKey.currentState?.spawn(1);  // feedback visual imediato
+    _heartsKey.currentState?.spawn(1); // feedback visual imediato
     _pendingRoses += 1;
     _roseFlushTimer?.cancel();
     _roseFlushTimer = Timer(const Duration(milliseconds: 400), _flushRoses);
@@ -398,10 +416,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text('Erro ao enviar rosa: ${e.toString().replaceFirst('Exception: ', '')}'),
-          duration: const Duration(seconds: 2),
-        ));
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erro ao enviar rosa: ${e.toString().replaceFirst('Exception: ', '')}',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
     }
   }
 
@@ -418,8 +440,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final commentsState =
-        ref.watch(liveRoomCommentsViewModelProvider(widget.room.id));
+    final commentsState = ref.watch(
+      liveRoomCommentsViewModelProvider(widget.room.id),
+    );
     final gifts = ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
 
     ref.listen<LiveRoomCommentsState>(
@@ -453,7 +476,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
           // ── 3. Top bar ──
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             child: SafeArea(
               bottom: false,
               child: Padding(
@@ -491,24 +516,27 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           // bottom bar = chat input (52) + spacing (10) + actions (52) + safearea
           // ≈ 140px → ticker fica em 160 para sobrar respiro visual.
           Positioned(
-            left: 12, right: 12, bottom: 160,
+            left: 12,
+            right: 12,
+            bottom: 160,
             child: IgnorePointer(
-              child: ChatTicker(
-                comments: commentsState.comments,
-                gifts: gifts,
-              ),
+              child: ChatTicker(comments: commentsState.comments, gifts: gifts),
             ),
           ),
 
           // ── 6.5. Pinned product (event-driven, slide-in quando streamer pinar) ──
           Positioned(
-            left: 0, right: 0, bottom: 250,
+            left: 0,
+            right: 0,
+            bottom: 250,
             child: PinnedProductBar(roomId: widget.room.id),
           ),
 
           // ── 7. Bottom bar: chat input + ações inline (TikTok Live style) ──
           Positioned(
-            left: 12, right: 12, bottom: 12,
+            left: 12,
+            right: 12,
+            bottom: 12,
             child: SafeArea(
               top: false,
               child: LiveBottomBar(
@@ -558,8 +586,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // exatamente como TikTok/Bigo PK: fundo preto total, vídeos entre o
     // top bar e o chat (NÃO de fora a fora).
     if (_activeBattleId != null) {
-      final asyncBattle =
-          ref.watch(battleViewModelProvider(_activeBattleId!));
+      final asyncBattle = ref.watch(battleViewModelProvider(_activeBattleId!));
       final battle = asyncBattle.value;
       if (battle != null &&
           (battle.streamUrlA != null || battle.streamUrlB != null)) {
@@ -581,12 +608,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         //  │  Chat + ações  ~140px + bottom  │  (preto)
         //  └─────────────────────────────────┘
         final mq = MediaQuery.of(context);
-        const kTopBarH = 80.0;   // altura estimada do LiveTopBar (abaixo SafeArea)
+        const kTopBarH =
+            80.0; // altura estimada do LiveTopBar (abaixo SafeArea)
         const kBottomBarH = 140.0; // LiveBottomBar + padding inferior
         final topOffset = mq.padding.top + kTopBarH;
         final bottomOffset = mq.padding.bottom + kBottomBarH;
-        final videoH = (mq.size.height - topOffset - bottomOffset)
-            .clamp(200.0, mq.size.height * 0.62);
+        final videoH = (mq.size.height - topOffset - bottomOffset).clamp(
+          200.0,
+          mq.size.height * 0.62,
+        );
 
         return Container(
           color: Colors.black,
@@ -646,11 +676,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   Widget _placeholder() => Container(
-        color: const Color(0xFF1B2B6B),
-        child: const Center(
-          child: Icon(Icons.live_tv, color: Colors.white24, size: 64),
-        ),
-      );
+    color: const Color(0xFF1B2B6B),
+    child: const Center(
+      child: Icon(Icons.live_tv, color: Colors.white24, size: 64),
+    ),
+  );
 }
 
 // ⚠️ _TopBar migrado para lib/ui/live/shared/widgets/hud/live_top_bar.dart
@@ -669,7 +699,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 // ⚠️ _LiveBottomBar + _LiveActionButton migrados para
 //    lib/ui/live/shared/widgets/actions/live_bottom_bar.dart
 //    (renomeado para LiveBottomBar; _LiveActionButton continua privado lá).
-
 
 // ⚠️ _PinnedProduct + _PinnedProductBar migrados para
 //    lib/ui/live/shared/widgets/commerce/pinned_product_bar.dart
