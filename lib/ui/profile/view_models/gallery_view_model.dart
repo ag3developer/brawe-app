@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/gallery_repository.dart';
 import '../../../domain/models/gallery_media.dart';
@@ -15,7 +14,8 @@ class GalleryViewModel extends _$GalleryViewModel {
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-        () => ref.read(galleryRepositoryProvider).getUserGallery(userId));
+      () => ref.read(galleryRepositoryProvider).getUserGallery(userId),
+    );
   }
 
   Future<bool> uploadPhoto(String filePath, {String? caption}) async {
@@ -25,11 +25,13 @@ class GalleryViewModel extends _$GalleryViewModel {
           .uploadPhoto(filePath, caption: caption);
       final current = state.value;
       if (current != null) {
-        state = AsyncValue.data(GalleryData(
-          photos: [...current.photos, media],
-          videos: current.videos,
-          limits: current.limits,
-        ));
+        state = AsyncValue.data(
+          GalleryData(
+            photos: [...current.photos, media],
+            videos: current.videos,
+            limits: current.limits,
+          ),
+        );
       }
       return true;
     } catch (_) {
@@ -44,11 +46,13 @@ class GalleryViewModel extends _$GalleryViewModel {
           .uploadVideo(filePath, caption: caption);
       final current = state.value;
       if (current != null) {
-        state = AsyncValue.data(GalleryData(
-          photos: current.photos,
-          videos: [...current.videos, media],
-          limits: current.limits,
-        ));
+        state = AsyncValue.data(
+          GalleryData(
+            photos: current.photos,
+            videos: [...current.videos, media],
+            limits: current.limits,
+          ),
+        );
       }
       return true;
     } catch (_) {
@@ -59,11 +63,13 @@ class GalleryViewModel extends _$GalleryViewModel {
   Future<void> deleteMedia(GalleryMedia m) async {
     final current = state.value;
     if (current == null) return;
-    state = AsyncValue.data(GalleryData(
-      photos: current.photos.where((x) => x.id != m.id).toList(),
-      videos: current.videos.where((x) => x.id != m.id).toList(),
-      limits: current.limits,
-    ));
+    state = AsyncValue.data(
+      GalleryData(
+        photos: current.photos.where((x) => x.id != m.id).toList(),
+        videos: current.videos.where((x) => x.id != m.id).toList(),
+        limits: current.limits,
+      ),
+    );
     try {
       await ref.read(galleryRepositoryProvider).deleteMedia(m.id);
     } catch (_) {
@@ -80,11 +86,13 @@ class GalleryViewModel extends _$GalleryViewModel {
             likesCount: x.likesCount + (x.isLiked ? -1 : 1),
           )
         : x;
-    state = AsyncValue.data(GalleryData(
-      photos: current.photos.map(toggle).toList(),
-      videos: current.videos.map(toggle).toList(),
-      limits: current.limits,
-    ));
+    state = AsyncValue.data(
+      GalleryData(
+        photos: current.photos.map(toggle).toList(),
+        videos: current.videos.map(toggle).toList(),
+        limits: current.limits,
+      ),
+    );
     try {
       await ref.read(galleryRepositoryProvider).toggleLike(m.id);
     } catch (_) {

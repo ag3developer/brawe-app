@@ -22,7 +22,7 @@ class PhotoPostView extends StatelessWidget {
           Image.network(
             item.imageUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _TextBackground(caption: item.caption),
+            errorBuilder: (_, _, _) => _TextBackground(caption: item.caption),
           )
         else
           _TextBackground(caption: item.caption),
@@ -43,11 +43,7 @@ class PhotoPostView extends StatelessWidget {
             ),
           ),
 
-        Positioned(
-          right: 8,
-          bottom: 140,
-          child: FeedActionsRail(item: item),
-        ),
+        Positioned(right: 8, bottom: 140, child: FeedActionsRail(item: item)),
         if (item.imageUrl != null)
           Positioned(
             left: 16,

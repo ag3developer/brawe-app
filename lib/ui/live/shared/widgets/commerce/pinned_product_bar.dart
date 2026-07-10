@@ -28,7 +28,8 @@ class PinnedProduct {
     final id = (raw['id'] ?? raw['product_id'] ?? '').toString();
     final name = (raw['name'] ?? raw['title'] ?? '').toString();
     if (id.isEmpty || name.isEmpty) return null;
-    final priceRaw = raw['price_label'] ??
+    final priceRaw =
+        raw['price_label'] ??
         raw['priceLabel'] ??
         (raw['price'] != null ? 'R\$ ${raw['price']}' : '');
     final subtitleRaw =
@@ -71,7 +72,8 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
     super.initState();
     _onPinned = (data) {
       final p = PinnedProduct.tryParse(
-          data is Map ? data['product'] ?? data : data);
+        data is Map ? data['product'] ?? data : data,
+      );
       if (!mounted || p == null) return;
       setState(() => _product = p);
     };
@@ -129,7 +131,9 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
               Text(
                 'Abrir produto na vitrine — em breve.',
                 style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.6), fontSize: 13),
+                  color: Colors.white.withValues(alpha: 0.6),
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -194,7 +198,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                       ? Image.network(
                                           p.thumbnailUrl!,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
+                                          errorBuilder: (_, _, _) =>
                                               _thumbPlaceholder(),
                                         )
                                       : _thumbPlaceholder(),
@@ -204,8 +208,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                               // ── Título · subtítulo · preço ──────────
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
@@ -226,8 +229,9 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.65),
+                                          color: Colors.white.withValues(
+                                            alpha: 0.65,
+                                          ),
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w500,
                                           height: 1.15,
@@ -253,7 +257,9 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                               // ── Botão "Ver produto" gradient pill ──
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 10),
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(20),
                                   gradient: const LinearGradient(
@@ -264,8 +270,9 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFFB44CF0)
-                                          .withValues(alpha: 0.45),
+                                      color: const Color(
+                                        0xFFB44CF0,
+                                      ).withValues(alpha: 0.45),
                                       blurRadius: 14,
                                       offset: const Offset(0, 4),
                                     ),
@@ -293,11 +300,13 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                             height: 22,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(0xFFB44CF0)
-                                  .withValues(alpha: 0.22),
+                              color: const Color(
+                                0xFFB44CF0,
+                              ).withValues(alpha: 0.22),
                               border: Border.all(
-                                color: const Color(0xFFB44CF0)
-                                    .withValues(alpha: 0.55),
+                                color: const Color(
+                                  0xFFB44CF0,
+                                ).withValues(alpha: 0.55),
                                 width: 0.8,
                               ),
                             ),
@@ -318,8 +327,11 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
   }
 
   Widget _thumbPlaceholder() => Container(
-        color: Colors.white.withValues(alpha: 0.08),
-        child: const Icon(Icons.shopping_bag_outlined,
-            color: Colors.white54, size: 18),
-      );
+    color: Colors.white.withValues(alpha: 0.08),
+    child: const Icon(
+      Icons.shopping_bag_outlined,
+      color: Colors.white54,
+      size: 18,
+    ),
+  );
 }

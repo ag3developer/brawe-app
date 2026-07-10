@@ -79,11 +79,9 @@ class BraweAvatar extends StatelessWidget {
                 height: size,
                 fadeInDuration: const Duration(milliseconds: 180),
                 fadeOutDuration: const Duration(milliseconds: 80),
-                placeholder: (_, __) => _Skeleton(
-                  size: size,
-                  baseColor: bgColor,
-                ),
-                errorWidget: (_, __, ___) => fallbackOnError
+                placeholder: (_, _) =>
+                    _Skeleton(size: size, baseColor: bgColor),
+                errorWidget: (_, _, _) => fallbackOnError
                     ? _InitialFallback(
                         initial: initial,
                         size: size,
@@ -107,10 +105,7 @@ class BraweAvatar extends StatelessWidget {
         width: size + borderWidth * 2,
         height: size + borderWidth * 2,
         padding: EdgeInsets.all(borderWidth),
-        decoration: BoxDecoration(
-          color: borderColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: borderColor, shape: BoxShape.circle),
         child: inner,
       );
     }
@@ -190,10 +185,7 @@ class _InitialFallback extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            bgColor,
-            Color.lerp(bgColor, Colors.black, 0.15)!,
-          ],
+          colors: [bgColor, Color.lerp(bgColor, Colors.black, 0.15)!],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -250,7 +242,7 @@ class _SkeletonState extends State<_Skeleton>
     final highlight = Color.lerp(widget.baseColor, Colors.black, 0.35)!;
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
+      builder: (_, _) {
         return Container(
           width: widget.size,
           height: widget.size,

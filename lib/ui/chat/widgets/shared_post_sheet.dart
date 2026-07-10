@@ -40,12 +40,12 @@ bool _isVideoUrl(String url) {
 }
 
 /// Provider local para refetch ao tocar em like / repost.
-final _sharedPostDetailProvider =
-    FutureProvider.autoDispose.family<Post, String>((ref, postId) async {
-  ref.keepAlive();
-  final repo = ref.watch(postRepositoryProvider);
-  return repo.getById(postId);
-});
+final _sharedPostDetailProvider = FutureProvider.autoDispose
+    .family<Post, String>((ref, postId) async {
+      ref.keepAlive();
+      final repo = ref.watch(postRepositoryProvider);
+      return repo.getById(postId);
+    });
 
 class SharedPostSheet extends ConsumerStatefulWidget {
   const SharedPostSheet({super.key, required this.postId});
@@ -78,7 +78,10 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
     super.initState();
     // Conta a visualização (best-effort).
     Future.microtask(() {
-      ref.read(postRepositoryProvider).incrementView(widget.postId).catchError((_) {});
+      ref
+          .read(postRepositoryProvider)
+          .incrementView(widget.postId)
+          .catchError((_) {});
     });
   }
 
@@ -122,7 +125,11 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
           color: context.colors.surfaceElevated,
           borderRadius: BorderRadius.circular(28),
           boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 14, offset: Offset(0, 6)),
+            BoxShadow(
+              color: Colors.black54,
+              blurRadius: 14,
+              offset: Offset(0, 6),
+            ),
           ],
         ),
         child: Row(
@@ -144,10 +151,12 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
     try {
       await ref.read(postRepositoryProvider).react(post.id, chosen);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.sharedPostReactionApplied)),
-      );
-    } catch (_) {/* ignore */}
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.sharedPostReactionApplied)));
+    } catch (_) {
+      /* ignore */
+    }
   }
 
   Future<void> _toggleRepost(Post post) async {
@@ -159,9 +168,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
       _repostsDelta += wasReposted ? -1 : 1;
     });
     try {
-      await ref
-          .read(postRepositoryProvider)
-          .toggleRepost(post.id, wasReposted);
+      await ref.read(postRepositoryProvider).toggleRepost(post.id, wasReposted);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -223,7 +230,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
         ),
         child: asyncPost.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => _ErrorView(onClose: () => Navigator.of(ctx).pop()),
+          error: (_, _) => _ErrorView(onClose: () => Navigator.of(ctx).pop()),
           data: (post) => _SheetContent(
             post: post,
             scrollCtrl: scrollCtrl,
@@ -316,14 +323,19 @@ class _SheetContent extends StatelessWidget {
                       child: CircleAvatar(
                         radius: 22,
                         backgroundColor: context.colors.surfaceElevated,
-                        backgroundImage: (post.author.avatarUrl != null &&
+                        backgroundImage:
+                            (post.author.avatarUrl != null &&
                                 post.author.avatarUrl!.isNotEmpty)
                             ? NetworkImage(post.author.avatarUrl!)
                             : null,
-                        child: (post.author.avatarUrl == null ||
+                        child:
+                            (post.author.avatarUrl == null ||
                                 post.author.avatarUrl!.isEmpty)
-                            ? Icon(Icons.person,
-                                color: context.colors.textPrimary, size: 22)
+                            ? Icon(
+                                Icons.person,
+                                color: context.colors.textPrimary,
+                                size: 22,
+                              )
                             : null,
                       ),
                     ),
@@ -350,8 +362,11 @@ class _SheetContent extends StatelessWidget {
                                 ),
                                 if (post.author.isVerified) ...[
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.verified,
-                                      color: AppColors.coolCyan, size: 16),
+                                  const Icon(
+                                    Icons.verified,
+                                    color: AppColors.coolCyan,
+                                    size: 16,
+                                  ),
                                 ],
                               ],
                             ),
@@ -369,8 +384,10 @@ class _SheetContent extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: onClose,
-                      icon: Icon(Icons.close,
-                          color: context.colors.textSecondary),
+                      icon: Icon(
+                        Icons.close,
+                        color: context.colors.textSecondary,
+                      ),
                       tooltip: s.actionClose,
                     ),
                   ],
@@ -423,9 +440,7 @@ class _SheetContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _ActionButton(
-                      icon: isLiked
-                          ? Icons.favorite
-                          : Icons.favorite_border,
+                      icon: isLiked ? Icons.favorite : Icons.favorite_border,
                       iconColor: isLiked
                           ? Colors.redAccent
                           : context.colors.textPrimary,
@@ -478,21 +493,16 @@ class _MediaBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_isVideoUrl(url)) {
-      return AspectRatio(
-        aspectRatio: 1,
-        child: _AutoplayVideo(url: url),
-      );
+      return AspectRatio(aspectRatio: 1, child: _AutoplayVideo(url: url));
     }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 480),
       child: CachedNetworkImage(
         imageUrl: url,
         fit: BoxFit.contain,
-        placeholder: (_, __) => Container(
-          height: 240,
-          color: context.colors.surfaceElevated,
-        ),
-        errorWidget: (_, __, ___) => Container(
+        placeholder: (_, _) =>
+            Container(height: 240, color: context.colors.surfaceElevated),
+        errorWidget: (_, _, _) => Container(
           height: 240,
           color: context.colors.surfaceElevated,
           child: Icon(Icons.broken_image, color: context.colors.textSecondary),
@@ -584,7 +594,10 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
     if (c == null || !c.value.isInitialized) {
       return Container(
         color: Colors.black,
-        child: Icon(Icons.videocam_off, color: Colors.white.withValues(alpha: 0.6)),
+        child: Icon(
+          Icons.videocam_off,
+          color: Colors.white.withValues(alpha: 0.6),
+        ),
       );
     }
     final isPlaying = c.value.isPlaying;
@@ -611,8 +624,11 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
                   color: Colors.black.withValues(alpha: 0.45),
                   shape: BoxShape.circle,
                 ),
-                child:
-                    const Icon(Icons.play_arrow, color: Colors.white, size: 38),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 38,
+                ),
               ),
             ),
           ),

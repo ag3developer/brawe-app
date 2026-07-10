@@ -790,7 +790,7 @@ class _TypingBubbleState extends State<_TypingBubble>
             ),
             child: AnimatedBuilder(
               animation: _c,
-              builder: (_, __) {
+              builder: (_, _) {
                 return Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (i) {
@@ -1402,7 +1402,7 @@ class _GifBubbleContent extends StatelessWidget {
             width: 200,
             height: 150,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               width: 200,
               height: 100,
               color: context.colors.surfaceElevated,
@@ -1486,7 +1486,7 @@ class _ImageBubbleContent extends StatelessWidget {
                   : CachedNetworkImage(
                       imageUrl: message.content,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => const Center(
+                      placeholder: (_, _) => const Center(
                         child: SizedBox(
                           width: 24,
                           height: 24,
@@ -1496,7 +1496,7 @@ class _ImageBubbleContent extends StatelessWidget {
                           ),
                         ),
                       ),
-                      errorWidget: (_, __, ___) => Icon(
+                      errorWidget: (_, _, _) => Icon(
                         Icons.broken_image,
                         color: context.colors.textTertiary,
                       ),
@@ -1622,10 +1622,10 @@ class _ImageViewerPage extends StatelessWidget {
               : CachedNetworkImage(
                   imageUrl: message.content,
                   fit: BoxFit.contain,
-                  placeholder: (_, __) => const CircularProgressIndicator(
+                  placeholder: (_, _) => const CircularProgressIndicator(
                     color: AppColors.electricPurple,
                   ),
-                  errorWidget: (_, __, ___) => Icon(
+                  errorWidget: (_, _, _) => Icon(
                     Icons.broken_image,
                     color: context.colors.textTertiary,
                   ),
@@ -1766,8 +1766,9 @@ class _ComposerState extends ConsumerState<_Composer>
       '${(s ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
 
   Future<void> _startRecording() async {
-    if (_isRecording)
+    if (_isRecording) {
       return; // evita double-start (tap + longPress simultâneos)
+    }
     final perm = await _recorder.hasPermission();
     if (!perm) {
       if (mounted) {
@@ -2440,7 +2441,7 @@ class _SharedPostPreview extends ConsumerWidget {
         child: asyncPost.when(
           data: (post) => _buildLoaded(context, post),
           loading: () => _buildSkeleton(context),
-          error: (_, __) => _buildError(context),
+          error: (_, _) => _buildError(context),
         ),
       ),
     );
@@ -2503,9 +2504,9 @@ class _SharedPostPreview extends ConsumerWidget {
                 : CachedNetworkImage(
                     imageUrl: post.imageUrl!,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) =>
+                    placeholder: (_, _) =>
                         Container(color: context.colors.surfaceElevated),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (_, _, _) => Container(
                       color: context.colors.surfaceElevated,
                       child: Icon(
                         Icons.broken_image,
@@ -3993,7 +3994,7 @@ class _GifGrid extends StatelessWidget {
                 Image.network(
                   gif.url,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: context.colors.surfaceElevated,
                     child: Center(
                       child: Text(
@@ -4123,7 +4124,7 @@ class _LiveInviteCard extends StatelessWidget {
                       Image.network(
                         thumb,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorBuilder: (_, _, _) =>
                             const ColoredBox(color: AppColors.deepBlue),
                       )
                     else

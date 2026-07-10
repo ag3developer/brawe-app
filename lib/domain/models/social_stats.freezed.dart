@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$SocialStats {
 
-@JsonKey(name: 'followers_count') int get followersCount;@JsonKey(name: 'following_count') int get followingCount;@JsonKey(name: 'lives_count') int get livesCount;@JsonKey(name: 'total_likes') int get totalLikes;@JsonKey(name: 'is_following') bool get isFollowing;
+@JsonKey(name: 'followers_count') int get followersCount;@JsonKey(name: 'following_count') int get followingCount;// Backend retorna `total_lives` (contagem de lives do usuário).
+@JsonKey(name: 'total_lives') int get livesCount;// Alcance total: soma de views de posts + mídia + stories + lives.
+@JsonKey(name: 'total_views') int get totalViews;@JsonKey(name: 'is_following') bool get isFollowing;
 /// Create a copy of SocialStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $SocialStatsCopyWith<SocialStats> get copyWith => _$SocialStatsCopyWithImpl<Soci
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SocialStats&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.livesCount, livesCount) || other.livesCount == livesCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SocialStats&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.livesCount, livesCount) || other.livesCount == livesCount)&&(identical(other.totalViews, totalViews) || other.totalViews == totalViews)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,followersCount,followingCount,livesCount,totalLikes,isFollowing);
+int get hashCode => Object.hash(runtimeType,followersCount,followingCount,livesCount,totalViews,isFollowing);
 
 @override
 String toString() {
-  return 'SocialStats(followersCount: $followersCount, followingCount: $followingCount, livesCount: $livesCount, totalLikes: $totalLikes, isFollowing: $isFollowing)';
+  return 'SocialStats(followersCount: $followersCount, followingCount: $followingCount, livesCount: $livesCount, totalViews: $totalViews, isFollowing: $isFollowing)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $SocialStatsCopyWith<$Res>  {
   factory $SocialStatsCopyWith(SocialStats value, $Res Function(SocialStats) _then) = _$SocialStatsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'followers_count') int followersCount,@JsonKey(name: 'following_count') int followingCount,@JsonKey(name: 'lives_count') int livesCount,@JsonKey(name: 'total_likes') int totalLikes,@JsonKey(name: 'is_following') bool isFollowing
+@JsonKey(name: 'followers_count') int followersCount,@JsonKey(name: 'following_count') int followingCount,@JsonKey(name: 'total_lives') int livesCount,@JsonKey(name: 'total_views') int totalViews,@JsonKey(name: 'is_following') bool isFollowing
 });
 
 
@@ -65,12 +67,12 @@ class _$SocialStatsCopyWithImpl<$Res>
 
 /// Create a copy of SocialStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? followersCount = null,Object? followingCount = null,Object? livesCount = null,Object? totalLikes = null,Object? isFollowing = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? followersCount = null,Object? followingCount = null,Object? livesCount = null,Object? totalViews = null,Object? isFollowing = null,}) {
   return _then(_self.copyWith(
 followersCount: null == followersCount ? _self.followersCount : followersCount // ignore: cast_nullable_to_non_nullable
 as int,followingCount: null == followingCount ? _self.followingCount : followingCount // ignore: cast_nullable_to_non_nullable
 as int,livesCount: null == livesCount ? _self.livesCount : livesCount // ignore: cast_nullable_to_non_nullable
-as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,totalViews: null == totalViews ? _self.totalViews : totalViews // ignore: cast_nullable_to_non_nullable
 as int,isFollowing: null == isFollowing ? _self.isFollowing : isFollowing // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
@@ -154,10 +156,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'lives_count')  int livesCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_following')  bool isFollowing)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'total_lives')  int livesCount, @JsonKey(name: 'total_views')  int totalViews, @JsonKey(name: 'is_following')  bool isFollowing)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SocialStats() when $default != null:
-return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalLikes,_that.isFollowing);case _:
+return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalViews,_that.isFollowing);case _:
   return orElse();
 
 }
@@ -175,10 +177,10 @@ return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'lives_count')  int livesCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_following')  bool isFollowing)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'total_lives')  int livesCount, @JsonKey(name: 'total_views')  int totalViews, @JsonKey(name: 'is_following')  bool isFollowing)  $default,) {final _that = this;
 switch (_that) {
 case _SocialStats():
-return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalLikes,_that.isFollowing);}
+return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalViews,_that.isFollowing);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -192,10 +194,10 @@ return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'lives_count')  int livesCount, @JsonKey(name: 'total_likes')  int totalLikes, @JsonKey(name: 'is_following')  bool isFollowing)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'followers_count')  int followersCount, @JsonKey(name: 'following_count')  int followingCount, @JsonKey(name: 'total_lives')  int livesCount, @JsonKey(name: 'total_views')  int totalViews, @JsonKey(name: 'is_following')  bool isFollowing)?  $default,) {final _that = this;
 switch (_that) {
 case _SocialStats() when $default != null:
-return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalLikes,_that.isFollowing);case _:
+return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that.totalViews,_that.isFollowing);case _:
   return null;
 
 }
@@ -207,13 +209,15 @@ return $default(_that.followersCount,_that.followingCount,_that.livesCount,_that
 @JsonSerializable()
 
 class _SocialStats implements SocialStats {
-  const _SocialStats({@JsonKey(name: 'followers_count') this.followersCount = 0, @JsonKey(name: 'following_count') this.followingCount = 0, @JsonKey(name: 'lives_count') this.livesCount = 0, @JsonKey(name: 'total_likes') this.totalLikes = 0, @JsonKey(name: 'is_following') this.isFollowing = false});
+  const _SocialStats({@JsonKey(name: 'followers_count') this.followersCount = 0, @JsonKey(name: 'following_count') this.followingCount = 0, @JsonKey(name: 'total_lives') this.livesCount = 0, @JsonKey(name: 'total_views') this.totalViews = 0, @JsonKey(name: 'is_following') this.isFollowing = false});
   factory _SocialStats.fromJson(Map<String, dynamic> json) => _$SocialStatsFromJson(json);
 
 @override@JsonKey(name: 'followers_count') final  int followersCount;
 @override@JsonKey(name: 'following_count') final  int followingCount;
-@override@JsonKey(name: 'lives_count') final  int livesCount;
-@override@JsonKey(name: 'total_likes') final  int totalLikes;
+// Backend retorna `total_lives` (contagem de lives do usuário).
+@override@JsonKey(name: 'total_lives') final  int livesCount;
+// Alcance total: soma de views de posts + mídia + stories + lives.
+@override@JsonKey(name: 'total_views') final  int totalViews;
 @override@JsonKey(name: 'is_following') final  bool isFollowing;
 
 /// Create a copy of SocialStats
@@ -229,16 +233,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SocialStats&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.livesCount, livesCount) || other.livesCount == livesCount)&&(identical(other.totalLikes, totalLikes) || other.totalLikes == totalLikes)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SocialStats&&(identical(other.followersCount, followersCount) || other.followersCount == followersCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.livesCount, livesCount) || other.livesCount == livesCount)&&(identical(other.totalViews, totalViews) || other.totalViews == totalViews)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,followersCount,followingCount,livesCount,totalLikes,isFollowing);
+int get hashCode => Object.hash(runtimeType,followersCount,followingCount,livesCount,totalViews,isFollowing);
 
 @override
 String toString() {
-  return 'SocialStats(followersCount: $followersCount, followingCount: $followingCount, livesCount: $livesCount, totalLikes: $totalLikes, isFollowing: $isFollowing)';
+  return 'SocialStats(followersCount: $followersCount, followingCount: $followingCount, livesCount: $livesCount, totalViews: $totalViews, isFollowing: $isFollowing)';
 }
 
 
@@ -249,7 +253,7 @@ abstract mixin class _$SocialStatsCopyWith<$Res> implements $SocialStatsCopyWith
   factory _$SocialStatsCopyWith(_SocialStats value, $Res Function(_SocialStats) _then) = __$SocialStatsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'followers_count') int followersCount,@JsonKey(name: 'following_count') int followingCount,@JsonKey(name: 'lives_count') int livesCount,@JsonKey(name: 'total_likes') int totalLikes,@JsonKey(name: 'is_following') bool isFollowing
+@JsonKey(name: 'followers_count') int followersCount,@JsonKey(name: 'following_count') int followingCount,@JsonKey(name: 'total_lives') int livesCount,@JsonKey(name: 'total_views') int totalViews,@JsonKey(name: 'is_following') bool isFollowing
 });
 
 
@@ -266,12 +270,12 @@ class __$SocialStatsCopyWithImpl<$Res>
 
 /// Create a copy of SocialStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? followersCount = null,Object? followingCount = null,Object? livesCount = null,Object? totalLikes = null,Object? isFollowing = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? followersCount = null,Object? followingCount = null,Object? livesCount = null,Object? totalViews = null,Object? isFollowing = null,}) {
   return _then(_SocialStats(
 followersCount: null == followersCount ? _self.followersCount : followersCount // ignore: cast_nullable_to_non_nullable
 as int,followingCount: null == followingCount ? _self.followingCount : followingCount // ignore: cast_nullable_to_non_nullable
 as int,livesCount: null == livesCount ? _self.livesCount : livesCount // ignore: cast_nullable_to_non_nullable
-as int,totalLikes: null == totalLikes ? _self.totalLikes : totalLikes // ignore: cast_nullable_to_non_nullable
+as int,totalViews: null == totalViews ? _self.totalViews : totalViews // ignore: cast_nullable_to_non_nullable
 as int,isFollowing: null == isFollowing ? _self.isFollowing : isFollowing // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

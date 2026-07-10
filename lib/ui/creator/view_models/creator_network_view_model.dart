@@ -15,7 +15,6 @@
 //   • AdminApplicationReviewController — aprovar/rejeitar/waitlist/etc
 // ============================================================================
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/creator_network_repository.dart';
@@ -87,7 +86,9 @@ class CreatorApplicationFormController
   }) async {
     state = const AsyncValue.loading();
     try {
-      final app = await ref.read(creatorNetworkRepositoryProvider).submitApplication(
+      final app = await ref
+          .read(creatorNetworkRepositoryProvider)
+          .submitApplication(
             fullName: fullName,
             username: username,
             email: email,
@@ -167,11 +168,13 @@ class AdminApplicationsFilter extends _$AdminApplicationsFilter {
 
   void update(AdminApplicationFilter filter) => state = filter;
   void reset() => state = const AdminApplicationFilter();
-  void setStatus(ApplicationStatus? s) => state = state.copyWith(status: s, page: 1);
+  void setStatus(ApplicationStatus? s) =>
+      state = state.copyWith(status: s, page: 1);
   void setTier(CreatorTier? t) => state = state.copyWith(tier: t, page: 1);
   void setNiche(ContentNiche? n) => state = state.copyWith(niche: n, page: 1);
   void setCountry(String? c) => state = state.copyWith(country: c, page: 1);
-  void setPriority(ApplicationPriority? p) => state = state.copyWith(priority: p, page: 1);
+  void setPriority(ApplicationPriority? p) =>
+      state = state.copyWith(priority: p, page: 1);
   void setSearch(String? s) => state = state.copyWith(search: s, page: 1);
   void nextPage() => state = state.copyWith(page: state.page + 1);
 }
@@ -237,10 +240,7 @@ class AdminApplicationReviewController
     }
   }
 
-  Future<CreatorProfile> moveTier(
-    String userId,
-    CreatorTier newTier,
-  ) async {
+  Future<CreatorProfile> moveTier(String userId, CreatorTier newTier) async {
     try {
       final profile = await ref
           .read(creatorNetworkRepositoryProvider)

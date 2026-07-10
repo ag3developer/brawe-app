@@ -262,12 +262,12 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/wallet',
-            redirect: (_, __) => kEnableMonetization ? null : '/',
+            redirect: (_, _) => kEnableMonetization ? null : '/',
             builder: (context, state) => const WalletScreen(),
           ),
           GoRoute(
             path: '/earnings',
-            redirect: (_, __) => kEnableMonetization ? null : '/',
+            redirect: (_, _) => kEnableMonetization ? null : '/',
             builder: (context, state) => const EarningsScreen(),
           ),
           GoRoute(
@@ -306,7 +306,7 @@ GoRouter router(Ref ref) {
             },
           ),
           // ── Brawe Creator Network ─────────────────────────────────
-          GoRoute(path: '/creator', redirect: (_, __) => '/creator/intro'),
+          GoRoute(path: '/creator', redirect: (_, _) => '/creator/intro'),
           GoRoute(
             path: '/creator/intro',
             builder: (context, state) => const CreatorProgramIntroScreen(),

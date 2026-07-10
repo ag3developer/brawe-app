@@ -12,9 +12,9 @@ import '../../core/ui/follow_button.dart';
 /// Provider AutoDispose+Family que busca os "likers" de um post.
 final postLikersProvider = FutureProvider.autoDispose
     .family<PostLikesPage, String>((ref, postId) async {
-  final repo = ref.watch(postRepositoryProvider);
-  return repo.getLikers(postId, limit: 100);
-});
+      final repo = ref.watch(postRepositoryProvider);
+      return repo.getLikers(postId, limit: 100);
+    });
 
 /// Tela que lista quem curtiu uma publicação, com chips de breakdown
 /// por tipo de reação (❤️ 🔥 😂 😮 😢) — estilo Instagram/Facebook.
@@ -39,14 +39,17 @@ class PostLikersScreen extends ConsumerWidget {
       ),
       body: asyncPage.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
+        error: (_, _) => Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.favorite_outline,
-                    color: colors.textSecondary, size: 56),
+                Icon(
+                  Icons.favorite_outline,
+                  color: colors.textSecondary,
+                  size: 56,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   s.postLikersLoadError,
@@ -71,8 +74,11 @@ class PostLikersScreen extends ConsumerWidget {
               ? ListView(
                   children: [
                     const SizedBox(height: 120),
-                    Icon(Icons.favorite_outline,
-                        size: 56, color: colors.textSecondary),
+                    Icon(
+                      Icons.favorite_outline,
+                      size: 56,
+                      color: colors.textSecondary,
+                    ),
                     const SizedBox(height: 12),
                     Center(
                       child: Text(
@@ -106,7 +112,7 @@ class PostLikersScreen extends ConsumerWidget {
                     SliverList.separated(
                       itemCount: page.likers.length,
                       itemBuilder: (_, i) => _LikerTile(liker: page.likers[i]),
-                      separatorBuilder: (_, __) =>
+                      separatorBuilder: (_, _) =>
                           Divider(height: 1, color: colors.divider),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 32)),
@@ -133,7 +139,7 @@ class _ReactionsBreakdownStrip extends StatelessWidget {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: entries.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
           itemBuilder: (_, i) {
             final e = entries[i];
             return _ReactionChip(type: e.key, count: e.value);
@@ -229,8 +235,8 @@ class _LikerTile extends ConsumerWidget {
                 CircleAvatar(
                   radius: 22,
                   backgroundColor: colors.surface,
-                  backgroundImage: (liker.avatarUrl != null &&
-                          liker.avatarUrl!.isNotEmpty)
+                  backgroundImage:
+                      (liker.avatarUrl != null && liker.avatarUrl!.isNotEmpty)
                       ? CachedNetworkImageProvider(liker.avatarUrl!)
                       : null,
                   child: (liker.avatarUrl == null || liker.avatarUrl!.isEmpty)
@@ -251,8 +257,7 @@ class _LikerTile extends ConsumerWidget {
                       color: colors.background,
                       shape: BoxShape.circle,
                     ),
-                    child: Text(emoji,
-                        style: const TextStyle(fontSize: 14)),
+                    child: Text(emoji, style: const TextStyle(fontSize: 14)),
                   ),
                 ),
               ],
@@ -276,8 +281,11 @@ class _LikerTile extends ConsumerWidget {
                   ),
                   if (liker.isVerified) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.verified,
-                        size: 16, color: Color(0xFF1DA1F2)),
+                    const Icon(
+                      Icons.verified,
+                      size: 16,
+                      color: Color(0xFF1DA1F2),
+                    ),
                   ],
                 ],
               ),

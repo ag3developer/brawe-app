@@ -25,8 +25,7 @@ class ProfileGalleryGrid extends ConsumerStatefulWidget {
   final bool isMe;
 
   @override
-  ConsumerState<ProfileGalleryGrid> createState() =>
-      _ProfileGalleryGridState();
+  ConsumerState<ProfileGalleryGrid> createState() => _ProfileGalleryGridState();
 }
 
 class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
@@ -45,37 +44,51 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
 
     return RefreshIndicator(
       color: AppColors.electricPurple,
-      onRefresh: () => ref
-          .read(galleryViewModelProvider(widget.userId).notifier)
-          .refresh(),
+      onRefresh: () =>
+          ref.read(galleryViewModelProvider(widget.userId).notifier).refresh(),
       child: asyncData.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.electricPurple),
         ),
-        error: (_, __) => ListView(
+        error: (_, _) => ListView(
           children: [
             const SizedBox(height: 120),
             Center(
-              child: Text(S.of(context).profileGalleryLoadError,
-                  style: const TextStyle(color: Colors.white60)),
+              child: Text(
+                S.of(context).profileGalleryLoadError,
+                style: TextStyle(color: context.colors.textSecondary),
+              ),
             ),
           ],
         ),
         data: (data) => Column(
           children: [
-            TabBar(
-              controller: _tab,
-              indicatorColor: AppColors.electricPurple,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              tabs: [
-                Tab(
-                    text: S.of(context).profileGalleryTabPhotos(
-                        data.photos.length, data.limits?.maxPhotos ?? 6)),
-                Tab(
-                    text: S.of(context).profileGalleryTabVideos(
-                        data.videos.length, data.limits?.maxVideos ?? 3)),
-              ],
+            Container(
+              color: context.colors.background,
+              child: TabBar(
+                controller: _tab,
+                indicatorColor: AppColors.electricPurple,
+                labelColor: context.colors.textPrimary,
+                unselectedLabelColor: context.colors.textSecondary,
+                tabs: [
+                  Tab(
+                    text: S
+                        .of(context)
+                        .profileGalleryTabPhotos(
+                          data.photos.length,
+                          data.limits?.maxPhotos ?? 6,
+                        ),
+                  ),
+                  Tab(
+                    text: S
+                        .of(context)
+                        .profileGalleryTabVideos(
+                          data.videos.length,
+                          data.limits?.maxVideos ?? 3,
+                        ),
+                  ),
+                ],
+              ),
             ),
             Expanded(
               child: TabBarView(
@@ -184,11 +197,16 @@ class _MediaGrid extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.image_outlined,
-                      size: 48, color: Colors.white24),
+                  Icon(
+                    Icons.image_outlined,
+                    size: 48,
+                    color: context.colors.textTertiary,
+                  ),
                   const SizedBox(height: 8),
-                  Text(S.of(context).profileGalleryEmpty,
-                      style: const TextStyle(color: Colors.white54)),
+                  Text(
+                    S.of(context).profileGalleryEmpty,
+                    style: TextStyle(color: context.colors.textSecondary),
+                  ),
                 ],
               ),
             ),
@@ -226,12 +244,15 @@ class _AddTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white10,
-          border: Border.all(color: Colors.white24),
+          color: context.colors.surfaceHighest,
+          border: Border.all(color: context.colors.border),
         ),
-        child: const Center(
-          child: Icon(Icons.add_a_photo_outlined,
-              color: Colors.white60, size: 32),
+        child: Center(
+          child: Icon(
+            Icons.add_a_photo_outlined,
+            color: context.colors.textSecondary,
+            size: 32,
+          ),
         ),
       ),
     );
@@ -257,10 +278,12 @@ class _MediaTile extends ConsumerWidget {
       onTap: () {
         // Track view (não-crítico)
         ref.read(galleryRepositoryProvider).registerView(media.id);
-        Navigator.of(context).push(MaterialPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => _MediaViewer(userId: userId, media: media),
-        ));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (_) => _MediaViewer(userId: userId, media: media),
+          ),
+        );
       },
       onLongPress: isMe ? () => _confirmDelete(context, ref) : null,
       child: Stack(
@@ -269,26 +292,32 @@ class _MediaTile extends ConsumerWidget {
           CachedNetworkImage(
             imageUrl: thumb,
             fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: Colors.white10),
-            errorWidget: (_, __, ___) => Container(
-              color: Colors.white10,
-              child: const Icon(Icons.broken_image, color: Colors.white24),
+            placeholder: (_, _) =>
+                Container(color: context.colors.surfaceHighest),
+            errorWidget: (_, _, _) => Container(
+              color: context.colors.surfaceHighest,
+              child: Icon(
+                Icons.broken_image,
+                color: context.colors.textTertiary,
+              ),
             ),
           ),
           if (isVideo)
             const Positioned(
               right: 6,
               top: 6,
-              child: Icon(Icons.play_circle_filled,
-                  color: Colors.white, size: 22),
+              child: Icon(
+                Icons.play_circle_filled,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
           if (media.likesCount > 0)
             Positioned(
               left: 6,
               bottom: 6,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(10),
@@ -298,9 +327,13 @@ class _MediaTile extends ConsumerWidget {
                   children: [
                     const Icon(Icons.favorite, color: Colors.white, size: 12),
                     const SizedBox(width: 3),
-                    Text(media.likesCount.toString(),
-                        style: TextStyle(
-                            color: context.colors.textPrimary, fontSize: 11)),
+                    Text(
+                      media.likesCount.toString(),
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
+                        fontSize: 11,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -315,20 +348,28 @@ class _MediaTile extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.colors.surface,
-        title: Text(S.of(ctx).profileGalleryRemoveTitle,
-            style: TextStyle(color: ctx.colors.textPrimary)),
-        content: Text(S.of(ctx).profileGalleryRemoveBody,
-            style: TextStyle(color: ctx.colors.textSecondary)),
+        title: Text(
+          S.of(ctx).profileGalleryRemoveTitle,
+          style: TextStyle(color: ctx.colors.textPrimary),
+        ),
+        content: Text(
+          S.of(ctx).profileGalleryRemoveBody,
+          style: TextStyle(color: ctx.colors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.of(ctx).actionCancel,
-                style: TextStyle(color: ctx.colors.textSecondary)),
+            child: Text(
+              S.of(ctx).actionCancel,
+              style: TextStyle(color: ctx.colors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.of(ctx).profileGalleryRemove,
-                style: const TextStyle(color: Colors.red)),
+            child: Text(
+              S.of(ctx).profileGalleryRemove,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -402,15 +443,17 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
       body: Center(
         child: isVideo
             ? (_chewie != null
-                ? Chewie(controller: _chewie!)
-                : const CircularProgressIndicator(
-                    color: AppColors.electricPurple))
+                  ? Chewie(controller: _chewie!)
+                  : const CircularProgressIndicator(
+                      color: AppColors.electricPurple,
+                    ))
             : InteractiveViewer(
                 child: CachedNetworkImage(
                   imageUrl: m.url,
                   fit: BoxFit.contain,
-                  placeholder: (_, __) => const CircularProgressIndicator(
-                      color: AppColors.electricPurple),
+                  placeholder: (_, _) => const CircularProgressIndicator(
+                    color: AppColors.electricPurple,
+                  ),
                 ),
               ),
       ),
@@ -432,13 +475,17 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
                   color: m.isLiked ? Colors.redAccent : Colors.white,
                 ),
               ),
-              Text('${m.likesCount}',
-                  style: const TextStyle(color: Colors.white)),
+              Text(
+                '${m.likesCount}',
+                style: const TextStyle(color: Colors.white),
+              ),
               const SizedBox(width: 16),
               const Icon(Icons.remove_red_eye, color: Colors.white54, size: 18),
               const SizedBox(width: 4),
-              Text('${m.viewsCount}',
-                  style: const TextStyle(color: Colors.white54)),
+              Text(
+                '${m.viewsCount}',
+                style: const TextStyle(color: Colors.white54),
+              ),
               const Spacer(),
               if (m.caption != null && m.caption!.isNotEmpty)
                 Flexible(

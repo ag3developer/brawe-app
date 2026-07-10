@@ -14,19 +14,17 @@ class LiveCommerceView extends StatelessWidget {
   final bool isActive;
 
   Product get _featured => item.products.firstWhere(
-        (p) => p.id == item.featuredProductId,
-        orElse: () => item.products.first,
-      );
+    (p) => p.id == item.featuredProductId,
+    orElse: () => item.products.first,
+  );
 
   void _openCart(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ProductsDrawer(
-        products: item.products,
-        author: item.author,
-      ),
+      builder: (_) =>
+          ProductsDrawer(products: item.products, author: item.author),
     );
   }
 
@@ -126,13 +124,10 @@ class LiveCommerceView extends StatelessWidget {
                     color: Colors.white,
                     fontSize: 13,
                     height: 1.3,
-                    shadows: [
-                      Shadow(color: Colors.black87, blurRadius: 4),
-                    ],
+                    shadows: [Shadow(color: Colors.black87, blurRadius: 4)],
                   ),
                 ),
               ],
-
             ],
           ),
         ),
@@ -151,8 +146,6 @@ class LiveCommerceView extends StatelessWidget {
     );
   }
 }
-
-
 
 class _FeaturedProductCard extends StatelessWidget {
   const _FeaturedProductCard({
@@ -194,7 +187,7 @@ class _FeaturedProductCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 56,
                   height: 56,
                   color: AppColors.slate,
@@ -212,26 +205,31 @@ class _FeaturedProductCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.mutedRed,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(S.of(context).liveOfferNow,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            )),
+                        child: Text(
+                          S.of(context).liveOfferNow,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       if (product.isLowStock) ...[
                         const SizedBox(width: 6),
                         Text(
                           'Restam ${product.stock}',
                           style: const TextStyle(
-                              color: Colors.amber,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.amber,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ],
@@ -288,8 +286,11 @@ class _FeaturedProductCard extends StatelessWidget {
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.shopping_bag,
-                      color: Colors.white, size: 22),
+                  child: const Icon(
+                    Icons.shopping_bag,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
                 Positioned(
                   top: -4,
@@ -301,7 +302,9 @@ class _FeaturedProductCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     constraints: const BoxConstraints(
-                        minWidth: 20, minHeight: 20),
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
                     child: Text(
                       '$totalProducts',
                       textAlign: TextAlign.center,

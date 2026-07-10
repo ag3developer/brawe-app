@@ -159,11 +159,11 @@ class _ImageSurface extends StatelessWidget {
             imageUrl: url,
             fit: BoxFit.cover,
             fadeInDuration: Duration.zero,
-            placeholder: (_, __) => _LoadingBackdrop(
+            placeholder: (_, _) => _LoadingBackdrop(
               authorName: authorName,
               authorAvatarUrl: authorAvatarUrl,
             ),
-            errorWidget: (_, __, ___) => const SizedBox.shrink(),
+            errorWidget: (_, _, _) => const SizedBox.shrink(),
             imageBuilder: (_, provider) => Stack(
               fit: StackFit.expand,
               children: [
@@ -184,8 +184,8 @@ class _ImageSurface extends StatelessWidget {
             fit: BoxFit.contain,
             fadeInDuration: const Duration(milliseconds: 150),
             fadeOutDuration: const Duration(milliseconds: 80),
-            placeholder: (_, __) => const SizedBox.shrink(),
-            errorWidget: (_, __, ___) => _ErrorBackdrop(
+            placeholder: (_, _) => const SizedBox.shrink(),
+            errorWidget: (_, _, _) => _ErrorBackdrop(
               authorName: authorName,
               authorAvatarUrl: authorAvatarUrl,
               message: 'Falha ao carregar a imagem',
@@ -233,11 +233,11 @@ class _ImageSurface extends StatelessWidget {
       fit: fit,
       fadeInDuration: const Duration(milliseconds: 150),
       fadeOutDuration: const Duration(milliseconds: 80),
-      placeholder: (_, __) => _LoadingBackdrop(
+      placeholder: (_, _) => _LoadingBackdrop(
         authorName: authorName,
         authorAvatarUrl: authorAvatarUrl,
       ),
-      errorWidget: (_, __, ___) => _ErrorBackdrop(
+      errorWidget: (_, _, _) => _ErrorBackdrop(
         authorName: authorName,
         authorAvatarUrl: authorAvatarUrl,
         message: 'Falha ao carregar a imagem',
@@ -330,8 +330,8 @@ class _LoadingBackdrop extends StatelessWidget {
               width: double.infinity,
               height: double.infinity,
               fadeInDuration: const Duration(milliseconds: 100),
-              placeholder: (_, __) => const SizedBox.shrink(),
-              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+              placeholder: (_, _) => const SizedBox.shrink(),
+              errorWidget: (_, _, _) => const SizedBox.shrink(),
               imageBuilder: (_, provider) => DecoratedBox(
                 decoration: BoxDecoration(
                   image: DecorationImage(

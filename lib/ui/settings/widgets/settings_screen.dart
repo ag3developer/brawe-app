@@ -113,10 +113,7 @@ class SettingsScreen extends ConsumerWidget {
                   .setBool('notifications_messages', v),
             ),
             const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.lock_outline,
-              title: s.settingsPrivacy,
-            ),
+            _SectionHeader(icon: Icons.lock_outline, title: s.settingsPrivacy),
             _SwitchTile(
               title: s.settingsPrivacyShowViewers,
               subtitle: s.settingsPrivacyShowViewersHint,
@@ -147,10 +144,7 @@ class SettingsScreen extends ConsumerWidget {
                   .setBool('sounds_enabled', v),
             ),
             const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.info_outline,
-              title: s.settingsAbout,
-            ),
+            _SectionHeader(icon: Icons.info_outline, title: s.settingsAbout),
             ListTile(
               leading: const Icon(Icons.description_outlined),
               title: Text(s.settingsTermsOfUse),
@@ -181,20 +175,14 @@ class SettingsScreen extends ConsumerWidget {
               leading: const Icon(Icons.tag_outlined),
               title: Text(s.settingsVersion),
               trailing: Consumer(
-                builder: (_, ref, __) {
+                builder: (_, ref, _) {
                   final v = ref.watch(_appVersionProvider);
-                  return Text(v.maybeWhen(
-                    data: (v) => v,
-                    orElse: () => '…',
-                  ));
+                  return Text(v.maybeWhen(data: (v) => v, orElse: () => '…'));
                 },
               ),
             ),
             const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.logout,
-              title: s.settingsAccount,
-            ),
+            _SectionHeader(icon: Icons.logout, title: s.settingsAccount),
             ListTile(
               leading: const Icon(Icons.lock_reset_outlined),
               title: Text(s.settingsChangePassword),
@@ -210,8 +198,10 @@ class SettingsScreen extends ConsumerWidget {
               onTap: () => _confirmLogout(context, ref),
             ),
             ListTile(
-              leading: Icon(Icons.delete_forever_outlined,
-                  color: context.colors.danger),
+              leading: Icon(
+                Icons.delete_forever_outlined,
+                color: context.colors.danger,
+              ),
               title: Text(
                 s.settingsDeleteAccount,
                 style: TextStyle(color: context.colors.danger),
@@ -266,15 +256,16 @@ class SettingsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                 child: Row(
                   children: [
-                    Icon(Icons.support_agent_outlined,
-                        color: Theme.of(ctx).colorScheme.primary),
+                    Icon(
+                      Icons.support_agent_outlined,
+                      color: Theme.of(ctx).colorScheme.primary,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       s.settingsHelpTitle,
-                      style: Theme.of(ctx)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -285,8 +276,7 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: const Text(AppConstants.supportEmail),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final version =
-                      await ref.read(_appVersionProvider.future);
+                  final version = await ref.read(_appVersionProvider.future);
                   final uri = Uri(
                     scheme: 'mailto',
                     path: AppConstants.supportEmail,
@@ -298,8 +288,7 @@ class SettingsScreen extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content:
-                              Text(S.of(context).settingsNoMailApp),
+                          content: Text(S.of(context).settingsNoMailApp),
                         ),
                       );
                     }
@@ -327,7 +316,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-    Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final s = S.of(context);
     final ok = await showDialog<bool>(
       context: context,
@@ -340,7 +329,9 @@ class SettingsScreen extends ConsumerWidget {
             child: Text(s.actionCancel),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: context.colors.danger),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.danger,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(s.settingsLogout),
           ),
@@ -371,9 +362,9 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -468,16 +459,16 @@ class _ThemeOption extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected
-                  ? scheme.primary
-                  : Theme.of(context).dividerColor,
+              color: selected ? scheme.primary : Theme.of(context).dividerColor,
             ),
           ),
           child: Column(
             children: [
               Icon(
                 icon,
-                color: selected ? context.colors.textOnAccent : scheme.onSurface,
+                color: selected
+                    ? context.colors.textOnAccent
+                    : scheme.onSurface,
                 size: 22,
               ),
               const SizedBox(height: 6),
@@ -485,7 +476,9 @@ class _ThemeOption extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: selected ? context.colors.textOnAccent : scheme.onSurface,
+                  color: selected
+                      ? context.colors.textOnAccent
+                      : scheme.onSurface,
                 ),
               ),
             ],

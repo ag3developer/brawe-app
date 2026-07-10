@@ -61,12 +61,21 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
           style: TextStyle(color: context.colors.textPrimary, fontSize: 15),
           decoration: InputDecoration(
             hintText: s.exploreSearchHint,
-            hintStyle:  TextStyle(color: context.colors.textSecondary, fontSize: 14),
-            prefixIcon:
-                 Icon(Icons.search, color: context.colors.textSecondary, size: 20),
+            hintStyle: TextStyle(
+              color: context.colors.textSecondary,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              Icons.search,
+              color: context.colors.textSecondary,
+              size: 20,
+            ),
             suffixIcon: isSearching
                 ? IconButton(
-                    icon:  Icon(Icons.close, color: context.colors.textSecondary),
+                    icon: Icon(
+                      Icons.close,
+                      color: context.colors.textSecondary,
+                    ),
                     onPressed: () {
                       _searchCtrl.clear();
                       ref.read(searchControllerProvider.notifier).clear();
@@ -126,19 +135,22 @@ class _TrendingTab extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.electricPurple),
         ),
-        error: (_, __) => const _ErrorView(),
+        error: (_, _) => const _ErrorView(),
         data: (data) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
             if (data.lives.isNotEmpty) ...[
-              _SectionHeader(title: S.of(context).exploreSectionLives, icon: Icons.live_tv),
+              _SectionHeader(
+                title: S.of(context).exploreSectionLives,
+                icon: Icons.live_tv,
+              ),
               const SizedBox(height: 12),
               SizedBox(
                 height: 200,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: data.lives.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  separatorBuilder: (_, _) => const SizedBox(width: 12),
                   itemBuilder: (_, i) => _LiveCard(live: data.lives[i]),
                 ),
               ),
@@ -146,14 +158,14 @@ class _TrendingTab extends ConsumerWidget {
             ],
             if (data.streamers.isNotEmpty) ...[
               _SectionHeader(
-                  title: S.of(context).exploreSectionTrendingStreamers, icon: Icons.trending_up),
+                title: S.of(context).exploreSectionTrendingStreamers,
+                icon: Icons.trending_up,
+              ),
               const SizedBox(height: 12),
-              ...data.streamers
-                  .map((s) => _StreamerTile(streamer: s))
-                  ,
+              ...data.streamers.map((s) => _StreamerTile(streamer: s)),
             ],
             if (data.lives.isEmpty && data.streamers.isEmpty)
-               Padding(
+              Padding(
                 padding: const EdgeInsets.symmetric(vertical: 80),
                 child: Center(
                   child: Text(
@@ -183,21 +195,22 @@ class _CategoriesTab extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.electricPurple),
         ),
-        error: (_, __) => const _ErrorView(),
+        error: (_, _) => const _ErrorView(),
         data: (cats) => cats.isEmpty
             ? ListView(
                 children: [
                   const SizedBox(height: 100),
                   Center(
-                    child: Text(S.of(context).exploreEmptyCategories,
-                        style: TextStyle(color: context.colors.textSecondary)),
+                    child: Text(
+                      S.of(context).exploreEmptyCategories,
+                      style: TextStyle(color: context.colors.textSecondary),
+                    ),
                   ),
                 ],
               )
             : GridView.builder(
                 padding: const EdgeInsets.all(16),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   childAspectRatio: 1.5,
                   crossAxisSpacing: 12,
@@ -225,7 +238,7 @@ class _RecommendedTab extends ConsumerWidget {
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.electricPurple),
         ),
-        error: (_, __) => const _ErrorView(),
+        error: (_, _) => const _ErrorView(),
         data: (data) {
           final items = [...data.lives];
           return items.isEmpty && data.streamers.isEmpty
@@ -249,18 +262,23 @@ class _RecommendedTab extends ConsumerWidget {
                   children: [
                     if (items.isNotEmpty) ...[
                       _SectionHeader(
-                          title: S.of(context).exploreSectionRecommendedLives, icon: Icons.recommend),
+                        title: S.of(context).exploreSectionRecommendedLives,
+                        icon: Icons.recommend,
+                      ),
                       const SizedBox(height: 12),
-                      ...items.map((l) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _LiveCard(live: l, fullWidth: true),
-                          )),
+                      ...items.map(
+                        (l) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _LiveCard(live: l, fullWidth: true),
+                        ),
+                      ),
                     ],
                     if (data.streamers.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       _SectionHeader(
-                          title: S.of(context).exploreSectionRecommendedStreamers,
-                          icon: Icons.person_add),
+                        title: S.of(context).exploreSectionRecommendedStreamers,
+                        icon: Icons.person_add,
+                      ),
                       const SizedBox(height: 12),
                       ...data.streamers.map((s) => _StreamerTile(streamer: s)),
                     ],
@@ -283,9 +301,9 @@ class _SearchResults extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppColors.electricPurple),
       ),
-      error: (_, __) => const _ErrorView(),
+      error: (_, _) => const _ErrorView(),
       data: (list) => list.isEmpty
-          ?  Center(
+          ? Center(
               child: Text(
                 S.of(context).exploreEmptySearch,
                 style: TextStyle(color: context.colors.textSecondary),
@@ -294,7 +312,7 @@ class _SearchResults extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: list.length,
-              separatorBuilder: (_, __) =>
+              separatorBuilder: (_, _) =>
                   const Divider(color: Colors.white10, height: 1),
               itemBuilder: (_, i) => _SearchTile(result: list[i]),
             ),
@@ -355,7 +373,7 @@ class _LiveCard extends StatelessWidget {
                     CachedNetworkImage(
                       imageUrl: live.thumbnailUrl!,
                       fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) =>
+                      errorWidget: (_, _, _) =>
                           Container(color: Colors.black54),
                     )
                   else
@@ -365,7 +383,9 @@ class _LiveCard extends StatelessWidget {
                     left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(4),
@@ -373,9 +393,10 @@ class _LiveCard extends StatelessWidget {
                       child: Text(
                         S.of(context).liveBadge,
                         style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold),
+                          color: context.colors.textPrimary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -384,7 +405,9 @@ class _LiveCard extends StatelessWidget {
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(4),
@@ -392,13 +415,18 @@ class _LiveCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.visibility,
-                              color: context.colors.textPrimary, size: 12),
+                          Icon(
+                            Icons.visibility,
+                            color: context.colors.textPrimary,
+                            size: 12,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${live.viewerCount}',
                             style: TextStyle(
-                                color: context.colors.textPrimary, fontSize: 11),
+                              color: context.colors.textPrimary,
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -424,14 +452,18 @@ class _LiveCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    S.of(context).exploreLiveSubtitle(
-                      live.streamerName ?? '',
-                      live.category ?? S.of(context).exploreCategoryGeneral,
-                    ),
+                    S
+                        .of(context)
+                        .exploreLiveSubtitle(
+                          live.streamerName ?? '',
+                          live.category ?? S.of(context).exploreCategoryGeneral,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style:  TextStyle(
-                        color: context.colors.textSecondary, fontSize: 11),
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -474,19 +506,22 @@ class _StreamerTile extends StatelessWidget {
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 4, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: context.colors.background, width: 1.5),
+                  border: Border.all(
+                    color: context.colors.background,
+                    width: 1.5,
+                  ),
                 ),
                 child: Text(
                   S.of(context).followsLiveBadge,
                   style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold),
+                    color: context.colors.textPrimary,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -495,11 +530,14 @@ class _StreamerTile extends StatelessWidget {
       title: Text(
         streamer.displayName,
         style: TextStyle(
-            color: context.colors.textPrimary, fontWeight: FontWeight.w600, fontSize: 14),
+          color: context.colors.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
       ),
       subtitle: Text(
         S.of(context).exploreFollowersCount(streamer.followerCount),
-        style:  TextStyle(color: context.colors.textSecondary, fontSize: 12),
+        style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
       ),
     );
   }
@@ -537,12 +575,18 @@ class _CategoryCard extends StatelessWidget {
             ),
             Row(
               children: [
-                Icon(Icons.live_tv, color: context.colors.textSecondary, size: 14),
+                Icon(
+                  Icons.live_tv,
+                  color: context.colors.textSecondary,
+                  size: 14,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   S.of(context).exploreCategoryLiveCount(category.liveCount),
-                  style:
-                      TextStyle(color: context.colors.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -569,8 +613,7 @@ class _SearchTile extends StatelessWidget {
         }
       },
       leading: ClipRRect(
-        borderRadius:
-            BorderRadius.circular(isLive ? 6 : 24),
+        borderRadius: BorderRadius.circular(isLive ? 6 : 24),
         child: SizedBox(
           width: 48,
           height: 48,
@@ -578,7 +621,7 @@ class _SearchTile extends StatelessWidget {
               ? CachedNetworkImage(
                   imageUrl: result.thumbnail!,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) =>
+                  errorWidget: (_, _, _) =>
                       Container(color: context.colors.surfaceElevated),
                 )
               : Container(
@@ -595,8 +638,7 @@ class _SearchTile extends StatelessWidget {
           if (isLive)
             Container(
               margin: const EdgeInsets.only(right: 6),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(3),
@@ -604,9 +646,10 @@ class _SearchTile extends StatelessWidget {
               child: Text(
                 S.of(context).followsLiveBadge,
                 style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold),
+                  color: context.colors.textPrimary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           Expanded(
@@ -624,8 +667,10 @@ class _SearchTile extends StatelessWidget {
               result.subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style:
-                   TextStyle(color: context.colors.textSecondary, fontSize: 12),
+              style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 12,
+              ),
             )
           : null,
     );
@@ -635,14 +680,14 @@ class _SearchTile extends StatelessWidget {
 class _ErrorView extends StatelessWidget {
   const _ErrorView();
   @override
-  Widget build(BuildContext context) =>  Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            S.of(context).exploreLoadError,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: context.colors.textSecondary),
-          ),
-        ),
-      );
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Text(
+        S.of(context).exploreLoadError,
+        textAlign: TextAlign.center,
+        style: TextStyle(color: context.colors.textSecondary),
+      ),
+    ),
+  );
 }

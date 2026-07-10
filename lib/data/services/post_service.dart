@@ -112,7 +112,7 @@ class PostService {
   }) async {
     await _dio.post(
       '/posts',
-      data: {'content': content, if (imageUrl != null) 'image_url': imageUrl},
+      data: {'content': content, 'image_url': ?imageUrl},
     );
   }
 

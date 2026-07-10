@@ -45,8 +45,10 @@ class ProductsDrawer extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Row(
                   children: [
-                    const Icon(Icons.shopping_bag,
-                        color: AppColors.electricPurple),
+                    const Icon(
+                      Icons.shopping_bag,
+                      color: AppColors.electricPurple,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -61,7 +63,10 @@ class ProductsDrawer extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            s.productsDrawerItemCount(products.length, author.name),
+                            s.productsDrawerItemCount(
+                              products.length,
+                              author.name,
+                            ),
                             style: const TextStyle(
                               color: AppColors.coolGray,
                               fontSize: 12,
@@ -84,7 +89,7 @@ class ProductsDrawer extends StatelessWidget {
                   controller: scrollCtrl,
                   padding: const EdgeInsets.all(16),
                   itemCount: products.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ProductTile(product: products[i]),
                 ),
               ),
@@ -120,12 +125,14 @@ class _ProductTile extends StatelessWidget {
               width: 72,
               height: 72,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 72,
                 height: 72,
                 color: Colors.black26,
-                child: const Icon(Icons.image_not_supported,
-                    color: Colors.white54),
+                child: const Icon(
+                  Icons.image_not_supported,
+                  color: Colors.white54,
+                ),
               ),
             ),
           ),
@@ -137,26 +144,32 @@ class _ProductTile extends StatelessWidget {
                 if (product.isFeatured)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
                       color: AppColors.electricPurple,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(S.of(context).productFeatured,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        )),
+                    child: Text(
+                      S.of(context).productFeatured,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                Text(product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    )),
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -181,17 +194,21 @@ class _ProductTile extends StatelessWidget {
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.mutedRed.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('-${product.discountPercent}%',
-                            style: const TextStyle(
-                              color: AppColors.mutedRed,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            )),
+                        child: Text(
+                          '-${product.discountPercent}%',
+                          style: const TextStyle(
+                            color: AppColors.mutedRed,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -201,14 +218,14 @@ class _ProductTile extends StatelessWidget {
                   product.isSoldOut
                       ? S.of(context).productSoldOut
                       : product.isLowStock
-                          ? S.of(context).productLowStock(product.stock)
-                          : S.of(context).productSoldCount(product.soldCount),
+                      ? S.of(context).productLowStock(product.stock)
+                      : S.of(context).productSoldCount(product.soldCount),
                   style: TextStyle(
                     color: product.isSoldOut
                         ? AppColors.mutedRed
                         : product.isLowStock
-                            ? Colors.amber
-                            : AppColors.coolGray,
+                        ? Colors.amber
+                        : AppColors.coolGray,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -226,10 +243,13 @@ class _ProductTile extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            child: Text(product.isSoldOut ? S.of(context).productSoldOut : S.of(context).productBuy),
+            child: Text(
+              product.isSoldOut
+                  ? S.of(context).productSoldOut
+                  : S.of(context).productBuy,
+            ),
           ),
         ],
       ),

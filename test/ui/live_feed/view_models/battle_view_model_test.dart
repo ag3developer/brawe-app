@@ -61,8 +61,7 @@ class _FakeBattleService extends BattleService {
 }
 
 class _FakeSocketService extends SocketService {
-  _FakeSocketService()
-      : super(StorageService(const FlutterSecureStorage()));
+  _FakeSocketService() : super(StorageService(const FlutterSecureStorage()));
 
   final Map<String, List<Function(dynamic)>> _handlers = {};
 
@@ -76,6 +75,7 @@ class _FakeSocketService extends SocketService {
     _handlers.remove(event);
   }
 
+  @override
   void emit(String event, dynamic payload) {
     for (final h in _handlers[event] ?? []) {
       h(payload);
@@ -93,10 +93,12 @@ ProviderContainer _makeContainer({
 }) {
   return ProviderContainer(
     overrides: [
-      battleServiceProvider
-          .overrideWithValue(battleSvc ?? _FakeBattleService()),
-      socketServiceProvider
-          .overrideWithValue(socketSvc ?? _FakeSocketService()),
+      battleServiceProvider.overrideWithValue(
+        battleSvc ?? _FakeBattleService(),
+      ),
+      socketServiceProvider.overrideWithValue(
+        socketSvc ?? _FakeSocketService(),
+      ),
     ],
   );
 }
@@ -107,32 +109,34 @@ ProviderContainer _makeContainer({
 /// vivo (Riverpod 3 descarta providers sem listeners). O container é
 /// descartado pelo `addTearDown` de cada teste, o que fecha a subscrição.
 Future<BattleState> _waitForState(
-    ProviderContainer container, String battleId) async {
+  ProviderContainer container,
+  String battleId,
+) async {
   final completer = Completer<BattleState>();
 
   // Intencionalmente não guardamos sub para fechamento manual — o container
   // vai limpar ao ser descartado. Isso evita que o provider seja GCed antes
   // do teste terminar de usar seus handlers de socket.
-  container.listen<AsyncValue<BattleState>>(
-    battleViewModelProvider(battleId),
-    (_, next) {
-      next.whenData((state) {
-        if (!completer.isCompleted) {
-          completer.complete(state);
-          // NÃO fecha a sub aqui — mantém provider vivo para os testes de socket
-        }
-      });
-      if (next is AsyncError && !completer.isCompleted) {
-        completer.completeError((next as AsyncError).error);
+  container.listen<AsyncValue<BattleState>>(battleViewModelProvider(battleId), (
+    _,
+    next,
+  ) {
+    next.whenData((state) {
+      if (!completer.isCompleted) {
+        completer.complete(state);
+        // NÃO fecha a sub aqui — mantém provider vivo para os testes de socket
       }
-    },
-    fireImmediately: true,
-  );
+    });
+    if (next is AsyncError && !completer.isCompleted) {
+      completer.completeError((next as AsyncError).error);
+    }
+  }, fireImmediately: true);
 
   return completer.future.timeout(
     const Duration(seconds: 5),
     onTimeout: () => throw TimeoutException(
-        'BattleViewModel não carregou estado em 5s para $battleId'),
+      'BattleViewModel não carregou estado em 5s para $battleId',
+    ),
   );
 }
 
@@ -155,8 +159,11 @@ void main() {
       expect(state.giftsCountA, 3);
       expect(state.giftsCountB, 2);
       expect(state.timeRemaining.inSeconds, 180);
-      expect(svc.liveScoresCalls, 1,
-          reason: 'deve chamar getLiveScores (endpoint Redis) primeiro');
+      expect(
+        svc.liveScoresCalls,
+        1,
+        reason: 'deve chamar getLiveScores (endpoint Redis) primeiro',
+      );
     });
 
     // ── Test 2 ────────────────────────────────────────────────────────────────
@@ -165,86 +172,105 @@ void main() {
     // lida com essa falha diretamente — recebe sempre dados válidos do serviço.
     // Aqui simulamos a falha total do serviço (ex: offline) e verificamos
     // que o ViewModel transita para AsyncError (não trava).
-    test('transitions to AsyncError when service is completely unavailable', () async {
-      final svc = _FakeBattleService()..liveScoresThrows = true;
-      final container = _makeContainer(battleSvc: svc);
-      addTearDown(container.dispose);
+    test(
+      'transitions to AsyncError when service is completely unavailable',
+      () async {
+        final svc = _FakeBattleService()..liveScoresThrows = true;
+        final container = _makeContainer(battleSvc: svc);
+        addTearDown(container.dispose);
 
-      final completer = Completer<bool>();
-      container.listen<AsyncValue<BattleState>>(
-        battleViewModelProvider('b-offline'),
-        (_, next) {
-          if (!completer.isCompleted && next is AsyncError) {
-            completer.complete(true);
-          }
-        },
-        fireImmediately: true,
-      );
+        final completer = Completer<bool>();
+        container.listen<AsyncValue<BattleState>>(
+          battleViewModelProvider('b-offline'),
+          (_, next) {
+            if (!completer.isCompleted && next is AsyncError) {
+              completer.complete(true);
+            }
+          },
+          fireImmediately: true,
+        );
 
-      final isError = await completer.future.timeout(
-        const Duration(seconds: 5),
-        onTimeout: () => false,
-      );
+        final isError = await completer.future.timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => false,
+        );
 
-      expect(isError, isTrue,
-          reason: 'ViewModel deve emitir AsyncError quando o serviço falha completamente');
-      expect(svc.liveScoresCalls, 1,
-          reason: 'getLiveScores deve ter sido chamado');
-    });
+        expect(
+          isError,
+          isTrue,
+          reason:
+              'ViewModel deve emitir AsyncError quando o serviço falha completamente',
+        );
+        expect(
+          svc.liveScoresCalls,
+          1,
+          reason: 'getLiveScores deve ter sido chamado',
+        );
+      },
+    );
 
     // ── Test 3 ────────────────────────────────────────────────────────────────
-    test('populates streamer metadata from flat fields (new backend format)', () async {
-      final svc = _FakeBattleService();
-      final container = _makeContainer(battleSvc: svc);
-      addTearDown(container.dispose);
+    test(
+      'populates streamer metadata from flat fields (new backend format)',
+      () async {
+        final svc = _FakeBattleService();
+        final container = _makeContainer(battleSvc: svc);
+        addTearDown(container.dispose);
 
-      final state = await _waitForState(container, 'b-001');
+        final state = await _waitForState(container, 'b-001');
 
-      expect(state.streamerAId, 'sa-1');
-      expect(state.streamerAName, 'Alice');
-      expect(state.streamerBId, 'sb-2');
-      expect(state.streamerBName, 'Bob');
-      expect(state.streamerAAvatarUrl, 'https://cdn.brawe.io/alice.jpg');
-      expect(state.streamerBAvatarUrl, isNull);
-      expect(state.roomAId, 'room-a');
-      expect(state.roomBId, 'room-b');
-    });
+        expect(state.streamerAId, 'sa-1');
+        expect(state.streamerAName, 'Alice');
+        expect(state.streamerBId, 'sb-2');
+        expect(state.streamerBName, 'Bob');
+        expect(state.streamerAAvatarUrl, 'https://cdn.brawe.io/alice.jpg');
+        expect(state.streamerBAvatarUrl, isNull);
+        expect(state.roomAId, 'room-a');
+        expect(state.roomBId, 'room-b');
+      },
+    );
 
     // ── Test 4 ────────────────────────────────────────────────────────────────
-    test('falls back to nested streamer fields when flat fields are absent', () async {
-      final svc = _FakeBattleService();
-      svc.battleDetailResponse = {
-        'data': {
-          'id': 'b-legacy',
-          'streamer_a': {
-            'id': 'sa-legacy',
-            'name': 'LegacyA',
-            'avatar': 'https://cdn.brawe.io/legacy-a.jpg',
-            'score': 5.0,
-            'gifts_count': 1,
+    test(
+      'falls back to nested streamer fields when flat fields are absent',
+      () async {
+        final svc = _FakeBattleService();
+        svc.battleDetailResponse = {
+          'data': {
+            'id': 'b-legacy',
+            'streamer_a': {
+              'id': 'sa-legacy',
+              'name': 'LegacyA',
+              'avatar': 'https://cdn.brawe.io/legacy-a.jpg',
+              'score': 5.0,
+              'gifts_count': 1,
+            },
+            'streamer_b': {
+              'id': 'sb-legacy',
+              'name': 'LegacyB',
+              'avatar': null,
+              'score': 3.0,
+              'gifts_count': 1,
+            },
+            'room_a_id': 'r-a',
+            'room_b_id': 'r-b',
           },
-          'streamer_b': {
-            'id': 'sb-legacy',
-            'name': 'LegacyB',
-            'avatar': null,
-            'score': 3.0,
-            'gifts_count': 1,
-          },
-          'room_a_id': 'r-a',
-          'room_b_id': 'r-b',
-        },
-      };
+        };
 
-      final container = _makeContainer(battleSvc: svc);
-      addTearDown(container.dispose);
+        final container = _makeContainer(battleSvc: svc);
+        addTearDown(container.dispose);
 
-      final state = await _waitForState(container, 'b-legacy');
+        final state = await _waitForState(container, 'b-legacy');
 
-      expect(state.streamerAId, 'sa-legacy',
-          reason: 'deve usar streamer_a.id como fallback');
-      expect(state.streamerAName, 'LegacyA');
-      expect(state.streamerAAvatarUrl, 'https://cdn.brawe.io/legacy-a.jpg');
-    });
+        expect(
+          state.streamerAId,
+          'sa-legacy',
+          reason: 'deve usar streamer_a.id como fallback',
+        );
+        expect(state.streamerAName, 'LegacyA');
+        expect(state.streamerAAvatarUrl, 'https://cdn.brawe.io/legacy-a.jpg');
+      },
+    );
 
     // ── Test 5 ────────────────────────────────────────────────────────────────
     test('phase is active when status is "active"', () async {
@@ -304,7 +330,8 @@ void main() {
 
       final updated = container
           .read(battleViewModelProvider('b-001'))
-          .asData?.value;
+          .asData
+          ?.value;
 
       expect(updated?.scoreA, 20.0, reason: 'scoreA deve atualizar via socket');
       expect(updated?.scoreB, 10.0);
@@ -342,10 +369,14 @@ void main() {
 
       final updated = container
           .read(battleViewModelProvider('b-001'))
-          .asData?.value;
+          .asData
+          ?.value;
 
-      expect(updated?.powerMoment, isTrue,
-          reason: 'power_moment do backend deve ligar o 2x real');
+      expect(
+        updated?.powerMoment,
+        isTrue,
+        reason: 'power_moment do backend deve ligar o 2x real',
+      );
       expect(updated?.multiplier, 2.0);
       expect(updated?.topGifterA?.id, 'fan99');
       expect(updated?.topGifterA?.total, 48.0);
@@ -354,67 +385,80 @@ void main() {
     });
 
     // ── Test 7c ─────────────────────────────────────────────────────────────
-    test('score_update without gamification fields keeps safe defaults',
-        () async {
-      final svc = _FakeBattleService();
-      final socket = _FakeSocketService();
-      final container = _makeContainer(battleSvc: svc, socketSvc: socket);
-      addTearDown(container.dispose);
+    test(
+      'score_update without gamification fields keeps safe defaults',
+      () async {
+        final svc = _FakeBattleService();
+        final socket = _FakeSocketService();
+        final container = _makeContainer(battleSvc: svc, socketSvc: socket);
+        addTearDown(container.dispose);
 
-      await _waitForState(container, 'b-001');
+        await _waitForState(container, 'b-001');
 
-      // Payload "legado" sem campos de gamificação — não pode quebrar nada.
-      socket.emit('connect:battle:score_update', {
-        'battle_id': 'b-001',
-        'score_a': 15.0,
-        'score_b': 10.0,
-        'gifts_count_a': 2,
-        'gifts_count_b': 1,
-        'time_remaining': 90,
-        'updated_side': 'a',
-      });
+        // Payload "legado" sem campos de gamificação — não pode quebrar nada.
+        socket.emit('connect:battle:score_update', {
+          'battle_id': 'b-001',
+          'score_a': 15.0,
+          'score_b': 10.0,
+          'gifts_count_a': 2,
+          'gifts_count_b': 1,
+          'time_remaining': 90,
+          'updated_side': 'a',
+        });
 
-      await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
-      final updated = container
-          .read(battleViewModelProvider('b-001'))
-          .asData?.value;
+        final updated = container
+            .read(battleViewModelProvider('b-001'))
+            .asData
+            ?.value;
 
-      expect(updated?.powerMoment, isFalse,
-          reason: 'sem power_moment, fica desligado');
-      expect(updated?.multiplier, 1.0, reason: 'multiplier padrão é 1x');
-      expect(updated?.topGifterA, isNull);
-      expect(updated?.topGifterB, isNull);
-    });
+        expect(
+          updated?.powerMoment,
+          isFalse,
+          reason: 'sem power_moment, fica desligado',
+        );
+        expect(updated?.multiplier, 1.0, reason: 'multiplier padrão é 1x');
+        expect(updated?.topGifterA, isNull);
+        expect(updated?.topGifterB, isNull);
+      },
+    );
 
     // ── Test 8 ────────────────────────────────────────────────────────────────
-    test('score_update event ignores payload for different battle_id', () async {
-      final svc = _FakeBattleService();
-      final socket = _FakeSocketService();
-      final container = _makeContainer(battleSvc: svc, socketSvc: socket);
-      addTearDown(container.dispose);
+    test(
+      'score_update event ignores payload for different battle_id',
+      () async {
+        final svc = _FakeBattleService();
+        final socket = _FakeSocketService();
+        final container = _makeContainer(battleSvc: svc, socketSvc: socket);
+        addTearDown(container.dispose);
 
-      await _waitForState(container, 'b-001');
+        await _waitForState(container, 'b-001');
 
-      socket.emit('connect:battle:score_update', {
-        'battle_id': 'b-OTHER',
-        'score_a': 999.0,
-        'score_b': 999.0,
-        'gifts_count_a': 99,
-        'gifts_count_b': 99,
-        'time_remaining': 1,
-        'updated_side': 'a',
-      });
+        socket.emit('connect:battle:score_update', {
+          'battle_id': 'b-OTHER',
+          'score_a': 999.0,
+          'score_b': 999.0,
+          'gifts_count_a': 99,
+          'gifts_count_b': 99,
+          'time_remaining': 1,
+          'updated_side': 'a',
+        });
 
-      await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
 
-      final unchanged = container
-          .read(battleViewModelProvider('b-001'))
-          .asData?.value;
+        final unchanged = container
+            .read(battleViewModelProvider('b-001'))
+            .asData
+            ?.value;
 
-      expect(unchanged?.scoreA, 12.5,
-          reason: 'evento de outra batalha não deve alterar o estado');
-    });
+        expect(
+          unchanged?.scoreA,
+          12.5,
+          reason: 'evento de outra batalha não deve alterar o estado',
+        );
+      },
+    );
 
     // ── Test 9 ────────────────────────────────────────────────────────────────
     test('ended event sets phase to finished and captures winner', () async {
@@ -437,7 +481,8 @@ void main() {
 
       final ended = container
           .read(battleViewModelProvider('b-001'))
-          .asData?.value;
+          .asData
+          ?.value;
 
       expect(ended?.phase, BattlePhase.finished);
       expect(ended?.winnerId, 'sa-1');
@@ -463,12 +508,17 @@ void main() {
 
       await _waitForState(container, 'b-cnt');
 
-      socket.emit('connect:battle:countdown', {'battle_id': 'b-cnt', 'count': 3});
+      socket.emit('connect:battle:countdown', {
+        'battle_id': 'b-cnt',
+        'count': 3,
+      });
       await Future<void>.delayed(Duration.zero);
 
       final phase = container
           .read(battleViewModelProvider('b-cnt'))
-          .asData?.value.phase;
+          .asData
+          ?.value
+          .phase;
 
       expect(phase, BattlePhase.countdown);
     });
@@ -498,7 +548,9 @@ void main() {
 
       final phase = container
           .read(battleViewModelProvider('b-start'))
-          .asData?.value.phase;
+          .asData
+          ?.value
+          .phase;
 
       expect(phase, BattlePhase.active);
     });
@@ -656,41 +708,48 @@ void main() {
       expect(result['score_a'], 12.5);
       expect(result['time_remaining_seconds'], 180);
       expect(svc.liveScoresCalls, 1, reason: 'deve ter chamado getLiveScores');
-      expect(svc.getBattleCalls, 0, reason: 'não deve chamar getBattle quando Redis responde');
+      expect(
+        svc.getBattleCalls,
+        0,
+        reason: 'não deve chamar getBattle quando Redis responde',
+      );
     });
 
     // ── Test 20 ───────────────────────────────────────────────────────────────
-    test('getLiveScores fallback: quando Redis lança, chama getBattle', () async {
-      // Usamos o fake configurado para lançar no primeiro endpoint
-      final svc = _FakeBattleService()..liveScoresThrows = true;
-      // getBattle deve retornar dado válido
-      svc.battleDetailResponse = {
-        'data': {
-          'id': 'b-fallback',
-          'streamer_a_id': 'sa-1',
-          'streamer_a_name': 'Alice',
-          'streamer_b_id': 'sb-2',
-          'streamer_b_name': 'Bob',
-          'status': 'accepted',
-        },
-      };
+    test(
+      'getLiveScores fallback: quando Redis lança, chama getBattle',
+      () async {
+        // Usamos o fake configurado para lançar no primeiro endpoint
+        final svc = _FakeBattleService()..liveScoresThrows = true;
+        // getBattle deve retornar dado válido
+        svc.battleDetailResponse = {
+          'data': {
+            'id': 'b-fallback',
+            'streamer_a_id': 'sa-1',
+            'streamer_a_name': 'Alice',
+            'streamer_b_id': 'sb-2',
+            'streamer_b_name': 'Bob',
+            'status': 'accepted',
+          },
+        };
 
-      // Invoca o método de fallback diretamente via override manual
-      // (testamos a lógica real de fallback no BattleService real,
-      // que já está integrada via getLiveScores → try/catch → getBattle)
-      Map<String, dynamic> result;
-      try {
-        result = await svc.getLiveScores('b-fallback');
-        // Se o fake não lança (porque sobrescrevemos), verifica getBattle
-      } catch (_) {
-        // Fake lança DioException — em produção o BattleService real
-        // captura e faz fallback para getBattle. Aqui validamos a lógica
-        // chamando getBattle diretamente como o código de produção faz.
-        result = await svc.getBattle('b-fallback');
-      }
+        // Invoca o método de fallback diretamente via override manual
+        // (testamos a lógica real de fallback no BattleService real,
+        // que já está integrada via getLiveScores → try/catch → getBattle)
+        Map<String, dynamic> result;
+        try {
+          result = await svc.getLiveScores('b-fallback');
+          // Se o fake não lança (porque sobrescrevemos), verifica getBattle
+        } catch (_) {
+          // Fake lança DioException — em produção o BattleService real
+          // captura e faz fallback para getBattle. Aqui validamos a lógica
+          // chamando getBattle diretamente como o código de produção faz.
+          result = await svc.getBattle('b-fallback');
+        }
 
-      expect(result, isNotEmpty);
-      expect(svc.getBattleCalls, greaterThanOrEqualTo(1));
-    });
+        expect(result, isNotEmpty);
+        expect(svc.getBattleCalls, greaterThanOrEqualTo(1));
+      },
+    );
   });
 }

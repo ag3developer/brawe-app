@@ -23,8 +23,10 @@ class GalleryService {
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
-  Future<Map<String, dynamic>> uploadPhoto(String filePath,
-      {String? caption}) async {
+  Future<Map<String, dynamic>> uploadPhoto(
+    String filePath, {
+    String? caption,
+  }) async {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       if (caption != null && caption.isNotEmpty) 'caption': caption,
@@ -37,8 +39,10 @@ class GalleryService {
     return Map<String, dynamic>.from(r.data['data'] ?? r.data);
   }
 
-  Future<Map<String, dynamic>> uploadVideo(String filePath,
-      {String? caption}) async {
+  Future<Map<String, dynamic>> uploadVideo(
+    String filePath, {
+    String? caption,
+  }) async {
     final form = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       if (caption != null && caption.isNotEmpty) 'caption': caption,
@@ -56,15 +60,14 @@ class GalleryService {
   }
 
   Future<void> updateMedia(String mediaId, {String? caption}) async {
-    await _dio.put('/gallery/$mediaId', data: {
-      if (caption != null) 'caption': caption,
-    });
+    await _dio.put('/gallery/$mediaId', data: {'caption': ?caption});
   }
 
   Future<void> reorder(String mediaType, List<String> mediaIds) async {
-    await _dio.put('/gallery/reorder/$mediaType', data: {
-      'media_ids': mediaIds,
-    });
+    await _dio.put(
+      '/gallery/reorder/$mediaType',
+      data: {'media_ids': mediaIds},
+    );
   }
 
   Future<void> registerView(String mediaId) async {

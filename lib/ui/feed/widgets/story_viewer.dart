@@ -649,7 +649,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                         : i == _currentIndex
                                         ? AnimatedBuilder(
                                             animation: _progressController,
-                                            builder: (_, __) =>
+                                            builder: (_, _) =>
                                                 LinearProgressIndicator(
                                                   value:
                                                       _progressController.value,

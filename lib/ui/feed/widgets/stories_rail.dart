@@ -163,7 +163,7 @@ class StoriesRail extends ConsumerWidget {
                 ref.read(storiesViewModelProvider.notifier).markAsViewed(id),
           ),
         ),
-        transitionsBuilder: (_, animation, __, child) =>
+        transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 180),

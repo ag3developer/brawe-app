@@ -2,10 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
 part 'stories_service.g.dart';
+
 @riverpod
 StoriesService storiesService(Ref ref) {
   return StoriesService(ref.watch(liveDioProvider));
 }
+
 class StoriesService {
   final Dio _dio;
   StoriesService(this._dio);
@@ -64,10 +66,7 @@ class StoriesService {
   }) async {
     await _dio.post(
       '/stories/$storyId/react',
-      queryParameters: {
-        'reaction_type': reactionType,
-        'message': message,
-      },
+      queryParameters: {'reaction_type': reactionType, 'message': message},
     );
   }
 
@@ -121,8 +120,9 @@ class StoriesService {
   }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
-      if (caption != null && caption.trim().isNotEmpty) 'caption': caption.trim(),
-      if (durationSeconds != null) 'duration_seconds': durationSeconds,
+      if (caption != null && caption.trim().isNotEmpty)
+        'caption': caption.trim(),
+      'duration_seconds': ?durationSeconds,
       if (originPostId != null && originPostId.isNotEmpty)
         'origin_post_id': originPostId,
     });

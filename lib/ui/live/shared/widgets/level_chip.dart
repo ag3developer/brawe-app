@@ -75,7 +75,11 @@ class LevelChip extends StatelessWidget {
               fontSize: fontSize,
               decoration: TextDecoration.none,
               shadows: const [
-                Shadow(color: Colors.black45, blurRadius: 2, offset: Offset(0, 1)),
+                Shadow(
+                  color: Colors.black45,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
               ],
             ),
           ),
@@ -105,7 +109,7 @@ class _BadgeIcon extends StatelessWidget {
               fit: BoxFit.contain,
               filterQuality: FilterQuality.medium,
               gaplessPlayback: true,
-              errorBuilder: (_, __, ___) => _emojiFallback(),
+              errorBuilder: (_, _, _) => _emojiFallback(),
               loadingBuilder: (ctx, child, progress) =>
                   progress == null ? child : _emojiFallback(),
             ),
@@ -113,10 +117,7 @@ class _BadgeIcon extends StatelessWidget {
   }
 
   Widget _emojiFallback() => FittedBox(
-        fit: BoxFit.contain,
-        child: Text(
-          emoji,
-          style: const TextStyle(decoration: TextDecoration.none),
-        ),
-      );
+    fit: BoxFit.contain,
+    child: Text(emoji, style: const TextStyle(decoration: TextDecoration.none)),
+  );
 }

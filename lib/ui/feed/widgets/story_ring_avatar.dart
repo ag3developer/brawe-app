@@ -55,11 +55,7 @@ class StoryRingAvatar extends ConsumerWidget {
   static const _unviewedGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFE040FB),
-      Color(0xFFFF6B35),
-      Color(0xFF7C4DFF),
-    ],
+    colors: [Color(0xFFE040FB), Color(0xFFFF6B35), Color(0xFF7C4DFF)],
   );
 
   static const _onlineGradient = LinearGradient(
@@ -98,10 +94,9 @@ class StoryRingAvatar extends ConsumerWidget {
       child: CircleAvatar(
         radius: radius,
         backgroundColor: backgroundColor ?? AppColors.slate,
-        backgroundImage:
-            (avatarUrl != null && avatarUrl!.isNotEmpty)
-                ? NetworkImage(avatarUrl!)
-                : null,
+        backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
+            ? NetworkImage(avatarUrl!)
+            : null,
         child: (avatarUrl == null || avatarUrl!.isEmpty)
             ? Text(
                 (fallbackText != null && fallbackText!.isNotEmpty)
@@ -134,8 +129,7 @@ class StoryRingAvatar extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.greenAccent.shade400,
                   shape: BoxShape.circle,
-                  border:
-                      Border.all(color: AppColors.nearBlack, width: 1.8),
+                  border: Border.all(color: AppColors.nearBlack, width: 1.8),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.greenAccent.withValues(alpha: 0.6),
@@ -204,9 +198,7 @@ class StoryRingAvatar extends ConsumerWidget {
     //    no `.then()` quando o usuário volta. O modo `immersiveSticky`
     //    deixa a barra aparecer rapidamente em swipe da borda mas volta
     //    a esconder sozinha — padrão de apps de mídia (YouTube, IG, TikTok).
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-    );
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     final navigator = Navigator.of(context, rootNavigator: true);
     await navigator.push(
@@ -222,7 +214,7 @@ class StoryRingAvatar extends ConsumerWidget {
         // início e desacelera no final — sensação de inércia natural.
         transitionDuration: const Duration(milliseconds: 280),
         reverseTransitionDuration: const Duration(milliseconds: 220),
-        pageBuilder: (_, __, ___) => ForceDarkTheme(
+        pageBuilder: (_, _, _) => ForceDarkTheme(
           child: StoryViewer(
             stories: unseen,
             initialIndex: 0,
@@ -233,7 +225,7 @@ class StoryRingAvatar extends ConsumerWidget {
             },
           ),
         ),
-        transitionsBuilder: (_, animation, __, child) {
+        transitionsBuilder: (_, animation, _, child) {
           // Combo "scale + fade" estilo Instagram: o story "explode"
           // a partir do avatar tocado. Não conseguimos ancorar no avatar
           // exato (precisa de Hero animation, refatoração maior), mas
@@ -242,10 +234,7 @@ class StoryRingAvatar extends ConsumerWidget {
             opacity: animation,
             child: ScaleTransition(
               scale: Tween<double>(begin: 0.92, end: 1.0).animate(
-                CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                ),
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
               ),
               child: child,
             ),

@@ -266,7 +266,7 @@ class _Header extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.electricPurple.withOpacity(0.2),
+                      color: AppColors.electricPurple.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -285,7 +285,7 @@ class _Header extends StatelessWidget {
                     child: Container(
                       height: 8,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -334,7 +334,7 @@ class _Header extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.hotPink.withOpacity(0.2),
+                      color: AppColors.hotPink.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -357,10 +357,10 @@ class _Header extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
@@ -600,19 +600,22 @@ class _Footer extends StatelessWidget {
             children: [
               Icon(
                 Icons.rocket_launch,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 size: 16,
               ),
               const SizedBox(width: 6),
               Text(
                 _getBattleNotification(),
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
                   shadows: [
-                    Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 4),
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 4,
+                    ),
                   ],
                 ),
               ),
@@ -661,11 +664,11 @@ class _MVPSeat extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: hasGifter
-              ? Colors.black.withOpacity(0.3)
-              : color.withOpacity(0.2),
+              ? Colors.black.withValues(alpha: 0.3)
+              : color.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: hasGifter ? color : color.withOpacity(0.4),
+            color: hasGifter ? color : color.withValues(alpha: 0.4),
             width: hasGifter ? 2 : 1,
           ),
         ),
@@ -673,7 +676,7 @@ class _MVPSeat extends StatelessWidget {
             ? Icon(Icons.person, color: color, size: 20)
             : Icon(
                 Icons.event_seat,
-                color: color.withOpacity(hasGifter ? 0.8 : 0.5),
+                color: color.withValues(alpha: hasGifter ? 0.8 : 0.5),
                 size: 20,
               ),
       ),
@@ -684,7 +687,7 @@ class _MVPSeat extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       isScrollControlled: true,
       builder: (_) => _MVPProfileSheet(userId: userId),
     );
@@ -709,10 +712,10 @@ class _MVPProfileSheet extends ConsumerWidget {
           filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0A0B14).withOpacity(0.9),
+              color: const Color(0xFF0A0B14).withValues(alpha: 0.9),
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   width: 0.6,
                 ),
               ),
@@ -786,7 +789,7 @@ class _MVPProfileContentState extends ConsumerState<_MVPProfileContent> {
           height: 4,
           margin: const EdgeInsets.only(bottom: 20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
+            color: Colors.white.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -794,7 +797,7 @@ class _MVPProfileContentState extends ConsumerState<_MVPProfileContent> {
         // Avatar
         CircleAvatar(
           radius: 40,
-          backgroundColor: AppColors.electricPurple.withOpacity(0.3),
+          backgroundColor: AppColors.electricPurple.withValues(alpha: 0.3),
           backgroundImage: _avatarUrl != null
               ? NetworkImage(_avatarUrl!)
               : null,
@@ -860,7 +863,7 @@ class _MVPProfileContentState extends ConsumerState<_MVPProfileContent> {
             label: Text(widget.isFollowing ? 'Deixar de seguir' : 'Seguir'),
             style: ElevatedButton.styleFrom(
               backgroundColor: widget.isFollowing
-                  ? Colors.white.withOpacity(0.15)
+                  ? Colors.white.withValues(alpha: 0.15)
                   : AppColors.electricPurple,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -884,7 +887,7 @@ class _MVPProfileContentState extends ConsumerState<_MVPProfileContent> {
           child: Text(
             'Ver perfil completo',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
               fontSize: 13,
             ),
           ),

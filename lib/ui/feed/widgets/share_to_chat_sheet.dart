@@ -312,7 +312,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
                   ? Image.network(
                       widget.postImageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _previewFallback(),
+                      errorBuilder: (_, _, _) => _previewFallback(),
                     )
                   : _previewFallback(),
             ),

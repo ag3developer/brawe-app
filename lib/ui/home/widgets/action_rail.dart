@@ -194,9 +194,7 @@ class _RailButton extends StatelessWidget {
             icon,
             color: color,
             size: 32,
-            shadows: const [
-              Shadow(color: Colors.black54, blurRadius: 6),
-            ],
+            shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
           ),
         ),
         const SizedBox(height: 4),
@@ -284,7 +282,7 @@ class _MysteryGiftButtonState extends State<_MysteryGiftButton>
         children: [
           AnimatedBuilder(
             animation: _ctrl,
-            builder: (_, __) {
+            builder: (_, _) {
               final scale = 1.0 + _ctrl.value * 0.12;
               return Transform.scale(
                 scale: scale,
@@ -302,8 +300,9 @@ class _MysteryGiftButtonState extends State<_MysteryGiftButton>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFF6F61)
-                            .withValues(alpha: 0.5 + _ctrl.value * 0.3),
+                        color: const Color(
+                          0xFFFF6F61,
+                        ).withValues(alpha: 0.5 + _ctrl.value * 0.3),
                         blurRadius: 14,
                         spreadRadius: 1,
                       ),

@@ -59,7 +59,7 @@ class BattleScoreBar extends StatelessWidget {
                   ? const Duration(milliseconds: 600)
                   : Duration.zero,
               curve: Curves.easeOutCubic,
-              builder: (_, value, __) {
+              builder: (_, value, _) {
                 return Stack(
                   children: [
                     // B side (right, pink)
@@ -78,7 +78,7 @@ class BattleScoreBar extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               AppColors.electricPurple,
-                              AppColors.softViolet
+                              AppColors.softViolet,
                             ],
                           ),
                         ),

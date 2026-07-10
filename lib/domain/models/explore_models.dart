@@ -1,5 +1,6 @@
 /// Modelos simples para a tela Explorar.
 /// Os endpoints retornam shapes diferentes — usamos classes leves.
+library;
 
 class TrendingLive {
   final String roomId;
@@ -23,15 +24,15 @@ class TrendingLive {
   });
 
   factory TrendingLive.fromJson(Map<String, dynamic> j) => TrendingLive(
-        roomId: (j['room_id'] ?? '').toString(),
-        slug: j['slug'] as String?,
-        title: (j['title'] ?? '') as String,
-        streamerName: j['streamer_name'] as String?,
-        streamerAvatar: j['streamer_avatar'] as String?,
-        category: j['category'] as String?,
-        viewerCount: (j['viewer_count'] ?? 0) as int,
-        thumbnailUrl: j['thumbnail_url'] as String?,
-      );
+    roomId: (j['room_id'] ?? '').toString(),
+    slug: j['slug'] as String?,
+    title: (j['title'] ?? '') as String,
+    streamerName: j['streamer_name'] as String?,
+    streamerAvatar: j['streamer_avatar'] as String?,
+    category: j['category'] as String?,
+    viewerCount: (j['viewer_count'] ?? 0) as int,
+    thumbnailUrl: j['thumbnail_url'] as String?,
+  );
 }
 
 class TrendingStreamer {
@@ -52,13 +53,13 @@ class TrendingStreamer {
   });
 
   factory TrendingStreamer.fromJson(Map<String, dynamic> j) => TrendingStreamer(
-        userId: (j['user_id'] ?? '') as String,
-        displayName: (j['display_name'] ?? 'User') as String,
-        avatarUrl: j['avatar_url'] as String?,
-        isLive: (j['is_live'] ?? false) as bool,
-        viewerCount: (j['viewer_count'] ?? 0) as int,
-        followerCount: (j['follower_count'] ?? 0) as int,
-      );
+    userId: (j['user_id'] ?? '') as String,
+    displayName: (j['display_name'] ?? 'User') as String,
+    avatarUrl: j['avatar_url'] as String?,
+    isLive: (j['is_live'] ?? false) as bool,
+    viewerCount: (j['viewer_count'] ?? 0) as int,
+    followerCount: (j['follower_count'] ?? 0) as int,
+  );
 }
 
 class ExploreCategory {
@@ -75,11 +76,11 @@ class ExploreCategory {
   });
 
   factory ExploreCategory.fromJson(Map<String, dynamic> j) => ExploreCategory(
-        name: (j['name'] ?? '') as String,
-        slug: (j['slug'] ?? '') as String,
-        liveCount: (j['live_count'] ?? 0) as int,
-        totalViewers: (j['total_viewers'] ?? 0) as int,
-      );
+    name: (j['name'] ?? '') as String,
+    slug: (j['slug'] ?? '') as String,
+    liveCount: (j['live_count'] ?? 0) as int,
+    totalViewers: (j['total_viewers'] ?? 0) as int,
+  );
 }
 
 /// Resultado unificado da busca (streamer ou live).
@@ -101,15 +102,15 @@ class SearchResult {
   });
 
   factory SearchResult.fromJson(Map<String, dynamic> j) => SearchResult(
-        type: (j['type'] ?? '') as String,
-        id: (j['id'] ?? '').toString(),
-        title: (j['title'] ?? '') as String,
-        subtitle: j['subtitle'] as String?,
-        thumbnail: j['thumbnail'] as String?,
-        metadata: (j['metadata'] is Map)
-            ? Map<String, dynamic>.from(j['metadata'] as Map)
-            : const {},
-      );
+    type: (j['type'] ?? '') as String,
+    id: (j['id'] ?? '').toString(),
+    title: (j['title'] ?? '') as String,
+    subtitle: j['subtitle'] as String?,
+    thumbnail: j['thumbnail'] as String?,
+    metadata: (j['metadata'] is Map)
+        ? Map<String, dynamic>.from(j['metadata'] as Map)
+        : const {},
+  );
 }
 
 class TrendingData {
@@ -118,12 +119,13 @@ class TrendingData {
   const TrendingData({this.lives = const [], this.streamers = const []});
 
   factory TrendingData.fromJson(Map<String, dynamic> j) => TrendingData(
-        lives: ((j['lives'] as List<dynamic>?) ?? [])
-            .map((e) => TrendingLive.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        streamers: ((j['streamers'] as List<dynamic>?) ?? [])
-            .map((e) =>
-                TrendingStreamer.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+    lives: ((j['lives'] as List<dynamic>?) ?? [])
+        .map((e) => TrendingLive.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    streamers: ((j['streamers'] as List<dynamic>?) ?? [])
+        .map(
+          (e) => TrendingStreamer.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList(),
+  );
 }

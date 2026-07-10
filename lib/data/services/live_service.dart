@@ -49,12 +49,20 @@ class LiveService {
 
       if (list != null) {
         return list
-            .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
+            .map(
+              (e) => LiveRoomDto.fromJson(
+                _normalizeRoomJson(e as Map<String, dynamic>),
+              ),
+            )
             .toList();
       }
     } else if (data is List) {
       return data
-          .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
+          .map(
+            (e) => LiveRoomDto.fromJson(
+              _normalizeRoomJson(e as Map<String, dynamic>),
+            ),
+          )
           .toList();
     }
 
@@ -84,12 +92,20 @@ class LiveService {
 
       if (list != null) {
         return list
-            .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
+            .map(
+              (e) => LiveRoomDto.fromJson(
+                _normalizeRoomJson(e as Map<String, dynamic>),
+              ),
+            )
             .toList();
       }
     } else if (data is List) {
       return data
-          .map((e) => LiveRoomDto.fromJson(_normalizeRoomJson(e as Map<String, dynamic>)))
+          .map(
+            (e) => LiveRoomDto.fromJson(
+              _normalizeRoomJson(e as Map<String, dynamic>),
+            ),
+          )
           .toList();
     }
 
@@ -200,7 +216,7 @@ class LiveService {
         'gift_id': giftId,
         'receiver_id': receiverId,
         'quantity': quantity,
-        if (battleId != null) 'battle_id': battleId,
+        'battle_id': ?battleId,
       },
     );
     return _toMap(response.data);
@@ -218,7 +234,9 @@ class LiveService {
     );
     final data = response.data;
     // API retorna { "top_gifters": [...] } ou lista direta.
-    final raw = data is Map ? (data['top_gifters'] ?? data['data'] ?? data) : data;
+    final raw = data is Map
+        ? (data['top_gifters'] ?? data['data'] ?? data)
+        : data;
     if (raw is List) {
       return raw
           .whereType<Map>()

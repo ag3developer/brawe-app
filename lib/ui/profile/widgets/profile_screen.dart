@@ -1257,8 +1257,7 @@ class _CompactStats extends StatelessWidget {
           label: s.profileFollowing,
           onTap: () => context.push('/follows/$userId?tab=following'),
         ),
-        _InlineStat(value: _fmt(stats.livesCount), label: s.profileLives),
-        _InlineStat(value: _fmt(stats.totalLikes), label: s.profileViews),
+        _InlineStat(value: _fmt(stats.totalViews), label: s.profileViews),
       ],
     );
   }
@@ -1342,9 +1341,8 @@ class _StatsCard extends StatelessWidget {
             onTap: () => context.push('/follows/$userId?tab=following'),
           ),
           _Divider(),
-          _StatsCol(value: _fmt(stats.livesCount), label: s.profileStatLives),
           _Divider(),
-          _StatsCol(value: _fmt(stats.totalLikes), label: s.profileStatViews),
+          _StatsCol(value: _fmt(stats.totalViews), label: s.profileStatViews),
         ],
       ),
     );
@@ -2825,5 +2823,11 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    // Precisa reconstruir quando a TabBar muda (ex.: troca de tema altera
+    // as cores do label/indicator) — senão o header persistente fica com
+    // a cor de fundo "presa" no tema anterior (bug do fundo branco no
+    // tema claro sobre conteúdo escuro).
+    return oldDelegate._tabBar != _tabBar;
+  }
 }

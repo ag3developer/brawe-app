@@ -51,8 +51,11 @@ class EarningsScreen extends ConsumerWidget {
                   child: Row(
                     children: [
                       if (c == currency)
-                        const Icon(Icons.check,
-                            size: 16, color: AppColors.electricPurple)
+                        const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: AppColors.electricPurple,
+                        )
                       else
                         const SizedBox(width: 16),
                       const SizedBox(width: 8),
@@ -78,9 +81,8 @@ class EarningsScreen extends ConsumerWidget {
       ),
       body: earnings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => _ErrorView(
-          onRetry: () =>
-              ref.read(earningsViewModelProvider.notifier).refresh(),
+        error: (_, _) => _ErrorView(
+          onRetry: () => ref.read(earningsViewModelProvider.notifier).refresh(),
         ),
         data: (data) => RefreshIndicator(
           onRefresh: () async {
@@ -138,10 +140,7 @@ class _BalanceCards extends StatelessWidget {
               data.coinsValueInCurrency,
               data.currency,
             ),
-            gradient: const [
-              AppColors.electricPurple,
-              AppColors.coolCyan,
-            ],
+            gradient: const [AppColors.electricPurple, AppColors.coolCyan],
             icon: const BraweCoin(size: 28, glow: true),
           ),
         ),
@@ -154,10 +153,7 @@ class _BalanceCards extends StatelessWidget {
               data.diamondsValueInCurrency,
               data.currency,
             ),
-            gradient: const [
-              Color(0xFF00C2FF),
-              Color(0xFF7B5BFF),
-            ],
+            gradient: const [Color(0xFF00C2FF), Color(0xFF7B5BFF)],
             icon: Image.asset(
               'assets/images/illustrations/diamond_3d.png',
               width: 32,
@@ -368,8 +364,10 @@ class _SectionHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
         const SizedBox(height: 4),
         Text(
           subtitle,
@@ -398,16 +396,13 @@ class _PurchaseOrdersList extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, __) => _EmptyTile(
-        text: S.of(context).earningsLoadError,
-      ),
+      error: (_, _) => _EmptyTile(text: S.of(context).earningsLoadError),
       data: (items) {
         if (items.isEmpty) {
           return _EmptyTile(
             text: S.of(context).earningsNoPurchases,
             hint: S.of(context).earningsNoPurchasesHint,
-            illustrationAsset:
-                'assets/images/illustrations/package_3d.png',
+            illustrationAsset: 'assets/images/illustrations/package_3d.png',
           );
         }
         return Container(
@@ -421,10 +416,7 @@ class _PurchaseOrdersList extends ConsumerWidget {
               for (int i = 0; i < items.length; i++) ...[
                 _PurchaseOrderTile(order: items[i]),
                 if (i < items.length - 1)
-                  Divider(
-                    height: 1,
-                    color: Theme.of(context).dividerColor,
-                  ),
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
               ],
             ],
           ),
@@ -509,8 +501,7 @@ class _PurchaseOrderTile extends StatelessWidget {
                 ),
               const SizedBox(height: 2),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(8),
@@ -547,17 +538,17 @@ class _GiftReceivedList extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (_, __) =>
-          _EmptyTile(text: S.of(context).earningsLoadError),
+      error: (_, _) => _EmptyTile(text: S.of(context).earningsLoadError),
       data: (items) {
-        final received =
-            items.where((t) => t.type == 'received').take(20).toList();
+        final received = items
+            .where((t) => t.type == 'received')
+            .take(20)
+            .toList();
         if (received.isEmpty) {
           return _EmptyTile(
             text: S.of(context).earningsNoGifts,
             hint: S.of(context).earningsNoGiftsHint,
-            illustrationAsset:
-                'assets/images/illustrations/gift_3d.png',
+            illustrationAsset: 'assets/images/illustrations/gift_3d.png',
           );
         }
         return Container(
@@ -571,10 +562,7 @@ class _GiftReceivedList extends ConsumerWidget {
               for (int i = 0; i < received.length; i++) ...[
                 _GiftTile(tx: received[i]),
                 if (i < received.length - 1)
-                  Divider(
-                    height: 1,
-                    color: Theme.of(context).dividerColor,
-                  ),
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
               ],
             ],
           ),
@@ -602,8 +590,11 @@ class _GiftTile extends StatelessWidget {
               color: const Color(0xFF00C2FF).withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.diamond,
-                color: Color(0xFF00C2FF), size: 20),
+            child: const Icon(
+              Icons.diamond,
+              color: Color(0xFF00C2FF),
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -651,11 +642,7 @@ class _EmptyTile extends StatelessWidget {
   final String text;
   final String? illustrationAsset;
   final String? hint;
-  const _EmptyTile({
-    required this.text,
-    this.illustrationAsset,
-    this.hint,
-  });
+  const _EmptyTile({required this.text, this.illustrationAsset, this.hint});
 
   @override
   Widget build(BuildContext context) {
@@ -757,13 +744,16 @@ String _formatCurrency(double value, String currency) {
   };
   // formato: SYMBOL 1.234,56
   final intPart = value.truncate();
-  final decPart = ((value - intPart) * 100).round().abs().toString().padLeft(2, '0');
+  final decPart = ((value - intPart) * 100).round().abs().toString().padLeft(
+    2,
+    '0',
+  );
   return '$symbol ${_formatInt(intPart)},$decPart';
 }
 
 String _formatDate(DateTime? d) {
   if (d == null) return '';
-  final two = (int x) => x.toString().padLeft(2, '0');
+  String two(int x) => x.toString().padLeft(2, '0');
   return '${two(d.day)}/${two(d.month)}/${d.year}';
 }
 
@@ -791,8 +781,11 @@ class _DisclaimerBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded,
-              color: colors.accentPrimary, size: 20),
+          Icon(
+            Icons.info_outline_rounded,
+            color: colors.accentPrimary,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

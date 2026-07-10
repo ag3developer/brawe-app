@@ -111,8 +111,8 @@ class _SearchBar extends StatelessWidget {
         style: TextStyle(color: context.colors.textPrimary),
         decoration: InputDecoration(
           hintText: S.of(context).followsSearchHint,
-          hintStyle:  TextStyle(color: context.colors.textSecondary),
-          prefixIcon:  Icon(Icons.search, color: context.colors.textSecondary),
+          hintStyle: TextStyle(color: context.colors.textSecondary),
+          prefixIcon: Icon(Icons.search, color: context.colors.textSecondary),
           filled: true,
           fillColor: Colors.white10,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -162,8 +162,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
   }
 
   void _onScroll() {
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - 300) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300) {
       ref
           .read(followsViewModelProvider(widget.userId, widget.tab).notifier)
           .loadMore();
@@ -173,8 +172,9 @@ class _FollowsListState extends ConsumerState<_FollowsList>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final asyncState =
-        ref.watch(followsViewModelProvider(widget.userId, widget.tab));
+    final asyncState = ref.watch(
+      followsViewModelProvider(widget.userId, widget.tab),
+    );
 
     return asyncState.when(
       loading: () => const Center(
@@ -184,18 +184,30 @@ class _FollowsListState extends ConsumerState<_FollowsList>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-             Icon(Icons.error_outline,
-                color: context.colors.textSecondary, size: 40),
+            Icon(
+              Icons.error_outline,
+              color: context.colors.textSecondary,
+              size: 40,
+            ),
             const SizedBox(height: 12),
-            Text(S.of(context).followsLoadError, style: TextStyle(color: context.colors.textPrimary)),
+            Text(
+              S.of(context).followsLoadError,
+              style: TextStyle(color: context.colors.textPrimary),
+            ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => ref
-                  .read(followsViewModelProvider(widget.userId, widget.tab)
-                      .notifier)
+                  .read(
+                    followsViewModelProvider(
+                      widget.userId,
+                      widget.tab,
+                    ).notifier,
+                  )
                   .refresh(),
-              child: Text(S.of(context).followsTryAgain,
-                  style: const TextStyle(color: AppColors.mutedRed)),
+              child: Text(
+                S.of(context).followsTryAgain,
+                style: const TextStyle(color: AppColors.mutedRed),
+              ),
             ),
           ],
         ),
@@ -228,10 +240,10 @@ class _FollowsListState extends ConsumerState<_FollowsList>
                     widget.query.isNotEmpty
                         ? S.of(context).followsNoResults(widget.query)
                         : widget.tab == FollowsTab.followers
-                            ? S.of(context).followsEmptyFollowers
-                            : S.of(context).followsEmptyFollowing,
+                        ? S.of(context).followsEmptyFollowers
+                        : S.of(context).followsEmptyFollowing,
                     textAlign: TextAlign.center,
-                    style:  TextStyle(color: context.colors.textSecondary),
+                    style: TextStyle(color: context.colors.textSecondary),
                   ),
                 ],
               ),
@@ -243,15 +255,16 @@ class _FollowsListState extends ConsumerState<_FollowsList>
           color: AppColors.mutedRed,
           backgroundColor: context.colors.background,
           onRefresh: () => ref
-              .read(followsViewModelProvider(widget.userId, widget.tab)
-                  .notifier)
+              .read(
+                followsViewModelProvider(widget.userId, widget.tab).notifier,
+              )
               .refresh(),
           child: ListView.separated(
             controller: _scroll,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(vertical: 4),
             itemCount: filtered.length + (s.isLoadingMore ? 1 : 0),
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (_, _) =>
                 Divider(color: context.colors.divider, height: 1),
             itemBuilder: (context, i) {
               if (i >= filtered.length) {
@@ -270,8 +283,12 @@ class _FollowsListState extends ConsumerState<_FollowsList>
                 user: u,
                 onTap: () => context.push('/profile/${u.userId}'),
                 onFollowTap: () => ref
-                    .read(followsViewModelProvider(widget.userId, widget.tab)
-                        .notifier)
+                    .read(
+                      followsViewModelProvider(
+                        widget.userId,
+                        widget.tab,
+                      ).notifier,
+                    )
                     .toggleFollow(u.userId),
               );
             },
@@ -297,7 +314,9 @@ class _UserRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (user.displayName?.isNotEmpty ?? false)
         ? user.displayName!
-        : (user.username.isNotEmpty ? '@${user.username}' : S.of(context).followsUserFallback);
+        : (user.username.isNotEmpty
+              ? '@${user.username}'
+              : S.of(context).followsUserFallback);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -319,7 +338,9 @@ class _UserRow extends StatelessWidget {
                     right: -2,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 1),
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.mutedRed,
                         borderRadius: BorderRadius.circular(4),
@@ -359,8 +380,11 @@ class _UserRow extends StatelessWidget {
                       ),
                       if (user.isVerified) ...[
                         const SizedBox(width: 4),
-                        const Icon(Icons.verified,
-                            size: 14, color: Colors.lightBlueAccent),
+                        const Icon(
+                          Icons.verified,
+                          size: 14,
+                          color: Colors.lightBlueAccent,
+                        ),
                       ],
                     ],
                   ),
@@ -369,7 +393,7 @@ class _UserRow extends StatelessWidget {
                       '@${user.username}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:  TextStyle(
+                      style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 12,
                       ),
@@ -412,8 +436,7 @@ class _FollowChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
@@ -421,7 +444,9 @@ class _FollowChip extends StatelessWidget {
             ),
           ),
           child: Text(
-            isFollowing ? S.of(context).actionUnfollow : S.of(context).actionFollow,
+            isFollowing
+                ? S.of(context).actionUnfollow
+                : S.of(context).actionFollow,
             style: TextStyle(
               color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,

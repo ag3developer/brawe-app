@@ -124,7 +124,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                         ),
                       ),
                       loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                   ],
                 ),
@@ -139,7 +139,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       color: AppColors.electricPurple,
                     ),
                   ),
-                  error: (_, __) => Center(
+                  error: (_, _) => Center(
                     child: Text(
                       s.commentsErrorLoad,
                       style: TextStyle(color: context.colors.textSecondary),

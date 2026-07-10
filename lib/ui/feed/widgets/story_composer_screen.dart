@@ -462,7 +462,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       //
       // Clampa em [1, 60] pra nunca rejeitar 422 do FastAPI: se o vídeo
       // tem 60.4s por arredondamento do encoder, vai como 60.
-      int? _videoDurSec() {
+      int? videoDurSec() {
         if (!_isVideo) return null;
         final d = _videoCtrl?.value.duration;
         if (d == null || d == Duration.zero) return null;
@@ -498,7 +498,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
         await notifier.createStory(
           localFilePath: pathToUpload,
           caption: caption,
-          durationSeconds: _videoDurSec(),
+          durationSeconds: videoDurSec(),
           originPostId: widget.initialOriginPostId,
           idempotencyKey: _idempotencyKey,
         );
@@ -507,7 +507,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       AppSnackBar.showSuccess(
         context,
         _videoSegments.length > 1
-            ? S.of(context).composerMultipleStoriesPublished(_videoSegments.length)
+            ? S
+                  .of(context)
+                  .composerMultipleStoriesPublished(_videoSegments.length)
             : S.of(context).composerStoryPublished,
       );
       Navigator.of(context).pop(true);
@@ -524,7 +526,8 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       // e podemos liberar o lock pra ele tentar de novo (com a mesma
       // idempotency key — backend deduplicará se já gravou).
       if (!mounted) return;
-      final isTimeout = e.type == DioExceptionType.connectionTimeout ||
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout;
       if (isTimeout) {
@@ -589,8 +592,11 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
               ? Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.white70, size: 48),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white70,
+                      size: 48,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       _remoteError!,
@@ -603,8 +609,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                         if (url != null) _prefetchRemote(url);
                       },
                       icon: const Icon(Icons.refresh, color: Colors.white),
-                      label: Text(S.of(context).composerRetry,
-                          style: const TextStyle(color: Colors.white)),
+                      label: Text(
+                        S.of(context).composerRetry,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 )
@@ -612,11 +620,15 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const CircularProgressIndicator(
-                        color: AppColors.electricPurple),
+                      color: AppColors.electricPurple,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       S.of(context).composerPreparing,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -716,31 +728,32 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             else
               _CaptureRing(
                 isRecording: _isRecording,
-                segmentProgress: (_currentSegmentElapsed.inMilliseconds /
-                        _kSegmentMax.inMilliseconds)
-                    .clamp(0.0, 1.0),
-                totalProgress: ((_previousSegmentsTotal + _currentSegmentElapsed)
-                            .inMilliseconds /
-                        _kTotalMax.inMilliseconds)
-                    .clamp(0.0, 1.0),
+                segmentProgress:
+                    (_currentSegmentElapsed.inMilliseconds /
+                            _kSegmentMax.inMilliseconds)
+                        .clamp(0.0, 1.0),
+                totalProgress:
+                    ((_previousSegmentsTotal + _currentSegmentElapsed)
+                                .inMilliseconds /
+                            _kTotalMax.inMilliseconds)
+                        .clamp(0.0, 1.0),
                 segmentBreaks: _videoSegments.isEmpty
                     ? const []
-                    : List<double>.generate(
-                        _videoSegments.length,
-                        (i) {
-                          // posição cumulativa de cada break sobre 60s
-                          double acc = 0;
-                          for (int k = 0; k <= i; k++) {
-                            // Aproxima usando _kSegmentMax (60s) por segmento.
-                            // No fluxo "Opção B" (vídeo único) só existe 1
-                            // segmento, então o break fica em 100% e visualmente
-                            // some — comportamento esperado.
-                            acc += _kSegmentMax.inMilliseconds.toDouble();
-                          }
-                          return (acc / _kTotalMax.inMilliseconds)
-                              .clamp(0.0, 1.0);
-                        },
-                      ),
+                    : List<double>.generate(_videoSegments.length, (i) {
+                        // posição cumulativa de cada break sobre 60s
+                        double acc = 0;
+                        for (int k = 0; k <= i; k++) {
+                          // Aproxima usando _kSegmentMax (60s) por segmento.
+                          // No fluxo "Opção B" (vídeo único) só existe 1
+                          // segmento, então o break fica em 100% e visualmente
+                          // some — comportamento esperado.
+                          acc += _kSegmentMax.inMilliseconds.toDouble();
+                        }
+                        return (acc / _kTotalMax.inMilliseconds).clamp(
+                          0.0,
+                          1.0,
+                        );
+                      }),
                 onTap: _capturePhoto,
                 onLongPressStart: _startRecording,
                 onLongPressEnd: () => _stopRecording(),
@@ -765,7 +778,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
                   : Text(
                       S.of(context).composerCaptureHint,
                       key: const ValueKey('rec-hint'),
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 12,
+                      ),
                     ),
             ),
             const SizedBox(height: 32),
@@ -938,8 +954,7 @@ class _CaptureRing extends StatelessWidget {
               height: isRecording ? innerSize * 0.55 : innerSize,
               decoration: BoxDecoration(
                 shape: isRecording ? BoxShape.rectangle : BoxShape.circle,
-                borderRadius:
-                    isRecording ? BorderRadius.circular(10) : null,
+                borderRadius: isRecording ? BorderRadius.circular(10) : null,
                 gradient: LinearGradient(
                   colors: isRecording
                       ? const [Colors.redAccent, Color(0xFFFF3D6E)]
@@ -949,10 +964,11 @@ class _CaptureRing extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isRecording
-                            ? Colors.redAccent
-                            : AppColors.electricPurple)
-                        .withValues(alpha: 0.55),
+                    color:
+                        (isRecording
+                                ? Colors.redAccent
+                                : AppColors.electricPurple)
+                            .withValues(alpha: 0.55),
                     blurRadius: 22,
                     spreadRadius: 2,
                   ),
@@ -1062,8 +1078,7 @@ class _PickerOption extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.08),
               shape: BoxShape.circle,
-              border:
-                  Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
@@ -1123,10 +1138,8 @@ class _StoryEditor extends StatefulWidget {
   final bool isPublishing;
   final bool isRepost;
   final VoidCallback onBack;
-  final Future<void> Function({
-    required String? caption,
-    File? flattenedImage,
-  }) onPublish;
+  final Future<void> Function({required String? caption, File? flattenedImage})
+  onPublish;
 
   /// Abre a tela de trim — implementada pelo parent
   /// (`_StoryComposerScreenState`), porque é ele quem detém o
@@ -1260,22 +1273,24 @@ class _StoryEditorState extends State<_StoryEditor> {
   }
 
   IconData _alignIcon(TextAlign a) => switch (a) {
-        TextAlign.left => Icons.format_align_left,
-        TextAlign.right => Icons.format_align_right,
-        _ => Icons.format_align_center,
-      };
+    TextAlign.left => Icons.format_align_left,
+    TextAlign.right => Icons.format_align_right,
+    _ => Icons.format_align_center,
+  };
 
   void _commitTextLayer() {
     final txt = _composeCtrl.text.trim();
     if (txt.isNotEmpty) {
-      _layers.add(_TextLayer(
-        text: txt,
-        color: _currentColor,
-        offset: const Offset(80, 200),
-        scale: _composeFontScale,
-        bgStyle: _composeBgStyle,
-        align: _composeAlign,
-      ));
+      _layers.add(
+        _TextLayer(
+          text: txt,
+          color: _currentColor,
+          offset: const Offset(80, 200),
+          scale: _composeFontScale,
+          bgStyle: _composeBgStyle,
+          align: _composeAlign,
+        ),
+      );
     }
     setState(() => _composingText = false);
   }
@@ -1294,8 +1309,9 @@ class _StoryEditorState extends State<_StoryEditor> {
     await Future<void>.delayed(const Duration(milliseconds: 16));
 
     try {
-      final boundary = _captureKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _captureKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) return null;
 
       // pixelRatio 3.0 ~= 1080p em devices comuns. Limita o teto para
@@ -1429,442 +1445,449 @@ class _StoryEditorState extends State<_StoryEditor> {
     return RepaintBoundary(
       key: _captureKey,
       child: Stack(
-      fit: StackFit.expand,
-      children: [
-        // Fundo: blur da própria mídia (evita laterais pretas quando cabe inteira).
-        if (!widget.isVideo)
-          Positioned.fill(
-            child: ImageFiltered(
-              imageFilter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-              child: Image.file(
-                widget.file,
-                fit: BoxFit.cover,
-                opacity: const AlwaysStoppedAnimation(0.55),
-              ),
-            ),
-          ),
-        // Mídia com pinch-zoom / pan / 1 dedo (estilo Instagram Stories):
-        // permite mover livremente, diminuir e até sair dos limites da tela.
-        // Double-tap cicla pelas molduras antes de publicar.
-        Positioned.fill(
-          child: GestureDetector(
-            onDoubleTap: _cycleFrame,
-            child: InteractiveViewer(
-              transformationController: _transformCtrl,
-              minScale: 0.2,
-              maxScale: 5.0,
-              panEnabled: true,
-              scaleEnabled: true,
-              // Permite arrastar pra fora da tela (igual Instagram).
-              boundaryMargin: const EdgeInsets.all(double.infinity),
-              // Sem clip: a mídia pode "vazar" pra fora durante o ajuste.
-              clipBehavior: Clip.none,
-              onInteractionStart: _onInteractionStart,
-              onInteractionEnd: _onInteractionEnd,
-              child: Center(child: _buildFramedMedia()),
-            ),
-          ),
-        ),
-
-        // Linhas guia (área de segurança 9:16) — aparecem durante o gesto.
-        if (!_capturing)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 220),
-                opacity: _showGuides ? 1.0 : 0.0,
-                child: const _SafeAreaGuides(),
-              ),
-            ),
-          ),
-
-        // Chip "Toque 2x para trocar moldura" (dica + label da moldura atual).
-        if (!_capturing)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 64,
-            left: 0,
-            right: 0,
-            child: IgnorePointer(
-              child: Center(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 240),
-                  child: Container(
-                    key: ValueKey(_frameStyle),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18)),
-                    ),
-                    child: Text(
-                      _frameStyle == 0
-                          ? S.of(context).composerFrameHint
-                          : S.of(context).composerFrameLabel(_frameLabel(context)),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+        fit: StackFit.expand,
+        children: [
+          // Fundo: blur da própria mídia (evita laterais pretas quando cabe inteira).
+          if (!widget.isVideo)
+            Positioned.fill(
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
+                child: Image.file(
+                  widget.file,
+                  fit: BoxFit.cover,
+                  opacity: const AlwaysStoppedAnimation(0.55),
                 ),
               ),
             ),
-          ),
-
-        // Camadas de texto draggable
-        ..._layers.asMap().entries.map((entry) {
-          final idx = entry.key;
-          final layer = entry.value;
-          return Positioned(
-            left: layer.offset.dx,
-            top: layer.offset.dy,
-            child: GestureDetector(
-              onPanStart: (_) {
-                setState(() {
-                  _draggingLayerIdx = idx;
-                  _hoverTrash = false;
-                });
-                HapticFeedback.selectionClick();
-              },
-              onPanUpdate: (d) {
-                final newOffset = Offset(
-                  layer.offset.dx + d.delta.dx,
-                  layer.offset.dy + d.delta.dy,
-                );
-                // Hit-test da lixeira usando a posição GLOBAL do dedo
-                // (d.globalPosition), não a posição do widget. O widget
-                // arrastado pode ser largo (texto longo) e o offset é o
-                // canto superior-esquerdo — usar isso quebra a detecção
-                // em ~70% dos casos. O dedo é a referência correta.
-                //
-                // A lixeira mora em: bottom = bottomPad + 32, tamanho 84
-                // (estado expandido) → centro Y ≈ height - bottomPad - 74.
-                // Usamos um raio de 64 (maior que o widget pra dar tolerância).
-                final bottomPad = MediaQuery.of(context).padding.bottom;
-                final trashCenter = Offset(
-                  size.width / 2,
-                  size.height - bottomPad - 74,
-                );
-                final dist = (d.globalPosition - trashCenter).distance;
-                final onTrash = dist < 64;
-                if (onTrash != _hoverTrash) {
-                  HapticFeedback.mediumImpact();
-                }
-                setState(() {
-                  _hoverTrash = onTrash;
-                  _layers[idx] = layer.copyWith(offset: newOffset);
-                });
-              },
-              onPanEnd: (_) {
-                if (_hoverTrash) {
-                  setState(() {
-                    _layers.removeAt(idx);
-                    _draggingLayerIdx = null;
-                    _hoverTrash = false;
-                  });
-                  HapticFeedback.heavyImpact();
-                } else {
-                  // Clamp dentro da tela ao soltar (se não foi pra lixeira).
-                  final clamped = Offset(
-                    _layers[idx]
-                        .offset
-                        .dx
-                        .clamp(0.0, size.width - 40),
-                    _layers[idx]
-                        .offset
-                        .dy
-                        .clamp(0.0, size.height - 60),
-                  );
-                  setState(() {
-                    _layers[idx] = _layers[idx].copyWith(offset: clamped);
-                    _draggingLayerIdx = null;
-                    _hoverTrash = false;
-                  });
-                }
-              },
-              // maxWidth = largura útil a partir da posição da camada,
-              // limitada a 88% da tela (mesmo limite do Instagram).
-              child: _TextLayerView(
-                layer: layer,
-                maxWidth: math.max(
-                  120.0,
-                  math.min(size.width * 0.88, size.width - layer.offset.dx - 8),
-                ),
-              ),
-            ),
-          );
-        }),
-
-        // Top bar — ferramentas estilo Instagram/TikTok.
-        // Ordem: voltar | (reset zoom) | spacer | Aa (texto) | moldura | cor.
-        // Padrão moderno: ações rápidas alinhadas à direita, voltar à esquerda.
-        if (!_capturing)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 12,
-            right: 12,
-            child: Row(
-              children: [
-                _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
-                const Spacer(),
-                // Reset zoom — só aparece se houver transformação aplicada.
-                AnimatedBuilder(
-                  animation: _transformCtrl,
-                  builder: (_, __) {
-                    final isIdentity =
-                        _transformCtrl.value == Matrix4.identity();
-                    if (isIdentity) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _CircleIconBtn(
-                        icon: Icons.center_focus_strong,
-                        onTap: _resetTransform,
-                      ),
-                    );
-                  },
-                ),
-                // Botão "Aa" estilizado: o ícone padrão (text_fields)
-                // não comunica que dá pra adicionar texto. Trocamos por
-                // um botão maior com label "Aa" (linguagem universal).
-                _AaTextButton(onTap: _startTextCompose),
-                const SizedBox(width: 8),
-                // Botão "scissors" — só aparece quando a mídia é vídeo.
-                // Abre o StoryVideoTrimScreen pra cortar o trecho desejado.
-                if (widget.isVideo) ...[
-                  _CircleIconBtn(
-                    icon: Icons.content_cut_rounded,
-                    onTap: () => widget.onTrim(),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                // Botão "salvar no dispositivo" (download).
-                // Ícone de seta-pra-baixo: padrão Instagram/TikTok.
-                // Funciona pra foto (com overlays via flatten) e vídeo
-                // (arquivo cortado, sem overlays). Mostra spinner
-                // enquanto renderiza o flatten + grava no álbum "Brawe".
-                _CircleIconBtn(
-                  icon: _isSavingToDevice
-                      ? Icons.hourglass_top_rounded
-                      : Icons.file_download_outlined,
-                  onTap: _isSavingToDevice ? null : () => _handleSaveToDevice(),
-                ),
-                const SizedBox(width: 8),
-                _CircleIconBtn(
-                  icon: _frameStyle == 0
-                      ? Icons.crop_din
-                      : (_frameStyle == 1
-                          ? Icons.filter_frames
-                          : Icons.auto_awesome),
-                  onTap: _cycleFrame,
-                ),
-                const SizedBox(width: 8),
-                _CircleIconBtn(
-                  icon: Icons.color_lens_outlined,
-                  onTap: () => _showColorPicker(),
-                ),
-              ],
-            ),
-          ),
-
-        // Bottom bar — modernizada (Instagram/TikTok 2026):
-        // Não tem mais campo de "caption" inferior (texto vive como overlay
-        // na própria mídia). Em vez disso, uma pill "Seu story" indica
-        // o destino + botão "Compartilhar" pill grande à direita.
-        if (!_capturing)
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-            child: Row(
-              children: [
-                _StoryDestinationPill(label: S.of(context).composerYourStory),
-                const Spacer(),
-                _ShareButton(
-                  loading: widget.isPublishing,
-                  onPressed: _flattenAndPublish,
-                ),
-              ],
-            ),
-          ),
-
-        // ── Overlay de composição de texto (estilo Instagram 2026) ──
-        // Layout:
-        //  • Top-right: botões verticais (alinhamento, fundo, "OK")
-        //  • Left side: slider vertical de tamanho da fonte
-        //  • Center: TextField (autofocus, multi-linha, com maxWidth)
-        //  • Bottom: paleta horizontal de cores
-        if (_composingText && !_capturing)
+          // Mídia com pinch-zoom / pan / 1 dedo (estilo Instagram Stories):
+          // permite mover livremente, diminuir e até sair dos limites da tela.
+          // Double-tap cicla pelas molduras antes de publicar.
           Positioned.fill(
             child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _commitTextLayer,
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.55),
-                child: Stack(
-                  children: [
-                    // Centro: campo de texto.
-                    // Largura limitada a 84% da tela — alinhada com a
-                    // largura do _TextLayerView depois de commitado para
-                    // evitar "salto visual" entre composição e camada final.
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: _ComposeTextField(
-                          controller: _composeCtrl,
-                          color: _currentColor,
-                          bgStyle: _composeBgStyle,
-                          align: _composeAlign,
-                          fontScale: _composeFontScale,
-                          maxWidth: size.width * 0.84,
-                          onSubmitted: (_) => _commitTextLayer(),
+              onDoubleTap: _cycleFrame,
+              child: InteractiveViewer(
+                transformationController: _transformCtrl,
+                minScale: 0.2,
+                maxScale: 5.0,
+                panEnabled: true,
+                scaleEnabled: true,
+                // Permite arrastar pra fora da tela (igual Instagram).
+                boundaryMargin: const EdgeInsets.all(double.infinity),
+                // Sem clip: a mídia pode "vazar" pra fora durante o ajuste.
+                clipBehavior: Clip.none,
+                onInteractionStart: _onInteractionStart,
+                onInteractionEnd: _onInteractionEnd,
+                child: Center(child: _buildFramedMedia()),
+              ),
+            ),
+          ),
+
+          // Linhas guia (área de segurança 9:16) — aparecem durante o gesto.
+          if (!_capturing)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 220),
+                  opacity: _showGuides ? 1.0 : 0.0,
+                  child: const _SafeAreaGuides(),
+                ),
+              ),
+            ),
+
+          // Chip "Toque 2x para trocar moldura" (dica + label da moldura atual).
+          if (!_capturing)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 64,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 240),
+                    child: Container(
+                      key: ValueKey(_frameStyle),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Text(
+                        _frameStyle == 0
+                            ? S.of(context).composerFrameHint
+                            : S
+                                  .of(context)
+                                  .composerFrameLabel(_frameLabel(context)),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ),
 
-                    // Topo direito: botões verticais (align / bg / OK).
-                    // GestureDetector pra impedir que o tap no botão
-                    // suba até o overlay externo (que commita a camada).
-                    Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
-                      right: 12,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {},
-                        child: Column(
-                          children: [
-                            _CircleIconBtn(
-                              icon: _alignIcon(_composeAlign),
-                              onTap: _cycleComposeAlign,
-                            ),
-                            const SizedBox(height: 8),
-                            _CircleIconBtn(
-                              icon: _composeBgStyle == 0
-                                  ? Icons.format_color_text
-                                  : (_composeBgStyle == 1
-                                      ? Icons.title
-                                      : Icons.text_format),
-                              onTap: () {
-                                setState(() => _composeBgStyle =
-                                    (_composeBgStyle + 1) % 3);
-                                HapticFeedback.selectionClick();
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            // "OK" pill — atalho explícito pra commitar.
-                            // Toque fora também funciona, mas o pill
-                            // ajuda usuários que não conhecem o gesto.
-                            GestureDetector(
-                              onTap: _commitTextLayer,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'OK',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                    letterSpacing: 0.5,
+          // Camadas de texto draggable
+          ..._layers.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final layer = entry.value;
+            return Positioned(
+              left: layer.offset.dx,
+              top: layer.offset.dy,
+              child: GestureDetector(
+                onPanStart: (_) {
+                  setState(() {
+                    _draggingLayerIdx = idx;
+                    _hoverTrash = false;
+                  });
+                  HapticFeedback.selectionClick();
+                },
+                onPanUpdate: (d) {
+                  final newOffset = Offset(
+                    layer.offset.dx + d.delta.dx,
+                    layer.offset.dy + d.delta.dy,
+                  );
+                  // Hit-test da lixeira usando a posição GLOBAL do dedo
+                  // (d.globalPosition), não a posição do widget. O widget
+                  // arrastado pode ser largo (texto longo) e o offset é o
+                  // canto superior-esquerdo — usar isso quebra a detecção
+                  // em ~70% dos casos. O dedo é a referência correta.
+                  //
+                  // A lixeira mora em: bottom = bottomPad + 32, tamanho 84
+                  // (estado expandido) → centro Y ≈ height - bottomPad - 74.
+                  // Usamos um raio de 64 (maior que o widget pra dar tolerância).
+                  final bottomPad = MediaQuery.of(context).padding.bottom;
+                  final trashCenter = Offset(
+                    size.width / 2,
+                    size.height - bottomPad - 74,
+                  );
+                  final dist = (d.globalPosition - trashCenter).distance;
+                  final onTrash = dist < 64;
+                  if (onTrash != _hoverTrash) {
+                    HapticFeedback.mediumImpact();
+                  }
+                  setState(() {
+                    _hoverTrash = onTrash;
+                    _layers[idx] = layer.copyWith(offset: newOffset);
+                  });
+                },
+                onPanEnd: (_) {
+                  if (_hoverTrash) {
+                    setState(() {
+                      _layers.removeAt(idx);
+                      _draggingLayerIdx = null;
+                      _hoverTrash = false;
+                    });
+                    HapticFeedback.heavyImpact();
+                  } else {
+                    // Clamp dentro da tela ao soltar (se não foi pra lixeira).
+                    final clamped = Offset(
+                      _layers[idx].offset.dx.clamp(0.0, size.width - 40),
+                      _layers[idx].offset.dy.clamp(0.0, size.height - 60),
+                    );
+                    setState(() {
+                      _layers[idx] = _layers[idx].copyWith(offset: clamped);
+                      _draggingLayerIdx = null;
+                      _hoverTrash = false;
+                    });
+                  }
+                },
+                // maxWidth = largura útil a partir da posição da camada,
+                // limitada a 88% da tela (mesmo limite do Instagram).
+                child: _TextLayerView(
+                  layer: layer,
+                  maxWidth: math.max(
+                    120.0,
+                    math.min(
+                      size.width * 0.88,
+                      size.width - layer.offset.dx - 8,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          // Top bar — ferramentas estilo Instagram/TikTok.
+          // Ordem: voltar | (reset zoom) | spacer | Aa (texto) | moldura | cor.
+          // Padrão moderno: ações rápidas alinhadas à direita, voltar à esquerda.
+          if (!_capturing)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 12,
+              right: 12,
+              child: Row(
+                children: [
+                  _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
+                  const Spacer(),
+                  // Reset zoom — só aparece se houver transformação aplicada.
+                  AnimatedBuilder(
+                    animation: _transformCtrl,
+                    builder: (_, _) {
+                      final isIdentity =
+                          _transformCtrl.value == Matrix4.identity();
+                      if (isIdentity) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _CircleIconBtn(
+                          icon: Icons.center_focus_strong,
+                          onTap: _resetTransform,
+                        ),
+                      );
+                    },
+                  ),
+                  // Botão "Aa" estilizado: o ícone padrão (text_fields)
+                  // não comunica que dá pra adicionar texto. Trocamos por
+                  // um botão maior com label "Aa" (linguagem universal).
+                  _AaTextButton(onTap: _startTextCompose),
+                  const SizedBox(width: 8),
+                  // Botão "scissors" — só aparece quando a mídia é vídeo.
+                  // Abre o StoryVideoTrimScreen pra cortar o trecho desejado.
+                  if (widget.isVideo) ...[
+                    _CircleIconBtn(
+                      icon: Icons.content_cut_rounded,
+                      onTap: () => widget.onTrim(),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  // Botão "salvar no dispositivo" (download).
+                  // Ícone de seta-pra-baixo: padrão Instagram/TikTok.
+                  // Funciona pra foto (com overlays via flatten) e vídeo
+                  // (arquivo cortado, sem overlays). Mostra spinner
+                  // enquanto renderiza o flatten + grava no álbum "Brawe".
+                  _CircleIconBtn(
+                    icon: _isSavingToDevice
+                        ? Icons.hourglass_top_rounded
+                        : Icons.file_download_outlined,
+                    onTap: _isSavingToDevice
+                        ? null
+                        : () => _handleSaveToDevice(),
+                  ),
+                  const SizedBox(width: 8),
+                  _CircleIconBtn(
+                    icon: _frameStyle == 0
+                        ? Icons.crop_din
+                        : (_frameStyle == 1
+                              ? Icons.filter_frames
+                              : Icons.auto_awesome),
+                    onTap: _cycleFrame,
+                  ),
+                  const SizedBox(width: 8),
+                  _CircleIconBtn(
+                    icon: Icons.color_lens_outlined,
+                    onTap: () => _showColorPicker(),
+                  ),
+                ],
+              ),
+            ),
+
+          // Bottom bar — modernizada (Instagram/TikTok 2026):
+          // Não tem mais campo de "caption" inferior (texto vive como overlay
+          // na própria mídia). Em vez disso, uma pill "Seu story" indica
+          // o destino + botão "Compartilhar" pill grande à direita.
+          if (!_capturing)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              child: Row(
+                children: [
+                  _StoryDestinationPill(label: S.of(context).composerYourStory),
+                  const Spacer(),
+                  _ShareButton(
+                    loading: widget.isPublishing,
+                    onPressed: _flattenAndPublish,
+                  ),
+                ],
+              ),
+            ),
+
+          // ── Overlay de composição de texto (estilo Instagram 2026) ──
+          // Layout:
+          //  • Top-right: botões verticais (alinhamento, fundo, "OK")
+          //  • Left side: slider vertical de tamanho da fonte
+          //  • Center: TextField (autofocus, multi-linha, com maxWidth)
+          //  • Bottom: paleta horizontal de cores
+          if (_composingText && !_capturing)
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _commitTextLayer,
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  child: Stack(
+                    children: [
+                      // Centro: campo de texto.
+                      // Largura limitada a 84% da tela — alinhada com a
+                      // largura do _TextLayerView depois de commitado para
+                      // evitar "salto visual" entre composição e camada final.
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: _ComposeTextField(
+                            controller: _composeCtrl,
+                            color: _currentColor,
+                            bgStyle: _composeBgStyle,
+                            align: _composeAlign,
+                            fontScale: _composeFontScale,
+                            maxWidth: size.width * 0.84,
+                            onSubmitted: (_) => _commitTextLayer(),
+                          ),
+                        ),
+                      ),
+
+                      // Topo direito: botões verticais (align / bg / OK).
+                      // GestureDetector pra impedir que o tap no botão
+                      // suba até o overlay externo (que commita a camada).
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 8,
+                        right: 12,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {},
+                          child: Column(
+                            children: [
+                              _CircleIconBtn(
+                                icon: _alignIcon(_composeAlign),
+                                onTap: _cycleComposeAlign,
+                              ),
+                              const SizedBox(height: 8),
+                              _CircleIconBtn(
+                                icon: _composeBgStyle == 0
+                                    ? Icons.format_color_text
+                                    : (_composeBgStyle == 1
+                                          ? Icons.title
+                                          : Icons.text_format),
+                                onTap: () {
+                                  setState(
+                                    () => _composeBgStyle =
+                                        (_composeBgStyle + 1) % 3,
+                                  );
+                                  HapticFeedback.selectionClick();
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              // "OK" pill — atalho explícito pra commitar.
+                              // Toque fora também funciona, mas o pill
+                              // ajuda usuários que não conhecem o gesto.
+                              GestureDetector(
+                                onTap: _commitTextLayer,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    'OK',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Lateral esquerda: slider vertical de tamanho.
-                    // Wrap em GestureDetector pra não commitar ao
-                    // arrastar o slider.
-                    Positioned(
-                      left: 8,
-                      top: MediaQuery.of(context).padding.top + 80,
-                      bottom: 140,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {},
-                        child: _FontSizeSlider(
-                          value: _composeFontScale,
-                          min: _kMinFontScale,
-                          max: _kMaxFontScale,
-                          onChanged: (v) =>
-                              setState(() => _composeFontScale = v),
+                      // Lateral esquerda: slider vertical de tamanho.
+                      // Wrap em GestureDetector pra não commitar ao
+                      // arrastar o slider.
+                      Positioned(
+                        left: 8,
+                        top: MediaQuery.of(context).padding.top + 80,
+                        bottom: 140,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {},
+                          child: _FontSizeSlider(
+                            value: _composeFontScale,
+                            min: _kMinFontScale,
+                            max: _kMaxFontScale,
+                            onChanged: (v) =>
+                                setState(() => _composeFontScale = v),
+                          ),
                         ),
                       ),
-                    ),
 
-                    // Rodapé: paleta de cores horizontal (substitui o
-                    // bottom sheet bruto que tínhamos antes).
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: MediaQuery.of(context).padding.bottom + 24,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {},
-                        child: _InlineColorPalette(
-                          palette: _palette,
-                          selected: _currentColor,
-                          onSelect: (c) =>
-                              setState(() => _currentColor = c),
+                      // Rodapé: paleta de cores horizontal (substitui o
+                      // bottom sheet bruto que tínhamos antes).
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: MediaQuery.of(context).padding.bottom + 24,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {},
+                          child: _InlineColorPalette(
+                            palette: _palette,
+                            selected: _currentColor,
+                            onSelect: (c) => setState(() => _currentColor = c),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-        // Lixeira (aparece enquanto arrasta uma camada de texto).
-        if (_draggingLayerIdx != null && !_capturing)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: MediaQuery.of(context).padding.bottom + 32,
-            child: IgnorePointer(
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  width: _hoverTrash ? 84 : 64,
-                  height: _hoverTrash ? 84 : 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _hoverTrash
-                        ? Colors.redAccent.withValues(alpha: 0.9)
-                        : Colors.black.withValues(alpha: 0.5),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      if (_hoverTrash)
-                        BoxShadow(
-                          color: Colors.redAccent.withValues(alpha: 0.5),
-                          blurRadius: 24,
-                          spreadRadius: 2,
-                        ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: Colors.white,
-                    size: _hoverTrash ? 36 : 28,
+                ),
+              ),
+            ),
+
+          // Lixeira (aparece enquanto arrasta uma camada de texto).
+          if (_draggingLayerIdx != null && !_capturing)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).padding.bottom + 32,
+              child: IgnorePointer(
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    width: _hoverTrash ? 84 : 64,
+                    height: _hoverTrash ? 84 : 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _hoverTrash
+                          ? Colors.redAccent.withValues(alpha: 0.9)
+                          : Colors.black.withValues(alpha: 0.5),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        if (_hoverTrash)
+                          BoxShadow(
+                            color: Colors.redAccent.withValues(alpha: 0.5),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                          ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                      size: _hoverTrash ? 36 : 28,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+        ],
       ),
     );
   }
@@ -2028,15 +2051,14 @@ class _TextLayer {
     Color? color,
     int? bgStyle,
     TextAlign? align,
-  }) =>
-      _TextLayer(
-        text: text,
-        color: color ?? this.color,
-        offset: offset ?? this.offset,
-        scale: scale ?? this.scale,
-        bgStyle: bgStyle ?? this.bgStyle,
-        align: align ?? this.align,
-      );
+  }) => _TextLayer(
+    text: text,
+    color: color ?? this.color,
+    offset: offset ?? this.offset,
+    scale: scale ?? this.scale,
+    bgStyle: bgStyle ?? this.bgStyle,
+    align: align ?? this.align,
+  );
 }
 
 /// Renderiza uma camada de texto com 3 estilos de fundo + alinhamento.
@@ -2048,10 +2070,7 @@ class _TextLayer {
 /// 1 = "plaquinha" preta translúcida
 /// 2 = fundo branco sólido com cor do texto invertida
 class _TextLayerView extends StatelessWidget {
-  const _TextLayerView({
-    required this.layer,
-    required this.maxWidth,
-  });
+  const _TextLayerView({required this.layer, required this.maxWidth});
 
   final _TextLayer layer;
   final double maxWidth;
@@ -2144,7 +2163,9 @@ class _ComposeTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = bgStyle == 2 ? _TextLayerView._invertOnWhite(color) : color;
+    final textColor = bgStyle == 2
+        ? _TextLayerView._invertOnWhite(color)
+        : color;
     final field = TextField(
       controller: controller,
       autofocus: true,
@@ -2211,12 +2232,73 @@ class _ComposeTextField extends StatelessWidget {
 
 // PNG 1x1 transparente (mínimo para criar um arquivo válido).
 final List<int> _kTransparentPngBytes = <int>[
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-  0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
-  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
 ];
 
 // Suppress unused-warning shim
@@ -2250,7 +2332,10 @@ class _SafeAreaGuides extends StatelessWidget {
           left: 0,
           right: 0,
           bottom: bottomGuide,
-          child: _GuideLine(label: S.of(context).composerGuideBottom, alignEnd: true),
+          child: _GuideLine(
+            label: S.of(context).composerGuideBottom,
+            alignEnd: true,
+          ),
         ),
       ],
     );
@@ -2265,8 +2350,9 @@ class _GuideLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         if (!alignEnd)
           Padding(
@@ -2471,8 +2557,11 @@ class _ShareButton extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward_rounded,
-                        color: Colors.white, size: 18),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ],
                 ),
               ),
@@ -2530,9 +2619,11 @@ class _FontSizeSlider extends StatelessWidget {
                   thumbColor: Colors.white,
                   overlayColor: Colors.white.withValues(alpha: 0.14),
                   thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 10),
+                    enabledThumbRadius: 10,
+                  ),
                   overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 18),
+                    overlayRadius: 18,
+                  ),
                 ),
                 child: Slider(
                   value: value.clamp(min, max),
@@ -2588,7 +2679,7 @@ class _InlineColorPalette extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 18),
         itemCount: palette.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
           final c = palette[i];
           final isSelected = c.toARGB32() == selected.toARGB32();

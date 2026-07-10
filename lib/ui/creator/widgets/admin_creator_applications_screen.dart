@@ -52,7 +52,7 @@ class AdminCreatorApplicationsScreen extends ConsumerWidget {
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                     itemCount: page.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (_, i) => _ApplicationTile(
                       item: page.items[i],
                       onTap: () => context.push(
@@ -111,7 +111,7 @@ class _Filters extends ConsumerWidget {
             side: BorderSide(color: context.colors.border),
           );
         },
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
         itemCount: entries.length,
       ),
     );
@@ -144,12 +144,14 @@ class _ApplicationTile extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(item.fullName,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        )),
+                    child: Text(
+                      item.fullName,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
                   ),
                   CreatorStatusChip(
                     status: item.status,
@@ -159,37 +161,51 @@ class _ApplicationTile extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text('@${item.username} · ${item.country} · ${item.niche.name}',
-                  style: TextStyle(
-                    color: context.colors.textSecondary,
-                    fontSize: 12.5,
-                  )),
+              Text(
+                '@${item.username} · ${item.country} · ${item.niche.name}',
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 12.5,
+                ),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
                   if (item.suggestedTier != null)
                     CreatorTierBadge(
-                      tier: item.suggestedTier!, size: 18, showLabel: true,
+                      tier: item.suggestedTier!,
+                      size: 18,
+                      showLabel: true,
                     ),
                   const Spacer(),
-                  Icon(Icons.person_outline,
-                      size: 14, color: context.colors.textTertiary),
+                  Icon(
+                    Icons.person_outline,
+                    size: 14,
+                    color: context.colors.textTertiary,
+                  ),
                   const SizedBox(width: 4),
-                  Text('${item.followersCount}',
+                  Text(
+                    '${item.followersCount}',
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (item.classifierScore != null) ...[
+                    const SizedBox(width: 14),
+                    Icon(
+                      Icons.analytics_outlined,
+                      size: 14,
+                      color: context.colors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${item.classifierScore}',
                       style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 12,
-                      )),
-                  if (item.classifierScore != null) ...[
-                    const SizedBox(width: 14),
-                    Icon(Icons.analytics_outlined,
-                        size: 14, color: context.colors.textTertiary),
-                    const SizedBox(width: 4),
-                    Text('${item.classifierScore}',
-                        style: TextStyle(
-                          color: context.colors.textSecondary,
-                          fontSize: 12,
-                        )),
+                      ),
+                    ),
                   ],
                 ],
               ),

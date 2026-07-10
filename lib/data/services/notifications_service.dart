@@ -21,11 +21,7 @@ class NotificationsService {
   }) async {
     final r = await _dio.get(
       '/notifications',
-      queryParameters: {
-        'page': page,
-        'limit': limit,
-        if (isRead != null) 'is_read': isRead,
-      },
+      queryParameters: {'page': page, 'limit': limit, 'is_read': ?isRead},
     );
     final data = r.data;
     if (data is Map<String, dynamic>) return data;

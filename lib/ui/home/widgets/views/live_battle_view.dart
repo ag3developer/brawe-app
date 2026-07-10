@@ -66,7 +66,9 @@ class LiveBattleView extends StatelessWidget {
 
           // ── Overlay escuro no rodapé para legibilidade ──────────────
           Positioned(
-            left: 0, right: 0, bottom: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             height: 200,
             child: Container(
               decoration: const BoxDecoration(
@@ -98,7 +100,8 @@ class LiveBattleView extends StatelessWidget {
 
           // ── Placar + VS + barra de progresso (centro) ───────────────
           Positioned(
-            left: 0, right: 0,
+            left: 0,
+            right: 0,
             bottom: 130,
             child: _BattleBar(item: item),
           ),
@@ -120,17 +123,22 @@ class LiveBattleView extends StatelessWidget {
           // ── Botão presente misterioso (centro-bottom) ────────────────
           Positioned(
             bottom: 56,
-            left: 0, right: 0,
+            left: 0,
+            right: 0,
             child: Center(child: _GiftButton()),
           ),
 
           // ── "Toque para assistir" hint ───────────────────────────────
           Positioned(
             bottom: 16,
-            left: 0, right: 0,
+            left: 0,
+            right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),
@@ -164,8 +172,9 @@ class _HalfPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glowColor =
-        side == _Side.left ? AppColors.electricPurple : AppColors.coolCyan;
+    final glowColor = side == _Side.left
+        ? AppColors.electricPurple
+        : AppColors.coolCyan;
 
     return Stack(
       fit: StackFit.expand,
@@ -173,10 +182,13 @@ class _HalfPreview extends StatelessWidget {
         Image.network(
           imageUrl,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Container(
+          errorBuilder: (_, _, _) => Container(
             color: AppColors.slate,
-            child: const Icon(Icons.videocam_off,
-                color: AppColors.coolGray, size: 40),
+            child: const Icon(
+              Icons.videocam_off,
+              color: AppColors.coolGray,
+              size: 40,
+            ),
           ),
         ),
         // Gradiente lateral suave
@@ -249,8 +261,10 @@ class _BattleBar extends StatelessWidget {
               ),
               // VS pill
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppColors.electricPurple, AppColors.mutedRed],
@@ -321,10 +335,8 @@ class _TimerPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final m =
-        remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s =
-        remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final m = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -358,8 +370,7 @@ class _StreamerTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        side == 'A' ? AppColors.electricPurple : AppColors.coolCyan;
+    final color = side == 'A' ? AppColors.electricPurple : AppColors.coolCyan;
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
       decoration: BoxDecoration(
@@ -409,8 +420,7 @@ class _GiftButton extends StatelessWidget {
     return GestureDetector(
       onTap: () => _showGiftSheet(context),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFFFF9500), Color(0xFFFF5A6B)],
@@ -427,7 +437,11 @@ class _GiftButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 20),
+            const Icon(
+              Icons.card_giftcard_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               S.of(context).liveBattleMysteryGift,
@@ -478,7 +492,8 @@ class _GiftSheetState extends State<_GiftSheet> {
         children: [
           // Handle
           Container(
-            width: 40, height: 4,
+            width: 40,
+            height: 4,
             margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
               color: Colors.white24,
@@ -487,7 +502,8 @@ class _GiftSheetState extends State<_GiftSheet> {
           ),
           // Ícone
           Container(
-            width: 64, height: 64,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFFF9500), Color(0xFFFF5A6B)],
@@ -519,7 +535,11 @@ class _GiftSheetState extends State<_GiftSheet> {
           Text(
             s.giftMysterySubtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.coolGray, fontSize: 13, height: 1.5),
+            style: const TextStyle(
+              color: AppColors.coolGray,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 24),
           // Toggle anônimo
@@ -538,11 +558,8 @@ class _GiftSheetState extends State<_GiftSheet> {
                 style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
               subtitle: Text(
-                _anonymous
-                    ? s.giftAnonNameHidden
-                    : s.giftAnonNameVisible,
-                style: const TextStyle(
-                    color: AppColors.coolGray, fontSize: 12),
+                _anonymous ? s.giftAnonNameHidden : s.giftAnonNameVisible,
+                style: const TextStyle(color: AppColors.coolGray, fontSize: 12),
               ),
               secondary: Icon(
                 _anonymous ? Icons.visibility_off : Icons.visibility,
@@ -575,9 +592,7 @@ class _GiftSheetState extends State<_GiftSheet> {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(_anonymous
-                        ? s.giftSentAnon
-                        : s.giftSent),
+                    content: Text(_anonymous ? s.giftSentAnon : s.giftSent),
                     backgroundColor: const Color(0xFFFF9500),
                     duration: const Duration(seconds: 2),
                   ),

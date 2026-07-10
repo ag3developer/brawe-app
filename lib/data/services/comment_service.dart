@@ -40,23 +40,28 @@ class CommentDto {
     return CommentDto(
       id: json['id']?.toString() ?? '',
       postId: json['post_id']?.toString() ?? json['postId']?.toString() ?? '',
-      authorId: (json['author'] as Map?)?['id']?.toString() ??
+      authorId:
+          (json['author'] as Map?)?['id']?.toString() ??
           json['author_id']?.toString() ??
           '',
-      authorName: (json['author'] as Map?)?['name']?.toString() ??
+      authorName:
+          (json['author'] as Map?)?['name']?.toString() ??
           json['author_name']?.toString() ??
           '',
-      authorUsername: (json['author'] as Map?)?['username']?.toString() ??
+      authorUsername:
+          (json['author'] as Map?)?['username']?.toString() ??
           json['author_username']?.toString() ??
           '',
-      authorAvatarUrl: (json['author'] as Map?)?['avatar_url']?.toString() ??
+      authorAvatarUrl:
+          (json['author'] as Map?)?['avatar_url']?.toString() ??
           json['author_avatar_url']?.toString(),
       authorIsVerified:
           (json['author'] as Map?)?['is_verified'] as bool? ?? false,
       content: json['content']?.toString() ?? '',
       likesCount: (json['likes_count'] as num?)?.toInt() ?? 0,
       userLiked: json['user_liked'] as bool? ?? false,
-      createdAt: json['created_at']?.toString() ?? DateTime.now().toIso8601String(),
+      createdAt:
+          json['created_at']?.toString() ?? DateTime.now().toIso8601String(),
       parentId: json['parent_id']?.toString(),
       replies: rawReplies
           .map((r) => CommentDto.fromJson(r as Map<String, dynamic>))
@@ -74,8 +79,11 @@ class CommentService {
   final Dio _dio;
   CommentService(this._dio);
 
-  Future<List<CommentDto>> getComments(String postId,
-      {int limit = 50, int offset = 0}) async {
+  Future<List<CommentDto>> getComments(
+    String postId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
     final response = await _dio.get(
       '/posts/$postId/comments',
       queryParameters: {'limit': limit, 'offset': offset},
@@ -89,15 +97,17 @@ class CommentService {
         .toList();
   }
 
-  Future<CommentDto> addComment(String postId, String content,
-      {String? parentId}) async {
-    final body = <String, dynamic>{
-      'content': content,
-      if (parentId != null) 'parent_id': parentId,
-    };
+  Future<CommentDto> addComment(
+    String postId,
+    String content, {
+    String? parentId,
+  }) async {
+    final body = <String, dynamic>{'content': content, 'parent_id': ?parentId};
     final response = await _dio.post('/posts/$postId/comments', data: body);
     final data = response.data as Map<String, dynamic>;
-    return CommentDto.fromJson(data['comment'] as Map<String, dynamic>? ?? data);
+    return CommentDto.fromJson(
+      data['comment'] as Map<String, dynamic>? ?? data,
+    );
   }
 
   Future<void> likeComment(String commentId) async {

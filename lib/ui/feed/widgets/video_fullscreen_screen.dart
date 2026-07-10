@@ -83,15 +83,19 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
         _loading = false;
       });
     } on Failure catch (_) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = true;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = true;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() {
-        _loading = false;
-        _error = true;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = true;
+        });
+      }
     }
   }
 
@@ -139,8 +143,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
     setState(() {
       _post = post.copyWith(
         userLiked: !post.userLiked,
-        likesCount:
-            post.userLiked ? post.likesCount - 1 : post.likesCount + 1,
+        likesCount: post.userLiked ? post.likesCount - 1 : post.likesCount + 1,
       );
     });
   }
@@ -154,16 +157,18 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
           .read(feedViewModelProvider.notifier)
           .reactToPost(post.id, reaction.key);
       if (!post.userLiked) {
-        setState(() => _post = post.copyWith(
-              userLiked: true,
-              likesCount: post.likesCount + 1,
-            ));
+        setState(
+          () => _post = post.copyWith(
+            userLiked: true,
+            likesCount: post.likesCount + 1,
+          ),
+        );
       }
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedCannotLike)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedCannotLike)));
     }
   }
 
@@ -186,10 +191,8 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ShareToChatSheet(
-        postId: post.id,
-        postCaption: post.content,
-      ),
+      builder: (_) =>
+          ShareToChatSheet(postId: post.id, postCaption: post.content),
     );
   }
 
@@ -214,9 +217,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
               // Vídeo
               if (_loading)
                 const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFFA855F7),
-                  ),
+                  child: CircularProgressIndicator(color: Color(0xFFA855F7)),
                 )
               else if (_error || _ctrl == null)
                 Center(
@@ -303,8 +304,10 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
                       final size = MediaQuery.of(context).size;
                       final picked = await showReactionsBar(
                         context,
-                        globalPosition:
-                            Offset(size.width - 48, size.height * 0.5),
+                        globalPosition: Offset(
+                          size.width - 48,
+                          size.height * 0.5,
+                        ),
                       );
                       if (picked != null) _onReact(picked);
                     },
@@ -338,10 +341,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
                                 fontSize: 14,
                                 height: 1.4,
                                 shadows: [
-                                  Shadow(
-                                    color: Colors.black54,
-                                    blurRadius: 6,
-                                  ),
+                                  Shadow(color: Colors.black54, blurRadius: 6),
                                 ],
                               ),
                             ),
@@ -496,9 +496,7 @@ class _RailItem extends StatelessWidget {
             icon,
             color: color,
             size: 34,
-            shadows: const [
-              Shadow(color: Colors.black54, blurRadius: 6),
-            ],
+            shadows: const [Shadow(color: Colors.black54, blurRadius: 6)],
           ),
         ),
         const SizedBox(height: 4),

@@ -25,10 +25,12 @@ class VibeSnapshot {
   final int batteryLevel;
 
   VibeStatus get overall {
-    if (network == VibeStatus.bad || battery == VibeStatus.bad)
+    if (network == VibeStatus.bad || battery == VibeStatus.bad) {
       return VibeStatus.bad;
-    if (network == VibeStatus.warning || battery == VibeStatus.warning)
+    }
+    if (network == VibeStatus.warning || battery == VibeStatus.warning) {
       return VibeStatus.warning;
+    }
     return VibeStatus.good;
   }
 }

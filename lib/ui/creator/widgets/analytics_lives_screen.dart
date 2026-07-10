@@ -1,16 +1,20 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:chewie/chewie.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gal/gal.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../data/services/analytics_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../feed/widgets/story_video_trim_screen.dart';
 import '../view_models/creator_analytics_view_model.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -691,21 +695,6 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
           ),
           overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          // Copiar URL para debug
-          IconButton(
-            icon: const Icon(LucideIcons.copy, color: Colors.white54, size: 18),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: widget.overrideUrl));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('URL copiada'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: Center(
         child: _error
@@ -767,45 +756,154 @@ class _DownloadSheet extends ConsumerStatefulWidget {
   ConsumerState<_DownloadSheet> createState() => _DownloadSheetState();
 }
 
-class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
-  bool _loading = false;
-  String? _status;
+/// Fases do fluxo de download.
+enum _DlPhase { idle, downloading, converting, done, error }
 
-  Future<void> _download(String quality) async {
+class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
+  static const _green = Color(0xFF10B981);
+
+  _DlPhase _phase = _DlPhase.idle;
+  double _progress = 0.0;
+  String? _errorMsg;
+  String _selectedQuality = 'high';
+  File? _downloadedFile;
+  CancelToken? _cancelToken;
+
+  @override
+  void dispose() {
+    _cancelToken?.cancel('sheet_closed');
+    super.dispose();
+  }
+
+  Future<void> _startDownload(String quality) async {
+    _selectedQuality = quality;
+    _cancelToken = CancelToken();
     setState(() {
-      _loading = true;
-      _status = 'Preparando download...';
+      _phase = _DlPhase.downloading;
+      _progress = 0.0;
+      _errorMsg = null;
     });
+
     try {
       final service = ref.read(analyticsServiceProvider);
-      final result = await service.getLiveDownload(
+      final dir = await getTemporaryDirectory();
+      final safeName =
+          'live_${widget.item.id}_${quality}_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      final savePath = '${dir.path}/$safeName';
+
+      final result = await service.downloadLiveFile(
         widget.item.id,
         quality: quality,
+        savePath: savePath,
+        cancelToken: _cancelToken,
+        onProgress: (p) {
+          if (mounted) setState(() => _progress = p.clamp(0.0, 1.0));
+        },
       );
+
       if (!mounted) return;
-
-      final success = result['success'] == true;
-      final data = result['data'] as Map<String, dynamic>?;
-
-      if (success && data != null) {
-        final url = data['download_url']?.toString() ?? '';
-        final filename = data['filename']?.toString() ?? 'live.mp4';
-        if (url.isNotEmpty) {
-          // Copiar URL para área de transferência — o usuário pode baixar no browser
-          await Clipboard.setData(ClipboardData(text: url));
-          setState(
-            () => _status =
-                '✅ URL copiada! Abra no browser para baixar "$filename"',
-          );
-        }
-      } else {
-        setState(() => _status = '❌ Download não disponível para esta live');
+      final file = File(savePath);
+      if (!await file.exists()) {
+        throw Exception('file_missing');
       }
+
+      _downloadedFile = file;
+      assert(result.isNotEmpty);
+
+      await _saveToGallery(file);
     } catch (e) {
-      if (mounted) setState(() => _status = '❌ Erro: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      if (!mounted) return;
+      if (e is DioException && CancelToken.isCancel(e)) return;
+      setState(() {
+        _phase = _DlPhase.error;
+        _errorMsg = _friendlyError(e);
+      });
     }
+  }
+
+  Future<void> _editAndConvert() async {
+    final file = _downloadedFile;
+    if (file == null) return;
+
+    final edited = await StoryVideoTrimScreen.push(
+      context,
+      file: file,
+      maxDuration: const Duration(hours: 2),
+    );
+
+    if (!mounted || edited == null) return;
+    setState(() => _phase = _DlPhase.converting);
+    await _saveToGallery(edited);
+  }
+
+  Future<void> _saveToGallery(File file) async {
+    setState(() => _phase = _DlPhase.converting);
+    try {
+      final hasAccess = await Gal.hasAccess(toAlbum: false);
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess(toAlbum: false);
+        if (!granted) {
+          if (!mounted) return;
+          setState(() {
+            _phase = _DlPhase.error;
+            _errorMsg = S.of(context).composerSavePermissionDenied;
+          });
+          return;
+        }
+      }
+
+      await Gal.putVideo(file.path, album: 'Brawe');
+      if (!mounted) return;
+      setState(() => _phase = _DlPhase.done);
+    } on GalException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _phase = _DlPhase.error;
+        _errorMsg = e.type == GalExceptionType.accessDenied
+            ? S.of(context).composerSavePermissionDenied
+            : S.of(context).composerSaveError;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _phase = _DlPhase.error;
+        _errorMsg = _friendlyError(e);
+      });
+    }
+  }
+
+  String _friendlyError(Object e) {
+    if (e is DioException) {
+      final code = e.response?.statusCode;
+      if (code == 404) {
+        return 'O arquivo ainda está sendo preparado pelo servidor. '
+            'Tente novamente em alguns minutos.';
+      }
+      if (code == 410) {
+        return 'O replay expirou (disponível por 30 dias após a live).';
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return 'Conexão lenta. Verifique sua internet e tente novamente.';
+      }
+    }
+    final msg = e.toString();
+    if (msg.contains('download_processing')) {
+      return 'O vídeo está sendo preparado para download. '
+          'Isso leva alguns minutos após a live. Tente novamente em breve.';
+    }
+    if (msg.contains('download_unavailable')) {
+      return 'Download não disponível para esta live.';
+    }
+    return 'Não foi possível concluir. Tente novamente.';
+  }
+
+  void _reset() {
+    setState(() {
+      _phase = _DlPhase.idle;
+      _progress = 0.0;
+      _errorMsg = null;
+    });
   }
 
   @override
@@ -833,11 +931,7 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(
-                LucideIcons.download,
-                color: Color(0xFF10B981),
-                size: 20,
-              ),
+              const Icon(LucideIcons.download, color: _green, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Baixar Live',
@@ -857,60 +951,242 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 20),
-
-          if (_loading)
-            const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Color(0xFF10B981),
-              ),
-            )
-          else if (_status != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                _status!,
-                style: TextStyle(color: textPrimary, fontSize: 13),
-              ),
-            ),
-          ] else ...[
-            Text(
-              'Selecione a qualidade:',
-              style: TextStyle(color: textSec, fontSize: 12),
-            ),
-            const SizedBox(height: 10),
-            _QualityButton(
-              label: '1080p (Alta qualidade)',
-              icon: LucideIcons.video,
-              color: const Color(0xFF8B5CF6),
-              onTap: () => _download('high'),
-            ),
-            const SizedBox(height: 8),
-            _QualityButton(
-              label: '720p (Média qualidade)',
-              icon: LucideIcons.video,
-              color: const Color(0xFF3B82F6),
-              onTap: () => _download('medium'),
-            ),
-            const SizedBox(height: 8),
-            _QualityButton(
-              label: '480p (Menor tamanho)',
-              icon: LucideIcons.video,
-              color: const Color(0xFF10B981),
-              onTap: () => _download('low'),
-            ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            'O link será copiado para a área de transferência.',
-            style: TextStyle(color: textSec, fontSize: 11),
-          ),
+          switch (_phase) {
+            _DlPhase.idle => _buildQualityPicker(textSec),
+            _DlPhase.downloading => _buildProgress(textPrimary, textSec),
+            _DlPhase.converting => _buildConverting(textPrimary, textSec),
+            _DlPhase.done => _buildDone(textPrimary, textSec),
+            _DlPhase.error => _buildError(textPrimary),
+          },
         ],
       ),
+    );
+  }
+
+  Widget _buildQualityPicker(Color textSec) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Selecione a qualidade:',
+          style: TextStyle(color: textSec, fontSize: 12),
+        ),
+        const SizedBox(height: 10),
+        _QualityButton(
+          label: '1080p (Alta qualidade)',
+          icon: LucideIcons.video,
+          color: const Color(0xFF8B5CF6),
+          onTap: () => _startDownload('high'),
+        ),
+        const SizedBox(height: 8),
+        _QualityButton(
+          label: '720p (Média qualidade)',
+          icon: LucideIcons.video,
+          color: const Color(0xFF3B82F6),
+          onTap: () => _startDownload('medium'),
+        ),
+        const SizedBox(height: 8),
+        _QualityButton(
+          label: '480p (Menor tamanho)',
+          icon: LucideIcons.video,
+          color: _green,
+          onTap: () => _startDownload('low'),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Icon(LucideIcons.smartphone, size: 13, color: textSec),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'O vídeo será baixado e salvo direto na galeria.',
+                style: TextStyle(color: textSec, fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgress(Color textPrimary, Color textSec) {
+    final pct = (_progress * 100).clamp(0, 100).toStringAsFixed(0);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Baixando…',
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              '$pct%',
+              style: const TextStyle(
+                color: _green,
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: _progress > 0 ? _progress : null,
+            minHeight: 8,
+            backgroundColor: _green.withValues(alpha: 0.12),
+            valueColor: const AlwaysStoppedAnimation(_green),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              _cancelToken?.cancel('user_cancelled');
+              _reset();
+            },
+            icon: const Icon(LucideIcons.x, size: 14),
+            label: const Text('Cancelar'),
+            style: TextButton.styleFrom(foregroundColor: textSec),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConverting(Color textPrimary, Color textSec) {
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        const CircularProgressIndicator(strokeWidth: 2.5, color: _green),
+        const SizedBox(height: 16),
+        Text(
+          'Preparando para a galeria…',
+          style: TextStyle(
+            color: textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Convertendo para o formato do dispositivo.',
+          style: TextStyle(color: textSec, fontSize: 12),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _buildDone(Color textPrimary, Color textSec) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _green.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.checkCircle2, color: _green, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Salvo na galeria (álbum “Brawe”).',
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (_downloadedFile != null)
+          OutlinedButton.icon(
+            onPressed: _editAndConvert,
+            icon: const Icon(LucideIcons.scissors, size: 16),
+            label: const Text('Cortar / editar vídeo'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.electricPurple,
+              side: BorderSide(
+                color: AppColors.electricPurple.withValues(alpha: 0.5),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        const SizedBox(height: 10),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: FilledButton.styleFrom(
+            backgroundColor: _green,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text('Concluir'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError(Color textPrimary) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                LucideIcons.alertTriangle,
+                color: Colors.redAccent,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _errorMsg ?? 'Falha ao baixar.',
+                  style: TextStyle(color: textPrimary, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: () => _startDownload(_selectedQuality),
+          icon: const Icon(LucideIcons.refreshCw, size: 16),
+          label: const Text('Tentar novamente'),
+          style: FilledButton.styleFrom(
+            backgroundColor: _green,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

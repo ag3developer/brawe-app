@@ -67,7 +67,7 @@ class _GiftersSectionState extends ConsumerState<GiftersSection> {
             padding: EdgeInsets.symmetric(vertical: 32),
             child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
           ),
-          error: (_, __) => _ErrorBox(
+          error: (_, _) => _ErrorBox(
             message: s.giftersLoadError,
             onRetry: () =>
                 ref.invalidate(giftersProvider(direction: _direction)),
@@ -81,10 +81,7 @@ class _GiftersSectionState extends ConsumerState<GiftersSection> {
                 for (final g in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _GifterCard(
-                      gifter: g,
-                      direction: _direction,
-                    ),
+                    child: _GifterCard(gifter: g, direction: _direction),
                   ),
               ],
             );
@@ -116,9 +113,7 @@ class _GiftersTabs extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected
-                ? AppColors.electricPurple
-                : scheme.surface,
+            color: selected ? AppColors.electricPurple : scheme.surface,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
@@ -220,8 +215,9 @@ class _GifterCard extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: scheme.onSurface
-                                      .withValues(alpha: 0.55),
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.55,
+                                  ),
                                 ),
                               ),
                             ),
@@ -234,8 +230,9 @@ class _GifterCard extends ConsumerWidget {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.electricPurple
-                                    .withValues(alpha: 0.14),
+                                color: AppColors.electricPurple.withValues(
+                                  alpha: 0.14,
+                                ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -352,11 +349,14 @@ class _GifterCard extends ConsumerWidget {
           .read(chatRepositoryProvider)
           .startConversation(participantId: gifter.userId);
       if (!context.mounted) return;
-      context.push('/chat/$convId', extra: {
-        'participantName': gifter.displayName,
-        'participantAvatarUrl': gifter.avatarUrl,
-        'participantId': gifter.userId,
-      });
+      context.push(
+        '/chat/$convId',
+        extra: {
+          'participantName': gifter.displayName,
+          'participantAvatarUrl': gifter.avatarUrl,
+          'participantId': gifter.userId,
+        },
+      );
     } catch (_) {
       messenger.showSnackBar(
         SnackBar(content: Text(S.of(context).giftersLoadError)),
@@ -396,10 +396,7 @@ class _Avatar extends StatelessWidget {
         color: AppColors.electricPurple.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         image: hasUrl
-            ? DecorationImage(
-                image: NetworkImage(url!),
-                fit: BoxFit.cover,
-              )
+            ? DecorationImage(image: NetworkImage(url!), fit: BoxFit.cover)
             : null,
       ),
       child: hasUrl
@@ -450,8 +447,9 @@ class _GifterTopGiftBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.5),
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -466,10 +464,7 @@ class _GifterTopGiftBadge extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               '×${gift.quantity}',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
             ),
           ],
         ),
@@ -497,14 +492,15 @@ class _ActionBtn extends StatelessWidget {
     final fg = filled
         ? Colors.white
         : muted
-            ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
-            : AppColors.electricPurple;
+        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
+        : AppColors.electricPurple;
     final bg = filled
         ? AppColors.electricPurple
         : muted
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-                .withValues(alpha: 0.4)
-            : AppColors.electricPurple.withValues(alpha: 0.10);
+        ? Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
+        : AppColors.electricPurple.withValues(alpha: 0.10);
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(10),
@@ -562,7 +558,7 @@ class _EmptyView extends StatelessWidget {
                 : 'assets/images/illustrations/coin_3d.png',
             width: 80,
             height: 80,
-            errorBuilder: (_, __, ___) => const Icon(
+            errorBuilder: (_, _, _) => const Icon(
               Icons.card_giftcard_outlined,
               size: 60,
               color: AppColors.electricPurple,
@@ -570,20 +566,13 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            isReceived
-                ? s.giftersEmptyReceivedTitle
-                : s.giftersEmptySentTitle,
+            isReceived ? s.giftersEmptyReceivedTitle : s.giftersEmptySentTitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
           ),
           const SizedBox(height: 6),
           Text(
-            isReceived
-                ? s.giftersEmptyReceivedBody
-                : s.giftersEmptySentBody,
+            isReceived ? s.giftersEmptyReceivedBody : s.giftersEmptySentBody,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
@@ -656,10 +645,9 @@ class GifterDetailSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final async = ref.watch(gifterDetailsProvider(
-      userId: userId,
-      direction: direction,
-    ));
+    final async = ref.watch(
+      gifterDetailsProvider(userId: userId, direction: direction),
+    );
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.7,
@@ -667,10 +655,9 @@ class GifterDetailSheet extends ConsumerWidget {
       maxChildSize: 0.92,
       builder: (_, controller) {
         return async.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          error: (_, __) => Center(
+          loading: () =>
+              const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          error: (_, _) => Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Text(s.giftersLoadError),
@@ -726,8 +713,7 @@ class GifterDetailSheet extends ConsumerWidget {
                               '@${g.username}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: scheme.onSurface
-                                    .withValues(alpha: 0.55),
+                                color: scheme.onSurface.withValues(alpha: 0.55),
                               ),
                             ),
                         ],
@@ -758,8 +744,7 @@ class GifterDetailSheet extends ConsumerWidget {
                                   : s.giftersDetailTotalSent,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: scheme.onSurface
-                                    .withValues(alpha: 0.6),
+                                color: scheme.onSurface.withValues(alpha: 0.6),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -794,8 +779,7 @@ class GifterDetailSheet extends ConsumerWidget {
                             s.giftersGiftsCount(g.giftCount),
                             style: TextStyle(
                               fontSize: 11,
-                              color: scheme.onSurface
-                                  .withValues(alpha: 0.6),
+                              color: scheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],

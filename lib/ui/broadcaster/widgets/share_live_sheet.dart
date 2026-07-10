@@ -113,11 +113,13 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
 
   List<FollowUser> get _filtered {
     if (_query.isEmpty) return _followers;
-    return _followers.where((p) {
-      final n = (p.displayName ?? '').toLowerCase();
-      final u = p.username.toLowerCase();
-      return n.contains(_query) || u.contains(_query);
-    }).toList(growable: false);
+    return _followers
+        .where((p) {
+          final n = (p.displayName ?? '').toLowerCase();
+          final u = p.username.toLowerCase();
+          return n.contains(_query) || u.contains(_query);
+        })
+        .toList(growable: false);
   }
 
   void _toggle(String userId) {
@@ -192,8 +194,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                           ),
                         )
                       : _error != null
-                          ? _errorState()
-                          : _list(scrollController),
+                      ? _errorState()
+                      : _list(scrollController),
                 ),
                 if (_selectedUserIds.isNotEmpty) _noteBar(),
                 _bottomActions(),
@@ -206,29 +208,29 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   }
 
   Widget _grabber() => Container(
-        margin: const EdgeInsets.only(top: 8),
-        width: 40,
-        height: 4,
-        decoration: BoxDecoration(
-          color: AppColors.coolGray.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
+    margin: const EdgeInsets.only(top: 8),
+    width: 40,
+    height: 4,
+    decoration: BoxDecoration(
+      color: AppColors.coolGray.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 
   Widget _header() => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            S.of(context).shareLiveTitle,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+    child: Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        S.of(context).shareLiveTitle,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _livePreview() {
     return Container(
@@ -250,12 +252,13 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                 SizedBox(
                   width: 56,
                   height: 56,
-                  child: widget.thumbnailUrl != null &&
+                  child:
+                      widget.thumbnailUrl != null &&
                           widget.thumbnailUrl!.isNotEmpty
                       ? Image.network(
                           widget.thumbnailUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _previewFallback(),
+                          errorBuilder: (_, _, _) => _previewFallback(),
                         )
                       : _previewFallback(),
                 ),
@@ -264,7 +267,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                   left: 4,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.mutedRed,
                       borderRadius: BorderRadius.circular(3),
@@ -315,10 +320,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   }
 
   Widget _previewFallback() => Container(
-        color: AppColors.deepBlue,
-        child: const Icon(Icons.videocam_outlined,
-            color: Colors.white54, size: 24),
-      );
+    color: AppColors.deepBlue,
+    child: const Icon(Icons.videocam_outlined, color: Colors.white54, size: 24),
+  );
 
   Widget _search() {
     return Padding(
@@ -348,8 +352,10 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_error ?? s.shareLiveErrorGeneric,
-              style: const TextStyle(color: AppColors.coolGray)),
+          Text(
+            _error ?? s.shareLiveErrorGeneric,
+            style: const TextStyle(color: AppColors.coolGray),
+          ),
           const SizedBox(height: 8),
           TextButton(onPressed: _load, child: Text(s.shareLiveRetry)),
         ],
@@ -404,8 +410,10 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
           hintStyle: const TextStyle(color: AppColors.coolGray),
           filled: true,
           fillColor: AppColors.slate,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -429,8 +437,9 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
             onPressed: hasSelection && !_sending ? _send : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.electricPurple,
-              disabledBackgroundColor:
-                  AppColors.electricPurple.withValues(alpha: 0.3),
+              disabledBackgroundColor: AppColors.electricPurple.withValues(
+                alpha: 0.3,
+              ),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -491,8 +500,7 @@ class _RecipientTile extends StatelessWidget {
                   ? NetworkImage(avatarUrl!)
                   : null,
               child: (avatarUrl == null || avatarUrl!.isEmpty)
-                  ? const Icon(Icons.person,
-                      color: Colors.white54, size: 22)
+                  ? const Icon(Icons.person, color: Colors.white54, size: 22)
                   : null,
             ),
             const SizedBox(width: 12),

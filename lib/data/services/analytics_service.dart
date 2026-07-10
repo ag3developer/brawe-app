@@ -167,8 +167,86 @@ class AnalyticsService {
     final r = await _dio.get<Map<String, dynamic>>(
       '/analytics/live-history/$roomId/download',
       queryParameters: {'quality': quality},
+      // 202 = MP4 ainda sendo preparado pelo Mux. Não é erro de rede;
+      // deixamos passar para tratar como "processando" no chamador.
+      options: Options(validateStatus: (s) => s != null && s < 500),
     );
-    return r.data ?? {};
+    // Propaga o status para o chamador diferenciar 202 (processando)
+    // de 200 (pronto) e 4xx (indisponível).
+    final data = r.data ?? <String, dynamic>{};
+    return {...data, '_statusCode': r.statusCode};
+  }
+
+  /// Baixa o MP4 da live diretamente para [savePath], reportando o
+  /// progresso via [onProgress] (0.0 → 1.0).
+  ///
+  /// Fluxo:
+  ///   1. Resolve a `download_url` via [getLiveDownload].
+  ///   2. Faz o streaming do arquivo com `dio.download` (chunked),
+  ///      emitindo o percentual recebido enquanto baixa.
+  ///
+  /// A URL retornada pelo backend aponta para um MP4 remoto (Mux) já
+  /// legível pela maioria dos players — a conversão para um formato
+  /// 100% compatível com o dispositivo é feita depois, na etapa de
+  /// edição/recorte nativa (video_trimmer).
+  ///
+  /// Retorna `{ filename, resolution, url }` em caso de sucesso.
+  /// Lança [Exception] se a URL não estiver disponível.
+  Future<Map<String, dynamic>> downloadLiveFile(
+    String roomId, {
+    String quality = 'high',
+    required String savePath,
+    void Function(double progress)? onProgress,
+    CancelToken? cancelToken,
+  }) async {
+    final meta = await getLiveDownload(roomId, quality: quality);
+    final statusCode = meta['_statusCode'] as int?;
+
+    // 202 → o MP4 ainda está sendo gerado pelo Mux (a solicitação de
+    // geração já foi disparada no backend). Sinaliza "processando".
+    if (statusCode == 202) {
+      throw Exception('download_processing');
+    }
+
+    final success = meta['success'] == true;
+    final data = meta['data'] as Map<String, dynamic>?;
+    final url = data?['download_url']?.toString() ?? '';
+
+    if (!success || url.isEmpty) {
+      throw Exception('download_unavailable');
+    }
+
+    // Baixa a URL externa (Mux) com uma instância Dio LIMPA — sem os
+    // interceptors da API interna, que injetavam o header Authorization
+    // Bearer (indevido para um CDN externo) em todas as requisições.
+    final plainDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 5),
+        followRedirects: true,
+      ),
+    );
+
+    try {
+      await plainDio.download(
+        url,
+        savePath,
+        cancelToken: cancelToken,
+        onReceiveProgress: (received, total) {
+          if (total > 0 && onProgress != null) {
+            onProgress(received / total);
+          }
+        },
+      );
+    } finally {
+      plainDio.close();
+    }
+
+    return {
+      'filename': data?['filename']?.toString() ?? 'live_$roomId.mp4',
+      'resolution': data?['resolution']?.toString() ?? quality,
+      'url': url,
+    };
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────
