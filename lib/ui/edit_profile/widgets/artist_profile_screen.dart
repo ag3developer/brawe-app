@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/sound_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -520,7 +520,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _divider(context),
                       _platformRow(
                         context: context,
-                        icon: LucideIcons.youtube,
+                        icon: LucideIcons.globe,
                         color: const Color(0xFFFF0000),
                         label: 'YouTube Music',
                         ctrl: _youtubeCtrl,

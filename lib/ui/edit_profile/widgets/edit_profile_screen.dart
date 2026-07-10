@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -346,7 +346,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
               title: s.editProfileSectionSocial,
               children: [
                 _SocialRow(
-                  icon: LucideIcons.instagram,
+                  icon: LucideIcons.globe,
                   color: const Color(0xFFE1306C),
                   label: 'Instagram',
                   controller: _instaCtrl,
@@ -354,7 +354,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 ),
                 _RowDivider(),
                 _SocialRow(
-                  icon: LucideIcons.twitter,
+                  icon: LucideIcons.globe,
                   color: const Color(0xFF1DA1F2),
                   label: 'X / Twitter',
                   controller: _twitterCtrl,
@@ -370,7 +370,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 ),
                 _RowDivider(),
                 _SocialRow(
-                  icon: LucideIcons.youtube,
+                  icon: LucideIcons.globe,
                   color: const Color(0xFFFF0000),
                   label: 'YouTube',
                   controller: _ytCtrl,

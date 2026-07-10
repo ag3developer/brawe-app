@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/profile_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -429,7 +429,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 _divider(context),
                 _platformRow(
                   context: context,
-                  icon: LucideIcons.linkedin,
+                  icon: LucideIcons.globe,
                   color: const Color(0xFF0A66C2),
                   label: 'LinkedIn',
                   ctrl: _linkedinCtrl,
@@ -438,7 +438,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 _divider(context),
                 _platformRow(
                   context: context,
-                  icon: LucideIcons.instagram,
+                  icon: LucideIcons.globe,
                   color: const Color(0xFFE1306C),
                   label: 'Instagram',
                   ctrl: _instagramCtrl,

@@ -1302,7 +1302,7 @@ class _InlineStat extends StatelessWidget {
 }
 
 // ── Stats Card ────────────────────────────────────────────────────────────────
-  // ignore: unused_element, unused_field, unused_element_parameter
+// ignore: unused_element, unused_field, unused_element_parameter
 class _StatsCard extends StatelessWidget {
   const _StatsCard({required this.stats, required this.userId});
   final SocialStats stats;
@@ -1581,7 +1581,9 @@ class _SocialLinkStyle {
   final Color color;
   final Color border;
   final String label;
-  final IconData icon;
+  // Object aceita tanto IconData (Material) quanto FaIconData (FontAwesome 11+),
+  // já que FaIconData não implementa mais IconData a partir da versão 11.0.0.
+  final Object icon;
 
   /// `true` → renderiza com `Icon()` (Material); `false` → renderiza com `FaIcon()`.
   final bool isNative;
@@ -1802,9 +1804,9 @@ class _SocialPill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (style.isNative)
-              Icon(style.icon, color: fg, size: 14)
+              Icon(style.icon as IconData, color: fg, size: 14)
             else
-              FaIcon(style.icon, color: fg, size: 14),
+              FaIcon(style.icon as FaIconData, color: fg, size: 14),
             const SizedBox(width: 6),
             Text(
               style.label,
@@ -2119,7 +2121,7 @@ class _PostsGrid extends StatelessWidget {
 }
 
 // ── LIVES GRID ──────────────────────────────────────────────────────────────
-  // ignore: unused_element, unused_field, unused_element_parameter
+// ignore: unused_element, unused_field, unused_element_parameter
 class _LivesGrid extends StatelessWidget {
   final AsyncValue<List<LiveRoom>> livesState;
   const _LivesGrid({required this.livesState});
