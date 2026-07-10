@@ -37,6 +37,35 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # ── Workaround: Bug Flutter 3.44+ / Swift Package Manager ──────────────────
+  # PROBLEMA: flutter pub get gera FlutterGeneratedPluginSwiftPackage/Package.swift
+  # com .iOS("13.0") hardcoded (darwin.dart:79). O `flutter build ios` chama
+  # SwiftPackageManager.updateMinimumDeployment() para corrigir, mas o
+  # xcode_backend.dart (Run Script do Xcode) NÃO chama essa função.
+  # Um build iniciado diretamente pelo Xcode (Play ou xcodebuild) falha com:
+  #   "firebase-core requires minimum platform version 15.0 but target supports 13.0"
+  # SOLUÇÃO: Atualizar o Package.swift aqui, após pod install, garantindo que
+  # o arquivo esteja correto antes de qualquer build Xcode.
+  # REVERSÃO: Remover este bloco do Podfile e rodar `pod install`.
+  # __dir__ aponta para o diretório ios/; Flutter/ephemeral está dentro de ios/
+  spm_package = File.expand_path(
+    'Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift',
+    __dir__
+  )
+  ios_target = '15.0'
+  if File.exist?(spm_package)
+    content = File.read(spm_package)
+    updated = content.gsub(/\.iOS\("[0-9]+\.[0-9]+"\)/, ".iOS(\"#{ios_target}\")")
+    if updated != content
+      File.write(spm_package, updated)
+      puts "✓ Fixed FlutterGeneratedPluginSwiftPackage deployment target → iOS #{ios_target}"
+    else
+      puts "✓ FlutterGeneratedPluginSwiftPackage already at iOS #{ios_target} or higher"
+    end
+  else
+    puts "ℹ FlutterGeneratedPluginSwiftPackage/Package.swift not found (will be fixed on next flutter pub get + pod install)"
+  end
+
   # Patch: Xcode 16+ rejeita #import "Header.h" em umbrella headers de framework.
   # Reescrevemos para o formato angle-bracket APENAS nos pods que sabemos que
   # precisam (Logboard, HaishinKit). NÃO mexer em pods do Firebase/Google
