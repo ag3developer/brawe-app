@@ -18,10 +18,10 @@ import '../../notifications/view_models/notifications_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/social_actions_service.dart';
 import '../../../data/repositories/chat_repository.dart';
-import '../../../data/repositories/product_repository.dart';
+import '../../../data/providers/marketplace_providers.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/post.dart';
-import '../../../domain/models/product.dart';
+import '../../../domain/models/marketplace_models.dart' show Product;
 import '../../../domain/models/profile.dart';
 import 'profile_videos_grid.dart';
 import '../../../domain/models/profile_state.dart';
@@ -105,29 +105,16 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
-  List<Product> _products = [];
-  // Abas: Posts, Vídeos, Galeria, Vitrine
-  int _tabCount = 4;
+  // Abas: Posts, Vídeos, Galeria.
+  // A Vitrine NUNCA fica lado a lado com posts/vídeos/galeria — ela abre
+  // como página dedicada fullscreen (/shop/creator/:userId), estilo TikTok
+  // Shop, acessível pelo ícone de loja no AppBar.
+  int _tabCount = 3;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabCount, vsync: this);
-    _loadProducts();
-  }
-
-  Future<void> _loadProducts() async {
-    try {
-      final products = await ref
-          .read(productRepositoryProvider)
-          .getUserProducts(widget.userId);
-      if (!mounted) return;
-      setState(() {
-        _products = products;
-      });
-    } catch (_) {
-      // Silencioso — vitrine fica vazia
-    }
   }
 
   @override
@@ -141,7 +128,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final profileState = ref.watch(profileViewModelProvider(widget.userId));
     final currentUserId = ref.watch(authStateProvider).value?.id;
     final isMe = currentUserId == widget.userId;
-    final products = _products;
+
+    // Vitrine: só busca dados reais quando o usuário vê o PRÓPRIO perfil.
+    // Gap de backend conhecido: ainda não há endpoint público de vitrine
+    // por userId arbitrário — para outros perfis mantemos o empty state.
+    // Usado apenas para decidir se mostramos o ícone de loja no AppBar e o
+    // badge de parceiro — os produtos em si são exibidos na página dedicada
+    // /shop/creator/:userId (ShopVitrinePage), nunca dentro das abas.
+    final storefrontAsync = isMe
+        ? ref.watch(myStorefrontProductsProvider)
+        : const AsyncValue<List<Product>>.data(<Product>[]);
+    final products = storefrontAsync.value ?? const <Product>[];
 
     final s = S.of(context);
     final tabs = <Tab>[
@@ -156,10 +153,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       Tab(
         icon: const Icon(Icons.grid_on_outlined, size: 20),
         text: s.profileTabGallery,
-      ),
-      Tab(
-        icon: const Icon(Icons.storefront_outlined, size: 20),
-        text: 'Vitrine',
       ),
     ];
 
@@ -199,7 +192,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     color: context.colors.textPrimary,
                   ),
                   tooltip: s.profileTooltipShop,
-                  onPressed: () => _tabController?.animateTo(3),
+                  // Vitrine é sempre uma página dedicada fullscreen (estilo
+                  // TikTok Shop) — nunca uma aba ao lado de posts/vídeos.
+                  onPressed: () =>
+                      context.push('/shop/creator/${widget.userId}'),
                 ),
               if (isMe)
                 IconButton(
@@ -287,8 +283,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 _ProfileHeader(
                   userId: widget.userId,
                   isMe: isMe,
-                  isSeller: products.isNotEmpty,
-                  productsCount: products.length,
                   profileState: profileState,
                 ),
               ],
@@ -327,11 +321,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 postsState: profileState.posts,
               ),
               ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
-              _AffiliateStorefront(
-                userId: widget.userId,
-                isMe: isMe,
-                products: products,
-              ),
             ],
           ),
         ),
@@ -743,15 +732,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 class _ProfileHeader extends ConsumerWidget {
   final String userId;
   final bool isMe;
-  final bool isSeller;
-  final int productsCount;
   final ProfileState profileState;
 
   const _ProfileHeader({
     required this.userId,
     required this.isMe,
-    required this.isSeller,
-    required this.productsCount,
     required this.profileState,
   });
 
@@ -920,12 +905,11 @@ class _ProfileHeader extends ConsumerWidget {
               // ── Ações ──────────────────────────────────────────────────
               // Quando isMe == true, _buildActions retorna SizedBox.shrink()
               // (a ação "Editar" virou ícone flutuante no banner).
+              // Nota: o badge "Parceiro verificado" NÃO aparece aqui — ele
+              // pertence à página dedicada da vitrine (ShopVitrinePage),
+              // nunca ao perfil social (nem para o próprio usuário, nem
+              // para visitantes).
               _buildActions(context, ref, profile),
-
-              if (isSeller) ...[
-                const SizedBox(height: 12),
-                _SellerBadge(productsCount: productsCount),
-              ],
 
               const SizedBox(height: 8),
             ],
@@ -1998,73 +1982,6 @@ class _HeaderError extends StatelessWidget {
   }
 }
 
-class _SellerBadge extends StatelessWidget {
-  final int productsCount;
-  const _SellerBadge({required this.productsCount});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFF9500).withValues(alpha: 0.2),
-            AppColors.electricPurple.withValues(alpha: 0.15),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFFF9500).withValues(alpha: 0.4),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.storefront, color: Color(0xFFFF9500), size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  S.of(context).profileSellerVerified,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  S.of(context).profileSellerSubtitle,
-                  style: TextStyle(
-                    color: context.colors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF9500),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$productsCount itens',
-              style: TextStyle(
-                color: context.colors.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── POSTS LIST (estilo Twitter/X — feed completo) ───────────────────────────
 class _PostsGrid extends StatelessWidget {
   final AsyncValue<List<Post>> postsState;
@@ -2199,577 +2116,6 @@ class _LivesGrid extends StatelessWidget {
       error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
         message: S.of(context).profileLivesLoadError,
-      ),
-    );
-  }
-}
-
-// ── VITRINE DE AFILIADOS ─────────────────────────────────────────────────────
-/// Vitrine de produtos afiliados do usuário.
-/// Exibe os produtos que o criador promove e ganha comissão.
-/// Quando vazia (sem afiliações), mostra CTA para aderir ao programa.
-class _AffiliateStorefront extends StatelessWidget {
-  final String userId;
-  final bool isMe;
-  final List<Product> products;
-  const _AffiliateStorefront({
-    required this.userId,
-    required this.isMe,
-    required this.products,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) {
-      return _EmptyStorefront(isMe: isMe);
-    }
-    return _ProductsGrid(products: products);
-  }
-}
-
-/// Estado vazio da vitrine — convida o criador a se afiliar.
-class _EmptyStorefront extends StatelessWidget {
-  final bool isMe;
-  const _EmptyStorefront({required this.isMe});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.electricPurple, AppColors.hotPink],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.storefront_outlined,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              isMe ? 'Sua vitrine está vazia' : 'Nenhum produto ainda',
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isMe
-                  ? 'Afilie-se a marcas e ganhe comissão\npor cada venda realizada pelo seu link.'
-                  : 'Este criador ainda não adicionou\nprodutos à vitrine.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.textSecondary,
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            if (isMe) ...[
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: () => context.push('/creator/intro'),
-                icon: const Icon(Icons.rocket_launch, size: 18),
-                label: const Text('Aderir ao Creator Network'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.electricPurple,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── VITRINE DE PRODUTOS ─────────────────────────────────────────────────────
-class _ProductsGrid extends StatelessWidget {
-  final List<Product> products;
-  const _ProductsGrid({required this.products});
-
-  @override
-  Widget build(BuildContext context) {
-    if (products.isEmpty) {
-      return _EmptyState(
-        icon: Icons.shopping_bag_outlined,
-        message: S.of(context).profileShopEmpty,
-      );
-    }
-
-    final featured = products.where((p) => p.isFeatured).toList();
-    final others = products.where((p) => !p.isFeatured).toList();
-
-    return CustomScrollView(
-      slivers: [
-        if (featured.isNotEmpty) ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Color(0xFFFF9500),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    S.of(context).profileShopFeatured,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 230,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: featured.length,
-                itemBuilder: (_, i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: SizedBox(
-                    width: 160,
-                    child: _ProductCard(product: featured[i]),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          sliver: SliverToBoxAdapter(
-            child: Text(
-              S.of(context).profileShopAllProducts,
-              style: TextStyle(
-                color: context.colors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.62,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (_, i) => _ProductCard(product: others[i]),
-              childCount: others.length,
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
-      ],
-    );
-  }
-}
-
-class _ProductCard extends StatelessWidget {
-  final Product product;
-  const _ProductCard({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _openProductSheet(context, product),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.colors.surfaceElevated,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(
-                    product.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: context.colors.background,
-                      child: Icon(
-                        Icons.image_outlined,
-                        color: context.colors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  if (product.hasDiscount)
-                    Positioned(
-                      top: 6,
-                      left: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.mutedRed,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '-${product.discountPercent}%',
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (product.isSoldOut)
-                    Container(
-                      color: Colors.black54,
-                      alignment: Alignment.center,
-                      child: Text(
-                        S.of(context).profileProductSoldOutUppercase,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    )
-                  else if (product.isLowStock)
-                    Positioned(
-                      bottom: 6,
-                      left: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF9500),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          S.of(context).profileProductLastStock(product.stock),
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'R\$ ${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: AppColors.coolCyan,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (product.hasDiscount) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: context.colors.textSecondary,
-                            fontSize: 10,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    S.of(context).profileProductSoldCount(product.soldCount),
-                    style: TextStyle(
-                      color: context.colors.textSecondary,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openProductSheet(BuildContext context, Product product) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ProductDetailSheet(product: product),
-    );
-  }
-}
-
-class _ProductDetailSheet extends StatelessWidget {
-  final Product product;
-  const _ProductDetailSheet({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      maxChildSize: 0.95,
-      minChildSize: 0.4,
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: context.colors.surfaceElevated,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: context.colors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                controller: controller,
-                padding: const EdgeInsets.all(16),
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: Image.network(
-                        product.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Container(color: context.colors.background),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    product.name,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        'R\$ ${product.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: AppColors.coolCyan,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (product.hasDiscount) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          'R\$ ${product.originalPrice!.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: context.colors.textSecondary,
-                            fontSize: 14,
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.mutedRed,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '-${product.discountPercent}%',
-                            style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        product.isSoldOut
-                            ? Icons.cancel_outlined
-                            : Icons.check_circle_outline,
-                        color: product.isSoldOut
-                            ? AppColors.mutedRed
-                            : Colors.green,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        product.isSoldOut
-                            ? S.of(context).profileProductSoldOut
-                            : product.isLowStock
-                            ? S
-                                  .of(context)
-                                  .profileProductLowStock(product.stock)
-                            : S
-                                  .of(context)
-                                  .profileProductInStock(product.stock),
-                        style: TextStyle(
-                          color: product.isSoldOut
-                              ? AppColors.mutedRed
-                              : context.colors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        S
-                            .of(context)
-                            .profileProductSoldCount(product.soldCount),
-                        style: TextStyle(
-                          color: context.colors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    S.of(context).profileProductAbout,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    S.of(context).profileProductDescription,
-                    style: TextStyle(
-                      color: context.colors.textSecondary,
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: product.isSoldOut
-                        ? null
-                        : () {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(S.of(context).profileAddedToCart),
-                                backgroundColor: AppColors.electricPurple,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.electricPurple,
-                      disabledBackgroundColor: context.colors.surfaceElevated,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: Icon(
-                      product.isSoldOut
-                          ? Icons.block
-                          : Icons.shopping_cart_outlined,
-                      color: context.colors.textPrimary,
-                    ),
-                    label: Text(
-                      product.isSoldOut
-                          ? S.of(context).profileProductUnavailable
-                          : S.of(context).profileProductBuyNow,
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

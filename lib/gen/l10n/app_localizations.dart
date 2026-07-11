@@ -3576,14 +3576,20 @@ abstract class S {
   /// No description provided for @profileSellerVerified.
   ///
   /// In pt, this message translates to:
-  /// **'Vendedor verificado'**
+  /// **'Parceiro verificado'**
   String get profileSellerVerified;
 
   /// No description provided for @profileSellerSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Confira a vitrine de produtos'**
+  /// **'Produtos selecionados com curadoria'**
   String get profileSellerSubtitle;
+
+  /// No description provided for @shopVitrinePartnerItemsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} itens}}'**
+  String shopVitrinePartnerItemsCount(int count);
 
   /// No description provided for @profileNoTextPosts.
   ///
@@ -3626,6 +3632,36 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Todos os produtos'**
   String get profileShopAllProducts;
+
+  /// No description provided for @profileShowcaseEmptyTitleMe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua vitrine está vazia'**
+  String get profileShowcaseEmptyTitleMe;
+
+  /// No description provided for @profileShowcaseEmptyTitleOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum produto ainda'**
+  String get profileShowcaseEmptyTitleOther;
+
+  /// No description provided for @profileShowcaseEmptySubtitleMe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Torne-se parceiro de marcas e mostre os produtos que você recomenda na sua vitrine.'**
+  String get profileShowcaseEmptySubtitleMe;
+
+  /// No description provided for @profileShowcaseEmptySubtitleOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este criador ainda não adicionou produtos à vitrine.'**
+  String get profileShowcaseEmptySubtitleOther;
+
+  /// No description provided for @profileShowcaseJoinCreatorNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aderir ao Creator Network'**
+  String get profileShowcaseJoinCreatorNetwork;
 
   /// No description provided for @profileLiveBadge.
   ///
@@ -8120,6 +8156,744 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'{min} min méd.'**
   String analyticsDashboardMinAvg(String min);
+
+  /// No description provided for @shopVitrineTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vitrine de {name}'**
+  String shopVitrineTitle(String name);
+
+  /// No description provided for @shopVitrineSearchTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar na vitrine'**
+  String get shopVitrineSearchTooltip;
+
+  /// No description provided for @shopProductPageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produto'**
+  String get shopProductPageTitle;
+
+  /// No description provided for @shopProductPrice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço'**
+  String get shopProductPrice;
+
+  /// No description provided for @shopProductOriginalPrice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço original'**
+  String get shopProductOriginalPrice;
+
+  /// No description provided for @shopProductDiscount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconto'**
+  String get shopProductDiscount;
+
+  /// No description provided for @shopProductAddToCart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar ao carrinho'**
+  String get shopProductAddToCart;
+
+  /// No description provided for @shopProductBuyNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar agora'**
+  String get shopProductBuyNow;
+
+  /// No description provided for @shopProductDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descrição'**
+  String get shopProductDescription;
+
+  /// No description provided for @shopProductStore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja'**
+  String get shopProductStore;
+
+  /// No description provided for @shopProductViewStore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver loja'**
+  String get shopProductViewStore;
+
+  /// No description provided for @shopProductQuantity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quantidade'**
+  String get shopProductQuantity;
+
+  /// No description provided for @shopProductRating.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avaliação'**
+  String get shopProductRating;
+
+  /// No description provided for @shopProductReviews.
+  ///
+  /// In pt, this message translates to:
+  /// **'avaliações'**
+  String get shopProductReviews;
+
+  /// No description provided for @shopProductSold.
+  ///
+  /// In pt, this message translates to:
+  /// **'vendidos'**
+  String get shopProductSold;
+
+  /// No description provided for @shopProductOutOfStock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fora de estoque'**
+  String get shopProductOutOfStock;
+
+  /// No description provided for @shopProductNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produto não encontrado.'**
+  String get shopProductNotFound;
+
+  /// No description provided for @shopProductError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o produto.'**
+  String get shopProductError;
+
+  /// No description provided for @shopProductAddedToCart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produto adicionado ao carrinho ✓'**
+  String get shopProductAddedToCart;
+
+  /// No description provided for @shopProductAddToCartError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível adicionar ao carrinho.'**
+  String get shopProductAddToCartError;
+
+  /// No description provided for @shopProductCartTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carrinho'**
+  String get shopProductCartTooltip;
+
+  /// No description provided for @shopProductSearchTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar produtos'**
+  String get shopProductSearchTooltip;
+
+  /// No description provided for @shopProductShareTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get shopProductShareTooltip;
+
+  /// No description provided for @shopProductMoreTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais opções'**
+  String get shopProductMoreTooltip;
+
+  /// No description provided for @shopProductShareFail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível compartilhar o produto.'**
+  String get shopProductShareFail;
+
+  /// No description provided for @shopProductLinkCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Link do produto copiado!'**
+  String get shopProductLinkCopied;
+
+  /// No description provided for @shopProductOptionShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar produto'**
+  String get shopProductOptionShare;
+
+  /// No description provided for @shopProductOptionCopyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar link'**
+  String get shopProductOptionCopyLink;
+
+  /// No description provided for @shopProductOptionReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar produto'**
+  String get shopProductOptionReport;
+
+  /// No description provided for @shopProductReportQuestion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que você está denunciando este produto?'**
+  String get shopProductReportQuestion;
+
+  /// No description provided for @shopProductReportSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denúncia enviada. Obrigado por ajudar a manter a Brawe segura.'**
+  String get shopProductReportSent;
+
+  /// No description provided for @shopProductReportError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a denúncia. Tente novamente.'**
+  String get shopProductReportError;
+
+  /// No description provided for @shopProductFooterStore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja'**
+  String get shopProductFooterStore;
+
+  /// No description provided for @shopProductFooterChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat'**
+  String get shopProductFooterChat;
+
+  /// No description provided for @shopProductChatComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat com a loja em breve.'**
+  String get shopProductChatComingSoon;
+
+  /// No description provided for @shopProductTabOverview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visão geral'**
+  String get shopProductTabOverview;
+
+  /// No description provided for @shopProductTabReviews.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avaliações'**
+  String get shopProductTabReviews;
+
+  /// No description provided for @shopProductTabDescription.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descrição'**
+  String get shopProductTabDescription;
+
+  /// No description provided for @shopProductTabRecommendations.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recomendações'**
+  String get shopProductTabRecommendations;
+
+  /// No description provided for @shopProductReviewsComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avaliações de produtos em breve.'**
+  String get shopProductReviewsComingSoon;
+
+  /// No description provided for @shopProductRecommendationsComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recomendações de outros produtos em breve.'**
+  String get shopProductRecommendationsComingSoon;
+
+  /// No description provided for @shopCartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carrinho'**
+  String get shopCartTitle;
+
+  /// No description provided for @shopCartClear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar carrinho'**
+  String get shopCartClear;
+
+  /// No description provided for @shopCartClearConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar carrinho?'**
+  String get shopCartClearConfirmTitle;
+
+  /// No description provided for @shopCartClearConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos os itens serão removidos do seu carrinho.'**
+  String get shopCartClearConfirmBody;
+
+  /// No description provided for @shopCartEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu carrinho está vazio'**
+  String get shopCartEmptyTitle;
+
+  /// No description provided for @shopCartEmptyBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Explore a vitrine e encontre produtos incríveis.'**
+  String get shopCartEmptyBody;
+
+  /// No description provided for @shopCartViewShowcase.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver vitrine'**
+  String get shopCartViewShowcase;
+
+  /// No description provided for @shopCartError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o carrinho.'**
+  String get shopCartError;
+
+  /// No description provided for @shopCartRemoveItem.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover item'**
+  String get shopCartRemoveItem;
+
+  /// No description provided for @shopCartSubtotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Subtotal'**
+  String get shopCartSubtotal;
+
+  /// No description provided for @shopCartTax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Taxas'**
+  String get shopCartTax;
+
+  /// No description provided for @shopCartTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total'**
+  String get shopCartTotal;
+
+  /// No description provided for @shopCartContinueToCheckout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar para checkout'**
+  String get shopCartContinueToCheckout;
+
+  /// No description provided for @shopCartUpdateError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível atualizar o item.'**
+  String get shopCartUpdateError;
+
+  /// No description provided for @shopCartRemoveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível remover o item.'**
+  String get shopCartRemoveError;
+
+  /// No description provided for @shopCartClearError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível limpar o carrinho.'**
+  String get shopCartClearError;
+
+  /// No description provided for @shopCheckoutTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Finalizar compra'**
+  String get shopCheckoutTitle;
+
+  /// No description provided for @shopCheckoutAddressSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço de entrega'**
+  String get shopCheckoutAddressSection;
+
+  /// No description provided for @shopCheckoutAddressEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem endereços salvos.'**
+  String get shopCheckoutAddressEmpty;
+
+  /// No description provided for @shopCheckoutAddressStreet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rua'**
+  String get shopCheckoutAddressStreet;
+
+  /// No description provided for @shopCheckoutAddressNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Número'**
+  String get shopCheckoutAddressNumber;
+
+  /// No description provided for @shopCheckoutAddressComplement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Complemento (opcional)'**
+  String get shopCheckoutAddressComplement;
+
+  /// No description provided for @shopCheckoutAddressNeighborhood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bairro'**
+  String get shopCheckoutAddressNeighborhood;
+
+  /// No description provided for @shopCheckoutAddressCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get shopCheckoutAddressCity;
+
+  /// No description provided for @shopCheckoutAddressState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estado'**
+  String get shopCheckoutAddressState;
+
+  /// No description provided for @shopCheckoutAddressPostalCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'CEP'**
+  String get shopCheckoutAddressPostalCode;
+
+  /// No description provided for @shopCheckoutAddressSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar endereço'**
+  String get shopCheckoutAddressSave;
+
+  /// No description provided for @shopCheckoutAddressSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço salvo ✓'**
+  String get shopCheckoutAddressSaved;
+
+  /// No description provided for @shopCheckoutAddressSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar o endereço.'**
+  String get shopCheckoutAddressSaveError;
+
+  /// No description provided for @shopCheckoutAddressRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione ou cadastre um endereço de entrega.'**
+  String get shopCheckoutAddressRequired;
+
+  /// No description provided for @shopCheckoutCustomerSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados do cliente'**
+  String get shopCheckoutCustomerSection;
+
+  /// No description provided for @shopCheckoutCustomerName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo'**
+  String get shopCheckoutCustomerName;
+
+  /// No description provided for @shopCheckoutCustomerEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get shopCheckoutCustomerEmail;
+
+  /// No description provided for @shopCheckoutCustomerPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Telefone (opcional)'**
+  String get shopCheckoutCustomerPhone;
+
+  /// No description provided for @shopCheckoutCustomerDocument.
+  ///
+  /// In pt, this message translates to:
+  /// **'CPF/CNPJ (opcional)'**
+  String get shopCheckoutCustomerDocument;
+
+  /// No description provided for @shopCheckoutNameRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe seu nome completo.'**
+  String get shopCheckoutNameRequired;
+
+  /// No description provided for @shopCheckoutEmailRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe seu e-mail.'**
+  String get shopCheckoutEmailRequired;
+
+  /// No description provided for @shopCheckoutEmailInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe um e-mail válido.'**
+  String get shopCheckoutEmailInvalid;
+
+  /// No description provided for @shopCheckoutShippingSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Método de envio'**
+  String get shopCheckoutShippingSection;
+
+  /// No description provided for @shopCheckoutShippingStandard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Padrão'**
+  String get shopCheckoutShippingStandard;
+
+  /// No description provided for @shopCheckoutShippingExpress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Expresso'**
+  String get shopCheckoutShippingExpress;
+
+  /// No description provided for @shopCheckoutPaymentSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Método de pagamento'**
+  String get shopCheckoutPaymentSection;
+
+  /// No description provided for @shopCheckoutPaymentPix.
+  ///
+  /// In pt, this message translates to:
+  /// **'PIX'**
+  String get shopCheckoutPaymentPix;
+
+  /// No description provided for @shopCheckoutPaymentCard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cartão'**
+  String get shopCheckoutPaymentCard;
+
+  /// No description provided for @shopCheckoutPaymentCrypto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cripto'**
+  String get shopCheckoutPaymentCrypto;
+
+  /// No description provided for @shopCheckoutSummarySection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo do pedido'**
+  String get shopCheckoutSummarySection;
+
+  /// No description provided for @shopCheckoutSubtotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Subtotal'**
+  String get shopCheckoutSubtotal;
+
+  /// No description provided for @shopCheckoutTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total'**
+  String get shopCheckoutTotal;
+
+  /// No description provided for @shopCheckoutConfirmOrder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar pedido'**
+  String get shopCheckoutConfirmOrder;
+
+  /// No description provided for @shopCheckoutError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir o pedido. Tente novamente.'**
+  String get shopCheckoutError;
+
+  /// No description provided for @shopPaymentTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento'**
+  String get shopPaymentTitle;
+
+  /// No description provided for @shopPaymentOrderNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido #{number}'**
+  String shopPaymentOrderNumber(String number);
+
+  /// No description provided for @shopPaymentTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total'**
+  String get shopPaymentTotal;
+
+  /// No description provided for @shopPaymentPixTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pague com PIX'**
+  String get shopPaymentPixTitle;
+
+  /// No description provided for @shopPaymentPixInstructions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escaneie o QR code no app do seu banco para concluir o pagamento.'**
+  String get shopPaymentPixInstructions;
+
+  /// No description provided for @shopPaymentAlreadyPaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já paguei'**
+  String get shopPaymentAlreadyPaid;
+
+  /// No description provided for @shopPaymentCardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento com cartão'**
+  String get shopPaymentCardTitle;
+
+  /// No description provided for @shopPaymentCardComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Integração de cartão em breve.'**
+  String get shopPaymentCardComingSoon;
+
+  /// No description provided for @shopPaymentCryptoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pague com criptomoeda'**
+  String get shopPaymentCryptoTitle;
+
+  /// No description provided for @shopPaymentCryptoComingSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço de carteira em breve.'**
+  String get shopPaymentCryptoComingSoon;
+
+  /// No description provided for @shopPaymentViewOrders.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver meus pedidos'**
+  String get shopPaymentViewOrders;
+
+  /// No description provided for @shopPaymentStatusPending.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando pagamento'**
+  String get shopPaymentStatusPending;
+
+  /// No description provided for @shopPaymentStatusPaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento confirmado ✓'**
+  String get shopPaymentStatusPaid;
+
+  /// No description provided for @shopPaymentStatusFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento falhou'**
+  String get shopPaymentStatusFailed;
+
+  /// No description provided for @shopPaymentError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível verificar o status do pagamento.'**
+  String get shopPaymentError;
+
+  /// No description provided for @shopStoreProductsSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produtos'**
+  String get shopStoreProductsSection;
+
+  /// No description provided for @shopStoreEmptyProducts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta loja ainda não tem produtos.'**
+  String get shopStoreEmptyProducts;
+
+  /// No description provided for @shopStoreProductsError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os produtos.'**
+  String get shopStoreProductsError;
+
+  /// No description provided for @shopStoreError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar a loja.'**
+  String get shopStoreError;
+
+  /// No description provided for @shopStoreNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja não encontrada.'**
+  String get shopStoreNotFound;
+
+  /// No description provided for @shopStorePremiumBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Premium'**
+  String get shopStorePremiumBadge;
+
+  /// No description provided for @shopStoreBravePassBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe Pass'**
+  String get shopStoreBravePassBadge;
+
+  /// No description provided for @shopStoreRatingCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} avaliações'**
+  String shopStoreRatingCount(String count);
+
+  /// No description provided for @shopStoreReadMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver mais'**
+  String get shopStoreReadMore;
+
+  /// No description provided for @shopStoreReadLess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver menos'**
+  String get shopStoreReadLess;
+
+  /// No description provided for @shopStoreContactSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contato'**
+  String get shopStoreContactSection;
+
+  /// No description provided for @shopStoreWhatsappTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'WhatsApp'**
+  String get shopStoreWhatsappTooltip;
+
+  /// No description provided for @shopStoreInstagramTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Instagram'**
+  String get shopStoreInstagramTooltip;
+
+  /// No description provided for @shopStoreFacebookTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Facebook'**
+  String get shopStoreFacebookTooltip;
+
+  /// No description provided for @shopStoreTiktokTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'TikTok'**
+  String get shopStoreTiktokTooltip;
+
+  /// No description provided for @shopStoreEmailTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get shopStoreEmailTooltip;
+
+  /// No description provided for @shopStoreLinkError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o link.'**
+  String get shopStoreLinkError;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

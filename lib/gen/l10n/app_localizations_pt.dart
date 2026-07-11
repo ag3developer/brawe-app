@@ -1890,10 +1890,21 @@ class SPt extends S {
   String get profileRetry => 'Tentar novamente';
 
   @override
-  String get profileSellerVerified => 'Vendedor verificado';
+  String get profileSellerVerified => 'Parceiro verificado';
 
   @override
-  String get profileSellerSubtitle => 'Confira a vitrine de produtos';
+  String get profileSellerSubtitle => 'Produtos selecionados com curadoria';
+
+  @override
+  String shopVitrinePartnerItemsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count itens',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get profileNoTextPosts => 'Nenhum post de texto ainda';
@@ -1915,6 +1926,23 @@ class SPt extends S {
 
   @override
   String get profileShopAllProducts => 'Todos os produtos';
+
+  @override
+  String get profileShowcaseEmptyTitleMe => 'Sua vitrine está vazia';
+
+  @override
+  String get profileShowcaseEmptyTitleOther => 'Nenhum produto ainda';
+
+  @override
+  String get profileShowcaseEmptySubtitleMe =>
+      'Torne-se parceiro de marcas e mostre os produtos que você recomenda na sua vitrine.';
+
+  @override
+  String get profileShowcaseEmptySubtitleOther =>
+      'Este criador ainda não adicionou produtos à vitrine.';
+
+  @override
+  String get profileShowcaseJoinCreatorNetwork => 'Aderir ao Creator Network';
 
   @override
   String get profileLiveBadge => 'LIVE';
@@ -4458,4 +4486,391 @@ class SPt extends S {
   String analyticsDashboardMinAvg(String min) {
     return '$min min méd.';
   }
+
+  @override
+  String shopVitrineTitle(String name) {
+    return 'Vitrine de $name';
+  }
+
+  @override
+  String get shopVitrineSearchTooltip => 'Buscar na vitrine';
+
+  @override
+  String get shopProductPageTitle => 'Produto';
+
+  @override
+  String get shopProductPrice => 'Preço';
+
+  @override
+  String get shopProductOriginalPrice => 'Preço original';
+
+  @override
+  String get shopProductDiscount => 'Desconto';
+
+  @override
+  String get shopProductAddToCart => 'Adicionar ao carrinho';
+
+  @override
+  String get shopProductBuyNow => 'Comprar agora';
+
+  @override
+  String get shopProductDescription => 'Descrição';
+
+  @override
+  String get shopProductStore => 'Loja';
+
+  @override
+  String get shopProductViewStore => 'Ver loja';
+
+  @override
+  String get shopProductQuantity => 'Quantidade';
+
+  @override
+  String get shopProductRating => 'Avaliação';
+
+  @override
+  String get shopProductReviews => 'avaliações';
+
+  @override
+  String get shopProductSold => 'vendidos';
+
+  @override
+  String get shopProductOutOfStock => 'Fora de estoque';
+
+  @override
+  String get shopProductNotFound => 'Produto não encontrado.';
+
+  @override
+  String get shopProductError => 'Não foi possível carregar o produto.';
+
+  @override
+  String get shopProductAddedToCart => 'Produto adicionado ao carrinho ✓';
+
+  @override
+  String get shopProductAddToCartError =>
+      'Não foi possível adicionar ao carrinho.';
+
+  @override
+  String get shopProductCartTooltip => 'Carrinho';
+
+  @override
+  String get shopProductSearchTooltip => 'Buscar produtos';
+
+  @override
+  String get shopProductShareTooltip => 'Compartilhar';
+
+  @override
+  String get shopProductMoreTooltip => 'Mais opções';
+
+  @override
+  String get shopProductShareFail => 'Não foi possível compartilhar o produto.';
+
+  @override
+  String get shopProductLinkCopied => 'Link do produto copiado!';
+
+  @override
+  String get shopProductOptionShare => 'Compartilhar produto';
+
+  @override
+  String get shopProductOptionCopyLink => 'Copiar link';
+
+  @override
+  String get shopProductOptionReport => 'Denunciar produto';
+
+  @override
+  String get shopProductReportQuestion =>
+      'Por que você está denunciando este produto?';
+
+  @override
+  String get shopProductReportSent =>
+      'Denúncia enviada. Obrigado por ajudar a manter a Brawe segura.';
+
+  @override
+  String get shopProductReportError =>
+      'Não foi possível enviar a denúncia. Tente novamente.';
+
+  @override
+  String get shopProductFooterStore => 'Loja';
+
+  @override
+  String get shopProductFooterChat => 'Chat';
+
+  @override
+  String get shopProductChatComingSoon => 'Chat com a loja em breve.';
+
+  @override
+  String get shopProductTabOverview => 'Visão geral';
+
+  @override
+  String get shopProductTabReviews => 'Avaliações';
+
+  @override
+  String get shopProductTabDescription => 'Descrição';
+
+  @override
+  String get shopProductTabRecommendations => 'Recomendações';
+
+  @override
+  String get shopProductReviewsComingSoon => 'Avaliações de produtos em breve.';
+
+  @override
+  String get shopProductRecommendationsComingSoon =>
+      'Recomendações de outros produtos em breve.';
+
+  @override
+  String get shopCartTitle => 'Carrinho';
+
+  @override
+  String get shopCartClear => 'Limpar carrinho';
+
+  @override
+  String get shopCartClearConfirmTitle => 'Limpar carrinho?';
+
+  @override
+  String get shopCartClearConfirmBody =>
+      'Todos os itens serão removidos do seu carrinho.';
+
+  @override
+  String get shopCartEmptyTitle => 'Seu carrinho está vazio';
+
+  @override
+  String get shopCartEmptyBody =>
+      'Explore a vitrine e encontre produtos incríveis.';
+
+  @override
+  String get shopCartViewShowcase => 'Ver vitrine';
+
+  @override
+  String get shopCartError => 'Não foi possível carregar o carrinho.';
+
+  @override
+  String get shopCartRemoveItem => 'Remover item';
+
+  @override
+  String get shopCartSubtotal => 'Subtotal';
+
+  @override
+  String get shopCartTax => 'Taxas';
+
+  @override
+  String get shopCartTotal => 'Total';
+
+  @override
+  String get shopCartContinueToCheckout => 'Continuar para checkout';
+
+  @override
+  String get shopCartUpdateError => 'Não foi possível atualizar o item.';
+
+  @override
+  String get shopCartRemoveError => 'Não foi possível remover o item.';
+
+  @override
+  String get shopCartClearError => 'Não foi possível limpar o carrinho.';
+
+  @override
+  String get shopCheckoutTitle => 'Finalizar compra';
+
+  @override
+  String get shopCheckoutAddressSection => 'Endereço de entrega';
+
+  @override
+  String get shopCheckoutAddressEmpty => 'Você ainda não tem endereços salvos.';
+
+  @override
+  String get shopCheckoutAddressStreet => 'Rua';
+
+  @override
+  String get shopCheckoutAddressNumber => 'Número';
+
+  @override
+  String get shopCheckoutAddressComplement => 'Complemento (opcional)';
+
+  @override
+  String get shopCheckoutAddressNeighborhood => 'Bairro';
+
+  @override
+  String get shopCheckoutAddressCity => 'Cidade';
+
+  @override
+  String get shopCheckoutAddressState => 'Estado';
+
+  @override
+  String get shopCheckoutAddressPostalCode => 'CEP';
+
+  @override
+  String get shopCheckoutAddressSave => 'Salvar endereço';
+
+  @override
+  String get shopCheckoutAddressSaved => 'Endereço salvo ✓';
+
+  @override
+  String get shopCheckoutAddressSaveError =>
+      'Não foi possível salvar o endereço.';
+
+  @override
+  String get shopCheckoutAddressRequired =>
+      'Selecione ou cadastre um endereço de entrega.';
+
+  @override
+  String get shopCheckoutCustomerSection => 'Dados do cliente';
+
+  @override
+  String get shopCheckoutCustomerName => 'Nome completo';
+
+  @override
+  String get shopCheckoutCustomerEmail => 'E-mail';
+
+  @override
+  String get shopCheckoutCustomerPhone => 'Telefone (opcional)';
+
+  @override
+  String get shopCheckoutCustomerDocument => 'CPF/CNPJ (opcional)';
+
+  @override
+  String get shopCheckoutNameRequired => 'Informe seu nome completo.';
+
+  @override
+  String get shopCheckoutEmailRequired => 'Informe seu e-mail.';
+
+  @override
+  String get shopCheckoutEmailInvalid => 'Informe um e-mail válido.';
+
+  @override
+  String get shopCheckoutShippingSection => 'Método de envio';
+
+  @override
+  String get shopCheckoutShippingStandard => 'Padrão';
+
+  @override
+  String get shopCheckoutShippingExpress => 'Expresso';
+
+  @override
+  String get shopCheckoutPaymentSection => 'Método de pagamento';
+
+  @override
+  String get shopCheckoutPaymentPix => 'PIX';
+
+  @override
+  String get shopCheckoutPaymentCard => 'Cartão';
+
+  @override
+  String get shopCheckoutPaymentCrypto => 'Cripto';
+
+  @override
+  String get shopCheckoutSummarySection => 'Resumo do pedido';
+
+  @override
+  String get shopCheckoutSubtotal => 'Subtotal';
+
+  @override
+  String get shopCheckoutTotal => 'Total';
+
+  @override
+  String get shopCheckoutConfirmOrder => 'Confirmar pedido';
+
+  @override
+  String get shopCheckoutError =>
+      'Não foi possível concluir o pedido. Tente novamente.';
+
+  @override
+  String get shopPaymentTitle => 'Pagamento';
+
+  @override
+  String shopPaymentOrderNumber(String number) {
+    return 'Pedido #$number';
+  }
+
+  @override
+  String get shopPaymentTotal => 'Total';
+
+  @override
+  String get shopPaymentPixTitle => 'Pague com PIX';
+
+  @override
+  String get shopPaymentPixInstructions =>
+      'Escaneie o QR code no app do seu banco para concluir o pagamento.';
+
+  @override
+  String get shopPaymentAlreadyPaid => 'Já paguei';
+
+  @override
+  String get shopPaymentCardTitle => 'Pagamento com cartão';
+
+  @override
+  String get shopPaymentCardComingSoon => 'Integração de cartão em breve.';
+
+  @override
+  String get shopPaymentCryptoTitle => 'Pague com criptomoeda';
+
+  @override
+  String get shopPaymentCryptoComingSoon => 'Endereço de carteira em breve.';
+
+  @override
+  String get shopPaymentViewOrders => 'Ver meus pedidos';
+
+  @override
+  String get shopPaymentStatusPending => 'Aguardando pagamento';
+
+  @override
+  String get shopPaymentStatusPaid => 'Pagamento confirmado ✓';
+
+  @override
+  String get shopPaymentStatusFailed => 'Pagamento falhou';
+
+  @override
+  String get shopPaymentError =>
+      'Não foi possível verificar o status do pagamento.';
+
+  @override
+  String get shopStoreProductsSection => 'Produtos';
+
+  @override
+  String get shopStoreEmptyProducts => 'Esta loja ainda não tem produtos.';
+
+  @override
+  String get shopStoreProductsError => 'Não foi possível carregar os produtos.';
+
+  @override
+  String get shopStoreError => 'Não foi possível carregar a loja.';
+
+  @override
+  String get shopStoreNotFound => 'Loja não encontrada.';
+
+  @override
+  String get shopStorePremiumBadge => 'Premium';
+
+  @override
+  String get shopStoreBravePassBadge => 'Brawe Pass';
+
+  @override
+  String shopStoreRatingCount(String count) {
+    return '$count avaliações';
+  }
+
+  @override
+  String get shopStoreReadMore => 'Ver mais';
+
+  @override
+  String get shopStoreReadLess => 'Ver menos';
+
+  @override
+  String get shopStoreContactSection => 'Contato';
+
+  @override
+  String get shopStoreWhatsappTooltip => 'WhatsApp';
+
+  @override
+  String get shopStoreInstagramTooltip => 'Instagram';
+
+  @override
+  String get shopStoreFacebookTooltip => 'Facebook';
+
+  @override
+  String get shopStoreTiktokTooltip => 'TikTok';
+
+  @override
+  String get shopStoreEmailTooltip => 'E-mail';
+
+  @override
+  String get shopStoreLinkError => 'Não foi possível abrir o link.';
 }

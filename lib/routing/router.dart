@@ -60,6 +60,12 @@ import '../ui/creator/widgets/analytics_viewers_screen.dart';
 import '../ui/creator/widgets/analytics_followers_screen.dart';
 import '../ui/creator/widgets/analytics_lives_screen.dart';
 import '../ui/creator/widgets/analytics_reach_screen.dart';
+import '../ui/shop/pages/shop_product_page.dart';
+import '../ui/shop/pages/shop_store_page.dart';
+import '../ui/shop/pages/shop_vitrine_page.dart';
+import '../ui/shop/pages/shop_cart_page.dart';
+import '../ui/shop/pages/shop_checkout_page.dart';
+import '../ui/shop/pages/shop_payment_page.dart';
 
 part 'router.g.dart';
 
@@ -443,6 +449,122 @@ GoRouter router(Ref ref) {
             ),
           );
         },
+      ),
+      // ── Marketplace (Vitrine + Compras) — estilo TikTok Shop ─────────────
+      // Fullscreen de propósito: a vitrine/produto/carrinho/checkout cobrem
+      // a bottom nav por completo (igual /live/:roomId e /chat/:id acima),
+      // entrando com slide-up para parecer um "app dentro do app".
+      GoRoute(
+        path: '/shop',
+        name: 'shop',
+        pageBuilder: (context, state) => BraweTransitions.slideUp(
+          key: state.pageKey,
+          child: const Placeholder(), // TODO: Descobrir Marcas (Fase 1B)
+        ),
+      ),
+      // Vitrine dedicada de um criador/parceiro específico — NUNCA misturada
+      // com posts/vídeos/galeria do perfil social (ver ShopVitrinePage doc).
+      GoRoute(
+        path: '/shop/creator/:userId',
+        name: 'shop-creator-vitrine',
+        pageBuilder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return BraweTransitions.slideUp(
+            key: state.pageKey,
+            child: ShopVitrinePage(userId: userId),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/shop/store/:slug',
+        name: 'shop-store',
+        pageBuilder: (context, state) {
+          final slug = state.pathParameters['slug']!;
+          return BraweTransitions.slideUp(
+            key: state.pageKey,
+            child: ShopStorePage(storeSlug: slug),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/shop/product/:id',
+        name: 'shop-product',
+        pageBuilder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return BraweTransitions.slideUp(
+            key: state.pageKey,
+            child: ShopProductPage(productId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/shop/cart',
+        name: 'shop-cart',
+        pageBuilder: (context, state) => BraweTransitions.slideUp(
+          key: state.pageKey,
+          child: const ShopCartPage(),
+        ),
+      ),
+      GoRoute(
+        path: '/shop/checkout',
+        name: 'shop-checkout',
+        pageBuilder: (context, state) => BraweTransitions.slideUp(
+          key: state.pageKey,
+          child: const ShopCheckoutPage(),
+        ),
+        routes: [
+          GoRoute(
+            path: 'payment/:orderId',
+            name: 'shop-payment',
+            pageBuilder: (context, state) {
+              final orderId = state.pathParameters['orderId']!;
+              return BraweTransitions.slideUp(
+                key: state.pageKey,
+                child: ShopPaymentPage(orderId: orderId),
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/shop/orders',
+        name: 'shop-orders',
+        pageBuilder: (context, state) => BraweTransitions.slideUp(
+          key: state.pageKey,
+          child: const Placeholder(), // TODO: ShopOrdersPage (Fase 4/5)
+        ),
+        routes: [
+          GoRoute(
+            path: ':orderNumber',
+            name: 'shop-order-detail',
+            pageBuilder: (context, state) {
+              // final orderNumber = state.pathParameters['orderNumber']!;
+              // TODO: Pass orderNumber to ShopOrderDetailPage(orderNumber)
+              return BraweTransitions.slideUp(
+                key: state.pageKey,
+                child: const Placeholder(),
+              );
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/shop/partnerships',
+        name: 'shop-partnerships',
+        pageBuilder: (context, state) => BraweTransitions.slideUp(
+          key: state.pageKey,
+          child: const Placeholder(), // TODO: ShopMyPartnershipsPage (Fase 5)
+        ),
+        routes: [
+          GoRoute(
+            path: 'received',
+            name: 'shop-partnerships-received',
+            pageBuilder: (context, state) => BraweTransitions.slideUp(
+              key: state.pageKey,
+              child: const Placeholder(), // TODO: ShopPartnershipInvitesPage
+            ),
+          ),
+        ],
       ),
     ],
   );
