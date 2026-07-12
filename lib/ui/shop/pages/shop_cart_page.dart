@@ -9,6 +9,7 @@ import '../../../domain/models/marketplace_models.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/shop_pill_button.dart';
 
 /// Cart page accessed via `/shop/cart` route.
 ///
@@ -28,21 +29,30 @@ class ShopCartPage extends ConsumerWidget {
         backgroundColor: context.colors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        centerTitle: false,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           S.of(context).shopCartTitle,
-          style: TextStyle(color: context.colors.textPrimary),
+          style: TextStyle(
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           if (!cartState.isEmpty)
             IconButton(
-              icon: Icon(LucideIcons.trash2, color: context.colors.textPrimary),
+              icon: Icon(
+                LucideIcons.trash2,
+                size: 20,
+                color: context.colors.textSecondary,
+              ),
               tooltip: S.of(context).shopCartClear,
               onPressed: () => _confirmClearCart(context, ref),
             ),
+          const SizedBox(width: 4),
         ],
       ),
       body: _buildBody(context, ref, cartState),
@@ -70,9 +80,9 @@ class ShopCartPage extends ConsumerWidget {
       children: [
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             itemCount: state.items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               return _CartItemTile(item: state.items[index]);
             },
@@ -85,26 +95,30 @@ class ShopCartPage extends ConsumerWidget {
 
   Widget _buildErrorState(BuildContext context, WidgetRef ref) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: context.colors.textSecondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            S.of(context).shopCartError,
-            style: TextStyle(color: context.colors.textPrimary),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => ref.read(cartNotifierProvider.notifier).loadCart(),
-            child: Text(S.of(context).actionRetry),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 56,
+              color: context.colors.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              S.of(context).shopCartError,
+              style: TextStyle(color: context.colors.textPrimary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ShopPillButton(
+              label: S.of(context).actionRetry,
+              onPressed: () =>
+                  ref.read(cartNotifierProvider.notifier).loadCart(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -118,10 +132,10 @@ class ShopCartPage extends ConsumerWidget {
           children: [
             Icon(
               LucideIcons.shoppingCart,
-              size: 72,
+              size: 60,
               color: context.colors.textSecondary,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
               S.of(context).shopCartEmptyTitle,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -136,8 +150,9 @@ class ShopCartPage extends ConsumerWidget {
               style: TextStyle(color: context.colors.textSecondary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
+            const SizedBox(height: 28),
+            ShopPillButton(
+              label: S.of(context).shopCartViewShowcase,
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();
@@ -145,23 +160,6 @@ class ShopCartPage extends ConsumerWidget {
                   context.go('/shop');
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colors.accentPrimary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                S.of(context).shopCartViewShowcase,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
             ),
           ],
         ),
@@ -171,10 +169,20 @@ class ShopCartPage extends ConsumerWidget {
 
   Widget _buildFooter(BuildContext context, CartState state) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
-        border: Border(top: BorderSide(color: context.colors.border)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         top: false,
@@ -186,13 +194,20 @@ class ShopCartPage extends ConsumerWidget {
               S.of(context).shopCartSubtotal,
               formatBRL(state.subtotal),
             ),
-            if (state.tax > 0)
+            if (state.shipping > 0)
               _summaryRow(
                 context,
-                S.of(context).shopCartTax,
-                formatBRL(state.tax),
+                S.of(context).shopCartShipping,
+                formatBRL(state.shipping),
+              ),
+            if (state.discount > 0)
+              _summaryRow(
+                context,
+                S.of(context).shopCartDiscount,
+                '-${formatBRL(state.discount)}',
               ),
             const SizedBox(height: 4),
+            Divider(color: context.colors.divider, height: 20),
             _summaryRow(
               context,
               S.of(context).shopCartTotal,
@@ -200,24 +215,12 @@ class ShopCartPage extends ConsumerWidget {
               emphasize: true,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
+            ShopPillButton(
+              label: S.of(context).shopCartContinueToCheckout,
               onPressed: state.isEmpty
                   ? null
                   : () => context.push('/shop/checkout'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.colors.accentPrimary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                S.of(context).shopCartContinueToCheckout,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              expand: true,
             ),
           ],
         ),
@@ -295,20 +298,26 @@ class _CartItemTile extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colors.border),
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             child: item.productImage != null
                 ? CachedNetworkImage(
                     imageUrl: item.productImage!,
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     fit: BoxFit.cover,
                     errorWidget: (_, _, _) => _imageFallback(context),
                   )
@@ -389,8 +398,8 @@ class _CartItemTile extends ConsumerWidget {
 
   Widget _imageFallback(BuildContext context) {
     return Container(
-      width: 72,
-      height: 72,
+      width: 76,
+      height: 76,
       color: context.colors.surfaceHighest,
       child: Icon(
         LucideIcons.image,

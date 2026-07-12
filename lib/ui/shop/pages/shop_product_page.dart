@@ -67,27 +67,19 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
         backgroundColor: context.colors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 48,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            size: 20,
+            color: context.colors.textPrimary,
+          ),
           onPressed: () => context.pop(),
         ),
-        centerTitle: false,
-        title: Text(
-          S.of(context).shopProductPageTitle,
-          style: TextStyle(color: context.colors.textPrimary),
-          overflow: TextOverflow.ellipsis,
-        ),
+        // Sem título fixo "Produto" no AppBar — o nome/preço real do
+        // produto já aparecem logo abaixo do carrossel de imagens.
+        title: null,
         actions: [
-          IconButton(
-            tooltip: S.of(context).shopProductSearchTooltip,
-            icon: Icon(LucideIcons.search, color: context.colors.textPrimary),
-            onPressed: () {}, // TODO: busca dentro da vitrine (fase futura)
-          ),
-          IconButton(
-            tooltip: S.of(context).shopProductShareTooltip,
-            icon: Icon(LucideIcons.share2, color: context.colors.textPrimary),
-            onPressed: () => _shareProduct(context, productAsync.value),
-          ),
           IconButton(
             tooltip: S.of(context).shopProductCartTooltip,
             icon: Badge(
@@ -95,6 +87,7 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
               isLabelVisible: cartItemCount > 0,
               child: Icon(
                 LucideIcons.shoppingCart,
+                size: 20,
                 color: context.colors.textPrimary,
               ),
             ),
@@ -104,10 +97,12 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
             tooltip: S.of(context).shopProductMoreTooltip,
             icon: Icon(
               LucideIcons.ellipsisVertical,
+              size: 20,
               color: context.colors.textPrimary,
             ),
             onPressed: () => _showOptionsSheet(context),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: productAsync.when(
@@ -185,12 +180,19 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
             TabBar(
               controller: _tabController,
               isScrollable: true,
+              tabAlignment: TabAlignment.start,
               indicatorColor: context.colors.accentPrimary,
+              indicatorWeight: 2,
               labelColor: context.colors.textPrimary,
               unselectedLabelColor: context.colors.textSecondary,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 12),
               labelStyle: const TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
               ),
               tabs: tabs,
             ),
@@ -214,12 +216,18 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
   Widget _buildMobileHeader(BuildContext context, Product product) {
     return Column(
       children: [
-        SizedBox(
-          height: 300,
-          child: ProductImageCarousel(
-            images: product.images,
-            fallbackImageUrl: product.imageUrl,
-            height: 300,
+        ClipRRect(
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+          child: SizedBox(
+            height: 280,
+            child: ProductImageCarousel(
+              images: product.images,
+              fallbackImageUrl: product.imageUrl,
+              height: 280,
+            ),
           ),
         ),
         Padding(
@@ -227,17 +235,21 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                product.name,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  height: 1.3,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
               ProductPriceSection(
                 price: product.price,
                 compareAtPrice: product.compareAtPrice,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                product.name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: context.colors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
               const SizedBox(height: 8),
               _buildRatingStatsSection(context, product),
@@ -257,12 +269,15 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
         children: [
           Expanded(
             flex: 1,
-            child: SizedBox(
-              height: 420,
-              child: ProductImageCarousel(
-                images: product.images,
-                fallbackImageUrl: product.imageUrl,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox(
                 height: 420,
+                child: ProductImageCarousel(
+                  images: product.images,
+                  fallbackImageUrl: product.imageUrl,
+                  height: 420,
+                ),
               ),
             ),
           ),
@@ -274,17 +289,19 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
               children: [
                 Text(
                   product.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: TextStyle(
                     color: context.colors.textPrimary,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 ProductPriceSection(
                   price: product.price,
                   compareAtPrice: product.compareAtPrice,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 _buildRatingStatsSection(context, product),
               ],
             ),
@@ -295,26 +312,46 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
   }
 
   Widget _buildRatingStatsSection(BuildContext context, Product product) {
-    return Row(
-      children: [
-        Text(
-          '⭐ ${(product.rating ?? 0).toStringAsFixed(1)}',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.star, size: 13, color: context.colors.accentGold),
+          const SizedBox(width: 4),
+          Text(
+            (product.rating ?? 0).toStringAsFixed(1),
+            style: TextStyle(
+              color: context.colors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '${product.ratingCount} ${S.of(context).shopProductReviews}',
-          style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          '${product.totalSold} ${S.of(context).shopProductSold}',
-          style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
-        ),
-      ],
+          const SizedBox(width: 6),
+          Text(
+            '${product.ratingCount} ${S.of(context).shopProductReviews}',
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            width: 3,
+            height: 3,
+            decoration: BoxDecoration(
+              color: context.colors.textTertiary,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '${product.totalSold} ${S.of(context).shopProductSold}',
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+          ),
+        ],
+      ),
     );
   }
 
@@ -357,10 +394,16 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: context.colors.surfaceElevated,
-          border: Border(top: BorderSide(color: context.colors.border)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -376,47 +419,44 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
               label: S.of(context).shopProductFooterChat,
               onTap: () => _handleChatWithStore(context),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Expanded(
               child: OutlinedButton(
                 onPressed: _handleAddToCart,
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: context.colors.accentPrimary),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.horizontal(
-                      left: Radius.circular(24),
-                    ),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: Text(
                   S.of(context).shopProductAddToCart,
                   style: TextStyle(
                     color: context.colors.accentPrimary,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               child: ElevatedButton(
                 onPressed: _handleBuyNow,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.accentPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.horizontal(
-                      right: Radius.circular(24),
-                    ),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 child: Text(
                   S.of(context).shopProductBuyNow,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                   overflow: TextOverflow.ellipsis,
@@ -432,14 +472,39 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
   // ─── Action Handlers ────────────────────────────────────────────────
 
   Future<bool> _addCurrentProductToCart() async {
-    final product = ref.read(productDetailProvider(widget.productId)).value;
-    if (product == null) return false;
+    try {
+      // Obter o produto — pode estar em FutureProvider state
+      final productAsync = ref.read(productDetailProvider(widget.productId));
+      final product = productAsync.value;
 
-    // Sempre adiciona 1 unidade — ajustes de quantidade acontecem dentro
-    // do carrinho (ver decisão de produto no doc da classe).
-    final request = CartItemRequest(productId: product.id, quantity: 1);
+      if (product == null) {
+        debugPrint('🛒 ERROR: Product is null');
+        return false;
+      }
 
-    return ref.read(cartNotifierProvider.notifier).addItem(request);
+      debugPrint(
+        '🛒 Adding product to cart: ${product.name} (id: ${product.id})',
+      );
+
+      // Sempre adiciona 1 unidade — ajustes de quantidade acontecem dentro
+      // do carrinho (ver decisão de produto no doc da classe).
+      final request = CartItemRequest(productId: product.id, quantity: 1);
+
+      final result = await ref
+          .read(cartNotifierProvider.notifier)
+          .addItem(request);
+
+      if (result) {
+        debugPrint('✅ Product added to cart successfully');
+      } else {
+        debugPrint('❌ Failed to add product to cart');
+      }
+
+      return result;
+    } catch (e) {
+      debugPrint('🛒 ERROR adding to cart: $e');
+      return false;
+    }
   }
 
   Future<void> _handleAddToCart() async {
@@ -466,7 +531,11 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
       );
       return;
     }
-    context.push('/shop/cart');
+    // "Comprar agora" pula o carrinho e vai direto pro checkout — como o
+    // usuário já costuma ter endereço salvo, a tela de checkout já abre
+    // com o endereço de entrega preenchido e as opções de pagamento
+    // visíveis, sem passo extra de revisar o carrinho.
+    context.push('/shop/checkout');
   }
 
   /// Chat direto com a loja — ainda não implementado (o backend não expõe
@@ -947,7 +1016,15 @@ class _ProductTabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: backgroundColor, child: _tabBar);
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          bottom: BorderSide(color: context.colors.divider, width: 1),
+        ),
+      ),
+      child: _tabBar,
+    );
   }
 
   @override

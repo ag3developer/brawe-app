@@ -28,10 +28,10 @@ abstract class MarketplaceCartService {
   /// - `affiliate_ref_code`: Optional referral code of affiliate
   /// - `room_id`: Optional room ID if purchase is from live stream
   ///
-  /// Returns [CartItem] with:
-  /// - Calculated prices (unit_price, total_price)
-  /// - ⭐ CRÍTICO: comissao_rate, comissao_amount if affiliate_ref_code provided
-  /// - Store and product details
+  /// ⚠️ Returns the FULL [Cart] (response_model=CartResponse on the
+  /// backend), NOT a single [CartItem] — same shape as [getCart]. Parsing
+  /// this as [CartItem] fails at runtime (`null as String`) because the
+  /// cart JSON has no `product_id`/`store_id` at its root level.
   ///
   /// Throws [AppException] if product not found, out of stock, or store not approved.
   Future<dynamic> addItem(dynamic cartItemRequest, {String? sessionId});
@@ -43,8 +43,8 @@ abstract class MarketplaceCartService {
   /// Request body: [CartItemUpdateRequest]
   /// - `quantity`: New quantity (≥ 1)
   ///
-  /// Returns updated [CartItem] with recalculated prices.
-  /// If quantity = 0, equivalent to DELETE (item removed).
+  /// ⚠️ Returns the FULL [Cart] (same as [addItem]/[getCart]), NOT a
+  /// single [CartItem]. If quantity = 0, equivalent to DELETE (item removed).
   ///
   /// Throws [AppException] if item not found or insufficient stock.
   Future<dynamic> updateItem(String cartItemId, dynamic cartItemUpdateRequest);

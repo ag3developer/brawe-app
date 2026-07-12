@@ -9,13 +9,17 @@ part of 'store_showcase_service_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Riverpod provider for [StoreShowcaseService].
-/// Uses [dioProvider] (main backend) for marketplace endpoints.
+/// Injects both Dio instances for different backends:
+/// - dioProvider (app.brawe.io) for /marketplace/* (requires auth)
+/// - liveDioProvider (connect.brawe.io) for /shopping/* (public)
 
 @ProviderFor(storeShowcaseService)
 final storeShowcaseServiceProvider = StoreShowcaseServiceProvider._();
 
 /// Riverpod provider for [StoreShowcaseService].
-/// Uses [dioProvider] (main backend) for marketplace endpoints.
+/// Injects both Dio instances for different backends:
+/// - dioProvider (app.brawe.io) for /marketplace/* (requires auth)
+/// - liveDioProvider (connect.brawe.io) for /shopping/* (public)
 
 final class StoreShowcaseServiceProvider
     extends
@@ -26,7 +30,9 @@ final class StoreShowcaseServiceProvider
         >
     with $Provider<StoreShowcaseService> {
   /// Riverpod provider for [StoreShowcaseService].
-  /// Uses [dioProvider] (main backend) for marketplace endpoints.
+  /// Injects both Dio instances for different backends:
+  /// - dioProvider (app.brawe.io) for /marketplace/* (requires auth)
+  /// - liveDioProvider (connect.brawe.io) for /shopping/* (public)
   StoreShowcaseServiceProvider._()
     : super(
         from: null,
@@ -62,4 +68,4 @@ final class StoreShowcaseServiceProvider
 }
 
 String _$storeShowcaseServiceHash() =>
-    r'67d2aa4d09f813a55b605f59a8ed1d53e79fe8f4';
+    r'12c8bb93181af0d8e8b5234edff0a2a9a1d4254f';

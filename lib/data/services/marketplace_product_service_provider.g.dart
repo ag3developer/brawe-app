@@ -9,13 +9,13 @@ part of 'marketplace_product_service_provider.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Riverpod provider for [MarketplaceProductService].
-/// Uses [dioProvider] (main backend) for marketplace product endpoints.
+/// Uses [dioProvider] (app.brawe.io) - all marketplace endpoints are here.
 
 @ProviderFor(marketplaceProductService)
 final marketplaceProductServiceProvider = MarketplaceProductServiceProvider._();
 
 /// Riverpod provider for [MarketplaceProductService].
-/// Uses [dioProvider] (main backend) for marketplace product endpoints.
+/// Uses [dioProvider] (app.brawe.io) - all marketplace endpoints are here.
 
 final class MarketplaceProductServiceProvider
     extends
@@ -26,7 +26,7 @@ final class MarketplaceProductServiceProvider
         >
     with $Provider<MarketplaceProductService> {
   /// Riverpod provider for [MarketplaceProductService].
-  /// Uses [dioProvider] (main backend) for marketplace product endpoints.
+  /// Uses [dioProvider] (app.brawe.io) - all marketplace endpoints are here.
   MarketplaceProductServiceProvider._()
     : super(
         from: null,

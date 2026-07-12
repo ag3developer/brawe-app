@@ -5,6 +5,7 @@ import '../services/marketplace_cart_service_provider.dart';
 import '../services/marketplace_checkout_service_provider.dart';
 import '../services/marketplace_product_service_provider.dart';
 import '../services/store_showcase_service_provider.dart';
+import '../services/viacep_service.dart';
 import '../../domain/models/marketplace_models.dart';
 
 // ============================================================================
@@ -160,4 +161,13 @@ final myStorefrontProductsProvider = FutureProvider<List<Product>>((ref) async {
 
   final results = await Future.wait(futures);
   return results.expand((list) => list).toList();
+});
+
+// ============================================================================
+// VIACEP SERVICE PROVIDER
+// ============================================================================
+
+/// Provider para ViaCepService (consultar endereço por CEP)
+final viaCepServiceProvider = Provider<ViaCepService>((ref) {
+  return ViaCepService();
 });

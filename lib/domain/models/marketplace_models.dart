@@ -109,34 +109,50 @@ sealed class StoreBanner with _$StoreBanner {
 sealed class Store with _$Store {
   const factory Store({
     required String id,
+    @JsonKey(name: 'owner_user_id') String? ownerUserId,
     required String name,
     required String slug,
     required String description,
     @JsonKey(name: 'logo_url') String? logoUrl,
     @JsonKey(name: 'banner_url') String? bannerUrl,
-    required List<StoreBanner> banners,
+    @JsonKey(name: 'banners') List<StoreBanner>? banners,
     required String currency,
+    // ⚠️ Nunca exibir na vitrine pública (regra de negócio) — ausente na
+    // resposta pública de /shopping/stores/{slug}, presente só no showcase
+    // interno de afiliados.
     @JsonKey(name: 'default_affiliate_commission')
-    required double defaultAffiliateCommission,
+    double? defaultAffiliateCommission,
     @JsonKey(name: 'total_products') required int totalProducts,
     @JsonKey(name: 'total_orders') required int totalOrders,
     @JsonKey(name: 'total_sales') double? totalSales,
     required double rating,
     @JsonKey(name: 'rating_count') required int ratingCount,
-    @JsonKey(name: 'is_premium') required bool isPremium,
+    // Ausente na resposta pública -> default false.
+    @JsonKey(name: 'is_premium') @Default(false) bool isPremium,
     @JsonKey(name: 'has_brawe_pass') required bool hasBrawePass,
     @JsonKey(name: 'contact_email') String? contactEmail,
     @JsonKey(name: 'contact_whatsapp') String? contactWhatsapp,
     @JsonKey(name: 'social_instagram') String? socialInstagram,
     @JsonKey(name: 'social_facebook') String? socialFacebook,
     @JsonKey(name: 'social_tiktok') String? socialTiktok,
-    required List<String> categories,
+    // Ausente na resposta pública -> default lista vazia.
+    @Default(<String>[]) List<String> categories,
     @JsonKey(name: 'top_products') List<Product>? topProducts,
-    @JsonKey(name: 'created_at') required String createdAt,
+    // Endpoint público retorna `member_since` em vez de `created_at`.
+    @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'member_since') String? memberSince,
     @JsonKey(name: 'application_status') ApplicationStatus? applicationStatus,
     @JsonKey(name: 'application_id') String? applicationId,
     @JsonKey(name: 'application_message') String? applicationMessage,
     @JsonKey(name: 'store_response') String? storeResponse,
+    // Campos extras do endpoint público (/shopping/stores/{slug}).
+    @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
+    @JsonKey(name: 'legal_name') String? legalName,
+    @JsonKey(name: 'trade_name') String? tradeName,
+    String? cnpj,
+    String? location,
+    String? country,
+    @JsonKey(name: 'store_url') String? storeUrl,
   }) = _Store;
 
   factory Store.fromJson(Map<String, dynamic> json) => _$StoreFromJson(json);
@@ -220,6 +236,11 @@ extension ProductDisplayX on Product {
 @freezed
 sealed class ShippingAddress with _$ShippingAddress {
   const factory ShippingAddress({
+    // Ausente para um endereço ainda não salvo (preenchido no formulário
+    // de checkout, mas ainda não enviado ao backend).
+    String? id,
+    // Rótulo amigável definido pelo usuário (ex.: "Casa", "Trabalho").
+    String? label,
     required String street,
     required String number,
     String? complement,
@@ -230,6 +251,14 @@ sealed class ShippingAddress with _$ShippingAddress {
     @JsonKey(name: 'postal_code') required String postalCode,
     double? lat,
     double? lng,
+    // ⚠️ Dados fiscais do destinatário — OBRIGATÓRIOS para a loja emitir
+    // NF do pedido físico. 'cpf' ou 'cnpj'.
+    @JsonKey(name: 'document_type') @Default('cpf') String documentType,
+    @JsonKey(name: 'document_number') String? documentNumber,
+    @JsonKey(name: 'recipient_name') String? recipientName,
+    @JsonKey(name: 'is_default') @Default(false) bool isDefault,
+    @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _ShippingAddress;
 
   factory ShippingAddress.fromJson(Map<String, dynamic> json) =>
@@ -244,16 +273,25 @@ sealed class CartItem with _$CartItem {
     @JsonKey(name: 'variant_id') String? variantId,
     @JsonKey(name: 'store_id') required String storeId,
     required int quantity,
-    @JsonKey(name: 'unit_price') required double unitPrice,
-    @JsonKey(name: 'total_price') required double totalPrice,
+    // Backend serializa Decimal como String no JSON (ex.: "79.90") — usar o
+    // mesmo helper resiliente de Product para aceitar String ou num.
+    @JsonKey(name: 'unit_price', fromJson: _priceFromJson)
+    required double unitPrice,
+    @JsonKey(name: 'total_price', fromJson: _priceFromJson)
+    required double totalPrice,
     @JsonKey(name: 'product_name') required String productName,
     @JsonKey(name: 'product_image') String? productImage,
     @JsonKey(name: 'variant_name') String? variantName,
+    // Nome real da loja (via Product.store no backend) — usado para
+    // agrupar itens por loja no checkout quando há múltiplas lojas.
+    @JsonKey(name: 'store_name') String? storeName,
     // ⭐ CRÍTICO: campos de comissão do afiliado
     @JsonKey(name: 'affiliate_ref_code') String? affiliateRefCode,
     @JsonKey(name: 'room_id') String? roomId,
-    @JsonKey(name: 'comissao_rate') double? comissaoRate,
-    @JsonKey(name: 'comissao_amount') double? comissaoAmount,
+    @JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson)
+    double? comissaoRate,
+    @JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson)
+    double? comissaoAmount,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _CartItem;
@@ -265,15 +303,25 @@ sealed class CartItem with _$CartItem {
 @freezed
 sealed class Cart with _$Cart {
   const factory Cart({
-    required String id,
+    // Carrinho de visitante (sem itens ainda) pode não ter `id`.
+    String? id,
     @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'store_id') String? storeId,
     required List<CartItem> items,
-    required double subtotal,
-    required double tax,
-    required double total,
-    @JsonKey(name: 'created_at') required String createdAt,
-    @JsonKey(name: 'updated_at') required String updatedAt,
+    // Todos os valores monetários abaixo vêm como String do backend
+    // (Decimal serializado) — usar o helper resiliente para aceitar
+    // String ou num.
+    @JsonKey(fromJson: _priceFromJson) @Default(0) double subtotal,
+    @JsonKey(fromJson: _priceFromJson) @Default(0) double discount,
+    @JsonKey(fromJson: _priceFromJson) @Default(0) double shipping,
+    @JsonKey(fromJson: _priceFromJson) @Default(0) double total,
+    @JsonKey(name: 'coupon_code') String? couponCode,
+    @JsonKey(name: 'coupon_discount', fromJson: _priceFromJson)
+    @Default(0)
+    double couponDiscount,
+    @JsonKey(name: 'item_count') @Default(0) int itemCount,
+    @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _Cart;
 
   factory Cart.fromJson(Map<String, dynamic> json) => _$CartFromJson(json);

@@ -138,7 +138,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final storefrontAsync = isMe
         ? ref.watch(myStorefrontProductsProvider)
         : const AsyncValue<List<Product>>.data(<Product>[]);
-    final products = storefrontAsync.value ?? const <Product>[];
+    final products = storefrontAsync.maybeWhen(
+      data: (p) => p,
+      orElse: () => const <Product>[],
+    );
 
     final s = S.of(context);
     final tabs = <Tab>[

@@ -293,7 +293,14 @@ as int,
 /// @nodoc
 mixin _$Store {
 
- String get id; String get name; String get slug; String get description;@JsonKey(name: 'logo_url') String? get logoUrl;@JsonKey(name: 'banner_url') String? get bannerUrl; List<StoreBanner> get banners; String get currency;@JsonKey(name: 'default_affiliate_commission') double get defaultAffiliateCommission;@JsonKey(name: 'total_products') int get totalProducts;@JsonKey(name: 'total_orders') int get totalOrders;@JsonKey(name: 'total_sales') double? get totalSales; double get rating;@JsonKey(name: 'rating_count') int get ratingCount;@JsonKey(name: 'is_premium') bool get isPremium;@JsonKey(name: 'has_brawe_pass') bool get hasBrawePass;@JsonKey(name: 'contact_email') String? get contactEmail;@JsonKey(name: 'contact_whatsapp') String? get contactWhatsapp;@JsonKey(name: 'social_instagram') String? get socialInstagram;@JsonKey(name: 'social_facebook') String? get socialFacebook;@JsonKey(name: 'social_tiktok') String? get socialTiktok; List<String> get categories;@JsonKey(name: 'top_products') List<Product>? get topProducts;@JsonKey(name: 'created_at') String get createdAt;@JsonKey(name: 'application_status') ApplicationStatus? get applicationStatus;@JsonKey(name: 'application_id') String? get applicationId;@JsonKey(name: 'application_message') String? get applicationMessage;@JsonKey(name: 'store_response') String? get storeResponse;
+ String get id;@JsonKey(name: 'owner_user_id') String? get ownerUserId; String get name; String get slug; String get description;@JsonKey(name: 'logo_url') String? get logoUrl;@JsonKey(name: 'banner_url') String? get bannerUrl;@JsonKey(name: 'banners') List<StoreBanner>? get banners; String get currency;// ⚠️ Nunca exibir na vitrine pública (regra de negócio) — ausente na
+// resposta pública de /shopping/stores/{slug}, presente só no showcase
+// interno de afiliados.
+@JsonKey(name: 'default_affiliate_commission') double? get defaultAffiliateCommission;@JsonKey(name: 'total_products') int get totalProducts;@JsonKey(name: 'total_orders') int get totalOrders;@JsonKey(name: 'total_sales') double? get totalSales; double get rating;@JsonKey(name: 'rating_count') int get ratingCount;// Ausente na resposta pública -> default false.
+@JsonKey(name: 'is_premium') bool get isPremium;@JsonKey(name: 'has_brawe_pass') bool get hasBrawePass;@JsonKey(name: 'contact_email') String? get contactEmail;@JsonKey(name: 'contact_whatsapp') String? get contactWhatsapp;@JsonKey(name: 'social_instagram') String? get socialInstagram;@JsonKey(name: 'social_facebook') String? get socialFacebook;@JsonKey(name: 'social_tiktok') String? get socialTiktok;// Ausente na resposta pública -> default lista vazia.
+ List<String> get categories;@JsonKey(name: 'top_products') List<Product>? get topProducts;// Endpoint público retorna `member_since` em vez de `created_at`.
+@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'member_since') String? get memberSince;@JsonKey(name: 'application_status') ApplicationStatus? get applicationStatus;@JsonKey(name: 'application_id') String? get applicationId;@JsonKey(name: 'application_message') String? get applicationMessage;@JsonKey(name: 'store_response') String? get storeResponse;// Campos extras do endpoint público (/shopping/stores/{slug}).
+@JsonKey(name: 'is_verified') bool get isVerified;@JsonKey(name: 'legal_name') String? get legalName;@JsonKey(name: 'trade_name') String? get tradeName; String? get cnpj; String? get location; String? get country;@JsonKey(name: 'store_url') String? get storeUrl;
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -306,16 +313,16 @@ $StoreCopyWith<Store> get copyWith => _$StoreCopyWithImpl<Store>(this as Store, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.description, description) || other.description == description)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other.banners, banners)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.defaultAffiliateCommission, defaultAffiliateCommission) || other.defaultAffiliateCommission == defaultAffiliateCommission)&&(identical(other.totalProducts, totalProducts) || other.totalProducts == totalProducts)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.totalSales, totalSales) || other.totalSales == totalSales)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium)&&(identical(other.hasBrawePass, hasBrawePass) || other.hasBrawePass == hasBrawePass)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.contactWhatsapp, contactWhatsapp) || other.contactWhatsapp == contactWhatsapp)&&(identical(other.socialInstagram, socialInstagram) || other.socialInstagram == socialInstagram)&&(identical(other.socialFacebook, socialFacebook) || other.socialFacebook == socialFacebook)&&(identical(other.socialTiktok, socialTiktok) || other.socialTiktok == socialTiktok)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.topProducts, topProducts)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.applicationStatus, applicationStatus) || other.applicationStatus == applicationStatus)&&(identical(other.applicationId, applicationId) || other.applicationId == applicationId)&&(identical(other.applicationMessage, applicationMessage) || other.applicationMessage == applicationMessage)&&(identical(other.storeResponse, storeResponse) || other.storeResponse == storeResponse));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Store&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.name, name) || other.name == name)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.description, description) || other.description == description)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other.banners, banners)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.defaultAffiliateCommission, defaultAffiliateCommission) || other.defaultAffiliateCommission == defaultAffiliateCommission)&&(identical(other.totalProducts, totalProducts) || other.totalProducts == totalProducts)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.totalSales, totalSales) || other.totalSales == totalSales)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium)&&(identical(other.hasBrawePass, hasBrawePass) || other.hasBrawePass == hasBrawePass)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.contactWhatsapp, contactWhatsapp) || other.contactWhatsapp == contactWhatsapp)&&(identical(other.socialInstagram, socialInstagram) || other.socialInstagram == socialInstagram)&&(identical(other.socialFacebook, socialFacebook) || other.socialFacebook == socialFacebook)&&(identical(other.socialTiktok, socialTiktok) || other.socialTiktok == socialTiktok)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.topProducts, topProducts)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.memberSince, memberSince) || other.memberSince == memberSince)&&(identical(other.applicationStatus, applicationStatus) || other.applicationStatus == applicationStatus)&&(identical(other.applicationId, applicationId) || other.applicationId == applicationId)&&(identical(other.applicationMessage, applicationMessage) || other.applicationMessage == applicationMessage)&&(identical(other.storeResponse, storeResponse) || other.storeResponse == storeResponse)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.legalName, legalName) || other.legalName == legalName)&&(identical(other.tradeName, tradeName) || other.tradeName == tradeName)&&(identical(other.cnpj, cnpj) || other.cnpj == cnpj)&&(identical(other.location, location) || other.location == location)&&(identical(other.country, country) || other.country == country)&&(identical(other.storeUrl, storeUrl) || other.storeUrl == storeUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,slug,description,logoUrl,bannerUrl,const DeepCollectionEquality().hash(banners),currency,defaultAffiliateCommission,totalProducts,totalOrders,totalSales,rating,ratingCount,isPremium,hasBrawePass,contactEmail,contactWhatsapp,socialInstagram,socialFacebook,socialTiktok,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(topProducts),createdAt,applicationStatus,applicationId,applicationMessage,storeResponse]);
+int get hashCode => Object.hashAll([runtimeType,id,ownerUserId,name,slug,description,logoUrl,bannerUrl,const DeepCollectionEquality().hash(banners),currency,defaultAffiliateCommission,totalProducts,totalOrders,totalSales,rating,ratingCount,isPremium,hasBrawePass,contactEmail,contactWhatsapp,socialInstagram,socialFacebook,socialTiktok,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(topProducts),createdAt,memberSince,applicationStatus,applicationId,applicationMessage,storeResponse,isVerified,legalName,tradeName,cnpj,location,country,storeUrl]);
 
 @override
 String toString() {
-  return 'Store(id: $id, name: $name, slug: $slug, description: $description, logoUrl: $logoUrl, bannerUrl: $bannerUrl, banners: $banners, currency: $currency, defaultAffiliateCommission: $defaultAffiliateCommission, totalProducts: $totalProducts, totalOrders: $totalOrders, totalSales: $totalSales, rating: $rating, ratingCount: $ratingCount, isPremium: $isPremium, hasBrawePass: $hasBrawePass, contactEmail: $contactEmail, contactWhatsapp: $contactWhatsapp, socialInstagram: $socialInstagram, socialFacebook: $socialFacebook, socialTiktok: $socialTiktok, categories: $categories, topProducts: $topProducts, createdAt: $createdAt, applicationStatus: $applicationStatus, applicationId: $applicationId, applicationMessage: $applicationMessage, storeResponse: $storeResponse)';
+  return 'Store(id: $id, ownerUserId: $ownerUserId, name: $name, slug: $slug, description: $description, logoUrl: $logoUrl, bannerUrl: $bannerUrl, banners: $banners, currency: $currency, defaultAffiliateCommission: $defaultAffiliateCommission, totalProducts: $totalProducts, totalOrders: $totalOrders, totalSales: $totalSales, rating: $rating, ratingCount: $ratingCount, isPremium: $isPremium, hasBrawePass: $hasBrawePass, contactEmail: $contactEmail, contactWhatsapp: $contactWhatsapp, socialInstagram: $socialInstagram, socialFacebook: $socialFacebook, socialTiktok: $socialTiktok, categories: $categories, topProducts: $topProducts, createdAt: $createdAt, memberSince: $memberSince, applicationStatus: $applicationStatus, applicationId: $applicationId, applicationMessage: $applicationMessage, storeResponse: $storeResponse, isVerified: $isVerified, legalName: $legalName, tradeName: $tradeName, cnpj: $cnpj, location: $location, country: $country, storeUrl: $storeUrl)';
 }
 
 
@@ -326,7 +333,7 @@ abstract mixin class $StoreCopyWith<$Res>  {
   factory $StoreCopyWith(Store value, $Res Function(Store) _then) = _$StoreCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, String slug, String description,@JsonKey(name: 'logo_url') String? logoUrl,@JsonKey(name: 'banner_url') String? bannerUrl, List<StoreBanner> banners, String currency,@JsonKey(name: 'default_affiliate_commission') double defaultAffiliateCommission,@JsonKey(name: 'total_products') int totalProducts,@JsonKey(name: 'total_orders') int totalOrders,@JsonKey(name: 'total_sales') double? totalSales, double rating,@JsonKey(name: 'rating_count') int ratingCount,@JsonKey(name: 'is_premium') bool isPremium,@JsonKey(name: 'has_brawe_pass') bool hasBrawePass,@JsonKey(name: 'contact_email') String? contactEmail,@JsonKey(name: 'contact_whatsapp') String? contactWhatsapp,@JsonKey(name: 'social_instagram') String? socialInstagram,@JsonKey(name: 'social_facebook') String? socialFacebook,@JsonKey(name: 'social_tiktok') String? socialTiktok, List<String> categories,@JsonKey(name: 'top_products') List<Product>? topProducts,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'application_status') ApplicationStatus? applicationStatus,@JsonKey(name: 'application_id') String? applicationId,@JsonKey(name: 'application_message') String? applicationMessage,@JsonKey(name: 'store_response') String? storeResponse
+ String id,@JsonKey(name: 'owner_user_id') String? ownerUserId, String name, String slug, String description,@JsonKey(name: 'logo_url') String? logoUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'banners') List<StoreBanner>? banners, String currency,@JsonKey(name: 'default_affiliate_commission') double? defaultAffiliateCommission,@JsonKey(name: 'total_products') int totalProducts,@JsonKey(name: 'total_orders') int totalOrders,@JsonKey(name: 'total_sales') double? totalSales, double rating,@JsonKey(name: 'rating_count') int ratingCount,@JsonKey(name: 'is_premium') bool isPremium,@JsonKey(name: 'has_brawe_pass') bool hasBrawePass,@JsonKey(name: 'contact_email') String? contactEmail,@JsonKey(name: 'contact_whatsapp') String? contactWhatsapp,@JsonKey(name: 'social_instagram') String? socialInstagram,@JsonKey(name: 'social_facebook') String? socialFacebook,@JsonKey(name: 'social_tiktok') String? socialTiktok, List<String> categories,@JsonKey(name: 'top_products') List<Product>? topProducts,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'member_since') String? memberSince,@JsonKey(name: 'application_status') ApplicationStatus? applicationStatus,@JsonKey(name: 'application_id') String? applicationId,@JsonKey(name: 'application_message') String? applicationMessage,@JsonKey(name: 'store_response') String? storeResponse,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'legal_name') String? legalName,@JsonKey(name: 'trade_name') String? tradeName, String? cnpj, String? location, String? country,@JsonKey(name: 'store_url') String? storeUrl
 });
 
 
@@ -343,18 +350,19 @@ class _$StoreCopyWithImpl<$Res>
 
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? slug = null,Object? description = null,Object? logoUrl = freezed,Object? bannerUrl = freezed,Object? banners = null,Object? currency = null,Object? defaultAffiliateCommission = null,Object? totalProducts = null,Object? totalOrders = null,Object? totalSales = freezed,Object? rating = null,Object? ratingCount = null,Object? isPremium = null,Object? hasBrawePass = null,Object? contactEmail = freezed,Object? contactWhatsapp = freezed,Object? socialInstagram = freezed,Object? socialFacebook = freezed,Object? socialTiktok = freezed,Object? categories = null,Object? topProducts = freezed,Object? createdAt = null,Object? applicationStatus = freezed,Object? applicationId = freezed,Object? applicationMessage = freezed,Object? storeResponse = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerUserId = freezed,Object? name = null,Object? slug = null,Object? description = null,Object? logoUrl = freezed,Object? bannerUrl = freezed,Object? banners = freezed,Object? currency = null,Object? defaultAffiliateCommission = freezed,Object? totalProducts = null,Object? totalOrders = null,Object? totalSales = freezed,Object? rating = null,Object? ratingCount = null,Object? isPremium = null,Object? hasBrawePass = null,Object? contactEmail = freezed,Object? contactWhatsapp = freezed,Object? socialInstagram = freezed,Object? socialFacebook = freezed,Object? socialTiktok = freezed,Object? categories = null,Object? topProducts = freezed,Object? createdAt = freezed,Object? memberSince = freezed,Object? applicationStatus = freezed,Object? applicationId = freezed,Object? applicationMessage = freezed,Object? storeResponse = freezed,Object? isVerified = null,Object? legalName = freezed,Object? tradeName = freezed,Object? cnpj = freezed,Object? location = freezed,Object? country = freezed,Object? storeUrl = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,ownerUserId: freezed == ownerUserId ? _self.ownerUserId : ownerUserId // ignore: cast_nullable_to_non_nullable
+as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
-as String?,banners: null == banners ? _self.banners : banners // ignore: cast_nullable_to_non_nullable
-as List<StoreBanner>,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
-as String,defaultAffiliateCommission: null == defaultAffiliateCommission ? _self.defaultAffiliateCommission : defaultAffiliateCommission // ignore: cast_nullable_to_non_nullable
-as double,totalProducts: null == totalProducts ? _self.totalProducts : totalProducts // ignore: cast_nullable_to_non_nullable
+as String?,banners: freezed == banners ? _self.banners : banners // ignore: cast_nullable_to_non_nullable
+as List<StoreBanner>?,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,defaultAffiliateCommission: freezed == defaultAffiliateCommission ? _self.defaultAffiliateCommission : defaultAffiliateCommission // ignore: cast_nullable_to_non_nullable
+as double?,totalProducts: null == totalProducts ? _self.totalProducts : totalProducts // ignore: cast_nullable_to_non_nullable
 as int,totalOrders: null == totalOrders ? _self.totalOrders : totalOrders // ignore: cast_nullable_to_non_nullable
 as int,totalSales: freezed == totalSales ? _self.totalSales : totalSales // ignore: cast_nullable_to_non_nullable
 as double?,rating: null == rating ? _self.rating : rating // ignore: cast_nullable_to_non_nullable
@@ -368,11 +376,19 @@ as String?,socialFacebook: freezed == socialFacebook ? _self.socialFacebook : so
 as String?,socialTiktok: freezed == socialTiktok ? _self.socialTiktok : socialTiktok // ignore: cast_nullable_to_non_nullable
 as String?,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
 as List<String>,topProducts: freezed == topProducts ? _self.topProducts : topProducts // ignore: cast_nullable_to_non_nullable
-as List<Product>?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,applicationStatus: freezed == applicationStatus ? _self.applicationStatus : applicationStatus // ignore: cast_nullable_to_non_nullable
+as List<Product>?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,memberSince: freezed == memberSince ? _self.memberSince : memberSince // ignore: cast_nullable_to_non_nullable
+as String?,applicationStatus: freezed == applicationStatus ? _self.applicationStatus : applicationStatus // ignore: cast_nullable_to_non_nullable
 as ApplicationStatus?,applicationId: freezed == applicationId ? _self.applicationId : applicationId // ignore: cast_nullable_to_non_nullable
 as String?,applicationMessage: freezed == applicationMessage ? _self.applicationMessage : applicationMessage // ignore: cast_nullable_to_non_nullable
 as String?,storeResponse: freezed == storeResponse ? _self.storeResponse : storeResponse // ignore: cast_nullable_to_non_nullable
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,legalName: freezed == legalName ? _self.legalName : legalName // ignore: cast_nullable_to_non_nullable
+as String?,tradeName: freezed == tradeName ? _self.tradeName : tradeName // ignore: cast_nullable_to_non_nullable
+as String?,cnpj: freezed == cnpj ? _self.cnpj : cnpj // ignore: cast_nullable_to_non_nullable
+as String?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String?,country: freezed == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
+as String?,storeUrl: freezed == storeUrl ? _self.storeUrl : storeUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -455,10 +471,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl,  List<StoreBanner> banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'owner_user_id')  String? ownerUserId,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'banners')  List<StoreBanner>? banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double? defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'member_since')  String? memberSince, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'legal_name')  String? legalName, @JsonKey(name: 'trade_name')  String? tradeName,  String? cnpj,  String? location,  String? country, @JsonKey(name: 'store_url')  String? storeUrl)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Store() when $default != null:
-return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse);case _:
+return $default(_that.id,_that.ownerUserId,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.memberSince,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse,_that.isVerified,_that.legalName,_that.tradeName,_that.cnpj,_that.location,_that.country,_that.storeUrl);case _:
   return orElse();
 
 }
@@ -476,10 +492,10 @@ return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl,  List<StoreBanner> banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'owner_user_id')  String? ownerUserId,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'banners')  List<StoreBanner>? banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double? defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'member_since')  String? memberSince, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'legal_name')  String? legalName, @JsonKey(name: 'trade_name')  String? tradeName,  String? cnpj,  String? location,  String? country, @JsonKey(name: 'store_url')  String? storeUrl)  $default,) {final _that = this;
 switch (_that) {
 case _Store():
-return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse);}
+return $default(_that.id,_that.ownerUserId,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.memberSince,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse,_that.isVerified,_that.legalName,_that.tradeName,_that.cnpj,_that.location,_that.country,_that.storeUrl);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -493,10 +509,10 @@ return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl,  List<StoreBanner> banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'owner_user_id')  String? ownerUserId,  String name,  String slug,  String description, @JsonKey(name: 'logo_url')  String? logoUrl, @JsonKey(name: 'banner_url')  String? bannerUrl, @JsonKey(name: 'banners')  List<StoreBanner>? banners,  String currency, @JsonKey(name: 'default_affiliate_commission')  double? defaultAffiliateCommission, @JsonKey(name: 'total_products')  int totalProducts, @JsonKey(name: 'total_orders')  int totalOrders, @JsonKey(name: 'total_sales')  double? totalSales,  double rating, @JsonKey(name: 'rating_count')  int ratingCount, @JsonKey(name: 'is_premium')  bool isPremium, @JsonKey(name: 'has_brawe_pass')  bool hasBrawePass, @JsonKey(name: 'contact_email')  String? contactEmail, @JsonKey(name: 'contact_whatsapp')  String? contactWhatsapp, @JsonKey(name: 'social_instagram')  String? socialInstagram, @JsonKey(name: 'social_facebook')  String? socialFacebook, @JsonKey(name: 'social_tiktok')  String? socialTiktok,  List<String> categories, @JsonKey(name: 'top_products')  List<Product>? topProducts, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'member_since')  String? memberSince, @JsonKey(name: 'application_status')  ApplicationStatus? applicationStatus, @JsonKey(name: 'application_id')  String? applicationId, @JsonKey(name: 'application_message')  String? applicationMessage, @JsonKey(name: 'store_response')  String? storeResponse, @JsonKey(name: 'is_verified')  bool isVerified, @JsonKey(name: 'legal_name')  String? legalName, @JsonKey(name: 'trade_name')  String? tradeName,  String? cnpj,  String? location,  String? country, @JsonKey(name: 'store_url')  String? storeUrl)?  $default,) {final _that = this;
 switch (_that) {
 case _Store() when $default != null:
-return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse);case _:
+return $default(_that.id,_that.ownerUserId,_that.name,_that.slug,_that.description,_that.logoUrl,_that.bannerUrl,_that.banners,_that.currency,_that.defaultAffiliateCommission,_that.totalProducts,_that.totalOrders,_that.totalSales,_that.rating,_that.ratingCount,_that.isPremium,_that.hasBrawePass,_that.contactEmail,_that.contactWhatsapp,_that.socialInstagram,_that.socialFacebook,_that.socialTiktok,_that.categories,_that.topProducts,_that.createdAt,_that.memberSince,_that.applicationStatus,_that.applicationId,_that.applicationMessage,_that.storeResponse,_that.isVerified,_that.legalName,_that.tradeName,_that.cnpj,_that.location,_that.country,_that.storeUrl);case _:
   return null;
 
 }
@@ -508,29 +524,36 @@ return $default(_that.id,_that.name,_that.slug,_that.description,_that.logoUrl,_
 @JsonSerializable()
 
 class _Store implements Store {
-  const _Store({required this.id, required this.name, required this.slug, required this.description, @JsonKey(name: 'logo_url') this.logoUrl, @JsonKey(name: 'banner_url') this.bannerUrl, required final  List<StoreBanner> banners, required this.currency, @JsonKey(name: 'default_affiliate_commission') required this.defaultAffiliateCommission, @JsonKey(name: 'total_products') required this.totalProducts, @JsonKey(name: 'total_orders') required this.totalOrders, @JsonKey(name: 'total_sales') this.totalSales, required this.rating, @JsonKey(name: 'rating_count') required this.ratingCount, @JsonKey(name: 'is_premium') required this.isPremium, @JsonKey(name: 'has_brawe_pass') required this.hasBrawePass, @JsonKey(name: 'contact_email') this.contactEmail, @JsonKey(name: 'contact_whatsapp') this.contactWhatsapp, @JsonKey(name: 'social_instagram') this.socialInstagram, @JsonKey(name: 'social_facebook') this.socialFacebook, @JsonKey(name: 'social_tiktok') this.socialTiktok, required final  List<String> categories, @JsonKey(name: 'top_products') final  List<Product>? topProducts, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'application_status') this.applicationStatus, @JsonKey(name: 'application_id') this.applicationId, @JsonKey(name: 'application_message') this.applicationMessage, @JsonKey(name: 'store_response') this.storeResponse}): _banners = banners,_categories = categories,_topProducts = topProducts;
+  const _Store({required this.id, @JsonKey(name: 'owner_user_id') this.ownerUserId, required this.name, required this.slug, required this.description, @JsonKey(name: 'logo_url') this.logoUrl, @JsonKey(name: 'banner_url') this.bannerUrl, @JsonKey(name: 'banners') final  List<StoreBanner>? banners, required this.currency, @JsonKey(name: 'default_affiliate_commission') this.defaultAffiliateCommission, @JsonKey(name: 'total_products') required this.totalProducts, @JsonKey(name: 'total_orders') required this.totalOrders, @JsonKey(name: 'total_sales') this.totalSales, required this.rating, @JsonKey(name: 'rating_count') required this.ratingCount, @JsonKey(name: 'is_premium') this.isPremium = false, @JsonKey(name: 'has_brawe_pass') required this.hasBrawePass, @JsonKey(name: 'contact_email') this.contactEmail, @JsonKey(name: 'contact_whatsapp') this.contactWhatsapp, @JsonKey(name: 'social_instagram') this.socialInstagram, @JsonKey(name: 'social_facebook') this.socialFacebook, @JsonKey(name: 'social_tiktok') this.socialTiktok, final  List<String> categories = const <String>[], @JsonKey(name: 'top_products') final  List<Product>? topProducts, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'member_since') this.memberSince, @JsonKey(name: 'application_status') this.applicationStatus, @JsonKey(name: 'application_id') this.applicationId, @JsonKey(name: 'application_message') this.applicationMessage, @JsonKey(name: 'store_response') this.storeResponse, @JsonKey(name: 'is_verified') this.isVerified = false, @JsonKey(name: 'legal_name') this.legalName, @JsonKey(name: 'trade_name') this.tradeName, this.cnpj, this.location, this.country, @JsonKey(name: 'store_url') this.storeUrl}): _banners = banners,_categories = categories,_topProducts = topProducts;
   factory _Store.fromJson(Map<String, dynamic> json) => _$StoreFromJson(json);
 
 @override final  String id;
+@override@JsonKey(name: 'owner_user_id') final  String? ownerUserId;
 @override final  String name;
 @override final  String slug;
 @override final  String description;
 @override@JsonKey(name: 'logo_url') final  String? logoUrl;
 @override@JsonKey(name: 'banner_url') final  String? bannerUrl;
- final  List<StoreBanner> _banners;
-@override List<StoreBanner> get banners {
+ final  List<StoreBanner>? _banners;
+@override@JsonKey(name: 'banners') List<StoreBanner>? get banners {
+  final value = _banners;
+  if (value == null) return null;
   if (_banners is EqualUnmodifiableListView) return _banners;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_banners);
+  return EqualUnmodifiableListView(value);
 }
 
 @override final  String currency;
-@override@JsonKey(name: 'default_affiliate_commission') final  double defaultAffiliateCommission;
+// ⚠️ Nunca exibir na vitrine pública (regra de negócio) — ausente na
+// resposta pública de /shopping/stores/{slug}, presente só no showcase
+// interno de afiliados.
+@override@JsonKey(name: 'default_affiliate_commission') final  double? defaultAffiliateCommission;
 @override@JsonKey(name: 'total_products') final  int totalProducts;
 @override@JsonKey(name: 'total_orders') final  int totalOrders;
 @override@JsonKey(name: 'total_sales') final  double? totalSales;
 @override final  double rating;
 @override@JsonKey(name: 'rating_count') final  int ratingCount;
+// Ausente na resposta pública -> default false.
 @override@JsonKey(name: 'is_premium') final  bool isPremium;
 @override@JsonKey(name: 'has_brawe_pass') final  bool hasBrawePass;
 @override@JsonKey(name: 'contact_email') final  String? contactEmail;
@@ -538,8 +561,10 @@ class _Store implements Store {
 @override@JsonKey(name: 'social_instagram') final  String? socialInstagram;
 @override@JsonKey(name: 'social_facebook') final  String? socialFacebook;
 @override@JsonKey(name: 'social_tiktok') final  String? socialTiktok;
+// Ausente na resposta pública -> default lista vazia.
  final  List<String> _categories;
-@override List<String> get categories {
+// Ausente na resposta pública -> default lista vazia.
+@override@JsonKey() List<String> get categories {
   if (_categories is EqualUnmodifiableListView) return _categories;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_categories);
@@ -554,11 +579,21 @@ class _Store implements Store {
   return EqualUnmodifiableListView(value);
 }
 
-@override@JsonKey(name: 'created_at') final  String createdAt;
+// Endpoint público retorna `member_since` em vez de `created_at`.
+@override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'member_since') final  String? memberSince;
 @override@JsonKey(name: 'application_status') final  ApplicationStatus? applicationStatus;
 @override@JsonKey(name: 'application_id') final  String? applicationId;
 @override@JsonKey(name: 'application_message') final  String? applicationMessage;
 @override@JsonKey(name: 'store_response') final  String? storeResponse;
+// Campos extras do endpoint público (/shopping/stores/{slug}).
+@override@JsonKey(name: 'is_verified') final  bool isVerified;
+@override@JsonKey(name: 'legal_name') final  String? legalName;
+@override@JsonKey(name: 'trade_name') final  String? tradeName;
+@override final  String? cnpj;
+@override final  String? location;
+@override final  String? country;
+@override@JsonKey(name: 'store_url') final  String? storeUrl;
 
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
@@ -573,16 +608,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Store&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.description, description) || other.description == description)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other._banners, _banners)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.defaultAffiliateCommission, defaultAffiliateCommission) || other.defaultAffiliateCommission == defaultAffiliateCommission)&&(identical(other.totalProducts, totalProducts) || other.totalProducts == totalProducts)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.totalSales, totalSales) || other.totalSales == totalSales)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium)&&(identical(other.hasBrawePass, hasBrawePass) || other.hasBrawePass == hasBrawePass)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.contactWhatsapp, contactWhatsapp) || other.contactWhatsapp == contactWhatsapp)&&(identical(other.socialInstagram, socialInstagram) || other.socialInstagram == socialInstagram)&&(identical(other.socialFacebook, socialFacebook) || other.socialFacebook == socialFacebook)&&(identical(other.socialTiktok, socialTiktok) || other.socialTiktok == socialTiktok)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._topProducts, _topProducts)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.applicationStatus, applicationStatus) || other.applicationStatus == applicationStatus)&&(identical(other.applicationId, applicationId) || other.applicationId == applicationId)&&(identical(other.applicationMessage, applicationMessage) || other.applicationMessage == applicationMessage)&&(identical(other.storeResponse, storeResponse) || other.storeResponse == storeResponse));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Store&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.name, name) || other.name == name)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.description, description) || other.description == description)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.bannerUrl, bannerUrl) || other.bannerUrl == bannerUrl)&&const DeepCollectionEquality().equals(other._banners, _banners)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.defaultAffiliateCommission, defaultAffiliateCommission) || other.defaultAffiliateCommission == defaultAffiliateCommission)&&(identical(other.totalProducts, totalProducts) || other.totalProducts == totalProducts)&&(identical(other.totalOrders, totalOrders) || other.totalOrders == totalOrders)&&(identical(other.totalSales, totalSales) || other.totalSales == totalSales)&&(identical(other.rating, rating) || other.rating == rating)&&(identical(other.ratingCount, ratingCount) || other.ratingCount == ratingCount)&&(identical(other.isPremium, isPremium) || other.isPremium == isPremium)&&(identical(other.hasBrawePass, hasBrawePass) || other.hasBrawePass == hasBrawePass)&&(identical(other.contactEmail, contactEmail) || other.contactEmail == contactEmail)&&(identical(other.contactWhatsapp, contactWhatsapp) || other.contactWhatsapp == contactWhatsapp)&&(identical(other.socialInstagram, socialInstagram) || other.socialInstagram == socialInstagram)&&(identical(other.socialFacebook, socialFacebook) || other.socialFacebook == socialFacebook)&&(identical(other.socialTiktok, socialTiktok) || other.socialTiktok == socialTiktok)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._topProducts, _topProducts)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.memberSince, memberSince) || other.memberSince == memberSince)&&(identical(other.applicationStatus, applicationStatus) || other.applicationStatus == applicationStatus)&&(identical(other.applicationId, applicationId) || other.applicationId == applicationId)&&(identical(other.applicationMessage, applicationMessage) || other.applicationMessage == applicationMessage)&&(identical(other.storeResponse, storeResponse) || other.storeResponse == storeResponse)&&(identical(other.isVerified, isVerified) || other.isVerified == isVerified)&&(identical(other.legalName, legalName) || other.legalName == legalName)&&(identical(other.tradeName, tradeName) || other.tradeName == tradeName)&&(identical(other.cnpj, cnpj) || other.cnpj == cnpj)&&(identical(other.location, location) || other.location == location)&&(identical(other.country, country) || other.country == country)&&(identical(other.storeUrl, storeUrl) || other.storeUrl == storeUrl));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,name,slug,description,logoUrl,bannerUrl,const DeepCollectionEquality().hash(_banners),currency,defaultAffiliateCommission,totalProducts,totalOrders,totalSales,rating,ratingCount,isPremium,hasBrawePass,contactEmail,contactWhatsapp,socialInstagram,socialFacebook,socialTiktok,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_topProducts),createdAt,applicationStatus,applicationId,applicationMessage,storeResponse]);
+int get hashCode => Object.hashAll([runtimeType,id,ownerUserId,name,slug,description,logoUrl,bannerUrl,const DeepCollectionEquality().hash(_banners),currency,defaultAffiliateCommission,totalProducts,totalOrders,totalSales,rating,ratingCount,isPremium,hasBrawePass,contactEmail,contactWhatsapp,socialInstagram,socialFacebook,socialTiktok,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_topProducts),createdAt,memberSince,applicationStatus,applicationId,applicationMessage,storeResponse,isVerified,legalName,tradeName,cnpj,location,country,storeUrl]);
 
 @override
 String toString() {
-  return 'Store(id: $id, name: $name, slug: $slug, description: $description, logoUrl: $logoUrl, bannerUrl: $bannerUrl, banners: $banners, currency: $currency, defaultAffiliateCommission: $defaultAffiliateCommission, totalProducts: $totalProducts, totalOrders: $totalOrders, totalSales: $totalSales, rating: $rating, ratingCount: $ratingCount, isPremium: $isPremium, hasBrawePass: $hasBrawePass, contactEmail: $contactEmail, contactWhatsapp: $contactWhatsapp, socialInstagram: $socialInstagram, socialFacebook: $socialFacebook, socialTiktok: $socialTiktok, categories: $categories, topProducts: $topProducts, createdAt: $createdAt, applicationStatus: $applicationStatus, applicationId: $applicationId, applicationMessage: $applicationMessage, storeResponse: $storeResponse)';
+  return 'Store(id: $id, ownerUserId: $ownerUserId, name: $name, slug: $slug, description: $description, logoUrl: $logoUrl, bannerUrl: $bannerUrl, banners: $banners, currency: $currency, defaultAffiliateCommission: $defaultAffiliateCommission, totalProducts: $totalProducts, totalOrders: $totalOrders, totalSales: $totalSales, rating: $rating, ratingCount: $ratingCount, isPremium: $isPremium, hasBrawePass: $hasBrawePass, contactEmail: $contactEmail, contactWhatsapp: $contactWhatsapp, socialInstagram: $socialInstagram, socialFacebook: $socialFacebook, socialTiktok: $socialTiktok, categories: $categories, topProducts: $topProducts, createdAt: $createdAt, memberSince: $memberSince, applicationStatus: $applicationStatus, applicationId: $applicationId, applicationMessage: $applicationMessage, storeResponse: $storeResponse, isVerified: $isVerified, legalName: $legalName, tradeName: $tradeName, cnpj: $cnpj, location: $location, country: $country, storeUrl: $storeUrl)';
 }
 
 
@@ -593,7 +628,7 @@ abstract mixin class _$StoreCopyWith<$Res> implements $StoreCopyWith<$Res> {
   factory _$StoreCopyWith(_Store value, $Res Function(_Store) _then) = __$StoreCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, String slug, String description,@JsonKey(name: 'logo_url') String? logoUrl,@JsonKey(name: 'banner_url') String? bannerUrl, List<StoreBanner> banners, String currency,@JsonKey(name: 'default_affiliate_commission') double defaultAffiliateCommission,@JsonKey(name: 'total_products') int totalProducts,@JsonKey(name: 'total_orders') int totalOrders,@JsonKey(name: 'total_sales') double? totalSales, double rating,@JsonKey(name: 'rating_count') int ratingCount,@JsonKey(name: 'is_premium') bool isPremium,@JsonKey(name: 'has_brawe_pass') bool hasBrawePass,@JsonKey(name: 'contact_email') String? contactEmail,@JsonKey(name: 'contact_whatsapp') String? contactWhatsapp,@JsonKey(name: 'social_instagram') String? socialInstagram,@JsonKey(name: 'social_facebook') String? socialFacebook,@JsonKey(name: 'social_tiktok') String? socialTiktok, List<String> categories,@JsonKey(name: 'top_products') List<Product>? topProducts,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'application_status') ApplicationStatus? applicationStatus,@JsonKey(name: 'application_id') String? applicationId,@JsonKey(name: 'application_message') String? applicationMessage,@JsonKey(name: 'store_response') String? storeResponse
+ String id,@JsonKey(name: 'owner_user_id') String? ownerUserId, String name, String slug, String description,@JsonKey(name: 'logo_url') String? logoUrl,@JsonKey(name: 'banner_url') String? bannerUrl,@JsonKey(name: 'banners') List<StoreBanner>? banners, String currency,@JsonKey(name: 'default_affiliate_commission') double? defaultAffiliateCommission,@JsonKey(name: 'total_products') int totalProducts,@JsonKey(name: 'total_orders') int totalOrders,@JsonKey(name: 'total_sales') double? totalSales, double rating,@JsonKey(name: 'rating_count') int ratingCount,@JsonKey(name: 'is_premium') bool isPremium,@JsonKey(name: 'has_brawe_pass') bool hasBrawePass,@JsonKey(name: 'contact_email') String? contactEmail,@JsonKey(name: 'contact_whatsapp') String? contactWhatsapp,@JsonKey(name: 'social_instagram') String? socialInstagram,@JsonKey(name: 'social_facebook') String? socialFacebook,@JsonKey(name: 'social_tiktok') String? socialTiktok, List<String> categories,@JsonKey(name: 'top_products') List<Product>? topProducts,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'member_since') String? memberSince,@JsonKey(name: 'application_status') ApplicationStatus? applicationStatus,@JsonKey(name: 'application_id') String? applicationId,@JsonKey(name: 'application_message') String? applicationMessage,@JsonKey(name: 'store_response') String? storeResponse,@JsonKey(name: 'is_verified') bool isVerified,@JsonKey(name: 'legal_name') String? legalName,@JsonKey(name: 'trade_name') String? tradeName, String? cnpj, String? location, String? country,@JsonKey(name: 'store_url') String? storeUrl
 });
 
 
@@ -610,18 +645,19 @@ class __$StoreCopyWithImpl<$Res>
 
 /// Create a copy of Store
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? slug = null,Object? description = null,Object? logoUrl = freezed,Object? bannerUrl = freezed,Object? banners = null,Object? currency = null,Object? defaultAffiliateCommission = null,Object? totalProducts = null,Object? totalOrders = null,Object? totalSales = freezed,Object? rating = null,Object? ratingCount = null,Object? isPremium = null,Object? hasBrawePass = null,Object? contactEmail = freezed,Object? contactWhatsapp = freezed,Object? socialInstagram = freezed,Object? socialFacebook = freezed,Object? socialTiktok = freezed,Object? categories = null,Object? topProducts = freezed,Object? createdAt = null,Object? applicationStatus = freezed,Object? applicationId = freezed,Object? applicationMessage = freezed,Object? storeResponse = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerUserId = freezed,Object? name = null,Object? slug = null,Object? description = null,Object? logoUrl = freezed,Object? bannerUrl = freezed,Object? banners = freezed,Object? currency = null,Object? defaultAffiliateCommission = freezed,Object? totalProducts = null,Object? totalOrders = null,Object? totalSales = freezed,Object? rating = null,Object? ratingCount = null,Object? isPremium = null,Object? hasBrawePass = null,Object? contactEmail = freezed,Object? contactWhatsapp = freezed,Object? socialInstagram = freezed,Object? socialFacebook = freezed,Object? socialTiktok = freezed,Object? categories = null,Object? topProducts = freezed,Object? createdAt = freezed,Object? memberSince = freezed,Object? applicationStatus = freezed,Object? applicationId = freezed,Object? applicationMessage = freezed,Object? storeResponse = freezed,Object? isVerified = null,Object? legalName = freezed,Object? tradeName = freezed,Object? cnpj = freezed,Object? location = freezed,Object? country = freezed,Object? storeUrl = freezed,}) {
   return _then(_Store(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,ownerUserId: freezed == ownerUserId ? _self.ownerUserId : ownerUserId // ignore: cast_nullable_to_non_nullable
+as String?,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
 as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,logoUrl: freezed == logoUrl ? _self.logoUrl : logoUrl // ignore: cast_nullable_to_non_nullable
 as String?,bannerUrl: freezed == bannerUrl ? _self.bannerUrl : bannerUrl // ignore: cast_nullable_to_non_nullable
-as String?,banners: null == banners ? _self._banners : banners // ignore: cast_nullable_to_non_nullable
-as List<StoreBanner>,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
-as String,defaultAffiliateCommission: null == defaultAffiliateCommission ? _self.defaultAffiliateCommission : defaultAffiliateCommission // ignore: cast_nullable_to_non_nullable
-as double,totalProducts: null == totalProducts ? _self.totalProducts : totalProducts // ignore: cast_nullable_to_non_nullable
+as String?,banners: freezed == banners ? _self._banners : banners // ignore: cast_nullable_to_non_nullable
+as List<StoreBanner>?,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
+as String,defaultAffiliateCommission: freezed == defaultAffiliateCommission ? _self.defaultAffiliateCommission : defaultAffiliateCommission // ignore: cast_nullable_to_non_nullable
+as double?,totalProducts: null == totalProducts ? _self.totalProducts : totalProducts // ignore: cast_nullable_to_non_nullable
 as int,totalOrders: null == totalOrders ? _self.totalOrders : totalOrders // ignore: cast_nullable_to_non_nullable
 as int,totalSales: freezed == totalSales ? _self.totalSales : totalSales // ignore: cast_nullable_to_non_nullable
 as double?,rating: null == rating ? _self.rating : rating // ignore: cast_nullable_to_non_nullable
@@ -635,11 +671,19 @@ as String?,socialFacebook: freezed == socialFacebook ? _self.socialFacebook : so
 as String?,socialTiktok: freezed == socialTiktok ? _self.socialTiktok : socialTiktok // ignore: cast_nullable_to_non_nullable
 as String?,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
 as List<String>,topProducts: freezed == topProducts ? _self._topProducts : topProducts // ignore: cast_nullable_to_non_nullable
-as List<Product>?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,applicationStatus: freezed == applicationStatus ? _self.applicationStatus : applicationStatus // ignore: cast_nullable_to_non_nullable
+as List<Product>?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,memberSince: freezed == memberSince ? _self.memberSince : memberSince // ignore: cast_nullable_to_non_nullable
+as String?,applicationStatus: freezed == applicationStatus ? _self.applicationStatus : applicationStatus // ignore: cast_nullable_to_non_nullable
 as ApplicationStatus?,applicationId: freezed == applicationId ? _self.applicationId : applicationId // ignore: cast_nullable_to_non_nullable
 as String?,applicationMessage: freezed == applicationMessage ? _self.applicationMessage : applicationMessage // ignore: cast_nullable_to_non_nullable
 as String?,storeResponse: freezed == storeResponse ? _self.storeResponse : storeResponse // ignore: cast_nullable_to_non_nullable
+as String?,isVerified: null == isVerified ? _self.isVerified : isVerified // ignore: cast_nullable_to_non_nullable
+as bool,legalName: freezed == legalName ? _self.legalName : legalName // ignore: cast_nullable_to_non_nullable
+as String?,tradeName: freezed == tradeName ? _self.tradeName : tradeName // ignore: cast_nullable_to_non_nullable
+as String?,cnpj: freezed == cnpj ? _self.cnpj : cnpj // ignore: cast_nullable_to_non_nullable
+as String?,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String?,country: freezed == country ? _self.country : country // ignore: cast_nullable_to_non_nullable
+as String?,storeUrl: freezed == storeUrl ? _self.storeUrl : storeUrl // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1285,7 +1329,12 @@ as String?,
 /// @nodoc
 mixin _$ShippingAddress {
 
- String get street; String get number; String? get complement; String get neighborhood; String get city; String get state; String get country;@JsonKey(name: 'postal_code') String get postalCode; double? get lat; double? get lng;
+// Ausente para um endereço ainda não salvo (preenchido no formulário
+// de checkout, mas ainda não enviado ao backend).
+ String? get id;// Rótulo amigável definido pelo usuário (ex.: "Casa", "Trabalho").
+ String? get label; String get street; String get number; String? get complement; String get neighborhood; String get city; String get state; String get country;@JsonKey(name: 'postal_code') String get postalCode; double? get lat; double? get lng;// ⚠️ Dados fiscais do destinatário — OBRIGATÓRIOS para a loja emitir
+// NF do pedido físico. 'cpf' ou 'cnpj'.
+@JsonKey(name: 'document_type') String get documentType;@JsonKey(name: 'document_number') String? get documentNumber;@JsonKey(name: 'recipient_name') String? get recipientName;@JsonKey(name: 'is_default') bool get isDefault;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of ShippingAddress
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1298,16 +1347,16 @@ $ShippingAddressCopyWith<ShippingAddress> get copyWith => _$ShippingAddressCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShippingAddress&&(identical(other.street, street) || other.street == street)&&(identical(other.number, number) || other.number == number)&&(identical(other.complement, complement) || other.complement == complement)&&(identical(other.neighborhood, neighborhood) || other.neighborhood == neighborhood)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.country, country) || other.country == country)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ShippingAddress&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.street, street) || other.street == street)&&(identical(other.number, number) || other.number == number)&&(identical(other.complement, complement) || other.complement == complement)&&(identical(other.neighborhood, neighborhood) || other.neighborhood == neighborhood)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.country, country) || other.country == country)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.documentType, documentType) || other.documentType == documentType)&&(identical(other.documentNumber, documentNumber) || other.documentNumber == documentNumber)&&(identical(other.recipientName, recipientName) || other.recipientName == recipientName)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,street,number,complement,neighborhood,city,state,country,postalCode,lat,lng);
+int get hashCode => Object.hash(runtimeType,id,label,street,number,complement,neighborhood,city,state,country,postalCode,lat,lng,documentType,documentNumber,recipientName,isDefault,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ShippingAddress(street: $street, number: $number, complement: $complement, neighborhood: $neighborhood, city: $city, state: $state, country: $country, postalCode: $postalCode, lat: $lat, lng: $lng)';
+  return 'ShippingAddress(id: $id, label: $label, street: $street, number: $number, complement: $complement, neighborhood: $neighborhood, city: $city, state: $state, country: $country, postalCode: $postalCode, lat: $lat, lng: $lng, documentType: $documentType, documentNumber: $documentNumber, recipientName: $recipientName, isDefault: $isDefault, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -1318,7 +1367,7 @@ abstract mixin class $ShippingAddressCopyWith<$Res>  {
   factory $ShippingAddressCopyWith(ShippingAddress value, $Res Function(ShippingAddress) _then) = _$ShippingAddressCopyWithImpl;
 @useResult
 $Res call({
- String street, String number, String? complement, String neighborhood, String city, String state, String country,@JsonKey(name: 'postal_code') String postalCode, double? lat, double? lng
+ String? id, String? label, String street, String number, String? complement, String neighborhood, String city, String state, String country,@JsonKey(name: 'postal_code') String postalCode, double? lat, double? lng,@JsonKey(name: 'document_type') String documentType,@JsonKey(name: 'document_number') String? documentNumber,@JsonKey(name: 'recipient_name') String? recipientName,@JsonKey(name: 'is_default') bool isDefault,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -1335,9 +1384,11 @@ class _$ShippingAddressCopyWithImpl<$Res>
 
 /// Create a copy of ShippingAddress
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? street = null,Object? number = null,Object? complement = freezed,Object? neighborhood = null,Object? city = null,Object? state = null,Object? country = null,Object? postalCode = null,Object? lat = freezed,Object? lng = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? label = freezed,Object? street = null,Object? number = null,Object? complement = freezed,Object? neighborhood = null,Object? city = null,Object? state = null,Object? country = null,Object? postalCode = null,Object? lat = freezed,Object? lng = freezed,Object? documentType = null,Object? documentNumber = freezed,Object? recipientName = freezed,Object? isDefault = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
-street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,label: freezed == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String?,street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
 as String,number: null == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as String,complement: freezed == complement ? _self.complement : complement // ignore: cast_nullable_to_non_nullable
 as String?,neighborhood: null == neighborhood ? _self.neighborhood : neighborhood // ignore: cast_nullable_to_non_nullable
@@ -1347,7 +1398,13 @@ as String,country: null == country ? _self.country : country // ignore: cast_nul
 as String,postalCode: null == postalCode ? _self.postalCode : postalCode // ignore: cast_nullable_to_non_nullable
 as String,lat: freezed == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
 as double?,lng: freezed == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,documentType: null == documentType ? _self.documentType : documentType // ignore: cast_nullable_to_non_nullable
+as String,documentNumber: freezed == documentNumber ? _self.documentNumber : documentNumber // ignore: cast_nullable_to_non_nullable
+as String?,recipientName: freezed == recipientName ? _self.recipientName : recipientName // ignore: cast_nullable_to_non_nullable
+as String?,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1429,10 +1486,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id,  String? label,  String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng, @JsonKey(name: 'document_type')  String documentType, @JsonKey(name: 'document_number')  String? documentNumber, @JsonKey(name: 'recipient_name')  String? recipientName, @JsonKey(name: 'is_default')  bool isDefault, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ShippingAddress() when $default != null:
-return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng);case _:
+return $default(_that.id,_that.label,_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng,_that.documentType,_that.documentNumber,_that.recipientName,_that.isDefault,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -1450,10 +1507,10 @@ return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id,  String? label,  String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng, @JsonKey(name: 'document_type')  String documentType, @JsonKey(name: 'document_number')  String? documentNumber, @JsonKey(name: 'recipient_name')  String? recipientName, @JsonKey(name: 'is_default')  bool isDefault, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _ShippingAddress():
-return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng);}
+return $default(_that.id,_that.label,_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng,_that.documentType,_that.documentNumber,_that.recipientName,_that.isDefault,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1467,10 +1524,10 @@ return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id,  String? label,  String street,  String number,  String? complement,  String neighborhood,  String city,  String state,  String country, @JsonKey(name: 'postal_code')  String postalCode,  double? lat,  double? lng, @JsonKey(name: 'document_type')  String documentType, @JsonKey(name: 'document_number')  String? documentNumber, @JsonKey(name: 'recipient_name')  String? recipientName, @JsonKey(name: 'is_default')  bool isDefault, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ShippingAddress() when $default != null:
-return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng);case _:
+return $default(_that.id,_that.label,_that.street,_that.number,_that.complement,_that.neighborhood,_that.city,_that.state,_that.country,_that.postalCode,_that.lat,_that.lng,_that.documentType,_that.documentNumber,_that.recipientName,_that.isDefault,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -1482,9 +1539,14 @@ return $default(_that.street,_that.number,_that.complement,_that.neighborhood,_t
 @JsonSerializable()
 
 class _ShippingAddress implements ShippingAddress {
-  const _ShippingAddress({required this.street, required this.number, this.complement, required this.neighborhood, required this.city, required this.state, this.country = 'BR', @JsonKey(name: 'postal_code') required this.postalCode, this.lat, this.lng});
+  const _ShippingAddress({this.id, this.label, required this.street, required this.number, this.complement, required this.neighborhood, required this.city, required this.state, this.country = 'BR', @JsonKey(name: 'postal_code') required this.postalCode, this.lat, this.lng, @JsonKey(name: 'document_type') this.documentType = 'cpf', @JsonKey(name: 'document_number') this.documentNumber, @JsonKey(name: 'recipient_name') this.recipientName, @JsonKey(name: 'is_default') this.isDefault = false, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
   factory _ShippingAddress.fromJson(Map<String, dynamic> json) => _$ShippingAddressFromJson(json);
 
+// Ausente para um endereço ainda não salvo (preenchido no formulário
+// de checkout, mas ainda não enviado ao backend).
+@override final  String? id;
+// Rótulo amigável definido pelo usuário (ex.: "Casa", "Trabalho").
+@override final  String? label;
 @override final  String street;
 @override final  String number;
 @override final  String? complement;
@@ -1495,6 +1557,14 @@ class _ShippingAddress implements ShippingAddress {
 @override@JsonKey(name: 'postal_code') final  String postalCode;
 @override final  double? lat;
 @override final  double? lng;
+// ⚠️ Dados fiscais do destinatário — OBRIGATÓRIOS para a loja emitir
+// NF do pedido físico. 'cpf' ou 'cnpj'.
+@override@JsonKey(name: 'document_type') final  String documentType;
+@override@JsonKey(name: 'document_number') final  String? documentNumber;
+@override@JsonKey(name: 'recipient_name') final  String? recipientName;
+@override@JsonKey(name: 'is_default') final  bool isDefault;
+@override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
 /// Create a copy of ShippingAddress
 /// with the given fields replaced by the non-null parameter values.
@@ -1509,16 +1579,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShippingAddress&&(identical(other.street, street) || other.street == street)&&(identical(other.number, number) || other.number == number)&&(identical(other.complement, complement) || other.complement == complement)&&(identical(other.neighborhood, neighborhood) || other.neighborhood == neighborhood)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.country, country) || other.country == country)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ShippingAddress&&(identical(other.id, id) || other.id == id)&&(identical(other.label, label) || other.label == label)&&(identical(other.street, street) || other.street == street)&&(identical(other.number, number) || other.number == number)&&(identical(other.complement, complement) || other.complement == complement)&&(identical(other.neighborhood, neighborhood) || other.neighborhood == neighborhood)&&(identical(other.city, city) || other.city == city)&&(identical(other.state, state) || other.state == state)&&(identical(other.country, country) || other.country == country)&&(identical(other.postalCode, postalCode) || other.postalCode == postalCode)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng)&&(identical(other.documentType, documentType) || other.documentType == documentType)&&(identical(other.documentNumber, documentNumber) || other.documentNumber == documentNumber)&&(identical(other.recipientName, recipientName) || other.recipientName == recipientName)&&(identical(other.isDefault, isDefault) || other.isDefault == isDefault)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,street,number,complement,neighborhood,city,state,country,postalCode,lat,lng);
+int get hashCode => Object.hash(runtimeType,id,label,street,number,complement,neighborhood,city,state,country,postalCode,lat,lng,documentType,documentNumber,recipientName,isDefault,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ShippingAddress(street: $street, number: $number, complement: $complement, neighborhood: $neighborhood, city: $city, state: $state, country: $country, postalCode: $postalCode, lat: $lat, lng: $lng)';
+  return 'ShippingAddress(id: $id, label: $label, street: $street, number: $number, complement: $complement, neighborhood: $neighborhood, city: $city, state: $state, country: $country, postalCode: $postalCode, lat: $lat, lng: $lng, documentType: $documentType, documentNumber: $documentNumber, recipientName: $recipientName, isDefault: $isDefault, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -1529,7 +1599,7 @@ abstract mixin class _$ShippingAddressCopyWith<$Res> implements $ShippingAddress
   factory _$ShippingAddressCopyWith(_ShippingAddress value, $Res Function(_ShippingAddress) _then) = __$ShippingAddressCopyWithImpl;
 @override @useResult
 $Res call({
- String street, String number, String? complement, String neighborhood, String city, String state, String country,@JsonKey(name: 'postal_code') String postalCode, double? lat, double? lng
+ String? id, String? label, String street, String number, String? complement, String neighborhood, String city, String state, String country,@JsonKey(name: 'postal_code') String postalCode, double? lat, double? lng,@JsonKey(name: 'document_type') String documentType,@JsonKey(name: 'document_number') String? documentNumber,@JsonKey(name: 'recipient_name') String? recipientName,@JsonKey(name: 'is_default') bool isDefault,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -1546,9 +1616,11 @@ class __$ShippingAddressCopyWithImpl<$Res>
 
 /// Create a copy of ShippingAddress
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? street = null,Object? number = null,Object? complement = freezed,Object? neighborhood = null,Object? city = null,Object? state = null,Object? country = null,Object? postalCode = null,Object? lat = freezed,Object? lng = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? label = freezed,Object? street = null,Object? number = null,Object? complement = freezed,Object? neighborhood = null,Object? city = null,Object? state = null,Object? country = null,Object? postalCode = null,Object? lat = freezed,Object? lng = freezed,Object? documentType = null,Object? documentNumber = freezed,Object? recipientName = freezed,Object? isDefault = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_ShippingAddress(
-street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,label: freezed == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String?,street: null == street ? _self.street : street // ignore: cast_nullable_to_non_nullable
 as String,number: null == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
 as String,complement: freezed == complement ? _self.complement : complement // ignore: cast_nullable_to_non_nullable
 as String?,neighborhood: null == neighborhood ? _self.neighborhood : neighborhood // ignore: cast_nullable_to_non_nullable
@@ -1558,7 +1630,13 @@ as String,country: null == country ? _self.country : country // ignore: cast_nul
 as String,postalCode: null == postalCode ? _self.postalCode : postalCode // ignore: cast_nullable_to_non_nullable
 as String,lat: freezed == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
 as double?,lng: freezed == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nullable
-as double?,
+as double?,documentType: null == documentType ? _self.documentType : documentType // ignore: cast_nullable_to_non_nullable
+as String,documentNumber: freezed == documentNumber ? _self.documentNumber : documentNumber // ignore: cast_nullable_to_non_nullable
+as String?,recipientName: freezed == recipientName ? _self.recipientName : recipientName // ignore: cast_nullable_to_non_nullable
+as String?,isDefault: null == isDefault ? _self.isDefault : isDefault // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -1569,8 +1647,12 @@ as double?,
 /// @nodoc
 mixin _$CartItem {
 
- String get id;@JsonKey(name: 'product_id') String get productId;@JsonKey(name: 'variant_id') String? get variantId;@JsonKey(name: 'store_id') String get storeId; int get quantity;@JsonKey(name: 'unit_price') double get unitPrice;@JsonKey(name: 'total_price') double get totalPrice;@JsonKey(name: 'product_name') String get productName;@JsonKey(name: 'product_image') String? get productImage;@JsonKey(name: 'variant_name') String? get variantName;// ⭐ CRÍTICO: campos de comissão do afiliado
-@JsonKey(name: 'affiliate_ref_code') String? get affiliateRefCode;@JsonKey(name: 'room_id') String? get roomId;@JsonKey(name: 'comissao_rate') double? get comissaoRate;@JsonKey(name: 'comissao_amount') double? get comissaoAmount;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
+ String get id;@JsonKey(name: 'product_id') String get productId;@JsonKey(name: 'variant_id') String? get variantId;@JsonKey(name: 'store_id') String get storeId; int get quantity;// Backend serializa Decimal como String no JSON (ex.: "79.90") — usar o
+// mesmo helper resiliente de Product para aceitar String ou num.
+@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double get unitPrice;@JsonKey(name: 'total_price', fromJson: _priceFromJson) double get totalPrice;@JsonKey(name: 'product_name') String get productName;@JsonKey(name: 'product_image') String? get productImage;@JsonKey(name: 'variant_name') String? get variantName;// Nome real da loja (via Product.store no backend) — usado para
+// agrupar itens por loja no checkout quando há múltiplas lojas.
+@JsonKey(name: 'store_name') String? get storeName;// ⭐ CRÍTICO: campos de comissão do afiliado
+@JsonKey(name: 'affiliate_ref_code') String? get affiliateRefCode;@JsonKey(name: 'room_id') String? get roomId;@JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson) double? get comissaoRate;@JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson) double? get comissaoAmount;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of CartItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1583,16 +1665,16 @@ $CartItemCopyWith<CartItem> get copyWith => _$CartItemCopyWithImpl<CartItem>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CartItem&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.variantId, variantId) || other.variantId == variantId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.totalPrice, totalPrice) || other.totalPrice == totalPrice)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productImage, productImage) || other.productImage == productImage)&&(identical(other.variantName, variantName) || other.variantName == variantName)&&(identical(other.affiliateRefCode, affiliateRefCode) || other.affiliateRefCode == affiliateRefCode)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.comissaoRate, comissaoRate) || other.comissaoRate == comissaoRate)&&(identical(other.comissaoAmount, comissaoAmount) || other.comissaoAmount == comissaoAmount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CartItem&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.variantId, variantId) || other.variantId == variantId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.totalPrice, totalPrice) || other.totalPrice == totalPrice)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productImage, productImage) || other.productImage == productImage)&&(identical(other.variantName, variantName) || other.variantName == variantName)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.affiliateRefCode, affiliateRefCode) || other.affiliateRefCode == affiliateRefCode)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.comissaoRate, comissaoRate) || other.comissaoRate == comissaoRate)&&(identical(other.comissaoAmount, comissaoAmount) || other.comissaoAmount == comissaoAmount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,variantId,storeId,quantity,unitPrice,totalPrice,productName,productImage,variantName,affiliateRefCode,roomId,comissaoRate,comissaoAmount,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,variantId,storeId,quantity,unitPrice,totalPrice,productName,productImage,variantName,storeName,affiliateRefCode,roomId,comissaoRate,comissaoAmount,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'CartItem(id: $id, productId: $productId, variantId: $variantId, storeId: $storeId, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, productName: $productName, productImage: $productImage, variantName: $variantName, affiliateRefCode: $affiliateRefCode, roomId: $roomId, comissaoRate: $comissaoRate, comissaoAmount: $comissaoAmount, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'CartItem(id: $id, productId: $productId, variantId: $variantId, storeId: $storeId, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, productName: $productName, productImage: $productImage, variantName: $variantName, storeName: $storeName, affiliateRefCode: $affiliateRefCode, roomId: $roomId, comissaoRate: $comissaoRate, comissaoAmount: $comissaoAmount, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -1603,7 +1685,7 @@ abstract mixin class $CartItemCopyWith<$Res>  {
   factory $CartItemCopyWith(CartItem value, $Res Function(CartItem) _then) = _$CartItemCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'store_id') String storeId, int quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_image') String? productImage,@JsonKey(name: 'variant_name') String? variantName,@JsonKey(name: 'affiliate_ref_code') String? affiliateRefCode,@JsonKey(name: 'room_id') String? roomId,@JsonKey(name: 'comissao_rate') double? comissaoRate,@JsonKey(name: 'comissao_amount') double? comissaoAmount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'store_id') String storeId, int quantity,@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double unitPrice,@JsonKey(name: 'total_price', fromJson: _priceFromJson) double totalPrice,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_image') String? productImage,@JsonKey(name: 'variant_name') String? variantName,@JsonKey(name: 'store_name') String? storeName,@JsonKey(name: 'affiliate_ref_code') String? affiliateRefCode,@JsonKey(name: 'room_id') String? roomId,@JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson) double? comissaoRate,@JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson) double? comissaoAmount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -1620,7 +1702,7 @@ class _$CartItemCopyWithImpl<$Res>
 
 /// Create a copy of CartItem
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? variantId = freezed,Object? storeId = null,Object? quantity = null,Object? unitPrice = null,Object? totalPrice = null,Object? productName = null,Object? productImage = freezed,Object? variantName = freezed,Object? affiliateRefCode = freezed,Object? roomId = freezed,Object? comissaoRate = freezed,Object? comissaoAmount = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? productId = null,Object? variantId = freezed,Object? storeId = null,Object? quantity = null,Object? unitPrice = null,Object? totalPrice = null,Object? productName = null,Object? productImage = freezed,Object? variantName = freezed,Object? storeName = freezed,Object? affiliateRefCode = freezed,Object? roomId = freezed,Object? comissaoRate = freezed,Object? comissaoAmount = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -1632,6 +1714,7 @@ as double,totalPrice: null == totalPrice ? _self.totalPrice : totalPrice // igno
 as double,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
 as String,productImage: freezed == productImage ? _self.productImage : productImage // ignore: cast_nullable_to_non_nullable
 as String?,variantName: freezed == variantName ? _self.variantName : variantName // ignore: cast_nullable_to_non_nullable
+as String?,storeName: freezed == storeName ? _self.storeName : storeName // ignore: cast_nullable_to_non_nullable
 as String?,affiliateRefCode: freezed == affiliateRefCode ? _self.affiliateRefCode : affiliateRefCode // ignore: cast_nullable_to_non_nullable
 as String?,roomId: freezed == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String?,comissaoRate: freezed == comissaoRate ? _self.comissaoRate : comissaoRate // ignore: cast_nullable_to_non_nullable
@@ -1720,10 +1803,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate')  double? comissaoRate, @JsonKey(name: 'comissao_amount')  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'store_name')  String? storeName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson)  double? comissaoRate, @JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson)  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CartItem() when $default != null:
-return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.storeName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -1741,10 +1824,10 @@ return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.qua
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate')  double? comissaoRate, @JsonKey(name: 'comissao_amount')  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'store_name')  String? storeName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson)  double? comissaoRate, @JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson)  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _CartItem():
-return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);}
+return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.storeName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1758,10 +1841,10 @@ return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.qua
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate')  double? comissaoRate, @JsonKey(name: 'comissao_amount')  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'store_id')  String storeId,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_image')  String? productImage, @JsonKey(name: 'variant_name')  String? variantName, @JsonKey(name: 'store_name')  String? storeName, @JsonKey(name: 'affiliate_ref_code')  String? affiliateRefCode, @JsonKey(name: 'room_id')  String? roomId, @JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson)  double? comissaoRate, @JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson)  double? comissaoAmount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _CartItem() when $default != null:
-return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.quantity,_that.unitPrice,_that.totalPrice,_that.productName,_that.productImage,_that.variantName,_that.storeName,_that.affiliateRefCode,_that.roomId,_that.comissaoRate,_that.comissaoAmount,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -1773,7 +1856,7 @@ return $default(_that.id,_that.productId,_that.variantId,_that.storeId,_that.qua
 @JsonSerializable()
 
 class _CartItem implements CartItem {
-  const _CartItem({required this.id, @JsonKey(name: 'product_id') required this.productId, @JsonKey(name: 'variant_id') this.variantId, @JsonKey(name: 'store_id') required this.storeId, required this.quantity, @JsonKey(name: 'unit_price') required this.unitPrice, @JsonKey(name: 'total_price') required this.totalPrice, @JsonKey(name: 'product_name') required this.productName, @JsonKey(name: 'product_image') this.productImage, @JsonKey(name: 'variant_name') this.variantName, @JsonKey(name: 'affiliate_ref_code') this.affiliateRefCode, @JsonKey(name: 'room_id') this.roomId, @JsonKey(name: 'comissao_rate') this.comissaoRate, @JsonKey(name: 'comissao_amount') this.comissaoAmount, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
+  const _CartItem({required this.id, @JsonKey(name: 'product_id') required this.productId, @JsonKey(name: 'variant_id') this.variantId, @JsonKey(name: 'store_id') required this.storeId, required this.quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson) required this.unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson) required this.totalPrice, @JsonKey(name: 'product_name') required this.productName, @JsonKey(name: 'product_image') this.productImage, @JsonKey(name: 'variant_name') this.variantName, @JsonKey(name: 'store_name') this.storeName, @JsonKey(name: 'affiliate_ref_code') this.affiliateRefCode, @JsonKey(name: 'room_id') this.roomId, @JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson) this.comissaoRate, @JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson) this.comissaoAmount, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
   factory _CartItem.fromJson(Map<String, dynamic> json) => _$CartItemFromJson(json);
 
 @override final  String id;
@@ -1781,16 +1864,21 @@ class _CartItem implements CartItem {
 @override@JsonKey(name: 'variant_id') final  String? variantId;
 @override@JsonKey(name: 'store_id') final  String storeId;
 @override final  int quantity;
-@override@JsonKey(name: 'unit_price') final  double unitPrice;
-@override@JsonKey(name: 'total_price') final  double totalPrice;
+// Backend serializa Decimal como String no JSON (ex.: "79.90") — usar o
+// mesmo helper resiliente de Product para aceitar String ou num.
+@override@JsonKey(name: 'unit_price', fromJson: _priceFromJson) final  double unitPrice;
+@override@JsonKey(name: 'total_price', fromJson: _priceFromJson) final  double totalPrice;
 @override@JsonKey(name: 'product_name') final  String productName;
 @override@JsonKey(name: 'product_image') final  String? productImage;
 @override@JsonKey(name: 'variant_name') final  String? variantName;
+// Nome real da loja (via Product.store no backend) — usado para
+// agrupar itens por loja no checkout quando há múltiplas lojas.
+@override@JsonKey(name: 'store_name') final  String? storeName;
 // ⭐ CRÍTICO: campos de comissão do afiliado
 @override@JsonKey(name: 'affiliate_ref_code') final  String? affiliateRefCode;
 @override@JsonKey(name: 'room_id') final  String? roomId;
-@override@JsonKey(name: 'comissao_rate') final  double? comissaoRate;
-@override@JsonKey(name: 'comissao_amount') final  double? comissaoAmount;
+@override@JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson) final  double? comissaoRate;
+@override@JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson) final  double? comissaoAmount;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 @override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
@@ -1807,16 +1895,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CartItem&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.variantId, variantId) || other.variantId == variantId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.totalPrice, totalPrice) || other.totalPrice == totalPrice)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productImage, productImage) || other.productImage == productImage)&&(identical(other.variantName, variantName) || other.variantName == variantName)&&(identical(other.affiliateRefCode, affiliateRefCode) || other.affiliateRefCode == affiliateRefCode)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.comissaoRate, comissaoRate) || other.comissaoRate == comissaoRate)&&(identical(other.comissaoAmount, comissaoAmount) || other.comissaoAmount == comissaoAmount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CartItem&&(identical(other.id, id) || other.id == id)&&(identical(other.productId, productId) || other.productId == productId)&&(identical(other.variantId, variantId) || other.variantId == variantId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.unitPrice, unitPrice) || other.unitPrice == unitPrice)&&(identical(other.totalPrice, totalPrice) || other.totalPrice == totalPrice)&&(identical(other.productName, productName) || other.productName == productName)&&(identical(other.productImage, productImage) || other.productImage == productImage)&&(identical(other.variantName, variantName) || other.variantName == variantName)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.affiliateRefCode, affiliateRefCode) || other.affiliateRefCode == affiliateRefCode)&&(identical(other.roomId, roomId) || other.roomId == roomId)&&(identical(other.comissaoRate, comissaoRate) || other.comissaoRate == comissaoRate)&&(identical(other.comissaoAmount, comissaoAmount) || other.comissaoAmount == comissaoAmount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,productId,variantId,storeId,quantity,unitPrice,totalPrice,productName,productImage,variantName,affiliateRefCode,roomId,comissaoRate,comissaoAmount,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,productId,variantId,storeId,quantity,unitPrice,totalPrice,productName,productImage,variantName,storeName,affiliateRefCode,roomId,comissaoRate,comissaoAmount,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'CartItem(id: $id, productId: $productId, variantId: $variantId, storeId: $storeId, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, productName: $productName, productImage: $productImage, variantName: $variantName, affiliateRefCode: $affiliateRefCode, roomId: $roomId, comissaoRate: $comissaoRate, comissaoAmount: $comissaoAmount, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'CartItem(id: $id, productId: $productId, variantId: $variantId, storeId: $storeId, quantity: $quantity, unitPrice: $unitPrice, totalPrice: $totalPrice, productName: $productName, productImage: $productImage, variantName: $variantName, storeName: $storeName, affiliateRefCode: $affiliateRefCode, roomId: $roomId, comissaoRate: $comissaoRate, comissaoAmount: $comissaoAmount, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -1827,7 +1915,7 @@ abstract mixin class _$CartItemCopyWith<$Res> implements $CartItemCopyWith<$Res>
   factory _$CartItemCopyWith(_CartItem value, $Res Function(_CartItem) _then) = __$CartItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'store_id') String storeId, int quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_image') String? productImage,@JsonKey(name: 'variant_name') String? variantName,@JsonKey(name: 'affiliate_ref_code') String? affiliateRefCode,@JsonKey(name: 'room_id') String? roomId,@JsonKey(name: 'comissao_rate') double? comissaoRate,@JsonKey(name: 'comissao_amount') double? comissaoAmount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'store_id') String storeId, int quantity,@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double unitPrice,@JsonKey(name: 'total_price', fromJson: _priceFromJson) double totalPrice,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_image') String? productImage,@JsonKey(name: 'variant_name') String? variantName,@JsonKey(name: 'store_name') String? storeName,@JsonKey(name: 'affiliate_ref_code') String? affiliateRefCode,@JsonKey(name: 'room_id') String? roomId,@JsonKey(name: 'comissao_rate', fromJson: _nullablePriceFromJson) double? comissaoRate,@JsonKey(name: 'comissao_amount', fromJson: _nullablePriceFromJson) double? comissaoAmount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -1844,7 +1932,7 @@ class __$CartItemCopyWithImpl<$Res>
 
 /// Create a copy of CartItem
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? variantId = freezed,Object? storeId = null,Object? quantity = null,Object? unitPrice = null,Object? totalPrice = null,Object? productName = null,Object? productImage = freezed,Object? variantName = freezed,Object? affiliateRefCode = freezed,Object? roomId = freezed,Object? comissaoRate = freezed,Object? comissaoAmount = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? productId = null,Object? variantId = freezed,Object? storeId = null,Object? quantity = null,Object? unitPrice = null,Object? totalPrice = null,Object? productName = null,Object? productImage = freezed,Object? variantName = freezed,Object? storeName = freezed,Object? affiliateRefCode = freezed,Object? roomId = freezed,Object? comissaoRate = freezed,Object? comissaoAmount = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_CartItem(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,productId: null == productId ? _self.productId : productId // ignore: cast_nullable_to_non_nullable
@@ -1856,6 +1944,7 @@ as double,totalPrice: null == totalPrice ? _self.totalPrice : totalPrice // igno
 as double,productName: null == productName ? _self.productName : productName // ignore: cast_nullable_to_non_nullable
 as String,productImage: freezed == productImage ? _self.productImage : productImage // ignore: cast_nullable_to_non_nullable
 as String?,variantName: freezed == variantName ? _self.variantName : variantName // ignore: cast_nullable_to_non_nullable
+as String?,storeName: freezed == storeName ? _self.storeName : storeName // ignore: cast_nullable_to_non_nullable
 as String?,affiliateRefCode: freezed == affiliateRefCode ? _self.affiliateRefCode : affiliateRefCode // ignore: cast_nullable_to_non_nullable
 as String?,roomId: freezed == roomId ? _self.roomId : roomId // ignore: cast_nullable_to_non_nullable
 as String?,comissaoRate: freezed == comissaoRate ? _self.comissaoRate : comissaoRate // ignore: cast_nullable_to_non_nullable
@@ -1873,7 +1962,11 @@ as String?,
 /// @nodoc
 mixin _$Cart {
 
- String get id;@JsonKey(name: 'user_id') String? get userId;@JsonKey(name: 'store_id') String? get storeId; List<CartItem> get items; double get subtotal; double get tax; double get total;@JsonKey(name: 'created_at') String get createdAt;@JsonKey(name: 'updated_at') String get updatedAt;
+// Carrinho de visitante (sem itens ainda) pode não ter `id`.
+ String? get id;@JsonKey(name: 'user_id') String? get userId;@JsonKey(name: 'store_id') String? get storeId; List<CartItem> get items;// Todos os valores monetários abaixo vêm como String do backend
+// (Decimal serializado) — usar o helper resiliente para aceitar
+// String ou num.
+@JsonKey(fromJson: _priceFromJson) double get subtotal;@JsonKey(fromJson: _priceFromJson) double get discount;@JsonKey(fromJson: _priceFromJson) double get shipping;@JsonKey(fromJson: _priceFromJson) double get total;@JsonKey(name: 'coupon_code') String? get couponCode;@JsonKey(name: 'coupon_discount', fromJson: _priceFromJson) double get couponDiscount;@JsonKey(name: 'item_count') int get itemCount;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of Cart
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1886,16 +1979,16 @@ $CartCopyWith<Cart> get copyWith => _$CartCopyWithImpl<Cart>(this as Cart, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cart&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.total, total) || other.total == total)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cart&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.shipping, shipping) || other.shipping == shipping)&&(identical(other.total, total) || other.total == total)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.couponDiscount, couponDiscount) || other.couponDiscount == couponDiscount)&&(identical(other.itemCount, itemCount) || other.itemCount == itemCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,storeId,const DeepCollectionEquality().hash(items),subtotal,tax,total,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,userId,storeId,const DeepCollectionEquality().hash(items),subtotal,discount,shipping,total,couponCode,couponDiscount,itemCount,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Cart(id: $id, userId: $userId, storeId: $storeId, items: $items, subtotal: $subtotal, tax: $tax, total: $total, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Cart(id: $id, userId: $userId, storeId: $storeId, items: $items, subtotal: $subtotal, discount: $discount, shipping: $shipping, total: $total, couponCode: $couponCode, couponDiscount: $couponDiscount, itemCount: $itemCount, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -1906,7 +1999,7 @@ abstract mixin class $CartCopyWith<$Res>  {
   factory $CartCopyWith(Cart value, $Res Function(Cart) _then) = _$CartCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<CartItem> items, double subtotal, double tax, double total,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt
+ String? id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<CartItem> items,@JsonKey(fromJson: _priceFromJson) double subtotal,@JsonKey(fromJson: _priceFromJson) double discount,@JsonKey(fromJson: _priceFromJson) double shipping,@JsonKey(fromJson: _priceFromJson) double total,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'coupon_discount', fromJson: _priceFromJson) double couponDiscount,@JsonKey(name: 'item_count') int itemCount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -1923,18 +2016,22 @@ class _$CartCopyWithImpl<$Res>
 
 /// Create a copy of Cart
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? subtotal = null,Object? tax = null,Object? total = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = freezed,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? subtotal = null,Object? discount = null,Object? shipping = null,Object? total = null,Object? couponCode = freezed,Object? couponDiscount = null,Object? itemCount = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,storeId: freezed == storeId ? _self.storeId : storeId // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
 as List<CartItem>,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
-as double,tax: null == tax ? _self.tax : tax // ignore: cast_nullable_to_non_nullable
+as double,discount: null == discount ? _self.discount : discount // ignore: cast_nullable_to_non_nullable
+as double,shipping: null == shipping ? _self.shipping : shipping // ignore: cast_nullable_to_non_nullable
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
-as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as double,couponCode: freezed == couponCode ? _self.couponCode : couponCode // ignore: cast_nullable_to_non_nullable
+as String?,couponDiscount: null == couponDiscount ? _self.couponDiscount : couponDiscount // ignore: cast_nullable_to_non_nullable
+as double,itemCount: null == itemCount ? _self.itemCount : itemCount // ignore: cast_nullable_to_non_nullable
+as int,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2016,10 +2113,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items,  double subtotal,  double tax,  double total, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double discount, @JsonKey(fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'coupon_discount', fromJson: _priceFromJson)  double couponDiscount, @JsonKey(name: 'item_count')  int itemCount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Cart() when $default != null:
-return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.tax,_that.total,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.discount,_that.shipping,_that.total,_that.couponCode,_that.couponDiscount,_that.itemCount,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -2037,10 +2134,10 @@ return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items,  double subtotal,  double tax,  double total, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double discount, @JsonKey(fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'coupon_discount', fromJson: _priceFromJson)  double couponDiscount, @JsonKey(name: 'item_count')  int itemCount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Cart():
-return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.tax,_that.total,_that.createdAt,_that.updatedAt);}
+return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.discount,_that.shipping,_that.total,_that.couponCode,_that.couponDiscount,_that.itemCount,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2054,10 +2151,10 @@ return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items,  double subtotal,  double tax,  double total, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<CartItem> items, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double discount, @JsonKey(fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'coupon_discount', fromJson: _priceFromJson)  double couponDiscount, @JsonKey(name: 'item_count')  int itemCount, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Cart() when $default != null:
-return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.tax,_that.total,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_that.discount,_that.shipping,_that.total,_that.couponCode,_that.couponDiscount,_that.itemCount,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -2069,10 +2166,11 @@ return $default(_that.id,_that.userId,_that.storeId,_that.items,_that.subtotal,_
 @JsonSerializable()
 
 class _Cart implements Cart {
-  const _Cart({required this.id, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'store_id') this.storeId, required final  List<CartItem> items, required this.subtotal, required this.tax, required this.total, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _items = items;
+  const _Cart({this.id, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'store_id') this.storeId, required final  List<CartItem> items, @JsonKey(fromJson: _priceFromJson) this.subtotal = 0, @JsonKey(fromJson: _priceFromJson) this.discount = 0, @JsonKey(fromJson: _priceFromJson) this.shipping = 0, @JsonKey(fromJson: _priceFromJson) this.total = 0, @JsonKey(name: 'coupon_code') this.couponCode, @JsonKey(name: 'coupon_discount', fromJson: _priceFromJson) this.couponDiscount = 0, @JsonKey(name: 'item_count') this.itemCount = 0, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _items = items;
   factory _Cart.fromJson(Map<String, dynamic> json) => _$CartFromJson(json);
 
-@override final  String id;
+// Carrinho de visitante (sem itens ainda) pode não ter `id`.
+@override final  String? id;
 @override@JsonKey(name: 'user_id') final  String? userId;
 @override@JsonKey(name: 'store_id') final  String? storeId;
  final  List<CartItem> _items;
@@ -2082,11 +2180,18 @@ class _Cart implements Cart {
   return EqualUnmodifiableListView(_items);
 }
 
-@override final  double subtotal;
-@override final  double tax;
-@override final  double total;
-@override@JsonKey(name: 'created_at') final  String createdAt;
-@override@JsonKey(name: 'updated_at') final  String updatedAt;
+// Todos os valores monetários abaixo vêm como String do backend
+// (Decimal serializado) — usar o helper resiliente para aceitar
+// String ou num.
+@override@JsonKey(fromJson: _priceFromJson) final  double subtotal;
+@override@JsonKey(fromJson: _priceFromJson) final  double discount;
+@override@JsonKey(fromJson: _priceFromJson) final  double shipping;
+@override@JsonKey(fromJson: _priceFromJson) final  double total;
+@override@JsonKey(name: 'coupon_code') final  String? couponCode;
+@override@JsonKey(name: 'coupon_discount', fromJson: _priceFromJson) final  double couponDiscount;
+@override@JsonKey(name: 'item_count') final  int itemCount;
+@override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
 /// Create a copy of Cart
 /// with the given fields replaced by the non-null parameter values.
@@ -2101,16 +2206,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cart&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.tax, tax) || other.tax == tax)&&(identical(other.total, total) || other.total == total)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cart&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.storeId, storeId) || other.storeId == storeId)&&const DeepCollectionEquality().equals(other._items, _items)&&(identical(other.subtotal, subtotal) || other.subtotal == subtotal)&&(identical(other.discount, discount) || other.discount == discount)&&(identical(other.shipping, shipping) || other.shipping == shipping)&&(identical(other.total, total) || other.total == total)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.couponDiscount, couponDiscount) || other.couponDiscount == couponDiscount)&&(identical(other.itemCount, itemCount) || other.itemCount == itemCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,storeId,const DeepCollectionEquality().hash(_items),subtotal,tax,total,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,userId,storeId,const DeepCollectionEquality().hash(_items),subtotal,discount,shipping,total,couponCode,couponDiscount,itemCount,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Cart(id: $id, userId: $userId, storeId: $storeId, items: $items, subtotal: $subtotal, tax: $tax, total: $total, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Cart(id: $id, userId: $userId, storeId: $storeId, items: $items, subtotal: $subtotal, discount: $discount, shipping: $shipping, total: $total, couponCode: $couponCode, couponDiscount: $couponDiscount, itemCount: $itemCount, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -2121,7 +2226,7 @@ abstract mixin class _$CartCopyWith<$Res> implements $CartCopyWith<$Res> {
   factory _$CartCopyWith(_Cart value, $Res Function(_Cart) _then) = __$CartCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<CartItem> items, double subtotal, double tax, double total,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt
+ String? id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<CartItem> items,@JsonKey(fromJson: _priceFromJson) double subtotal,@JsonKey(fromJson: _priceFromJson) double discount,@JsonKey(fromJson: _priceFromJson) double shipping,@JsonKey(fromJson: _priceFromJson) double total,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'coupon_discount', fromJson: _priceFromJson) double couponDiscount,@JsonKey(name: 'item_count') int itemCount,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -2138,18 +2243,22 @@ class __$CartCopyWithImpl<$Res>
 
 /// Create a copy of Cart
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? subtotal = null,Object? tax = null,Object? total = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = freezed,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? subtotal = null,Object? discount = null,Object? shipping = null,Object? total = null,Object? couponCode = freezed,Object? couponDiscount = null,Object? itemCount = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Cart(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+id: freezed == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,storeId: freezed == storeId ? _self.storeId : storeId // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable
 as List<CartItem>,subtotal: null == subtotal ? _self.subtotal : subtotal // ignore: cast_nullable_to_non_nullable
-as double,tax: null == tax ? _self.tax : tax // ignore: cast_nullable_to_non_nullable
+as double,discount: null == discount ? _self.discount : discount // ignore: cast_nullable_to_non_nullable
+as double,shipping: null == shipping ? _self.shipping : shipping // ignore: cast_nullable_to_non_nullable
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
-as double,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as double,couponCode: freezed == couponCode ? _self.couponCode : couponCode // ignore: cast_nullable_to_non_nullable
+as String?,couponDiscount: null == couponDiscount ? _self.couponDiscount : couponDiscount // ignore: cast_nullable_to_non_nullable
+as double,itemCount: null == itemCount ? _self.itemCount : itemCount // ignore: cast_nullable_to_non_nullable
+as int,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

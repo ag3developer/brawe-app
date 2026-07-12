@@ -4479,6 +4479,38 @@ class SEn extends S {
   String get shopVitrineSearchTooltip => 'Search storefront';
 
   @override
+  String get shopVitrineFilterTooltip => 'Sort products';
+
+  @override
+  String get shopVitrineViewModeTooltip => 'Change view';
+
+  @override
+  String get shopVitrineSortTitle => 'Sort by';
+
+  @override
+  String get shopVitrineSortCreatorChoice => 'Creator\'s choice';
+
+  @override
+  String get shopVitrineSortBestSelling => 'Best selling';
+
+  @override
+  String get shopVitrineSortNewest => 'Newest';
+
+  @override
+  String get shopVitrineSortPriceAsc => 'Price: low to high';
+
+  @override
+  String get shopVitrineSortPriceDesc => 'Price: high to low';
+
+  @override
+  String shopVitrineSoldOnline(String count) {
+    return '$count sold online';
+  }
+
+  @override
+  String get shopVitrineFreeShipping => 'Free shipping';
+
+  @override
   String get shopProductPageTitle => 'Product';
 
   @override
@@ -4634,6 +4666,12 @@ class SEn extends S {
   String get shopCartTax => 'Tax';
 
   @override
+  String get shopCartShipping => 'Shipping';
+
+  @override
+  String get shopCartDiscount => 'Discount';
+
+  @override
   String get shopCartTotal => 'Total';
 
   @override
@@ -4657,6 +4695,12 @@ class SEn extends S {
   @override
   String get shopCheckoutAddressEmpty =>
       'You don\'t have any saved addresses yet.';
+
+  @override
+  String get shopCheckoutAddNewAddress => 'Use another address';
+
+  @override
+  String get shopCheckoutAddressLabel => 'Address name (e.g., Home, Work)';
 
   @override
   String get shopCheckoutAddressStreet => 'Street';
@@ -4704,7 +4748,27 @@ class SEn extends S {
   String get shopCheckoutCustomerPhone => 'Phone (optional)';
 
   @override
-  String get shopCheckoutCustomerDocument => 'Tax ID (optional)';
+  String get shopCheckoutRecipientSection => 'Recipient (for tax invoice)';
+
+  @override
+  String get shopCheckoutRecipientHint =>
+      'The store needs this info to issue the invoice for your order.';
+
+  @override
+  String get shopCheckoutRecipientName => 'Recipient\'s full name';
+
+  @override
+  String get shopCheckoutDocumentType => 'Type';
+
+  @override
+  String get shopCheckoutDocumentRequired =>
+      'Tax ID is required to issue the invoice.';
+
+  @override
+  String get shopCheckoutCpfInvalid => 'CPF must have 11 digits.';
+
+  @override
+  String get shopCheckoutCnpjInvalid => 'CNPJ must have 14 digits.';
 
   @override
   String get shopCheckoutNameRequired => 'Enter your full name.';
@@ -4751,6 +4815,42 @@ class SEn extends S {
   @override
   String get shopCheckoutError =>
       'Failed to complete your order. Please try again.';
+
+  @override
+  String get shopCheckoutDiscount => 'Discount';
+
+  @override
+  String get shopCheckoutFreeShipping => 'Free';
+
+  @override
+  String get shopCheckoutAddNote => 'Add note';
+
+  @override
+  String shopCheckoutTotalItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'items',
+      one: 'item',
+    );
+    return 'Total ($count $_temp0)';
+  }
+
+  @override
+  String get shopCheckoutTermsPrefix =>
+      'By placing your order, you agree to Brawe\'s ';
+
+  @override
+  String get shopCheckoutTermsLink => 'Terms of Use';
+
+  @override
+  String get shopCheckoutTermsAnd => ' and ';
+
+  @override
+  String get shopCheckoutPrivacyLink => 'Privacy Policy';
+
+  @override
+  String get shopCheckoutTermsSuffix => '.';
 
   @override
   String get shopPaymentTitle => 'Payment';
@@ -4834,23 +4934,14 @@ class SEn extends S {
   String get shopStoreReadLess => 'Read less';
 
   @override
-  String get shopStoreContactSection => 'Contact';
+  String get shopStoreChatCta => 'Message the store';
 
   @override
-  String get shopStoreWhatsappTooltip => 'WhatsApp';
+  String get shopStoreChatUnavailable =>
+      'This store can\'t receive messages yet.';
 
   @override
-  String get shopStoreInstagramTooltip => 'Instagram';
-
-  @override
-  String get shopStoreFacebookTooltip => 'Facebook';
-
-  @override
-  String get shopStoreTiktokTooltip => 'TikTok';
-
-  @override
-  String get shopStoreEmailTooltip => 'Email';
-
-  @override
-  String get shopStoreLinkError => 'Couldn\'t open the link.';
+  String shopStoreChatError(String error) {
+    return 'Couldn\'t open the chat: $error';
+  }
 }

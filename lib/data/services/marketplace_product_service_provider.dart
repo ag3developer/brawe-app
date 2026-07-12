@@ -6,7 +6,7 @@ import 'marketplace_product_service_impl.dart';
 part 'marketplace_product_service_provider.g.dart';
 
 /// Riverpod provider for [MarketplaceProductService].
-/// Uses [dioProvider] (main backend) for marketplace product endpoints.
+/// Uses [dioProvider] (app.brawe.io) - all marketplace endpoints are here.
 @riverpod
 MarketplaceProductService marketplaceProductService(Ref ref) {
   final dio = ref.watch(dioProvider);

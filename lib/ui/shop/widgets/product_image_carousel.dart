@@ -81,11 +81,15 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
   }
 
   Widget _buildImageTile(String imageUrl) {
+    // BoxFit.contain (não .cover) — produtos (embalagens, frascos, etc)
+    // não podem ser cortados nas bordas; preferimos ver a foto inteira
+    // com uma leve margem de respiro em vez de cortar o produto.
     return Container(
       color: context.colors.surface,
+      padding: const EdgeInsets.all(20),
       child: CachedNetworkImage(
         imageUrl: imageUrl,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         placeholder: (context, url) => _buildLoadingPlaceholder(),
         errorWidget: (context, url, error) => _buildErrorPlaceholder(),
       ),
@@ -136,15 +140,16 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
           count,
-          (index) => Container(
-            width: 8,
-            height: 8,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+          (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _currentPage == index ? 16 : 6,
+            height: 6,
+            margin: const EdgeInsets.symmetric(horizontal: 3),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(3),
               color: _currentPage == index
                   ? context.colors.accentPrimary
-                  : context.colors.textSecondary.withValues(alpha: 0.4),
+                  : context.colors.textSecondary.withValues(alpha: 0.3),
             ),
           ),
         ),

@@ -1,12 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/providers/marketplace_providers.dart';
+import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/models/marketplace_models.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -14,9 +13,11 @@ import '../utils/currency_formatter.dart';
 
 /// Public storefront page accessed via `/shop/store/:slug` route.
 ///
-/// Displays the store's banner, header info (logo, name, rating,
-/// description, categories), contact/social links and a responsive grid of
-/// its products.
+/// Premium, single-purpose e-commerce header: banner, logo overlapping the
+/// banner (Instagram/TikTok Shop style), verified badge, rating, description
+/// and a single CTA — "Falar com a loja" — that opens the in-app chat with
+/// the store owner. No external contact icons (WhatsApp/Instagram/etc.):
+/// every interaction with a brand stays inside Brawe.
 ///
 /// ⚠️ CRITICAL BUSINESS RULE: `Store.defaultAffiliateCommission` is
 /// intentionally NEVER read or rendered anywhere in this file. Commission is
@@ -35,55 +36,111 @@ class ShopStorePage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: context.colors.background,
       body: storeAsync.when(
-        loading: () => _buildLoadingState(context),
-        error: (error, stackTrace) => _buildErrorState(context, ref),
+        loading: () => _ShopStoreSkeleton(onBack: () => context.pop()),
+        error: (error, stackTrace) => _ShopStoreErrorState(
+          onBack: () => context.pop(),
+          onRetry: () => ref.invalidate(storeDetailProvider(storeSlug)),
+        ),
         data: (store) => _StoreContent(store: store),
       ),
     );
   }
+}
 
-  Widget _buildLoadingState(BuildContext context) {
+/// Floating circular back button — always legible over any banner/theme.
+class _FloatingBackButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _FloatingBackButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.35),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const SizedBox(
+          width: 40,
+          height: 40,
+          child: Icon(Icons.arrow_back, color: Colors.white, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Loading skeleton ──────────────────────────────────────────────────────
+class _ShopStoreSkeleton extends StatelessWidget {
+  final VoidCallback onBack;
+  const _ShopStoreSkeleton({required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
+      bottom: false,
+      child: Stack(
         children: [
-          AppBar(
-            backgroundColor: context.colors.background,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-              onPressed: () => context.pop(),
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(
-                  context.colors.accentPrimary,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(height: 220, color: context.colors.surfaceHighest),
+              const SizedBox(height: 48),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 160,
+                      height: 20,
+                      color: context.colors.surfaceHighest,
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      height: 14,
+                      color: context.colors.surfaceHighest,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 220,
+                      height: 14,
+                      color: context.colors.surfaceHighest,
+                    ),
+                  ],
                 ),
               ),
-            ),
+            ],
+          ),
+          Positioned(
+            top: 8,
+            left: 8,
+            child: _FloatingBackButton(onTap: onBack),
+          ),
+          const Positioned.fill(
+            child: Center(child: CircularProgressIndicator()),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildErrorState(BuildContext context, WidgetRef ref) {
+// ─── Error state ───────────────────────────────────────────────────────────
+class _ShopStoreErrorState extends StatelessWidget {
+  final VoidCallback onBack;
+  final VoidCallback onRetry;
+  const _ShopStoreErrorState({required this.onBack, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
+      child: Stack(
         children: [
-          AppBar(
-            backgroundColor: context.colors.background,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-              onPressed: () => context.pop(),
-            ),
-          ),
-          Expanded(
-            child: Center(
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -93,23 +150,24 @@ class ShopStorePage extends ConsumerWidget {
                     color: context.colors.textSecondary,
                   ),
                   const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      S.of(context).shopStoreError,
-                      style: TextStyle(color: context.colors.textPrimary),
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    S.of(context).shopStoreError,
+                    style: TextStyle(color: context.colors.textPrimary),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: () =>
-                        ref.invalidate(storeDetailProvider(storeSlug)),
+                    onPressed: onRetry,
                     child: Text(S.of(context).actionRetry),
                   ),
                 ],
               ),
             ),
+          ),
+          Positioned(
+            top: 8,
+            left: 8,
+            child: _FloatingBackButton(onTap: onBack),
           ),
         ],
       ),
@@ -127,60 +185,69 @@ class _StoreContent extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final crossAxisCount = width >= 1280 ? 4 : (width >= 640 ? 3 : 2);
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          backgroundColor: context.colors.background,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          pinned: true,
-          expandedHeight: 200,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-            onPressed: () => context.pop(),
-          ),
-          title: Text(
-            store.name,
-            style: TextStyle(color: context.colors.textPrimary),
-            overflow: TextOverflow.ellipsis,
-          ),
-          flexibleSpace: FlexibleSpaceBar(
-            background: _StoreBanner(store: store),
-          ),
-        ),
-        SliverToBoxAdapter(child: _StoreHeader(store: store)),
-        SliverToBoxAdapter(child: _StoreContactRow(store: store)),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-          sliver: SliverToBoxAdapter(
-            child: Text(
-              S.of(context).shopStoreProductsSection,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: context.colors.textPrimary,
-                fontWeight: FontWeight.bold,
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: _StoreBannerHeader(store: store)),
+            SliverToBoxAdapter(child: _StoreInfo(store: store)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 12),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.shoppingBag,
+                      size: 18,
+                      color: context.colors.textPrimary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      S.of(context).shopStoreProductsSection,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: context.colors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            _StoreProductsSliver(
+              storeId: store.id,
+              crossAxisCount: crossAxisCount,
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ],
+        ),
+        SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8, left: 8),
+            child: _FloatingBackButton(onTap: () => context.pop()),
           ),
         ),
-        _StoreProductsSliver(storeId: store.id, crossAxisCount: crossAxisCount),
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],
     );
   }
 }
 
-// ─── Banner ──────────────────────────────────────────────────────────────
-class _StoreBanner extends StatefulWidget {
+// ─── Banner + overlapping logo (Instagram/TikTok Shop style header) ───────
+class _StoreBannerHeader extends StatefulWidget {
   final Store store;
-  const _StoreBanner({required this.store});
+  const _StoreBannerHeader({required this.store});
 
   @override
-  State<_StoreBanner> createState() => _StoreBannerState();
+  State<_StoreBannerHeader> createState() => _StoreBannerHeaderState();
 }
 
-class _StoreBannerState extends State<_StoreBanner> {
+class _StoreBannerHeaderState extends State<_StoreBannerHeader> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  static const double _bannerHeight = 220;
+  static const double _logoSize = 84;
+  static const double _logoOverlap = _logoSize / 2;
 
   @override
   void dispose() {
@@ -190,7 +257,58 @@ class _StoreBannerState extends State<_StoreBanner> {
 
   @override
   Widget build(BuildContext context) {
-    final banners = widget.store.banners;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _logoOverlap),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+            child: SizedBox(
+              height: _bannerHeight,
+              width: double.infinity,
+              child: _buildBanner(context),
+            ),
+          ),
+          // Subtle bottom gradient for legibility where the logo overlaps.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 64,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0),
+                    Colors.black.withValues(alpha: 0.28),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Logo — overlaps the bottom edge of the banner.
+          Positioned(
+            left: 16,
+            bottom: -_logoOverlap,
+            child: _StoreLogo(store: widget.store, size: _logoSize),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBanner(BuildContext context) {
+    final banners = widget.store.banners ?? const <StoreBanner>[];
 
     if (banners.isNotEmpty) {
       return Stack(
@@ -213,21 +331,22 @@ class _StoreBannerState extends State<_StoreBanner> {
           ),
           if (banners.length > 1)
             Positioned(
-              bottom: 12,
+              bottom: 76,
               left: 0,
               right: 0,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   banners.length,
-                  (i) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                  (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _currentPage == i ? 16 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(3),
                       color: _currentPage == i
-                          ? context.colors.accentPrimary
+                          ? Colors.white
                           : Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
@@ -251,7 +370,7 @@ class _StoreBannerState extends State<_StoreBanner> {
   }
 
   Widget _fallback(BuildContext context) {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -262,166 +381,263 @@ class _StoreBannerState extends State<_StoreBanner> {
           ],
         ),
       ),
-      child: Center(
-        child: widget.store.logoUrl != null
-            ? ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: widget.store.logoUrl!,
-                  width: 64,
-                  height: 64,
-                  fit: BoxFit.cover,
-                  errorWidget: (context, url, error) => const Icon(
-                    LucideIcons.store,
-                    size: 48,
-                    color: Colors.white,
-                  ),
-                ),
+    );
+  }
+}
+
+class _StoreLogo extends StatelessWidget {
+  final Store store;
+  final double size;
+  const _StoreLogo({required this.store, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: context.colors.background,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipOval(
+        child: store.logoUrl != null
+            ? CachedNetworkImage(
+                imageUrl: store.logoUrl!,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => _placeholder(context),
               )
-            : const Icon(LucideIcons.store, size: 48, color: Colors.white),
+            : _placeholder(context),
+      ),
+    );
+  }
+
+  Widget _placeholder(BuildContext context) {
+    return Container(
+      color: context.colors.surfaceHighest,
+      child: Icon(
+        LucideIcons.store,
+        size: size * 0.4,
+        color: context.colors.textSecondary,
       ),
     );
   }
 }
 
-// ─── Header (logo, name, badges, rating, description, categories) ────────
-class _StoreHeader extends StatefulWidget {
+// ─── Store info: name, verified badge, rating, description, categories ────
+class _StoreInfo extends ConsumerStatefulWidget {
   final Store store;
-  const _StoreHeader({required this.store});
+  const _StoreInfo({required this.store});
 
   @override
-  State<_StoreHeader> createState() => _StoreHeaderState();
+  ConsumerState<_StoreInfo> createState() => _StoreInfoState();
 }
 
-class _StoreHeaderState extends State<_StoreHeader> {
+class _StoreInfoState extends ConsumerState<_StoreInfo> {
   bool _descriptionExpanded = false;
+  bool _openingChat = false;
 
   @override
   Widget build(BuildContext context) {
     final store = widget.store;
+    final s = S.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Logo
-              ClipOval(
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: store.logoUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: store.logoUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: (context, url, error) =>
-                              _buildLogoPlaceholder(context),
-                        )
-                      : _buildLogoPlaceholder(context),
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
-                child: Column(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      store.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: context.colors.textPrimary,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        store.name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: context.colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (store.isPremium)
-                          _Badge(
-                            label: S.of(context).shopStorePremiumBadge,
-                            icon: LucideIcons.crown,
-                            color: context.colors.accentGold,
-                          ),
-                        if (store.hasBrawePass)
-                          _Badge(
-                            label: S.of(context).shopStoreBravePassBadge,
-                            icon: LucideIcons.sparkles,
-                            color: context.colors.accentPrimary,
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.star,
-                          size: 16,
-                          color: context.colors.accentGold,
+                    if (store.isVerified) ...[
+                      const SizedBox(width: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Icon(
+                          LucideIcons.badgeCheck,
+                          size: 18,
+                          color: context.colors.accentPrimary,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          store.rating.toStringAsFixed(1),
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          S
-                              .of(context)
-                              .shopStoreRatingCount('${store.ratingCount}'),
-                          style: TextStyle(
-                            color: context.colors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
-
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _RatingPill(store: store),
+              if (store.isPremium)
+                _Badge(
+                  label: s.shopStorePremiumBadge,
+                  icon: LucideIcons.crown,
+                  color: context.colors.accentGold,
+                ),
+              if (store.hasBrawePass)
+                _Badge(
+                  label: s.shopStoreBravePassBadge,
+                  icon: LucideIcons.sparkles,
+                  color: context.colors.accentPrimary,
+                ),
+            ],
+          ),
+          if (store.location != null && store.location!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  LucideIcons.mapPin,
+                  size: 14,
+                  color: context.colors.textSecondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  store.location!,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (store.description.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildDescription(context, store),
           ],
-
           if (store.categories.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             SizedBox(
-              height: 32,
+              height: 30,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: store.categories.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
                   final category = store.categories[index];
-                  return Chip(
-                    label: Text(category),
-                    labelStyle: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 12,
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceHighest,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: context.colors.border),
                     ),
-                    backgroundColor: context.colors.surfaceHighest,
-                    side: BorderSide(color: context.colors.border),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      category,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   );
                 },
               ),
             ),
           ],
+          const SizedBox(height: 18),
+          _buildChatCta(context, store),
+          const SizedBox(height: 4),
+          Divider(color: context.colors.divider, height: 1),
         ],
       ),
     );
+  }
+
+  Widget _buildChatCta(BuildContext context, Store store) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: FilledButton.icon(
+        onPressed: _openingChat ? null : () => _openStoreChat(context, store),
+        style: FilledButton.styleFrom(
+          backgroundColor: context.colors.accentPrimary,
+          foregroundColor: context.colors.textOnAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: _openingChat
+            ? SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(
+                    context.colors.textOnAccent,
+                  ),
+                ),
+              )
+            : const Icon(LucideIcons.messageCircle, size: 18),
+        label: Text(
+          S.of(context).shopStoreChatCta,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openStoreChat(BuildContext context, Store store) async {
+    final s = S.of(context);
+    final ownerId = store.ownerUserId;
+    if (ownerId == null || ownerId.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.shopStoreChatUnavailable)));
+      return;
+    }
+
+    setState(() => _openingChat = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final convId = await ref
+          .read(chatRepositoryProvider)
+          .startConversation(participantId: ownerId);
+      if (!context.mounted) return;
+      context.push(
+        '/chat/$convId',
+        extra: {
+          'participantName': store.name,
+          'participantAvatarUrl': store.logoUrl,
+          'participantId': ownerId,
+        },
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(s.shopStoreChatError(e.toString()))),
+      );
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
   }
 
   Widget _buildDescription(BuildContext context, Store store) {
@@ -457,14 +673,40 @@ class _StoreHeaderState extends State<_StoreHeader> {
       ],
     );
   }
+}
 
-  Widget _buildLogoPlaceholder(BuildContext context) {
+/// Rating pill — always shown for consistent premium look, even at 0.0.
+class _RatingPill extends StatelessWidget {
+  final Store store;
+  const _RatingPill({required this.store});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      color: context.colors.surfaceHighest,
-      child: Icon(
-        LucideIcons.store,
-        size: 28,
-        color: context.colors.textSecondary,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(LucideIcons.star, size: 13, color: context.colors.accentGold),
+          const SizedBox(width: 4),
+          Text(
+            store.rating.toStringAsFixed(1),
+            style: TextStyle(
+              color: context.colors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            S.of(context).shopStoreRatingCount('${store.ratingCount}'),
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+          ),
+        ],
       ),
     );
   }
@@ -481,7 +723,7 @@ class _Badge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(999),
@@ -501,166 +743,6 @@ class _Badge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Contact / social icons row ───────────────────────────────────────────
-class _StoreContactRow extends StatelessWidget {
-  final Store store;
-  const _StoreContactRow({required this.store});
-
-  bool get _hasAnyContact =>
-      (store.contactWhatsapp != null && store.contactWhatsapp!.isNotEmpty) ||
-      (store.socialInstagram != null && store.socialInstagram!.isNotEmpty) ||
-      (store.socialFacebook != null && store.socialFacebook!.isNotEmpty) ||
-      (store.socialTiktok != null && store.socialTiktok!.isNotEmpty) ||
-      (store.contactEmail != null && store.contactEmail!.isNotEmpty);
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_hasAnyContact) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.of(context).shopStoreContactSection,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: context.colors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              if (store.contactWhatsapp != null &&
-                  store.contactWhatsapp!.isNotEmpty)
-                _ContactIcon(
-                  iconWidget: const FaIcon(
-                    FontAwesomeIcons.whatsapp,
-                    size: 16,
-                    color: Color(0xFF25D366),
-                  ),
-                  tooltip: S.of(context).shopStoreWhatsappTooltip,
-                  onTap: () => _launch(
-                    context,
-                    'https://wa.me/${_digitsOnly(store.contactWhatsapp!)}',
-                  ),
-                ),
-              if (store.socialInstagram != null &&
-                  store.socialInstagram!.isNotEmpty)
-                _ContactIcon(
-                  iconWidget: const FaIcon(
-                    FontAwesomeIcons.instagram,
-                    size: 16,
-                    color: Color(0xFFE1306C),
-                  ),
-                  tooltip: S.of(context).shopStoreInstagramTooltip,
-                  onTap: () => _launch(
-                    context,
-                    'https://instagram.com/${_stripHandle(store.socialInstagram!)}',
-                  ),
-                ),
-              if (store.socialFacebook != null &&
-                  store.socialFacebook!.isNotEmpty)
-                _ContactIcon(
-                  iconWidget: const FaIcon(
-                    FontAwesomeIcons.facebook,
-                    size: 16,
-                    color: Color(0xFF1877F2),
-                  ),
-                  tooltip: S.of(context).shopStoreFacebookTooltip,
-                  onTap: () => _launch(
-                    context,
-                    'https://facebook.com/${_stripHandle(store.socialFacebook!)}',
-                  ),
-                ),
-              if (store.socialTiktok != null && store.socialTiktok!.isNotEmpty)
-                _ContactIcon(
-                  iconWidget: FaIcon(
-                    FontAwesomeIcons.tiktok,
-                    size: 16,
-                    color: context.colors.textPrimary,
-                  ),
-                  tooltip: S.of(context).shopStoreTiktokTooltip,
-                  onTap: () => _launch(
-                    context,
-                    'https://www.tiktok.com/@${_stripHandle(store.socialTiktok!)}',
-                  ),
-                ),
-              if (store.contactEmail != null && store.contactEmail!.isNotEmpty)
-                _ContactIcon(
-                  iconWidget: Icon(
-                    Icons.mail_outline,
-                    size: 18,
-                    color: context.colors.textSecondary,
-                  ),
-                  tooltip: S.of(context).shopStoreEmailTooltip,
-                  onTap: () => _launch(context, 'mailto:${store.contactEmail}'),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _digitsOnly(String value) =>
-      value.replaceAll(RegExp(r'[^0-9]'), '');
-
-  static String _stripHandle(String value) =>
-      value.startsWith('@') ? value.substring(1) : value;
-
-  static Future<void> _launch(BuildContext context, String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    final ok = await canLaunchUrl(uri);
-    if (!ok) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(S.of(context).shopStoreLinkError)));
-      return;
-    }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-}
-
-class _ContactIcon extends StatelessWidget {
-  final Widget iconWidget;
-  final String tooltip;
-  final VoidCallback onTap;
-
-  const _ContactIcon({
-    required this.iconWidget,
-    required this.tooltip,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: context.colors.surfaceHighest,
-            border: Border.all(color: context.colors.border),
-          ),
-          child: iconWidget,
-        ),
       ),
     );
   }

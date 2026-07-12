@@ -8169,6 +8169,66 @@ abstract class S {
   /// **'Buscar na vitrine'**
   String get shopVitrineSearchTooltip;
 
+  /// No description provided for @shopVitrineFilterTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Classificar produtos'**
+  String get shopVitrineFilterTooltip;
+
+  /// No description provided for @shopVitrineViewModeTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mudar visualização'**
+  String get shopVitrineViewModeTooltip;
+
+  /// No description provided for @shopVitrineSortTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Classificar por'**
+  String get shopVitrineSortTitle;
+
+  /// No description provided for @shopVitrineSortCreatorChoice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha do criador'**
+  String get shopVitrineSortCreatorChoice;
+
+  /// No description provided for @shopVitrineSortBestSelling.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais vendidos'**
+  String get shopVitrineSortBestSelling;
+
+  /// No description provided for @shopVitrineSortNewest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novidades'**
+  String get shopVitrineSortNewest;
+
+  /// No description provided for @shopVitrineSortPriceAsc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço: menor para maior'**
+  String get shopVitrineSortPriceAsc;
+
+  /// No description provided for @shopVitrineSortPriceDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preço: maior para menor'**
+  String get shopVitrineSortPriceDesc;
+
+  /// No description provided for @shopVitrineSoldOnline.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} vendidos online'**
+  String shopVitrineSoldOnline(String count);
+
+  /// No description provided for @shopVitrineFreeShipping.
+  ///
+  /// In pt, this message translates to:
+  /// **'Frete grátis'**
+  String get shopVitrineFreeShipping;
+
   /// No description provided for @shopProductPageTitle.
   ///
   /// In pt, this message translates to:
@@ -8469,6 +8529,18 @@ abstract class S {
   /// **'Taxas'**
   String get shopCartTax;
 
+  /// No description provided for @shopCartShipping.
+  ///
+  /// In pt, this message translates to:
+  /// **'Frete'**
+  String get shopCartShipping;
+
+  /// No description provided for @shopCartDiscount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconto'**
+  String get shopCartDiscount;
+
   /// No description provided for @shopCartTotal.
   ///
   /// In pt, this message translates to:
@@ -8516,6 +8588,18 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Você ainda não tem endereços salvos.'**
   String get shopCheckoutAddressEmpty;
+
+  /// No description provided for @shopCheckoutAddNewAddress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar outro endereço'**
+  String get shopCheckoutAddNewAddress;
+
+  /// No description provided for @shopCheckoutAddressLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome do endereço (ex.: Casa, Trabalho)'**
+  String get shopCheckoutAddressLabel;
 
   /// No description provided for @shopCheckoutAddressStreet.
   ///
@@ -8607,11 +8691,47 @@ abstract class S {
   /// **'Telefone (opcional)'**
   String get shopCheckoutCustomerPhone;
 
-  /// No description provided for @shopCheckoutCustomerDocument.
+  /// No description provided for @shopCheckoutRecipientSection.
   ///
   /// In pt, this message translates to:
-  /// **'CPF/CNPJ (opcional)'**
-  String get shopCheckoutCustomerDocument;
+  /// **'Destinatário (para nota fiscal)'**
+  String get shopCheckoutRecipientSection;
+
+  /// No description provided for @shopCheckoutRecipientHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'A loja precisa desses dados para emitir a nota fiscal do seu pedido.'**
+  String get shopCheckoutRecipientHint;
+
+  /// No description provided for @shopCheckoutRecipientName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo do destinatário'**
+  String get shopCheckoutRecipientName;
+
+  /// No description provided for @shopCheckoutDocumentType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo'**
+  String get shopCheckoutDocumentType;
+
+  /// No description provided for @shopCheckoutDocumentRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'CPF/CNPJ é obrigatório para emissão de NF.'**
+  String get shopCheckoutDocumentRequired;
+
+  /// No description provided for @shopCheckoutCpfInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'CPF deve ter 11 dígitos.'**
+  String get shopCheckoutCpfInvalid;
+
+  /// No description provided for @shopCheckoutCnpjInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'CNPJ deve ter 14 dígitos.'**
+  String get shopCheckoutCnpjInvalid;
 
   /// No description provided for @shopCheckoutNameRequired.
   ///
@@ -8702,6 +8822,60 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Não foi possível concluir o pedido. Tente novamente.'**
   String get shopCheckoutError;
+
+  /// No description provided for @shopCheckoutDiscount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconto'**
+  String get shopCheckoutDiscount;
+
+  /// No description provided for @shopCheckoutFreeShipping.
+  ///
+  /// In pt, this message translates to:
+  /// **'Grátis'**
+  String get shopCheckoutFreeShipping;
+
+  /// No description provided for @shopCheckoutAddNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar nota'**
+  String get shopCheckoutAddNote;
+
+  /// No description provided for @shopCheckoutTotalItems.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total ({count} {count, plural, =1{item} other{itens}})'**
+  String shopCheckoutTotalItems(int count);
+
+  /// No description provided for @shopCheckoutTermsPrefix.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao concluir o pedido, você concorda com os '**
+  String get shopCheckoutTermsPrefix;
+
+  /// No description provided for @shopCheckoutTermsLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos de Uso'**
+  String get shopCheckoutTermsLink;
+
+  /// No description provided for @shopCheckoutTermsAnd.
+  ///
+  /// In pt, this message translates to:
+  /// **' e a '**
+  String get shopCheckoutTermsAnd;
+
+  /// No description provided for @shopCheckoutPrivacyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Política de Privacidade'**
+  String get shopCheckoutPrivacyLink;
+
+  /// No description provided for @shopCheckoutTermsSuffix.
+  ///
+  /// In pt, this message translates to:
+  /// **' da Brawe.'**
+  String get shopCheckoutTermsSuffix;
 
   /// No description provided for @shopPaymentTitle.
   ///
@@ -8853,47 +9027,23 @@ abstract class S {
   /// **'Ver menos'**
   String get shopStoreReadLess;
 
-  /// No description provided for @shopStoreContactSection.
+  /// No description provided for @shopStoreChatCta.
   ///
   /// In pt, this message translates to:
-  /// **'Contato'**
-  String get shopStoreContactSection;
+  /// **'Falar com a loja'**
+  String get shopStoreChatCta;
 
-  /// No description provided for @shopStoreWhatsappTooltip.
+  /// No description provided for @shopStoreChatUnavailable.
   ///
   /// In pt, this message translates to:
-  /// **'WhatsApp'**
-  String get shopStoreWhatsappTooltip;
+  /// **'Esta loja ainda não pode receber mensagens.'**
+  String get shopStoreChatUnavailable;
 
-  /// No description provided for @shopStoreInstagramTooltip.
+  /// No description provided for @shopStoreChatError.
   ///
   /// In pt, this message translates to:
-  /// **'Instagram'**
-  String get shopStoreInstagramTooltip;
-
-  /// No description provided for @shopStoreFacebookTooltip.
-  ///
-  /// In pt, this message translates to:
-  /// **'Facebook'**
-  String get shopStoreFacebookTooltip;
-
-  /// No description provided for @shopStoreTiktokTooltip.
-  ///
-  /// In pt, this message translates to:
-  /// **'TikTok'**
-  String get shopStoreTiktokTooltip;
-
-  /// No description provided for @shopStoreEmailTooltip.
-  ///
-  /// In pt, this message translates to:
-  /// **'E-mail'**
-  String get shopStoreEmailTooltip;
-
-  /// No description provided for @shopStoreLinkError.
-  ///
-  /// In pt, this message translates to:
-  /// **'Não foi possível abrir o link.'**
-  String get shopStoreLinkError;
+  /// **'Não foi possível abrir o chat: {error}'**
+  String shopStoreChatError(String error);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

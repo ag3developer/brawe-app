@@ -1,37 +1,72 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/marketplace_models.dart';
 import '../repositories/marketplace_repository.dart';
+import '../services/cart_session_manager.dart';
 import 'marketplace_providers.dart';
 
 // ============================================================================
-// SESSION ID (anonymous cart support)
+// CART SESSION MANAGER PROVIDER
 // ============================================================================
 
-/// In-memory anonymous session id.
+/// Provider para CartSessionManager (gerencia persistência de sessão)
+final cartSessionManagerProvider = FutureProvider<CartSessionManager>((
+  ref,
+) async {
+  return CartSessionManager.create();
+});
+
+// ============================================================================
+// SESSION ID (anonymous cart support with persistence)
+// ============================================================================
+
+/// Anonymous session id manager.
 ///
-/// **TODO (gap):** Persist this across app restarts using
-/// `shared_preferences` (already a dependency of the project) once the
-/// backend confirms it needs a *stable* anonymous session across restarts.
-/// For now, an in-memory singleton is enough: an anonymous cart is only
-/// relevant for the lifetime of the current app session and any logged-in
-/// user's cart is scoped server-side by user id instead of session id.
+/// Agora persiste através de restarts usando `shared_preferences`.
+/// Sessões expiram após 30 dias de inatividade.
 class CartSession {
   CartSession._();
 
   static String? _sessionId;
+  static CartSessionManager? _manager;
 
-  /// Returns the current anonymous session id, generating one on first use.
+  /// Inicializa o manager com dados persistidos
+  static Future<void> initialize(CartSessionManager manager) async {
+    _manager = manager;
+    _sessionId = await manager.getOrCreateSessionId();
+  }
+
+  /// Returns the current anonymous session id, using persisted value or generating one.
+  ///
+  /// IMPORTANTE: Chamar `initialize()` uma vez na app startup para garantir
+  /// que a sessão seja carregada do disco.
+  /// Se não inicializado, gera um ID temporário em-memória.
   static String get id {
-    _sessionId ??= _generate();
+    if (_sessionId == null) {
+      // Fallback: gerar ID temporário em-memória
+      // (não é persistido, mas permite usar carrinho mesmo se inicialização falhou)
+      _sessionId =
+          'anon_${DateTime.now().microsecondsSinceEpoch.toRadixString(16)}';
+    }
     return _sessionId!;
   }
 
-  static String _generate() {
-    final random =
-        DateTime.now().microsecondsSinceEpoch.toRadixString(16) +
-        (DateTime.now().hashCode & 0xFFFFFF).toRadixString(16);
-    return 'anon_$random';
+  /// Força criar uma nova sessão (útil para logout)
+  static Future<void> createNew() async {
+    if (_manager == null) {
+      throw Exception('CartSession não foi inicializado!');
+    }
+    _sessionId = await _manager!.createNewSession();
+  }
+
+  /// Limpa a sessão (logout)
+  static Future<void> clear() async {
+    if (_manager == null) {
+      throw Exception('CartSession não foi inicializado!');
+    }
+    await _manager!.clearSession();
+    _sessionId = null;
   }
 }
 
@@ -67,7 +102,9 @@ class CartState {
 
   double get subtotal => cart?.subtotal ?? 0;
 
-  double get tax => cart?.tax ?? 0;
+  double get shipping => cart?.shipping ?? 0;
+
+  double get discount => cart?.discount ?? 0;
 
   double get total => cart?.total ?? 0;
 }
@@ -89,12 +126,14 @@ class CartNotifier extends Notifier<CartState> {
   Future<void> loadCart({String? sessionId}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final result = await _repo.getCart(
-        sessionId: sessionId ?? CartSession.id,
-      );
+      final cartSessionId = sessionId ?? CartSession.id;
+      debugPrint('🛒 Loading cart with session: $cartSessionId');
+      final result = await _repo.getCart(sessionId: cartSessionId);
       final cart = result as Cart;
+      debugPrint('✅ Cart loaded: ${cart.items.length} items');
       state = state.copyWith(cart: cart, isLoading: false, clearError: true);
     } catch (e) {
+      debugPrint('❌ Error loading cart: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -102,10 +141,17 @@ class CartNotifier extends Notifier<CartState> {
   Future<bool> addItem(CartItemRequest request, {String? sessionId}) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      await _repo.addToCart(request, sessionId: sessionId ?? CartSession.id);
+      final cartSessionId = sessionId ?? CartSession.id;
+      debugPrint(
+        '🛒 Adding item: product=${request.productId}, qty=${request.quantity}, session=$cartSessionId',
+      );
+      await _repo.addToCart(request, sessionId: cartSessionId);
+      debugPrint('✅ Item added, reloading cart...');
       await loadCart(sessionId: sessionId);
+      debugPrint('✅ Cart reloaded after adding item');
       return true;
     } catch (e) {
+      debugPrint('❌ Error adding item: $e');
       state = state.copyWith(isLoading: false, error: e.toString());
       return false;
     }

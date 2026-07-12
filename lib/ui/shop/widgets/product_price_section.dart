@@ -39,53 +39,50 @@ class ProductPriceSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Main price + discount badge
+        // Main price + discount badge — tamanhos compactos (premium
+        // marketplaces não usam display-size para preço de item).
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Price
             Text(
               '$currencyPrefix ${price.toStringAsFixed(decimalPlaces)}',
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              style: TextStyle(
                 color: context.colors.textPrimary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
               ),
             ),
-            const SizedBox(width: 16),
-
-            // Discount badge (if applicable)
-            if (hasDiscount && discountPercentage != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+            if (hasDiscount && compareAtPrice != null) ...[
+              const SizedBox(width: 8),
+              Text(
+                '$currencyPrefix ${compareAtPrice!.toStringAsFixed(decimalPlaces)}',
+                style: TextStyle(
+                  color: context.colors.textTertiary,
+                  fontSize: 13,
+                  decoration: TextDecoration.lineThrough,
                 ),
+              ),
+            ],
+            if (hasDiscount && discountPercentage != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF4444), // Red badge
-                  borderRadius: BorderRadius.circular(8),
+                  color: context.colors.danger.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  '$discountPercentage% OFF',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  '-$discountPercentage%',
+                  style: TextStyle(
+                    color: context.colors.danger,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
                   ),
                 ),
               ),
+            ],
           ],
         ),
-
-        const SizedBox(height: 8),
-
-        // Original price (if has discount)
-        if (hasDiscount && compareAtPrice != null)
-          Text(
-            '$currencyPrefix ${compareAtPrice!.toStringAsFixed(decimalPlaces)}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: context.colors.textSecondary,
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
       ],
     );
   }

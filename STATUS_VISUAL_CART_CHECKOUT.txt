@@ -1,0 +1,251 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                 🛒 STATUS VISUAL: CARRINHO + CHECKOUT                        ║
+║                            brawe-app (2026-07-11)                             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ COMPONENTE           STATUS      COMPLETO    PRONTO PARA          BLOQUEIA   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Carrinho             ✅ Ready      95%         Testes               Session   │
+│ Checkout             ⚠️  Parcial   70%         Testes parciais      Endereços │
+│ Pagamento            ⚠️  Mock      20%         Visualizar           Wolknow   │
+│ Meus Pedidos         ❌ Falta      0%          Nada                 Criar     │
+│ Models               ✅ Completo   100%        Produção             —         │
+│ Services             ✅ Funcional  90%         Produção             —         │
+│ Rotas                ✅ Registro   100%        Produção             —         │
+│ Afiliados            ⚠️  Estrutura 80%         Testes               Origin ID │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ GERAL                ✅ 75% PRONTO  —  PRONTO PARA TESTES DE FLUXO           │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🔄 FLUXO DE COMPRA (ESTADO ATUAL)                                           │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1️⃣  VITRINE                2️⃣  PRODUTO               3️⃣  CARRINHO         │
+│  ┌──────────────────┐       ┌─────────────────┐      ┌──────────────────┐  │
+│  │ /shop/vitrine    │  ──→  │ /shop/product   │ ──→  │ /shop/cart       │  │
+│  │ ✅ Funciona      │       │ ✅ Funciona     │      │ ✅ Funciona      │  │
+│  │ Lista produtos   │       │ Mostra detalhe  │      │ Lista itens      │  │
+│  │ Mostra preços    │       │ Clica ADD →     │      │ Edit quantidade  │  │
+│  └──────────────────┘       │ addToCart()     │      │ Remove item      │  │
+│           │                 └─────────────────┘      │ Limpar tudo      │  │
+│           └─────────────────────────────────────────→ Clica CHECKOUT   │  │
+│                                                      └──────────┬───────┘  │
+│                                                                 │          │
+│  4️⃣  CHECKOUT                   5️⃣  PAGAMENTO (MOCK)          │          │
+│  ┌──────────────────────┐        ┌─────────────────────┐       │          │
+│  │ /shop/checkout       │ ──────→ │ /shop/checkout      │       │          │
+│  │ ✅ Funciona          │        │ /payment/:orderId   │       │          │
+│  │ Preenche:            │        │ ⚠️ Mock             │       │          │
+│  │  • Endereço entrega  │        │ Mostra Order ID     │       │          │
+│  │  • Dados cliente     │        │ PIX: QR code mock   │       │          │
+│  │  • Envio (dropdown)  │        │ Card: Coming soon   │       │          │
+│  │  • Pagamento (radio) │        │ Crypto: Coming soon │       │          │
+│  │  • Resumo carrinho   │        │ ❌ SEM integração   │       │          │
+│  │ Clica CONFIRMAR ────→│        │    Wolknow          │       │          │
+│  │ Backend cria Order   │        │ ❌ SEM polling      │       │          │
+│  │ (status=pending)     │        │    de payment       │       │          │
+│  └──────────────────────┘        │                     │       │          │
+│           │                      │ Clica "Meus       │       │          │
+│           └─────────────────────→│ Pedidos"           │       │          │
+│                                  └─────────┬──────────┘       │          │
+│                                            │                  │          │
+│                    6️⃣  PEDIDOS (FALTA)                       │          │
+│                    ┌──────────────────────┐                   │          │
+│                    │ /shop/orders         │                   │          │
+│                    │ ❌ Placeholder       │←──────────────────┘          │
+│                    │ Precisa ser criado   │                              │
+│                    └──────────────────────┘                              │
+│                                                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📁 ARQUIVOS PRINCIPAIS (ONDE ESTÁ O QUÊ?)                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STATE & RIVERPOD:                                                         │
+│  └─ lib/data/providers/cart_notifier_provider.dart                          │
+│     • CartState (cart, isLoading, error)                                    │
+│     • CartNotifier (addItem, updateQuantity, removeItem, etc)               │
+│     • cartNotifierProvider                                                  │
+│                                                                              │
+│  UI PAGES:                                                                 │
+│  ├─ lib/ui/shop/pages/shop_cart_page.dart           ✅ Funcional           │
+│  ├─ lib/ui/shop/pages/shop_checkout_page.dart       ✅ Funcional           │
+│  ├─ lib/ui/shop/pages/shop_payment_page.dart        ⚠️  Mock               │
+│  └─ lib/ui/shop/pages/shop_product_page.dart        ✅ Funcional           │
+│                                                                              │
+│  SERVICES:                                                                 │
+│  ├─ lib/data/services/marketplace_cart_service_impl.dart          ✅       │
+│  ├─ lib/data/services/marketplace_checkout_service_impl.dart      ⚠️       │
+│  ├─ lib/data/services/marketplace_address_service_impl.dart       ✅       │
+│  └─ lib/data/repositories/marketplace_repository.dart             ✅       │
+│                                                                              │
+│  MODELS (Freezed):                                                         │
+│  └─ lib/domain/models/marketplace_models.dart                               │
+│     • Cart, CartItem, Order, OrderItem                                      │
+│     • ShippingAddress, Product, Store                                       │
+│     • CheckoutRequest, CartItemRequest, PaymentRequest                      │
+│     • PaymentIntent, PaymentStatus, OrderStatus                             │
+│     • ⭐ Com suporte a afiliados (comissao_*, affiliate_*)                  │
+│                                                                              │
+│  ROTAS:                                                                    │
+│  └─ lib/routing/router.dart (linhas ~495-549)                              │
+│     ✅ /shop/vitrine, /shop/product/:id, /shop/cart                        │
+│     ✅ /shop/checkout, /shop/checkout/payment/:orderId                      │
+│     ❌ /shop/orders, /shop/orders/:orderNumber (Placeholder)                │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ⚠️  GAPS PRINCIPAIS (O QUE FALTA)                                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  CRÍTICOS (Fase 0):                                                        │
+│  ─────────────────                                                         │
+│  1. 🔴 AFFILIATE_ID ORIGIN                                                 │
+│     ↳ Como app sabe qual afiliado referiu?                                 │
+│     ↳ De um provider? localStorage? URL deep link?                         │
+│     ↳ Impacto: Rastreamento de comissões end-to-end                        │
+│                                                                              │
+│  2. 🔴 SESSION PERSISTENCE                                                 │
+│     ↳ Session ID se perde entre restarts                                   │
+│     ↳ Solução: shared_preferences                                          │
+│     ↳ Impacto: Usuários anônimos perdem carrinho                           │
+│                                                                              │
+│  3. 🔴 CRIAR /shop/orders                                                  │
+│     ↳ Listar pedidos do usuário                                            │
+│     ↳ Mostra detalhe de pedido                                             │
+│     ↳ Impacto: Usuário não consegue ver seus pedidos                       │
+│                                                                              │
+│  IMPORTANTES (Fase 0.5):                                                   │
+│  ──────────────────────                                                    │
+│  4. Integrar endereços salvos no checkout                                  │
+│  5. Validação de CEP (ViaCEP)                                              │
+│  6. Cálculo de frete real (Melhor Envio)                                   │
+│                                                                              │
+│  FUTUROS (Fase 1):                                                         │
+│  ────────────────                                                          │
+│  7. Integração Wolknow (pagamento real)                                    │
+│  8. Polling/Webhook de pagamento                                           │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🧪 COMO TESTAR AGORA (E2E)                                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Start backends:                                                        │
+│     $ cd Brawe/backend && python -m app.main                                │
+│     $ cd Brawe/brawe-connect/backend                                        │
+│     $ python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload   │
+│                                                                              │
+│  2. Start app:                                                             │
+│     $ cd brawe-app && flutter run                                           │
+│                                                                              │
+│  3. Teste:                                                                 │
+│     a) Navega /shop/vitrine                                                │
+│     b) Clica produto → /shop/product/:id                                   │
+│     c) Clica "Adicionar" → deve aparecer em /shop/cart ✅                  │
+│     d) Em /shop/cart, edita quantidade → deve atualizar ✅                 │
+│     e) Clica "Checkout" → /shop/checkout ✅                                │
+│     f) Preenche formulário (todos os campos)                               │
+│     g) Clica "Confirmar" → Order criada no backend ✅                      │
+│     h) App navega /shop/checkout/payment/:id → vê mock ⚠️                  │
+│                                                                              │
+│  4. Verifica no backend:                                                   │
+│     GET /marketplace/orders/:id → Vê Order criada ✅                       │
+│     Check affiliate_id → Se foi enviado, vê no Order ✅                    │
+│     Check affiliate_commission_amount → Se calculado, vê aqui ✅           │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📊 SUPORTE A AFILIADOS (END-TO-END)                                        │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ✅ ESTRUTURA PRONTA:                                                       │
+│                                                                              │
+│  CartItem:                                                                 │
+│    • affiliate_ref_code: String?      ← Código de referência do afiliado    │
+│    • room_id: String?                 ← Se comprou em live stream           │
+│    • comissao_rate: double?           ← Taxa calculada pelo backend         │
+│    • comissao_amount: double?         ← Valor calculado pelo backend        │
+│                                                                              │
+│  Order:                                                                    │
+│    • affiliate_id: String?            ← UUID de quem referiu                │
+│    • affiliate_commission_amount: double  ← Total de comissão da ordem      │
+│                                                                              │
+│  ⚠️  FALTA: ORIGEM DO AFFILIATE_ID                                         │
+│      └─ Como app sabe qual é o afiliado que referiu?                       │
+│      └─ Precisa de decisão arquitetural                                    │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📈 PRÓXIMOS PASSOS RECOMENDADOS                                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  IMEDIATO (Hoje):                                                          │
+│  □ Rodar teste E2E (produto → checkout → pagamento mock)                   │
+│  □ Definir affiliate_id origin (decisão crítica)                           │
+│  □ Validar comissões no backend                                            │
+│                                                                              │
+│  CURTO PRAZO (Esta semana):                                                │
+│  □ Persistir session ID (shared_preferences)                               │
+│  □ Integrar endereços salvos no checkout                                   │
+│  □ Criar /shop/orders (listagem + detalhe)                                 │
+│                                                                              │
+│  MÉDIO PRAZO (Próxima semana):                                             │
+│  □ Validação de CEP (ViaCEP)                                               │
+│  □ Cálculo de frete (Melhor Envio)                                         │
+│  □ Integração Wolknow (pagamento real)                                     │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📚 DOCUMENTAÇÃO DISPONÍVEL                                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. DIAGNOSTICO_EXECUTIVO.txt              ← COMECE AQUI (3 min)            │
+│  2. RESUMO_RAPIDO_CART_CHECKOUT.md         ← Tabelas (5 min)                │
+│  3. FLUXO_VISUAL_CART_CHECKOUT.md          ← Diagramas Mermaid (10 min)     │
+│  4. DIAGNOSTICO_CARRINHO_CHECKOUT.md       ← Completo (20 min)              │
+│  5. GUIA_RAPIDO_ARQUIVOS.md                ← Referência de código            │
+│  6. INDICE_DIAGNOSTICO_CART_CHECKOUT.md    ← Índice e rotas de leitura      │
+│  7. STATUS_VISUAL_CART_CHECKOUT.txt        ← Este arquivo (visual)          │
+│                                                                              │
+│  Próximo: Leia DIAGNOSTICO_EXECUTIVO.txt (3 minutos)                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ✨ CONCLUSÃO                                                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STATUS: ✅ 75% PRONTO PARA TESTES                                          │
+│                                                                              │
+│  ✅ Carrinho + Checkout funcional (sem pagamento real)                      │
+│  ✅ Todas as rotas registradas                                              │
+│  ✅ Todos os models e services criados                                      │
+│  ⚠️  Pagamento é mock (Wolknow não integrado)                               │
+│  ❌ /shop/orders é placeholder (precisa criar)                             │
+│  ⚠️  3 decisões críticas precisam ser tomadas                               │
+│                                                                              │
+│  PRONTO PARA:                                                              │
+│  • Testes de fluxo (produto → cart → checkout)                             │
+│  • Testes de UI/UX                                                         │
+│  • Testes anônimo vs autenticado                                           │
+│                                                                              │
+│  NÃO PRONTO PARA:                                                          │
+│  • Produção sem integração Wolknow                                         │
+│  • Produção sem /shop/orders                                               │
+│  • Produção sem definição de affiliate_id origin                           │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════════
+Documentação criada em: 2026-07-11
+Próximo passo: Leia DIAGNOSTICO_EXECUTIVO.txt (3 minutos) →
+═══════════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,271 @@
+================================================================================
+🛒 DIAGNÓSTICO EXECUTIVO: CARRINHO + CHECKOUT - brawe-app
+================================================================================
+Data: 2026-07-11
+Status Geral: ✅ 75% PRONTO PARA TESTES
+
+================================================================================
+RESUMO EM 30 SEGUNDOS
+================================================================================
+
+✅ PRONTO:
+  • Carrinho completo: adicionar, remover, atualizar quantidade
+  • Checkout com formulário: endereço, cliente, método envio/pagamento
+  • Models Freezed: Product, Cart, CartItem, Order, ShippingAddress, etc
+  • Services: CartService, CheckoutService, AddressService
+  • Rotas: /shop/cart, /shop/checkout, /shop/checkout/payment/:orderId
+  • Suporte a afiliados na estrutura (comissao_rate, comissao_amount, affiliate_id)
+
+⚠️ PARCIALMENTE:
+  • Pagamento: Mock apenas (PIX QR placeholder, sem Wolknow real)
+  • Endereços: Service criado, mas UI não integrada
+
+❌ FALTA:
+  • /shop/orders: Placeholder (listar pedidos do usuário)
+  • Persistência de session anônimo entre restarts
+  • Validação de CEP (ViaCEP)
+  • Origem de affiliate_id (como app sabe qual afiliado referiu?)
+  • Integração Wolknow para pagamento real
+
+================================================================================
+FLUXO ATUAL (E2E)
+================================================================================
+
+1. Usuário vê produto em /shop/vitrine
+2. Clica produto → /shop/product/:id
+3. Clica "Adicionar ao carrinho"
+   └─ Chama: addToCart(CartItemRequest)
+   └─ Envia: POST /marketplace/cart/items
+4. Clica ícone carrinho → /shop/cart
+   └─ Mostra: itens, quantidades, preço, botão checkout
+5. Clica "Ir para Checkout" → /shop/checkout
+   └─ Preenche: endereço, dados cliente, envio, pagamento
+6. Clica "Confirmar Pedido" → checkout(CheckoutRequest)
+   └─ Envia: POST /marketplace/orders
+   └─ Backend cria Order (status="pending")
+7. App navega → /shop/checkout/payment/:orderId
+   └─ Mostra: Order ID + mock de pagamento (PIX)
+   └─ ❌ NÃO chama createPayment() de verdade
+   └─ ❌ NÃO integra Wolknow
+8. Clica "Meus Pedidos" → /shop/orders
+   └─ ❌ Placeholder (não implementado)
+
+================================================================================
+ARQUIVOS PRINCIPAIS
+================================================================================
+
+STATE & PROVIDERS:
+  lib/data/providers/cart_notifier_provider.dart
+    - CartState (cart, isLoading, error)
+    - CartNotifier (loadCart, addItem, updateQuantity, removeItem, clear)
+    - cartNotifierProvider (Riverpod Notifier)
+
+UI PAGES:
+  lib/ui/shop/pages/shop_cart_page.dart           ✅ Funcional
+  lib/ui/shop/pages/shop_checkout_page.dart       ✅ Funcional
+  lib/ui/shop/pages/shop_payment_page.dart        ⚠️ Mock
+  lib/ui/shop/pages/shop_vitrine_page.dart        ✅ Showcase
+  lib/ui/shop/pages/shop_product_page.dart        ✅ Detalhes
+
+SERVICES:
+  lib/data/services/marketplace_cart_service_impl.dart          ✅
+  lib/data/services/marketplace_checkout_service_impl.dart      ⚠️
+  lib/data/services/marketplace_address_service_impl.dart       ✅ (não integrado)
+
+MODELS:
+  lib/domain/models/marketplace_models.dart       ✅ (Freezed)
+    - Product, Cart, CartItem
+    - ShippingAddress, Order, OrderItem
+    - CheckoutRequest, CartItemRequest, PaymentRequest
+    - PaymentIntent
+    - Com suporte a afiliados ⭐
+
+REPOSITORY:
+  lib/data/repositories/marketplace_repository.dart           ✅
+
+ROUTING:
+  lib/routing/router.dart (linhas ~495-549)
+    /shop/vitrine               → ShopVitrinnePage
+    /shop/product/:id           → ShopProductPage
+    /shop/cart                  → ShopCartPage
+    /shop/checkout              → ShopCheckoutPage
+    /shop/checkout/payment/:id  → ShopPaymentPage
+    /shop/orders                → Placeholder ❌
+    /shop/orders/:orderNumber   → Placeholder ❌
+
+================================================================================
+ENDPOINTS DO BACKEND
+================================================================================
+
+CARRINHO:
+  GET    /marketplace/cart?session_id=...
+  POST   /marketplace/cart/items
+  PUT    /marketplace/cart/items/{id}
+  DELETE /marketplace/cart/items/{id}
+  DELETE /marketplace/cart
+
+CHECKOUT:
+  POST /marketplace/orders
+       → Retorna Order com affiliate_id + affiliate_commission_amount
+
+PAGAMENTO (NÃO INTEGRADO):
+  POST /shopping/payments/create
+  GET  /shopping/payments/{id}/status
+
+ENDEREÇOS (NÃO INTEGRADO NA UI):
+  GET    /marketplace/shipping-addresses
+  POST   /marketplace/shipping-addresses
+  PUT    /marketplace/shipping-addresses/{id}/default
+  DELETE /marketplace/shipping-addresses/{id}
+
+================================================================================
+GAPS E PRIORIDADES
+================================================================================
+
+CRÍTICOS (Para Fase 0):
+  1. ⚠️ Definir ORIGEM do affiliate_id
+     - Como app sabe qual é o afiliado que referiu?
+     - Provider? localStorage? URL deep link? Contexto da loja?
+  
+  2. ⚠️ Persistência de session anônimo
+     - Session ID se perde entre restarts
+     - Solução: shared_preferences
+
+  3. ❌ Criar /shop/orders
+     - Placeholder precisa ser ShopOrdersPage (listar)
+     - Precisa ShopOrderDetailPage (detalhe)
+     - Precisa endpoint no backend
+
+IMPORTANTES (Para Fase 0.5):
+  4. ⚠️ Integrar endereços salvos no checkout
+     - Service já existe (MarketplaceAddressService)
+     - Falta: mostrar dropdown + permitir criar novo
+
+  5. ⚠️ Validação de CEP (ViaCEP)
+     - Integrar com ViaCEP para auto-completar
+
+  6. ⚠️ Cálculo de frete real
+     - Integrar com transportadora (Melhor Envio)
+
+FUTUROS (Para Fase 1 - Pagamento Real):
+  7. ❌ Integração Wolknow
+     - Real PIX QR code
+     - Real card processing
+     - Real crypto
+
+  8. ❌ Polling/Webhook de pagamento
+     - Monitorar payment_status
+     - Redirecionar após pagamento confirmado
+
+================================================================================
+ESTADO DE AFILIADOS (END-TO-END)
+================================================================================
+
+✅ ESTRUTURA PRONTA:
+
+  CartItem:
+    - affiliate_ref_code: String?    (código de referência)
+    - room_id: String?               (se comprou em live)
+    - comissao_rate: double?         (calculado backend)
+    - comissao_amount: double?       (calculado backend)
+
+  Order:
+    - affiliate_id: String?          (UUID de quem referiu)
+    - affiliate_commission_amount: double  (total de comissão)
+
+⚠️ FALTA:
+
+  1. Fonte de affiliate_id
+     - Como app sabe qual é o affiliado que referiu o comprador?
+     
+  2. Rastreamento de affiliate_ref_code
+     - De onde vem o código de referência do item?
+     - De um provider? De localStorage? De URL?
+
+================================================================================
+COMO TESTAR AGORA (E2E)
+================================================================================
+
+1. Start backend:
+   $ cd Brawe/backend && python -m app.main
+
+2. Start connect (pagamentos):
+   $ cd Brawe/brawe-connect/backend
+   $ python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+
+3. Start app:
+   $ cd brawe-app && flutter run
+
+4. Teste:
+   a) Navega /shop/vitrine
+   b) Clica produto → /shop/product/:id
+   c) Clica "Adicionar" → deve aparecer em /shop/cart
+   d) Em /shop/cart, edita quantidade → deve atualizar
+   e) Clica "Checkout" → /shop/checkout
+   f) Preenche formulário (todos os campos obrigatórios)
+   g) Clica "Confirmar" → Backend cria Order, app navega a /shop/checkout/payment/:id
+   h) Vê mock de PIX (QR code placeholder)
+
+5. Verifica no backend:
+   - GET /marketplace/orders/:id → Vê Order criada ✅
+   - Check affiliate_id → Se foi enviado, verá no Order ✅
+   - Check affiliate_commission_amount → Se foi calculado, verá aqui ✅
+
+================================================================================
+PRÓXIMOS PASSOS RECOMENDADOS
+================================================================================
+
+IMEDIATO (Hoje):
+  □ Rodar teste E2E (produto → checkout → pagamento mock)
+  □ Definir origine do affiliate_id (decisão arquitetural)
+  □ Validar se comissões estão sendo calculadas no backend
+
+CURTO PRAZO (Esta semana):
+  □ Persistir session ID anônimo (shared_preferences)
+  □ Integrar endereços salvos no checkout
+  □ Criar /shop/orders (listagem + detalhe)
+
+MÉDIO PRAZO (Próxima semana):
+  □ Validação de CEP (ViaCEP)
+  □ Cálculo de frete real (Melhor Envio)
+  □ Integrar Wolknow (pagamento real)
+
+================================================================================
+CONCLUSÃO
+================================================================================
+
+✅ PRONTO PARA:
+  - Testes de fluxo (produto → cart → checkout)
+  - Testes de afiliados (se origem definida)
+  - Testes de UI/UX
+  - Testes de anônimo vs autenticado
+
+⚠️ REQUER ANTES DE PRODUÇÃO:
+  - Definição de affiliate_id origin
+  - Persistência de session anônimo
+  - Integração de endereços salvos
+  - Integração Wolknow (pagamento real)
+
+❌ FORA DE SCOPE AGORA:
+  - Integração de pagamento real (Wolknow)
+  - Webhook de pagamento
+  - /shop/orders (precisa ser criado)
+
+================================================================================
+DOCUMENTAÇÃO CRIADA
+================================================================================
+
+  1. DIAGNOSTICO_CARRINHO_CHECKOUT.md        (Detalhado, 500+ linhas)
+  2. RESUMO_RAPIDO_CART_CHECKOUT.md          (Resumido, tabelas)
+  3. FLUXO_VISUAL_CART_CHECKOUT.md           (Mermaid diagrams)
+  4. GUIA_RAPIDO_ARQUIVOS.md                 (Referência de código)
+  5. DIAGNOSTICO_EXECUTIVO.txt               (Este arquivo)
+
+Leia em ordem:
+  1. Este arquivo (overview 2min)
+  2. RESUMO_RAPIDO (tabelas, 5min)
+  3. FLUXO_VISUAL (diagramas, 10min)
+  4. DIAGNOSTICO_CARRINHO_CHECKOUT (completo, 20min)
+  5. GUIA_RAPIDO_ARQUIVOS (referência, consulte quando precisar)
+
+================================================================================

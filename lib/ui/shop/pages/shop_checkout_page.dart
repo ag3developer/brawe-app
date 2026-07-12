@@ -5,14 +5,21 @@ import 'package:go_router/go_router.dart';
 import '../../../data/providers/cart_notifier_provider.dart';
 import '../../../data/providers/marketplace_providers.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../data/services/viacep_service.dart';
 import '../../../domain/models/marketplace_models.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../utils/currency_formatter.dart';
+import '../widgets/checkout/address_selection_sheet.dart';
+import '../widgets/checkout/checkout_bottom_bar.dart';
+import '../widgets/checkout/checkout_terms.dart';
+import '../widgets/checkout/delivery_address_section.dart';
+import '../widgets/checkout/order_price_summary.dart';
+import '../widgets/checkout/payment_method_section.dart';
+import '../widgets/checkout/store_section.dart';
 
 enum _ShippingMethod { standard, express }
 
-enum _PaymentMethod { pix, card, crypto }
+enum _DocumentType { cpf, cnpj }
 
 /// Checkout page accessed via `/shop/checkout` route.
 ///
@@ -37,9 +44,9 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _documentController = TextEditingController();
 
   // New address form fields
+  final _labelController = TextEditingController();
   final _streetController = TextEditingController();
   final _numberController = TextEditingController();
   final _complementController = TextEditingController();
@@ -47,13 +54,33 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _postalCodeController = TextEditingController();
+  // Dados fiscais do destinatário — OBRIGATÓRIOS: a loja precisa desses
+  // dados para emitir NF do pedido físico (não é opcional em compras reais).
+  final _recipientNameController = TextEditingController();
+  final _recipientDocumentController = TextEditingController();
+  _DocumentType _documentType = _DocumentType.cpf;
 
   ShippingAddress? _selectedAddress;
-  _ShippingMethod _shippingMethod = _ShippingMethod.standard;
-  _PaymentMethod _paymentMethod = _PaymentMethod.pix;
+  // Controla explicitamente a intenção de "usar outro endereço" — sem essa
+  // flag, `_selectedAddress ??= addresses.first` no build reatribuiria o
+  // endereço salvo assim que o usuário zerasse a seleção, escondendo o
+  // formulário de novo endereço antes mesmo dele aparecer.
+  bool _addingNewAddress = false;
+  // Sem seletor de método de envio na UI: o backend não expõe custos
+  // diferentes para padrão/expresso ainda, então mantemos 'standard' fixo
+  // em vez de mostrar uma opção que não afeta nada de real no pedido.
+  final _shippingMethod = _ShippingMethod.standard;
+  CheckoutPaymentMethod _paymentMethod = CheckoutPaymentMethod.pix;
 
   bool _isSubmitting = false;
   bool _isSavingAddress = false;
+  bool _isFetchingCep = false;
+  String? _cepError;
+
+  // Quantidade sendo atualizada por item — evita múltiplas requisições
+  // simultâneas para o mesmo item (o usuário vê um spinner local nesse
+  // item enquanto a chamada está em andamento).
+  final Set<String> _updatingItemIds = <String>{};
 
   @override
   void initState() {
@@ -70,7 +97,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _documentController.dispose();
+    _labelController.dispose();
     _streetController.dispose();
     _numberController.dispose();
     _complementController.dispose();
@@ -78,12 +105,15 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
     _cityController.dispose();
     _stateController.dispose();
     _postalCodeController.dispose();
+    _recipientNameController.dispose();
+    _recipientDocumentController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartNotifierProvider);
+    final addressesAsync = ref.watch(savedAddressesProvider);
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 1280;
 
@@ -93,50 +123,90 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         backgroundColor: context.colors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        toolbarHeight: 48,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
+          icon: Icon(
+            Icons.arrow_back,
+            size: 20,
+            color: context.colors.textPrimary,
+          ),
           onPressed: () => context.pop(),
         ),
         title: Text(
           S.of(context).shopCheckoutTitle,
-          style: TextStyle(color: context.colors.textPrimary),
+          style: TextStyle(
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 17,
+          ),
         ),
       ),
       body: SafeArea(
+        top: false,
         child: Form(
           key: _formKey,
-          child: isDesktop
-              ? _buildDesktopLayout(context, cartState)
-              : _buildMobileLayout(context, cartState),
+          child: Column(
+            children: [
+              Expanded(
+                child: isDesktop
+                    ? _buildDesktopLayout(context, cartState, addressesAsync)
+                    : _buildMobileLayout(context, cartState, addressesAsync),
+              ),
+              CheckoutBottomBar(
+                itemCount: cartState.itemCount,
+                total: cartState.total,
+                isSubmitting: _isSubmitting,
+                enabled: !cartState.isEmpty,
+                onConfirm: () => _confirmOrder(context, cartState),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, CartState cartState) {
+  Widget _buildMobileLayout(
+    BuildContext context,
+    CartState cartState,
+    AsyncValue<List<ShippingAddress>> addressesAsync,
+  ) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildAddressSection(context),
-          const SizedBox(height: 24),
+          _buildAddressBlock(context, addressesAsync),
+          const SizedBox(height: 10),
+          ..._buildStoreSections(context, cartState),
+          const SizedBox(height: 10),
           _buildCustomerSection(context),
-          const SizedBox(height: 24),
-          _buildShippingSection(context),
-          const SizedBox(height: 24),
-          _buildPaymentSection(context),
-          const SizedBox(height: 24),
-          _buildSummarySection(context, cartState),
-          const SizedBox(height: 24),
-          _buildConfirmButton(context, cartState),
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
+          OrderPriceSummary(
+            subtotal: cartState.subtotal,
+            shipping: cartState.shipping,
+            discount: cartState.discount,
+            total: cartState.total,
+          ),
+          const SizedBox(height: 10),
+          PaymentMethodSection(
+            selected: _paymentMethod,
+            onChanged: (v) => setState(() => _paymentMethod = v),
+          ),
+          const SizedBox(height: 16),
+          const CheckoutTerms(),
+          const SizedBox(height: 8),
         ],
       ),
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, CartState cartState) {
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    CartState cartState,
+    AsyncValue<List<ShippingAddress>> addressesAsync,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(32),
       child: Row(
@@ -147,13 +217,11 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAddressSection(context),
-                const SizedBox(height: 24),
+                _buildAddressBlock(context, addressesAsync),
+                const SizedBox(height: 10),
+                ..._buildStoreSections(context, cartState),
+                const SizedBox(height: 10),
                 _buildCustomerSection(context),
-                const SizedBox(height: 24),
-                _buildShippingSection(context),
-                const SizedBox(height: 24),
-                _buildPaymentSection(context),
               ],
             ),
           ),
@@ -163,15 +231,162 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSummarySection(context, cartState),
-                const SizedBox(height: 24),
-                _buildConfirmButton(context, cartState),
+                OrderPriceSummary(
+                  subtotal: cartState.subtotal,
+                  shipping: cartState.shipping,
+                  discount: cartState.discount,
+                  total: cartState.total,
+                ),
+                const SizedBox(height: 10),
+                PaymentMethodSection(
+                  selected: _paymentMethod,
+                  onChanged: (v) => setState(() => _paymentMethod = v),
+                ),
+                const SizedBox(height: 16),
+                const CheckoutTerms(),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  // ─── Address block (compact, single address + bottom sheet) ───────────
+
+  Widget _buildAddressBlock(
+    BuildContext context,
+    AsyncValue<List<ShippingAddress>> addressesAsync,
+  ) {
+    return addressesAsync.when(
+      loading: () => Container(
+        height: 64,
+        decoration: BoxDecoration(
+          color: context.colors.surfaceElevated,
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+      error: (_, _) => _buildAddressForm(context),
+      data: (addresses) {
+        if (addresses.isEmpty || _addingNewAddress) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (addresses.isNotEmpty)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        S.of(context).shopCheckoutAddNewAddress,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: context.colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() {
+                        _addingNewAddress = false;
+                        _selectedAddress = addresses.first;
+                      }),
+                      child: Text(S.of(context).actionCancel),
+                    ),
+                  ],
+                ),
+              _sectionCard(
+                context,
+                S.of(context).shopCheckoutAddressSection,
+                _buildAddressForm(context),
+              ),
+            ],
+          );
+        }
+
+        _selectedAddress ??= addresses.first;
+        return DeliveryAddressSection(
+          address: _selectedAddress!,
+          customerPhone: _phoneController.text.trim().isEmpty
+              ? null
+              : _phoneController.text.trim(),
+          onTap: () => _openAddressSelection(context, addresses),
+        );
+      },
+    );
+  }
+
+  Future<void> _openAddressSelection(
+    BuildContext context,
+    List<ShippingAddress> addresses,
+  ) async {
+    final result = await AddressSelectionSheet.show(
+      context,
+      addresses: addresses,
+      selected: _selectedAddress,
+    );
+    if (result == null || !mounted) return;
+    if (result == '__new__') {
+      setState(() {
+        _addingNewAddress = true;
+        _selectedAddress = null;
+      });
+      return;
+    }
+    if (result is ShippingAddress) {
+      setState(() => _selectedAddress = result);
+    }
+  }
+
+  // ─── Store sections (grouped cart items) ───────────────────────────────
+
+  List<Widget> _buildStoreSections(BuildContext context, CartState cartState) {
+    if (cartState.items.isEmpty) return const [];
+
+    // Agrupa por loja (dado real via CartItem.storeId/storeName) — se todo
+    // o carrinho for de uma única loja, isso gera apenas 1 seção; se houver
+    // múltiplas lojas, uma seção por loja, cada uma com seu próprio frete.
+    final byStore = <String, List<CartItem>>{};
+    for (final item in cartState.items) {
+      byStore.putIfAbsent(item.storeId, () => []).add(item);
+    }
+
+    final storeIds = byStore.keys.toList();
+    // O frete/desconto atual vem agregado no carrinho (não por loja) — ao
+    // dividir por múltiplas lojas, distribuímos o mesmo total já calculado
+    // apenas na primeira seção, para não inventar valores por loja que o
+    // backend não fornece.
+    return [
+      for (var i = 0; i < storeIds.length; i++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: StoreSection(
+            storeName: byStore[storeIds[i]]!.first.storeName,
+            items: byStore[storeIds[i]]!,
+            shippingCost: i == 0 ? cartState.shipping : 0,
+            isFreeShipping: i == 0 && cartState.shipping == 0,
+            isUpdating: (item) => _updatingItemIds.contains(item.id),
+            onQuantityChanged: _onQuantityChanged,
+          ),
+        ),
+    ];
+  }
+
+  Future<void> _onQuantityChanged(CartItem item, int newQuantity) async {
+    // Evita disparar uma nova requisição para o mesmo item enquanto a
+    // anterior ainda está em andamento (previne múltiplas chamadas
+    // simultâneas ao tocar rapidamente em +/-).
+    if (_updatingItemIds.contains(item.id)) return;
+    setState(() => _updatingItemIds.add(item.id));
+    try {
+      if (newQuantity < 1) {
+        await ref.read(cartNotifierProvider.notifier).removeItem(item.id);
+      } else {
+        await ref
+            .read(cartNotifierProvider.notifier)
+            .updateQuantity(item.id, newQuantity);
+      }
+    } finally {
+      if (mounted) setState(() => _updatingItemIds.remove(item.id));
+    }
   }
 
   // ─── Sections ───────────────────────────────────────────────────────
@@ -181,77 +396,30 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.colors.border),
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: TextStyle(
               color: context.colors.textPrimary,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           child,
         ],
-      ),
-    );
-  }
-
-  Widget _buildAddressSection(BuildContext context) {
-    final addressesAsync = ref.watch(savedAddressesProvider);
-
-    return _sectionCard(
-      context,
-      S.of(context).shopCheckoutAddressSection,
-      addressesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _buildAddressForm(context),
-        data: (addresses) {
-          if (addresses.isEmpty) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  S.of(context).shopCheckoutAddressEmpty,
-                  style: TextStyle(color: context.colors.textSecondary),
-                ),
-                const SizedBox(height: 12),
-                _buildAddressForm(context),
-              ],
-            );
-          }
-
-          _selectedAddress ??= addresses.first;
-
-          return RadioGroup<ShippingAddress>(
-            groupValue: _selectedAddress,
-            onChanged: (value) => setState(() => _selectedAddress = value),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final address in addresses)
-                  RadioListTile<ShippingAddress>(
-                    contentPadding: EdgeInsets.zero,
-                    value: address,
-                    activeColor: context.colors.accentPrimary,
-                    title: Text(
-                      '${address.street}, ${address.number}',
-                      style: TextStyle(color: context.colors.textPrimary),
-                    ),
-                    subtitle: Text(
-                      '${address.neighborhood}, ${address.city} - ${address.state} · ${address.postalCode}',
-                      style: TextStyle(color: context.colors.textSecondary),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
@@ -260,6 +428,13 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _textField(
+          context,
+          _labelController,
+          S.of(context).shopCheckoutAddressLabel,
+          required: false,
+        ),
+        const SizedBox(height: 12),
         _textField(
           context,
           _streetController,
@@ -314,12 +489,73 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
           ],
         ),
         const SizedBox(height: 12),
-        _textField(
-          context,
-          _postalCodeController,
-          S.of(context).shopCheckoutAddressPostalCode,
+        _buildCepField(context),
+        const SizedBox(height: 20),
+        Divider(color: context.colors.divider, height: 1),
+        const SizedBox(height: 16),
+        Text(
+          S.of(context).shopCheckoutRecipientSection,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          S.of(context).shopCheckoutRecipientHint,
+          style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 12),
+        _textField(
+          context,
+          _recipientNameController,
+          S.of(context).shopCheckoutRecipientName,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: DropdownButtonFormField<_DocumentType>(
+                initialValue: _documentType,
+                decoration: _inputDecoration(
+                  context,
+                  S.of(context).shopCheckoutDocumentType,
+                ),
+                dropdownColor: context.colors.surfaceElevated,
+                style: TextStyle(color: context.colors.textPrimary),
+                items: [
+                  DropdownMenuItem(
+                    value: _DocumentType.cpf,
+                    child: const Text('CPF'),
+                  ),
+                  DropdownMenuItem(
+                    value: _DocumentType.cnpj,
+                    child: const Text('CNPJ'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _documentType = value);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 3,
+              child: TextFormField(
+                controller: _recipientDocumentController,
+                keyboardType: TextInputType.number,
+                style: TextStyle(color: context.colors.textPrimary),
+                decoration: _inputDecoration(
+                  context,
+                  _documentType == _DocumentType.cpf ? 'CPF' : 'CNPJ',
+                ),
+                validator: _validateDocument,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
@@ -342,24 +578,16 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   }
 
   Widget _buildCustomerSection(BuildContext context) {
+    // Nome já vem do destinatário do endereço (evita repetir a mesma
+    // informação em dois lugares da tela) — aqui só e-mail (para o
+    // recibo) e telefone (usado no bloco compacto de endereço, mascarado).
+    // Ambos pré-preenchidos a partir do perfil quando disponível.
     return _sectionCard(
       context,
       S.of(context).shopCheckoutCustomerSection,
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
-            controller: _nameController,
-            style: TextStyle(color: context.colors.textPrimary),
-            decoration: _inputDecoration(
-              context,
-              S.of(context).shopCheckoutCustomerName,
-            ),
-            validator: (value) => (value == null || value.trim().isEmpty)
-                ? S.of(context).shopCheckoutNameRequired
-                : null,
-          ),
-          const SizedBox(height: 12),
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -378,7 +606,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               return null;
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
@@ -387,189 +615,9 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               context,
               S.of(context).shopCheckoutCustomerPhone,
             ),
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _documentController,
-            style: TextStyle(color: context.colors.textPrimary),
-            decoration: _inputDecoration(
-              context,
-              S.of(context).shopCheckoutCustomerDocument,
-            ),
+            onChanged: (_) => setState(() {}),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildShippingSection(BuildContext context) {
-    return _sectionCard(
-      context,
-      S.of(context).shopCheckoutShippingSection,
-      RadioGroup<_ShippingMethod>(
-        groupValue: _shippingMethod,
-        onChanged: (value) => setState(() => _shippingMethod = value!),
-        child: Column(
-          children: [
-            RadioListTile<_ShippingMethod>(
-              contentPadding: EdgeInsets.zero,
-              value: _ShippingMethod.standard,
-              activeColor: context.colors.accentPrimary,
-              title: Text(
-                S.of(context).shopCheckoutShippingStandard,
-                style: TextStyle(color: context.colors.textPrimary),
-              ),
-            ),
-            RadioListTile<_ShippingMethod>(
-              contentPadding: EdgeInsets.zero,
-              value: _ShippingMethod.express,
-              activeColor: context.colors.accentPrimary,
-              title: Text(
-                S.of(context).shopCheckoutShippingExpress,
-                style: TextStyle(color: context.colors.textPrimary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPaymentSection(BuildContext context) {
-    return _sectionCard(
-      context,
-      S.of(context).shopCheckoutPaymentSection,
-      RadioGroup<_PaymentMethod>(
-        groupValue: _paymentMethod,
-        onChanged: (value) => setState(() => _paymentMethod = value!),
-        child: Column(
-          children: [
-            RadioListTile<_PaymentMethod>(
-              contentPadding: EdgeInsets.zero,
-              value: _PaymentMethod.pix,
-              activeColor: context.colors.accentPrimary,
-              title: Text(
-                S.of(context).shopCheckoutPaymentPix,
-                style: TextStyle(color: context.colors.textPrimary),
-              ),
-            ),
-            RadioListTile<_PaymentMethod>(
-              contentPadding: EdgeInsets.zero,
-              value: _PaymentMethod.card,
-              activeColor: context.colors.accentPrimary,
-              title: Text(
-                S.of(context).shopCheckoutPaymentCard,
-                style: TextStyle(color: context.colors.textPrimary),
-              ),
-            ),
-            RadioListTile<_PaymentMethod>(
-              contentPadding: EdgeInsets.zero,
-              value: _PaymentMethod.crypto,
-              activeColor: context.colors.accentPrimary,
-              title: Text(
-                S.of(context).shopCheckoutPaymentCrypto,
-                style: TextStyle(color: context.colors.textPrimary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummarySection(BuildContext context, CartState cartState) {
-    return _sectionCard(
-      context,
-      S.of(context).shopCheckoutSummarySection,
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final item in cartState.items)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${item.quantity}x ${item.productName}',
-                      style: TextStyle(color: context.colors.textPrimary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    formatBRL(item.totalPrice),
-                    style: TextStyle(color: context.colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-          const Divider(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                S.of(context).shopCheckoutSubtotal,
-                style: TextStyle(color: context.colors.textSecondary),
-              ),
-              Text(
-                formatBRL(cartState.subtotal),
-                style: TextStyle(color: context.colors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                S.of(context).shopCheckoutTotal,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: context.colors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                formatBRL(cartState.total),
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: context.colors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConfirmButton(BuildContext context, CartState cartState) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: (_isSubmitting || cartState.isEmpty)
-            ? null
-            : () => _confirmOrder(context, cartState),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: context.colors.accentPrimary,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: _isSubmitting
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : Text(
-                S.of(context).shopCheckoutConfirmOrder,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
       ),
     );
   }
@@ -594,15 +642,123 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
     );
   }
 
+  Widget _buildCepField(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _postalCodeController,
+          style: TextStyle(color: context.colors.textPrimary),
+          decoration:
+              _inputDecoration(
+                context,
+                S.of(context).shopCheckoutAddressPostalCode,
+              ).copyWith(
+                suffixIcon: _isFetchingCep
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(
+                              context.colors.accentPrimary,
+                            ),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return S.of(context).shopCheckoutAddressRequired;
+            }
+            if (!ViaCepService.isValidCepFormat(value)) {
+              return 'CEP inválido (8 dígitos)';
+            }
+            return null;
+          },
+          onChanged: (value) {
+            // Auto-fetch address when CEP is complete
+            if (ViaCepService.isValidCepFormat(value) && _cepError == null) {
+              _fetchAddressFromCep(value, context);
+            }
+            setState(() => _cepError = null);
+          },
+        ),
+        if (_cepError != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              _cepError!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: Colors.red),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _fetchAddressFromCep(String cep, BuildContext context) async {
+    setState(() {
+      _isFetchingCep = true;
+      _cepError = null;
+    });
+
+    try {
+      final viaCepService = ref.read(viaCepServiceProvider);
+      final address = await viaCepService.searchCep(cep);
+
+      // Auto-fill other fields
+      setState(() {
+        _streetController.text = address.street;
+        _neighborhoodController.text = address.neighborhood;
+        _cityController.text = address.city;
+        _stateController.text = address.state;
+        _isFetchingCep = false;
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ Endereço auto-completado'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on InvalidCepException catch (e) {
+      setState(() {
+        _cepError = e.message;
+        _isFetchingCep = false;
+      });
+    } catch (e) {
+      setState(() {
+        _cepError = 'Erro ao buscar CEP: $e';
+        _isFetchingCep = false;
+      });
+    }
+  }
+
   InputDecoration _inputDecoration(BuildContext context, String label) {
     return InputDecoration(
       labelText: label,
       labelStyle: TextStyle(color: context.colors.textSecondary),
       filled: true,
       fillColor: context.colors.surfaceHighest,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: context.colors.accentPrimary, width: 1.5),
       ),
     );
   }
@@ -613,10 +769,15 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         _neighborhoodController.text.trim().isEmpty ||
         _cityController.text.trim().isEmpty ||
         _stateController.text.trim().isEmpty ||
-        _postalCodeController.text.trim().isEmpty) {
+        _postalCodeController.text.trim().isEmpty ||
+        _recipientNameController.text.trim().isEmpty ||
+        _validateDocument(_recipientDocumentController.text) != null) {
       return null;
     }
     return ShippingAddress(
+      label: _labelController.text.trim().isEmpty
+          ? null
+          : _labelController.text.trim(),
       street: _streetController.text.trim(),
       number: _numberController.text.trim(),
       complement: _complementController.text.trim().isEmpty
@@ -626,7 +787,31 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       city: _cityController.text.trim(),
       state: _stateController.text.trim(),
       postalCode: _postalCodeController.text.trim(),
+      documentType: _documentType == _DocumentType.cpf ? 'cpf' : 'cnpj',
+      documentNumber: _recipientDocumentController.text.trim().replaceAll(
+        RegExp(r'\D'),
+        '',
+      ),
+      recipientName: _recipientNameController.text.trim(),
     );
+  }
+
+  /// Valida CPF (11 dígitos) ou CNPJ (14 dígitos) conforme [_documentType].
+  /// Não valida os dígitos verificadores (isso é feito no backend) — aqui
+  /// só garante que o usuário preencheu algo com o tamanho certo, para dar
+  /// feedback imediato no formulário.
+  String? _validateDocument(String? value) {
+    final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
+    final expectedLength = _documentType == _DocumentType.cpf ? 11 : 14;
+    if (digits.isEmpty) {
+      return S.of(context).shopCheckoutDocumentRequired;
+    }
+    if (digits.length != expectedLength) {
+      return _documentType == _DocumentType.cpf
+          ? S.of(context).shopCheckoutCpfInvalid
+          : S.of(context).shopCheckoutCnpjInvalid;
+    }
+    return null;
   }
 
   Future<void> _saveAddress(BuildContext context) async {
@@ -645,6 +830,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       ref.invalidate(savedAddressesProvider);
       setState(() {
         _selectedAddress = saved;
+        _addingNewAddress = false;
         _isSavingAddress = false;
       });
       if (context.mounted) {
@@ -682,16 +868,16 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       customerPhone: _phoneController.text.trim().isEmpty
           ? null
           : _phoneController.text.trim(),
-      customerDocument: _documentController.text.trim().isEmpty
-          ? null
-          : _documentController.text.trim(),
+      // CPF/CNPJ do DESTINATÁRIO do endereço — obrigatório para a loja
+      // emitir NF do pedido (ver ShippingAddress.documentNumber).
+      customerDocument: address.documentNumber,
       shippingMethod: _shippingMethod == _ShippingMethod.express
           ? 'express'
           : 'standard',
       paymentMethod: switch (_paymentMethod) {
-        _PaymentMethod.pix => 'pix',
-        _PaymentMethod.card => 'card',
-        _PaymentMethod.crypto => 'crypto',
+        CheckoutPaymentMethod.pix => 'pix',
+        CheckoutPaymentMethod.card => 'card',
+        CheckoutPaymentMethod.crypto => 'crypto',
       },
       sessionId: CartSession.id,
     );

@@ -4498,6 +4498,38 @@ class SEs extends S {
   String get shopVitrineSearchTooltip => 'Buscar en la vitrina';
 
   @override
+  String get shopVitrineFilterTooltip => 'Ordenar productos';
+
+  @override
+  String get shopVitrineViewModeTooltip => 'Cambiar vista';
+
+  @override
+  String get shopVitrineSortTitle => 'Ordenar por';
+
+  @override
+  String get shopVitrineSortCreatorChoice => 'Elección del creador';
+
+  @override
+  String get shopVitrineSortBestSelling => 'Más vendidos';
+
+  @override
+  String get shopVitrineSortNewest => 'Novedades';
+
+  @override
+  String get shopVitrineSortPriceAsc => 'Precio: menor a mayor';
+
+  @override
+  String get shopVitrineSortPriceDesc => 'Precio: mayor a menor';
+
+  @override
+  String shopVitrineSoldOnline(String count) {
+    return '$count vendidos en línea';
+  }
+
+  @override
+  String get shopVitrineFreeShipping => 'Envío gratis';
+
+  @override
   String get shopProductPageTitle => 'Producto';
 
   @override
@@ -4655,6 +4687,12 @@ class SEs extends S {
   String get shopCartTax => 'Impuestos';
 
   @override
+  String get shopCartShipping => 'Envío';
+
+  @override
+  String get shopCartDiscount => 'Descuento';
+
+  @override
   String get shopCartTotal => 'Total';
 
   @override
@@ -4677,6 +4715,13 @@ class SEs extends S {
 
   @override
   String get shopCheckoutAddressEmpty => 'Aún no tienes direcciones guardadas.';
+
+  @override
+  String get shopCheckoutAddNewAddress => 'Usar otra dirección';
+
+  @override
+  String get shopCheckoutAddressLabel =>
+      'Nombre de la dirección (ej.: Casa, Trabajo)';
 
   @override
   String get shopCheckoutAddressStreet => 'Calle';
@@ -4725,7 +4770,27 @@ class SEs extends S {
   String get shopCheckoutCustomerPhone => 'Teléfono (opcional)';
 
   @override
-  String get shopCheckoutCustomerDocument => 'RFC/CPF (opcional)';
+  String get shopCheckoutRecipientSection => 'Destinatario (para factura)';
+
+  @override
+  String get shopCheckoutRecipientHint =>
+      'La tienda necesita estos datos para emitir la factura de tu pedido.';
+
+  @override
+  String get shopCheckoutRecipientName => 'Nombre completo del destinatario';
+
+  @override
+  String get shopCheckoutDocumentType => 'Tipo';
+
+  @override
+  String get shopCheckoutDocumentRequired =>
+      'El CPF/CNPJ es obligatorio para emitir la factura.';
+
+  @override
+  String get shopCheckoutCpfInvalid => 'El CPF debe tener 11 dígitos.';
+
+  @override
+  String get shopCheckoutCnpjInvalid => 'El CNPJ debe tener 14 dígitos.';
 
   @override
   String get shopCheckoutNameRequired => 'Ingresa tu nombre completo.';
@@ -4773,6 +4838,41 @@ class SEs extends S {
   @override
   String get shopCheckoutError =>
       'No se pudo completar el pedido. Inténtalo de nuevo.';
+
+  @override
+  String get shopCheckoutDiscount => 'Descuento';
+
+  @override
+  String get shopCheckoutFreeShipping => 'Gratis';
+
+  @override
+  String get shopCheckoutAddNote => 'Agregar nota';
+
+  @override
+  String shopCheckoutTotalItems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'artículos',
+      one: 'artículo',
+    );
+    return 'Total ($count $_temp0)';
+  }
+
+  @override
+  String get shopCheckoutTermsPrefix => 'Al realizar el pedido, aceptas los ';
+
+  @override
+  String get shopCheckoutTermsLink => 'Términos de Uso';
+
+  @override
+  String get shopCheckoutTermsAnd => ' y la ';
+
+  @override
+  String get shopCheckoutPrivacyLink => 'Política de Privacidad';
+
+  @override
+  String get shopCheckoutTermsSuffix => ' de Brawe.';
 
   @override
   String get shopPaymentTitle => 'Pago';
@@ -4858,23 +4958,14 @@ class SEs extends S {
   String get shopStoreReadLess => 'Ver menos';
 
   @override
-  String get shopStoreContactSection => 'Contacto';
+  String get shopStoreChatCta => 'Hablar con la tienda';
 
   @override
-  String get shopStoreWhatsappTooltip => 'WhatsApp';
+  String get shopStoreChatUnavailable =>
+      'Esta tienda todavía no puede recibir mensajes.';
 
   @override
-  String get shopStoreInstagramTooltip => 'Instagram';
-
-  @override
-  String get shopStoreFacebookTooltip => 'Facebook';
-
-  @override
-  String get shopStoreTiktokTooltip => 'TikTok';
-
-  @override
-  String get shopStoreEmailTooltip => 'Correo';
-
-  @override
-  String get shopStoreLinkError => 'No se pudo abrir el enlace.';
+  String shopStoreChatError(String error) {
+    return 'No se pudo abrir el chat: $error';
+  }
 }

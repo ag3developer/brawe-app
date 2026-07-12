@@ -31,36 +31,40 @@ Map<String, dynamic> _$StoreBannerToJson(_StoreBanner instance) =>
 
 _Store _$StoreFromJson(Map<String, dynamic> json) => _Store(
   id: json['id'] as String,
+  ownerUserId: json['owner_user_id'] as String?,
   name: json['name'] as String,
   slug: json['slug'] as String,
   description: json['description'] as String,
   logoUrl: json['logo_url'] as String?,
   bannerUrl: json['banner_url'] as String?,
-  banners: (json['banners'] as List<dynamic>)
-      .map((e) => StoreBanner.fromJson(e as Map<String, dynamic>))
+  banners: (json['banners'] as List<dynamic>?)
+      ?.map((e) => StoreBanner.fromJson(e as Map<String, dynamic>))
       .toList(),
   currency: json['currency'] as String,
-  defaultAffiliateCommission: (json['default_affiliate_commission'] as num)
-      .toDouble(),
+  defaultAffiliateCommission: (json['default_affiliate_commission'] as num?)
+      ?.toDouble(),
   totalProducts: (json['total_products'] as num).toInt(),
   totalOrders: (json['total_orders'] as num).toInt(),
   totalSales: (json['total_sales'] as num?)?.toDouble(),
   rating: (json['rating'] as num).toDouble(),
   ratingCount: (json['rating_count'] as num).toInt(),
-  isPremium: json['is_premium'] as bool,
+  isPremium: json['is_premium'] as bool? ?? false,
   hasBrawePass: json['has_brawe_pass'] as bool,
   contactEmail: json['contact_email'] as String?,
   contactWhatsapp: json['contact_whatsapp'] as String?,
   socialInstagram: json['social_instagram'] as String?,
   socialFacebook: json['social_facebook'] as String?,
   socialTiktok: json['social_tiktok'] as String?,
-  categories: (json['categories'] as List<dynamic>)
-      .map((e) => e as String)
-      .toList(),
+  categories:
+      (json['categories'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
   topProducts: (json['top_products'] as List<dynamic>?)
       ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
       .toList(),
-  createdAt: json['created_at'] as String,
+  createdAt: json['created_at'] as String?,
+  memberSince: json['member_since'] as String?,
   applicationStatus: $enumDecodeNullable(
     _$ApplicationStatusEnumMap,
     json['application_status'],
@@ -68,10 +72,18 @@ _Store _$StoreFromJson(Map<String, dynamic> json) => _Store(
   applicationId: json['application_id'] as String?,
   applicationMessage: json['application_message'] as String?,
   storeResponse: json['store_response'] as String?,
+  isVerified: json['is_verified'] as bool? ?? false,
+  legalName: json['legal_name'] as String?,
+  tradeName: json['trade_name'] as String?,
+  cnpj: json['cnpj'] as String?,
+  location: json['location'] as String?,
+  country: json['country'] as String?,
+  storeUrl: json['store_url'] as String?,
 );
 
 Map<String, dynamic> _$StoreToJson(_Store instance) => <String, dynamic>{
   'id': instance.id,
+  'owner_user_id': instance.ownerUserId,
   'name': instance.name,
   'slug': instance.slug,
   'description': instance.description,
@@ -95,10 +107,18 @@ Map<String, dynamic> _$StoreToJson(_Store instance) => <String, dynamic>{
   'categories': instance.categories,
   'top_products': instance.topProducts,
   'created_at': instance.createdAt,
+  'member_since': instance.memberSince,
   'application_status': _$ApplicationStatusEnumMap[instance.applicationStatus],
   'application_id': instance.applicationId,
   'application_message': instance.applicationMessage,
   'store_response': instance.storeResponse,
+  'is_verified': instance.isVerified,
+  'legal_name': instance.legalName,
+  'trade_name': instance.tradeName,
+  'cnpj': instance.cnpj,
+  'location': instance.location,
+  'country': instance.country,
+  'store_url': instance.storeUrl,
 };
 
 const _$ApplicationStatusEnumMap = {
@@ -204,6 +224,8 @@ Map<String, dynamic> _$ProductToJson(_Product instance) => <String, dynamic>{
 
 _ShippingAddress _$ShippingAddressFromJson(Map<String, dynamic> json) =>
     _ShippingAddress(
+      id: json['id'] as String?,
+      label: json['label'] as String?,
       street: json['street'] as String,
       number: json['number'] as String,
       complement: json['complement'] as String?,
@@ -214,10 +236,18 @@ _ShippingAddress _$ShippingAddressFromJson(Map<String, dynamic> json) =>
       postalCode: json['postal_code'] as String,
       lat: (json['lat'] as num?)?.toDouble(),
       lng: (json['lng'] as num?)?.toDouble(),
+      documentType: json['document_type'] as String? ?? 'cpf',
+      documentNumber: json['document_number'] as String?,
+      recipientName: json['recipient_name'] as String?,
+      isDefault: json['is_default'] as bool? ?? false,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
     );
 
 Map<String, dynamic> _$ShippingAddressToJson(_ShippingAddress instance) =>
     <String, dynamic>{
+      'id': instance.id,
+      'label': instance.label,
       'street': instance.street,
       'number': instance.number,
       'complement': instance.complement,
@@ -228,6 +258,12 @@ Map<String, dynamic> _$ShippingAddressToJson(_ShippingAddress instance) =>
       'postal_code': instance.postalCode,
       'lat': instance.lat,
       'lng': instance.lng,
+      'document_type': instance.documentType,
+      'document_number': instance.documentNumber,
+      'recipient_name': instance.recipientName,
+      'is_default': instance.isDefault,
+      'created_at': instance.createdAt,
+      'updated_at': instance.updatedAt,
     };
 
 _CartItem _$CartItemFromJson(Map<String, dynamic> json) => _CartItem(
@@ -236,15 +272,16 @@ _CartItem _$CartItemFromJson(Map<String, dynamic> json) => _CartItem(
   variantId: json['variant_id'] as String?,
   storeId: json['store_id'] as String,
   quantity: (json['quantity'] as num).toInt(),
-  unitPrice: (json['unit_price'] as num).toDouble(),
-  totalPrice: (json['total_price'] as num).toDouble(),
+  unitPrice: _priceFromJson(json['unit_price']),
+  totalPrice: _priceFromJson(json['total_price']),
   productName: json['product_name'] as String,
   productImage: json['product_image'] as String?,
   variantName: json['variant_name'] as String?,
+  storeName: json['store_name'] as String?,
   affiliateRefCode: json['affiliate_ref_code'] as String?,
   roomId: json['room_id'] as String?,
-  comissaoRate: (json['comissao_rate'] as num?)?.toDouble(),
-  comissaoAmount: (json['comissao_amount'] as num?)?.toDouble(),
+  comissaoRate: _nullablePriceFromJson(json['comissao_rate']),
+  comissaoAmount: _nullablePriceFromJson(json['comissao_amount']),
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
 );
@@ -260,6 +297,7 @@ Map<String, dynamic> _$CartItemToJson(_CartItem instance) => <String, dynamic>{
   'product_name': instance.productName,
   'product_image': instance.productImage,
   'variant_name': instance.variantName,
+  'store_name': instance.storeName,
   'affiliate_ref_code': instance.affiliateRefCode,
   'room_id': instance.roomId,
   'comissao_rate': instance.comissaoRate,
@@ -269,17 +307,23 @@ Map<String, dynamic> _$CartItemToJson(_CartItem instance) => <String, dynamic>{
 };
 
 _Cart _$CartFromJson(Map<String, dynamic> json) => _Cart(
-  id: json['id'] as String,
+  id: json['id'] as String?,
   userId: json['user_id'] as String?,
   storeId: json['store_id'] as String?,
   items: (json['items'] as List<dynamic>)
       .map((e) => CartItem.fromJson(e as Map<String, dynamic>))
       .toList(),
-  subtotal: (json['subtotal'] as num).toDouble(),
-  tax: (json['tax'] as num).toDouble(),
-  total: (json['total'] as num).toDouble(),
-  createdAt: json['created_at'] as String,
-  updatedAt: json['updated_at'] as String,
+  subtotal: json['subtotal'] == null ? 0 : _priceFromJson(json['subtotal']),
+  discount: json['discount'] == null ? 0 : _priceFromJson(json['discount']),
+  shipping: json['shipping'] == null ? 0 : _priceFromJson(json['shipping']),
+  total: json['total'] == null ? 0 : _priceFromJson(json['total']),
+  couponCode: json['coupon_code'] as String?,
+  couponDiscount: json['coupon_discount'] == null
+      ? 0
+      : _priceFromJson(json['coupon_discount']),
+  itemCount: (json['item_count'] as num?)?.toInt() ?? 0,
+  createdAt: json['created_at'] as String?,
+  updatedAt: json['updated_at'] as String?,
 );
 
 Map<String, dynamic> _$CartToJson(_Cart instance) => <String, dynamic>{
@@ -288,8 +332,12 @@ Map<String, dynamic> _$CartToJson(_Cart instance) => <String, dynamic>{
   'store_id': instance.storeId,
   'items': instance.items,
   'subtotal': instance.subtotal,
-  'tax': instance.tax,
+  'discount': instance.discount,
+  'shipping': instance.shipping,
   'total': instance.total,
+  'coupon_code': instance.couponCode,
+  'coupon_discount': instance.couponDiscount,
+  'item_count': instance.itemCount,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
 };

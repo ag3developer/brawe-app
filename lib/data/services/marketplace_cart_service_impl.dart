@@ -55,8 +55,12 @@ class MarketplaceCartServiceImpl implements MarketplaceCartService {
         queryParameters: queryParams,
       );
 
+      // O backend retorna o CARRINHO inteiro (CartResponse), não o item
+      // isolado — mesmo formato de GET /marketplace/cart. Fazer
+      // CartItem.fromJson aqui falhava com "null as String" porque o JSON
+      // do carrinho não tem product_id/store_id no nível raiz.
       final data = extractMap(response.data);
-      return CartItem.fromJson(data);
+      return Cart.fromJson(data);
     } on DioException catch (e) {
       print('[MarketplaceCartService] Error in addItem: ${e.message}');
       rethrow;
@@ -76,8 +80,10 @@ class MarketplaceCartServiceImpl implements MarketplaceCartService {
         data: (cartItemUpdateRequest as CartItemUpdateRequest).toJson(),
       );
 
+      // Mesmo caso de addItem: PUT /marketplace/cart/items/{id} retorna o
+      // CARRINHO inteiro (CartResponse), não o item isolado.
       final data = extractMap(response.data);
-      return CartItem.fromJson(data);
+      return Cart.fromJson(data);
     } on DioException catch (e) {
       print('[MarketplaceCartService] Error in updateItem: ${e.message}');
       rethrow;

@@ -4,11 +4,12 @@ import 'marketplace_response_utils.dart';
 import 'store_showcase_service.dart';
 
 /// Implementation of [StoreShowcaseService].
-/// Communicates with Main Backend (/marketplace/* endpoints).
+/// Handles both marketplace (app.brawe.io) and shopping (connect.brawe.io) endpoints.
 class StoreShowcaseServiceImpl implements StoreShowcaseService {
-  final Dio _dio;
+  final Dio _appDio; // app.brawe.io - /marketplace/* endpoints
+  final Dio _connectDio; // connect.brawe.io - /shopping/* endpoints
 
-  StoreShowcaseServiceImpl(this._dio);
+  StoreShowcaseServiceImpl(this._appDio, this._connectDio);
 
   @override
   Future<List<Store>> getShowcase({
@@ -29,7 +30,7 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
       if (minCommission != null) queryParams['min_commission'] = minCommission;
       if (sortBy != null) queryParams['sort_by'] = sortBy;
 
-      final response = await _dio.get(
+      final response = await _appDio.get(
         '/marketplace/affiliate/showcase',
         queryParameters: queryParams,
       );
@@ -50,7 +51,8 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
     try {
       print('[StoreShowcaseService] getStore($slug) called');
 
-      final response = await _dio.get('/marketplace/affiliate/showcase/$slug');
+      // Endpoint público de loja - sem autenticação necessária (connect.brawe.io)
+      final response = await _connectDio.get('/shopping/stores/$slug');
 
       final data = extractMap(response.data);
       return Store.fromJson(data);
@@ -81,7 +83,7 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
         requestBody['custom_commission'] = customCommission;
       }
 
-      final response = await _dio.post(
+      final response = await _appDio.post(
         '/marketplace/affiliate/showcase/$storeSlug/apply',
         data: requestBody,
       );
@@ -99,12 +101,10 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
   @override
   Future<List<AffiliateApplication>> getMyApplications({String? status}) async {
     try {
-      print('[StoreShowcaseService] getMyApplications() called');
-
       final queryParams = <String, dynamic>{};
       if (status != null) queryParams['status'] = status;
 
-      final response = await _dio.get(
+      final response = await _appDio.get(
         '/marketplace/affiliate/my-applications',
         queryParameters: queryParams,
       );
@@ -130,7 +130,7 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
     try {
       print('[StoreShowcaseService] deleteApplication($applicationId) called');
 
-      await _dio.delete(
+      await _appDio.delete(
         '/marketplace/affiliate/my-applications/$applicationId',
       );
     } on DioException catch (e) {
@@ -158,7 +158,7 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
         requestBody['custom_commission'] = customCommission;
       }
 
-      final response = await _dio.put(
+      final response = await _appDio.put(
         '/marketplace/affiliate/my-applications/$applicationId/review',
         data: requestBody,
       );

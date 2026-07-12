@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../widgets/shop_pill_button.dart';
 
 /// Payment page accessed via `/shop/checkout/payment/:orderId`.
 ///
@@ -37,29 +38,41 @@ class ShopPaymentPage extends ConsumerWidget {
         automaticallyImplyLeading: false,
         title: Text(
           S.of(context).shopPaymentTitle,
-          style: TextStyle(color: context.colors.textPrimary),
+          style: TextStyle(
+            color: context.colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: context.colors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.colors.border),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 18,
                 ),
-                child: Column(
+                decoration: BoxDecoration(
+                  color: context.colors.surfaceHighest,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Icon(
+                      LucideIcons.receipt,
+                      size: 16,
+                      color: context.colors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
                       S.of(context).shopPaymentOrderNumber(orderId),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: TextStyle(
                         color: context.colors.textPrimary,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -68,20 +81,12 @@ class ShopPaymentPage extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               _buildPixMock(context),
-              const SizedBox(height: 32),
-              OutlinedButton(
+              const SizedBox(height: 28),
+              ShopPillButton(
+                label: S.of(context).shopPaymentViewOrders,
+                outlined: true,
+                expand: true,
                 onPressed: () => context.go('/shop/orders'),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: context.colors.border),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  S.of(context).shopPaymentViewOrders,
-                  style: TextStyle(color: context.colors.textPrimary),
-                ),
               ),
             ],
           ),
@@ -98,57 +103,58 @@ class ShopPaymentPage extends ConsumerWidget {
   /// `payment_method`, and gateway integration is out of scope, we show
   /// the PIX mock unconditionally as the primary MVP path.
   Widget _buildPixMock(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          S.of(context).shopPaymentPixTitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.bold,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        Container(
-          height: 220,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: context.colors.surfaceHighest,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: context.colors.border),
-          ),
-          child: Icon(
-            LucideIcons.qrCode,
-            size: 96,
-            color: context.colors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          S.of(context).shopPaymentPixInstructions,
-          style: TextStyle(color: context.colors.textSecondary),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: () => context.go('/shop/orders'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: context.colors.accentPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: Text(
-            S.of(context).shopPaymentAlreadyPaid,
-            style: const TextStyle(
-              color: Colors.white,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            S.of(context).shopPaymentPixTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
-        ),
-      ],
+          const SizedBox(height: 20),
+          Container(
+            height: 220,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: context.colors.surfaceHighest,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Icon(
+              LucideIcons.qrCode,
+              size: 96,
+              color: context.colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            S.of(context).shopPaymentPixInstructions,
+            style: TextStyle(color: context.colors.textSecondary, height: 1.4),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ShopPillButton(
+            label: S.of(context).shopPaymentAlreadyPaid,
+            expand: true,
+            onPressed: () => context.go('/shop/orders'),
+          ),
+        ],
+      ),
     );
   }
 }

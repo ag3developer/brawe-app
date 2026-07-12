@@ -93,15 +93,6 @@ class CommentService {
         ? data
         : (data as Map<String, dynamic>)['comments'] as List<dynamic>? ?? [];
     return list
-        K
-        K
-        K
-        K
-        K
-        K
-        K
-        K
-        K
         .map((e) => CommentDto.fromJson(e as Map<String, dynamic>))
         .toList();
   }

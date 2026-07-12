@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fvp/fvp.dart' as fvp;
 
 import 'config/locale_provider.dart';
+import 'data/providers/cart_notifier_provider.dart';
 import 'data/repositories/auth_state_provider.dart';
+import 'data/services/cart_session_manager.dart';
 import 'data/services/iap_service.dart';
 import 'data/services/notification_navigation_service.dart';
 import 'data/services/push_notification_service.dart';
@@ -25,6 +27,14 @@ Future<void> main() async {
   runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Initialize cart session persistence
+      try {
+        final sessionManager = await CartSessionManager.create();
+        await CartSession.initialize(sessionManager);
+      } catch (e) {
+        debugPrint('Failed to initialize CartSession: $e');
+      }
 
       // ── Video backend ──────────────────────────────────────────────────
       // Android: usar `fvp` (MDK/FFmpeg) como backend do `video_player`.
