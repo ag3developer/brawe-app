@@ -252,6 +252,23 @@ GoRouter router(Ref ref) {
               return ProfileScreen(userId: userId);
             },
           ),
+          // Alias usado no CONTEÚDO do QR code de perfil e nos links
+          // públicos compartilhados (`AppConstants.profileUrl` gera
+          // `brawe.app/connect/u/:userId`). Universal Links (iOS) / App
+          // Links (Android) abrem o app direto nesta rota sem passar pelo
+          // navegador; sem o app instalado, o mesmo link cai na página web
+          // `/connect/u/[id]` (ver frontend), que redireciona para o
+          // perfil completo. Mantém o mesmo comportamento de `/profile/:userId`.
+          GoRoute(
+            path: '/connect/u/:userId',
+            builder: (context, state) {
+              var userId = state.pathParameters['userId']!;
+              if (userId.startsWith('@')) {
+                userId = userId.substring(1);
+              }
+              return ProfileScreen(userId: userId);
+            },
+          ),
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
