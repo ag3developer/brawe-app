@@ -2,6 +2,7 @@ import '../services/marketplace_address_service.dart';
 import '../services/marketplace_cart_service.dart';
 import '../services/marketplace_checkout_service.dart';
 import '../services/marketplace_product_service.dart';
+import '../services/marketplace_shipping_service.dart';
 import '../services/store_showcase_service.dart';
 
 /// Repository that aggregates all marketplace services.
@@ -14,6 +15,7 @@ class MarketplaceRepository {
   final MarketplaceCartService cartService;
   final MarketplaceCheckoutService checkoutService;
   final MarketplaceAddressService addressService;
+  final MarketplaceShippingService shippingService;
 
   MarketplaceRepository({
     required this.storeShowcaseService,
@@ -21,6 +23,7 @@ class MarketplaceRepository {
     required this.cartService,
     required this.checkoutService,
     required this.addressService,
+    required this.shippingService,
   });
 
   // =========================================================================
@@ -166,4 +169,14 @@ class MarketplaceRepository {
 
   Future<void> deleteAddress(String addressId) =>
       addressService.deleteAddress(addressId);
+
+  // =========================================================================
+  // SHIPPING OPERATIONS
+  // =========================================================================
+
+  Future<dynamic> calculateShipping(String storeId, String postalCode) =>
+      shippingService.calculateShipping(storeId, postalCode);
+
+  Future<dynamic> getShippingEstimate(String storeId, String postalCode) =>
+      shippingService.getShippingEstimate(storeId, postalCode);
 }
