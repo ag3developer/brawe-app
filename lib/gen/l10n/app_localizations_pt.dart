@@ -4965,4 +4965,63 @@ class SPt extends S {
   String shopStoreChatError(String error) {
     return 'Não foi possível abrir o chat: $error';
   }
+
+  @override
+  String get profileTooltipFindFriends => 'Encontrar amigos';
+
+  @override
+  String get findFriendsTitle => 'Encontrar amigos';
+
+  @override
+  String get findFriendsMyQrCode => 'Meu código QR';
+
+  @override
+  String get findFriendsQrHint =>
+      'Outras pessoas podem escanear este código para ver seu perfil ou fazer login rapidamente';
+
+  @override
+  String get findFriendsScanButton => 'Escanear código';
+
+  @override
+  String get findFriendsSuggestionsTitle => 'Sugestões para você';
+
+  @override
+  String get findFriendsSuggestionsEmpty => 'Nenhuma sugestão por agora';
+
+  @override
+  String get findFriendsFollowButton => 'Seguir';
+
+  @override
+  String get findFriendsFollowingButton => 'Seguindo';
+
+  @override
+  String get qrScannerTitle => 'Escanear código QR';
+
+  @override
+  String get qrScannerHint => 'Aponte a câmera para um QR code do Brawe';
+
+  @override
+  String get qrScannerCameraPermissionDenied =>
+      'Permita o acesso à câmera para escanear códigos QR.';
+
+  @override
+  String get qrScannerInvalidCode => 'Este código QR não é válido.';
+
+  @override
+  String get qrScannerLoginApproved => 'Login aprovado com sucesso!';
+
+  @override
+  String get qrScannerLoginConfirmTitle => 'Confirmar login';
+
+  @override
+  String get qrScannerLoginConfirmBody =>
+      'Aprovar login em outro dispositivo usando esta conta?';
+
+  @override
+  String qrScannerLoginError(String error) {
+    return 'Não foi possível aprovar o login: $error';
+  }
+
+  @override
+  String get actionApprove => 'Aprovar';
 }

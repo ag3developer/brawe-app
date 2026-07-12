@@ -9044,6 +9044,114 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Não foi possível abrir o chat: {error}'**
   String shopStoreChatError(String error);
+
+  /// No description provided for @profileTooltipFindFriends.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrar amigos'**
+  String get profileTooltipFindFriends;
+
+  /// No description provided for @findFriendsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encontrar amigos'**
+  String get findFriendsTitle;
+
+  /// No description provided for @findFriendsMyQrCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meu código QR'**
+  String get findFriendsMyQrCode;
+
+  /// No description provided for @findFriendsQrHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outras pessoas podem escanear este código para ver seu perfil ou fazer login rapidamente'**
+  String get findFriendsQrHint;
+
+  /// No description provided for @findFriendsScanButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escanear código'**
+  String get findFriendsScanButton;
+
+  /// No description provided for @findFriendsSuggestionsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestões para você'**
+  String get findFriendsSuggestionsTitle;
+
+  /// No description provided for @findFriendsSuggestionsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma sugestão por agora'**
+  String get findFriendsSuggestionsEmpty;
+
+  /// No description provided for @findFriendsFollowButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get findFriendsFollowButton;
+
+  /// No description provided for @findFriendsFollowingButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get findFriendsFollowingButton;
+
+  /// No description provided for @qrScannerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escanear código QR'**
+  String get qrScannerTitle;
+
+  /// No description provided for @qrScannerHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aponte a câmera para um QR code do Brawe'**
+  String get qrScannerHint;
+
+  /// No description provided for @qrScannerCameraPermissionDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permita o acesso à câmera para escanear códigos QR.'**
+  String get qrScannerCameraPermissionDenied;
+
+  /// No description provided for @qrScannerInvalidCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este código QR não é válido.'**
+  String get qrScannerInvalidCode;
+
+  /// No description provided for @qrScannerLoginApproved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Login aprovado com sucesso!'**
+  String get qrScannerLoginApproved;
+
+  /// No description provided for @qrScannerLoginConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar login'**
+  String get qrScannerLoginConfirmTitle;
+
+  /// No description provided for @qrScannerLoginConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovar login em outro dispositivo usando esta conta?'**
+  String get qrScannerLoginConfirmBody;
+
+  /// No description provided for @qrScannerLoginError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível aprovar o login: {error}'**
+  String qrScannerLoginError(String error);
+
+  /// No description provided for @actionApprove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovar'**
+  String get actionApprove;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

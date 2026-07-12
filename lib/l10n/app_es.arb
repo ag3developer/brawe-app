@@ -2114,5 +2114,25 @@
   "shopStoreChatCta": "Hablar con la tienda",
   "shopStoreChatUnavailable": "Esta tienda todavía no puede recibir mensajes.",
   "shopStoreChatError": "No se pudo abrir el chat: {error}",
-  "@shopStoreChatError": { "placeholders": { "error": { "type": "String" } } }
+  "@shopStoreChatError": { "placeholders": { "error": { "type": "String" } } },
+
+  "profileTooltipFindFriends": "Encontrar amigos",
+  "findFriendsTitle": "Encontrar amigos",
+  "findFriendsMyQrCode": "Mi código QR",
+  "findFriendsQrHint": "Otras personas pueden escanear este código para ver tu perfil o iniciar sesión al instante",
+  "findFriendsScanButton": "Escanear código",
+  "findFriendsSuggestionsTitle": "Sugerencias para ti",
+  "findFriendsSuggestionsEmpty": "No hay sugerencias por ahora",
+  "findFriendsFollowButton": "Seguir",
+  "findFriendsFollowingButton": "Siguiendo",
+  "qrScannerTitle": "Escanear código QR",
+  "qrScannerHint": "Apunta la cámara a un código QR de Brawe",
+  "qrScannerCameraPermissionDenied": "Permite el acceso a la cámara para escanear códigos QR.",
+  "qrScannerInvalidCode": "Este código QR no es válido.",
+  "qrScannerLoginApproved": "¡Inicio de sesión aprobado!",
+  "qrScannerLoginConfirmTitle": "Confirmar inicio de sesión",
+  "qrScannerLoginConfirmBody": "¿Aprobar inicio de sesión en otro dispositivo con esta cuenta?",
+  "qrScannerLoginError": "No se pudo aprobar el inicio de sesión: {error}",
+  "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
+  "actionApprove": "Aprobar"
 }

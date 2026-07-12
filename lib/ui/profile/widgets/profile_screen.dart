@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../creator/widgets/creator_tier_badge_for_user.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../config/feature_flags.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -172,22 +173,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               onPressed: () =>
                   context.canPop() ? context.pop() : context.go('/home'),
             ),
-            title: profileState.profile.maybeWhen(
-              data: (p) {
-                final handle = _realHandle(p.username);
-                if (handle == null) return const SizedBox.shrink();
-                return Text(
-                  '@$handle',
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            // No PRÓPRIO perfil não mostramos "@username" no título — é
+            // redundante (o usuário já sabe quem é) e visualmente datado.
+            // Em vez disso, o título fica vazio e o ícone de "adicionar
+            // pessoa" (ver actions) assume esse espaço, abrindo a página
+            // de Encontrar amigos. Em perfis de terceiros mantemos o
+            // "@username" — útil para saber de quem é o perfil ao rolar.
+            title: isMe
+                ? null
+                : profileState.profile.maybeWhen(
+                    data: (p) {
+                      final handle = _realHandle(p.username);
+                      if (handle == null) return const SizedBox.shrink();
+                      return Text(
+                        '@$handle',
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
                   ),
-                );
-              },
-              orElse: () => const SizedBox.shrink(),
-            ),
             actions: [
+              if (isMe)
+                IconButton(
+                  icon: Icon(
+                    LucideIcons.userPlus,
+                    color: context.colors.textPrimary,
+                    size: 22,
+                  ),
+                  tooltip: s.profileTooltipFindFriends,
+                  onPressed: () => context.push('/find-friends'),
+                ),
               if (products.isNotEmpty)
                 IconButton(
                   icon: Icon(

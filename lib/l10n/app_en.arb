@@ -2114,5 +2114,25 @@
   "shopStoreChatCta": "Message the store",
   "shopStoreChatUnavailable": "This store can't receive messages yet.",
   "shopStoreChatError": "Couldn't open the chat: {error}",
-  "@shopStoreChatError": { "placeholders": { "error": { "type": "String" } } }
+  "@shopStoreChatError": { "placeholders": { "error": { "type": "String" } } },
+
+  "profileTooltipFindFriends": "Find friends",
+  "findFriendsTitle": "Find friends",
+  "findFriendsMyQrCode": "My QR code",
+  "findFriendsQrHint": "Others can scan this code to view your profile or log in instantly",
+  "findFriendsScanButton": "Scan code",
+  "findFriendsSuggestionsTitle": "Suggested for you",
+  "findFriendsSuggestionsEmpty": "No suggestions right now",
+  "findFriendsFollowButton": "Follow",
+  "findFriendsFollowingButton": "Following",
+  "qrScannerTitle": "Scan QR code",
+  "qrScannerHint": "Point your camera at a Brawe QR code",
+  "qrScannerCameraPermissionDenied": "Allow camera access to scan QR codes.",
+  "qrScannerInvalidCode": "This QR code isn't valid.",
+  "qrScannerLoginApproved": "Login approved successfully!",
+  "qrScannerLoginConfirmTitle": "Confirm login",
+  "qrScannerLoginConfirmBody": "Approve login on another device using this account?",
+  "qrScannerLoginError": "Couldn't approve login: {error}",
+  "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
+  "actionApprove": "Approve"
 }

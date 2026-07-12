@@ -4968,4 +4968,63 @@ class SEs extends S {
   String shopStoreChatError(String error) {
     return 'No se pudo abrir el chat: $error';
   }
+
+  @override
+  String get profileTooltipFindFriends => 'Encontrar amigos';
+
+  @override
+  String get findFriendsTitle => 'Encontrar amigos';
+
+  @override
+  String get findFriendsMyQrCode => 'Mi código QR';
+
+  @override
+  String get findFriendsQrHint =>
+      'Otras personas pueden escanear este código para ver tu perfil o iniciar sesión al instante';
+
+  @override
+  String get findFriendsScanButton => 'Escanear código';
+
+  @override
+  String get findFriendsSuggestionsTitle => 'Sugerencias para ti';
+
+  @override
+  String get findFriendsSuggestionsEmpty => 'No hay sugerencias por ahora';
+
+  @override
+  String get findFriendsFollowButton => 'Seguir';
+
+  @override
+  String get findFriendsFollowingButton => 'Siguiendo';
+
+  @override
+  String get qrScannerTitle => 'Escanear código QR';
+
+  @override
+  String get qrScannerHint => 'Apunta la cámara a un código QR de Brawe';
+
+  @override
+  String get qrScannerCameraPermissionDenied =>
+      'Permite el acceso a la cámara para escanear códigos QR.';
+
+  @override
+  String get qrScannerInvalidCode => 'Este código QR no es válido.';
+
+  @override
+  String get qrScannerLoginApproved => '¡Inicio de sesión aprobado!';
+
+  @override
+  String get qrScannerLoginConfirmTitle => 'Confirmar inicio de sesión';
+
+  @override
+  String get qrScannerLoginConfirmBody =>
+      '¿Aprobar inicio de sesión en otro dispositivo con esta cuenta?';
+
+  @override
+  String qrScannerLoginError(String error) {
+    return 'No se pudo aprobar el inicio de sesión: $error';
+  }
+
+  @override
+  String get actionApprove => 'Aprobar';
 }

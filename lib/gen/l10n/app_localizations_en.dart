@@ -4944,4 +4944,63 @@ class SEn extends S {
   String shopStoreChatError(String error) {
     return 'Couldn\'t open the chat: $error';
   }
+
+  @override
+  String get profileTooltipFindFriends => 'Find friends';
+
+  @override
+  String get findFriendsTitle => 'Find friends';
+
+  @override
+  String get findFriendsMyQrCode => 'My QR code';
+
+  @override
+  String get findFriendsQrHint =>
+      'Others can scan this code to view your profile or log in instantly';
+
+  @override
+  String get findFriendsScanButton => 'Scan code';
+
+  @override
+  String get findFriendsSuggestionsTitle => 'Suggested for you';
+
+  @override
+  String get findFriendsSuggestionsEmpty => 'No suggestions right now';
+
+  @override
+  String get findFriendsFollowButton => 'Follow';
+
+  @override
+  String get findFriendsFollowingButton => 'Following';
+
+  @override
+  String get qrScannerTitle => 'Scan QR code';
+
+  @override
+  String get qrScannerHint => 'Point your camera at a Brawe QR code';
+
+  @override
+  String get qrScannerCameraPermissionDenied =>
+      'Allow camera access to scan QR codes.';
+
+  @override
+  String get qrScannerInvalidCode => 'This QR code isn\'t valid.';
+
+  @override
+  String get qrScannerLoginApproved => 'Login approved successfully!';
+
+  @override
+  String get qrScannerLoginConfirmTitle => 'Confirm login';
+
+  @override
+  String get qrScannerLoginConfirmBody =>
+      'Approve login on another device using this account?';
+
+  @override
+  String qrScannerLoginError(String error) {
+    return 'Couldn\'t approve login: $error';
+  }
+
+  @override
+  String get actionApprove => 'Approve';
 }

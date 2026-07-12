@@ -90,6 +90,16 @@ dependencies:
   just_audio: ^0.9.43
   audio_session: ^0.1.21
 
+  # ── QR Code: geração (meu perfil / login) + leitura (escanear) ────────
+  # `qr_flutter` é puro Dart (sem deps nativas) — usado para renderizar o
+  # QR code do próprio perfil na tela "Encontrar amigos" e no fluxo de
+  # aprovação de QR login. `mobile_scanner` usa o pipeline de câmera nativo
+  # (CameraX/AVFoundation), independente do plugin `camera` já usado pelo
+  # broadcaster/story composer — não há conflito pois nunca são usados na
+  # mesma tela simultaneamente.
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.0.1
+
   # ── Trim/recorte de vídeo nativo ──────────────────────────────────────
   # video_trimmer 5.0+ usa APIs nativas (AVFoundation no iOS,
   # MediaCodec/MediaMuxer no Android via flutter_native_video_trimmer).

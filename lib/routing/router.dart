@@ -38,6 +38,8 @@ import '../ui/edit_profile/widgets/business_profile_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
 import '../ui/wallet/widgets/earnings_screen.dart';
 import '../ui/notifications/widgets/notifications_screen.dart';
+import '../ui/find_friends/widgets/find_friends_screen.dart';
+import '../ui/find_friends/widgets/qr_scanner_screen.dart';
 import '../ui/follows/widgets/follows_screen.dart';
 import '../ui/edit_profile/widgets/edit_profile_screen.dart';
 import '../ui/explore/widgets/explore_screen.dart';
@@ -279,6 +281,14 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationsScreen(),
+          ),
+          GoRoute(
+            path: '/find-friends',
+            builder: (context, state) => const FindFriendsScreen(),
+          ),
+          GoRoute(
+            path: '/scan-qr',
+            builder: (context, state) => const QrScannerScreen(),
           ),
           GoRoute(
             path: '/edit-profile',
