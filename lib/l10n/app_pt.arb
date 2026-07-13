@@ -2397,5 +2397,25 @@
   "qrScannerLoginConfirmBody": "Aprovar login em outro dispositivo usando esta conta?",
   "qrScannerLoginError": "Não foi possível aprovar o login: {error}",
   "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
-  "actionApprove": "Aprovar"
+  "actionApprove": "Aprovar",
+  "questsRewardCollected": "Recompensa coletada!",
+  "questsXpReceived": "{xp} XP recebido",
+  "@questsXpReceived": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "questsCoinsReceived": "{coins} moedas recebidas",
+  "@questsCoinsReceived": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "questsLevelUp": "Nível alcançado!",
+  "questsFailedToClaim": "Não foi possível coletar a recompensa",
+  "questsAlreadyClaimed": "Recompensa já coletada"
 }

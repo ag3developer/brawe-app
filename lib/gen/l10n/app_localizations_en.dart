@@ -5003,4 +5003,26 @@ class SEn extends S {
 
   @override
   String get actionApprove => 'Approve';
+
+  @override
+  String get questsRewardCollected => 'Reward collected!';
+
+  @override
+  String questsXpReceived(int xp) {
+    return '$xp XP received';
+  }
+
+  @override
+  String questsCoinsReceived(int coins) {
+    return '$coins coins received';
+  }
+
+  @override
+  String get questsLevelUp => 'Level up!';
+
+  @override
+  String get questsFailedToClaim => 'Failed to claim the reward';
+
+  @override
+  String get questsAlreadyClaimed => 'Reward already claimed';
 }

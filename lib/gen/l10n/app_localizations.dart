@@ -9152,6 +9152,42 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Aprovar'**
   String get actionApprove;
+
+  /// No description provided for @questsRewardCollected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recompensa coletada!'**
+  String get questsRewardCollected;
+
+  /// No description provided for @questsXpReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{xp} XP recebido'**
+  String questsXpReceived(int xp);
+
+  /// No description provided for @questsCoinsReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{coins} moedas recebidas'**
+  String questsCoinsReceived(int coins);
+
+  /// No description provided for @questsLevelUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível alcançado!'**
+  String get questsLevelUp;
+
+  /// No description provided for @questsFailedToClaim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível coletar a recompensa'**
+  String get questsFailedToClaim;
+
+  /// No description provided for @questsAlreadyClaimed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recompensa já coletada'**
+  String get questsAlreadyClaimed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -5024,4 +5024,26 @@ class SPt extends S {
 
   @override
   String get actionApprove => 'Aprovar';
+
+  @override
+  String get questsRewardCollected => 'Recompensa coletada!';
+
+  @override
+  String questsXpReceived(int xp) {
+    return '$xp XP recebido';
+  }
+
+  @override
+  String questsCoinsReceived(int coins) {
+    return '$coins moedas recebidas';
+  }
+
+  @override
+  String get questsLevelUp => 'Nível alcançado!';
+
+  @override
+  String get questsFailedToClaim => 'Não foi possível coletar a recompensa';
+
+  @override
+  String get questsAlreadyClaimed => 'Recompensa já coletada';
 }

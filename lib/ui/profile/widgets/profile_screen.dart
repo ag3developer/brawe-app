@@ -952,7 +952,13 @@ class _ProfileHeader extends ConsumerWidget {
 
     return Row(
       children: [
-        Expanded(child: FollowButton(userId: userId)),
+        Expanded(
+          child: FollowButton(
+            userId: userId,
+            useThemeColors: true,
+            filled: true,
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: GestureDetector(

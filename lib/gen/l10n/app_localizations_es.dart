@@ -5027,4 +5027,26 @@ class SEs extends S {
 
   @override
   String get actionApprove => 'Aprobar';
+
+  @override
+  String get questsRewardCollected => '¡Recompensa recolectada!';
+
+  @override
+  String questsXpReceived(int xp) {
+    return '$xp XP recibidos';
+  }
+
+  @override
+  String questsCoinsReceived(int coins) {
+    return '$coins monedas recibidas';
+  }
+
+  @override
+  String get questsLevelUp => '¡Subida de nivel!';
+
+  @override
+  String get questsFailedToClaim => 'No se pudo recolectar la recompensa';
+
+  @override
+  String get questsAlreadyClaimed => 'Recompensa ya recolectada';
 }

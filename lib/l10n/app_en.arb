@@ -2134,5 +2134,25 @@
   "qrScannerLoginConfirmBody": "Approve login on another device using this account?",
   "qrScannerLoginError": "Couldn't approve login: {error}",
   "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
-  "actionApprove": "Approve"
+  "actionApprove": "Approve",
+  "questsRewardCollected": "Reward collected!",
+  "questsXpReceived": "{xp} XP received",
+  "@questsXpReceived": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "questsCoinsReceived": "{coins} coins received",
+  "@questsCoinsReceived": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "questsLevelUp": "Level up!",
+  "questsFailedToClaim": "Failed to claim the reward",
+  "questsAlreadyClaimed": "Reward already claimed"
 }

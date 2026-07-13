@@ -2134,5 +2134,25 @@
   "qrScannerLoginConfirmBody": "¿Aprobar inicio de sesión en otro dispositivo con esta cuenta?",
   "qrScannerLoginError": "No se pudo aprobar el inicio de sesión: {error}",
   "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
-  "actionApprove": "Aprobar"
+  "actionApprove": "Aprobar",
+  "questsRewardCollected": "¡Recompensa recolectada!",
+  "questsXpReceived": "{xp} XP recibidos",
+  "@questsXpReceived": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
+  "questsCoinsReceived": "{coins} monedas recibidas",
+  "@questsCoinsReceived": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
+  "questsLevelUp": "¡Subida de nivel!",
+  "questsFailedToClaim": "No se pudo recolectar la recompensa",
+  "questsAlreadyClaimed": "Recompensa ya recolectada"
 }
