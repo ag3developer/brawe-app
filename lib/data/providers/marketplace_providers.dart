@@ -3,6 +3,7 @@ import '../repositories/marketplace_repository.dart';
 import '../services/marketplace_address_service_provider.dart';
 import '../services/marketplace_cart_service_provider.dart';
 import '../services/marketplace_checkout_service_provider.dart';
+import '../services/marketplace_payment_providers.dart';
 import '../services/marketplace_product_service_provider.dart';
 import '../services/marketplace_shipping_service_provider.dart';
 import '../services/store_showcase_service_provider.dart';
@@ -22,6 +23,7 @@ final marketplaceRepositoryProvider = Provider((ref) {
     checkoutService: ref.watch(marketplaceCheckoutServiceProvider),
     addressService: ref.watch(marketplaceAddressServiceProvider),
     shippingService: ref.watch(marketplaceShippingServiceProvider),
+    paymentService: ref.watch(marketplacePaymentServiceProvider),
   );
 });
 
