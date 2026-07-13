@@ -7683,6 +7683,12 @@ abstract class S {
   /// **'Brawe Sounds'**
   String get soundsTitle;
 
+  /// No description provided for @soundsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descubra trilhas incríveis'**
+  String get soundsSubtitle;
+
   /// No description provided for @soundsTabTrending.
   ///
   /// In pt, this message translates to:

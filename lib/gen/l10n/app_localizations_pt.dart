@@ -4228,6 +4228,9 @@ class SPt extends S {
   String get soundsTitle => 'Brawe Sounds';
 
   @override
+  String get soundsSubtitle => 'Descubra trilhas incríveis';
+
+  @override
   String get soundsTabTrending => 'Em alta';
 
   @override

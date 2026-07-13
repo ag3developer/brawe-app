@@ -11,6 +11,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/sound_player_view_model.dart';
 import '../view_models/sounds_view_model.dart';
 import 'sound_player_bottom_sheet.dart';
+import 'sounds_header_premium.dart';
 
 class SoundsCatalogScreen extends ConsumerStatefulWidget {
   const SoundsCatalogScreen({super.key});
@@ -74,7 +75,7 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
       backgroundColor: context.colors.background,
       body: NestedScrollView(
         headerSliverBuilder: (_, _) => [
-          _SoundsAppBar(
+          SoundsPremiumHeader(
             tabs: _tabs,
             searchCtrl: _searchCtrl,
             onSearch: (q) {
@@ -106,109 +107,6 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
       ),
       // Mini-player persistente no fundo quando há música carregada
       bottomSheet: const _MiniPlayer(),
-    );
-  }
-}
-
-// ── AppBar com tabs + busca ───────────────────────────────────────────────────
-class _SoundsAppBar extends StatelessWidget {
-  const _SoundsAppBar({
-    required this.tabs,
-    required this.searchCtrl,
-    required this.onSearch,
-    required this.onClearSearch,
-  });
-  final TabController tabs;
-  final TextEditingController searchCtrl;
-  final ValueChanged<String> onSearch;
-  final VoidCallback onClearSearch;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return SliverAppBar(
-      backgroundColor: context.colors.background,
-      elevation: 0,
-      pinned: true,
-      floating: true,
-      snap: true,
-      expandedHeight: 120,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: EdgeInsets.zero,
-        background: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 56, 16, 0),
-          child: Row(
-            children: [
-              Image.asset(
-                'assets/images/brawe_sounds_icon.png',
-                width: 28,
-                height: 28,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                s.soundsTitle,
-                style: TextStyle(
-                  color: context.colors.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(92),
-        child: Column(
-          children: [
-            // Barra de busca
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: TextField(
-                controller: searchCtrl,
-                onChanged: onSearch,
-                style: TextStyle(color: context.colors.textPrimary, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: s.soundsSearch,
-                  hintStyle: TextStyle(color: context.colors.textSecondary, fontSize: 14),
-                  prefixIcon: Icon(Icons.search, color: context.colors.textSecondary, size: 20),
-                  suffixIcon: ValueListenableBuilder(
-                    valueListenable: searchCtrl,
-                    builder: (_, val, _) => val.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.close, size: 18, color: context.colors.textSecondary),
-                            onPressed: onClearSearch,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                  filled: true,
-                  fillColor: context.colors.surfaceHighest.withValues(alpha: 0.08),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-            // Tabs
-            TabBar(
-              controller: tabs,
-              indicatorColor: AppColors.mutedRed,
-              labelColor: context.colors.textPrimary,
-              unselectedLabelColor: context.colors.textSecondary,
-              indicatorWeight: 2,
-              labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              tabs: [
-                Tab(text: s.soundsTabTrending),
-                Tab(text: s.soundsTabCatalog),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

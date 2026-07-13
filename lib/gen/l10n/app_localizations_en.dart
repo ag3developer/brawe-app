@@ -4212,6 +4212,9 @@ class SEn extends S {
   String get soundsTitle => 'Brawe Sounds';
 
   @override
+  String get soundsSubtitle => 'Discover amazing tracks';
+
+  @override
   String get soundsTabTrending => 'Trending';
 
   @override

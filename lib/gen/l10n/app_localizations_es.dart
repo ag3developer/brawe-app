@@ -4229,6 +4229,9 @@ class SEs extends S {
   String get soundsTitle => 'Brawe Sounds';
 
   @override
+  String get soundsSubtitle => 'Descubre pistas increíbles';
+
+  @override
   String get soundsTabTrending => 'Tendencias';
 
   @override
