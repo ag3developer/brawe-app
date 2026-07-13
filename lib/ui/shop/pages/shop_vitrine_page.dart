@@ -16,6 +16,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/shop_pill_button.dart';
+import '../widgets/shop_promotion_badge.dart';
 import '../widgets/vitrine_sort_sheet.dart';
 
 /// Grid vs. list display for the vitrine's product catalog — same toggle
@@ -625,15 +626,42 @@ class _ProductsSliverGrid extends StatelessWidget {
   }
 }
 
-class _VitrineProductCard extends StatelessWidget {
+class _VitrineProductCard extends ConsumerWidget {
   final Product product;
   const _VitrineProductCard({required this.product});
 
   bool get _isSoldOut => product.quantity == 0;
   bool get _isLowStock => product.quantity > 0 && product.quantity <= 5;
 
+  /// Build promotion badge widget (free shipping) by fetching store details
+  Widget _buildPromotionBadge(BuildContext context, WidgetRef ref) {
+    // If storeId is not available, return empty
+    if (product.storeId == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Fetch store details using the new storeByIdProvider
+    final storeAsync = ref.watch(storeByIdProvider(product.storeId!));
+
+    return storeAsync.when(
+      data: (store) {
+        // If store is null or doesn't have free shipping threshold, hide badge
+        if (store == null || store.freeShippingThreshold == null) {
+          return const SizedBox.shrink();
+        }
+
+        // Show free shipping badge with threshold
+        return ShopPromotionBadge.freeShippingThreshold(
+          store.freeShippingThreshold!,
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () => context.push('/shop/product/${product.id}'),
       child: Container(
@@ -717,6 +745,13 @@ class _VitrineProductCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    ),
+                  // Promotion badge (free shipping) — top right
+                  if (product.storeId != null)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: _buildPromotionBadge(context, ref),
                     ),
                 ],
               ),

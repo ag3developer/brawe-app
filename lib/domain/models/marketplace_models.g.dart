@@ -79,6 +79,12 @@ _Store _$StoreFromJson(Map<String, dynamic> json) => _Store(
   location: json['location'] as String?,
   country: json['country'] as String?,
   storeUrl: json['store_url'] as String?,
+  freeShippingThreshold: _nullablePriceFromJson(
+    json['free_shipping_threshold'],
+  ),
+  localDeliveryEnabled: json['local_delivery_enabled'] as bool? ?? false,
+  localDeliveryRadiusKm:
+      (json['local_delivery_radius_km'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$StoreToJson(_Store instance) => <String, dynamic>{
@@ -119,6 +125,9 @@ Map<String, dynamic> _$StoreToJson(_Store instance) => <String, dynamic>{
   'location': instance.location,
   'country': instance.country,
   'store_url': instance.storeUrl,
+  'free_shipping_threshold': instance.freeShippingThreshold,
+  'local_delivery_enabled': instance.localDeliveryEnabled,
+  'local_delivery_radius_km': instance.localDeliveryRadiusKm,
 };
 
 const _$ApplicationStatusEnumMap = {

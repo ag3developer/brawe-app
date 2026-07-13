@@ -17,17 +17,16 @@ class MarketplaceShippingServiceImpl implements MarketplaceShippingService {
 
       final response = await _dio.post(
         '/shipping/calculate',
-        data: {
-          'store_id': storeId,
-          'postal_code': postalCode,
-        },
+        data: {'store_id': storeId, 'postal_code': postalCode},
       );
 
       final data = extractMap(response.data);
       print('[MarketplaceShippingService] Shipping calculated successfully');
       return data;
     } on DioException catch (e) {
-      print('[MarketplaceShippingService] Error in calculateShipping: ${e.message}');
+      print(
+        '[MarketplaceShippingService] Error in calculateShipping: ${e.message}',
+      );
       rethrow;
     }
   }
@@ -47,7 +46,9 @@ class MarketplaceShippingServiceImpl implements MarketplaceShippingService {
       print('[MarketplaceShippingService] Shipping estimate retrieved');
       return data;
     } on DioException catch (e) {
-      print('[MarketplaceShippingService] Error in getShippingEstimate: ${e.message}');
+      print(
+        '[MarketplaceShippingService] Error in getShippingEstimate: ${e.message}',
+      );
       rethrow;
     }
   }

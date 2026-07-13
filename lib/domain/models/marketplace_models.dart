@@ -153,6 +153,15 @@ sealed class Store with _$Store {
     String? location,
     String? country,
     @JsonKey(name: 'store_url') String? storeUrl,
+    // Configurações de frete
+    @JsonKey(name: 'free_shipping_threshold', fromJson: _nullablePriceFromJson)
+    double? freeShippingThreshold,
+    @JsonKey(name: 'local_delivery_enabled')
+    @Default(false)
+    bool localDeliveryEnabled,
+    @JsonKey(name: 'local_delivery_radius_km')
+    @Default(0)
+    int localDeliveryRadiusKm,
   }) = _Store;
 
   factory Store.fromJson(Map<String, dynamic> json) => _$StoreFromJson(json);

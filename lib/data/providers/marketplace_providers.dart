@@ -165,6 +165,23 @@ final myStorefrontProductsProvider = FutureProvider<List<Product>>((ref) async {
   return results.expand((list) => list).toList();
 });
 
+/// Fetch store by ID (looks up from store showcase).
+/// This allows widget to access store details like free_shipping_threshold.
+final storeByIdProvider = FutureProvider.family<Store?, String>((
+  ref,
+  storeId,
+) async {
+  try {
+    final repo = ref.watch(marketplaceRepositoryProvider);
+    final stores = await repo.getStoreShowcase();
+    final storeList = stores.cast<Store>();
+    final store = storeList.firstWhereOrNull((s) => s.id == storeId);
+    return store;
+  } catch (_) {
+    return null;
+  }
+});
+
 // ============================================================================
 // VIACEP SERVICE PROVIDER
 // ============================================================================
