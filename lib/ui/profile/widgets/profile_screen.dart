@@ -130,15 +130,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final currentUserId = ref.watch(authStateProvider).value?.id;
     final isMe = currentUserId == widget.userId;
 
-    // Vitrine: só busca dados reais quando o usuário vê o PRÓPRIO perfil.
-    // Gap de backend conhecido: ainda não há endpoint público de vitrine
-    // por userId arbitrário — para outros perfis mantemos o empty state.
-    // Usado apenas para decidir se mostramos o ícone de loja no AppBar e o
-    // badge de parceiro — os produtos em si são exibidos na página dedicada
-    // /shop/creator/:userId (ShopVitrinePage), nunca dentro das abas.
-    final storefrontAsync = isMe
-        ? ref.watch(myStorefrontProductsProvider)
-        : const AsyncValue<List<Product>>.data(<Product>[]);
+    // Vitrine: busca a vitrine PÚBLICA do usuário visitado (`widget.userId`)
+    // via endpoint sem autenticação — funciona tanto no próprio perfil
+    // quanto no de terceiros. Usado apenas para decidir se mostramos o
+    // ícone de loja no AppBar e o badge de parceiro — os produtos em si são
+    // exibidos na página dedicada /shop/creator/:userId (ShopVitrinePage),
+    // nunca dentro das abas.
+    final storefrontAsync = ref.watch(
+      storefrontProductsProvider(widget.userId),
+    );
     final products = storefrontAsync.maybeWhen(
       data: (p) => p,
       orElse: () => const <Product>[],

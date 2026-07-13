@@ -2280,8 +2280,8 @@ as String?,
 /// @nodoc
 mixin _$OrderItem {
 
- String get id;@JsonKey(name: 'product_id') String get productId;@JsonKey(name: 'variant_id') String? get variantId;@JsonKey(name: 'product_name') String get productName;@JsonKey(name: 'variant_name') String? get variantName; String? get sku;@JsonKey(name: 'image_url') String? get imageUrl; int get quantity;@JsonKey(name: 'unit_price') double get unitPrice;@JsonKey(name: 'total_price') double get totalPrice;// ⭐ CRÍTICO: comissão do afiliado
-@JsonKey(name: 'affiliate_commission_rate') double? get affiliateCommissionRate;@JsonKey(name: 'affiliate_commission_amount') double? get affiliateCommissionAmount;@JsonKey(name: 'fulfilled_quantity') int get fulfilledQuantity;
+ String get id;@JsonKey(name: 'product_id') String get productId;@JsonKey(name: 'variant_id') String? get variantId;@JsonKey(name: 'product_name') String get productName;@JsonKey(name: 'variant_name') String? get variantName; String? get sku;@JsonKey(name: 'image_url') String? get imageUrl; int get quantity;@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double get unitPrice;@JsonKey(name: 'total_price', fromJson: _priceFromJson) double get totalPrice;// ⭐ CRÍTICO: comissão do afiliado
+@JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson) double? get affiliateCommissionRate;@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? get affiliateCommissionAmount;@JsonKey(name: 'fulfilled_quantity') int get fulfilledQuantity;
 /// Create a copy of OrderItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2314,7 +2314,7 @@ abstract mixin class $OrderItemCopyWith<$Res>  {
   factory $OrderItemCopyWith(OrderItem value, $Res Function(OrderItem) _then) = _$OrderItemCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'variant_name') String? variantName, String? sku,@JsonKey(name: 'image_url') String? imageUrl, int quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice,@JsonKey(name: 'affiliate_commission_rate') double? affiliateCommissionRate,@JsonKey(name: 'affiliate_commission_amount') double? affiliateCommissionAmount,@JsonKey(name: 'fulfilled_quantity') int fulfilledQuantity
+ String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'variant_name') String? variantName, String? sku,@JsonKey(name: 'image_url') String? imageUrl, int quantity,@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double unitPrice,@JsonKey(name: 'total_price', fromJson: _priceFromJson) double totalPrice,@JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson) double? affiliateCommissionRate,@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? affiliateCommissionAmount,@JsonKey(name: 'fulfilled_quantity') int fulfilledQuantity
 });
 
 
@@ -2428,7 +2428,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'affiliate_commission_rate')  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson)  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _OrderItem() when $default != null:
 return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that.variantName,_that.sku,_that.imageUrl,_that.quantity,_that.unitPrice,_that.totalPrice,_that.affiliateCommissionRate,_that.affiliateCommissionAmount,_that.fulfilledQuantity);case _:
@@ -2449,7 +2449,7 @@ return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'affiliate_commission_rate')  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson)  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)  $default,) {final _that = this;
 switch (_that) {
 case _OrderItem():
 return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that.variantName,_that.sku,_that.imageUrl,_that.quantity,_that.unitPrice,_that.totalPrice,_that.affiliateCommissionRate,_that.affiliateCommissionAmount,_that.fulfilledQuantity);}
@@ -2466,7 +2466,7 @@ return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice, @JsonKey(name: 'affiliate_commission_rate')  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'product_id')  String productId, @JsonKey(name: 'variant_id')  String? variantId, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'variant_name')  String? variantName,  String? sku, @JsonKey(name: 'image_url')  String? imageUrl,  int quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson)  double unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson)  double totalPrice, @JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson)  double? affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity')  int fulfilledQuantity)?  $default,) {final _that = this;
 switch (_that) {
 case _OrderItem() when $default != null:
 return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that.variantName,_that.sku,_that.imageUrl,_that.quantity,_that.unitPrice,_that.totalPrice,_that.affiliateCommissionRate,_that.affiliateCommissionAmount,_that.fulfilledQuantity);case _:
@@ -2481,7 +2481,7 @@ return $default(_that.id,_that.productId,_that.variantId,_that.productName,_that
 @JsonSerializable()
 
 class _OrderItem implements OrderItem {
-  const _OrderItem({required this.id, @JsonKey(name: 'product_id') required this.productId, @JsonKey(name: 'variant_id') this.variantId, @JsonKey(name: 'product_name') required this.productName, @JsonKey(name: 'variant_name') this.variantName, this.sku, @JsonKey(name: 'image_url') this.imageUrl, required this.quantity, @JsonKey(name: 'unit_price') required this.unitPrice, @JsonKey(name: 'total_price') required this.totalPrice, @JsonKey(name: 'affiliate_commission_rate') this.affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount') this.affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity') this.fulfilledQuantity = 0});
+  const _OrderItem({required this.id, @JsonKey(name: 'product_id') required this.productId, @JsonKey(name: 'variant_id') this.variantId, @JsonKey(name: 'product_name') required this.productName, @JsonKey(name: 'variant_name') this.variantName, this.sku, @JsonKey(name: 'image_url') this.imageUrl, required this.quantity, @JsonKey(name: 'unit_price', fromJson: _priceFromJson) required this.unitPrice, @JsonKey(name: 'total_price', fromJson: _priceFromJson) required this.totalPrice, @JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson) this.affiliateCommissionRate, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) this.affiliateCommissionAmount, @JsonKey(name: 'fulfilled_quantity') this.fulfilledQuantity = 0});
   factory _OrderItem.fromJson(Map<String, dynamic> json) => _$OrderItemFromJson(json);
 
 @override final  String id;
@@ -2492,11 +2492,11 @@ class _OrderItem implements OrderItem {
 @override final  String? sku;
 @override@JsonKey(name: 'image_url') final  String? imageUrl;
 @override final  int quantity;
-@override@JsonKey(name: 'unit_price') final  double unitPrice;
-@override@JsonKey(name: 'total_price') final  double totalPrice;
+@override@JsonKey(name: 'unit_price', fromJson: _priceFromJson) final  double unitPrice;
+@override@JsonKey(name: 'total_price', fromJson: _priceFromJson) final  double totalPrice;
 // ⭐ CRÍTICO: comissão do afiliado
-@override@JsonKey(name: 'affiliate_commission_rate') final  double? affiliateCommissionRate;
-@override@JsonKey(name: 'affiliate_commission_amount') final  double? affiliateCommissionAmount;
+@override@JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson) final  double? affiliateCommissionRate;
+@override@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) final  double? affiliateCommissionAmount;
 @override@JsonKey(name: 'fulfilled_quantity') final  int fulfilledQuantity;
 
 /// Create a copy of OrderItem
@@ -2532,7 +2532,7 @@ abstract mixin class _$OrderItemCopyWith<$Res> implements $OrderItemCopyWith<$Re
   factory _$OrderItemCopyWith(_OrderItem value, $Res Function(_OrderItem) _then) = __$OrderItemCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'variant_name') String? variantName, String? sku,@JsonKey(name: 'image_url') String? imageUrl, int quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice,@JsonKey(name: 'affiliate_commission_rate') double? affiliateCommissionRate,@JsonKey(name: 'affiliate_commission_amount') double? affiliateCommissionAmount,@JsonKey(name: 'fulfilled_quantity') int fulfilledQuantity
+ String id,@JsonKey(name: 'product_id') String productId,@JsonKey(name: 'variant_id') String? variantId,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'variant_name') String? variantName, String? sku,@JsonKey(name: 'image_url') String? imageUrl, int quantity,@JsonKey(name: 'unit_price', fromJson: _priceFromJson) double unitPrice,@JsonKey(name: 'total_price', fromJson: _priceFromJson) double totalPrice,@JsonKey(name: 'affiliate_commission_rate', fromJson: _nullablePriceFromJson) double? affiliateCommissionRate,@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? affiliateCommissionAmount,@JsonKey(name: 'fulfilled_quantity') int fulfilledQuantity
 });
 
 
@@ -2575,8 +2575,8 @@ as int,
 /// @nodoc
 mixin _$Order {
 
- String get id; String get number;@JsonKey(name: 'user_id') String? get userId;@JsonKey(name: 'store_id') String? get storeId; List<OrderItem> get items;// ⭐ CRÍTICO: rastreamento de comissão
-@JsonKey(name: 'affiliate_id') String? get affiliateId;@JsonKey(name: 'affiliate_commission_amount') double? get affiliateCommissionAmount; double get subtotal; double get tax; double get shipping; double get total; OrderStatus get status;@JsonKey(name: 'payment_status') PaymentStatus get paymentStatus;@JsonKey(name: 'created_at') String get createdAt;@JsonKey(name: 'updated_at') String get updatedAt;
+ String get id;@JsonKey(name: 'order_number') String get number;@JsonKey(name: 'user_id') String? get userId;@JsonKey(name: 'store_id') String? get storeId; List<OrderItem> get items;// ⭐ CRÍTICO: rastreamento de comissão
+@JsonKey(name: 'affiliate_id') String? get affiliateId;@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? get affiliateCommissionAmount;@JsonKey(fromJson: _priceFromJson) double get subtotal;@JsonKey(fromJson: _priceFromJson) double get tax;@JsonKey(name: 'shipping_cost', fromJson: _priceFromJson) double get shipping;@JsonKey(fromJson: _priceFromJson) double get total; OrderStatus get status;@JsonKey(name: 'payment_status') PaymentStatus get paymentStatus;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2609,7 +2609,7 @@ abstract mixin class $OrderCopyWith<$Res>  {
   factory $OrderCopyWith(Order value, $Res Function(Order) _then) = _$OrderCopyWithImpl;
 @useResult
 $Res call({
- String id, String number,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<OrderItem> items,@JsonKey(name: 'affiliate_id') String? affiliateId,@JsonKey(name: 'affiliate_commission_amount') double? affiliateCommissionAmount, double subtotal, double tax, double shipping, double total, OrderStatus status,@JsonKey(name: 'payment_status') PaymentStatus paymentStatus,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt
+ String id,@JsonKey(name: 'order_number') String number,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<OrderItem> items,@JsonKey(name: 'affiliate_id') String? affiliateId,@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? affiliateCommissionAmount,@JsonKey(fromJson: _priceFromJson) double subtotal,@JsonKey(fromJson: _priceFromJson) double tax,@JsonKey(name: 'shipping_cost', fromJson: _priceFromJson) double shipping,@JsonKey(fromJson: _priceFromJson) double total, OrderStatus status,@JsonKey(name: 'payment_status') PaymentStatus paymentStatus,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -2626,7 +2626,7 @@ class _$OrderCopyWithImpl<$Res>
 
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? number = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? affiliateId = freezed,Object? affiliateCommissionAmount = freezed,Object? subtotal = null,Object? tax = null,Object? shipping = null,Object? total = null,Object? status = null,Object? paymentStatus = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? number = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? affiliateId = freezed,Object? affiliateCommissionAmount = freezed,Object? subtotal = null,Object? tax = null,Object? shipping = null,Object? total = null,Object? status = null,Object? paymentStatus = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,number: null == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
@@ -2641,9 +2641,9 @@ as double,shipping: null == shipping ? _self.shipping : shipping // ignore: cast
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as OrderStatus,paymentStatus: null == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
-as PaymentStatus,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as PaymentStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2725,7 +2725,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount,  double subtotal,  double tax,  double shipping,  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'order_number')  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double tax, @JsonKey(name: 'shipping_cost', fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Order() when $default != null:
 return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_that.affiliateId,_that.affiliateCommissionAmount,_that.subtotal,_that.tax,_that.shipping,_that.total,_that.status,_that.paymentStatus,_that.createdAt,_that.updatedAt);case _:
@@ -2746,7 +2746,7 @@ return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount,  double subtotal,  double tax,  double shipping,  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'order_number')  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double tax, @JsonKey(name: 'shipping_cost', fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Order():
 return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_that.affiliateId,_that.affiliateCommissionAmount,_that.subtotal,_that.tax,_that.shipping,_that.total,_that.status,_that.paymentStatus,_that.createdAt,_that.updatedAt);}
@@ -2763,7 +2763,7 @@ return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount')  double? affiliateCommissionAmount,  double subtotal,  double tax,  double shipping,  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String createdAt, @JsonKey(name: 'updated_at')  String updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'order_number')  String number, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'store_id')  String? storeId,  List<OrderItem> items, @JsonKey(name: 'affiliate_id')  String? affiliateId, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson)  double? affiliateCommissionAmount, @JsonKey(fromJson: _priceFromJson)  double subtotal, @JsonKey(fromJson: _priceFromJson)  double tax, @JsonKey(name: 'shipping_cost', fromJson: _priceFromJson)  double shipping, @JsonKey(fromJson: _priceFromJson)  double total,  OrderStatus status, @JsonKey(name: 'payment_status')  PaymentStatus paymentStatus, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Order() when $default != null:
 return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_that.affiliateId,_that.affiliateCommissionAmount,_that.subtotal,_that.tax,_that.shipping,_that.total,_that.status,_that.paymentStatus,_that.createdAt,_that.updatedAt);case _:
@@ -2778,11 +2778,11 @@ return $default(_that.id,_that.number,_that.userId,_that.storeId,_that.items,_th
 @JsonSerializable()
 
 class _Order implements Order {
-  const _Order({required this.id, required this.number, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'store_id') this.storeId, required final  List<OrderItem> items, @JsonKey(name: 'affiliate_id') this.affiliateId, @JsonKey(name: 'affiliate_commission_amount') this.affiliateCommissionAmount, required this.subtotal, required this.tax, required this.shipping, required this.total, required this.status, @JsonKey(name: 'payment_status') required this.paymentStatus, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt}): _items = items;
+  const _Order({required this.id, @JsonKey(name: 'order_number') required this.number, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'store_id') this.storeId, required final  List<OrderItem> items, @JsonKey(name: 'affiliate_id') this.affiliateId, @JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) this.affiliateCommissionAmount, @JsonKey(fromJson: _priceFromJson) required this.subtotal, @JsonKey(fromJson: _priceFromJson) required this.tax, @JsonKey(name: 'shipping_cost', fromJson: _priceFromJson) required this.shipping, @JsonKey(fromJson: _priceFromJson) required this.total, required this.status, @JsonKey(name: 'payment_status') required this.paymentStatus, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _items = items;
   factory _Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
 
 @override final  String id;
-@override final  String number;
+@override@JsonKey(name: 'order_number') final  String number;
 @override@JsonKey(name: 'user_id') final  String? userId;
 @override@JsonKey(name: 'store_id') final  String? storeId;
  final  List<OrderItem> _items;
@@ -2794,15 +2794,15 @@ class _Order implements Order {
 
 // ⭐ CRÍTICO: rastreamento de comissão
 @override@JsonKey(name: 'affiliate_id') final  String? affiliateId;
-@override@JsonKey(name: 'affiliate_commission_amount') final  double? affiliateCommissionAmount;
-@override final  double subtotal;
-@override final  double tax;
-@override final  double shipping;
-@override final  double total;
+@override@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) final  double? affiliateCommissionAmount;
+@override@JsonKey(fromJson: _priceFromJson) final  double subtotal;
+@override@JsonKey(fromJson: _priceFromJson) final  double tax;
+@override@JsonKey(name: 'shipping_cost', fromJson: _priceFromJson) final  double shipping;
+@override@JsonKey(fromJson: _priceFromJson) final  double total;
 @override final  OrderStatus status;
 @override@JsonKey(name: 'payment_status') final  PaymentStatus paymentStatus;
-@override@JsonKey(name: 'created_at') final  String createdAt;
-@override@JsonKey(name: 'updated_at') final  String updatedAt;
+@override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
@@ -2837,7 +2837,7 @@ abstract mixin class _$OrderCopyWith<$Res> implements $OrderCopyWith<$Res> {
   factory _$OrderCopyWith(_Order value, $Res Function(_Order) _then) = __$OrderCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String number,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<OrderItem> items,@JsonKey(name: 'affiliate_id') String? affiliateId,@JsonKey(name: 'affiliate_commission_amount') double? affiliateCommissionAmount, double subtotal, double tax, double shipping, double total, OrderStatus status,@JsonKey(name: 'payment_status') PaymentStatus paymentStatus,@JsonKey(name: 'created_at') String createdAt,@JsonKey(name: 'updated_at') String updatedAt
+ String id,@JsonKey(name: 'order_number') String number,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'store_id') String? storeId, List<OrderItem> items,@JsonKey(name: 'affiliate_id') String? affiliateId,@JsonKey(name: 'affiliate_commission_amount', fromJson: _nullablePriceFromJson) double? affiliateCommissionAmount,@JsonKey(fromJson: _priceFromJson) double subtotal,@JsonKey(fromJson: _priceFromJson) double tax,@JsonKey(name: 'shipping_cost', fromJson: _priceFromJson) double shipping,@JsonKey(fromJson: _priceFromJson) double total, OrderStatus status,@JsonKey(name: 'payment_status') PaymentStatus paymentStatus,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -2854,7 +2854,7 @@ class __$OrderCopyWithImpl<$Res>
 
 /// Create a copy of Order
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? number = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? affiliateId = freezed,Object? affiliateCommissionAmount = freezed,Object? subtotal = null,Object? tax = null,Object? shipping = null,Object? total = null,Object? status = null,Object? paymentStatus = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? number = null,Object? userId = freezed,Object? storeId = freezed,Object? items = null,Object? affiliateId = freezed,Object? affiliateCommissionAmount = freezed,Object? subtotal = null,Object? tax = null,Object? shipping = null,Object? total = null,Object? status = null,Object? paymentStatus = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Order(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,number: null == number ? _self.number : number // ignore: cast_nullable_to_non_nullable
@@ -2869,9 +2869,9 @@ as double,shipping: null == shipping ? _self.shipping : shipping // ignore: cast
 as double,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as double,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as OrderStatus,paymentStatus: null == paymentStatus ? _self.paymentStatus : paymentStatus // ignore: cast_nullable_to_non_nullable
-as PaymentStatus,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as PaymentStatus,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

@@ -38,8 +38,20 @@ Dio liveDio(Ref ref) {
     ),
   );
 
-  // Add logging interceptor for development
-  dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+  // Add logging interceptor for development only — NEVER log headers here:
+  // Authorization carries the raw Bearer token and must not be printed to
+  // the console (kDebugMode-only guard also keeps this out of release
+  // builds entirely).
+  if (kDebugMode) {
+    dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        requestHeader: false,
+        responseHeader: false,
+      ),
+    );
+  }
 
   return dio;
 }

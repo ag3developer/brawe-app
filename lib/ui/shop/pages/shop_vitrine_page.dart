@@ -32,11 +32,10 @@ enum VitrineViewMode { grid, list }
 /// pattern as TikTok Shop), reachable via the storefront icon in the
 /// profile's AppBar.
 ///
-/// ⚠️ Gap de backend conhecido: só há dados reais de parceria/produtos para
-/// o PRÓPRIO usuário logado (`myStorefrontProductsProvider` usa o endpoint
-/// "my-applications"). Para o perfil de outra pessoa, mostramos o mesmo
-/// empty state até existir um endpoint público de vitrine por `userId`
-/// (`GET /marketplace/affiliate/{user_id}/storefront`, ainda não criado).
+/// Usa o endpoint público `GET /marketplace/affiliate/{userId}/storefront`
+/// (via [storefrontProductsProvider]) — funciona tanto para o próprio
+/// usuário logado quanto para o perfil de qualquer outra pessoa, sem exigir
+/// autenticação nem candidatura própria.
 class ShopVitrinePage extends ConsumerStatefulWidget {
   final String userId;
 
@@ -56,9 +55,9 @@ class _ShopVitrinePageState extends ConsumerState<ShopVitrinePage> {
     final isMe = currentUserId == widget.userId;
     final profileState = ref.watch(profileViewModelProvider(widget.userId));
 
-    final storefrontAsync = isMe
-        ? ref.watch(myStorefrontProductsProvider)
-        : const AsyncValue<List<Product>>.data(<Product>[]);
+    final storefrontAsync = ref.watch(
+      storefrontProductsProvider(widget.userId),
+    );
 
     return Scaffold(
       backgroundColor: context.colors.background,

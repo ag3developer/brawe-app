@@ -69,6 +69,11 @@ class MarketplaceRepository {
   Future<List<dynamic>> getMyApplications({String? status}) =>
       storeShowcaseService.getMyApplications(status: status);
 
+  /// Vitrine pública por userId — funciona para o próprio perfil e para o
+  /// perfil de qualquer outro usuário (ver [StoreShowcaseService.getPublicStorefront]).
+  Future<List<dynamic>> getPublicStorefront(String userId) =>
+      storeShowcaseService.getPublicStorefront(userId);
+
   Future<void> deleteApplication(String applicationId) =>
       storeShowcaseService.deleteApplication(applicationId);
 

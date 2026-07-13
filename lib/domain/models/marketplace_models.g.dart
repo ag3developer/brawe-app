@@ -360,12 +360,14 @@ _OrderItem _$OrderItemFromJson(Map<String, dynamic> json) => _OrderItem(
   sku: json['sku'] as String?,
   imageUrl: json['image_url'] as String?,
   quantity: (json['quantity'] as num).toInt(),
-  unitPrice: (json['unit_price'] as num).toDouble(),
-  totalPrice: (json['total_price'] as num).toDouble(),
-  affiliateCommissionRate: (json['affiliate_commission_rate'] as num?)
-      ?.toDouble(),
-  affiliateCommissionAmount: (json['affiliate_commission_amount'] as num?)
-      ?.toDouble(),
+  unitPrice: _priceFromJson(json['unit_price']),
+  totalPrice: _priceFromJson(json['total_price']),
+  affiliateCommissionRate: _nullablePriceFromJson(
+    json['affiliate_commission_rate'],
+  ),
+  affiliateCommissionAmount: _nullablePriceFromJson(
+    json['affiliate_commission_amount'],
+  ),
   fulfilledQuantity: (json['fulfilled_quantity'] as num?)?.toInt() ?? 0,
 );
 
@@ -388,28 +390,29 @@ Map<String, dynamic> _$OrderItemToJson(_OrderItem instance) =>
 
 _Order _$OrderFromJson(Map<String, dynamic> json) => _Order(
   id: json['id'] as String,
-  number: json['number'] as String,
+  number: json['order_number'] as String,
   userId: json['user_id'] as String?,
   storeId: json['store_id'] as String?,
   items: (json['items'] as List<dynamic>)
       .map((e) => OrderItem.fromJson(e as Map<String, dynamic>))
       .toList(),
   affiliateId: json['affiliate_id'] as String?,
-  affiliateCommissionAmount: (json['affiliate_commission_amount'] as num?)
-      ?.toDouble(),
-  subtotal: (json['subtotal'] as num).toDouble(),
-  tax: (json['tax'] as num).toDouble(),
-  shipping: (json['shipping'] as num).toDouble(),
-  total: (json['total'] as num).toDouble(),
+  affiliateCommissionAmount: _nullablePriceFromJson(
+    json['affiliate_commission_amount'],
+  ),
+  subtotal: _priceFromJson(json['subtotal']),
+  tax: _priceFromJson(json['tax']),
+  shipping: _priceFromJson(json['shipping_cost']),
+  total: _priceFromJson(json['total']),
   status: $enumDecode(_$OrderStatusEnumMap, json['status']),
   paymentStatus: $enumDecode(_$PaymentStatusEnumMap, json['payment_status']),
-  createdAt: json['created_at'] as String,
-  updatedAt: json['updated_at'] as String,
+  createdAt: json['created_at'] as String?,
+  updatedAt: json['updated_at'] as String?,
 );
 
 Map<String, dynamic> _$OrderToJson(_Order instance) => <String, dynamic>{
   'id': instance.id,
-  'number': instance.number,
+  'order_number': instance.number,
   'user_id': instance.userId,
   'store_id': instance.storeId,
   'items': instance.items,
@@ -417,7 +420,7 @@ Map<String, dynamic> _$OrderToJson(_Order instance) => <String, dynamic>{
   'affiliate_commission_amount': instance.affiliateCommissionAmount,
   'subtotal': instance.subtotal,
   'tax': instance.tax,
-  'shipping': instance.shipping,
+  'shipping_cost': instance.shipping,
   'total': instance.total,
   'status': _$OrderStatusEnumMap[instance.status]!,
   'payment_status': _$PaymentStatusEnumMap[instance.paymentStatus]!,

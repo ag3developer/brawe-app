@@ -172,4 +172,27 @@ class StoreShowcaseServiceImpl implements StoreShowcaseService {
       rethrow;
     }
   }
+
+  @override
+  Future<List<dynamic>> getPublicStorefront(String userId) async {
+    try {
+      print('[StoreShowcaseService] getPublicStorefront($userId) called');
+
+      final response = await _appDio.get(
+        '/marketplace/affiliate/$userId/storefront',
+      );
+
+      // Backend retorna lista de grupos {store_id, store_name, ..., products:
+      // [...]} — devolvemos os mapas crus; quem chama decide como agregar
+      // (ver [storefrontProductsProvider], que faz o flatten para List<Product>).
+      return extractList(response.data);
+    } on DioException catch (e) {
+      // Perfil sem vitrine aprovada não é erro — apenas lista vazia.
+      if (e.response?.statusCode == 404) return const [];
+      print(
+        '[StoreShowcaseService] Error in getPublicStorefront: ${e.message}',
+      );
+      rethrow;
+    }
+  }
 }

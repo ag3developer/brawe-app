@@ -347,11 +347,20 @@ sealed class OrderItem with _$OrderItem {
     String? sku,
     @JsonKey(name: 'image_url') String? imageUrl,
     required int quantity,
-    @JsonKey(name: 'unit_price') required double unitPrice,
-    @JsonKey(name: 'total_price') required double totalPrice,
+    @JsonKey(name: 'unit_price', fromJson: _priceFromJson)
+    required double unitPrice,
+    @JsonKey(name: 'total_price', fromJson: _priceFromJson)
+    required double totalPrice,
     // ⭐ CRÍTICO: comissão do afiliado
-    @JsonKey(name: 'affiliate_commission_rate') double? affiliateCommissionRate,
-    @JsonKey(name: 'affiliate_commission_amount')
+    @JsonKey(
+      name: 'affiliate_commission_rate',
+      fromJson: _nullablePriceFromJson,
+    )
+    double? affiliateCommissionRate,
+    @JsonKey(
+      name: 'affiliate_commission_amount',
+      fromJson: _nullablePriceFromJson,
+    )
     double? affiliateCommissionAmount,
     @JsonKey(name: 'fulfilled_quantity') @Default(0) int fulfilledQuantity,
   }) = _OrderItem;
@@ -364,22 +373,26 @@ sealed class OrderItem with _$OrderItem {
 sealed class Order with _$Order {
   const factory Order({
     required String id,
-    required String number,
+    @JsonKey(name: 'order_number') required String number,
     @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'store_id') String? storeId,
     required List<OrderItem> items,
     // ⭐ CRÍTICO: rastreamento de comissão
     @JsonKey(name: 'affiliate_id') String? affiliateId,
-    @JsonKey(name: 'affiliate_commission_amount')
+    @JsonKey(
+      name: 'affiliate_commission_amount',
+      fromJson: _nullablePriceFromJson,
+    )
     double? affiliateCommissionAmount,
-    required double subtotal,
-    required double tax,
+    @JsonKey(fromJson: _priceFromJson) required double subtotal,
+    @JsonKey(fromJson: _priceFromJson) required double tax,
+    @JsonKey(name: 'shipping_cost', fromJson: _priceFromJson)
     required double shipping,
-    required double total,
+    @JsonKey(fromJson: _priceFromJson) required double total,
     required OrderStatus status,
     @JsonKey(name: 'payment_status') required PaymentStatus paymentStatus,
-    @JsonKey(name: 'created_at') required String createdAt,
-    @JsonKey(name: 'updated_at') required String updatedAt,
+    @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _Order;
 
   factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);

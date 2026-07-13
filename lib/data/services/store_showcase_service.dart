@@ -88,4 +88,18 @@ abstract class StoreShowcaseService {
     String? message,
     String? customCommission,
   });
+
+  /// Fetch the PUBLIC storefront(s) for an arbitrary user, by `userId` —
+  /// no authentication required, works for ANY visited profile (own or
+  /// someone else's).
+  ///
+  /// GET /marketplace/affiliate/{userId}/storefront
+  ///
+  /// Returns a list of store-with-products groups (one per store where
+  /// the user has an approved+active affiliate application). Empty list
+  /// means the user has no approved storefront — not an error.
+  ///
+  /// Used to decide whether the storefront icon/badge should be shown on
+  /// a profile page, regardless of who is viewing it.
+  Future<List<dynamic>> getPublicStorefront(String userId);
 }

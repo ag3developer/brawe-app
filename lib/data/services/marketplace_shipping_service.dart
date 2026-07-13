@@ -6,7 +6,7 @@
 abstract class MarketplaceShippingService {
   /// Calculate shipping options for a given store and postal code.
   ///
-  /// POST /shipping/calculate
+  /// POST /marketplace/shipping/calculate
   ///
   /// - `store_id`: UUID of the store (required)
   /// - `postal_code`: CEP of delivery address (required)
@@ -17,7 +17,7 @@ abstract class MarketplaceShippingService {
 
   /// Get quick shipping estimate for a store.
   ///
-  /// GET /shipping/estimate/{store_id}
+  /// GET /marketplace/shipping/estimate/{store_id}
   ///
   /// - `store_id`: UUID of the store (required)
   /// - `postal_code`: CEP query param (required)

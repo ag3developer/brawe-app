@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../data/providers/affiliate_origin_provider.dart';
 import '../../../data/providers/cart_notifier_provider.dart';
 import '../../../data/providers/marketplace_providers.dart';
 import '../../../data/repositories/auth_state_provider.dart';
@@ -370,11 +371,31 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       double totalShipping = 0.0;
       for (final storeId in byStore.keys) {
         try {
-          final shippingCost = await repository.calculateShipping(
+          final shippingResponse = await repository.calculateShipping(
             storeId,
             _selectedAddress!.postalCode.replaceAll(RegExp(r'\D'), ''),
           );
-          totalShipping += (shippingCost ?? 0.0);
+
+          // Response is {options: [{id, name, price, ...}]}
+          // Select the cheapest option (or first standard option)
+          if (shippingResponse is Map<String, dynamic> &&
+              shippingResponse.containsKey('options')) {
+            final options = shippingResponse['options'] as List?;
+            if (options != null && options.isNotEmpty) {
+              // Find 'standard' method or use first option
+              dynamic selectedOption = options.firstWhere(
+                (opt) => opt['id'] == 'standard',
+                orElse: () => options.first,
+              );
+
+              if (selectedOption is Map<String, dynamic>) {
+                final price = selectedOption['price'];
+                if (price is num) {
+                  totalShipping += price.toDouble();
+                }
+              }
+            }
+          }
         } catch (e) {
           debugPrint('Error calculating shipping for store $storeId: $e');
         }
@@ -903,6 +924,11 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   }
 
   Future<void> _confirmOrder(BuildContext context, CartState cartState) async {
+    // Guarda extra contra duplo-clique/duplo-tap: o botão já desabilita
+    // com `isSubmitting`, mas isso reforça mesmo se _confirmOrder for
+    // chamado novamente antes do primeiro setState ser aplicado — evita
+    // criar dois pedidos para a mesma compra.
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
 
     final address = _selectedAddress ?? _buildAddressFromForm();
@@ -914,6 +940,20 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
     }
 
     setState(() => _isSubmitting = true);
+
+    // ⭐ CRÍTICO: preserva a atribuição do afiliado capturada na vitrine
+    // (via ?ref=... ou ?affiliate_code=...) e persistida em
+    // AffiliateOriginManager. Sem isso, o pedido nunca registra comissão
+    // mesmo quando a compra começou por um link de afiliado.
+    String? affiliateId;
+    try {
+      final affiliateManager = await ref.read(
+        affiliateOriginManagerProvider.future,
+      );
+      affiliateId = affiliateManager.getStoredAffiliateId();
+    } catch (e) {
+      debugPrint('⚠️ Failed to read affiliate origin: $e');
+    }
 
     final request = CheckoutRequest(
       shippingAddress: address,
@@ -935,15 +975,28 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         CheckoutPaymentMethod.crypto => 'crypto',
       },
       sessionId: CartSession.id,
+      affiliateId: affiliateId,
     );
 
     try {
       final repo = ref.read(marketplaceRepositoryProvider);
-      final order = await repo.checkout(request) as Order;
+      debugPrint('📤 Sending checkout request...');
+      final rawResponse = await repo.checkout(request);
+      debugPrint('📥 Raw response: $rawResponse');
+      debugPrint('📥 Response type: ${rawResponse.runtimeType}');
+
+      final order = rawResponse as Order;
       if (!context.mounted) return;
       setState(() => _isSubmitting = false);
+      debugPrint('✅ Order created successfully: ${order.id}');
+      debugPrint(
+        '🔀 Navigating to payment page: /shop/checkout/payment/${order.id}',
+      );
       context.pushReplacement('/shop/checkout/payment/${order.id}');
-    } catch (_) {
+    } catch (e) {
+      debugPrint('❌ Checkout error: $e');
+      debugPrint('❌ Error stack: ${StackTrace.current}');
+      debugPrint('❌ Error type: ${e.runtimeType}');
       setState(() => _isSubmitting = false);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

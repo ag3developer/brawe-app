@@ -16,7 +16,7 @@ class MarketplaceShippingServiceImpl implements MarketplaceShippingService {
       print('  storeId=$storeId, postalCode=$postalCode');
 
       final response = await _dio.post(
-        '/shipping/calculate',
+        '/marketplace/shipping/calculate',
         data: {'store_id': storeId, 'postal_code': postalCode},
       );
 
@@ -38,7 +38,7 @@ class MarketplaceShippingServiceImpl implements MarketplaceShippingService {
       print('  storeId=$storeId, postalCode=$postalCode');
 
       final response = await _dio.get(
-        '/shipping/estimate/$storeId',
+        '/marketplace/shipping/estimate/$storeId',
         queryParameters: {'postal_code': postalCode},
       );
 

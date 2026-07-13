@@ -16,7 +16,7 @@ class MarketplacePaymentServiceImpl implements MarketplacePaymentService {
   ) async {
     try {
       final response = await dio.post(
-        '/api/v1/marketplace/orders/$orderId/initiate-payment',
+        '/marketplace/orders/$orderId/initiate-payment',
         queryParameters: {'payment_method': paymentMethod},
       );
 
@@ -35,7 +35,7 @@ class MarketplacePaymentServiceImpl implements MarketplacePaymentService {
   @override
   Future<Map<String, dynamic>> checkPaymentStatus(String orderId) async {
     try {
-      final response = await dio.get('/api/v1/marketplace/orders/$orderId');
+      final response = await dio.get('/marketplace/orders/$orderId');
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
