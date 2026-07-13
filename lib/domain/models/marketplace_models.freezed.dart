@@ -3691,7 +3691,7 @@ as int,
 /// @nodoc
 mixin _$CheckoutRequest {
 
-@JsonKey(name: 'shipping_address') ShippingAddress get shippingAddress;@JsonKey(name: 'billing_address') ShippingAddress? get billingAddress;@JsonKey(name: 'customer_name') String get customerName;@JsonKey(name: 'customer_email') String get customerEmail;@JsonKey(name: 'customer_phone') String? get customerPhone;@JsonKey(name: 'customer_document') String? get customerDocument;@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? get customerFiscalData;@JsonKey(name: 'shipping_method') String get shippingMethod;@JsonKey(name: 'payment_method') String get paymentMethod;@JsonKey(name: 'coupon_code') String? get couponCode;@JsonKey(name: 'customer_note') String? get customerNote;@JsonKey(name: 'session_id') String? get sessionId;// ⭐ CRÍTICO: afiliado que referiu
+@JsonKey(name: 'shipping_address') ShippingAddress get shippingAddress;@JsonKey(name: 'billing_address') ShippingAddress? get billingAddress;@JsonKey(name: 'customer_name') String get customerName;@JsonKey(name: 'customer_email') String get customerEmail;@JsonKey(name: 'customer_phone') String? get customerPhone;@JsonKey(name: 'customer_document') String? get customerDocument;@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? get customerFiscalData;@JsonKey(name: 'shipping_method') String get shippingMethod;@JsonKey(name: 'shipping_cost') double? get shippingCost;@JsonKey(name: 'payment_method') String get paymentMethod;@JsonKey(name: 'coupon_code') String? get couponCode;@JsonKey(name: 'customer_note') String? get customerNote;@JsonKey(name: 'session_id') String? get sessionId;// ⭐ CRÍTICO: afiliado que referiu
 @JsonKey(name: 'affiliate_id') String? get affiliateId;
 /// Create a copy of CheckoutRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -3705,16 +3705,16 @@ $CheckoutRequestCopyWith<CheckoutRequest> get copyWith => _$CheckoutRequestCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CheckoutRequest&&(identical(other.shippingAddress, shippingAddress) || other.shippingAddress == shippingAddress)&&(identical(other.billingAddress, billingAddress) || other.billingAddress == billingAddress)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.customerEmail, customerEmail) || other.customerEmail == customerEmail)&&(identical(other.customerPhone, customerPhone) || other.customerPhone == customerPhone)&&(identical(other.customerDocument, customerDocument) || other.customerDocument == customerDocument)&&const DeepCollectionEquality().equals(other.customerFiscalData, customerFiscalData)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.customerNote, customerNote) || other.customerNote == customerNote)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.affiliateId, affiliateId) || other.affiliateId == affiliateId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CheckoutRequest&&(identical(other.shippingAddress, shippingAddress) || other.shippingAddress == shippingAddress)&&(identical(other.billingAddress, billingAddress) || other.billingAddress == billingAddress)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.customerEmail, customerEmail) || other.customerEmail == customerEmail)&&(identical(other.customerPhone, customerPhone) || other.customerPhone == customerPhone)&&(identical(other.customerDocument, customerDocument) || other.customerDocument == customerDocument)&&const DeepCollectionEquality().equals(other.customerFiscalData, customerFiscalData)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.customerNote, customerNote) || other.customerNote == customerNote)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.affiliateId, affiliateId) || other.affiliateId == affiliateId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,shippingAddress,billingAddress,customerName,customerEmail,customerPhone,customerDocument,const DeepCollectionEquality().hash(customerFiscalData),shippingMethod,paymentMethod,couponCode,customerNote,sessionId,affiliateId);
+int get hashCode => Object.hash(runtimeType,shippingAddress,billingAddress,customerName,customerEmail,customerPhone,customerDocument,const DeepCollectionEquality().hash(customerFiscalData),shippingMethod,shippingCost,paymentMethod,couponCode,customerNote,sessionId,affiliateId);
 
 @override
 String toString() {
-  return 'CheckoutRequest(shippingAddress: $shippingAddress, billingAddress: $billingAddress, customerName: $customerName, customerEmail: $customerEmail, customerPhone: $customerPhone, customerDocument: $customerDocument, customerFiscalData: $customerFiscalData, shippingMethod: $shippingMethod, paymentMethod: $paymentMethod, couponCode: $couponCode, customerNote: $customerNote, sessionId: $sessionId, affiliateId: $affiliateId)';
+  return 'CheckoutRequest(shippingAddress: $shippingAddress, billingAddress: $billingAddress, customerName: $customerName, customerEmail: $customerEmail, customerPhone: $customerPhone, customerDocument: $customerDocument, customerFiscalData: $customerFiscalData, shippingMethod: $shippingMethod, shippingCost: $shippingCost, paymentMethod: $paymentMethod, couponCode: $couponCode, customerNote: $customerNote, sessionId: $sessionId, affiliateId: $affiliateId)';
 }
 
 
@@ -3725,7 +3725,7 @@ abstract mixin class $CheckoutRequestCopyWith<$Res>  {
   factory $CheckoutRequestCopyWith(CheckoutRequest value, $Res Function(CheckoutRequest) _then) = _$CheckoutRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'shipping_address') ShippingAddress shippingAddress,@JsonKey(name: 'billing_address') ShippingAddress? billingAddress,@JsonKey(name: 'customer_name') String customerName,@JsonKey(name: 'customer_email') String customerEmail,@JsonKey(name: 'customer_phone') String? customerPhone,@JsonKey(name: 'customer_document') String? customerDocument,@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? customerFiscalData,@JsonKey(name: 'shipping_method') String shippingMethod,@JsonKey(name: 'payment_method') String paymentMethod,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'customer_note') String? customerNote,@JsonKey(name: 'session_id') String? sessionId,@JsonKey(name: 'affiliate_id') String? affiliateId
+@JsonKey(name: 'shipping_address') ShippingAddress shippingAddress,@JsonKey(name: 'billing_address') ShippingAddress? billingAddress,@JsonKey(name: 'customer_name') String customerName,@JsonKey(name: 'customer_email') String customerEmail,@JsonKey(name: 'customer_phone') String? customerPhone,@JsonKey(name: 'customer_document') String? customerDocument,@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? customerFiscalData,@JsonKey(name: 'shipping_method') String shippingMethod,@JsonKey(name: 'shipping_cost') double? shippingCost,@JsonKey(name: 'payment_method') String paymentMethod,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'customer_note') String? customerNote,@JsonKey(name: 'session_id') String? sessionId,@JsonKey(name: 'affiliate_id') String? affiliateId
 });
 
 
@@ -3742,7 +3742,7 @@ class _$CheckoutRequestCopyWithImpl<$Res>
 
 /// Create a copy of CheckoutRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? shippingAddress = null,Object? billingAddress = freezed,Object? customerName = null,Object? customerEmail = null,Object? customerPhone = freezed,Object? customerDocument = freezed,Object? customerFiscalData = freezed,Object? shippingMethod = null,Object? paymentMethod = null,Object? couponCode = freezed,Object? customerNote = freezed,Object? sessionId = freezed,Object? affiliateId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? shippingAddress = null,Object? billingAddress = freezed,Object? customerName = null,Object? customerEmail = null,Object? customerPhone = freezed,Object? customerDocument = freezed,Object? customerFiscalData = freezed,Object? shippingMethod = null,Object? shippingCost = freezed,Object? paymentMethod = null,Object? couponCode = freezed,Object? customerNote = freezed,Object? sessionId = freezed,Object? affiliateId = freezed,}) {
   return _then(_self.copyWith(
 shippingAddress: null == shippingAddress ? _self.shippingAddress : shippingAddress // ignore: cast_nullable_to_non_nullable
 as ShippingAddress,billingAddress: freezed == billingAddress ? _self.billingAddress : billingAddress // ignore: cast_nullable_to_non_nullable
@@ -3752,7 +3752,8 @@ as String,customerPhone: freezed == customerPhone ? _self.customerPhone : custom
 as String?,customerDocument: freezed == customerDocument ? _self.customerDocument : customerDocument // ignore: cast_nullable_to_non_nullable
 as String?,customerFiscalData: freezed == customerFiscalData ? _self.customerFiscalData : customerFiscalData // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,shippingMethod: null == shippingMethod ? _self.shippingMethod : shippingMethod // ignore: cast_nullable_to_non_nullable
-as String,paymentMethod: null == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
+as String,shippingCost: freezed == shippingCost ? _self.shippingCost : shippingCost // ignore: cast_nullable_to_non_nullable
+as double?,paymentMethod: null == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
 as String,couponCode: freezed == couponCode ? _self.couponCode : couponCode // ignore: cast_nullable_to_non_nullable
 as String?,customerNote: freezed == customerNote ? _self.customerNote : customerNote // ignore: cast_nullable_to_non_nullable
 as String?,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
@@ -3860,10 +3861,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'shipping_cost')  double? shippingCost, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CheckoutRequest() when $default != null:
-return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);case _:
+return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.shippingCost,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);case _:
   return orElse();
 
 }
@@ -3881,10 +3882,10 @@ return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'shipping_cost')  double? shippingCost, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)  $default,) {final _that = this;
 switch (_that) {
 case _CheckoutRequest():
-return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);}
+return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.shippingCost,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -3898,10 +3899,10 @@ return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'shipping_address')  ShippingAddress shippingAddress, @JsonKey(name: 'billing_address')  ShippingAddress? billingAddress, @JsonKey(name: 'customer_name')  String customerName, @JsonKey(name: 'customer_email')  String customerEmail, @JsonKey(name: 'customer_phone')  String? customerPhone, @JsonKey(name: 'customer_document')  String? customerDocument, @JsonKey(name: 'customer_fiscal_data')  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method')  String shippingMethod, @JsonKey(name: 'shipping_cost')  double? shippingCost, @JsonKey(name: 'payment_method')  String paymentMethod, @JsonKey(name: 'coupon_code')  String? couponCode, @JsonKey(name: 'customer_note')  String? customerNote, @JsonKey(name: 'session_id')  String? sessionId, @JsonKey(name: 'affiliate_id')  String? affiliateId)?  $default,) {final _that = this;
 switch (_that) {
 case _CheckoutRequest() when $default != null:
-return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);case _:
+return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_that.customerEmail,_that.customerPhone,_that.customerDocument,_that.customerFiscalData,_that.shippingMethod,_that.shippingCost,_that.paymentMethod,_that.couponCode,_that.customerNote,_that.sessionId,_that.affiliateId);case _:
   return null;
 
 }
@@ -3913,7 +3914,7 @@ return $default(_that.shippingAddress,_that.billingAddress,_that.customerName,_t
 @JsonSerializable()
 
 class _CheckoutRequest implements CheckoutRequest {
-  const _CheckoutRequest({@JsonKey(name: 'shipping_address') required this.shippingAddress, @JsonKey(name: 'billing_address') this.billingAddress, @JsonKey(name: 'customer_name') required this.customerName, @JsonKey(name: 'customer_email') required this.customerEmail, @JsonKey(name: 'customer_phone') this.customerPhone, @JsonKey(name: 'customer_document') this.customerDocument, @JsonKey(name: 'customer_fiscal_data') final  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method') required this.shippingMethod, @JsonKey(name: 'payment_method') required this.paymentMethod, @JsonKey(name: 'coupon_code') this.couponCode, @JsonKey(name: 'customer_note') this.customerNote, @JsonKey(name: 'session_id') this.sessionId, @JsonKey(name: 'affiliate_id') this.affiliateId}): _customerFiscalData = customerFiscalData;
+  const _CheckoutRequest({@JsonKey(name: 'shipping_address') required this.shippingAddress, @JsonKey(name: 'billing_address') this.billingAddress, @JsonKey(name: 'customer_name') required this.customerName, @JsonKey(name: 'customer_email') required this.customerEmail, @JsonKey(name: 'customer_phone') this.customerPhone, @JsonKey(name: 'customer_document') this.customerDocument, @JsonKey(name: 'customer_fiscal_data') final  Map<String, dynamic>? customerFiscalData, @JsonKey(name: 'shipping_method') required this.shippingMethod, @JsonKey(name: 'shipping_cost') this.shippingCost, @JsonKey(name: 'payment_method') required this.paymentMethod, @JsonKey(name: 'coupon_code') this.couponCode, @JsonKey(name: 'customer_note') this.customerNote, @JsonKey(name: 'session_id') this.sessionId, @JsonKey(name: 'affiliate_id') this.affiliateId}): _customerFiscalData = customerFiscalData;
   factory _CheckoutRequest.fromJson(Map<String, dynamic> json) => _$CheckoutRequestFromJson(json);
 
 @override@JsonKey(name: 'shipping_address') final  ShippingAddress shippingAddress;
@@ -3932,6 +3933,7 @@ class _CheckoutRequest implements CheckoutRequest {
 }
 
 @override@JsonKey(name: 'shipping_method') final  String shippingMethod;
+@override@JsonKey(name: 'shipping_cost') final  double? shippingCost;
 @override@JsonKey(name: 'payment_method') final  String paymentMethod;
 @override@JsonKey(name: 'coupon_code') final  String? couponCode;
 @override@JsonKey(name: 'customer_note') final  String? customerNote;
@@ -3952,16 +3954,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CheckoutRequest&&(identical(other.shippingAddress, shippingAddress) || other.shippingAddress == shippingAddress)&&(identical(other.billingAddress, billingAddress) || other.billingAddress == billingAddress)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.customerEmail, customerEmail) || other.customerEmail == customerEmail)&&(identical(other.customerPhone, customerPhone) || other.customerPhone == customerPhone)&&(identical(other.customerDocument, customerDocument) || other.customerDocument == customerDocument)&&const DeepCollectionEquality().equals(other._customerFiscalData, _customerFiscalData)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.customerNote, customerNote) || other.customerNote == customerNote)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.affiliateId, affiliateId) || other.affiliateId == affiliateId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CheckoutRequest&&(identical(other.shippingAddress, shippingAddress) || other.shippingAddress == shippingAddress)&&(identical(other.billingAddress, billingAddress) || other.billingAddress == billingAddress)&&(identical(other.customerName, customerName) || other.customerName == customerName)&&(identical(other.customerEmail, customerEmail) || other.customerEmail == customerEmail)&&(identical(other.customerPhone, customerPhone) || other.customerPhone == customerPhone)&&(identical(other.customerDocument, customerDocument) || other.customerDocument == customerDocument)&&const DeepCollectionEquality().equals(other._customerFiscalData, _customerFiscalData)&&(identical(other.shippingMethod, shippingMethod) || other.shippingMethod == shippingMethod)&&(identical(other.shippingCost, shippingCost) || other.shippingCost == shippingCost)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.couponCode, couponCode) || other.couponCode == couponCode)&&(identical(other.customerNote, customerNote) || other.customerNote == customerNote)&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.affiliateId, affiliateId) || other.affiliateId == affiliateId));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,shippingAddress,billingAddress,customerName,customerEmail,customerPhone,customerDocument,const DeepCollectionEquality().hash(_customerFiscalData),shippingMethod,paymentMethod,couponCode,customerNote,sessionId,affiliateId);
+int get hashCode => Object.hash(runtimeType,shippingAddress,billingAddress,customerName,customerEmail,customerPhone,customerDocument,const DeepCollectionEquality().hash(_customerFiscalData),shippingMethod,shippingCost,paymentMethod,couponCode,customerNote,sessionId,affiliateId);
 
 @override
 String toString() {
-  return 'CheckoutRequest(shippingAddress: $shippingAddress, billingAddress: $billingAddress, customerName: $customerName, customerEmail: $customerEmail, customerPhone: $customerPhone, customerDocument: $customerDocument, customerFiscalData: $customerFiscalData, shippingMethod: $shippingMethod, paymentMethod: $paymentMethod, couponCode: $couponCode, customerNote: $customerNote, sessionId: $sessionId, affiliateId: $affiliateId)';
+  return 'CheckoutRequest(shippingAddress: $shippingAddress, billingAddress: $billingAddress, customerName: $customerName, customerEmail: $customerEmail, customerPhone: $customerPhone, customerDocument: $customerDocument, customerFiscalData: $customerFiscalData, shippingMethod: $shippingMethod, shippingCost: $shippingCost, paymentMethod: $paymentMethod, couponCode: $couponCode, customerNote: $customerNote, sessionId: $sessionId, affiliateId: $affiliateId)';
 }
 
 
@@ -3972,7 +3974,7 @@ abstract mixin class _$CheckoutRequestCopyWith<$Res> implements $CheckoutRequest
   factory _$CheckoutRequestCopyWith(_CheckoutRequest value, $Res Function(_CheckoutRequest) _then) = __$CheckoutRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'shipping_address') ShippingAddress shippingAddress,@JsonKey(name: 'billing_address') ShippingAddress? billingAddress,@JsonKey(name: 'customer_name') String customerName,@JsonKey(name: 'customer_email') String customerEmail,@JsonKey(name: 'customer_phone') String? customerPhone,@JsonKey(name: 'customer_document') String? customerDocument,@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? customerFiscalData,@JsonKey(name: 'shipping_method') String shippingMethod,@JsonKey(name: 'payment_method') String paymentMethod,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'customer_note') String? customerNote,@JsonKey(name: 'session_id') String? sessionId,@JsonKey(name: 'affiliate_id') String? affiliateId
+@JsonKey(name: 'shipping_address') ShippingAddress shippingAddress,@JsonKey(name: 'billing_address') ShippingAddress? billingAddress,@JsonKey(name: 'customer_name') String customerName,@JsonKey(name: 'customer_email') String customerEmail,@JsonKey(name: 'customer_phone') String? customerPhone,@JsonKey(name: 'customer_document') String? customerDocument,@JsonKey(name: 'customer_fiscal_data') Map<String, dynamic>? customerFiscalData,@JsonKey(name: 'shipping_method') String shippingMethod,@JsonKey(name: 'shipping_cost') double? shippingCost,@JsonKey(name: 'payment_method') String paymentMethod,@JsonKey(name: 'coupon_code') String? couponCode,@JsonKey(name: 'customer_note') String? customerNote,@JsonKey(name: 'session_id') String? sessionId,@JsonKey(name: 'affiliate_id') String? affiliateId
 });
 
 
@@ -3989,7 +3991,7 @@ class __$CheckoutRequestCopyWithImpl<$Res>
 
 /// Create a copy of CheckoutRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? shippingAddress = null,Object? billingAddress = freezed,Object? customerName = null,Object? customerEmail = null,Object? customerPhone = freezed,Object? customerDocument = freezed,Object? customerFiscalData = freezed,Object? shippingMethod = null,Object? paymentMethod = null,Object? couponCode = freezed,Object? customerNote = freezed,Object? sessionId = freezed,Object? affiliateId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? shippingAddress = null,Object? billingAddress = freezed,Object? customerName = null,Object? customerEmail = null,Object? customerPhone = freezed,Object? customerDocument = freezed,Object? customerFiscalData = freezed,Object? shippingMethod = null,Object? shippingCost = freezed,Object? paymentMethod = null,Object? couponCode = freezed,Object? customerNote = freezed,Object? sessionId = freezed,Object? affiliateId = freezed,}) {
   return _then(_CheckoutRequest(
 shippingAddress: null == shippingAddress ? _self.shippingAddress : shippingAddress // ignore: cast_nullable_to_non_nullable
 as ShippingAddress,billingAddress: freezed == billingAddress ? _self.billingAddress : billingAddress // ignore: cast_nullable_to_non_nullable
@@ -3999,7 +4001,8 @@ as String,customerPhone: freezed == customerPhone ? _self.customerPhone : custom
 as String?,customerDocument: freezed == customerDocument ? _self.customerDocument : customerDocument // ignore: cast_nullable_to_non_nullable
 as String?,customerFiscalData: freezed == customerFiscalData ? _self._customerFiscalData : customerFiscalData // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>?,shippingMethod: null == shippingMethod ? _self.shippingMethod : shippingMethod // ignore: cast_nullable_to_non_nullable
-as String,paymentMethod: null == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
+as String,shippingCost: freezed == shippingCost ? _self.shippingCost : shippingCost // ignore: cast_nullable_to_non_nullable
+as double?,paymentMethod: null == paymentMethod ? _self.paymentMethod : paymentMethod // ignore: cast_nullable_to_non_nullable
 as String,couponCode: freezed == couponCode ? _self.couponCode : couponCode // ignore: cast_nullable_to_non_nullable
 as String?,customerNote: freezed == customerNote ? _self.customerNote : customerNote // ignore: cast_nullable_to_non_nullable
 as String?,sessionId: freezed == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable

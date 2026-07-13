@@ -206,6 +206,42 @@ class ShopCartPage extends ConsumerWidget {
                 S.of(context).shopCartDiscount,
                 '-${formatBRL(state.discount)}',
               ),
+            if (state.discount > 0) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colors.accentPrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: context.colors.accentPrimary.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      LucideIcons.sparkles,
+                      size: 16,
+                      color: context.colors.accentPrimary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Você economizou ${formatBRL(state.discount)}!',
+                        style: TextStyle(
+                          color: context.colors.accentPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 4),
             Divider(color: context.colors.divider, height: 20),
             _summaryRow(

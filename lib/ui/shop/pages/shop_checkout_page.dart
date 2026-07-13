@@ -76,6 +76,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   bool _isSavingAddress = false;
   bool _isFetchingCep = false;
   String? _cepError;
+  double _calculatedShipping = 0.0;
 
   // Quantidade sendo atualizada por item — evita múltiplas requisições
   // simultâneas para o mesmo item (o usuário vê um spinner local nesse
@@ -185,9 +186,16 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
           const SizedBox(height: 10),
           OrderPriceSummary(
             subtotal: cartState.subtotal,
-            shipping: cartState.shipping,
+            shipping: _calculatedShipping > 0
+                ? _calculatedShipping
+                : cartState.shipping,
             discount: cartState.discount,
-            total: cartState.total,
+            total:
+                cartState.subtotal -
+                cartState.discount +
+                (_calculatedShipping > 0
+                    ? _calculatedShipping
+                    : cartState.shipping),
           ),
           const SizedBox(height: 10),
           PaymentMethodSection(
@@ -233,9 +241,16 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               children: [
                 OrderPriceSummary(
                   subtotal: cartState.subtotal,
-                  shipping: cartState.shipping,
+                  shipping: _calculatedShipping > 0
+                      ? _calculatedShipping
+                      : cartState.shipping,
                   discount: cartState.discount,
-                  total: cartState.total,
+                  total:
+                      cartState.subtotal -
+                      cartState.discount +
+                      (_calculatedShipping > 0
+                          ? _calculatedShipping
+                          : cartState.shipping),
                 ),
                 const SizedBox(height: 10),
                 PaymentMethodSection(
@@ -328,11 +343,50 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       setState(() {
         _addingNewAddress = true;
         _selectedAddress = null;
+        _calculatedShipping = 0.0;
       });
       return;
     }
     if (result is ShippingAddress) {
       setState(() => _selectedAddress = result);
+      // Calculate shipping cost when address is selected
+      await _calculateShippingCost(context);
+    }
+  }
+
+  Future<void> _calculateShippingCost(BuildContext context) async {
+    if (_selectedAddress == null) return;
+
+    try {
+      final cartState = ref.read(cartNotifierProvider);
+      final repository = ref.read(marketplaceRepositoryProvider);
+
+      // Group items by store to calculate shipping per store
+      final byStore = <String, List<CartItem>>{};
+      for (final item in cartState.items) {
+        byStore.putIfAbsent(item.storeId, () => []).add(item);
+      }
+
+      double totalShipping = 0.0;
+      for (final storeId in byStore.keys) {
+        try {
+          final shippingCost = await repository.calculateShipping(
+            storeId,
+            _selectedAddress!.postalCode.replaceAll(RegExp(r'\D'), ''),
+          );
+          totalShipping += (shippingCost ?? 0.0);
+        } catch (e) {
+          debugPrint('Error calculating shipping for store $storeId: $e');
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _calculatedShipping = totalShipping;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error calculating shipping: $e');
     }
   }
 
@@ -874,6 +928,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       shippingMethod: _shippingMethod == _ShippingMethod.express
           ? 'express'
           : 'standard',
+      shippingCost: _calculatedShipping > 0 ? _calculatedShipping : 0.0,
       paymentMethod: switch (_paymentMethod) {
         CheckoutPaymentMethod.pix => 'pix',
         CheckoutPaymentMethod.card => 'card',

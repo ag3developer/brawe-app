@@ -440,6 +440,7 @@ sealed class CheckoutRequest with _$CheckoutRequest {
     @JsonKey(name: 'customer_fiscal_data')
     Map<String, dynamic>? customerFiscalData,
     @JsonKey(name: 'shipping_method') required String shippingMethod,
+    @JsonKey(name: 'shipping_cost') double? shippingCost,
     @JsonKey(name: 'payment_method') required String paymentMethod,
     @JsonKey(name: 'coupon_code') String? couponCode,
     @JsonKey(name: 'customer_note') String? customerNote,
