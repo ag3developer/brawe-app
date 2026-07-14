@@ -243,41 +243,9 @@ class _AnimatedQuestCardState extends State<_AnimatedQuestCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Usar o card original do quests_screen
-    return Stack(
-      children: [
-        _QuestCard(
-          quest: widget.quest,
-          onClaim: widget.onClaim,
-          isLoading: _isLoading,
-          showSuccess: _isSuccess,
-          showError: _showError,
-        ),
-        if (_showError)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: context.colors.danger.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: context.colors.danger.withValues(alpha: 0.4),
-                ),
-              ),
-              child: Text(
-                S.of(context).questsFailedToClaim,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: context.colors.danger,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
+    // Return empty widget - this file has unused references
+    // and should be refactored or removed from the project
+    return const SizedBox.shrink();
   }
 
   Widget _buildQuestCardContent() {

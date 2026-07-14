@@ -44,8 +44,9 @@ class StoriesViewModel extends _$StoriesViewModel {
     final updated = groups.map((g) {
       final hasThis = g.stories.any((s) => s.id == storyId);
       if (!hasThis) return g;
-      final newStories =
-          g.stories.map((s) => s.id == storyId ? s.copyWith(isSeen: true) : s).toList();
+      final newStories = g.stories
+          .map((s) => s.id == storyId ? s.copyWith(isSeen: true) : s)
+          .toList();
       final stillUnviewed = newStories.any((s) => !s.isSeen);
       return UserStoriesGroup(
         userId: g.userId,
@@ -88,13 +89,25 @@ class StoriesViewModel extends _$StoriesViewModel {
     int? durationSeconds,
     String? originPostId,
     String? idempotencyKey,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
-    await ref.read(storiesRepositoryProvider).createStory(
+    await ref
+        .read(storiesRepositoryProvider)
+        .createStory(
           localFilePath: localFilePath,
           caption: caption,
           durationSeconds: durationSeconds,
           originPostId: originPostId,
           idempotencyKey: idempotencyKey,
+          soundId: soundId,
+          soundTrimStartMs: soundTrimStartMs,
+          soundTrimEndMs: soundTrimEndMs,
+          soundVolume: soundVolume,
+          originalAudioVolume: originalAudioVolume,
         );
     // Recarrega o feed para mostrar o novo story imediatamente.
     state = const AsyncValue.loading();

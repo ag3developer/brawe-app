@@ -34,8 +34,7 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
     _tabs = TabController(length: 2, vsync: this);
     _scrollCtrl.addListener(_onScroll);
     // Carrega catálogo ao entrar
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _reload());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reload());
   }
 
   void _reload() {
@@ -58,15 +57,24 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
     super.dispose();
   }
 
-  void _openPlayer(BuildContext context, Sound sound) {
-    showModalBottomSheet(
+  Future<void> _openPlayer(BuildContext context, Sound sound) async {
+    // Inicia playback imediatamente
+    ref.read(soundPlayerViewModelProvider.notifier).play(sound);
+
+    // O bottom sheet do player devolve o `Sound` quando o usuário toca em
+    // "Usar" (`Navigator.pop(sound)` dentro do SoundPlayerBottomSheet).
+    // Precisamos propagar esse retorno para quem abriu ESTA tela
+    // (`SoundsCatalogScreen`) via `Navigator.push<Sound>`, senão a música
+    // escolhida nunca chega no create_post_sheet/story_composer.
+    final selected = await showModalBottomSheet<Sound>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => SoundPlayerBottomSheet(sound: sound),
     );
-    // Inicia playback imediatamente
-    ref.read(soundPlayerViewModelProvider.notifier).play(sound);
+    if (selected != null && context.mounted) {
+      Navigator.of(context).pop(selected);
+    }
   }
 
   @override
@@ -81,9 +89,7 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
             onSearch: (q) {
               _searchDebounce?.cancel();
               _searchDebounce = Timer(const Duration(milliseconds: 400), () {
-                ref
-                    .read(soundsCatalogViewModelProvider.notifier)
-                    .setSearch(q);
+                ref.read(soundsCatalogViewModelProvider.notifier).setSearch(q);
               });
             },
             onClearSearch: () {
@@ -98,10 +104,7 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
             // Tab 0 — Trending
             _TrendingTab(onTap: _openPlayer),
             // Tab 1 — Catálogo
-            _CatalogTab(
-              scrollCtrl: _scrollCtrl,
-              onTap: _openPlayer,
-            ),
+            _CatalogTab(scrollCtrl: _scrollCtrl, onTap: _openPlayer),
           ],
         ),
       ),
@@ -126,8 +129,10 @@ class _TrendingTab extends ConsumerWidget {
         child: CircularProgressIndicator(color: AppColors.mutedRed),
       ),
       error: (_, _) => Center(
-        child: Text(s.soundsEmptyTrending,
-            style: TextStyle(color: context.colors.textSecondary)),
+        child: Text(
+          s.soundsEmptyTrending,
+          style: TextStyle(color: context.colors.textSecondary),
+        ),
       ),
       data: (sounds) {
         if (sounds.isEmpty) {
@@ -155,24 +160,44 @@ class _CatalogTab extends ConsumerWidget {
 
   // Gêneros para o filtro
   static const _genreKeys = [
-    null, 'funk', 'sertanejo', 'pagode', 'forró',
-    'pop', 'rap', 'eletrônico', 'gospel', 'rock', 'mpb',
+    null,
+    'funk',
+    'sertanejo',
+    'pagode',
+    'forró',
+    'pop',
+    'rap',
+    'eletrônico',
+    'gospel',
+    'rock',
+    'mpb',
   ];
 
   String _genreLabel(S s, String? key) {
     if (key == null) return s.soundsGenreAll;
     switch (key) {
-      case 'funk':       return s.soundsGenreFunk;
-      case 'sertanejo':  return s.soundsGenreSertanejo;
-      case 'pagode':     return s.soundsGenrePagode;
-      case 'forró':      return s.soundsGenreForro;
-      case 'pop':        return s.soundsGenrePop;
-      case 'rap':        return s.soundsGenreRap;
-      case 'eletrônico': return s.soundsGenreElectro;
-      case 'gospel':     return s.soundsGenreGospel;
-      case 'rock':       return s.soundsGenreRock;
-      case 'mpb':        return s.soundsGenreMpb;
-      default:           return key;
+      case 'funk':
+        return s.soundsGenreFunk;
+      case 'sertanejo':
+        return s.soundsGenreSertanejo;
+      case 'pagode':
+        return s.soundsGenrePagode;
+      case 'forró':
+        return s.soundsGenreForro;
+      case 'pop':
+        return s.soundsGenrePop;
+      case 'rap':
+        return s.soundsGenreRap;
+      case 'eletrônico':
+        return s.soundsGenreElectro;
+      case 'gospel':
+        return s.soundsGenreGospel;
+      case 'rock':
+        return s.soundsGenreRock;
+      case 'mpb':
+        return s.soundsGenreMpb;
+      default:
+        return key;
     }
   }
 
@@ -202,17 +227,19 @@ class _CatalogTab extends ConsumerWidget {
                     .setGenre(key),
                 selectedColor: AppColors.mutedRed,
                 checkmarkColor: Colors.white,
-                backgroundColor:
-                    context.colors.surfaceHighest.withValues(alpha: 0.08),
+                backgroundColor: context.colors.surfaceHighest.withValues(
+                  alpha: 0.08,
+                ),
                 labelStyle: TextStyle(
                   color: selected ? Colors.white : context.colors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
                 side: BorderSide(
-                    color: selected
-                        ? AppColors.mutedRed
-                        : context.colors.border.withValues(alpha: 0.3)),
+                  color: selected
+                      ? AppColors.mutedRed
+                      : context.colors.border.withValues(alpha: 0.3),
+                ),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               );
@@ -238,7 +265,9 @@ class _CatalogTab extends ConsumerWidget {
                         padding: EdgeInsets.all(16),
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: AppColors.mutedRed, strokeWidth: 2),
+                            color: AppColors.mutedRed,
+                            strokeWidth: 2,
+                          ),
                         ),
                       );
                     }
@@ -281,11 +310,16 @@ class _SoundTile extends ConsumerWidget {
               height: 50,
               child: sound.coverUrl != null
                   ? CachedNetworkImage(
-                      imageUrl: sound.coverUrl!, fit: BoxFit.cover)
+                      imageUrl: sound.coverUrl!,
+                      fit: BoxFit.cover,
+                    )
                   : Container(
                       color: context.colors.surfaceHighest,
-                      child: Icon(LucideIcons.music,
-                          color: context.colors.textSecondary, size: 20),
+                      child: Icon(
+                        LucideIcons.music,
+                        color: context.colors.textSecondary,
+                        size: 20,
+                      ),
                     ),
             ),
           ),
@@ -316,9 +350,10 @@ class _SoundTile extends ConsumerWidget {
                 child: Text(
                   '#$rank',
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700),
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -327,9 +362,7 @@ class _SoundTile extends ConsumerWidget {
       title: Text(
         sound.title,
         style: TextStyle(
-          color: isCurrent
-              ? AppColors.mutedRed
-              : context.colors.textPrimary,
+          color: isCurrent ? AppColors.mutedRed : context.colors.textPrimary,
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
@@ -342,18 +375,27 @@ class _SoundTile extends ConsumerWidget {
             Text(
               sound.artist!.artistName,
               style: TextStyle(
-                  color: context.colors.textSecondary, fontSize: 12),
+                color: context.colors.textSecondary,
+                fontSize: 12,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
           if (sound.genre != null) ...[
-            Text(' · ',
-                style: TextStyle(color: context.colors.textTertiary, fontSize: 12)),
+            Text(
+              ' · ',
+              style: TextStyle(
+                color: context.colors.textTertiary,
+                fontSize: 12,
+              ),
+            ),
             Text(
               sound.genre!,
               style: TextStyle(
-                  color: context.colors.textTertiary, fontSize: 12),
+                color: context.colors.textTertiary,
+                fontSize: 12,
+              ),
             ),
           ],
         ],
@@ -362,13 +404,24 @@ class _SoundTile extends ConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(LucideIcons.share2, size: 11, color: context.colors.textTertiary),
-            const SizedBox(width: 3),
-            Text(_fmtCount(sound.usageCount),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                LucideIcons.share2,
+                size: 11,
+                color: context.colors.textTertiary,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                _fmtCount(sound.usageCount),
                 style: TextStyle(
-                    color: context.colors.textTertiary, fontSize: 11)),
-          ]),
+                  color: context.colors.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             _fmtDuration(sound.durationMs),
@@ -404,17 +457,31 @@ class _MiniPlayer extends ConsumerWidget {
     if (sound == null) return const SizedBox.shrink();
 
     return GestureDetector(
-      onTap: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => SoundPlayerBottomSheet(sound: sound),
-      ),
+      onTap: () async {
+        // Mesma propagação do botão "Usar" que existe em `_openPlayer`:
+        // se o usuário selecionar a música a partir do mini-player,
+        // também precisamos fechar `SoundsCatalogScreen` devolvendo o
+        // `Sound` escolhido (senão o create_post_sheet/story_composer
+        // nunca recebe a seleção).
+        final selected = await showModalBottomSheet<Sound>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => SoundPlayerBottomSheet(sound: sound),
+        );
+        if (selected != null && context.mounted) {
+          Navigator.of(context).pop(selected);
+        }
+      },
       child: Container(
         height: 60,
         decoration: BoxDecoration(
           color: context.colors.surfaceElevated,
-          border: Border(top: BorderSide(color: context.colors.border.withValues(alpha: 0.3))),
+          border: Border(
+            top: BorderSide(
+              color: context.colors.border.withValues(alpha: 0.3),
+            ),
+          ),
         ),
         child: Row(
           children: [
@@ -426,11 +493,17 @@ class _MiniPlayer extends ConsumerWidget {
                 height: 40,
                 child: sound.coverUrl != null
                     ? CachedNetworkImage(
-                        imageUrl: sound.coverUrl!, fit: BoxFit.cover)
+                        imageUrl: sound.coverUrl!,
+                        fit: BoxFit.cover,
+                      )
                     : Container(
                         color: context.colors.surfaceHighest,
-                        child: Icon(LucideIcons.music,
-                            color: context.colors.textSecondary, size: 16)),
+                        child: Icon(
+                          LucideIcons.music,
+                          color: context.colors.textSecondary,
+                          size: 16,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -439,19 +512,26 @@ class _MiniPlayer extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(sound.title,
-                      style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  Text(
+                    sound.title,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   if (sound.artist != null)
-                    Text(sound.artist!.artistName,
-                        style: TextStyle(
-                            color: context.colors.textSecondary, fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      sound.artist!.artistName,
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
@@ -460,10 +540,8 @@ class _MiniPlayer extends ConsumerWidget {
               width: 60,
               child: LinearProgressIndicator(
                 value: playerState.progress,
-                backgroundColor:
-                    context.colors.border.withValues(alpha: 0.3),
-                valueColor:
-                    const AlwaysStoppedAnimation(AppColors.mutedRed),
+                backgroundColor: context.colors.border.withValues(alpha: 0.3),
+                valueColor: const AlwaysStoppedAnimation(AppColors.mutedRed),
                 minHeight: 2,
               ),
             ),
@@ -477,8 +555,11 @@ class _MiniPlayer extends ConsumerWidget {
                   ref.read(soundPlayerViewModelProvider.notifier).play(sound),
             ),
             IconButton(
-              icon: Icon(Icons.close,
-                  size: 18, color: context.colors.textSecondary),
+              icon: Icon(
+                Icons.close,
+                size: 18,
+                color: context.colors.textSecondary,
+              ),
               onPressed: () =>
                   ref.read(soundPlayerViewModelProvider.notifier).stop(),
             ),
@@ -500,14 +581,17 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.music,
-              size: 56,
-              color: context.colors.textSecondary.withValues(alpha: 0.3)),
+          Icon(
+            LucideIcons.music,
+            size: 56,
+            color: context.colors.textSecondary.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 12),
-          Text(message,
-              style: TextStyle(
-                  color: context.colors.textSecondary, fontSize: 14),
-              textAlign: TextAlign.center),
+          Text(
+            message,
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

@@ -117,7 +117,13 @@ class StoriesService {
     int? durationSeconds,
     String? originPostId,
     String? idempotencyKey,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
+    final hasSound = soundId != null && soundId.isNotEmpty;
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
       if (caption != null && caption.trim().isNotEmpty)
@@ -125,6 +131,12 @@ class StoriesService {
       'duration_seconds': ?durationSeconds,
       if (originPostId != null && originPostId.isNotEmpty)
         'origin_post_id': originPostId,
+      if (hasSound) 'sound_id': soundId,
+      if (hasSound) 'sound_trim_start_ms': soundTrimStartMs,
+      if (hasSound && soundTrimEndMs != null)
+        'sound_trim_end_ms': soundTrimEndMs,
+      if (hasSound) 'sound_volume': soundVolume,
+      if (hasSound) 'original_audio_volume': originalAudioVolume,
     });
     final response = await _dio.post(
       '/stories/upload',

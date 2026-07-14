@@ -10,10 +10,14 @@ import 'dart:async';
 
 import '../../../../data/repositories/post_repository.dart';
 import '../../../../domain/models/feed_item.dart';
+import '../../../../domain/models/sound_preview.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../core/themes/force_dark_theme.dart';
 import '../../../feed/widgets/story_composer_screen.dart';
+import '../../../shared/widgets/content_sound_attribution.dart';
+import '../../../sounds/view_models/sound_player_view_model.dart';
+import '../../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../../view_models/feed_video_mute_provider.dart';
 import 'shared/_caption_block.dart';
 import 'shared/_feed_actions_rail.dart';
@@ -49,6 +53,15 @@ class _VideoViewState extends ConsumerState<VideoView> {
   Timer? _viewTimer;
   bool _viewSent = false;
 
+  /// Última posição observada do vídeo — detecta o wraparound do loop
+  /// para reiniciar a música anexada em sincronia (ver mesmo padrão em
+  /// `video_fullscreen_screen.dart`).
+  Duration _lastVideoPosition = Duration.zero;
+
+  bool get _hasSound => widget.item.sound != null;
+
+  String get _owner => 'feed:${widget.item.id}';
+
   @override
   void initState() {
     super.initState();
@@ -81,7 +94,14 @@ class _VideoViewState extends ConsumerState<VideoView> {
       await ctrl.initialize();
       await ctrl.setLooping(true);
       final muted = ref.read(feedVideoMuteProvider);
-      await ctrl.setVolume(muted ? 0.0 : 1.0);
+      // Brawe Sound: sem mixagem server-side — quando há faixa anexada, o
+      // áudio ORIGINAL do vídeo toca no volume definido pelo autor
+      // (geralmente abaixado/mutado) para não competir com a música.
+      final baseVolume = _hasSound
+          ? widget.item.originalAudioVolume.clamp(0.0, 1.0)
+          : 1.0;
+      await ctrl.setVolume(muted ? 0.0 : baseVolume);
+      ctrl.addListener(_onVideoTick);
       if (!mounted) {
         await ctrl.dispose();
         return;
@@ -94,11 +114,25 @@ class _VideoViewState extends ConsumerState<VideoView> {
     }
   }
 
+  /// Detecta o wraparound do loop do vídeo para reiniciar a música
+  /// anexada em sincronia (o `ClippingAudioSource` não tem loop nativo).
+  void _onVideoTick() {
+    if (!_hasSound) return;
+    final c = _ctrl;
+    if (c == null) return;
+    final pos = c.value.position;
+    if (pos < _lastVideoPosition) {
+      ref.read(soundPlayerViewModelProvider.notifier).seek(0.0);
+    }
+    _lastVideoPosition = pos;
+  }
+
   void _applyActiveState() {
     final c = _ctrl;
     if (c == null || !_initialized) return;
     if (widget.isActive && !_userPaused) {
       c.play();
+      _playAttachedSound();
       _scheduleViewTracking();
     } else {
       c.pause();
@@ -106,7 +140,29 @@ class _VideoViewState extends ConsumerState<VideoView> {
       if (!widget.isActive) {
         c.seekTo(Duration.zero);
         _userPaused = false;
+        if (_hasSound) {
+          ref.read(soundPlayerViewModelProvider.notifier).stop();
+        }
+      } else if (_hasSound) {
+        ref.read(soundPlayerViewModelProvider.notifier).pause();
       }
+    }
+  }
+
+  /// Toca a música do Brawe Sounds anexada a este vídeo (se houver) —
+  /// respeitando o mute global do feed e o volume específico do post.
+  void _playAttachedSound() {
+    final sound = widget.item.sound;
+    if (sound == null) return;
+    final muted = ref.read(feedVideoMuteProvider);
+    ref
+        .read(soundPlayerViewModelProvider.notifier)
+        .play(
+          sound.toPlayableSound(volume: widget.item.soundVolume),
+          owner: _owner,
+        );
+    if (muted) {
+      ref.read(soundPlayerViewModelProvider.notifier).setVolume(0);
     }
   }
 
@@ -124,11 +180,24 @@ class _VideoViewState extends ConsumerState<VideoView> {
 
   void _disposeController() {
     _viewTimer?.cancel();
+    _ctrl?.removeListener(_onVideoTick);
     _ctrl?.dispose();
     _ctrl = null;
     _initialized = false;
     _failed = false;
     _userPaused = false;
+    if (_hasSound) {
+      // `stop()` é assíncrono — dispara fire-and-forget com timeout de
+      // segurança para nunca deixar áudio órfão tocando após o card sair
+      // da tela (o PageView descarta este State ao trocar de página).
+      unawaited(
+        ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .stop()
+            .timeout(const Duration(seconds: 2))
+            .catchError((_) {}),
+      );
+    }
   }
 
   @override
@@ -146,11 +215,17 @@ class _VideoViewState extends ConsumerState<VideoView> {
         _viewTimer?.cancel();
         _userPaused = true;
         _showPlayHint = true;
+        if (_hasSound) {
+          ref.read(soundPlayerViewModelProvider.notifier).pause();
+        }
       } else {
         c.play();
         _userPaused = false;
         _showPlayHint = false;
         _scheduleViewTracking();
+        if (_hasSound) {
+          _playAttachedSound();
+        }
       }
     });
   }
@@ -158,7 +233,32 @@ class _VideoViewState extends ConsumerState<VideoView> {
   void _toggleMute() {
     ref.read(feedVideoMuteProvider.notifier).toggle();
     final muted = ref.read(feedVideoMuteProvider);
-    _ctrl?.setVolume(muted ? 0.0 : 1.0);
+    final baseVolume = _hasSound
+        ? widget.item.originalAudioVolume.clamp(0.0, 1.0)
+        : 1.0;
+    _ctrl?.setVolume(muted ? 0.0 : baseVolume);
+    if (_hasSound) {
+      ref
+          .read(soundPlayerViewModelProvider.notifier)
+          .setVolume(muted ? 0.0 : widget.item.soundVolume.clamp(0.0, 1.0));
+    }
+  }
+
+  /// Abre o preview da faixa no bottom sheet, pausando o vídeo (áudio
+  /// original) enquanto o player único continua tocando a faixa — evita
+  /// duas fontes de áudio simultâneas (mesmo padrão do fullscreen).
+  Future<void> _openSoundDetails(SoundPreview sound) async {
+    final wasPlaying = _ctrl?.value.isPlaying ?? false;
+    _ctrl?.pause();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SoundPlayerBottomSheet(
+        sound: sound.toPlayableSound(volume: widget.item.soundVolume),
+      ),
+    );
+    if (mounted && wasPlaying) _ctrl?.play();
   }
 
   void _repostAsStory() {
@@ -182,7 +282,15 @@ class _VideoViewState extends ConsumerState<VideoView> {
   Widget build(BuildContext context) {
     // Reage a mudanças globais de mute (ex: outro vídeo desmutou)
     ref.listen<bool>(feedVideoMuteProvider, (_, muted) {
-      _ctrl?.setVolume(muted ? 0.0 : 1.0);
+      final baseVolume = _hasSound
+          ? widget.item.originalAudioVolume.clamp(0.0, 1.0)
+          : 1.0;
+      _ctrl?.setVolume(muted ? 0.0 : baseVolume);
+      if (_hasSound) {
+        ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .setVolume(muted ? 0.0 : widget.item.soundVolume.clamp(0.0, 1.0));
+      }
     });
     final muted = ref.watch(feedVideoMuteProvider);
     final isPlaying = _ctrl?.value.isPlaying ?? false;
@@ -266,8 +374,11 @@ class _VideoViewState extends ConsumerState<VideoView> {
                       width: 1.5,
                     ),
                   ),
-                  child: const Icon(Icons.play_arrow_rounded,
-                      color: Colors.white, size: 48),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 48,
+                  ),
                 ),
               ),
             ),
@@ -293,11 +404,16 @@ class _VideoViewState extends ConsumerState<VideoView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.white54, size: 40),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white54,
+                      size: 40,
+                    ),
                     const SizedBox(height: 8),
-                    Text(S.of(context).videoLoadError,
-                        style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      S.of(context).videoLoadError,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -327,13 +443,33 @@ class _VideoViewState extends ConsumerState<VideoView> {
             child: FeedActionsRail(item: widget.item),
           ),
 
-          // ── Legenda + autor ────────────────────────────────────
+          // ── Legenda + autor (+ atribuição musical, se houver) ──
           Positioned(
             left: 16,
             right: 90,
             bottom: 100,
-            child: CaptionBlock(
-                author: widget.item.author, caption: widget.item.caption),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.item.sound != null) ...[
+                  ContentSoundAttribution(
+                    trackId: widget.item.sound!.id,
+                    title: widget.item.sound!.title,
+                    artistName: widget.item.sound!.artistName,
+                    coverUrl: widget.item.sound!.coverUrl,
+                    isPlaying: isPlaying && !muted,
+                    contentType: ContentSoundSurface.video,
+                    onTap: () => _openSoundDetails(widget.item.sound!),
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                CaptionBlock(
+                  author: widget.item.author,
+                  caption: widget.item.caption,
+                ),
+              ],
+            ),
           ),
 
           // ── Barra de progresso fina na base ────────────────────
@@ -380,9 +516,7 @@ class _MuteButton extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.black.withValues(alpha: 0.5),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
           ),
           alignment: Alignment.center,
           child: Icon(
@@ -418,9 +552,7 @@ class _RepostStoryButton extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.black.withValues(alpha: 0.5),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             alignment: Alignment.center,
             child: const Icon(

@@ -18,6 +18,11 @@ import 'package:video_player/video_player.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../domain/models/sound.dart';
+import '../../shared/widgets/volume_mixer_sheet.dart';
+import '../../sounds/view_models/sound_player_view_model.dart';
+import '../../sounds/widgets/sound_trim_screen.dart';
+import '../../sounds/widgets/sounds_catalog_screen.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_video_trim_screen.dart';
 
@@ -91,6 +96,22 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   /// os segmentos do mesmo upload e descartada quando a tela é fechada.
   final String _idempotencyKey = const Uuid().v4();
 
+  // ── Brawe Sound: música anexada ao story (opcional) ───────────────
+  Sound? _selectedSound;
+  // Trecho ESPECÍFICO escolhido para ESTE story (teto = 60s, igual ao
+  // limite de duração de vídeo/story validado no backend).
+  static const Duration _kMaxSoundTrim = Duration(seconds: 60);
+  int _soundTrimStartMs = 0;
+  int? _soundTrimEndMs;
+
+  // Fase D: volumes específicos do MIX entre a música anexada e o áudio
+  // original do vídeo — persistidos com o story (`sound_volume`/
+  // `original_audio_volume`, já suportados pelo backend/payload). Default
+  // 1.0/1.0 preserva o comportamento anterior quando o usuário não abre
+  // o mixer de volumes.
+  double _soundVolume = 1.0;
+  double _originalAudioVolume = 1.0;
+
   // ── Live camera preview (background of picker) ──────────────────────
   CameraController? _camCtrl;
   Future<void>? _camInitFuture;
@@ -157,7 +178,92 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     _recordTicker?.cancel();
     _videoCtrl?.dispose();
     _camCtrl?.dispose();
+    ref.read(soundPlayerViewModelProvider.notifier).stop();
     super.dispose();
+  }
+
+  /// Abre o catálogo do Brawe Sounds para escolher uma música pro story.
+  /// Reaproveita a mesma tela usada em `create_post_sheet.dart`.
+  Future<void> _pickSound() async {
+    ref.read(soundPlayerViewModelProvider.notifier).stop();
+    final sound = await Navigator.of(context).push<Sound>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => const SoundsCatalogScreen(),
+      ),
+    );
+    if (sound != null && mounted) {
+      ref.read(soundPlayerViewModelProvider.notifier).stop();
+      await _openTrimScreen(sound);
+    }
+  }
+
+  /// Abre a tela de trim para o usuário escolher o trecho ESPECÍFICO
+  /// deste story.
+  Future<void> _openTrimScreen(Sound sound) async {
+    final result = await SoundTrimScreen.push(
+      context,
+      sound: sound,
+      maxDuration: _kMaxSoundTrim,
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedSound = sound;
+        _soundTrimStartMs = result.trimStartMs;
+        _soundTrimEndMs = result.trimEndMs;
+        // Nova faixa — reseta o mix de volumes para o default (1.0/1.0)
+        // em vez de herdar valores de uma faixa anterior removida.
+        _soundVolume = 1.0;
+        _originalAudioVolume = 1.0;
+      });
+    }
+  }
+
+  /// Reabre a tela de trim para AJUSTAR o trecho de uma música já
+  /// selecionada (tap no chip).
+  Future<void> _editTrim() async {
+    final sound = _selectedSound;
+    if (sound == null) return;
+    await _openTrimScreen(sound);
+  }
+
+  void _removeSound() {
+    ref.read(soundPlayerViewModelProvider.notifier).stop();
+    setState(() {
+      _selectedSound = null;
+      _soundTrimStartMs = 0;
+      _soundTrimEndMs = null;
+      _soundVolume = 1.0;
+      _originalAudioVolume = 1.0;
+    });
+  }
+
+  /// Fase D: abre o mixer de volumes (música anexada × áudio original do
+  /// vídeo) com preview em tempo real — ajusta o volume do
+  /// `SoundPlayerViewModel` (música) e do `VideoPlayerController` local
+  /// (áudio original) enquanto o usuário arrasta os sliders, e persiste
+  /// os valores finais em [_soundVolume]/[_originalAudioVolume] para
+  /// envio no payload existente de `createStory` (restauração ao reabrir
+  /// a edição não se aplica aqui — story é criado uma única vez — mas os
+  /// valores ficam disponíveis para o `_StoryEditor` durante toda a
+  /// sessão de composição).
+  Future<void> _openVolumeMixer() async {
+    if (_selectedSound == null) return;
+    HapticFeedback.selectionClick();
+    await VolumeMixerSheet.show(
+      context,
+      initialMusicVolume: _soundVolume,
+      initialOriginalVolume: _originalAudioVolume,
+      musicTitle: _selectedSound!.title,
+      onMusicVolumeChanged: (v) {
+        setState(() => _soundVolume = v);
+        ref.read(soundPlayerViewModelProvider.notifier).setVolume(v);
+      },
+      onOriginalVolumeChanged: (v) {
+        setState(() => _originalAudioVolume = v);
+        _videoCtrl?.setVolume(v);
+      },
+    );
   }
 
   Future<void> _initCameraPreview() async {
@@ -485,10 +591,15 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
         for (int i = 0; i < _videoSegments.length; i++) {
           await notifier.createStory(
             localFilePath: _videoSegments[i].path,
-            // Caption apenas no primeiro segmento (padrão Instagram)
+            // Caption e música apenas no primeiro segmento (padrão Instagram)
             caption: i == 0 ? caption : null,
             originPostId: widget.initialOriginPostId,
             idempotencyKey: '$_idempotencyKey:$i',
+            soundId: i == 0 ? _selectedSound?.id : null,
+            soundTrimStartMs: i == 0 ? _soundTrimStartMs : 0,
+            soundTrimEndMs: i == 0 ? _soundTrimEndMs : null,
+            soundVolume: i == 0 ? _soundVolume : 1.0,
+            originalAudioVolume: i == 0 ? _originalAudioVolume : 1.0,
           );
         }
       } else {
@@ -501,6 +612,13 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
           durationSeconds: videoDurSec(),
           originPostId: widget.initialOriginPostId,
           idempotencyKey: _idempotencyKey,
+          soundId: _selectedSound?.id,
+          soundTrimStartMs: _soundTrimStartMs,
+          soundTrimEndMs: _soundTrimEndMs,
+          // Fase D: mix de volumes definido pelo usuário no
+          // `VolumeMixerSheet` (default 1.0/1.0 quando não ajustado).
+          soundVolume: _soundVolume,
+          originalAudioVolume: _originalAudioVolume,
         );
       }
       if (!mounted) return;
@@ -522,6 +640,16 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       // explícita) e deixamos o usuário voltar pra tela de stories — o
       // feed que recarrega vai mostrar se foi publicado ou não.
       //
+      // Também tratamos 500 (`badResponse`) como AMBÍGUO: o endpoint
+      // POST /stories/upload faz o commit principal do story e SÓ DEPOIS
+      // roda passos "extra" (incrementar contagem de uso da música,
+      // buscar preview da faixa para a resposta). Se qualquer um desses
+      // passos pós-commit falhar no servidor, o cliente recebe 500 —
+      // mas o story JÁ ESTÁ publicado e visível no feed. Sem essa
+      // heurística, o usuário via "falha ao publicar" para um story que
+      // na verdade foi criado com sucesso (bug relatado: "story aparece
+      // como erro, mas já está publicado quando eu vou ver").
+      //
       // Em todos os outros casos (4xx, sem rede, etc) é uma falha real
       // e podemos liberar o lock pra ele tentar de novo (com a mesma
       // idempotency key — backend deduplicará se já gravou).
@@ -530,7 +658,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout;
-      if (isTimeout) {
+      final isServerError =
+          e.type == DioExceptionType.badResponse &&
+          (e.response?.statusCode ?? 0) >= 500;
+      if (isTimeout || isServerError) {
         AppSnackBar.showWarning(
           context,
           S.of(context).composerPublishTimeoutMaybe,
@@ -832,6 +963,11 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       videoCtrl: _videoCtrl,
       isPublishing: _isPublishing,
       isRepost: _isRepostMode,
+      selectedSound: _selectedSound,
+      onPickSound: _pickSound,
+      onEditSoundTrim: _editTrim,
+      onRemoveSound: _removeSound,
+      onOpenVolumeMixer: _openVolumeMixer,
       onBack: () async {
         await _videoCtrl?.dispose();
         _videoCtrl = null;
@@ -1094,11 +1230,18 @@ class _PickerOption extends StatelessWidget {
 }
 
 class _CircleIconBtn extends StatelessWidget {
-  const _CircleIconBtn({required this.icon, required this.onTap});
+  const _CircleIconBtn({
+    required this.icon,
+    required this.onTap,
+    this.iconColor,
+  });
   final IconData icon;
   // Aceita `null` para representar estado desabilitado (ex.: enquanto a ação
   // está em progresso). `GestureDetector.onTap` já aceita callback nulo.
   final VoidCallback? onTap;
+  // Cor customizada do ícone (ex.: destacar quando um estado está ativo).
+  // `null` usa o branco padrão.
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1112,7 +1255,7 @@ class _CircleIconBtn extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
       ),
     );
   }
@@ -1130,6 +1273,11 @@ class _StoryEditor extends StatefulWidget {
     required this.onPublish,
     required this.onTrim,
     this.isRepost = false,
+    this.selectedSound,
+    required this.onPickSound,
+    required this.onEditSoundTrim,
+    required this.onRemoveSound,
+    required this.onOpenVolumeMixer,
   });
 
   final File file;
@@ -1145,6 +1293,21 @@ class _StoryEditor extends StatefulWidget {
   /// (`_StoryComposerScreenState`), porque é ele quem detém o
   /// `VideoPlayerController` e precisa recriá-lo após o corte.
   final Future<void> Function() onTrim;
+
+  /// Brawe Sound: música anexada ao story (opcional), e callbacks para
+  /// selecionar/remover — implementados pelo parent (que detém o player).
+  final Sound? selectedSound;
+  final Future<void> Function() onPickSound;
+
+  /// Reabre a tela de trim para ajustar o trecho da música já selecionada
+  /// (tap no chip).
+  final Future<void> Function() onEditSoundTrim;
+  final VoidCallback onRemoveSound;
+
+  /// Fase D: abre o `VolumeMixerSheet` para ajustar o volume da música e
+  /// do áudio original do vídeo (só relevante quando `isVideo &&
+  /// selectedSound != null` — o botão só é exibido nesse caso).
+  final Future<void> Function() onOpenVolumeMixer;
 
   @override
   State<_StoryEditor> createState() => _StoryEditorState();
@@ -1658,6 +1821,16 @@ class _StoryEditorState extends State<_StoryEditor> {
                     ),
                     const SizedBox(width: 8),
                   ],
+                  // Botão "música" — abre o catálogo do Brawe Sounds.
+                  // Ícone muda de cor quando já há música selecionada.
+                  _CircleIconBtn(
+                    icon: Icons.music_note_rounded,
+                    iconColor: widget.selectedSound != null
+                        ? const Color(0xFFE11D48)
+                        : null,
+                    onTap: () => widget.onPickSound(),
+                  ),
+                  const SizedBox(width: 8),
                   // Botão "salvar no dispositivo" (download).
                   // Ícone de seta-pra-baixo: padrão Instagram/TikTok.
                   // Funciona pra foto (com overlays via flatten) e vídeo
@@ -1693,18 +1866,70 @@ class _StoryEditorState extends State<_StoryEditor> {
           // Não tem mais campo de "caption" inferior (texto vive como overlay
           // na própria mídia). Em vez disso, uma pill "Seu story" indica
           // o destino + botão "Compartilhar" pill grande à direita.
+          // Quando há música selecionada, mostra um chip acima da bottom bar.
           if (!_capturing)
             Positioned(
               left: 16,
               right: 16,
               bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StoryDestinationPill(label: S.of(context).composerYourStory),
-                  const Spacer(),
-                  _ShareButton(
-                    loading: widget.isPublishing,
-                    onPressed: _flattenAndPublish,
+                  if (widget.selectedSound != null) ...[
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: widget.onEditSoundTrim,
+                          child: _SelectedStorySoundChip(
+                            sound: widget.selectedSound!,
+                            onRemove: widget.onRemoveSound,
+                          ),
+                        ),
+                        // Fase D: mixer de volumes (música × áudio
+                        // original) — só faz sentido quando há um
+                        // ÁUDIO ORIGINAL para balancear, ou seja, em
+                        // stories de VÍDEO. Em foto, não há áudio
+                        // original e o slider único (soundVolume) já
+                        // é suficiente.
+                        if (widget.isVideo) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: widget.onOpenVolumeMixer,
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.tune_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Row(
+                    children: [
+                      _StoryDestinationPill(
+                        label: S.of(context).composerYourStory,
+                      ),
+                      const Spacer(),
+                      _ShareButton(
+                        loading: widget.isPublishing,
+                        onPressed: _flattenAndPublish,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2419,6 +2644,93 @@ class _GuideTag extends StatelessWidget {
 // Substitui a antiga "caption inferior" (tipo Insta de 2014) pelo padrão
 // moderno: texto vive como overlay arrastável, bottom bar é só destino +
 // CTA de publicar.
+
+/// Chip da música selecionada (Brawe Sounds) exibido acima da bottom bar
+/// do editor de stories. Espelha `_SelectedSoundChip` do
+/// `create_post_sheet.dart` — mesmo visual (cor de destaque rosa/red,
+/// cover thumbnail, título + artista, botão de remover).
+class _SelectedStorySoundChip extends StatelessWidget {
+  const _SelectedStorySoundChip({required this.sound, required this.onRemove});
+  final Sound sound;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE11D48).withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (sound.coverUrl != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                sound.coverUrl!,
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallbackIcon(),
+              ),
+            )
+          else
+            _fallbackIcon(),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sound.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (sound.artist?.artistName != null)
+                  Text(
+                    sound.artist!.artistName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 10,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(Icons.close, color: Colors.white, size: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fallbackIcon() => Container(
+    width: 28,
+    height: 28,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE11D48).withValues(alpha: 0.2),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: const Icon(Icons.music_note, color: Color(0xFFE11D48), size: 16),
+  );
+}
 
 /// Botão "Aa" da top bar — versão mais legível e moderna do antigo
 /// `_CircleIconBtn(icon: Icons.text_fields)`. Usa label de texto "Aa" no

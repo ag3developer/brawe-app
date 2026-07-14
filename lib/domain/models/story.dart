@@ -1,3 +1,5 @@
+import 'sound_preview.dart';
+
 class Story {
   const Story({
     required this.id,
@@ -19,6 +21,9 @@ class Story {
     this.originPostId,
     this.mediaWidth,
     this.mediaHeight,
+    this.sound,
+    this.soundVolume = 1.0,
+    this.originalAudioVolume = 1.0,
   });
 
   final String id;
@@ -38,6 +43,16 @@ class Story {
   final bool isSeen;
   final bool isVerified;
   final String? originPostId;
+
+  /// Música do Brawe Sounds anexada a este story (opcional).
+  final SoundPreview? sound;
+
+  /// Volume da música anexada (0.0-1.0) ESPECÍFICO deste story.
+  final double soundVolume;
+
+  /// Volume do áudio ORIGINAL do vídeo (0.0-1.0) quando há música
+  /// anexada. Sem música anexada, é ignorado.
+  final double originalAudioVolume;
 
   /// Dimensões originais da mídia (disponíveis quando publicado pela web).
   /// Usadas para calcular o fit correto no viewer — evita corte indesejado
@@ -99,6 +114,9 @@ class Story {
     originPostId: originPostId,
     mediaWidth: mediaWidth,
     mediaHeight: mediaHeight,
+    sound: sound,
+    soundVolume: soundVolume,
+    originalAudioVolume: originalAudioVolume,
   );
 }
 

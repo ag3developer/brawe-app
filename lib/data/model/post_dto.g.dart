@@ -45,6 +45,12 @@ _PostResponseDto _$PostResponseDtoFromJson(
       ? null
       : AuthorResponseDto.fromJson(json['reposted_by'] as Map<String, dynamic>),
   repostCreatedAt: json['repost_created_at'] as String?,
+  sound: json['sound'] == null
+      ? null
+      : SoundPreview.fromJson(json['sound'] as Map<String, dynamic>),
+  soundVolume: (json['sound_volume'] as num?)?.toDouble() ?? 1.0,
+  originalAudioVolume:
+      (json['original_audio_volume'] as num?)?.toDouble() ?? 1.0,
 );
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
@@ -65,6 +71,9 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'user_following_author': instance.userFollowingAuthor,
       'reposted_by': instance.repostedBy,
       'repost_created_at': instance.repostCreatedAt,
+      'sound': instance.sound,
+      'sound_volume': instance.soundVolume,
+      'original_audio_volume': instance.originalAudioVolume,
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>

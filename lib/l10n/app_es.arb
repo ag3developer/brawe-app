@@ -468,6 +468,12 @@
   },
   "trimError": "No se pudo guardar el video recortado.",
   "trimHint": "Arrastra los controles para elegir inicio y fin",
+  "volumeMixerButtonLabel": "Volúmenes",
+  "volumeMixerTitle": "Volúmenes",
+  "volumeMixerSubtitle": "Ajusta el volumen de la música y el audio original del video",
+  "volumeMixerMusicLabel": "Música",
+  "volumeMixerOriginalLabel": "Audio original del video",
+  "volumeMixerDone": "Listo",
   "giftTierFree": "Bóveda",
   "@giftTierFree": {
     "description": "Pestaña/categoría del nivel gratuito de regalos (pagados con monedas/XP de quests). Renombrado de 'Free' a 'Bóveda' — transmite que son regalos de una reserva que el usuario acumuló con su actividad, no con dinero real."
@@ -1889,6 +1895,35 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "postSoundRemove": "Quitar sonido",
+
+  "contentSoundOriginalAudio": "Audio original",
+  "contentSoundUseThis": "Usar este sonido",
+  "contentSoundUnavailable": "Sonido no disponible",
+  "contentSoundView": "Ver sonido",
+  "contentSoundNowPlaying": "Reproduciendo ahora",
+  "contentSoundByArtist": "{title} · {artist}",
+  "@contentSoundByArtist": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "artist": { "type": "String" }
+    }
+  },
+
+  "soundTrimTitle": "Cortar música",
+  "soundTrimSave": "Listo",
+  "soundTrimCancel": "Cancelar",
+  "soundTrimHint": "Arrastra las asas para elegir el fragmento de la música",
+  "soundTrimMaxDuration": "Máximo {seconds}s para este contenido",
+  "@soundTrimMaxDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimSelectedDuration": "{seconds}s seleccionados",
+  "@soundTrimSelectedDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimError": "No se pudo procesar el fragmento seleccionado.",
+  "soundVolumeLabel": "Volumen de la música",
+  "originalAudioVolumeLabel": "Volumen del audio original",
 
   "analyticsViewersTitle": "Audiencia",
   "analyticsViewersTotalViewers": "Total de viewers",

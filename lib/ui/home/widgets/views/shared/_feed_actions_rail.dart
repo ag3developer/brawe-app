@@ -64,24 +64,26 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     if (!_isPost) return; // sem endpoint para lives
 
     try {
-      await ref.read(postRepositoryProvider).toggleLike(widget.item.id, prevLiked);
+      await ref
+          .read(postRepositoryProvider)
+          .toggleLike(widget.item.id, prevLiked);
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _liked = prevLiked;
         _likesCount = prevCount;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedCannotLike)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedCannotLike)));
     }
   }
 
   void _onComment() {
     if (!_isPost) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedUseLiveChat)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedUseLiveChat)));
       return;
     }
     showModalBottomSheet(
@@ -89,9 +91,8 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       isScrollControlled: true,
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ForceDarkTheme(
-        child: CommentsSheet(postId: widget.item.id),
-      ),
+      builder: (_) =>
+          ForceDarkTheme(child: CommentsSheet(postId: widget.item.id)),
     );
   }
 
@@ -110,9 +111,9 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       await Share.share('$caption\n\n$url');
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedCannotShare)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedCannotShare)));
     }
   }
 
@@ -136,18 +137,18 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _following = prev);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedCannotFollow)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedCannotFollow)));
     } finally {
       if (mounted) setState(() => _busyFollow = false);
     }
   }
 
   void _onGift() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(S.of(context).giftComingSoon)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(S.of(context).giftComingSoon)));
   }
 
   void _onProfile() {
@@ -166,12 +167,14 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       });
     }
     try {
-      await ref.read(postRepositoryProvider).react(widget.item.id, reactionType);
+      await ref
+          .read(postRepositoryProvider)
+          .react(widget.item.id, reactionType);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedCannotLike)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(S.of(context).feedCannotLike)));
     }
   }
 
@@ -235,65 +238,68 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     final i = widget.item;
     return switch (i) {
       VideoFeedItem() => VideoFeedItem(
-          id: i.id,
-          author: i.author,
-          likesCount: _likesCount,
-          commentsCount: i.commentsCount,
-          sharesCount: i.sharesCount,
-          userLiked: _liked,
-          userFollowingAuthor: _following,
-          caption: i.caption,
-          viewsCount: i.viewsCount,
-          videoUrl: i.videoUrl,
-          thumbnailUrl: i.thumbnailUrl,
-          duration: i.duration,
-        ),
+        id: i.id,
+        author: i.author,
+        likesCount: _likesCount,
+        commentsCount: i.commentsCount,
+        sharesCount: i.sharesCount,
+        userLiked: _liked,
+        userFollowingAuthor: _following,
+        caption: i.caption,
+        viewsCount: i.viewsCount,
+        videoUrl: i.videoUrl,
+        thumbnailUrl: i.thumbnailUrl,
+        duration: i.duration,
+        sound: i.sound,
+        soundVolume: i.soundVolume,
+        originalAudioVolume: i.originalAudioVolume,
+      ),
       PhotoPostFeedItem() => PhotoPostFeedItem(
-          id: i.id,
-          author: i.author,
-          likesCount: _likesCount,
-          commentsCount: i.commentsCount,
-          sharesCount: i.sharesCount,
-          userLiked: _liked,
-          userFollowingAuthor: _following,
-          caption: i.caption,
-          viewsCount: i.viewsCount,
-          imageUrl: i.imageUrl,
-          createdAt: i.createdAt,
-        ),
+        id: i.id,
+        author: i.author,
+        likesCount: _likesCount,
+        commentsCount: i.commentsCount,
+        sharesCount: i.sharesCount,
+        userLiked: _liked,
+        userFollowingAuthor: _following,
+        caption: i.caption,
+        viewsCount: i.viewsCount,
+        imageUrl: i.imageUrl,
+        createdAt: i.createdAt,
+      ),
       LiveChatItem() => LiveChatItem(
-          id: i.id,
-          author: i.author,
-          likesCount: _likesCount,
-          commentsCount: i.commentsCount,
-          sharesCount: i.sharesCount,
-          userLiked: _liked,
-          userFollowingAuthor: _following,
-          caption: i.caption,
-          viewsCount: i.viewsCount,
-          thumbnailUrl: i.thumbnailUrl,
-          viewerCount: i.viewerCount,
-          topic: i.topic,
-          slug: i.slug,
-          streamUrl: i.streamUrl,
-        ),
+        id: i.id,
+        author: i.author,
+        likesCount: _likesCount,
+        commentsCount: i.commentsCount,
+        sharesCount: i.sharesCount,
+        userLiked: _liked,
+        userFollowingAuthor: _following,
+        caption: i.caption,
+        viewsCount: i.viewsCount,
+        thumbnailUrl: i.thumbnailUrl,
+        viewerCount: i.viewerCount,
+        topic: i.topic,
+        slug: i.slug,
+        streamUrl: i.streamUrl,
+      ),
       LiveCommerceItem() => LiveCommerceItem(
-          id: i.id,
-          author: i.author,
-          likesCount: _likesCount,
-          commentsCount: i.commentsCount,
-          sharesCount: i.sharesCount,
-          userLiked: _liked,
-          userFollowingAuthor: _following,
-          caption: i.caption,
-          viewsCount: i.viewsCount,
-          thumbnailUrl: i.thumbnailUrl,
-          viewerCount: i.viewerCount,
-          products: i.products,
-          featuredProductId: i.featuredProductId,
-          slug: i.slug,
-          streamUrl: i.streamUrl,
-        ),
+        id: i.id,
+        author: i.author,
+        likesCount: _likesCount,
+        commentsCount: i.commentsCount,
+        sharesCount: i.sharesCount,
+        userLiked: _liked,
+        userFollowingAuthor: _following,
+        caption: i.caption,
+        viewsCount: i.viewsCount,
+        thumbnailUrl: i.thumbnailUrl,
+        viewerCount: i.viewerCount,
+        products: i.products,
+        featuredProductId: i.featuredProductId,
+        slug: i.slug,
+        streamUrl: i.streamUrl,
+      ),
       LiveBattleItem() => i, // Battle não muda
     };
   }

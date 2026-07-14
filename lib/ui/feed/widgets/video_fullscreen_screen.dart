@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +10,11 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../data/services/feedback_service.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/post.dart';
+import '../../../domain/models/sound_preview.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../shared/widgets/content_sound_attribution.dart';
+import '../../sounds/view_models/sound_player_view_model.dart';
+import '../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../view_models/feed_view_model.dart';
 import 'comments_sheet.dart';
 import 'reactions_bar.dart';
@@ -35,7 +41,8 @@ class VideoFullscreenScreen extends ConsumerStatefulWidget {
       _VideoFullscreenScreenState();
 }
 
-class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
+class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
+    with WidgetsBindingObserver {
   VideoPlayerController? _ctrl;
   Post? _post;
   bool _loading = true;
@@ -43,18 +50,81 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
   bool _muted = false;
   bool _controlsVisible = true;
 
+  /// `true` quando o vídeo/música foram pausados automaticamente pelo
+  /// lifecycle do app (background) — distingue de uma pausa manual do
+  /// usuário via toque, que nunca deve ser retomada sozinha ao voltar.
+  bool _pausedByLifecycle = false;
+
+  /// Última posição observada do vídeo — usada para detectar quando o
+  /// loop (`setLooping(true)`) reinicia o vídeo do zero, para então
+  /// reiniciar a música do Brawe Sounds em sincronia (senão a música
+  /// toca uma vez só enquanto o vídeo continua repetindo).
+  Duration _lastVideoPosition = Duration.zero;
+
+  /// Timer throttled de correção de drift entre vídeo (master clock) e
+  /// música anexada — nunca faz seek por frame.
+  Timer? _syncTimer;
+  static const _driftCheckInterval = Duration(milliseconds: 600);
+  static const _driftThreshold = Duration(milliseconds: 300);
+
+  /// Sessão do bootstrap atual — permite abortar callbacks assíncronos
+  /// (ex.: aguardando o player de música ficar pronto) se a tela for
+  /// fechada antes deles terminarem.
+  int _session = 0;
+
+  String get _owner => 'fullscreen:${widget.postId}';
+
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    WidgetsBinding.instance.addObserver(this);
     _bootstrap();
   }
 
+  /// Fase A: pausa vídeo + música quando o app sai de foreground e
+  /// retoma ao voltar (nunca sobre uma pausa manual do usuário).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        final c = _ctrl;
+        if (c != null && c.value.isPlaying) {
+          _pausedByLifecycle = true;
+          c.pause();
+          if (_post?.sound != null) {
+            ref.read(soundPlayerViewModelProvider.notifier).pause();
+          }
+        }
+        break;
+      case AppLifecycleState.resumed:
+        if (_pausedByLifecycle) {
+          _pausedByLifecycle = false;
+          _ctrl?.play();
+          final sound = _post?.sound;
+          if (sound != null) {
+            ref
+                .read(soundPlayerViewModelProvider.notifier)
+                .play(
+                  sound.toPlayableSound(volume: _post!.soundVolume),
+                  owner: _owner,
+                );
+          }
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
   Future<void> _bootstrap() async {
+    final session = ++_session;
     try {
       final repo = ref.read(postRepositoryProvider);
       final post = await repo.getById(widget.postId);
-      if (!mounted) return;
+      if (!mounted || session != _session) return;
       _post = post;
       final url = widget.initialUrl ?? post.imageUrl;
       if (url == null || url.isEmpty) {
@@ -66,31 +136,61 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
       }
       final c = VideoPlayerController.networkUrl(Uri.parse(url));
       await c.initialize();
-      if (!mounted) {
+      if (!mounted || session != _session) {
         await c.dispose();
         return;
       }
-      c
-        ..setLooping(true)
-        ..setVolume(1)
-        ..play();
+      final attachedSound = post.sound;
+      // Brawe Sound: NÃO há mixagem server-side (sem ffmpeg) — a música
+      // NUNCA está "dentro" do arquivo de vídeo. Quando há faixa anexada,
+      // o áudio ORIGINAL do vídeo toca no volume definido pelo autor
+      // (`originalAudioVolume`, geralmente abaixado/mutado) e a música
+      // toca separadamente pelo player único (`SoundPlayerViewModel`).
+      final baseVolume = attachedSound != null
+          ? post.originalAudioVolume.clamp(0.0, 1.0)
+          : 1.0;
+      c.setLooping(true);
+      await c.setVolume(_muted ? 0 : baseVolume);
+
+      // Fase C: vídeo é o master clock. Inicia vídeo + progress bar
+      // primeiro, depois anexa a música (owner dedicado desta tela) e só
+      // então libera o loading — evita a janela de "vídeo tocando sem
+      // música" enquanto a faixa ainda carrega da rede.
+      await c.play();
+      if (!mounted || session != _session) {
+        await c.dispose();
+        return;
+      }
+      if (attachedSound != null) {
+        await ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .play(
+              attachedSound.toPlayableSound(volume: post.soundVolume),
+              owner: _owner,
+            );
+        if (!mounted || session != _session) {
+          await c.dispose();
+          return;
+        }
+        _startDriftCorrection(session: session);
+      }
       // Marca view.
       repo.incrementView(widget.postId);
-      // Listener para rebuild da progress bar.
+      // Listener para rebuild da progress bar + detectar loop.
       c.addListener(_onTick);
       setState(() {
         _ctrl = c;
         _loading = false;
       });
     } on Failure catch (_) {
-      if (mounted) {
+      if (mounted && session == _session) {
         setState(() {
           _loading = false;
           _error = true;
         });
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && session == _session) {
         setState(() {
           _loading = false;
           _error = true;
@@ -100,14 +200,70 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
   }
 
   void _onTick() {
+    final c = _ctrl;
+    if (c == null) return;
+    // Detecta o wraparound do loop (`setLooping(true)`): a posição atual
+    // fica MENOR que a anterior quando o vídeo reinicia do zero. Nesse
+    // momento, reinicia a música anexada em sincronia — senão a faixa
+    // (que não tem loop nativo no ClippingAudioSource) tocaria só na
+    // primeira passada e ficaria em silêncio nas repetições seguintes.
+    final pos = c.value.position;
+    if (_post?.sound != null && pos < _lastVideoPosition) {
+      ref.read(soundPlayerViewModelProvider.notifier).seek(0.0);
+    }
+    _lastVideoPosition = pos;
     if (mounted) setState(() {});
+  }
+
+  /// Correção de drift throttled entre vídeo (master) e música anexada.
+  /// Nunca faz seek por frame — só a cada [_driftCheckInterval] e só se
+  /// o desvio exceder [_driftThreshold].
+  void _startDriftCorrection({required int session}) {
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(_driftCheckInterval, (_) {
+      if (!mounted || session != _session) {
+        _syncTimer?.cancel();
+        return;
+      }
+      final c = _ctrl;
+      if (c == null || !c.value.isPlaying) return;
+      final notifier = ref.read(soundPlayerViewModelProvider.notifier);
+      if (!notifier.isOwner(_owner)) return;
+      final playerState = ref.read(soundPlayerViewModelProvider);
+      if (playerState.sound == null || !playerState.isPlaying) return;
+      final musicDurationMs = playerState.duration.inMilliseconds;
+      if (musicDurationMs <= 0) return;
+
+      final drift = c.value.position - playerState.position;
+      if (drift.abs() > _driftThreshold) {
+        final progress = (c.value.position.inMilliseconds / musicDurationMs)
+            .clamp(0.0, 1.0);
+        notifier.seek(progress);
+      }
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _session++; // aborta bootstrap/drift-correction pendentes
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _syncTimer?.cancel();
     _ctrl?.removeListener(_onTick);
     _ctrl?.dispose();
+    // Brawe Sound: para a música ao sair da tela — não deve continuar
+    // tocando em background depois que o usuário fecha o fullscreen.
+    // `stop()` é assíncrono; aguardamos com timeout de segurança via
+    // fire-and-forget (dispose precisa continuar síncrono).
+    if (_post?.sound != null) {
+      unawaited(
+        ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .stop()
+            .timeout(const Duration(seconds: 2))
+            .catchError((_) {}),
+      );
+    }
     super.dispose();
   }
 
@@ -115,10 +271,26 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
     final c = _ctrl;
     if (c == null) return;
     HapticFeedback.selectionClick();
+    final sound = _post?.sound;
     if (c.value.isPlaying) {
       c.pause();
+      _syncTimer?.cancel();
+      if (sound != null) {
+        ref.read(soundPlayerViewModelProvider.notifier).pause();
+      }
     } else {
       c.play();
+      if (sound != null) {
+        // `play()` do notifier faz toggle play/pause quando já é a mesma
+        // faixa carregada — reaproveita a mesma chamada usada no bootstrap.
+        ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .play(
+              sound.toPlayableSound(volume: _post!.soundVolume),
+              owner: _owner,
+            );
+        _startDriftCorrection(session: _session);
+      }
     }
     setState(() {});
   }
@@ -128,11 +300,54 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
     if (c == null) return;
     HapticFeedback.selectionClick();
     setState(() => _muted = !_muted);
-    c.setVolume(_muted ? 0 : 1);
+    final post = _post;
+    final sound = post?.sound;
+    final baseVolume = sound != null
+        ? post!.originalAudioVolume.clamp(0.0, 1.0)
+        : 1.0;
+    c.setVolume(_muted ? 0 : baseVolume);
+    // Brawe Sound: o mute do vídeo também silencia a música anexada —
+    // mesma semântica de um único controle de áudio usada em Stories.
+    if (sound != null) {
+      ref
+          .read(soundPlayerViewModelProvider.notifier)
+          .setVolume(_muted ? 0 : post!.soundVolume.clamp(0.0, 1.0));
+    }
   }
 
   void _toggleControls() {
     setState(() => _controlsVisible = !_controlsVisible);
+  }
+
+  /// Abre a página/bottom sheet da faixa (reutiliza `SoundPlayerBottomSheet`
+  /// já existente — não cria uma segunda tela duplicada). O player de
+  /// música (`SoundPlayerViewModel`) é o MESMO usado para tocar a faixa
+  /// durante o vídeo — pausamos apenas o vídeo (áudio original) enquanto
+  /// o bottom sheet está aberto, para evitar competir visualmente/
+  /// sonoramente, sem nunca abrir uma segunda fonte de áudio.
+  Future<void> _openSoundDetails(SoundPreview sound) async {
+    final wasPlaying = _ctrl?.value.isPlaying ?? false;
+    _ctrl?.pause();
+    // Suspende a correção de drift enquanto o bottom sheet está aberto —
+    // ele reutiliza o MESMO player global (mesma faixa), então não há
+    // segunda fonte de áudio, mas o vídeo (master clock) está pausado e
+    // não deve haver correção de drift comparando contra um vídeo parado.
+    _syncTimer?.cancel();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SoundPlayerBottomSheet(
+        sound: sound.toPlayableSound(volume: _post?.soundVolume ?? 1.0),
+      ),
+    );
+    if (!mounted) return;
+    if (wasPlaying) {
+      _ctrl?.play();
+      if (_post?.sound != null) {
+        _startDriftCorrection(session: _session);
+      }
+    }
   }
 
   Future<void> _onLike() async {
@@ -331,6 +546,27 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Brawe Sound: atribuição musical compacta. O
+                          // áudio JÁ ESTÁ mixado no arquivo de vídeo (não
+                          // existe player de música separado aqui) — o
+                          // componente só exibe metadados e sincroniza o
+                          // estado visual "tocando" com o player de vídeo,
+                          // sem nunca iniciar uma segunda reprodução.
+                          if (_post!.sound != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: ContentSoundAttribution(
+                                trackId: _post!.sound!.id,
+                                title: _post!.sound!.title,
+                                artistName: _post!.sound!.artistName,
+                                coverUrl: _post!.sound!.coverUrl,
+                                isPlaying:
+                                    (_ctrl?.value.isPlaying ?? false) &&
+                                    !_muted,
+                                contentType: ContentSoundSurface.reel,
+                                onTap: () => _openSoundDetails(_post!.sound!),
+                              ),
+                            ),
                           if (_post!.content.isNotEmpty)
                             Text(
                               _post!.content,

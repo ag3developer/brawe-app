@@ -89,6 +89,7 @@ _Sound _$SoundFromJson(Map<String, dynamic> json) => _Sound(
   createdAt: json['created_at'] == null
       ? null
       : DateTime.parse(json['created_at'] as String),
+  volume: (json['volume'] as num?)?.toDouble() ?? 1.0,
 );
 
 Map<String, dynamic> _$SoundToJson(_Sound instance) => <String, dynamic>{
@@ -117,4 +118,5 @@ Map<String, dynamic> _$SoundToJson(_Sound instance) => <String, dynamic>{
   'is_saved': instance.isSaved,
   'artist': instance.artist,
   'created_at': instance.createdAt?.toIso8601String(),
+  'volume': instance.volume,
 };

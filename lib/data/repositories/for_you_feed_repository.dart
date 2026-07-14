@@ -86,10 +86,7 @@ class ForYouFeedRepository {
       final rooms = await _liveRepo.getLiveFeed(limit: limit);
       // Filtra localmente — garante que lives encerradas nunca entram no feed
       // mesmo que o backend demore a remover ou o cache local esteja stale.
-      return rooms
-          .where((r) => r.status == 'live')
-          .map(_mapLive)
-          .toList();
+      return rooms.where((r) => r.status == 'live').map(_mapLive).toList();
     } catch (_) {
       return const [];
     }
@@ -134,8 +131,10 @@ class ForYouFeedRepository {
   FeedItem _mapLive(LiveRoom room) {
     // Username vem do backend (wallet_bridge.user_info). Se ausente,
     // derivamos um fallback legível do nome do streamer para não quebrar a UI.
-    final fallbackUsername =
-        room.streamerName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '');
+    final fallbackUsername = room.streamerName.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]+'),
+      '',
+    );
     final author = FeedAuthor(
       id: room.streamerId,
       name: room.streamerName,
@@ -148,7 +147,8 @@ class ForYouFeedRepository {
 
     final type = (room.liveType).toLowerCase();
     final isCommerce =
-        type == 'commerce' || (room.category ?? '').toLowerCase().contains('shop');
+        type == 'commerce' ||
+        (room.category ?? '').toLowerCase().contains('shop');
     final isBattle = type == 'battle';
 
     if (isBattle) {
@@ -258,6 +258,9 @@ class ForYouFeedRepository {
         videoUrl: url,
         thumbnailUrl: url,
         duration: Duration.zero,
+        sound: post.sound,
+        soundVolume: post.soundVolume,
+        originalAudioVolume: post.originalAudioVolume,
       );
     }
 
@@ -277,6 +280,9 @@ class ForYouFeedRepository {
       videoUrl: url,
       thumbnailUrl: url,
       duration: Duration.zero,
+      sound: post.sound,
+      soundVolume: post.soundVolume,
+      originalAudioVolume: post.originalAudioVolume,
     );
   }
 }

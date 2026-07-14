@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/models/post.dart';
+import '../../domain/models/sound_preview.dart';
 
 part 'post_dto.freezed.dart';
 part 'post_dto.g.dart';
@@ -51,6 +52,11 @@ sealed class PostResponseDto with _$PostResponseDto {
     bool userFollowingAuthor,
     @JsonKey(name: 'reposted_by') AuthorResponseDto? repostedBy,
     @JsonKey(name: 'repost_created_at') String? repostCreatedAt,
+    SoundPreview? sound,
+    @JsonKey(name: 'sound_volume') @Default(1.0) double soundVolume,
+    @JsonKey(name: 'original_audio_volume')
+    @Default(1.0)
+    double originalAudioVolume,
   }) = _PostResponseDto;
 
   factory PostResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -77,6 +83,9 @@ extension PostResponseDtoMapper on PostResponseDto {
       repostCreatedAt: repostCreatedAt != null
           ? DateTime.tryParse(repostCreatedAt!)
           : null,
+      sound: sound,
+      soundVolume: soundVolume,
+      originalAudioVolume: originalAudioVolume,
     );
   }
 }

@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element_parameter
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,6 +15,7 @@ import '../../core/widgets/badge_count.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
+import '../../../domain/models/sound_preview.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/feedback_service.dart';
@@ -21,6 +23,8 @@ import '../../../data/services/social_actions_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../chat/view_models/unread_count_provider.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
+import '../../shared/widgets/sound_preview_chip.dart';
+import '../../sounds/view_models/sound_player_view_model.dart';
 import '../view_models/feed_view_model.dart';
 import '../view_models/stories_view_model.dart';
 import 'comments_sheet.dart';
@@ -866,6 +870,11 @@ class _PostCardState extends ConsumerState<PostCard>
           authorName: widget.post.author.name,
           authorUsername: widget.post.author.username,
           authorAvatarUrl: widget.post.author.avatarUrl,
+          // Brawe Sound: Fase C — preserva a música anexada ao abrir a
+          // imagem em fullscreen (antes o lightbox não recebia nenhum
+          // dado musical e a faixa nunca era iniciada).
+          sound: widget.post.sound,
+          soundVolume: widget.post.soundVolume,
         ),
       ),
     );
@@ -959,6 +968,22 @@ class _PostCardState extends ConsumerState<PostCard>
               ],
             ),
           ),
+
+          // Brawe Sound: atribuição musical compacta, logo abaixo do
+          // header (nome do autor) — informação contextual da publicação,
+          // não um card separado. Mesmo componente/posicionamento usado
+          // nos Stories (ver `ContentSoundAttribution`).
+          if (post.sound != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SoundPreviewChip(
+                  sound: post.sound!,
+                  volume: post.soundVolume,
+                ),
+              ),
+            ),
 
           // Content text
           if (post.content.isNotEmpty)
@@ -1971,6 +1996,8 @@ class _ImageLightbox extends ConsumerStatefulWidget {
     required this.authorName,
     required this.authorUsername,
     this.authorAvatarUrl,
+    this.sound,
+    this.soundVolume = 1.0,
   });
 
   final String imageUrl;
@@ -1981,18 +2008,31 @@ class _ImageLightbox extends ConsumerStatefulWidget {
   final String authorUsername;
   final String? authorAvatarUrl;
 
+  /// Brawe Sound: música anexada ao post (opcional) — iniciada junto com
+  /// a imagem em fullscreen (Fase C do relatório de áudio).
+  final SoundPreview? sound;
+  final double soundVolume;
+
   @override
   ConsumerState<_ImageLightbox> createState() => _ImageLightboxState();
 }
 
 class _ImageLightboxState extends ConsumerState<_ImageLightbox>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   double _dragOffset = 0;
   bool _chromeVisible = true;
   late final AnimationController _heartCtrl;
   late final Animation<double> _heartScale;
   bool _showHeart = false;
   final TransformationController _zoomCtrl = TransformationController();
+
+  /// `true` quando a música foi pausada automaticamente pelo lifecycle do
+  /// app (background) — nunca retomada por uma pausa manual do usuário
+  /// (aqui não há play/pause manual, mas o padrão é mantido por
+  /// consistência com StoryViewer/VideoFullscreenScreen).
+  bool _pausedByLifecycle = false;
+
+  String get _owner => 'fullscreen:image:${widget.postId}';
 
   @override
   void initState() {
@@ -2032,12 +2072,71 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
         _heartCtrl.reset();
       }
     });
+
+    WidgetsBinding.instance.addObserver(this);
+    // Brawe Sound (Fase C): inicia a música anexada junto com a imagem em
+    // fullscreen — antes esta tela não recebia/não tocava nenhuma faixa.
+    final sound = widget.sound;
+    if (sound != null) {
+      ref
+          .read(soundPlayerViewModelProvider.notifier)
+          .play(
+            sound.toPlayableSound(volume: widget.soundVolume),
+            owner: _owner,
+          );
+    }
+  }
+
+  /// Fase A: pausa a música quando o app sai de foreground e retoma ao
+  /// voltar (sem isso a faixa continuava tocando com o app em background).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final sound = widget.sound;
+    if (sound == null) return;
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        final playerState = ref.read(soundPlayerViewModelProvider);
+        if (playerState.isPlaying) {
+          _pausedByLifecycle = true;
+          ref.read(soundPlayerViewModelProvider.notifier).pause();
+        }
+        break;
+      case AppLifecycleState.resumed:
+        if (_pausedByLifecycle) {
+          _pausedByLifecycle = false;
+          ref
+              .read(soundPlayerViewModelProvider.notifier)
+              .play(
+                sound.toPlayableSound(volume: widget.soundVolume),
+                owner: _owner,
+              );
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _heartCtrl.dispose();
     _zoomCtrl.dispose();
+    // Brawe Sound: para a música ao fechar a imagem em fullscreen — não
+    // deve continuar tocando em background. `stop()` é assíncrono;
+    // dispose() precisa continuar síncrono, por isso fire-and-forget com
+    // timeout de segurança (mesmo padrão usado em StoryViewer/Fullscreen).
+    if (widget.sound != null) {
+      unawaited(
+        ref
+            .read(soundPlayerViewModelProvider.notifier)
+            .stop()
+            .timeout(const Duration(seconds: 2))
+            .catchError((_) {}),
+      );
+    }
     super.dispose();
   }
 

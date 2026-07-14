@@ -1137,6 +1137,25 @@ class SEs extends S {
   String get trimHint => 'Arrastra los controles para elegir inicio y fin';
 
   @override
+  String get volumeMixerButtonLabel => 'Volúmenes';
+
+  @override
+  String get volumeMixerTitle => 'Volúmenes';
+
+  @override
+  String get volumeMixerSubtitle =>
+      'Ajusta el volumen de la música y el audio original del video';
+
+  @override
+  String get volumeMixerMusicLabel => 'Música';
+
+  @override
+  String get volumeMixerOriginalLabel => 'Audio original del video';
+
+  @override
+  String get volumeMixerDone => 'Listo';
+
+  @override
   String get giftTierFree => 'Bóveda';
 
   @override
@@ -4300,6 +4319,58 @@ class SEs extends S {
 
   @override
   String get postSoundRemove => 'Quitar sonido';
+
+  @override
+  String get contentSoundOriginalAudio => 'Audio original';
+
+  @override
+  String get contentSoundUseThis => 'Usar este sonido';
+
+  @override
+  String get contentSoundUnavailable => 'Sonido no disponible';
+
+  @override
+  String get contentSoundView => 'Ver sonido';
+
+  @override
+  String get contentSoundNowPlaying => 'Reproduciendo ahora';
+
+  @override
+  String contentSoundByArtist(String title, String artist) {
+    return '$title · $artist';
+  }
+
+  @override
+  String get soundTrimTitle => 'Cortar música';
+
+  @override
+  String get soundTrimSave => 'Listo';
+
+  @override
+  String get soundTrimCancel => 'Cancelar';
+
+  @override
+  String get soundTrimHint =>
+      'Arrastra las asas para elegir el fragmento de la música';
+
+  @override
+  String soundTrimMaxDuration(int seconds) {
+    return 'Máximo ${seconds}s para este contenido';
+  }
+
+  @override
+  String soundTrimSelectedDuration(int seconds) {
+    return '${seconds}s seleccionados';
+  }
+
+  @override
+  String get soundTrimError => 'No se pudo procesar el fragmento seleccionado.';
+
+  @override
+  String get soundVolumeLabel => 'Volumen de la música';
+
+  @override
+  String get originalAudioVolumeLabel => 'Volumen del audio original';
 
   @override
   String get analyticsViewersTitle => 'Audiencia';

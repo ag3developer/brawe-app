@@ -468,6 +468,12 @@
   },
   "trimError": "Could not save trimmed video.",
   "trimHint": "Drag the handles to choose start and end",
+  "volumeMixerButtonLabel": "Volumes",
+  "volumeMixerTitle": "Volumes",
+  "volumeMixerSubtitle": "Adjust the music volume and the video's original audio volume",
+  "volumeMixerMusicLabel": "Music",
+  "volumeMixerOriginalLabel": "Video's original audio",
+  "volumeMixerDone": "Done",
   "giftTierFree": "Vault",
   "@giftTierFree": {
     "description": "Tab/category name for the free gift tier (gifts paid with quest coins/XP). Branded as 'Vault' in EN, 'Cofre' in PT and 'Bóveda' in ES — emphasizes that these gifts come from a stash the user earned through activity, not real money."
@@ -1889,6 +1895,35 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "postSoundRemove": "Remove sound",
+
+  "contentSoundOriginalAudio": "Original audio",
+  "contentSoundUseThis": "Use this sound",
+  "contentSoundUnavailable": "Sound unavailable",
+  "contentSoundView": "View sound",
+  "contentSoundNowPlaying": "Now playing",
+  "contentSoundByArtist": "{title} · {artist}",
+  "@contentSoundByArtist": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "artist": { "type": "String" }
+    }
+  },
+
+  "soundTrimTitle": "Trim music",
+  "soundTrimSave": "Done",
+  "soundTrimCancel": "Cancel",
+  "soundTrimHint": "Drag the handles to choose the music segment",
+  "soundTrimMaxDuration": "Maximum {seconds}s for this content",
+  "@soundTrimMaxDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimSelectedDuration": "{seconds}s selected",
+  "@soundTrimSelectedDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimError": "Could not process the selected segment.",
+  "soundVolumeLabel": "Music volume",
+  "originalAudioVolumeLabel": "Original audio volume",
 
   "analyticsViewersTitle": "Audience",
   "analyticsViewersTotalViewers": "Total viewers",

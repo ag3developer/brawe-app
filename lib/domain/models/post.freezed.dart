@@ -16,7 +16,14 @@ mixin _$Post {
 
  String get id; String get content; String? get imageUrl; int get likesCount; int get commentsCount; int get repostsCount; int get viewsCount; DateTime get createdAt; PostAuthor get author; bool get userLiked;@JsonKey(name: 'user_reaction_type') String? get userReactionType; bool get userReposted; bool get userFollowingAuthor;// Quando o item aparece no feed por causa de um repost de alguém,
 // [repostedBy] traz o autor do repost. Frontend mostra "X repostou".
- PostAuthor? get repostedBy; DateTime? get repostCreatedAt;
+ PostAuthor? get repostedBy; DateTime? get repostCreatedAt;// Brawe Sound: música anexada ao post (opcional).
+ SoundPreview? get sound;// Volume da música anexada (0.0-1.0) ESPECÍFICO deste post — a mesma
+// faixa pode tocar com volumes diferentes em conteúdos diferentes.
+@JsonKey(name: 'sound_volume') double get soundVolume;// Volume do áudio ORIGINAL do vídeo (0.0-1.0) quando há música
+// anexada — permite ao autor abaixar/mutar o som próprio do vídeo
+// pra não competir com a música do Brawe Sounds. Sem música anexada,
+// este valor é ignorado (áudio original toca no volume nativo).
+@JsonKey(name: 'original_audio_volume') double get originalAudioVolume;
 /// Create a copy of Post
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -27,16 +34,16 @@ $PostCopyWith<Post> get copyWith => _$PostCopyWithImpl<Post>(this as Post, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Post&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReactionType, userReactionType) || other.userReactionType == userReactionType)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Post&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReactionType, userReactionType) || other.userReactionType == userReactionType)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt)&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.soundVolume, soundVolume) || other.soundVolume == soundVolume)&&(identical(other.originalAudioVolume, originalAudioVolume) || other.originalAudioVolume == originalAudioVolume));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,author,userLiked,userReactionType,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt);
+int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,author,userLiked,userReactionType,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt,sound,soundVolume,originalAudioVolume);
 
 @override
 String toString() {
-  return 'Post(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, author: $author, userLiked: $userLiked, userReactionType: $userReactionType, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt)';
+  return 'Post(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, author: $author, userLiked: $userLiked, userReactionType: $userReactionType, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt, sound: $sound, soundVolume: $soundVolume, originalAudioVolume: $originalAudioVolume)';
 }
 
 
@@ -47,11 +54,11 @@ abstract mixin class $PostCopyWith<$Res>  {
   factory $PostCopyWith(Post value, $Res Function(Post) _then) = _$PostCopyWithImpl;
 @useResult
 $Res call({
- String id, String content, String? imageUrl, int likesCount, int commentsCount, int repostsCount, int viewsCount, DateTime createdAt, PostAuthor author, bool userLiked,@JsonKey(name: 'user_reaction_type') String? userReactionType, bool userReposted, bool userFollowingAuthor, PostAuthor? repostedBy, DateTime? repostCreatedAt
+ String id, String content, String? imageUrl, int likesCount, int commentsCount, int repostsCount, int viewsCount, DateTime createdAt, PostAuthor author, bool userLiked,@JsonKey(name: 'user_reaction_type') String? userReactionType, bool userReposted, bool userFollowingAuthor, PostAuthor? repostedBy, DateTime? repostCreatedAt, SoundPreview? sound,@JsonKey(name: 'sound_volume') double soundVolume,@JsonKey(name: 'original_audio_volume') double originalAudioVolume
 });
 
 
-$PostAuthorCopyWith<$Res> get author;$PostAuthorCopyWith<$Res>? get repostedBy;
+$PostAuthorCopyWith<$Res> get author;$PostAuthorCopyWith<$Res>? get repostedBy;$SoundPreviewCopyWith<$Res>? get sound;
 
 }
 /// @nodoc
@@ -64,7 +71,7 @@ class _$PostCopyWithImpl<$Res>
 
 /// Create a copy of Post
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? author = null,Object? userLiked = null,Object? userReactionType = freezed,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? author = null,Object? userLiked = null,Object? userReactionType = freezed,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,Object? sound = freezed,Object? soundVolume = null,Object? originalAudioVolume = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
@@ -81,7 +88,10 @@ as String?,userReposted: null == userReposted ? _self.userReposted : userReposte
 as bool,userFollowingAuthor: null == userFollowingAuthor ? _self.userFollowingAuthor : userFollowingAuthor // ignore: cast_nullable_to_non_nullable
 as bool,repostedBy: freezed == repostedBy ? _self.repostedBy : repostedBy // ignore: cast_nullable_to_non_nullable
 as PostAuthor?,repostCreatedAt: freezed == repostCreatedAt ? _self.repostCreatedAt : repostCreatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,sound: freezed == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
+as SoundPreview?,soundVolume: null == soundVolume ? _self.soundVolume : soundVolume // ignore: cast_nullable_to_non_nullable
+as double,originalAudioVolume: null == originalAudioVolume ? _self.originalAudioVolume : originalAudioVolume // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 /// Create a copy of Post
@@ -104,6 +114,18 @@ $PostAuthorCopyWith<$Res>? get repostedBy {
 
   return $PostAuthorCopyWith<$Res>(_self.repostedBy!, (value) {
     return _then(_self.copyWith(repostedBy: value));
+  });
+}/// Create a copy of Post
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SoundPreviewCopyWith<$Res>? get sound {
+    if (_self.sound == null) {
+    return null;
+  }
+
+  return $SoundPreviewCopyWith<$Res>(_self.sound!, (value) {
+    return _then(_self.copyWith(sound: value));
   });
 }
 }
@@ -184,10 +206,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt,  SoundPreview? sound, @JsonKey(name: 'sound_volume')  double soundVolume, @JsonKey(name: 'original_audio_volume')  double originalAudioVolume)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Post() when $default != null:
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);case _:
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt,_that.sound,_that.soundVolume,_that.originalAudioVolume);case _:
   return orElse();
 
 }
@@ -205,10 +227,10 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt,  SoundPreview? sound, @JsonKey(name: 'sound_volume')  double soundVolume, @JsonKey(name: 'original_audio_volume')  double originalAudioVolume)  $default,) {final _that = this;
 switch (_that) {
 case _Post():
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);}
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt,_that.sound,_that.soundVolume,_that.originalAudioVolume);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -222,10 +244,10 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String content,  String? imageUrl,  int likesCount,  int commentsCount,  int repostsCount,  int viewsCount,  DateTime createdAt,  PostAuthor author,  bool userLiked, @JsonKey(name: 'user_reaction_type')  String? userReactionType,  bool userReposted,  bool userFollowingAuthor,  PostAuthor? repostedBy,  DateTime? repostCreatedAt,  SoundPreview? sound, @JsonKey(name: 'sound_volume')  double soundVolume, @JsonKey(name: 'original_audio_volume')  double originalAudioVolume)?  $default,) {final _that = this;
 switch (_that) {
 case _Post() when $default != null:
-return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt);case _:
+return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.commentsCount,_that.repostsCount,_that.viewsCount,_that.createdAt,_that.author,_that.userLiked,_that.userReactionType,_that.userReposted,_that.userFollowingAuthor,_that.repostedBy,_that.repostCreatedAt,_that.sound,_that.soundVolume,_that.originalAudioVolume);case _:
   return null;
 
 }
@@ -237,7 +259,7 @@ return $default(_that.id,_that.content,_that.imageUrl,_that.likesCount,_that.com
 
 
 class _Post implements Post {
-  const _Post({required this.id, required this.content, this.imageUrl, required this.likesCount, required this.commentsCount, required this.repostsCount, required this.viewsCount, required this.createdAt, required this.author, this.userLiked = false, @JsonKey(name: 'user_reaction_type') this.userReactionType, this.userReposted = false, this.userFollowingAuthor = false, this.repostedBy, this.repostCreatedAt});
+  const _Post({required this.id, required this.content, this.imageUrl, required this.likesCount, required this.commentsCount, required this.repostsCount, required this.viewsCount, required this.createdAt, required this.author, this.userLiked = false, @JsonKey(name: 'user_reaction_type') this.userReactionType, this.userReposted = false, this.userFollowingAuthor = false, this.repostedBy, this.repostCreatedAt, this.sound, @JsonKey(name: 'sound_volume') this.soundVolume = 1.0, @JsonKey(name: 'original_audio_volume') this.originalAudioVolume = 1.0});
   
 
 @override final  String id;
@@ -257,6 +279,16 @@ class _Post implements Post {
 // [repostedBy] traz o autor do repost. Frontend mostra "X repostou".
 @override final  PostAuthor? repostedBy;
 @override final  DateTime? repostCreatedAt;
+// Brawe Sound: música anexada ao post (opcional).
+@override final  SoundPreview? sound;
+// Volume da música anexada (0.0-1.0) ESPECÍFICO deste post — a mesma
+// faixa pode tocar com volumes diferentes em conteúdos diferentes.
+@override@JsonKey(name: 'sound_volume') final  double soundVolume;
+// Volume do áudio ORIGINAL do vídeo (0.0-1.0) quando há música
+// anexada — permite ao autor abaixar/mutar o som próprio do vídeo
+// pra não competir com a música do Brawe Sounds. Sem música anexada,
+// este valor é ignorado (áudio original toca no volume nativo).
+@override@JsonKey(name: 'original_audio_volume') final  double originalAudioVolume;
 
 /// Create a copy of Post
 /// with the given fields replaced by the non-null parameter values.
@@ -268,16 +300,16 @@ _$PostCopyWith<_Post> get copyWith => __$PostCopyWithImpl<_Post>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Post&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReactionType, userReactionType) || other.userReactionType == userReactionType)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Post&&(identical(other.id, id) || other.id == id)&&(identical(other.content, content) || other.content == content)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.commentsCount, commentsCount) || other.commentsCount == commentsCount)&&(identical(other.repostsCount, repostsCount) || other.repostsCount == repostsCount)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.author, author) || other.author == author)&&(identical(other.userLiked, userLiked) || other.userLiked == userLiked)&&(identical(other.userReactionType, userReactionType) || other.userReactionType == userReactionType)&&(identical(other.userReposted, userReposted) || other.userReposted == userReposted)&&(identical(other.userFollowingAuthor, userFollowingAuthor) || other.userFollowingAuthor == userFollowingAuthor)&&(identical(other.repostedBy, repostedBy) || other.repostedBy == repostedBy)&&(identical(other.repostCreatedAt, repostCreatedAt) || other.repostCreatedAt == repostCreatedAt)&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.soundVolume, soundVolume) || other.soundVolume == soundVolume)&&(identical(other.originalAudioVolume, originalAudioVolume) || other.originalAudioVolume == originalAudioVolume));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,author,userLiked,userReactionType,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt);
+int get hashCode => Object.hash(runtimeType,id,content,imageUrl,likesCount,commentsCount,repostsCount,viewsCount,createdAt,author,userLiked,userReactionType,userReposted,userFollowingAuthor,repostedBy,repostCreatedAt,sound,soundVolume,originalAudioVolume);
 
 @override
 String toString() {
-  return 'Post(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, author: $author, userLiked: $userLiked, userReactionType: $userReactionType, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt)';
+  return 'Post(id: $id, content: $content, imageUrl: $imageUrl, likesCount: $likesCount, commentsCount: $commentsCount, repostsCount: $repostsCount, viewsCount: $viewsCount, createdAt: $createdAt, author: $author, userLiked: $userLiked, userReactionType: $userReactionType, userReposted: $userReposted, userFollowingAuthor: $userFollowingAuthor, repostedBy: $repostedBy, repostCreatedAt: $repostCreatedAt, sound: $sound, soundVolume: $soundVolume, originalAudioVolume: $originalAudioVolume)';
 }
 
 
@@ -288,11 +320,11 @@ abstract mixin class _$PostCopyWith<$Res> implements $PostCopyWith<$Res> {
   factory _$PostCopyWith(_Post value, $Res Function(_Post) _then) = __$PostCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String content, String? imageUrl, int likesCount, int commentsCount, int repostsCount, int viewsCount, DateTime createdAt, PostAuthor author, bool userLiked,@JsonKey(name: 'user_reaction_type') String? userReactionType, bool userReposted, bool userFollowingAuthor, PostAuthor? repostedBy, DateTime? repostCreatedAt
+ String id, String content, String? imageUrl, int likesCount, int commentsCount, int repostsCount, int viewsCount, DateTime createdAt, PostAuthor author, bool userLiked,@JsonKey(name: 'user_reaction_type') String? userReactionType, bool userReposted, bool userFollowingAuthor, PostAuthor? repostedBy, DateTime? repostCreatedAt, SoundPreview? sound,@JsonKey(name: 'sound_volume') double soundVolume,@JsonKey(name: 'original_audio_volume') double originalAudioVolume
 });
 
 
-@override $PostAuthorCopyWith<$Res> get author;@override $PostAuthorCopyWith<$Res>? get repostedBy;
+@override $PostAuthorCopyWith<$Res> get author;@override $PostAuthorCopyWith<$Res>? get repostedBy;@override $SoundPreviewCopyWith<$Res>? get sound;
 
 }
 /// @nodoc
@@ -305,7 +337,7 @@ class __$PostCopyWithImpl<$Res>
 
 /// Create a copy of Post
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? author = null,Object? userLiked = null,Object? userReactionType = freezed,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? content = null,Object? imageUrl = freezed,Object? likesCount = null,Object? commentsCount = null,Object? repostsCount = null,Object? viewsCount = null,Object? createdAt = null,Object? author = null,Object? userLiked = null,Object? userReactionType = freezed,Object? userReposted = null,Object? userFollowingAuthor = null,Object? repostedBy = freezed,Object? repostCreatedAt = freezed,Object? sound = freezed,Object? soundVolume = null,Object? originalAudioVolume = null,}) {
   return _then(_Post(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
@@ -322,7 +354,10 @@ as String?,userReposted: null == userReposted ? _self.userReposted : userReposte
 as bool,userFollowingAuthor: null == userFollowingAuthor ? _self.userFollowingAuthor : userFollowingAuthor // ignore: cast_nullable_to_non_nullable
 as bool,repostedBy: freezed == repostedBy ? _self.repostedBy : repostedBy // ignore: cast_nullable_to_non_nullable
 as PostAuthor?,repostCreatedAt: freezed == repostCreatedAt ? _self.repostCreatedAt : repostCreatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,sound: freezed == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
+as SoundPreview?,soundVolume: null == soundVolume ? _self.soundVolume : soundVolume // ignore: cast_nullable_to_non_nullable
+as double,originalAudioVolume: null == originalAudioVolume ? _self.originalAudioVolume : originalAudioVolume // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 
@@ -346,6 +381,18 @@ $PostAuthorCopyWith<$Res>? get repostedBy {
 
   return $PostAuthorCopyWith<$Res>(_self.repostedBy!, (value) {
     return _then(_self.copyWith(repostedBy: value));
+  });
+}/// Create a copy of Post
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$SoundPreviewCopyWith<$Res>? get sound {
+    if (_self.sound == null) {
+    return null;
+  }
+
+  return $SoundPreviewCopyWith<$Res>(_self.sound!, (value) {
+    return _then(_self.copyWith(sound: value));
   });
 }
 }

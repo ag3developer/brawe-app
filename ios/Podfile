@@ -37,6 +37,16 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # ── FORÇA: iOS 15.0 no target Runner ─────────────────────────────────────
+  # Alguns builds herdam iOS 13.0 do projeto original. Firebase exige 15.0+.
+  # Isso garante que o Runner SEMPRE tenha iOS 15.0, mesmo se o Xcode não ler correto.
+  runner_target = installer.pods_project.targets.find { |t| t.name == 'Runner' }
+  if runner_target
+    runner_target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+    end
+  end
+
   # ── Workaround: Bug Flutter 3.44+ / Swift Package Manager ──────────────────
   # PROBLEMA: flutter pub get gera FlutterGeneratedPluginSwiftPackage/Package.swift
   # com .iOS("13.0") hardcoded (darwin.dart:79). O `flutter build ios` chama

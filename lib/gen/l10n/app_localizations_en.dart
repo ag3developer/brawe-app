@@ -1133,6 +1133,25 @@ class SEn extends S {
   String get trimHint => 'Drag the handles to choose start and end';
 
   @override
+  String get volumeMixerButtonLabel => 'Volumes';
+
+  @override
+  String get volumeMixerTitle => 'Volumes';
+
+  @override
+  String get volumeMixerSubtitle =>
+      'Adjust the music volume and the video\'s original audio volume';
+
+  @override
+  String get volumeMixerMusicLabel => 'Music';
+
+  @override
+  String get volumeMixerOriginalLabel => 'Video\'s original audio';
+
+  @override
+  String get volumeMixerDone => 'Done';
+
+  @override
   String get giftTierFree => 'Vault';
 
   @override
@@ -4282,6 +4301,57 @@ class SEn extends S {
 
   @override
   String get postSoundRemove => 'Remove sound';
+
+  @override
+  String get contentSoundOriginalAudio => 'Original audio';
+
+  @override
+  String get contentSoundUseThis => 'Use this sound';
+
+  @override
+  String get contentSoundUnavailable => 'Sound unavailable';
+
+  @override
+  String get contentSoundView => 'View sound';
+
+  @override
+  String get contentSoundNowPlaying => 'Now playing';
+
+  @override
+  String contentSoundByArtist(String title, String artist) {
+    return '$title · $artist';
+  }
+
+  @override
+  String get soundTrimTitle => 'Trim music';
+
+  @override
+  String get soundTrimSave => 'Done';
+
+  @override
+  String get soundTrimCancel => 'Cancel';
+
+  @override
+  String get soundTrimHint => 'Drag the handles to choose the music segment';
+
+  @override
+  String soundTrimMaxDuration(int seconds) {
+    return 'Maximum ${seconds}s for this content';
+  }
+
+  @override
+  String soundTrimSelectedDuration(int seconds) {
+    return '${seconds}s selected';
+  }
+
+  @override
+  String get soundTrimError => 'Could not process the selected segment.';
+
+  @override
+  String get soundVolumeLabel => 'Music volume';
+
+  @override
+  String get originalAudioVolumeLabel => 'Original audio volume';
 
   @override
   String get analyticsViewersTitle => 'Audience';

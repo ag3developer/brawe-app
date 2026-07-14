@@ -1136,6 +1136,25 @@ class SPt extends S {
   String get trimHint => 'Arraste as alças para escolher início e fim';
 
   @override
+  String get volumeMixerButtonLabel => 'Volumes';
+
+  @override
+  String get volumeMixerTitle => 'Volumes';
+
+  @override
+  String get volumeMixerSubtitle =>
+      'Ajuste o volume da música e do áudio original do vídeo';
+
+  @override
+  String get volumeMixerMusicLabel => 'Música';
+
+  @override
+  String get volumeMixerOriginalLabel => 'Áudio original do vídeo';
+
+  @override
+  String get volumeMixerDone => 'Concluir';
+
+  @override
   String get giftTierFree => 'Cofre';
 
   @override
@@ -4298,6 +4317,59 @@ class SPt extends S {
 
   @override
   String get postSoundRemove => 'Remover som';
+
+  @override
+  String get contentSoundOriginalAudio => 'Áudio original';
+
+  @override
+  String get contentSoundUseThis => 'Usar esta música';
+
+  @override
+  String get contentSoundUnavailable => 'Música indisponível';
+
+  @override
+  String get contentSoundView => 'Ver música';
+
+  @override
+  String get contentSoundNowPlaying => 'Tocando agora';
+
+  @override
+  String contentSoundByArtist(String title, String artist) {
+    return '$title · $artist';
+  }
+
+  @override
+  String get soundTrimTitle => 'Cortar música';
+
+  @override
+  String get soundTrimSave => 'Concluir';
+
+  @override
+  String get soundTrimCancel => 'Cancelar';
+
+  @override
+  String get soundTrimHint =>
+      'Arraste as alças para escolher o trecho da música';
+
+  @override
+  String soundTrimMaxDuration(int seconds) {
+    return 'Máximo de ${seconds}s para este conteúdo';
+  }
+
+  @override
+  String soundTrimSelectedDuration(int seconds) {
+    return '${seconds}s selecionados';
+  }
+
+  @override
+  String get soundTrimError =>
+      'Não foi possível processar o trecho selecionado.';
+
+  @override
+  String get soundVolumeLabel => 'Volume da música';
+
+  @override
+  String get originalAudioVolumeLabel => 'Volume do áudio original';
 
   @override
   String get analyticsViewersTitle => 'Audiência';

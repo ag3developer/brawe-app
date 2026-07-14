@@ -338,7 +338,12 @@ as DateTime?,
 /// @nodoc
 mixin _$Sound {
 
- String get id;@JsonKey(name: 'artist_id') String get artistId; String get title; String? get slug;@JsonKey(name: 'audio_url') String get audioUrl;@JsonKey(name: 'cover_url') String? get coverUrl;@JsonKey(name: 'waveform_url') String? get waveformUrl;@JsonKey(name: 'duration_ms') int get durationMs; int? get bpm; String? get genre; String? get subgenre; String? get mood; String? get language;@JsonKey(name: 'album_name') String? get albumName;@JsonKey(name: 'license_type') String get licenseType;@JsonKey(name: 'allow_trim') bool get allowTrim;@JsonKey(name: 'trim_start_ms') int get trimStartMs;@JsonKey(name: 'trim_end_ms') int? get trimEndMs;@JsonKey(name: 'play_count') int get playCount;@JsonKey(name: 'usage_count') int get usageCount;@JsonKey(name: 'save_count') int get saveCount; String get status;@JsonKey(name: 'is_saved') bool get isSaved; SoundArtist? get artist;@JsonKey(name: 'created_at') DateTime? get createdAt;
+ String get id;@JsonKey(name: 'artist_id') String get artistId; String get title; String? get slug;@JsonKey(name: 'audio_url') String get audioUrl;@JsonKey(name: 'cover_url') String? get coverUrl;@JsonKey(name: 'waveform_url') String? get waveformUrl;@JsonKey(name: 'duration_ms') int get durationMs; int? get bpm; String? get genre; String? get subgenre; String? get mood; String? get language;@JsonKey(name: 'album_name') String? get albumName;@JsonKey(name: 'license_type') String get licenseType;@JsonKey(name: 'allow_trim') bool get allowTrim;@JsonKey(name: 'trim_start_ms') int get trimStartMs;@JsonKey(name: 'trim_end_ms') int? get trimEndMs;@JsonKey(name: 'play_count') int get playCount;@JsonKey(name: 'usage_count') int get usageCount;@JsonKey(name: 'save_count') int get saveCount; String get status;@JsonKey(name: 'is_saved') bool get isSaved; SoundArtist? get artist;@JsonKey(name: 'created_at') DateTime? get createdAt;// Volume de reprodução (0.0-1.0). Campo SOMENTE de UI/player — o
+// catálogo do backend não retorna isso; é preenchido quando um
+// `SoundPreview` (post/story) é convertido para `Sound` reproduzível
+// via `toPlayableSound()`, refletindo `sound_volume` gravado no
+// conteúdo. Ausente no JSON do catálogo → usa o default 1.0.
+ double get volume;
 /// Create a copy of Sound
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -351,16 +356,16 @@ $SoundCopyWith<Sound> get copyWith => _$SoundCopyWithImpl<Sound>(this as Sound, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Sound&&(identical(other.id, id) || other.id == id)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.title, title) || other.title == title)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.audioUrl, audioUrl) || other.audioUrl == audioUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.waveformUrl, waveformUrl) || other.waveformUrl == waveformUrl)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.bpm, bpm) || other.bpm == bpm)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.subgenre, subgenre) || other.subgenre == subgenre)&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.language, language) || other.language == language)&&(identical(other.albumName, albumName) || other.albumName == albumName)&&(identical(other.licenseType, licenseType) || other.licenseType == licenseType)&&(identical(other.allowTrim, allowTrim) || other.allowTrim == allowTrim)&&(identical(other.trimStartMs, trimStartMs) || other.trimStartMs == trimStartMs)&&(identical(other.trimEndMs, trimEndMs) || other.trimEndMs == trimEndMs)&&(identical(other.playCount, playCount) || other.playCount == playCount)&&(identical(other.usageCount, usageCount) || other.usageCount == usageCount)&&(identical(other.saveCount, saveCount) || other.saveCount == saveCount)&&(identical(other.status, status) || other.status == status)&&(identical(other.isSaved, isSaved) || other.isSaved == isSaved)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Sound&&(identical(other.id, id) || other.id == id)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.title, title) || other.title == title)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.audioUrl, audioUrl) || other.audioUrl == audioUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.waveformUrl, waveformUrl) || other.waveformUrl == waveformUrl)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.bpm, bpm) || other.bpm == bpm)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.subgenre, subgenre) || other.subgenre == subgenre)&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.language, language) || other.language == language)&&(identical(other.albumName, albumName) || other.albumName == albumName)&&(identical(other.licenseType, licenseType) || other.licenseType == licenseType)&&(identical(other.allowTrim, allowTrim) || other.allowTrim == allowTrim)&&(identical(other.trimStartMs, trimStartMs) || other.trimStartMs == trimStartMs)&&(identical(other.trimEndMs, trimEndMs) || other.trimEndMs == trimEndMs)&&(identical(other.playCount, playCount) || other.playCount == playCount)&&(identical(other.usageCount, usageCount) || other.usageCount == usageCount)&&(identical(other.saveCount, saveCount) || other.saveCount == saveCount)&&(identical(other.status, status) || other.status == status)&&(identical(other.isSaved, isSaved) || other.isSaved == isSaved)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.volume, volume) || other.volume == volume));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,artistId,title,slug,audioUrl,coverUrl,waveformUrl,durationMs,bpm,genre,subgenre,mood,language,albumName,licenseType,allowTrim,trimStartMs,trimEndMs,playCount,usageCount,saveCount,status,isSaved,artist,createdAt]);
+int get hashCode => Object.hashAll([runtimeType,id,artistId,title,slug,audioUrl,coverUrl,waveformUrl,durationMs,bpm,genre,subgenre,mood,language,albumName,licenseType,allowTrim,trimStartMs,trimEndMs,playCount,usageCount,saveCount,status,isSaved,artist,createdAt,volume]);
 
 @override
 String toString() {
-  return 'Sound(id: $id, artistId: $artistId, title: $title, slug: $slug, audioUrl: $audioUrl, coverUrl: $coverUrl, waveformUrl: $waveformUrl, durationMs: $durationMs, bpm: $bpm, genre: $genre, subgenre: $subgenre, mood: $mood, language: $language, albumName: $albumName, licenseType: $licenseType, allowTrim: $allowTrim, trimStartMs: $trimStartMs, trimEndMs: $trimEndMs, playCount: $playCount, usageCount: $usageCount, saveCount: $saveCount, status: $status, isSaved: $isSaved, artist: $artist, createdAt: $createdAt)';
+  return 'Sound(id: $id, artistId: $artistId, title: $title, slug: $slug, audioUrl: $audioUrl, coverUrl: $coverUrl, waveformUrl: $waveformUrl, durationMs: $durationMs, bpm: $bpm, genre: $genre, subgenre: $subgenre, mood: $mood, language: $language, albumName: $albumName, licenseType: $licenseType, allowTrim: $allowTrim, trimStartMs: $trimStartMs, trimEndMs: $trimEndMs, playCount: $playCount, usageCount: $usageCount, saveCount: $saveCount, status: $status, isSaved: $isSaved, artist: $artist, createdAt: $createdAt, volume: $volume)';
 }
 
 
@@ -371,7 +376,7 @@ abstract mixin class $SoundCopyWith<$Res>  {
   factory $SoundCopyWith(Sound value, $Res Function(Sound) _then) = _$SoundCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'artist_id') String artistId, String title, String? slug,@JsonKey(name: 'audio_url') String audioUrl,@JsonKey(name: 'cover_url') String? coverUrl,@JsonKey(name: 'waveform_url') String? waveformUrl,@JsonKey(name: 'duration_ms') int durationMs, int? bpm, String? genre, String? subgenre, String? mood, String? language,@JsonKey(name: 'album_name') String? albumName,@JsonKey(name: 'license_type') String licenseType,@JsonKey(name: 'allow_trim') bool allowTrim,@JsonKey(name: 'trim_start_ms') int trimStartMs,@JsonKey(name: 'trim_end_ms') int? trimEndMs,@JsonKey(name: 'play_count') int playCount,@JsonKey(name: 'usage_count') int usageCount,@JsonKey(name: 'save_count') int saveCount, String status,@JsonKey(name: 'is_saved') bool isSaved, SoundArtist? artist,@JsonKey(name: 'created_at') DateTime? createdAt
+ String id,@JsonKey(name: 'artist_id') String artistId, String title, String? slug,@JsonKey(name: 'audio_url') String audioUrl,@JsonKey(name: 'cover_url') String? coverUrl,@JsonKey(name: 'waveform_url') String? waveformUrl,@JsonKey(name: 'duration_ms') int durationMs, int? bpm, String? genre, String? subgenre, String? mood, String? language,@JsonKey(name: 'album_name') String? albumName,@JsonKey(name: 'license_type') String licenseType,@JsonKey(name: 'allow_trim') bool allowTrim,@JsonKey(name: 'trim_start_ms') int trimStartMs,@JsonKey(name: 'trim_end_ms') int? trimEndMs,@JsonKey(name: 'play_count') int playCount,@JsonKey(name: 'usage_count') int usageCount,@JsonKey(name: 'save_count') int saveCount, String status,@JsonKey(name: 'is_saved') bool isSaved, SoundArtist? artist,@JsonKey(name: 'created_at') DateTime? createdAt, double volume
 });
 
 
@@ -388,7 +393,7 @@ class _$SoundCopyWithImpl<$Res>
 
 /// Create a copy of Sound
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? artistId = null,Object? title = null,Object? slug = freezed,Object? audioUrl = null,Object? coverUrl = freezed,Object? waveformUrl = freezed,Object? durationMs = null,Object? bpm = freezed,Object? genre = freezed,Object? subgenre = freezed,Object? mood = freezed,Object? language = freezed,Object? albumName = freezed,Object? licenseType = null,Object? allowTrim = null,Object? trimStartMs = null,Object? trimEndMs = freezed,Object? playCount = null,Object? usageCount = null,Object? saveCount = null,Object? status = null,Object? isSaved = null,Object? artist = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? artistId = null,Object? title = null,Object? slug = freezed,Object? audioUrl = null,Object? coverUrl = freezed,Object? waveformUrl = freezed,Object? durationMs = null,Object? bpm = freezed,Object? genre = freezed,Object? subgenre = freezed,Object? mood = freezed,Object? language = freezed,Object? albumName = freezed,Object? licenseType = null,Object? allowTrim = null,Object? trimStartMs = null,Object? trimEndMs = freezed,Object? playCount = null,Object? usageCount = null,Object? saveCount = null,Object? status = null,Object? isSaved = null,Object? artist = freezed,Object? createdAt = freezed,Object? volume = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,artistId: null == artistId ? _self.artistId : artistId // ignore: cast_nullable_to_non_nullable
@@ -415,7 +420,8 @@ as int,status: null == status ? _self.status : status // ignore: cast_nullable_t
 as String,isSaved: null == isSaved ? _self.isSaved : isSaved // ignore: cast_nullable_to_non_nullable
 as bool,artist: freezed == artist ? _self.artist : artist // ignore: cast_nullable_to_non_nullable
 as SoundArtist?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,volume: null == volume ? _self.volume : volume // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 /// Create a copy of Sound
@@ -509,10 +515,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt,  double volume)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Sound() when $default != null:
-return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt);case _:
+return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt,_that.volume);case _:
   return orElse();
 
 }
@@ -530,10 +536,10 @@ return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt,  double volume)  $default,) {final _that = this;
 switch (_that) {
 case _Sound():
-return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt);}
+return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt,_that.volume);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -547,10 +553,10 @@ return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'artist_id')  String artistId,  String title,  String? slug, @JsonKey(name: 'audio_url')  String audioUrl, @JsonKey(name: 'cover_url')  String? coverUrl, @JsonKey(name: 'waveform_url')  String? waveformUrl, @JsonKey(name: 'duration_ms')  int durationMs,  int? bpm,  String? genre,  String? subgenre,  String? mood,  String? language, @JsonKey(name: 'album_name')  String? albumName, @JsonKey(name: 'license_type')  String licenseType, @JsonKey(name: 'allow_trim')  bool allowTrim, @JsonKey(name: 'trim_start_ms')  int trimStartMs, @JsonKey(name: 'trim_end_ms')  int? trimEndMs, @JsonKey(name: 'play_count')  int playCount, @JsonKey(name: 'usage_count')  int usageCount, @JsonKey(name: 'save_count')  int saveCount,  String status, @JsonKey(name: 'is_saved')  bool isSaved,  SoundArtist? artist, @JsonKey(name: 'created_at')  DateTime? createdAt,  double volume)?  $default,) {final _that = this;
 switch (_that) {
 case _Sound() when $default != null:
-return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt);case _:
+return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_that.coverUrl,_that.waveformUrl,_that.durationMs,_that.bpm,_that.genre,_that.subgenre,_that.mood,_that.language,_that.albumName,_that.licenseType,_that.allowTrim,_that.trimStartMs,_that.trimEndMs,_that.playCount,_that.usageCount,_that.saveCount,_that.status,_that.isSaved,_that.artist,_that.createdAt,_that.volume);case _:
   return null;
 
 }
@@ -562,7 +568,7 @@ return $default(_that.id,_that.artistId,_that.title,_that.slug,_that.audioUrl,_t
 @JsonSerializable()
 
 class _Sound implements Sound {
-  const _Sound({required this.id, @JsonKey(name: 'artist_id') required this.artistId, required this.title, this.slug, @JsonKey(name: 'audio_url') required this.audioUrl, @JsonKey(name: 'cover_url') this.coverUrl, @JsonKey(name: 'waveform_url') this.waveformUrl, @JsonKey(name: 'duration_ms') this.durationMs = 0, this.bpm, this.genre, this.subgenre, this.mood, this.language, @JsonKey(name: 'album_name') this.albumName, @JsonKey(name: 'license_type') this.licenseType = 'brawe_standard', @JsonKey(name: 'allow_trim') this.allowTrim = true, @JsonKey(name: 'trim_start_ms') this.trimStartMs = 0, @JsonKey(name: 'trim_end_ms') this.trimEndMs, @JsonKey(name: 'play_count') this.playCount = 0, @JsonKey(name: 'usage_count') this.usageCount = 0, @JsonKey(name: 'save_count') this.saveCount = 0, this.status = 'pending', @JsonKey(name: 'is_saved') this.isSaved = false, this.artist, @JsonKey(name: 'created_at') this.createdAt});
+  const _Sound({required this.id, @JsonKey(name: 'artist_id') required this.artistId, required this.title, this.slug, @JsonKey(name: 'audio_url') required this.audioUrl, @JsonKey(name: 'cover_url') this.coverUrl, @JsonKey(name: 'waveform_url') this.waveformUrl, @JsonKey(name: 'duration_ms') this.durationMs = 0, this.bpm, this.genre, this.subgenre, this.mood, this.language, @JsonKey(name: 'album_name') this.albumName, @JsonKey(name: 'license_type') this.licenseType = 'brawe_standard', @JsonKey(name: 'allow_trim') this.allowTrim = true, @JsonKey(name: 'trim_start_ms') this.trimStartMs = 0, @JsonKey(name: 'trim_end_ms') this.trimEndMs, @JsonKey(name: 'play_count') this.playCount = 0, @JsonKey(name: 'usage_count') this.usageCount = 0, @JsonKey(name: 'save_count') this.saveCount = 0, this.status = 'pending', @JsonKey(name: 'is_saved') this.isSaved = false, this.artist, @JsonKey(name: 'created_at') this.createdAt, this.volume = 1.0});
   factory _Sound.fromJson(Map<String, dynamic> json) => _$SoundFromJson(json);
 
 @override final  String id;
@@ -590,6 +596,12 @@ class _Sound implements Sound {
 @override@JsonKey(name: 'is_saved') final  bool isSaved;
 @override final  SoundArtist? artist;
 @override@JsonKey(name: 'created_at') final  DateTime? createdAt;
+// Volume de reprodução (0.0-1.0). Campo SOMENTE de UI/player — o
+// catálogo do backend não retorna isso; é preenchido quando um
+// `SoundPreview` (post/story) é convertido para `Sound` reproduzível
+// via `toPlayableSound()`, refletindo `sound_volume` gravado no
+// conteúdo. Ausente no JSON do catálogo → usa o default 1.0.
+@override@JsonKey() final  double volume;
 
 /// Create a copy of Sound
 /// with the given fields replaced by the non-null parameter values.
@@ -604,16 +616,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Sound&&(identical(other.id, id) || other.id == id)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.title, title) || other.title == title)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.audioUrl, audioUrl) || other.audioUrl == audioUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.waveformUrl, waveformUrl) || other.waveformUrl == waveformUrl)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.bpm, bpm) || other.bpm == bpm)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.subgenre, subgenre) || other.subgenre == subgenre)&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.language, language) || other.language == language)&&(identical(other.albumName, albumName) || other.albumName == albumName)&&(identical(other.licenseType, licenseType) || other.licenseType == licenseType)&&(identical(other.allowTrim, allowTrim) || other.allowTrim == allowTrim)&&(identical(other.trimStartMs, trimStartMs) || other.trimStartMs == trimStartMs)&&(identical(other.trimEndMs, trimEndMs) || other.trimEndMs == trimEndMs)&&(identical(other.playCount, playCount) || other.playCount == playCount)&&(identical(other.usageCount, usageCount) || other.usageCount == usageCount)&&(identical(other.saveCount, saveCount) || other.saveCount == saveCount)&&(identical(other.status, status) || other.status == status)&&(identical(other.isSaved, isSaved) || other.isSaved == isSaved)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Sound&&(identical(other.id, id) || other.id == id)&&(identical(other.artistId, artistId) || other.artistId == artistId)&&(identical(other.title, title) || other.title == title)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.audioUrl, audioUrl) || other.audioUrl == audioUrl)&&(identical(other.coverUrl, coverUrl) || other.coverUrl == coverUrl)&&(identical(other.waveformUrl, waveformUrl) || other.waveformUrl == waveformUrl)&&(identical(other.durationMs, durationMs) || other.durationMs == durationMs)&&(identical(other.bpm, bpm) || other.bpm == bpm)&&(identical(other.genre, genre) || other.genre == genre)&&(identical(other.subgenre, subgenre) || other.subgenre == subgenre)&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.language, language) || other.language == language)&&(identical(other.albumName, albumName) || other.albumName == albumName)&&(identical(other.licenseType, licenseType) || other.licenseType == licenseType)&&(identical(other.allowTrim, allowTrim) || other.allowTrim == allowTrim)&&(identical(other.trimStartMs, trimStartMs) || other.trimStartMs == trimStartMs)&&(identical(other.trimEndMs, trimEndMs) || other.trimEndMs == trimEndMs)&&(identical(other.playCount, playCount) || other.playCount == playCount)&&(identical(other.usageCount, usageCount) || other.usageCount == usageCount)&&(identical(other.saveCount, saveCount) || other.saveCount == saveCount)&&(identical(other.status, status) || other.status == status)&&(identical(other.isSaved, isSaved) || other.isSaved == isSaved)&&(identical(other.artist, artist) || other.artist == artist)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.volume, volume) || other.volume == volume));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,artistId,title,slug,audioUrl,coverUrl,waveformUrl,durationMs,bpm,genre,subgenre,mood,language,albumName,licenseType,allowTrim,trimStartMs,trimEndMs,playCount,usageCount,saveCount,status,isSaved,artist,createdAt]);
+int get hashCode => Object.hashAll([runtimeType,id,artistId,title,slug,audioUrl,coverUrl,waveformUrl,durationMs,bpm,genre,subgenre,mood,language,albumName,licenseType,allowTrim,trimStartMs,trimEndMs,playCount,usageCount,saveCount,status,isSaved,artist,createdAt,volume]);
 
 @override
 String toString() {
-  return 'Sound(id: $id, artistId: $artistId, title: $title, slug: $slug, audioUrl: $audioUrl, coverUrl: $coverUrl, waveformUrl: $waveformUrl, durationMs: $durationMs, bpm: $bpm, genre: $genre, subgenre: $subgenre, mood: $mood, language: $language, albumName: $albumName, licenseType: $licenseType, allowTrim: $allowTrim, trimStartMs: $trimStartMs, trimEndMs: $trimEndMs, playCount: $playCount, usageCount: $usageCount, saveCount: $saveCount, status: $status, isSaved: $isSaved, artist: $artist, createdAt: $createdAt)';
+  return 'Sound(id: $id, artistId: $artistId, title: $title, slug: $slug, audioUrl: $audioUrl, coverUrl: $coverUrl, waveformUrl: $waveformUrl, durationMs: $durationMs, bpm: $bpm, genre: $genre, subgenre: $subgenre, mood: $mood, language: $language, albumName: $albumName, licenseType: $licenseType, allowTrim: $allowTrim, trimStartMs: $trimStartMs, trimEndMs: $trimEndMs, playCount: $playCount, usageCount: $usageCount, saveCount: $saveCount, status: $status, isSaved: $isSaved, artist: $artist, createdAt: $createdAt, volume: $volume)';
 }
 
 
@@ -624,7 +636,7 @@ abstract mixin class _$SoundCopyWith<$Res> implements $SoundCopyWith<$Res> {
   factory _$SoundCopyWith(_Sound value, $Res Function(_Sound) _then) = __$SoundCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'artist_id') String artistId, String title, String? slug,@JsonKey(name: 'audio_url') String audioUrl,@JsonKey(name: 'cover_url') String? coverUrl,@JsonKey(name: 'waveform_url') String? waveformUrl,@JsonKey(name: 'duration_ms') int durationMs, int? bpm, String? genre, String? subgenre, String? mood, String? language,@JsonKey(name: 'album_name') String? albumName,@JsonKey(name: 'license_type') String licenseType,@JsonKey(name: 'allow_trim') bool allowTrim,@JsonKey(name: 'trim_start_ms') int trimStartMs,@JsonKey(name: 'trim_end_ms') int? trimEndMs,@JsonKey(name: 'play_count') int playCount,@JsonKey(name: 'usage_count') int usageCount,@JsonKey(name: 'save_count') int saveCount, String status,@JsonKey(name: 'is_saved') bool isSaved, SoundArtist? artist,@JsonKey(name: 'created_at') DateTime? createdAt
+ String id,@JsonKey(name: 'artist_id') String artistId, String title, String? slug,@JsonKey(name: 'audio_url') String audioUrl,@JsonKey(name: 'cover_url') String? coverUrl,@JsonKey(name: 'waveform_url') String? waveformUrl,@JsonKey(name: 'duration_ms') int durationMs, int? bpm, String? genre, String? subgenre, String? mood, String? language,@JsonKey(name: 'album_name') String? albumName,@JsonKey(name: 'license_type') String licenseType,@JsonKey(name: 'allow_trim') bool allowTrim,@JsonKey(name: 'trim_start_ms') int trimStartMs,@JsonKey(name: 'trim_end_ms') int? trimEndMs,@JsonKey(name: 'play_count') int playCount,@JsonKey(name: 'usage_count') int usageCount,@JsonKey(name: 'save_count') int saveCount, String status,@JsonKey(name: 'is_saved') bool isSaved, SoundArtist? artist,@JsonKey(name: 'created_at') DateTime? createdAt, double volume
 });
 
 
@@ -641,7 +653,7 @@ class __$SoundCopyWithImpl<$Res>
 
 /// Create a copy of Sound
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? artistId = null,Object? title = null,Object? slug = freezed,Object? audioUrl = null,Object? coverUrl = freezed,Object? waveformUrl = freezed,Object? durationMs = null,Object? bpm = freezed,Object? genre = freezed,Object? subgenre = freezed,Object? mood = freezed,Object? language = freezed,Object? albumName = freezed,Object? licenseType = null,Object? allowTrim = null,Object? trimStartMs = null,Object? trimEndMs = freezed,Object? playCount = null,Object? usageCount = null,Object? saveCount = null,Object? status = null,Object? isSaved = null,Object? artist = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? artistId = null,Object? title = null,Object? slug = freezed,Object? audioUrl = null,Object? coverUrl = freezed,Object? waveformUrl = freezed,Object? durationMs = null,Object? bpm = freezed,Object? genre = freezed,Object? subgenre = freezed,Object? mood = freezed,Object? language = freezed,Object? albumName = freezed,Object? licenseType = null,Object? allowTrim = null,Object? trimStartMs = null,Object? trimEndMs = freezed,Object? playCount = null,Object? usageCount = null,Object? saveCount = null,Object? status = null,Object? isSaved = null,Object? artist = freezed,Object? createdAt = freezed,Object? volume = null,}) {
   return _then(_Sound(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,artistId: null == artistId ? _self.artistId : artistId // ignore: cast_nullable_to_non_nullable
@@ -668,7 +680,8 @@ as int,status: null == status ? _self.status : status // ignore: cast_nullable_t
 as String,isSaved: null == isSaved ? _self.isSaved : isSaved // ignore: cast_nullable_to_non_nullable
 as bool,artist: freezed == artist ? _self.artist : artist // ignore: cast_nullable_to_non_nullable
 as SoundArtist?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,
+as DateTime?,volume: null == volume ? _self.volume : volume // ignore: cast_nullable_to_non_nullable
+as double,
   ));
 }
 

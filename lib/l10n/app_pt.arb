@@ -531,6 +531,12 @@
   },
   "trimError": "Não foi possível salvar o vídeo cortado.",
   "trimHint": "Arraste as alças para escolher início e fim",
+  "volumeMixerButtonLabel": "Volumes",
+  "volumeMixerTitle": "Volumes",
+  "volumeMixerSubtitle": "Ajuste o volume da música e do áudio original do vídeo",
+  "volumeMixerMusicLabel": "Música",
+  "volumeMixerOriginalLabel": "Áudio original do vídeo",
+  "volumeMixerDone": "Concluir",
   "giftTierFree": "Cofre",
   "@giftTierFree": {
     "description": "Aba/categoria do tier gratuito de presentes (pagos com moedas/XP de quests). Renomeado de 'Free' para 'Cofre' — comunica que são presentes de um baú que o usuário acumulou com atividade, não com dinheiro real."
@@ -2152,6 +2158,35 @@
     "placeholders": { "title": { "type": "String" } }
   },
   "postSoundRemove": "Remover som",
+
+  "contentSoundOriginalAudio": "Áudio original",
+  "contentSoundUseThis": "Usar esta música",
+  "contentSoundUnavailable": "Música indisponível",
+  "contentSoundView": "Ver música",
+  "contentSoundNowPlaying": "Tocando agora",
+  "contentSoundByArtist": "{title} · {artist}",
+  "@contentSoundByArtist": {
+    "placeholders": {
+      "title": { "type": "String" },
+      "artist": { "type": "String" }
+    }
+  },
+
+  "soundTrimTitle": "Cortar música",
+  "soundTrimSave": "Concluir",
+  "soundTrimCancel": "Cancelar",
+  "soundTrimHint": "Arraste as alças para escolher o trecho da música",
+  "soundTrimMaxDuration": "Máximo de {seconds}s para este conteúdo",
+  "@soundTrimMaxDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimSelectedDuration": "{seconds}s selecionados",
+  "@soundTrimSelectedDuration": {
+    "placeholders": { "seconds": { "type": "int" } }
+  },
+  "soundTrimError": "Não foi possível processar o trecho selecionado.",
+  "soundVolumeLabel": "Volume da música",
+  "originalAudioVolumeLabel": "Volume do áudio original",
 
   "analyticsViewersTitle": "Audiência",
   "analyticsViewersTotalViewers": "Total de viewers",

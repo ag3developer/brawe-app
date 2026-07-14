@@ -109,10 +109,23 @@ class PostService {
     required String content,
     String? imageUrl,
     String? audience, // mantido por compat — ignorado pelo backend atual
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
     await _dio.post(
       '/posts',
-      data: {'content': content, 'image_url': ?imageUrl},
+      data: {
+        'content': content,
+        'image_url': ?imageUrl,
+        'sound_id': ?soundId,
+        'sound_trim_start_ms': soundTrimStartMs,
+        'sound_trim_end_ms': ?soundTrimEndMs,
+        if (soundId != null) 'sound_volume': soundVolume,
+        if (soundId != null) 'original_audio_volume': originalAudioVolume,
+      },
     );
   }
 

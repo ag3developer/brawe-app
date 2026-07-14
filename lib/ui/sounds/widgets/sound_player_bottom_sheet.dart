@@ -5,20 +5,47 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../../data/repositories/waveform_repository.dart';
 import '../../../domain/models/sound.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/sound_player_view_model.dart';
 import '../view_models/sounds_view_model.dart';
+import 'waveform_view.dart';
 
 /// Bottom sheet do player de Brawe Sounds.
 /// Chamado com:
 ///   showModalBottomSheet(builder: (_) => SoundPlayerBottomSheet(sound: s))
-class SoundPlayerBottomSheet extends ConsumerWidget {
+class SoundPlayerBottomSheet extends ConsumerStatefulWidget {
   const SoundPlayerBottomSheet({super.key, required this.sound});
   final Sound sound;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SoundPlayerBottomSheet> createState() =>
+      _SoundPlayerBottomSheetState();
+}
+
+class _SoundPlayerBottomSheetState
+    extends ConsumerState<SoundPlayerBottomSheet> {
+  List<double>? _waveform;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadWaveform());
+  }
+
+  Future<void> _loadWaveform() async {
+    final samples = await ref
+        .read(waveformRepositoryProvider)
+        .getWaveform(widget.sound.waveformUrl);
+    if (mounted && samples != null) {
+      setState(() => _waveform = samples);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sound = widget.sound;
     final s = S.of(context);
     final playerState = ref.watch(soundPlayerViewModelProvider);
     final isCurrent = playerState.sound?.id == sound.id;
@@ -87,13 +114,29 @@ class SoundPlayerBottomSheet extends ConsumerWidget {
             ),
           ),
 
-          // Waveform / progress bar
+          // Waveform / progress bar — usa amostras REAIS de
+          // `sound.waveformUrl` quando dispon\u00edveis (fetch ass\u00edncrono via
+          // `WaveformRepository`); cai no padr\u00e3o neutro do `WaveformView`
+          // enquanto carrega ou se a faixa n\u00e3o tiver waveform gerado.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _WaveformProgress(
-              progress: isCurrent ? playerState.progress : 0,
-              onSeek: (v) =>
-                  ref.read(soundPlayerViewModelProvider.notifier).seek(v),
+            child: GestureDetector(
+              onHorizontalDragUpdate: (d) => _seekFromLocalDx(
+                context,
+                d.globalPosition,
+                ref,
+              ),
+              onTapDown: (d) => _seekFromLocalDx(
+                context,
+                d.globalPosition,
+                ref,
+              ),
+              child: WaveformView(
+                samples: _waveform,
+                progress: isCurrent ? playerState.progress : 0,
+                activeColor: AppColors.mutedRed,
+                inactiveColor: context.colors.border,
+              ),
             ),
           ),
 
@@ -217,87 +260,20 @@ class SoundPlayerBottomSheet extends ConsumerWidget {
     if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
     return n.toString();
   }
-}
 
-// ── Waveform / progress ───────────────────────────────────────────────────────
-class _WaveformProgress extends StatelessWidget {
-  const _WaveformProgress({required this.progress, required this.onSeek});
-  final double progress;
-  final ValueChanged<double> onSeek;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragUpdate: (d) {
-        final box = context.findRenderObject() as RenderBox?;
-        if (box == null) return;
-        final local = box.globalToLocal(d.globalPosition);
-        onSeek((local.dx / box.size.width).clamp(0.0, 1.0));
-      },
-      onTapDown: (d) {
-        final box = context.findRenderObject() as RenderBox?;
-        if (box == null) return;
-        final local = box.globalToLocal(d.globalPosition);
-        onSeek((local.dx / box.size.width).clamp(0.0, 1.0));
-      },
-      child: SizedBox(
-        height: 48,
-        child: CustomPaint(
-          size: const Size(double.infinity, 48),
-          painter: _WaveformPainter(
-            progress: progress,
-            activeColor: AppColors.mutedRed,
-            inactiveColor: context.colors.border,
-          ),
-        ),
-      ),
-    );
+  /// Converte uma posi\u00e7\u00e3o global de toque/arrasto em progresso [0..1]
+  /// relativo \u00e0 largura do `WaveformView` e aplica via `seek()`.
+  void _seekFromLocalDx(
+    BuildContext context,
+    Offset globalPosition,
+    WidgetRef ref,
+  ) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final local = box.globalToLocal(globalPosition);
+    final progress = (local.dx / box.size.width).clamp(0.0, 1.0);
+    ref.read(soundPlayerViewModelProvider.notifier).seek(progress);
   }
-}
-
-class _WaveformPainter extends CustomPainter {
-  final double progress;
-  final Color activeColor;
-  final Color inactiveColor;
-  static const _bars = 50;
-
-  const _WaveformPainter({
-    required this.progress,
-    required this.activeColor,
-    required this.inactiveColor,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final barW = size.width / (_bars * 1.6);
-    final gap = barW * 0.6;
-    final centerY = size.height / 2;
-    // Simula alturas de waveform com valores fixos (substituídos por dados reais quando waveform_url existir)
-    const heights = [
-      0.3,0.5,0.8,0.6,0.4,0.9,0.7,0.5,0.3,0.6,
-      0.8,1.0,0.7,0.4,0.6,0.5,0.8,0.9,0.6,0.3,
-      0.5,0.7,1.0,0.8,0.6,0.4,0.7,0.9,0.5,0.3,
-      0.4,0.6,0.8,1.0,0.7,0.5,0.3,0.6,0.8,0.9,
-      0.7,0.5,0.4,0.6,0.8,1.0,0.7,0.5,0.4,0.3,
-    ];
-
-    for (var i = 0; i < _bars; i++) {
-      final x = i * (barW + gap);
-      final h = (heights[i % heights.length] * centerY).clamp(2.0, centerY);
-      final active = x / size.width <= progress;
-      final paint = Paint()
-        ..color = active ? activeColor : inactiveColor
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = barW;
-      canvas.drawLine(
-          Offset(x + barW / 2, centerY - h),
-          Offset(x + barW / 2, centerY + h),
-          paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_WaveformPainter o) => o.progress != progress;
 }
 
 // ── Sub-widgets ───────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 
 import 'product.dart';
 import 'battle_state.dart';
+import 'sound_preview.dart';
 
 sealed class FeedItem {
   const FeedItem({
@@ -139,11 +140,23 @@ class VideoFeedItem extends FeedItem {
     required this.videoUrl,
     required this.thumbnailUrl,
     required this.duration,
+    this.sound,
+    this.soundVolume = 1.0,
+    this.originalAudioVolume = 1.0,
   });
 
   final String videoUrl;
   final String thumbnailUrl;
   final Duration duration;
+
+  /// Música do Brawe Sounds anexada a este Reel/vídeo (opcional).
+  final SoundPreview? sound;
+
+  /// Volume da música anexada (0.0-1.0) ESPECÍFICO deste vídeo.
+  final double soundVolume;
+
+  /// Volume do áudio ORIGINAL do vídeo (0.0-1.0) quando há música anexada.
+  final double originalAudioVolume;
 }
 
 /// 📸 Post de foto/texto.

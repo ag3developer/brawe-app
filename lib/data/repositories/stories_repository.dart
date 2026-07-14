@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/failure.dart';
+import '../../domain/models/sound_preview.dart';
 import '../../domain/models/story.dart';
 import '../../domain/models/story_active_status.dart';
 import '../services/stories_service.dart';
@@ -109,12 +110,20 @@ class StoriesRepository {
   /// Backend persiste em `stories.idempotency_key` (UNIQUE) e devolve o
   /// registro existente se a mesma key chegar 2x — evita duplicatas
   /// quando o usuário toca "Compartilhar" várias vezes em rede lenta.
+  /// [soundId] (opcional) anexa uma música do Brawe Sounds ao story;
+  /// [soundTrimStartMs]/[soundTrimEndMs] definem o trecho específico
+  /// escolhido para ESTE story.
   Future<void> createStory({
     required String localFilePath,
     String? caption,
     int? durationSeconds,
     String? originPostId,
     String? idempotencyKey,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
     try {
       await _service.createStory(
@@ -123,6 +132,11 @@ class StoriesRepository {
         durationSeconds: durationSeconds,
         originPostId: originPostId,
         idempotencyKey: idempotencyKey,
+        soundId: soundId,
+        soundTrimStartMs: soundTrimStartMs,
+        soundTrimEndMs: soundTrimEndMs,
+        soundVolume: soundVolume,
+        originalAudioVolume: originalAudioVolume,
       );
     } on DioException {
       // ⚠️ Re-lança o DioException ORIGINAL para o composer poder
@@ -266,6 +280,12 @@ class StoriesRepository {
       isSeen: (json['is_viewed'] ?? false) as bool,
       isVerified: isVerified,
       originPostId: json['origin_post_id'] as String?,
+      sound: json['sound'] != null
+          ? SoundPreview.fromJson(json['sound'] as Map<String, dynamic>)
+          : null,
+      soundVolume: (json['sound_volume'] as num?)?.toDouble() ?? 1.0,
+      originalAudioVolume:
+          (json['original_audio_volume'] as num?)?.toDouble() ?? 1.0,
     );
   }
 }

@@ -2205,6 +2205,42 @@ abstract class S {
   /// **'Arraste as alças para escolher início e fim'**
   String get trimHint;
 
+  /// No description provided for @volumeMixerButtonLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volumes'**
+  String get volumeMixerButtonLabel;
+
+  /// No description provided for @volumeMixerTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volumes'**
+  String get volumeMixerTitle;
+
+  /// No description provided for @volumeMixerSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuste o volume da música e do áudio original do vídeo'**
+  String get volumeMixerSubtitle;
+
+  /// No description provided for @volumeMixerMusicLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música'**
+  String get volumeMixerMusicLabel;
+
+  /// No description provided for @volumeMixerOriginalLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio original do vídeo'**
+  String get volumeMixerOriginalLabel;
+
+  /// No description provided for @volumeMixerDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get volumeMixerDone;
+
   /// Aba/categoria do tier gratuito de presentes (pagos com moedas/XP de quests). Renomeado de 'Free' para 'Cofre' — comunica que são presentes de um baú que o usuário acumulou com atividade, não com dinheiro real.
   ///
   /// In pt, this message translates to:
@@ -7802,6 +7838,96 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Remover som'**
   String get postSoundRemove;
+
+  /// No description provided for @contentSoundOriginalAudio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio original'**
+  String get contentSoundOriginalAudio;
+
+  /// No description provided for @contentSoundUseThis.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar esta música'**
+  String get contentSoundUseThis;
+
+  /// No description provided for @contentSoundUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música indisponível'**
+  String get contentSoundUnavailable;
+
+  /// No description provided for @contentSoundView.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver música'**
+  String get contentSoundView;
+
+  /// No description provided for @contentSoundNowPlaying.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tocando agora'**
+  String get contentSoundNowPlaying;
+
+  /// No description provided for @contentSoundByArtist.
+  ///
+  /// In pt, this message translates to:
+  /// **'{title} · {artist}'**
+  String contentSoundByArtist(String title, String artist);
+
+  /// No description provided for @soundTrimTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cortar música'**
+  String get soundTrimTitle;
+
+  /// No description provided for @soundTrimSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get soundTrimSave;
+
+  /// No description provided for @soundTrimCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get soundTrimCancel;
+
+  /// No description provided for @soundTrimHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arraste as alças para escolher o trecho da música'**
+  String get soundTrimHint;
+
+  /// No description provided for @soundTrimMaxDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'Máximo de {seconds}s para este conteúdo'**
+  String soundTrimMaxDuration(int seconds);
+
+  /// No description provided for @soundTrimSelectedDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'{seconds}s selecionados'**
+  String soundTrimSelectedDuration(int seconds);
+
+  /// No description provided for @soundTrimError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível processar o trecho selecionado.'**
+  String get soundTrimError;
+
+  /// No description provided for @soundVolumeLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volume da música'**
+  String get soundVolumeLabel;
+
+  /// No description provided for @originalAudioVolumeLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volume do áudio original'**
+  String get originalAudioVolumeLabel;
 
   /// No description provided for @analyticsViewersTitle.
   ///

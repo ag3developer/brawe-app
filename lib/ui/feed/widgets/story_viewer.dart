@@ -9,6 +9,7 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/stories_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/social_actions_service.dart';
+import '../../../domain/models/sound_preview.dart';
 import '../../../domain/models/story.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -17,6 +18,9 @@ import '../../core/themes/force_dark_theme.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_story_media.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
+import '../../shared/widgets/content_sound_attribution.dart';
+import '../../sounds/view_models/sound_player_view_model.dart';
+import '../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
 import 'gift_flight_overlay.dart';
@@ -46,7 +50,7 @@ class StoryViewer extends ConsumerStatefulWidget {
 }
 
 class _StoryViewerState extends ConsumerState<StoryViewer>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late int _currentIndex;
   final GlobalKey _creatorAvatarKey = GlobalKey();
 
@@ -60,10 +64,37 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   // Quando o long-press abre o menu, evita que `onLongPressEnd` retome o
   // story (o menu cuida do resume ao fechar).
   bool _menuOpenedByLongPress = false;
+  // Brawe Sound: `true` quando a música anexada falhou ao carregar (URL
+  // inválida, faixa removida, etc). O story NUNCA quebra por isso — apenas
+  // mostra "Música indisponível" no lugar do título/artista e não tenta
+  // reproduzir novamente.
+  bool _soundUnavailable = false;
   final TextEditingController _replyController = TextEditingController();
   final FocusNode _replyFocus = FocusNode();
 
+  /// `true` quando o story foi pausado automaticamente pelo lifecycle do
+  /// app (background/inativo) — distingue de uma pausa manual do usuário
+  /// (long-press), que NUNCA deve ser retomada automaticamente ao voltar.
+  bool _pausedByLifecycle = false;
+
+  /// Timer periódico (throttled) que corrige o drift entre vídeo (master
+  /// clock) e música anexada em stories de vídeo. Nunca faz seek por
+  /// frame — apenas a cada [_driftCheckInterval].
+  Timer? _syncTimer;
+  static const _driftCheckInterval = Duration(milliseconds: 600);
+  static const _driftThreshold = Duration(milliseconds: 300);
+
+  /// Incrementado a cada `_startStory()` — permite que callbacks
+  /// assíncronos (aguardando a música ficar pronta) detectem que o story
+  /// mudou (ou o viewer foi fechado) enquanto esperavam, e abortem sem
+  /// aplicar efeitos em um story que não é mais o atual.
+  int _storySession = 0;
+
   static const _imageDuration = Duration(seconds: 5);
+
+  /// Offset base (px) da área inferior de overlays (legenda, música,
+  /// "ver post original"). Elementos adicionais empilham a partir daqui.
+  static const _kStoryBottomBase = 80.0;
 
   Story get _story => widget.stories[_currentIndex];
 
@@ -72,17 +103,66 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     super.initState();
     _currentIndex = widget.initialIndex;
     _progressController = AnimationController(vsync: this);
+    WidgetsBinding.instance.addObserver(this);
     _startStory();
     _notifyViewed();
   }
 
+  /// Pausa vídeo/animação/música quando o app sai de foreground (troca de
+  /// app, tela de bloqueio, notification shade) e retoma ao voltar —
+  /// sem isso a música do Brawe Sound continuava tocando "às escuras" com
+  /// o app em background (lacuna de lifecycle apontada no relatório de
+  /// áudio). Nunca retoma automaticamente uma pausa MANUAL do usuário.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+        if (!_paused) {
+          _pausedByLifecycle = true;
+          _pause();
+        }
+        break;
+      case AppLifecycleState.resumed:
+        if (_pausedByLifecycle) {
+          _pausedByLifecycle = false;
+          _resume();
+        }
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Invalida qualquer callback assíncrono pendente de `_startStory()`
+    // (ex.: aguardando a música ficar pronta) — ao retomar de um `await`,
+    // esses callbacks checam `_storySession` e abortam se ele mudou.
+    _storySession++;
     _timer?.cancel();
+    _syncTimer?.cancel();
     _progressController.dispose();
     _videoController?.dispose();
     _replyController.dispose();
     _replyFocus.dispose();
+    // Brawe Sound: para a música ao sair do viewer (não deve continuar
+    // tocando em background depois que o usuário fecha a tela). `stop()`
+    // incrementa a geração do player IMEDIATAMENTE e de forma SÍNCRONA
+    // — qualquer `play()` de uma chamada anterior ainda em andamento é
+    // invalidado nesse instante, mesmo que a limpeza completa do
+    // `AudioPlayer` (assíncrona) termine depois. `dispose()` precisa
+    // permanecer síncrono, por isso a limpeza completa é fire-and-forget
+    // com timeout de segurança.
+    unawaited(
+      ref
+          .read(soundPlayerViewModelProvider.notifier)
+          .stop()
+          .timeout(const Duration(seconds: 2))
+          .catchError((_) {}),
+    );
     super.dispose();
   }
 
@@ -100,34 +180,92 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   }
 
   Future<void> _startStory() async {
+    // Sessão desta chamada — usada para abortar callbacks assíncronos
+    // (espera pela música, drift timer) caso o story mude ou o viewer
+    // seja fechado antes deles terminarem.
+    final session = ++_storySession;
+
     _timer?.cancel();
+    _syncTimer?.cancel();
     await _videoController?.dispose();
     _videoController = null;
     _progressController.reset();
     _paused = false;
+    _pausedByLifecycle = false;
+    _soundUnavailable = false;
+
+    // Brawe Sound: para a música do story anterior ANTES de iniciar o
+    // próximo — e AGUARDA a limpeza completar (agora `stop()` é
+    // assíncrono). Sem esse `await`, o `play()` da faixa deste story
+    // podia começar enquanto o `stop()` do story anterior ainda estava
+    // finalizando, e o `AudioPlayer` antigo "vencia" a corrida, deixando
+    // uma faixa errada (ou nenhuma) tocando — a causa raiz do Bug #2.
+    await ref.read(soundPlayerViewModelProvider.notifier).stop();
+    if (!mounted || session != _storySession) return;
 
     final story = _story;
+    final owner = 'story:${story.id}';
+
     if (story.isVideo && story.mediaUrl.isNotEmpty) {
       final ctrl = VideoPlayerController.networkUrl(Uri.parse(story.mediaUrl));
       _videoController = ctrl;
       try {
         await ctrl.initialize();
-        if (!mounted) return;
-        await ctrl.setVolume(_muted ? 0 : 1);
+        if (!mounted || session != _storySession) return;
+        // Quando há música do Brawe Sounds anexada, o áudio ORIGINAL do
+        // vídeo respeita `originalAudioVolume` (definido pelo autor ao
+        // publicar) em vez de tocar sempre a 100% — evita que o áudio
+        // nativo do vídeo compita com a música escolhida.
+        final baseVolume = story.sound != null
+            ? story.originalAudioVolume.clamp(0.0, 1.0)
+            : 1.0;
+        await ctrl.setVolume(_muted ? 0 : baseVolume);
         final duration = ctrl.value.duration > Duration.zero
             ? ctrl.value.duration
             : _imageDuration;
         _progressController.duration = duration;
+
+        // Story de VÍDEO: o vídeo é o master clock (requisito da Fase B).
+        // Inicia vídeo + barra de progresso + timer juntos; a música (se
+        // houver) é anexada em paralelo e mantida em sincronia por um
+        // timer de correção de drift com throttle — nunca por seek a
+        // cada frame.
         await ctrl.play();
+        if (!mounted || session != _storySession) return;
         _progressController.forward();
         _timer = Timer(duration, _nextStory);
         setState(() {});
+
+        if (story.sound != null) {
+          unawaited(
+            _playStorySoundIfPresent(
+              story.sound,
+              owner: owner,
+              session: session,
+            ),
+          );
+          _startDriftCorrection(session: session, owner: owner);
+        }
       } catch (_) {
+        if (!mounted || session != _storySession) return;
         _progressController.duration = _imageDuration;
         _progressController.forward();
         _timer = Timer(_imageDuration, _nextStory);
       }
     } else {
+      // Story de IMAGEM: sem master clock externo — aguarda a música
+      // ficar pronta (ou falhar/expirar o teto de espera) ANTES de
+      // iniciar a barra de progresso, para que ambas comecem "juntas"
+      // (requisito da Fase B; corrige o drift inicial do Bug #1).
+      if (story.sound != null) {
+        await _playStorySoundIfPresent(
+          story.sound,
+          owner: owner,
+          session: session,
+          awaitReady: true,
+        );
+      }
+      if (!mounted || session != _storySession) return;
       _progressController.duration = _imageDuration;
       _progressController.forward();
       _timer = Timer(_imageDuration, _nextStory);
@@ -137,6 +275,104 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     // avançar, a próxima mídia já estará no cache (ou pelo menos com
     // DNS+TLS aquecidos para vídeo). Best-effort, ignora falhas.
     _precacheNeighbors();
+  }
+
+  /// Toca a música do Brawe Sounds anexada ao story (se houver),
+  /// respeitando o estado atual de mute. O player já recorta o trecho
+  /// exato (`trim_start_ms`/`trim_end_ms`) escolhido para ESTE story —
+  /// ver `SoundPreviewPlayback.toPlayableSound()`.
+  ///
+  /// Se [awaitReady] for `true`, espera o player sair de `loading` (até
+  /// [_kSoundReadyTimeout]) antes de retornar — usado nos stories de
+  /// IMAGEM para iniciar a animação de progresso em sincronia com o
+  /// início real do áudio (Fase B). Stories de VÍDEO não usam
+  /// `awaitReady` — o vídeo já é o master clock e não pode esperar a
+  /// rede da música.
+  ///
+  /// Nunca deixa uma falha de áudio (URL inválida, faixa removida, etc)
+  /// derrubar o story: qualquer erro apenas marca [_soundUnavailable]
+  /// para a UI mostrar "Música indisponível" no lugar do título/artista.
+  static const _kSoundReadyTimeout = Duration(seconds: 3);
+  static const _kSoundReadyPollInterval = Duration(milliseconds: 40);
+
+  Future<void> _playStorySoundIfPresent(
+    SoundPreview? sound, {
+    required String owner,
+    required int session,
+    bool awaitReady = false,
+  }) async {
+    if (sound == null) return;
+    final notifier = ref.read(soundPlayerViewModelProvider.notifier);
+    try {
+      await notifier.play(
+        sound.toPlayableSound(volume: _story.soundVolume),
+        owner: owner,
+      );
+      if (!mounted || session != _storySession) return;
+
+      if (awaitReady) {
+        var waited = Duration.zero;
+        while (waited < _kSoundReadyTimeout) {
+          if (!mounted || session != _storySession) return;
+          final status = ref.read(soundPlayerViewModelProvider).status;
+          if (status == SoundPlayerStatus.playing ||
+              status == SoundPlayerStatus.error) {
+            break;
+          }
+          await Future.delayed(_kSoundReadyPollInterval);
+          waited += _kSoundReadyPollInterval;
+        }
+      }
+
+      if (!mounted || session != _storySession) return;
+      final status = ref.read(soundPlayerViewModelProvider).status;
+      if (status == SoundPlayerStatus.error) {
+        if (mounted) setState(() => _soundUnavailable = true);
+        return;
+      }
+      if (_muted) await notifier.setVolume(0);
+    } catch (_) {
+      if (!mounted || session != _storySession) return;
+      setState(() => _soundUnavailable = true);
+    }
+  }
+
+  /// Inicia o timer de correção de drift (throttled) para stories de
+  /// VÍDEO com música anexada: o vídeo é o master clock, e a música é
+  /// periodicamente comparada e corrigida via `seek()` se o desvio
+  /// exceder [_driftThreshold]. NUNCA faz seek a cada frame — apenas a
+  /// cada [_driftCheckInterval].
+  void _startDriftCorrection({required int session, required String owner}) {
+    _syncTimer?.cancel();
+    _syncTimer = Timer.periodic(_driftCheckInterval, (_) {
+      if (!mounted || session != _storySession) {
+        _syncTimer?.cancel();
+        return;
+      }
+      if (_paused) return;
+      final videoCtrl = _videoController;
+      if (videoCtrl == null || !videoCtrl.value.isInitialized) return;
+
+      final notifier = ref.read(soundPlayerViewModelProvider.notifier);
+      final playerState = ref.read(soundPlayerViewModelProvider);
+      if (playerState.sound == null || !playerState.isPlaying) return;
+      // Só corrige se ainda formos o dono legítimo do player — evita
+      // interferir se outra tela assumiu o player nesse meio tempo.
+      if (!notifier.isOwner(owner)) return;
+      final musicDurationMs = playerState.duration.inMilliseconds;
+      if (musicDurationMs <= 0) return;
+
+      final videoPos = videoCtrl.value.position;
+      final audioPos = playerState.position;
+      final drift = videoPos - audioPos;
+      if (drift.abs() > _driftThreshold) {
+        final progress = (videoPos.inMilliseconds / musicDurationMs).clamp(
+          0.0,
+          1.0,
+        );
+        notifier.seek(progress);
+      }
+    });
   }
 
   /// Pré-baixa silenciosamente o story imediatamente seguinte (e o
@@ -161,18 +397,50 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     if (_paused) return;
     _paused = true;
     _timer?.cancel();
+    _syncTimer?.cancel();
     _progressController.stop();
     _videoController?.pause();
+    if (_story.sound != null) {
+      ref.read(soundPlayerViewModelProvider.notifier).pause();
+    }
   }
 
   void _resume() {
     if (!_paused) return;
     _paused = false;
+    final session = _storySession;
+    final owner = 'story:${_story.id}';
+    final notifier = ref.read(soundPlayerViewModelProvider.notifier);
+    final playerState = ref.read(soundPlayerViewModelProvider);
+
+    // Fase B: usa a posição REAL do áudio (quando disponível e ainda
+    // somos o dono legítimo do player) em vez do valor da animação —
+    // evita que o tempo restante calculado derive do progress bar, que
+    // pode já estar dessincronizado da música.
+    Duration remaining;
     final total = _progressController.duration ?? _imageDuration;
-    final remaining = total * (1 - _progressController.value);
+    if (_story.sound != null &&
+        playerState.sound?.id == _story.sound!.id &&
+        notifier.isOwner(owner) &&
+        playerState.duration > Duration.zero) {
+      remaining = playerState.duration - playerState.position;
+      if (remaining.isNegative) remaining = Duration.zero;
+    } else {
+      remaining = total * (1 - _progressController.value);
+    }
+
     _progressController.forward();
     _videoController?.play();
     _timer = Timer(remaining, _nextStory);
+    if (_story.sound != null) {
+      notifier.play(
+        _story.sound!.toPlayableSound(volume: _story.soundVolume),
+        owner: owner,
+      );
+      if (_videoController != null) {
+        _startDriftCorrection(session: session, owner: owner);
+      }
+    }
   }
 
   void _nextStory() {
@@ -724,6 +992,36 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                         fontSize: 12,
                                       ),
                                     ),
+                                    // Brawe Sound: atribuição musical
+                                    // compacta, logo abaixo do nome+horário
+                                    // do autor (padrão contextual — NÃO é
+                                    // mais um card separado na parte
+                                    // inferior da tela, perto dos
+                                    // comentários/visualizações).
+                                    if (story.sound != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: ContentSoundAttribution(
+                                          trackId: story.sound!.id,
+                                          title: story.sound!.title,
+                                          artistName: story.sound!.artistName,
+                                          coverUrl: story.sound!.coverUrl,
+                                          isPlaying:
+                                              !_paused &&
+                                              !_muted &&
+                                              !_soundUnavailable,
+                                          isUnavailable: _soundUnavailable,
+                                          contentType:
+                                              ContentSoundSurface.story,
+                                          maxWidth:
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.width *
+                                              0.55,
+                                          onTap: () =>
+                                              _openSoundDetails(story.sound!),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -758,9 +1056,14 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 ),
               ),
 
+              // Brawe Sound: a atribuição musical NÃO fica mais aqui.
+              // Ela foi movida para o header, abaixo do nome+horário do
+              // autor (ver Row do avatar acima) — é uma informação
+              // contextual da publicação, não um card separado perto da
+              // reply bar/comentários. Ver `ContentSoundAttribution`.
               if (story.caption != null)
                 Positioned(
-                  bottom: 80,
+                  bottom: _kStoryBottomBase,
                   left: 16,
                   right: 16,
                   child: Text(
@@ -773,10 +1076,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   ),
                 ),
 
-              // Chip "Ver post original" quando o story é um repost
+              // Chip "Ver post original" quando o story é um repost.
+              // Empilha acima da legenda quando ambos existem.
               if (story.originPostId != null && story.originPostId!.isNotEmpty)
                 Positioned(
-                  bottom: story.caption != null ? 120 : 80,
+                  bottom: _kStoryBottomBase + (story.caption != null ? 40 : 0),
                   left: 16,
                   child: GestureDetector(
                     onTap: () {
@@ -863,7 +1167,20 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
   void _toggleMute() {
     setState(() => _muted = !_muted);
-    _videoController?.setVolume(_muted ? 0 : 1);
+    // Ao desmutar, restaura o volume ORIGINAL configurado para este
+    // story (não sempre 1.0) — mantém a mixagem autor-definida entre
+    // áudio nativo do vídeo e a música anexada.
+    final baseVolume = _story.sound != null
+        ? _story.originalAudioVolume.clamp(0.0, 1.0)
+        : 1.0;
+    _videoController?.setVolume(_muted ? 0 : baseVolume);
+    // Brawe Sound: o mute do vídeo também silencia a música anexada —
+    // mesma semântica do Instagram/TikTok (um único controle de áudio).
+    if (_story.sound != null) {
+      ref
+          .read(soundPlayerViewModelProvider.notifier)
+          .setVolume(_muted ? 0 : _story.soundVolume.clamp(0.0, 1.0));
+    }
   }
 
   Future<void> _sendQuickReaction({String emoji = '❤️'}) async {
@@ -930,6 +1247,21 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) => _StoryViewersSheet(storyId: _story.id),
+    );
+    if (mounted) _resume();
+  }
+
+  /// Abre a página/bottom sheet da faixa (reutiliza `SoundPlayerBottomSheet`
+  /// já existente — não cria uma segunda tela duplicada). Pausa o story
+  /// enquanto o sheet está aberto e retoma ao fechar, mesmo padrão de
+  /// `_openViewers`/`_openMenu`.
+  Future<void> _openSoundDetails(SoundPreview sound) async {
+    _pause();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SoundPlayerBottomSheet(sound: sound.toPlayableSound()),
     );
     if (mounted) _resume();
   }
@@ -1283,6 +1615,7 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
 }
 
 /// Chip de ação na reply bar (presente / coração) — glass + blur.
+
 class _StoryActionChip extends StatelessWidget {
   const _StoryActionChip({
     required this.icon,

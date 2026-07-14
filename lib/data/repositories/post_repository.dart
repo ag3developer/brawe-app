@@ -111,10 +111,19 @@ class PostRepository {
     }
   }
 
+  /// Cria um post. [soundId] (opcional) anexa uma música do Brawe Sounds
+  /// escolhida no `create_post_sheet.dart`; [soundTrimStartMs]/
+  /// [soundTrimEndMs] definem o trecho específico para ESTE post (não o
+  /// trecho padrão sugerido pelo artista).
   Future<void> createPost({
     required String content,
     String? imageLocalPath,
     String? audience,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
     try {
       String? imageUrl;
@@ -125,6 +134,11 @@ class PostRepository {
         content: content,
         imageUrl: imageUrl,
         audience: audience,
+        soundId: soundId,
+        soundTrimStartMs: soundTrimStartMs,
+        soundTrimEndMs: soundTrimEndMs,
+        soundVolume: soundVolume,
+        originalAudioVolume: originalAudioVolume,
       );
     } on DioException catch (_) {
       throw const Failure.network();
@@ -137,10 +151,16 @@ class PostRepository {
   /// 1. Faz upload via /posts/upload-video → recebe URL
   /// 2. Cria post via POST /posts com image_url apontando pro vídeo
   /// O feed "Para Você" detecta vídeo pela extensão da URL (.mp4/.mov/.webm).
+  /// [soundId] (opcional) anexa uma música do Brawe Sounds ao Reel.
   Future<void> createVideoPost({
     required String videoLocalPath,
     String content = '',
     String? audience,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
   }) async {
     try {
       final videoUrl = await _postService.uploadVideo(videoLocalPath);
@@ -151,6 +171,11 @@ class PostRepository {
         content: content,
         imageUrl: videoUrl,
         audience: audience,
+        soundId: soundId,
+        soundTrimStartMs: soundTrimStartMs,
+        soundTrimEndMs: soundTrimEndMs,
+        soundVolume: soundVolume,
+        originalAudioVolume: originalAudioVolume,
       );
     } on DioException catch (_) {
       throw const Failure.network();

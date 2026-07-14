@@ -11,6 +11,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../feed/view_models/feed_view_model.dart';
 import '../../home/view_models/for_you_feed_view_model.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
+import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 
 class CreatePostSheet extends ConsumerStatefulWidget {
@@ -26,6 +27,13 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   Sound? _selectedSound;
   bool _isPosting = false;
   String _audience = 'Todos';
+
+  // Brawe Sound: trecho ESPECÍFICO escolhido para ESTE post (não o trim
+  // default sugerido pelo artista). Teto de segurança igual ao validado
+  // no backend (`MAX_TRIM_MS_BY_CONTEXT["posts"]` = 60s).
+  static const Duration _kMaxSoundTrim = Duration(seconds: 60);
+  int _soundTrimStartMs = 0;
+  int? _soundTrimEndMs;
 
   int get _charCount => _textController.text.length;
   static const _maxChars = 500;
@@ -46,6 +54,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             content: _textController.text.trim(),
             imageLocalPath: _selectedImage?.path,
             audience: _audience,
+            soundId: _selectedSound?.id,
+            soundTrimStartMs: _soundTrimStartMs,
+            soundTrimEndMs: _soundTrimEndMs,
           );
       // Refresh feeds para o post novo aparecer imediatamente.
       ref.invalidate(feedViewModelProvider);
@@ -94,15 +105,47 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       ),
     );
     if (sound != null && mounted) {
-      setState(() => _selectedSound = sound);
-      // Inicia preview do som selecionado
-      ref.read(soundPlayerViewModelProvider.notifier).play(sound);
+      ref.read(soundPlayerViewModelProvider.notifier).stop();
+      await _openTrimScreen(sound);
     }
+  }
+
+  /// Abre a tela de trim para o usuário escolher o trecho ESPECÍFICO
+  /// deste post. Se cancelar, mantém/descarta a seleção anterior sem
+  /// travar o fluxo — nunca deixa a música anexada sem um trim válido.
+  Future<void> _openTrimScreen(Sound sound) async {
+    final result = await SoundTrimScreen.push(
+      context,
+      sound: sound,
+      maxDuration: _kMaxSoundTrim,
+    );
+    if (result != null && mounted) {
+      setState(() {
+        _selectedSound = sound;
+        _soundTrimStartMs = result.trimStartMs;
+        _soundTrimEndMs = result.trimEndMs;
+      });
+    } else if (_selectedSound == null) {
+      // Cancelou sem ter uma música prévia selecionada — nada a fazer.
+      return;
+    }
+  }
+
+  /// Reabre a tela de trim para AJUSTAR o trecho de uma música já
+  /// selecionada (tap no chip).
+  Future<void> _editTrim() async {
+    final sound = _selectedSound;
+    if (sound == null) return;
+    await _openTrimScreen(sound);
   }
 
   void _removeSound() {
     ref.read(soundPlayerViewModelProvider.notifier).stop();
-    setState(() => _selectedSound = null);
+    setState(() {
+      _selectedSound = null;
+      _soundTrimStartMs = 0;
+      _soundTrimEndMs = null;
+    });
   }
 
   String _audienceLabel(S s, String value) => switch (value) {
@@ -299,12 +342,15 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         ],
                       ),
 
-                    // Chip do som selecionado
+                    // Chip do som selecionado (tap = ajustar o trecho)
                     if (_selectedSound != null) ...[
                       const SizedBox(height: 10),
-                      _SelectedSoundChip(
-                        sound: _selectedSound!,
-                        onRemove: _removeSound,
+                      GestureDetector(
+                        onTap: _editTrim,
+                        child: _SelectedSoundChip(
+                          sound: _selectedSound!,
+                          onRemove: _removeSound,
+                        ),
                       ),
                     ],
                   ],

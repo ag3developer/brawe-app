@@ -63,6 +63,12 @@ sealed class Sound with _$Sound {
     @JsonKey(name: 'is_saved') @Default(false) bool isSaved,
     SoundArtist? artist,
     @JsonKey(name: 'created_at') DateTime? createdAt,
+    // Volume de reprodução (0.0-1.0). Campo SOMENTE de UI/player — o
+    // catálogo do backend não retorna isso; é preenchido quando um
+    // `SoundPreview` (post/story) é convertido para `Sound` reproduzível
+    // via `toPlayableSound()`, refletindo `sound_volume` gravado no
+    // conteúdo. Ausente no JSON do catálogo → usa o default 1.0.
+    @Default(1.0) double volume,
   }) = _Sound;
 
   factory Sound.fromJson(Map<String, dynamic> json) => _$SoundFromJson(json);
