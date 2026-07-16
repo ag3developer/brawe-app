@@ -29,6 +29,7 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   artistCountry: json['artist_country'] as String?,
   artistTotalTracks: (json['artist_total_tracks'] as num?)?.toInt() ?? 0,
   artistTotalPlays: (json['artist_total_plays'] as num?)?.toInt() ?? 0,
+  createdAt: json['created_at'] as String?,
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
@@ -48,6 +49,7 @@ Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{
   'artist_country': instance.artistCountry,
   'artist_total_tracks': instance.artistTotalTracks,
   'artist_total_plays': instance.artistTotalPlays,
+  'created_at': instance.createdAt,
 };
 
 const _$AccountTypeEnumMap = {

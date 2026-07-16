@@ -25,10 +25,14 @@
 -keep class androidx.camera.** { *; }
 -dontwarn androidx.camera.**
 
-# ── video_player + ExoPlayer ────────────────────────────────────────────────
--keep class com.google.android.exoplayer2.** { *; }
+# ── video_player (androidx.media3) ──────────────────────────────────────────
+# Projeto usa video_player_android 2.11.0, que depende de androidx.media3
+# (media3-exoplayer). O pacote legado com.google.android.exoplayer2 NÃO é
+# usado — não há essa dependência no projeto. androidx.media3 já traz suas
+# próprias consumer-rules embutidas no AAR; o -keep abaixo é redundante em
+# teoria, mas mantido por segurança pois o plugin faz chamadas via reflexão
+# em alguns fallbacks de codec.
 -keep class androidx.media3.** { *; }
--dontwarn com.google.android.exoplayer2.**
 -dontwarn androidx.media3.**
 
 # ── rtmp_broadcaster (live streaming) ───────────────────────────────────────

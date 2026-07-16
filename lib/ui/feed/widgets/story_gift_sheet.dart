@@ -88,12 +88,22 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
     super.dispose();
   }
 
+  /// Retorna o índice da aba "basic" na lista de tiers vinda do backend.
+  /// Se não existir (catálogo customizado), cai no índice 0 como fallback
+  /// seguro em vez de quebrar.
+  int _preferredTierIndex(List<GiftTier> tiers) {
+    final idx = tiers.indexWhere((t) => t.name.trim().toLowerCase() == 'basic');
+    return idx >= 0 ? idx : 0;
+  }
+
   Future<void> _send() async {
     final gift = _selected;
     if (gift == null || _sending) return;
     setState(() => _sending = true);
     try {
-      await ref.read(giftRepositoryProvider).sendStoryGift(
+      await ref
+          .read(giftRepositoryProvider)
+          .sendStoryGift(
             storyId: widget.storyId,
             giftId: gift.id,
             quantity: _quantity,
@@ -126,113 +136,188 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
   Widget build(BuildContext context) {
     final catalog = ref.watch(giftCatalogViewModelProvider);
     final mediaInsets = MediaQuery.of(context).viewInsets;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Responsivo: altura máxima adapta ao teclado/tela, com piso mínimo
+    // confortável para não colapsar em telas pequenas.
+    final maxSheetHeight = (screenHeight * 0.82).clamp(420.0, 780.0);
 
     return Padding(
       padding: EdgeInsets.only(bottom: mediaInsets.bottom),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        curve: Curves.easeOutCubic,
+        constraints: BoxConstraints(maxHeight: maxSheetHeight),
+        decoration: BoxDecoration(
+          // Mesmo gradiente de marca usado na sacola de Live/Batalha
+          // (gifts_overlay.dart) — garante identidade visual consistente
+          // entre Stories e Lives.
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2A1247), Color(0xFF160922), Color(0xFF0A0612)],
+            stops: [0.0, 0.45, 1.0],
+          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          border: Border(
+            top: BorderSide(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 0.8,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFB44CF0).withValues(alpha: 0.25),
+              blurRadius: 30,
+              spreadRadius: -8,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
-        decoration: const BoxDecoration(
-          color: AppColors.nearBlack,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 38,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 14),
-              _Header(
-                creatorName: widget.creatorName,
-                creatorAvatarUrl: widget.creatorAvatarUrl,
-              ),
-              const SizedBox(height: 10),
-              Expanded(
-                child: catalog.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(color: Colors.white70),
-                  ),
-                  error: (e, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        S.of(context).giftLoadError(e),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70),
-                      ),
+        child: Stack(
+          children: [
+            // Glow decorativo no topo — mesmo efeito da sacola de Live.
+            Positioned(
+              top: -40,
+              left: -20,
+              right: -20,
+              height: 140,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topCenter,
+                      radius: 0.9,
+                      colors: [
+                        const Color(0xFFFF4F8B).withValues(alpha: 0.18),
+                        const Color(0xFFB44CF0).withValues(alpha: 0.10),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                   ),
-                  data: (tiers) {
-                    if (tiers.isEmpty) {
-                      return Center(
-                        child: Text(
-                          S.of(context).giftEmptyState,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      );
-                    }
-                    _tabs ??= TabController(length: tiers.length, vsync: this);
-                    return Column(
-                      children: [
-                        TabBar(
-                          controller: _tabs,
-                          isScrollable: true,
-                          tabAlignment: TabAlignment.start,
-                          indicatorColor: AppColors.electricPurple,
-                          labelColor: Colors.white,
-                          unselectedLabelColor: Colors.white54,
-                          labelStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                          tabs: [
-                            for (final t in tiers)
-                              // Localizado via GiftTierNames — "free" vira
-                              // "Cofre" (PT) / "Vault" (EN) / "Bóveda" (ES).
-                              Tab(text: GiftTierNames.of(context, t.name)),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Expanded(
-                          child: TabBarView(
-                            controller: _tabs,
-                            children: [
-                              for (final t in tiers)
-                                _GiftGrid(
-                                  gifts: t.gifts,
-                                  selectedId: _selected?.id,
-                                  onSelect: (g) =>
-                                      setState(() => _selected = g),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
                 ),
               ),
-              _Footer(
-                selected: _selected,
-                quantity: _quantity,
-                sending: _sending,
-                onQuantity: (q) => setState(() => _quantity = q),
-                quickQuantities: _quickQuantities,
-                onSend: _send,
+            ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(22),
               ),
-            ],
-          ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _Header(
+                      creatorName: widget.creatorName,
+                      creatorAvatarUrl: widget.creatorAvatarUrl,
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: catalog.when(
+                        loading: () => const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.electricPurple,
+                          ),
+                        ),
+                        error: (e, _) => Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(
+                              S.of(context).giftLoadError(e),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ),
+                        data: (tiers) {
+                          if (tiers.isEmpty) {
+                            return Center(
+                              child: Text(
+                                S.of(context).giftEmptyState,
+                                style: const TextStyle(color: Colors.white70),
+                              ),
+                            );
+                          }
+                          // Abre por padrão na aba "basic" (não no "free"/
+                          // Cofre) — presentes básicos são a experiência
+                          // principal de envio; o Cofre é secundário.
+                          _tabs ??= TabController(
+                            length: tiers.length,
+                            vsync: this,
+                            initialIndex: _preferredTierIndex(tiers),
+                          );
+                          return Column(
+                            children: [
+                              TabBar(
+                                controller: _tabs,
+                                isScrollable: true,
+                                tabAlignment: TabAlignment.start,
+                                indicatorColor: AppColors.electricPurple,
+                                indicatorWeight: 2.5,
+                                labelColor: Colors.white,
+                                unselectedLabelColor: Colors.white54,
+                                labelStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  letterSpacing: 0.3,
+                                ),
+                                tabs: [
+                                  for (final t in tiers)
+                                    // Localizado via GiftTierNames — "free"
+                                    // vira "COFRE" (PT) / "VAULT" (EN) /
+                                    // "BÓVEDA" (ES). UPPER para manter o
+                                    // mesmo estilo TikTok da sacola de live.
+                                    Tab(
+                                      text: GiftTierNames.ofUpper(
+                                        context,
+                                        t.name,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Expanded(
+                                child: TabBarView(
+                                  controller: _tabs,
+                                  children: [
+                                    for (final t in tiers)
+                                      _GiftGrid(
+                                        gifts: t.gifts,
+                                        selectedId: _selected?.id,
+                                        onSelect: (g) =>
+                                            setState(() => _selected = g),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    _Footer(
+                      selected: _selected,
+                      quantity: _quantity,
+                      sending: _sending,
+                      onQuantity: (q) => setState(() => _quantity = q),
+                      quickQuantities: _quickQuantities,
+                      onSend: _send,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -252,29 +337,47 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.slate,
-            backgroundImage:
-                (url != null && url.isNotEmpty) ? NetworkImage(url) : null,
-            child: (url == null || url.isEmpty)
-                ? Text(
-                    creatorName.isNotEmpty
-                        ? creatorName.characters.first.toUpperCase()
-                        : '?',
-                    style: const TextStyle(color: Colors.white),
-                  )
-                : null,
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF4F8B), Color(0xFFB44CF0)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFB44CF0).withValues(alpha: 0.35),
+                  blurRadius: 10,
+                  spreadRadius: -1,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(2),
+            child: ClipOval(
+              child: (url != null && url.isNotEmpty)
+                  ? Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _avatarFallback(),
+                    )
+                  : _avatarFallback(),
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   S.of(context).giftSendTo,
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   '@$creatorName',
                   style: const TextStyle(
@@ -289,6 +392,23 @@ class _Header extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _avatarFallback() {
+    return Container(
+      color: const Color(0xFF1F1232),
+      alignment: Alignment.center,
+      child: Text(
+        creatorName.isNotEmpty
+            ? creatorName.characters.first.toUpperCase()
+            : '?',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
       ),
     );
   }
@@ -307,19 +427,34 @@ class _GiftGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: gifts.length,
-      itemBuilder: (_, i) {
-        final g = gifts[i];
-        final selected = g.id == selectedId;
-        return _GiftCard(gift: g, selected: selected, onTap: () => onSelect(g));
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Responsivo: calcula quantas colunas cabem confortavelmente ao
+        // invés de fixar 3 — evita cards apertados em telas largas
+        // (tablets, foldables) ou apertados demais em telas estreitas.
+        const minTileWidth = 96.0;
+        final crossAxisCount = (constraints.maxWidth / minTileWidth)
+            .floor()
+            .clamp(3, 5);
+        return GridView.builder(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: gifts.length,
+          itemBuilder: (_, i) {
+            final g = gifts[i];
+            final selected = g.id == selectedId;
+            return _GiftCard(
+              gift: g,
+              selected: selected,
+              onTap: () => onSelect(g),
+            );
+          },
+        );
       },
     );
   }
@@ -387,8 +522,11 @@ class _GiftCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.diamond_outlined,
-                        size: 11, color: AppColors.coolCyan),
+                    const Icon(
+                      Icons.diamond_outlined,
+                      size: 11,
+                      color: AppColors.coolCyan,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       gift.priceCredits.toStringAsFixed(0),
@@ -409,31 +547,48 @@ class _GiftCard extends StatelessWidget {
   }
 }
 
+/// 🎁 Ícone de presente — MESMO padrão usado na sacola de Live/Batalha
+/// (gifts_overlay.dart): asset local primeiro (assets/images/gifts/{tier}/{slug}.png),
+/// depois rede (icon_url), depois emoji, depois ícone genérico.
+/// Isso garante que o presente apareça IDÊNTICO em Stories e em Lives.
 class _GiftIcon extends StatelessWidget {
   const _GiftIcon({required this.gift});
   final Gift gift;
 
+  static const double _size = 42;
+
   @override
   Widget build(BuildContext context) {
-    final iconUrl = gift.iconUrl;
-    if (iconUrl != null && iconUrl.isNotEmpty) {
-      return SizedBox(
-        width: 42,
-        height: 42,
-        child: Image.network(
-          iconUrl,
-          fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => _emojiFallback(gift.emoji),
-        ),
-      );
-    }
-    return _emojiFallback(gift.emoji);
+    final assetPath = 'assets/images/gifts/${gift.tier}/${gift.slug}.png';
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: Image.asset(
+        assetPath,
+        width: _size,
+        height: _size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) {
+          final iconUrl = gift.iconUrl;
+          if (iconUrl != null && iconUrl.isNotEmpty) {
+            return Image.network(
+              iconUrl,
+              width: _size,
+              height: _size,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => _emojiFallback(gift.emoji),
+            );
+          }
+          return _emojiFallback(gift.emoji);
+        },
+      ),
+    );
   }
 
   Widget _emojiFallback(String? emoji) {
     return SizedBox(
-      width: 42,
-      height: 42,
+      width: _size,
+      height: _size,
       child: Center(
         child: Text(
           (emoji != null && emoji.isNotEmpty) ? emoji : '🎁',
@@ -505,8 +660,9 @@ class _Footer extends StatelessWidget {
                   boxShadow: canSend
                       ? [
                           BoxShadow(
-                            color: AppColors.electricPurple
-                                .withValues(alpha: 0.45),
+                            color: AppColors.electricPurple.withValues(
+                              alpha: 0.45,
+                            ),
                             blurRadius: 14,
                             spreadRadius: 0.5,
                           ),
@@ -531,8 +687,11 @@ class _Footer extends StatelessWidget {
                           : Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.card_giftcard,
-                                    color: Colors.white, size: 20),
+                                const Icon(
+                                  Icons.card_giftcard,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   selected == null

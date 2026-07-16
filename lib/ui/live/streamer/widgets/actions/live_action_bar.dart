@@ -6,7 +6,7 @@ import '../../../../core/themes/app_colors.dart';
 import 'action_btn.dart';
 
 /// Bottom floating glass pill with the main broadcaster actions
-/// (Pause/Resume, Battle, Co-host, More, End live).
+/// (Pause/Resume, Battle, Co-host, Chat, More, End live).
 class LiveActionBar extends StatelessWidget {
   const LiveActionBar({
     super.key,
@@ -19,6 +19,8 @@ class LiveActionBar extends StatelessWidget {
     required this.onPauseResume,
     required this.onEnd,
     required this.onMoreOptions,
+    this.showChat = false,
+    this.onChatToggle,
   });
 
   final bool isPaused;
@@ -30,6 +32,8 @@ class LiveActionBar extends StatelessWidget {
   final VoidCallback onPauseResume;
   final VoidCallback onEnd;
   final VoidCallback onMoreOptions;
+  final bool showChat;
+  final VoidCallback? onChatToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +74,14 @@ class LiveActionBar extends StatelessWidget {
                 label: 'Co-host',
                 color: const Color(0xFF0EA5E9),
                 onTap: onCoHost,
+              ),
+              // 💬 Chat
+              ActionBtn(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Chat',
+                color: showChat ? AppColors.electricPurple : Colors.white24,
+                onTap: onChatToggle,
+                flat: !showChat,
               ),
               // ···
               ActionBtn(

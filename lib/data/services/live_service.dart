@@ -216,7 +216,7 @@ class LiveService {
         'gift_id': giftId,
         'receiver_id': receiverId,
         'quantity': quantity,
-        'battle_id': ?battleId,
+        if (battleId != null) 'battle_id': battleId,
       },
     );
     return _toMap(response.data);

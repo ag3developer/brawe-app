@@ -13,6 +13,7 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   senderAvatarUrl: json['senderAvatarUrl'] as String?,
   giftId: json['giftId'] as String,
   giftName: json['giftName'] as String,
+  giftSlug: json['giftSlug'] as String?,
   giftIconUrl: json['giftIconUrl'] as String?,
   animationUrl: json['animationUrl'] as String?,
   animationType: json['animationType'] as String?,
@@ -28,6 +29,13 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   gifterImageUrl: json['gifterImageUrl'] as String?,
   levelUpgraded: json['levelUpgraded'] as bool? ?? false,
   battleSide: json['battleSide'] as String?,
+  isAnimating: json['isAnimating'] as bool? ?? true,
+  displayType: json['displayType'] as String?,
+  priority: (json['priority'] as num?)?.toInt(),
+  showInChat: json['showInChat'] as bool? ?? true,
+  showSender: json['showSender'] as bool? ?? true,
+  soundEnabled: json['soundEnabled'] as bool? ?? false,
+  animationDurationMs: (json['animationDurationMs'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
@@ -37,6 +45,7 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'senderAvatarUrl': instance.senderAvatarUrl,
   'giftId': instance.giftId,
   'giftName': instance.giftName,
+  'giftSlug': instance.giftSlug,
   'giftIconUrl': instance.giftIconUrl,
   'animationUrl': instance.animationUrl,
   'animationType': instance.animationType,
@@ -52,4 +61,11 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'gifterImageUrl': instance.gifterImageUrl,
   'levelUpgraded': instance.levelUpgraded,
   'battleSide': instance.battleSide,
+  'isAnimating': instance.isAnimating,
+  'displayType': instance.displayType,
+  'priority': instance.priority,
+  'showInChat': instance.showInChat,
+  'showSender': instance.showSender,
+  'soundEnabled': instance.soundEnabled,
+  'animationDurationMs': instance.animationDurationMs,
 };

@@ -1,0 +1,120 @@
+═══════════════════════════════════════════════════════════════════════
+SUGESTÃO DE COMMIT MESSAGE
+═══════════════════════════════════════════════════════════════════════
+
+TÍTULO (Commit message):
+═════════════════════════════════════════════════════════════════════
+
+fix(onboarding): Update auth state after profile completion
+
+CORPO (Detalhes adicionais):
+═════════════════════════════════════════════════════════════════════
+
+Resolve issue where new users were stuck on /edit-profile after saving
+their profile. The app now updates authStateProvider with the completed
+user and navigates to /home (feed).
+
+Changes:
+- Add authRepositoryProvider import
+- Add authStateProvider import  
+- Fetch updated user after profile save
+- Update authStateProvider with new user data
+- Navigate to /home after successful completion
+
+The fix follows the established pattern used in LoginViewModel and
+SignupViewModel, ensuring consistency with the existing codebase.
+
+When user completes profile:
+1. Save displayName, bio, social links → ✓
+2. Save username → ✓
+3. Upload avatar → ✓
+4. [NEW] Fetch updated user from backend
+5. [NEW] Update authStateProvider (notifies router)
+6. [NEW] Navigate to /home (feed)
+
+This is a critical fix for onboarding UX. No breaking changes.
+Retrocompatible with published versions.
+
+═════════════════════════════════════════════════════════════════════════
+
+GIT COMMAND:
+═════════════════════════════════════════════════════════════════════
+
+git add lib/ui/edit_profile/widgets/edit_profile_screen.dart
+
+git commit -m "fix(onboarding): Update auth state after profile completion
+
+Resolve issue where new users were stuck on /edit-profile after saving
+their profile. The app now updates authStateProvider with the completed
+user and navigates to /home (feed).
+
+Changes:
+- Add authRepositoryProvider import
+- Add authStateProvider import  
+- Fetch updated user after profile save
+- Update authStateProvider with new user data
+- Navigate to /home after successful completion
+
+The fix follows the established pattern used in LoginViewModel and
+SignupViewModel, ensuring consistency with the existing codebase.
+
+Fixes: New user onboarding flow broken at profile completion"
+
+═════════════════════════════════════════════════════════════════════════
+
+ALTERNATIVA (Mais curta):
+═════════════════════════════════════════════════════════════════════
+
+git commit -m "fix(auth): Navigate to feed after profile completion
+
+New users were stuck on /edit-profile. Now updates authState and
+navigates to /home after saving profile.
+
+Follows LoginViewModel/SignupViewModel pattern."
+
+═════════════════════════════════════════════════════════════════════════
+
+PR DESCRIPTION (Se usar GitHub):
+═════════════════════════════════════════════════════════════════════
+
+## Summary
+Fixes critical onboarding bug where new users were stuck on the
+profile completion screen.
+
+## Problem
+After users completed their profile with avatar, username, and other
+details, they remained stuck on `/edit-profile` instead of being
+redirected to the feed.
+
+## Root Cause
+`EditProfileScreen._onSave()` was not updating the `authStateProvider`
+after successful profile save. The router continues to observe the old
+user state (with empty avatarUrl) and forces redirect back to
+`/edit-profile`.
+
+## Solution
+Update `authStateProvider` with the new user data after profile save
+and navigate to `/home`, following the pattern established in
+`LoginViewModel` and `SignupViewModel`.
+
+## Changes
+- Add imports for `authRepositoryProvider` and `authStateProvider`
+- After profile save success, fetch updated user from backend
+- Update auth state via `authStateProvider.notifier.updateSession()`
+- Navigate to `/home` (feed)
+
+## Testing
+- [x] Tested on Android emulator
+- [x] Tested on iOS simulator
+- [x] New user signup → profile completion → feeds works ✓
+- [x] Back button works correctly
+- [x] Logout/login doesn't break
+- [x] No compilation errors
+
+## Backward Compatibility
+✅ Fully backward compatible with published versions
+
+## Risk
+Low - implementation is simple and follows existing patterns
+
+═════════════════════════════════════════════════════════════════════════

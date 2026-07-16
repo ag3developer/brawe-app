@@ -5547,6 +5547,54 @@ abstract class S {
   /// **'Encerrar'**
   String get broadcasterEnd;
 
+  /// No description provided for @liveSummaryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo da live'**
+  String get liveSummaryTitle;
+
+  /// No description provided for @liveSummaryDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração'**
+  String get liveSummaryDuration;
+
+  /// No description provided for @liveSummaryPeakViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pico de audiência'**
+  String get liveSummaryPeakViewers;
+
+  /// No description provided for @liveSummaryTotalViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espectadores únicos'**
+  String get liveSummaryTotalViewers;
+
+  /// No description provided for @liveSummaryGiftsValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes recebidos'**
+  String get liveSummaryGiftsValue;
+
+  /// No description provided for @liveSummaryMysteryGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes misteriosos revelados'**
+  String get liveSummaryMysteryGifts;
+
+  /// No description provided for @liveSummaryDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get liveSummaryDone;
+
+  /// No description provided for @liveSummaryUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua live foi encerrada. Não foi possível carregar o resumo completo agora.'**
+  String get liveSummaryUnavailable;
+
   /// No description provided for @broadcasterMoreResumeLive.
   ///
   /// In pt, this message translates to:
@@ -7818,7 +7866,7 @@ abstract class S {
   /// No description provided for @createSoundsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Brawe Sounds'**
+  /// **'Sounds'**
   String get createSoundsTitle;
 
   /// No description provided for @createSoundsSubtitle.

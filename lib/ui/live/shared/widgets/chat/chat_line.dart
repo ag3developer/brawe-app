@@ -19,7 +19,7 @@ class ChatLine extends StatelessWidget {
         ? comment.userName.characters.first.toUpperCase()
         : '?';
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 8), // ✨ +3px (era 5px)
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,7 +28,8 @@ class ChatLine extends StatelessWidget {
           Container(
             width: 20,
             height: 20,
-            margin: const EdgeInsets.only(top: 1),
+            margin: const EdgeInsets.only(top: 2), // ✨ +1px (era 1px)
+
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.electricPurple,
@@ -60,7 +61,7 @@ class ChatLine extends StatelessWidget {
                 text: TextSpan(
                   style: const TextStyle(
                     fontSize: 13,
-                    height: 1.25,
+                    height: 1.35, // ✨ +0.10 line-height (era 1.25)
                     shadows: [
                       Shadow(
                         color: Colors.black54,

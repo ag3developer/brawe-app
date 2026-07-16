@@ -16,6 +16,11 @@ part of 'live_room_gifts_view_model.dart';
 ///
 /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
 /// ~5s após a última atualização — combos prorrogam o timer.
+///
+/// 🎬 FLUXO TIKTOK CORRETO:
+/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
 
 @ProviderFor(LiveRoomGiftsViewModel)
 final liveRoomGiftsViewModelProvider = LiveRoomGiftsViewModelFamily._();
@@ -28,6 +33,11 @@ final liveRoomGiftsViewModelProvider = LiveRoomGiftsViewModelFamily._();
 ///
 /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
 /// ~5s após a última atualização — combos prorrogam o timer.
+///
+/// 🎬 FLUXO TIKTOK CORRETO:
+/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
 final class LiveRoomGiftsViewModelProvider
     extends $NotifierProvider<LiveRoomGiftsViewModel, List<LiveGift>> {
   /// 🎁 ViewModel das animações de presente em tempo real.
@@ -38,6 +48,11 @@ final class LiveRoomGiftsViewModelProvider
   ///
   /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
   /// ~5s após a última atualização — combos prorrogam o timer.
+  ///
+  /// 🎬 FLUXO TIKTOK CORRETO:
+  /// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+  /// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+  /// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
   LiveRoomGiftsViewModelProvider._({
     required LiveRoomGiftsViewModelFamily super.from,
     required String super.argument,
@@ -84,7 +99,7 @@ final class LiveRoomGiftsViewModelProvider
 }
 
 String _$liveRoomGiftsViewModelHash() =>
-    r'eff035141e98b5366c64fda284fe564a9f1a078d';
+    r'a71907a812a7bf9ed6e59e248ae9027f0eb4d4cf';
 
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///
@@ -94,6 +109,11 @@ String _$liveRoomGiftsViewModelHash() =>
 ///
 /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
 /// ~5s após a última atualização — combos prorrogam o timer.
+///
+/// 🎬 FLUXO TIKTOK CORRETO:
+/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
 
 final class LiveRoomGiftsViewModelFamily extends $Family
     with
@@ -121,6 +141,11 @@ final class LiveRoomGiftsViewModelFamily extends $Family
   ///
   /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
   /// ~5s após a última atualização — combos prorrogam o timer.
+  ///
+  /// 🎬 FLUXO TIKTOK CORRETO:
+  /// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+  /// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+  /// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
 
   LiveRoomGiftsViewModelProvider call(String roomId) =>
       LiveRoomGiftsViewModelProvider._(argument: roomId, from: this);
@@ -137,6 +162,11 @@ final class LiveRoomGiftsViewModelFamily extends $Family
 ///
 /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
 /// ~5s após a última atualização — combos prorrogam o timer.
+///
+/// 🎬 FLUXO TIKTOK CORRETO:
+/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
+/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
+/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
 
 abstract class _$LiveRoomGiftsViewModel extends $Notifier<List<LiveGift>> {
   late final _$args = ref.$arg as String;

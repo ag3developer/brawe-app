@@ -27,8 +27,12 @@ class GiftsOverlay extends ConsumerStatefulWidget {
     this.battleId,
   });
 
-  static void show(BuildContext context, String roomId, String streamerId,
-      {String? battleId}) {
+  static void show(
+    BuildContext context,
+    String roomId,
+    String streamerId, {
+    String? battleId,
+  }) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -55,6 +59,14 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
   void initState() {
     super.initState();
     _tabController = TabController(length: 0, vsync: this);
+  }
+
+  /// Retorna o índice da aba "basic" na lista de tiers vinda do backend.
+  /// Se não existir (catálogo customizado), cai no índice 0 como fallback
+  /// seguro em vez de quebrar.
+  int _preferredTierIndex(List<GiftTier> tiers) {
+    final idx = tiers.indexWhere((t) => t.name.trim().toLowerCase() == 'basic');
+    return idx >= 0 ? idx : 0;
   }
 
   @override
@@ -92,12 +104,14 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
 
     // Envia em background; resultado chega via snackbar no contexto pai
     final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
-    final success = await ref.read(sendGiftViewModelProvider.notifier).sendGift(
-      roomId: widget.roomId,
-      giftId: gift.id,
-      receiverId: widget.streamerId,
-      battleId: widget.battleId,
-    );
+    final success = await ref
+        .read(sendGiftViewModelProvider.notifier)
+        .sendGift(
+          roomId: widget.roomId,
+          giftId: gift.id,
+          receiverId: widget.streamerId,
+          battleId: widget.battleId,
+        );
 
     if (!mounted) {
       // Tela já foi descartada — atualiza saldo em background mesmo assim
@@ -138,11 +152,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF2A1247),
-            Color(0xFF160922),
-            Color(0xFF0A0612),
-          ],
+          colors: [Color(0xFF2A1247), Color(0xFF160922), Color(0xFF0A0612)],
           stops: [0.0, 0.45, 1.0],
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -186,8 +196,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
             ),
           ),
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(22)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
             child: _buildContent(context, s, catalogState, sendState),
           ),
         ],
@@ -204,7 +213,14 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     return catalogState.when(
       data: (tiers) {
         if (_tabController.length != tiers.length) {
-          _tabController = TabController(length: tiers.length, vsync: this);
+          // Abre por padrão na aba "basic" (não no "free"/Cofre) —
+          // presentes básicos são a experiência principal de envio; o
+          // Cofre é secundário.
+          _tabController = TabController(
+            length: tiers.length,
+            vsync: this,
+            initialIndex: _preferredTierIndex(tiers),
+          );
         }
         return Column(
           children: [
@@ -243,18 +259,23 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
             Expanded(
               child: tiers.isEmpty
                   ? Center(
-                      child: Text(s.giftsEmpty,
-                          style: const TextStyle(color: Colors.white54)))
+                      child: Text(
+                        s.giftsEmpty,
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                    )
                   : TabBarView(
                       controller: _tabController,
                       children: tiers
-                          .map<Widget>((tier) => _GiftsGrid(
-                                gifts: tier.gifts,
-                                selectedGift: _selectedGift,
-                                onSelect: (gift) =>
-                                    setState(() => _selectedGift = gift),
-                                onConfirmTap: _handleSend,
-                              ))
+                          .map<Widget>(
+                            (tier) => _GiftsGrid(
+                              gifts: tier.gifts,
+                              selectedGift: _selectedGift,
+                              onSelect: (gift) =>
+                                  setState(() => _selectedGift = gift),
+                              onConfirmTap: _handleSend,
+                            ),
+                          )
                           .toList(),
                     ),
             ),
@@ -267,10 +288,13 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         );
       },
       loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.electricPurple)),
+        child: CircularProgressIndicator(color: AppColors.electricPurple),
+      ),
       error: (e, _) => Center(
-        child: Text(s.giftsError(e.toString()),
-            style: const TextStyle(color: Colors.white)),
+        child: Text(
+          s.giftsError(e.toString()),
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
@@ -294,7 +318,11 @@ class _GamerLevelHeader extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, AppSpacing.sm, AppSpacing.sm, AppSpacing.sm),
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           Stack(
@@ -320,35 +348,44 @@ class _GamerLevelHeader extends ConsumerWidget {
                 child: ClipOval(
                   child:
                       (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty)
-                          ? Image.network(
-                              user.avatarUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => _avatarFallback(user),
-                            )
-                          : _avatarFallback(user),
+                      ? Image.network(
+                          user.avatarUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _avatarFallback(user),
+                        )
+                      : _avatarFallback(user),
                 ),
               ),
               Positioned(
                 left: -4,
                 bottom: -2,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor,
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: const Color(0xFF160922), width: 1.5),
+                    border: Border.all(
+                      color: const Color(0xFF160922),
+                      width: 1.5,
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (badgeEmoji != null && badgeEmoji.isNotEmpty)
-                        Text(badgeEmoji,
-                            style: const TextStyle(fontSize: 9, height: 1.0))
+                        Text(
+                          badgeEmoji,
+                          style: const TextStyle(fontSize: 9, height: 1.0),
+                        )
                       else
-                        const Icon(Icons.diamond_rounded,
-                            size: 9, color: Colors.white),
+                        const Icon(
+                          Icons.diamond_rounded,
+                          size: 9,
+                          color: Colors.white,
+                        ),
                       const SizedBox(width: 2),
                       Text(
                         '$level',
@@ -557,7 +594,9 @@ class _GiftTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Expanded(
-              child: Center(child: _GiftIcon(gift: gift, size: iconSize)),
+              child: Center(
+                child: _GiftIcon(gift: gift, size: iconSize),
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -631,7 +670,9 @@ class _BalanceFooter extends ConsumerWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: 10),
+            horizontal: AppSpacing.md,
+            vertical: 10,
+          ),
           child: Row(
             children: [
               GestureDetector(
@@ -656,8 +697,11 @@ class _BalanceFooter extends ConsumerWidget {
                         color: Color(0xFFFF4F8B),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add,
-                          color: Colors.white, size: 14),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -677,15 +721,16 @@ class _BalanceFooter extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(22),
                     ),
                     elevation: canSend ? 6 : 0,
-                    shadowColor:
-                        const Color(0xFFFF4F8B).withValues(alpha: 0.5),
+                    shadowColor: const Color(0xFFFF4F8B).withValues(alpha: 0.5),
                   ),
                   child: isSending
                       ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(
                           S.of(context).giftsSendButton,
@@ -774,9 +819,6 @@ class _GiftIcon extends StatelessWidget {
     );
   }
 
-  Widget _fallback() => Icon(
-        Icons.card_giftcard,
-        color: Colors.white54,
-        size: size * 0.8,
-      );
+  Widget _fallback() =>
+      Icon(Icons.card_giftcard, color: Colors.white54, size: size * 0.8);
 }

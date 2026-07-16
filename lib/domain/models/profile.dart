@@ -27,7 +27,9 @@ sealed class Profile with _$Profile {
     @JsonKey(name: 'banner_url') String? bannerUrl,
     @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
     @JsonKey(name: 'social_links') Map<String, String>? socialLinks,
-    @JsonKey(name: 'account_type') @Default(AccountType.consumer) AccountType accountType,
+    @JsonKey(name: 'account_type')
+    @Default(AccountType.consumer)
+    AccountType accountType,
     // Campos de artista — populados quando accountType == musician
     @JsonKey(name: 'artist_id') String? artistId,
     @JsonKey(name: 'artist_name') String? artistName,
@@ -36,7 +38,10 @@ sealed class Profile with _$Profile {
     @JsonKey(name: 'artist_country') String? artistCountry,
     @JsonKey(name: 'artist_total_tracks') @Default(0) int artistTotalTracks,
     @JsonKey(name: 'artist_total_plays') @Default(0) int artistTotalPlays,
+    // Data de criação do perfil
+    @JsonKey(name: 'created_at') String? createdAt,
   }) = _Profile;
 
-  factory Profile.fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
+  factory Profile.fromJson(Map<String, dynamic> json) =>
+      _$ProfileFromJson(json);
 }

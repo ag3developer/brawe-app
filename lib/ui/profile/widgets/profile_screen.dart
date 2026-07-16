@@ -35,6 +35,7 @@ import 'package:flutter/services.dart'
 import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
+import '../../chat/view_models/presence_provider.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
 /// Filtra valores vazios, IDs internos (ex.: BF-10006, AF-2023) e UUIDs.
@@ -792,7 +793,7 @@ class _ProfileHeader extends ConsumerWidget {
 
   Widget _buildFull(BuildContext context, WidgetRef ref, Profile profile) {
     final stats = profileState.stats.asData?.value;
-    final joinedAt = _parseJoinDate(ref);
+    final joinedAt = _parseJoinDate(profile);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,6 +806,7 @@ class _ProfileHeader extends ConsumerWidget {
             final hasStories = stories.isNotEmpty;
             final hasUnviewed = stories.any((s) => !s.isSeen);
             return _BannerSection(
+              userId: userId,
               bannerUrl: profile.bannerUrl,
               avatarUrl: profile.avatarUrl,
               initials: _initialsFor(profile),
@@ -1026,11 +1028,10 @@ class _ProfileHeader extends ConsumerWidget {
     }
   }
 
-  String? _parseJoinDate(WidgetRef ref) {
-    final user = ref.read(authStateProvider).value;
-    if (user == null) return null;
+  String? _parseJoinDate(Profile profile) {
+    if (profile.createdAt == null || profile.createdAt!.isEmpty) return null;
     try {
-      final dt = DateTime.parse(user.createdAt);
+      final dt = DateTime.parse(profile.createdAt!);
       const months = [
         'jan',
         'fev',
@@ -1066,8 +1067,9 @@ class _ProfileHeader extends ConsumerWidget {
 }
 
 // ── Banner + Avatar sobrepostos ──────────────────────────────────────────────
-class _BannerSection extends StatelessWidget {
+class _BannerSection extends ConsumerStatefulWidget {
   const _BannerSection({
+    required this.userId,
     required this.bannerUrl,
     required this.avatarUrl,
     required this.initials,
@@ -1078,6 +1080,7 @@ class _BannerSection extends StatelessWidget {
     this.hasUnviewedStories = false,
     this.onAvatarTap,
   });
+  final String userId;
   final String? bannerUrl;
   final String? avatarUrl;
   final String initials;
@@ -1089,8 +1092,45 @@ class _BannerSection extends StatelessWidget {
   final VoidCallback? onAvatarTap;
 
   @override
+  ConsumerState<_BannerSection> createState() => _BannerSectionState();
+}
+
+class _BannerSectionState extends ConsumerState<_BannerSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Registrar userId para polling de presença
+    ref.read(presenceCacheProvider.notifier).watch(widget.userId);
+  }
+
+  @override
+  void didUpdateWidget(_BannerSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      ref.read(presenceCacheProvider.notifier).unwatch(oldWidget.userId);
+      ref.read(presenceCacheProvider.notifier).watch(widget.userId);
+    }
+  }
+
+  @override
+  void dispose() {
+    ref.read(presenceCacheProvider.notifier).unwatch(widget.userId);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final hasBanner = bannerUrl != null && bannerUrl!.isNotEmpty;
+    final bannerUrl = widget.bannerUrl;
+    final avatarUrl = widget.avatarUrl;
+    final initials = widget.initials;
+    final isMe = widget.isMe;
+    final onEditProfile = widget.onEditProfile;
+    final hasStories = widget.hasStories;
+    final hasUnviewedStories = widget.hasUnviewedStories;
+    final onAvatarTap = widget.onAvatarTap;
+    final userId = widget.userId;
+
+    final hasBanner = bannerUrl != null && bannerUrl.isNotEmpty;
     // Sem banner: usamos uma faixa baixa só para acomodar o avatar sobreposto.
     final bannerHeight = hasBanner ? 160.0 : 70.0;
 
@@ -1104,7 +1144,7 @@ class _BannerSection extends StatelessWidget {
           color: context.colors.background,
           child: hasBanner
               ? CachedNetworkImage(
-                  imageUrl: bannerUrl!,
+                  imageUrl: bannerUrl,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const SizedBox.shrink(),
                 )
@@ -1173,23 +1213,8 @@ class _BannerSection extends StatelessWidget {
                   ),
                 ),
               ),
-              // Indicador online
-              Positioned(
-                right: 4,
-                bottom: 4,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.colors.background,
-                      width: 2,
-                    ),
-                  ),
-                ),
-              ),
+              // ── Indicador online (com dados reais do presenceCacheProvider) ──
+              _OnlineIndicator(userId: userId),
             ],
           ),
         ),
@@ -2019,37 +2044,22 @@ class _PostsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return postsState.when(
       data: (posts) {
-        // Aba "Posts" mostra apenas publicações textuais (sem mídia).
-        // Posts com foto vão para "Galeria" e posts com vídeo vão para "Vídeos".
-        bool _isVideo(String? url) {
-          if (url == null || url.isEmpty) return false;
-          final l = url.toLowerCase();
-          return l.endsWith('.mp4') ||
-              l.endsWith('.mov') ||
-              l.endsWith('.webm') ||
-              l.endsWith('.m4v');
-        }
+        // Aba "Posts" mostra TUDO: textos, fotos e vídeos publicados no feed.
+        // Desta forma o usuário vê todo o conteúdo que criou.
 
-        final textual = posts
-            .where(
-              (p) =>
-                  (p.imageUrl == null || p.imageUrl!.isEmpty) &&
-                  !_isVideo(p.imageUrl),
-            )
-            .toList();
-
-        if (textual.isEmpty) {
+        if (posts.isEmpty) {
           return _EmptyState(
             icon: Icons.article_outlined,
             message: S.of(context).profileNoTextPosts,
           );
         }
+
         return ListView.separated(
           padding: const EdgeInsets.only(top: 4, bottom: 16),
-          itemCount: textual.length,
+          itemCount: posts.length,
           separatorBuilder: (_, __) =>
               const Divider(color: Colors.white10, height: 1),
-          itemBuilder: (context, index) => PostCard(post: textual[index]),
+          itemBuilder: (context, index) => PostCard(post: posts[index]),
         );
       },
       loading: () => const Center(
@@ -2203,5 +2213,46 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     // a cor de fundo "presa" no tema anterior (bug do fundo branco no
     // tema claro sobre conteúdo escuro).
     return oldDelegate._tabBar != _tabBar;
+  }
+}
+
+// ── Indicador de Presença Online ─────────────────────────────────────────────
+/// Widget que exibe um ponto verde no canto inferior direito do avatar
+/// quando o usuário está online. Usa dados reais do presenceCacheProvider.
+class _OnlineIndicator extends ConsumerWidget {
+  const _OnlineIndicator({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final presence = ref.watch(presenceCacheProvider);
+    final userPresence = presence[userId];
+    final isOnline = userPresence?.isOnline ?? false;
+
+    if (!isOnline) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      right: 4,
+      bottom: 4,
+      child: Container(
+        width: 14,
+        height: 14,
+        decoration: BoxDecoration(
+          color: const Color(0xFF4CAF50),
+          shape: BoxShape.circle,
+          border: Border.all(color: context.colors.background, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
+              blurRadius: 4,
+              spreadRadius: 0.5,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

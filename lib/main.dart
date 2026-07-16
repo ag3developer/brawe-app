@@ -6,9 +6,11 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fvp/fvp.dart' as fvp;
+import 'package:go_router/go_router.dart';
 
 import 'config/locale_provider.dart';
 import 'data/providers/cart_notifier_provider.dart';
@@ -90,6 +92,20 @@ Future<void> main() async {
           debugPrint('FirebaseMessaging background handler failed: $e');
         }
       }
+
+      // ── Rede de segurança global contra tela branca/travada ──────────
+      // Por padrão, se um widget lançar uma exceção durante o build em
+      // modo release, o Flutter renderiza um `ErrorWidget` cinza/em branco
+      // sem nenhuma ação possível — foi essa a causa raiz de telas brancas
+      // travadas (ex.: bug ao encerrar uma live no Android, ver
+      // BUG_LIVE_END_BLANK_SCREEN.md). Este builder garante que QUALQUER
+      // erro de renderização mostre, no mínimo, uma tela com um botão
+      // "Recarregar" que leva o usuário de volta pra Home — nunca fica
+      // preso sem nenhuma ação possível.
+      ErrorWidget.builder = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        return _GlobalErrorFallback(details: details);
+      };
 
       runApp(const ProviderScope(child: BraweApp()));
     },
@@ -175,6 +191,116 @@ class _BraweAppState extends ConsumerState<BraweApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      // ── Contraste padrão das barras do sistema (edge-to-edge) ─────────
+      // A maioria das telas usa Scaffold sem AppBar (headers customizados),
+      // então o `systemOverlayStyle` do AppBarTheme (ver app_theme.dart)
+      // nunca é aplicado nelas. Este builder garante um fallback global
+      // consistente com o tema ativo (claro/escuro) para status bar e nav
+      // bar transparentes com ícones de contraste correto. Telas que
+      // precisam de um estilo diferente (ex.: Stories, fundo sempre escuro)
+      // continuam podendo sobrepor com seu próprio `AnnotatedRegion` — o
+      // mais próximo na árvore prevalece. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md,
+      // Fase H.
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: isDark
+              ? SystemUiOverlayStyle.light.copyWith(
+                  statusBarColor: Colors.transparent,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: Brightness.light,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                )
+              : SystemUiOverlayStyle.dark.copyWith(
+                  statusBarColor: Colors.transparent,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: Brightness.dark,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
+          child: child!,
+        );
+      },
+    );
+  }
+}
+
+/// Tela mínima de recuperação exibida quando QUALQUER widget lança uma
+/// exceção durante o build (substitui o `ErrorWidget` padrão do Flutter,
+/// que em release é apenas uma tela cinza/branca sem nenhuma ação
+/// possível). Sempre oferece um botão para recarregar o app na Home,
+/// evitando que o usuário fique travado numa tela sem saída.
+class _GlobalErrorFallback extends StatelessWidget {
+  const _GlobalErrorFallback({required this.details});
+
+  final FlutterErrorDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    if (kDebugMode) {
+      // Em debug, mantém o comportamento padrão (tela vermelha com stack
+      // trace) — é essencial pra debugar durante o desenvolvimento.
+      return ErrorWidget(details.exception);
+    }
+    return Material(
+      color: const Color(0xFF0B0F1A),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Colors.white54,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Algo deu errado',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Toque no botão abaixo para voltar ao início.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white54, fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    // Tenta navegar via GoRouter usando o contexto local
+                    // (ainda válido, é o build acima do erro). Se falhar
+                    // por qualquer motivo, fecha o app como último
+                    // recurso — nunca deixa o usuário sem ação possível.
+                    try {
+                      GoRouter.of(context).go('/home');
+                    } catch (_) {
+                      SystemNavigator.pop();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6E4DFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text('Recarregar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

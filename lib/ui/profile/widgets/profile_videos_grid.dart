@@ -53,8 +53,9 @@ class ProfileVideosGrid extends ConsumerWidget {
         message: S.of(context).profileVideosLoadError,
       ),
       data: (posts) {
-        final videos =
-            posts.where((p) => _isVideoUrl(p.imageUrl)).toList(growable: false);
+        final videos = posts
+            .where((p) => _isVideoUrl(p.imageUrl))
+            .toList(growable: false);
         if (videos.isEmpty) {
           return _EmptyVideos(
             icon: Icons.video_library_outlined,
@@ -62,12 +63,12 @@ class ProfileVideosGrid extends ConsumerWidget {
           );
         }
         return GridView.builder(
-          padding: const EdgeInsets.all(2),
+          padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-            childAspectRatio: 9 / 16,
+            crossAxisCount: 2,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 3 / 4,
           ),
           itemCount: videos.length,
           itemBuilder: (_, i) => _VideoTile(
@@ -152,140 +153,166 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
   Widget build(BuildContext context) {
     final post = widget.post;
     return GestureDetector(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => _VideoPostViewer(
-          userId: widget.userId,
-          videos: widget.videos,
-          initialIndex: widget.initialIndex,
-          isMe: widget.isMe,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => _VideoPostViewer(
+            userId: widget.userId,
+            videos: widget.videos,
+            initialIndex: widget.initialIndex,
+            isMe: widget.isMe,
+          ),
         ),
-      )),
+      ),
       onLongPress: widget.isMe
           ? () => _confirmDelete(context, ref, post: post)
           : null,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Fundo escuro fallback
-          Container(color: const Color(0xFF111122)),
+      child: AspectRatio(
+        aspectRatio: 3 / 4,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Fundo escuro fallback
+            Container(color: const Color(0xFF111122)),
 
-          // Frame real do vídeo (preview)
-          if (_ready && _ctrl != null)
-            FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _ctrl!.value.size.width,
-                height: _ctrl!.value.size.height,
-                child: VideoPlayer(_ctrl!),
-              ),
-            ),
-
-          // Loading shimmer-ish enquanto carrega
-          if (!_ready && !_failed)
-            const Center(
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  color: Colors.white38,
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-
-          if (_failed)
-            const Center(
-              child: Icon(Icons.broken_image,
-                  color: Colors.white24, size: 24),
-            ),
-
-          // Gradiente sutil pra legibilidade dos overlays
-          IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.35),
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.55),
-                  ],
-                  stops: const [0.0, 0.45, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          // Play badge central (estilo Reels)
-          IgnorePointer(
-            child: Center(
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.4),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    width: 1.2,
+            // Frame real do vídeo (preview)
+            if (_ready && _ctrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: _ctrl!.value.size.width,
+                    height: _ctrl!.value.size.height,
+                    child: VideoPlayer(_ctrl!),
                   ),
                 ),
-                child: const Icon(Icons.play_arrow_rounded,
-                    color: Colors.white, size: 24),
+              ),
+
+            // Loading shimmer-ish enquanto carrega
+            if (!_ready && !_failed)
+              const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    color: Colors.white38,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+
+            if (_failed)
+              const Center(
+                child: Icon(
+                  Icons.broken_image,
+                  color: Colors.white24,
+                  size: 24,
+                ),
+              ),
+
+            // Gradiente sutil pra legibilidade dos overlays
+            IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.35),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.55),
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
+                ),
               ),
             ),
-          ),
 
-          // Likes (canto inferior esquerdo)
-          if (post.likesCount > 0)
-            Positioned(
-              left: 6,
-              bottom: 6,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.favorite,
-                      color: Colors.white, size: 12),
-                  const SizedBox(width: 3),
-                  Text('${post.likesCount}',
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
+            // Play badge central (estilo Reels)
+            IgnorePointer(
+              child: Center(
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.4),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+
+            // Likes (canto inferior esquerdo)
+            if (post.likesCount > 0)
+              Positioned(
+                left: 6,
+                bottom: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.favorite,
+                      color: Colors.white,
+                      size: 12,
+                      shadows: const [
+                        Shadow(color: Colors.black87, blurRadius: 2),
+                      ],
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${post.likesCount}',
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        shadows: [
-                          Shadow(color: Colors.black, blurRadius: 4)
-                        ],
-                      )),
-                ],
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 2)],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
 
-          // Views (canto inferior direito)
-          if (post.viewsCount > 0)
-            Positioned(
-              right: 6,
-              bottom: 6,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.remove_red_eye,
-                      color: Colors.white, size: 12),
-                  const SizedBox(width: 3),
-                  Text(_formatCount(post.viewsCount),
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
+            // Views (canto inferior direito)
+            if (post.viewsCount > 0)
+              Positioned(
+                right: 6,
+                bottom: 6,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.remove_red_eye,
+                      color: Colors.white,
+                      size: 12,
+                      shadows: const [
+                        Shadow(color: Colors.black87, blurRadius: 2),
+                      ],
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      _formatCount(post.viewsCount),
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        shadows: [
-                          Shadow(color: Colors.black, blurRadius: 4)
-                        ],
-                      )),
-                ],
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 2)],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -306,8 +333,10 @@ Future<void> _confirmDelete(
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: ctx.colors.surface,
-      title: Text(S.of(ctx).profileVideoDeleteTitle,
-          style: TextStyle(color: ctx.colors.textPrimary)),
+      title: Text(
+        S.of(ctx).profileVideoDeleteTitle,
+        style: TextStyle(color: ctx.colors.textPrimary),
+      ),
       content: Text(
         S.of(ctx).profileVideoDeleteBody,
         style: TextStyle(color: ctx.colors.textSecondary),
@@ -315,13 +344,17 @@ Future<void> _confirmDelete(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text(S.of(ctx).actionCancel,
-              style: TextStyle(color: ctx.colors.textSecondary)),
+          child: Text(
+            S.of(ctx).actionCancel,
+            style: TextStyle(color: ctx.colors.textSecondary),
+          ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(S.of(ctx).profileVideoDelete,
-              style: const TextStyle(color: Colors.red)),
+          child: Text(
+            S.of(ctx).profileVideoDelete,
+            style: const TextStyle(color: Colors.red),
+          ),
         ),
       ],
     ),
@@ -330,13 +363,11 @@ Future<void> _confirmDelete(
   try {
     await ref.read(postRepositoryProvider).deletePost(post.id);
     // Atualiza posts do perfil (a aba Vídeos vai re-filtrar sozinha).
-    await ref
-        .read(profileViewModelProvider(post.author.id).notifier)
-        .refresh();
+    await ref.read(profileViewModelProvider(post.author.id).notifier).refresh();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(S.of(context).profileVideoDeleted)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(S.of(context).profileVideoDeleted)));
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -438,8 +469,7 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                 IconButton(
                   tooltip: S.of(context).profileVideoRepostStory,
                   icon: const Icon(LucideIcons.aperture, color: Colors.white),
-                  onPressed: () =>
-                      _repostAsStory(widget.videos[_currentIndex]),
+                  onPressed: () => _repostAsStory(widget.videos[_currentIndex]),
                 ),
                 if (widget.isMe)
                   PopupMenuButton<String>(
@@ -457,11 +487,16 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         value: 'story',
                         child: Row(
                           children: [
-                            const Icon(LucideIcons.aperture,
-                                color: Colors.white70, size: 18),
+                            const Icon(
+                              LucideIcons.aperture,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
                             const SizedBox(width: 10),
-                            Text(S.of(ctx).profileVideoRepostStory,
-                                style: const TextStyle(color: Colors.white)),
+                            Text(
+                              S.of(ctx).profileVideoRepostStory,
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -469,11 +504,15 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            const Icon(Icons.delete_outline,
-                                color: Colors.redAccent),
+                            const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
                             const SizedBox(width: 8),
-                            Text(S.of(ctx).profileVideoDeleteAction,
-                                style: const TextStyle(color: Colors.white)),
+                            Text(
+                              S.of(ctx).profileVideoDeleteAction,
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ],
                         ),
                       ),
@@ -487,9 +526,7 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
             const Positioned(
               right: 12,
               top: 80,
-              child: IgnorePointer(
-                child: _SwipeHint(),
-              ),
+              child: IgnorePointer(child: _SwipeHint()),
             ),
         ],
       ),
@@ -637,9 +674,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
             ),
           if (!_initialized && !_failed)
             const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.electricPurple,
-              ),
+              child: CircularProgressIndicator(color: AppColors.electricPurple),
             ),
           if (_failed)
             Center(
@@ -648,11 +683,16 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        color: Colors.white54, size: 40),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white54,
+                      size: 40,
+                    ),
                     const SizedBox(height: 8),
-                    Text(S.of(context).profileVideoLoadError,
-                        style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      S.of(context).profileVideoLoadError,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                   ],
                 ),
               ),
@@ -694,8 +734,9 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                             ? CachedNetworkImage(
                                 imageUrl: post.author.avatarUrl!,
                                 fit: BoxFit.cover,
-                                errorWidget: (_, _, _) =>
-                                    Container(color: context.colors.surfaceElevated),
+                                errorWidget: (_, _, _) => Container(
+                                  color: context.colors.surfaceElevated,
+                                ),
                               )
                             : Container(color: context.colors.surfaceElevated),
                       ),
@@ -703,12 +744,10 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                     const SizedBox(width: 8),
                     Text(
                       '@${post.author.username}',
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
-                        shadows: [
-                          Shadow(color: Colors.black, blurRadius: 6)
-                        ],
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 3)],
                       ),
                     ),
                   ],
@@ -717,10 +756,10 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                   const SizedBox(height: 8),
                   Text(
                     post.content,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 14,
-                      shadows: [Shadow(color: Colors.black, blurRadius: 6)],
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 3)],
                     ),
                   ),
                 ],
@@ -730,16 +769,19 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                     _Metric(icon: Icons.favorite, value: post.likesCount),
                     const SizedBox(width: 14),
                     _Metric(
-                        icon: Icons.mode_comment_outlined,
-                        value: post.commentsCount),
+                      icon: Icons.mode_comment_outlined,
+                      value: post.commentsCount,
+                    ),
                     const SizedBox(width: 14),
                     _Metric(
-                        icon: Icons.repeat_rounded,
-                        value: post.repostsCount),
+                      icon: Icons.repeat_rounded,
+                      value: post.repostsCount,
+                    ),
                     const SizedBox(width: 14),
                     _Metric(
-                        icon: Icons.remove_red_eye_outlined,
-                        value: post.viewsCount),
+                      icon: Icons.remove_red_eye_outlined,
+                      value: post.viewsCount,
+                    ),
                   ],
                 ),
               ],
@@ -796,8 +838,11 @@ class _SwipeHintState extends State<_SwipeHint>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.keyboard_arrow_up,
-              color: Colors.white.withValues(alpha: 0.9), size: 28),
+          Icon(
+            Icons.keyboard_arrow_up,
+            color: Colors.white.withValues(alpha: 0.9),
+            size: 28,
+          ),
           Text(
             S.of(context).profileVideoSwipeHint,
             style: TextStyle(
@@ -829,15 +874,20 @@ class _Metric extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white, size: 16),
+        Icon(
+          icon,
+          color: Colors.white,
+          size: 16,
+          shadows: const [Shadow(color: Colors.black87, blurRadius: 2)],
+        ),
         const SizedBox(width: 4),
         Text(
           _f(value),
-          style: TextStyle(
-            color: context.colors.textPrimary,
+          style: const TextStyle(
+            color: Colors.white,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            shadows: [Shadow(color: Colors.black, blurRadius: 6)],
+            shadows: [Shadow(color: Colors.black87, blurRadius: 2)],
           ),
         ),
       ],
@@ -864,8 +914,7 @@ class _EmptyVideos extends StatelessWidget {
               children: [
                 Icon(icon, size: 48, color: Colors.white24),
                 const SizedBox(height: 8),
-                Text(message,
-                    style: const TextStyle(color: Colors.white54)),
+                Text(message, style: const TextStyle(color: Colors.white54)),
               ],
             ),
           ),

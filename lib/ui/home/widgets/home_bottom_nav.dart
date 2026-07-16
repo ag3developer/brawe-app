@@ -28,8 +28,15 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
     _NavDestination(icon: Icons.home_filled, label: s.navHome, route: '/home'),
     _NavDestination(icon: Icons.newspaper, label: s.navFeed, route: '/feed'),
     _NavDestination(
-        icon: Icons.chat_bubble_outline, label: s.navChat, route: '/chat'),
-    _NavDestination(icon: Icons.person_outline, label: s.navProfile, route: null),
+      icon: Icons.chat_bubble_outline,
+      label: s.navChat,
+      route: '/chat',
+    ),
+    _NavDestination(
+      icon: Icons.person_outline,
+      label: s.navProfile,
+      route: null,
+    ),
   ];
 
   void _onTap(int index, String? route, String? userId) {
@@ -82,15 +89,19 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: colors.accentPrimary
-                                    .withValues(alpha: 0.4),
+                                color: colors.accentPrimary.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                          child: Icon(Icons.add,
-                              color: colors.textOnAccent, size: 26),
+                          child: Icon(
+                            Icons.add,
+                            color: colors.textOnAccent,
+                            size: 26,
+                          ),
                         ),
                       ),
                     ),
@@ -167,7 +178,6 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE OVERLAY — TikTok-style fullscreen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -199,10 +209,13 @@ class _CreateOverlayState extends ConsumerState<_CreateOverlay>
   }
 
   Animation<double> _stagger(int i) => CurvedAnimation(
-        parent: _c,
-        curve: Interval(0.05 + i * 0.08, (0.4 + i * 0.08).clamp(0, 1),
-            curve: Curves.easeOutBack),
-      );
+    parent: _c,
+    curve: Interval(
+      0.05 + i * 0.08,
+      (0.4 + i * 0.08).clamp(0, 1),
+      curve: Curves.easeOutBack,
+    ),
+  );
 
   void _close() => Navigator.of(context).pop();
 
@@ -280,10 +293,14 @@ class _CreateOverlayState extends ConsumerState<_CreateOverlay>
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2)),
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
                     ),
-                    child: const Icon(Icons.close,
-                        color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
               ),
@@ -305,7 +322,7 @@ class _CreateOverlayState extends ConsumerState<_CreateOverlay>
                       children: [
                         _OverlayItem(
                           anim: _stagger(0),
-                          icon: Icons.auto_stories_outlined,
+                          icon: LucideIcons.aperture,
                           label: s.createStoryTitle,
                           onTap: _openStory,
                         ),
@@ -409,8 +426,8 @@ class _OverlayItem extends StatelessWidget {
                   ),
                 ),
                 child: Center(
-                  child: iconWidget ??
-                      Icon(icon, color: Colors.white, size: 24),
+                  child:
+                      iconWidget ?? Icon(icon, color: Colors.white, size: 24),
                 ),
               ),
               const SizedBox(height: 8),

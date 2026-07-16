@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.27+27
+version: 1.0.30+30
 
 environment:
   sdk: ^3.11.0
@@ -135,6 +135,7 @@ dependencies:
 
   # Versão do app (lida do pubspec/Info.plist/AndroidManifest em runtime).
   package_info_plus: ^8.0.0
+  lottie: ^3.5.1
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que
@@ -189,6 +190,7 @@ flutter:
     - assets/images/illustrations/3.0x/
     - assets/sounds/
     - assets/legal/
+    - assets/lottie_test/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

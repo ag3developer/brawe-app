@@ -141,17 +141,17 @@ class StoriesRail extends ConsumerWidget {
     );
   }
 
-  void _openViewer(
+  Future<void> _openViewer(
     BuildContext context,
     WidgetRef ref,
     UserStoriesGroup group,
-  ) {
+  ) async {
     // Modo imersivo — esconde status bar e nav bar do sistema durante o story.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
     // rootNavigator: true → sobe para o Navigator raiz (acima do ShellRoute),
     // cobrindo o BottomNavigationBar por completo — igual ao Instagram Stories.
-    Navigator.of(context, rootNavigator: true).push(
+    await Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: false,
         fullscreenDialog: true,
@@ -169,6 +169,18 @@ class StoriesRail extends ConsumerWidget {
         reverseTransitionDuration: const Duration(milliseconds: 180),
       ),
     );
+
+    // ── Restaura system UI ao voltar ──
+    // Sem isso, ao fechar o viewer aberto a partir do stories_rail, a
+    // status bar / nav bar continuariam escondidas para sempre (bug
+    // confirmado em ANDROID_EDGE_TO_EDGE_AUDIT.md, Fase 8.2) — diferente
+    // do fluxo de `story_ring_avatar.dart`, que já restaurava.
+    if (context.mounted) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+    }
   }
 }
 

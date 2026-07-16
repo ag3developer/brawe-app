@@ -29,6 +29,7 @@ import '../ui/chat/widgets/chat_detail_screen.dart';
 import '../ui/chat/widgets/new_conversation_screen.dart';
 import '../ui/broadcaster/widgets/start_live_screen.dart';
 import '../ui/broadcaster/widgets/broadcaster_screen.dart';
+import '../ui/broadcaster/widgets/live_summary_screen.dart';
 import '../ui/core/themes/force_dark_theme.dart';
 import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
@@ -419,6 +420,20 @@ GoRouter router(Ref ref) {
         path: '/live/start',
         builder: (context, state) =>
             const ForceDarkTheme(child: StartLiveScreen()),
+      ),
+      // Resumo exibido imediatamente após o streamer encerrar a live —
+      // ver LiveSummaryScreen doc header. Se `extra` vier ausente/incorreto
+      // (ex.: navegação direta via deep link), cai num resumo vazio em vez
+      // de quebrar — NUNCA deve resultar em tela branca.
+      GoRoute(
+        path: '/live/summary',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final data =
+              extra?['data'] as LiveSummaryData? ?? const LiveSummaryData();
+          final roomTitle = extra?['roomTitle'] as String?;
+          return LiveSummaryScreen(data: data, roomTitle: roomTitle);
+        },
       ),
       GoRoute(
         path: '/live/broadcast',

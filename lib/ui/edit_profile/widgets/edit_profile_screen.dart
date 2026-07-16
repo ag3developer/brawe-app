@@ -13,6 +13,8 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../domain/models/profile.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
 
@@ -153,6 +155,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       }
 
       _showSnack(S.of(context).editProfileSaved);
+
+      // ── Atualizar estado de autenticação e navegar para feed ─────────────────
+      // Após salvar perfil com sucesso, obtém usuário atualizado do backend
+      // e notifica o router para reconhecer que perfil agora está completo.
+      try {
+        final updatedUser = await ref
+            .read(authRepositoryProvider)
+            .getCurrentUser();
+
+        // Atualizar o estado autenticado (padrão: LoginViewModel e SignupViewModel)
+        ref.read(authStateProvider.notifier).updateSession(updatedUser);
+
+        // Aguardar um micro-delay para garantir que router processa a mudança
+        await Future.delayed(const Duration(milliseconds: 50));
+
+        // Navegar para o feed (novo usuário completa onboarding → feed)
+        if (mounted) {
+          context.go('/home');
+        }
+      } catch (e) {
+        // Log silencioso: perfil principal já foi salvo
+        // Se falhar aqui, na próxima tela o router ainda vai redirecionar correto
+        // pois o backend tem avatarUrl preenchido e app recarrega sessão
+        debugPrint('Aviso: Falha ao atualizar sessão: $e');
+      }
     }
   }
 

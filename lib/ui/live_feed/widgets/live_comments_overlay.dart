@@ -10,11 +10,13 @@ class LiveCommentsOverlay extends StatefulWidget {
     required this.comments,
     required this.isSending,
     required this.onSendComment,
+    this.onClose,
   });
 
   final List<LiveComment> comments;
   final bool isSending;
   final ValueChanged<String> onSendComment;
+  final VoidCallback? onClose;
 
   @override
   State<LiveCommentsOverlay> createState() => _LiveCommentsOverlayState();
@@ -36,8 +38,9 @@ class _LiveCommentsOverlayState extends State<LiveCommentsOverlay> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Chat messages list — minimal style
         Container(
-          constraints: const BoxConstraints(maxHeight: 180),
+          constraints: const BoxConstraints(maxHeight: 200),
           child: widget.comments.isEmpty
               ? const SizedBox.shrink()
               : ListView.builder(
@@ -52,56 +55,73 @@ class _LiveCommentsOverlayState extends State<LiveCommentsOverlay> {
                 ),
         ),
         const SizedBox(height: 12),
+        // Input field — TikTok style: transparent, minimalist
         Row(
           children: [
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white12),
+                  // ✅ TRANSPARENT instead of dark background
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
                 ),
                 child: TextField(
                   controller: _commentController,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _submitComment(),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  cursorColor: Colors.white,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  cursorColor: Colors.white70,
                   decoration: InputDecoration(
                     hintText: s.liveCommentsHint,
-                    hintStyle: const TextStyle(color: Colors.white38, fontSize: 14),
+                    hintStyle: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                    ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
+                      horizontal: 14,
+                      vertical: 8,
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
+            // Send button — minimal
             GestureDetector(
               onTap: widget.isSending ? null : _submitComment,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Colors.white10,
-                  shape: BoxShape.circle,
-                ),
-                child: widget.isSending
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.send_rounded,
-                        color: Colors.white,
-                        size: 20,
+              child: widget.isSending
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
                       ),
+                    )
+                  : const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+            ),
+            const SizedBox(width: 8),
+            // Close button
+            GestureDetector(
+              onTap: widget.onClose,
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white54,
+                size: 20,
               ),
             ),
           ],

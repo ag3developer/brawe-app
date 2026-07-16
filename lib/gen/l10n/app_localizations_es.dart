@@ -3044,6 +3044,31 @@ class SEs extends S {
   String get broadcasterEnd => 'Finalizar';
 
   @override
+  String get liveSummaryTitle => 'Resumen de la transmisión';
+
+  @override
+  String get liveSummaryDuration => 'Duración';
+
+  @override
+  String get liveSummaryPeakViewers => 'Pico de audiencia';
+
+  @override
+  String get liveSummaryTotalViewers => 'Espectadores únicos';
+
+  @override
+  String get liveSummaryGiftsValue => 'Regalos recibidos';
+
+  @override
+  String get liveSummaryMysteryGifts => 'Regalos misteriosos revelados';
+
+  @override
+  String get liveSummaryDone => 'Listo';
+
+  @override
+  String get liveSummaryUnavailable =>
+      'Tu transmisión ha finalizado. No se pudo cargar el resumen completo ahora.';
+
+  @override
   String get broadcasterMoreResumeLive => 'Reanudar live';
 
   @override
@@ -4306,7 +4331,7 @@ class SEs extends S {
   String get navSounds => 'Sounds';
 
   @override
-  String get createSoundsTitle => 'Brawe Sounds';
+  String get createSoundsTitle => 'Sounds';
 
   @override
   String get createSoundsSubtitle =>

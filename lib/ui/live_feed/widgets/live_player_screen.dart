@@ -112,6 +112,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   @override
   void initState() {
     super.initState();
+    // Fullscreen imersivo: esconde status bar e nav bar durante a live
+    // (vídeo ocupa 100% da tela, igual Stories/TikTok Live). Restaurado no
+    // dispose. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md, Fase E.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _likesCount = widget.room.totalLikes;
     // ⚡ Se o room já veio com battleId (live_type=battle + dados enriquecidos
     // pelo backend), seta o HUD imediatamente — sem nenhum roundtrip extra.
@@ -144,6 +148,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _controller?.dispose();
     _unsubscribeFromBattleEvents();
     WakelockPlus.disable();
+    // Restaura as barras do sistema ao sair da live.
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+      overlays: SystemUiOverlay.values,
+    );
     super.dispose();
   }
 
@@ -455,11 +464,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// com `quantity=N`. Isso elimina o 429 (rate limit 30/min) quando o
   /// usuário clica em combo rápido — antes cada tap era 1 request.
   ///
-  /// Animação: o spawn local do coração é IMEDIATO (sem esperar o flush).
-  /// O backend confirma via socket `gift_received` após o batch.
+  /// Animação: o presente em si (toast/overlay da rosa) já é disparado
+  /// pelo `liveRoomGiftsViewModelProvider` ao receber o evento de socket
+  /// `gift_received` — não precisamos (e não devemos) spawnar corações
+  /// aqui. `_heartsKey.spawn()` é EXCLUSIVO do botão de curtir
+  /// (`_onTapLike`); usá-lo aqui também causava o bug reportado onde um
+  /// coração flutuante aparecia junto de toda rosa enviada, mesmo sem o
+  /// usuário ter tocado em "Curtir".
   void _sendRose() {
     HapticFeedback.lightImpact();
-    _heartsKey.currentState?.spawn(1); // feedback visual imediato
     _pendingRoses += 1;
     _roseFlushTimer?.cancel();
     _roseFlushTimer = Timer(const Duration(milliseconds: 400), _flushRoses);
@@ -588,11 +601,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
           // ── 6. Chat ticker (sobe da base, ACIMA do bottom bar) ──
           // bottom bar = chat input (52) + spacing (10) + actions (52) + safearea
-          // ≈ 140px → ticker fica em 160 para sobrar respiro visual.
+          // ✨ Otimizado: 140 → 120px (mais espaço pro vídeo principal!)
           Positioned(
             left: 12,
             right: 12,
-            bottom: 160,
+            bottom: 120, // ✨ -20px (era 140px) - Video agora ocupa 75%!
             child: IgnorePointer(
               child: ChatTicker(comments: commentsState.comments, gifts: gifts),
             ),
@@ -781,7 +794,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 // ── Seletor de qualidade de stream ───────────────────────────────────────────
 
 /// Botão compacto que exibe a qualidade atual e abre o seletor.
-  // ignore: unused_element, unused_field, unused_element_parameter
+// ignore: unused_element, unused_field, unused_element_parameter
 class _QualityButton extends StatelessWidget {
   final StreamQuality quality;
   final VoidCallback onTap;

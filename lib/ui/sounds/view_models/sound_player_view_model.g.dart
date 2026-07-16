@@ -42,7 +42,7 @@ final class SoundPlayerViewModelProvider
 }
 
 String _$soundPlayerViewModelHash() =>
-    r'09e69c4270e6b84a3a367ef0f0956bd7b873729f';
+    r'aacaa9fc1a299f232a795660f940c5088367d6cf';
 
 abstract class _$SoundPlayerViewModel extends $Notifier<SoundPlayerState> {
   SoundPlayerState build();

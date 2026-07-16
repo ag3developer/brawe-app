@@ -35,22 +35,42 @@ class LevelChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = _parseHex(colorHex);
-    final fontSize = (height * 0.6).clamp(10.0, 14.0);
+    // 🎨 Tipografia mais discreta e proporcional — antes chegava a 14px
+    // num chip de 18px de altura, brigando visualmente com o nome do
+    // remetente (13px) e chamando mais atenção do que deveria num
+    // elemento secundário. Agora escala mais devagar e tem piso/teto
+    // menores, mantendo legibilidade sem "gritar".
+    final fontSize = (height * 0.5).clamp(8.5, 11.5);
+    final iconSize = (height * 0.62).clamp(8.0, 13.0);
+    final radius = height / 2; // pill perfeito, mais premium que squircle
 
     return Container(
       height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: EdgeInsets.symmetric(horizontal: height * 0.16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(height * 0.35),
+        borderRadius: BorderRadius.circular(radius),
+        // 🥇 Gradiente metálico com 3 stops (em vez de 2 chapados) — dá
+        // sensação de "pin" físico/premium ao invés de chip flat saturado.
         gradient: LinearGradient(
-          colors: [base, base.withValues(alpha: 0.7)],
+          colors: [
+            Color.lerp(base, Colors.white, 0.18)!,
+            base,
+            Color.lerp(base, Colors.black, 0.22)!,
+          ],
+          stops: const [0.0, 0.5, 1.0],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        // Borda "glass" sutil — separa o chip do fundo escuro do toast
+        // sem precisar de saturação/tamanho extra pra se destacar.
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.28),
+          width: 0.6,
+        ),
         boxShadow: [
           BoxShadow(
-            color: base.withValues(alpha: 0.45),
-            blurRadius: 6,
+            color: base.withValues(alpha: 0.35),
+            blurRadius: 4,
             offset: const Offset(0, 1),
           ),
         ],
@@ -60,25 +80,22 @@ class LevelChip extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Lado esquerdo: imagem PNG OU emoji de fallback
-          _BadgeIcon(
-            imageUrl: imageUrl,
-            emoji: badge ?? '💎',
-            size: height - 4,
-          ),
-          const SizedBox(width: 3),
+          _BadgeIcon(imageUrl: imageUrl, emoji: badge ?? '💎', size: iconSize),
+          SizedBox(width: height * 0.12),
           // Lado direito: número do nível
           Text(
             '$level',
             style: TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
               fontSize: fontSize,
+              letterSpacing: -0.1,
               decoration: TextDecoration.none,
               shadows: const [
                 Shadow(
-                  color: Colors.black45,
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
+                  color: Colors.black38,
+                  blurRadius: 1.5,
+                  offset: Offset(0, 0.5),
                 ),
               ],
             ),

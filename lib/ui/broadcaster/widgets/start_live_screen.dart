@@ -173,9 +173,10 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   }
 
   Future<void> _flipCamera() async {
-    if (_cameras.length < 2) return;
+    if (_cameras.length < 2 || !mounted) return;
     _cameraIndex = (_cameraIndex + 1) % _cameras.length;
     await _controller?.dispose();
+    if (!mounted) return; // Check again after dispose, as it's async
     await _setupController(_cameras[_cameraIndex]);
   }
 

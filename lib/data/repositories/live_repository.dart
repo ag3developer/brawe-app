@@ -35,8 +35,10 @@ class LiveRepository {
   final Map<String, StreamController<int>> _likeCountControllers = {};
   final Map<String, StreamController<int>> _commentCountControllers = {};
   final Map<String, StreamController<LiveGift>> _giftControllers = {};
-  final Map<String, StreamController<LiveViewerEvent>> _viewerEventControllers = {};
-  final Map<String, StreamController<LiveReactionEvent>> _reactionControllers = {};
+  final Map<String, StreamController<LiveViewerEvent>> _viewerEventControllers =
+      {};
+  final Map<String, StreamController<LiveReactionEvent>> _reactionControllers =
+      {};
   final Map<String, StreamController<double>> _giftTotalControllers = {};
   final Set<String> _connectedRooms = {};
   final Map<String, int> _roomConnectionLeases = {};
@@ -96,13 +98,19 @@ class LiveRepository {
   }
 
   Future<LiveRoom?> getRoom(String idOrSlug) async {
-    debugPrint('LiveRepository: 🔍 getRoom("$idOrSlug") — stack: ${StackTrace.current.toString().split("\n").take(5).join(" | ")}');
+    debugPrint(
+      'LiveRepository: 🔍 getRoom("$idOrSlug") — stack: ${StackTrace.current.toString().split("\n").take(5).join(" | ")}',
+    );
     try {
       final dto = await _liveService.getRoom(idOrSlug);
-      debugPrint('LiveRepository: ✅ getRoom("$idOrSlug") → ${dto != null ? "found" : "null"}');
+      debugPrint(
+        'LiveRepository: ✅ getRoom("$idOrSlug") → ${dto != null ? "found" : "null"}',
+      );
       return dto?.toDomain();
     } on DioException catch (e) {
-      debugPrint('LiveRepository: ❌ getRoom("$idOrSlug") DioException status=${e.response?.statusCode} msg=${e.message}');
+      debugPrint(
+        'LiveRepository: ❌ getRoom("$idOrSlug") DioException status=${e.response?.statusCode} msg=${e.message}',
+      );
       throw _mapFailure(e);
     } catch (e) {
       debugPrint('LiveRepository: ❌ getRoom("$idOrSlug") Error: $e');
@@ -150,9 +158,16 @@ class LiveRepository {
     }
   }
 
-  Future<void> endLive(String roomId) async {
+  /// Encerra a live e retorna o resumo final (duração, picos de audiência,
+  /// presentes recebidos, etc.) devolvido pelo backend em `data`.
+  /// Retorna um Map vazio se o backend não devolver `data` (nunca lança
+  /// nesse caso específico — só lança em falha real de rede/servidor).
+  Future<Map<String, dynamic>> endLive(String roomId) async {
     try {
-      await _liveService.endLive(roomId);
+      final response = await _liveService.endLive(roomId);
+      final data = response['data'];
+      if (data is Map<String, dynamic>) return data;
+      return <String, dynamic>{};
     } on DioException catch (e) {
       debugPrint('LiveRepository: endLive DioException: ${e.message}');
       throw _mapFailure(e);
@@ -214,7 +229,10 @@ class LiveRepository {
   /// (warm-up vira no-op para nao bloquear o fluxo).
   Future<bool> announceLive(String roomId, {int? secondsUntilLive}) async {
     try {
-      await _liveService.announceLive(roomId, secondsUntilLive: secondsUntilLive);
+      await _liveService.announceLive(
+        roomId,
+        secondsUntilLive: secondsUntilLive,
+      );
       return true;
     } on DioException catch (e) {
       debugPrint('LiveRepository: announceLive DioException: ${e.message}');
@@ -563,7 +581,9 @@ class LiveRepository {
       // elegibilidade (avatar, creator network, seguidores mínimos). Quando
       // há essa mensagem amigável, preservamos ela em vez de mostrar o
       // genérico "sessão expirada" — que confundiria o criador.
-      final eligibilityMessage = _extractEligibilityMessage(exception.response?.data);
+      final eligibilityMessage = _extractEligibilityMessage(
+        exception.response?.data,
+      );
       if (eligibilityMessage != null) {
         return Failure.validation(eligibilityMessage);
       }
@@ -619,11 +639,18 @@ class LiveRepository {
       final payload = _asMap(data);
       if (payload == null) return;
       final msgRoomId = payload['room_id']?.toString();
-      final raw = payload['total_likes'] ?? payload['like_count'] ?? payload['count'];
+      final raw =
+          payload['total_likes'] ?? payload['like_count'] ?? payload['count'];
       final count = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
       if (count == null) return;
-      debugPrint('LiveRepository: like_count_update → room=$msgRoomId count=$count');
-      _dispatchToIntControllers(_likeCountControllers, count, roomId: msgRoomId);
+      debugPrint(
+        'LiveRepository: like_count_update → room=$msgRoomId count=$count',
+      );
+      _dispatchToIntControllers(
+        _likeCountControllers,
+        count,
+        roomId: msgRoomId,
+      );
     };
     _socketService.on(AppConstants.eventLikeCountUpdate, _onLikeCount!);
     _onCommentCount = (data) {
@@ -633,8 +660,14 @@ class LiveRepository {
       final raw = payload['total_messages'] ?? payload['count'];
       final count = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
       if (count == null) return;
-      debugPrint('LiveRepository: comment_count_update → room=$msgRoomId count=$count');
-      _dispatchToIntControllers(_commentCountControllers, count, roomId: msgRoomId);
+      debugPrint(
+        'LiveRepository: comment_count_update → room=$msgRoomId count=$count',
+      );
+      _dispatchToIntControllers(
+        _commentCountControllers,
+        count,
+        roomId: msgRoomId,
+      );
     };
     _socketService.on(AppConstants.eventCommentCountUpdate, _onCommentCount!);
     _onNewMessage = (data) {
@@ -687,12 +720,17 @@ class LiveRepository {
         );
       }
 
-      if (payload != null && (payload['user_id']?.toString().isNotEmpty ?? false)) {
+      if (payload != null &&
+          (payload['user_id']?.toString().isNotEmpty ?? false)) {
         final event = LiveViewerEvent.fromSocket(
           Map<String, dynamic>.from(payload),
           joined: true,
         );
-        _dispatchToControllers(_viewerEventControllers, event, roomId: msgRoomId);
+        _dispatchToControllers(
+          _viewerEventControllers,
+          event,
+          roomId: msgRoomId,
+        );
       }
     };
     _socketService.on('viewer_joined', _onViewerJoined!);
@@ -711,12 +749,17 @@ class LiveRepository {
         );
       }
 
-      if (payload != null && (payload['user_id']?.toString().isNotEmpty ?? false)) {
+      if (payload != null &&
+          (payload['user_id']?.toString().isNotEmpty ?? false)) {
         final event = LiveViewerEvent.fromSocket(
           Map<String, dynamic>.from(payload),
           joined: false,
         );
-        _dispatchToControllers(_viewerEventControllers, event, roomId: msgRoomId);
+        _dispatchToControllers(
+          _viewerEventControllers,
+          event,
+          roomId: msgRoomId,
+        );
       }
     };
     _socketService.on('viewer_left', _onViewerLeft!);
@@ -764,13 +807,16 @@ class LiveRepository {
         count: count,
         color: payload['color']?.toString(),
         battleSide: battleSide,
-        timestamp: DateTime.tryParse(payload['timestamp']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+        timestamp:
+            DateTime.tryParse(
+              payload['timestamp']?.toString() ?? '',
+            )?.toLocal() ??
+            DateTime.now(),
       );
       _dispatchToControllers(_reactionControllers, event, roomId: msgRoomId);
     };
     _socketService.on(AppConstants.eventLiveReaction, _onLiveReaction!);
   }
-
 
   void _dispatchToCommentControllers(LiveComment comment, {String? roomId}) {
     _dispatchToControllers(_commentControllers, comment, roomId: roomId);
@@ -847,7 +893,8 @@ class LiveRepository {
       message: message,
       timestamp: timestamp,
       // ─── Gifter level pin (TikTok-style) ───
-      gifterLevel: int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
+      gifterLevel:
+          int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
       gifterBadge: payload['gifter_badge']?.toString(),
       gifterLabel: payload['gifter_label']?.toString(),
       gifterColor: payload['gifter_color']?.toString(),
@@ -907,6 +954,7 @@ class LiveRepository {
       senderAvatarUrl: payload['sender_avatar']?.toString(),
       giftId: giftId,
       giftName: payload['gift_name']?.toString() ?? 'Gift',
+      giftSlug: payload['gift_slug']?.toString(),
       // 🖼 Static PNG icon for inline chat ticker / small overlay.
       // Prefer the explicit `icon_url`; fall back to `animation_url` only if
       // it looks like an image (legacy payloads).
@@ -919,7 +967,8 @@ class LiveRepository {
       value: int.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0,
       timestamp: timestamp,
       // ─── Gifter level (TikTok-style chip) ───
-      gifterLevel: int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
+      gifterLevel:
+          int.tryParse(payload['gifter_level']?.toString() ?? '1') ?? 1,
       gifterBadge: payload['gifter_badge']?.toString(),
       gifterLabel: payload['gifter_label']?.toString(),
       gifterColor: payload['gifter_color']?.toString(),
@@ -928,6 +977,19 @@ class LiveRepository {
       // 🎯 Lado da batalha (vem do backend quando há `battle_id`).
       // O overlay usa pra ancorar o toast no lado certo do split-screen.
       battleSide: _parseBattleSide(payload),
+      // ─── 🎯 Arquitetura profissional de exibição (4 modos) ───
+      // `display_type` já vem RESOLVIDO do backend (nunca None em
+      // payloads novos) — mas mantemos o parse tolerante: se ausente
+      // (evento antigo/app antigo), `LiveGift.resolvedDisplayType` aplica
+      // o fallback via `isFullscreen` automaticamente.
+      displayType: payload['display_type']?.toString(),
+      priority: int.tryParse(payload['priority']?.toString() ?? ''),
+      showInChat: payload['show_in_chat'] != false, // default true
+      showSender: payload['show_sender'] != false, // default true
+      soundEnabled: payload['sound_enabled'] == true,
+      animationDurationMs: int.tryParse(
+        payload['animation_duration_ms']?.toString() ?? '',
+      ),
     );
   }
 

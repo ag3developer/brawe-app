@@ -3041,6 +3041,31 @@ class SPt extends S {
   String get broadcasterEnd => 'Encerrar';
 
   @override
+  String get liveSummaryTitle => 'Resumo da live';
+
+  @override
+  String get liveSummaryDuration => 'Duração';
+
+  @override
+  String get liveSummaryPeakViewers => 'Pico de audiência';
+
+  @override
+  String get liveSummaryTotalViewers => 'Espectadores únicos';
+
+  @override
+  String get liveSummaryGiftsValue => 'Presentes recebidos';
+
+  @override
+  String get liveSummaryMysteryGifts => 'Presentes misteriosos revelados';
+
+  @override
+  String get liveSummaryDone => 'Concluir';
+
+  @override
+  String get liveSummaryUnavailable =>
+      'Sua live foi encerrada. Não foi possível carregar o resumo completo agora.';
+
+  @override
   String get broadcasterMoreResumeLive => 'Retomar live';
 
   @override
@@ -4305,7 +4330,7 @@ class SPt extends S {
   String get navSounds => 'Sounds';
 
   @override
-  String get createSoundsTitle => 'Brawe Sounds';
+  String get createSoundsTitle => 'Sounds';
 
   @override
   String get createSoundsSubtitle => 'Adicione uma música original ao seu post';

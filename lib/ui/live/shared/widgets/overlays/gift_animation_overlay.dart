@@ -1,15 +1,140 @@
 // ignore_for_file: unused_element_parameter
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../../../domain/models/live_gift.dart';
+import '../../../../../domain/models/gift_display_type.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../level_chip.dart';
 
-/// Limiar (em créditos) acima do qual o presente vira "premium" —
-/// dispara animação fullscreen com efeito de luz/blur.
-const int _kPremiumThreshold = 100;
+/// 🧪 TESTE (Fase de validação Lottie): slugs que têm asset Lottie local
+/// disponível em `assets/lottie_test/<slug>.json`. Fora desta lista, o
+/// comportamento é IDENTICO ao anterior (Image.network do ícone PNG).
+/// Isolado de propósito para não afetar nenhum outro presente existente.
+const Map<String, String> _kLottieTestAssets = {
+  'star': 'assets/lottie_test/estrela.json',
+};
+
+/// 🖼️ Mapa slug → tier, usado para localizar o PNG local em
+/// `assets/images/gifts/<tier>/<slug>.png` (mesmo pacote de assets já
+/// usado pela sacola de presentes em `GiftsOverlay`/`_GiftIcon`).
+///
+/// IMPORTANTE: o `icon_url` que vem do backend (`cdn.brawe.io/gifts/v1/...`)
+/// atualmente retorna 404 — nenhum ícone de gift foi publicado no R2/DO
+/// Spaces ainda. Por isso os PNGs locais são a fonte PRIMÁRIA e confiável;
+/// a URL remota fica como fallback secundário (pra quando o CDN for
+/// populado no futuro, sem precisar mudar código).
+const Map<String, String> _kGiftSlugTier = {
+  // FREE
+  'clap': 'free', 'fire': 'free', 'heart': 'free',
+  // BASIC
+  'rose': 'basic', 'star': 'basic', 'kiss': 'basic', 'butterfly': 'basic',
+  'headphones': 'basic', 'moon': 'basic', 'microphone': 'basic',
+  'diamond': 'basic',
+  // PREMIUM
+  'energy': 'premium', 'rocket': 'premium', 'gamepad': 'premium',
+  'mini-crown': 'premium', 'bear': 'premium', 'galaxy': 'premium',
+  'coin-rain': 'premium',
+  // LUXURY
+  'crown': 'luxury', 'sports-car': 'luxury', 'yacht': 'luxury',
+  'private-jet': 'luxury', 'titan': 'luxury', 'tsunami': 'luxury',
+  // LEGENDARY
+  'castle': 'legendary', 'dragon': 'legendary', 'lion': 'legendary',
+  'phoenix': 'legendary', 'supernova': 'legendary', 'universe': 'legendary',
+};
+
+/// Widget central que decide o visual do gift, em ordem de prioridade:
+/// 1. Lottie local (se o slug estiver mapeado em [_kLottieTestAssets])
+/// 2. PNG local do asset pack (`assets/images/gifts/<tier>/<slug>.png`) —
+///    fonte PRIMÁRIA confiável, já empacotada no app
+/// 3. `Image.network` do `icon_url` remoto (CDN) — fallback secundário
+/// 4. Emoji/ícone genérico — fallback final
+class _GiftVisual extends StatelessWidget {
+  const _GiftVisual({
+    required this.gift,
+    required this.size,
+    this.fallbackIcon,
+  });
+
+  final LiveGift gift;
+  final double size;
+  final Widget? fallbackIcon;
+
+  /// 🚫 SVGA não é suportado na arquitetura da Brawe (ver
+  /// SVGA_NOT_SUPPORTED.md). Se `animationType == "svga"` (ou qualquer
+  /// formato não-Lottie), NUNCA tentamos carregar um player — pulamos
+  /// direto para a cadeia de fallback estático (PNG local → PNG remoto →
+  /// emoji). Isso é intencional e definitivo, não um "TODO".
+  bool get _isUnsupportedAnimationFormat {
+    final type = gift.animationType?.toLowerCase();
+    return type == 'svga' || type == 'video' || type == 'particle';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slug = gift.giftSlug;
+    final lottiePath = slug != null ? _kLottieTestAssets[slug] : null;
+
+    // Lottie local de teste tem prioridade absoluta (independe do
+    // animationType vindo do backend — é um asset já embutido no app).
+    if (lottiePath != null) {
+      return Lottie.asset(
+        lottiePath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        repeat: false,
+        errorBuilder: (_, __, ___) => _networkOrFallback(),
+      );
+    }
+
+    // 🚫 Formato incompatível (SVGA/VIDEO/PARTICLE) — NUNCA tenta nenhum
+    // player para esses formatos. O PNG local por tier ainda é tentado
+    // normalmente aqui embaixo (é um asset estático independente do
+    // `animationType`), então esse gift ainda mostra corretamente sua
+    // imagem — só a "animação" em si é que nunca é reproduzida.
+    if (_isUnsupportedAnimationFormat) {
+      // Log sanitizado (sem dados sensíveis) — ajuda a identificar
+      // presentes que precisam ser migrados para LOTTIE no catálogo.
+      debugPrint(
+        '⚠️ [GIFT-FORMAT] slug=$slug tem animation_type incompatível '
+        '(${gift.animationType}) — usando fallback estático. '
+        'Ver SVGA_NOT_SUPPORTED.md.',
+      );
+    }
+
+    final tier = slug != null ? _kGiftSlugTier[slug] : null;
+    if (tier != null) {
+      return Image.asset(
+        'assets/images/gifts/$tier/$slug.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _networkOrFallback(),
+      );
+    }
+
+    return _networkOrFallback();
+  }
+
+  Widget _networkOrFallback() {
+    if (gift.giftIconUrl != null) {
+      return Image.network(
+        gift.giftIconUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _iconFallback(),
+      );
+    }
+    return _iconFallback();
+  }
+
+  Widget _iconFallback() =>
+      fallbackIcon ?? const Icon(Icons.workspace_premium, color: Colors.white);
+}
 
 /// 🎁 Overlay de animações de presente.
 ///
@@ -21,7 +146,8 @@ class GiftAnimationOverlay extends ConsumerStatefulWidget {
   const GiftAnimationOverlay({super.key, required this.roomId});
 
   @override
-  ConsumerState<GiftAnimationOverlay> createState() => _GiftAnimationOverlayState();
+  ConsumerState<GiftAnimationOverlay> createState() =>
+      _GiftAnimationOverlayState();
 }
 
 class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
@@ -32,67 +158,93 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   // Também limpamos o set quando passa do limite, para não vazar memória
   // numa live longa.
   static const int _kDedupCap = 300;
-  final Set<String> _shownPremium = <String>{};
-  final Set<String> _shownToast = <String>{};
-  // ignore: unused_field
-  final List<LiveGift> _activeToasts = [];
+  final Set<String> _shownVisual = <String>{};
 
-  void _rememberShown(Set<String> bag, String id) {
-    bag.add(id);
-    if (bag.length > _kDedupCap) {
+  void _rememberShown(String id) {
+    _shownVisual.add(id);
+    if (_shownVisual.length > _kDedupCap) {
       // FIFO trim — remove o(s) mais antigo(s) (Set mantém ordem de inserção).
-      final overflow = bag.length - _kDedupCap;
-      final toRemove = bag.take(overflow).toList(growable: false);
-      bag.removeAll(toRemove);
+      final overflow = _shownVisual.length - _kDedupCap;
+      final toRemove = _shownVisual.take(overflow).toList(growable: false);
+      _shownVisual.removeAll(toRemove);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<List<LiveGift>>(
-      liveRoomGiftsViewModelProvider(widget.roomId),
-      (prev, next) {
-        for (final g in next) {
-          final isPremium =
-              g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
-                  g.value >= _kPremiumThreshold;
+    ref.listen<List<LiveGift>>(liveRoomGiftsViewModelProvider(widget.roomId), (
+      prev,
+      next,
+    ) {
+      for (final g in next) {
+        final displayType = g.resolvedDisplayType;
 
-          // Chave única do gift (transaction_id). Em combos, o view-model
-          // mantém o mesmo `id` e só incrementa `quantity` → não re-dispara
-          // a animação (correto: TikTok-style, mostra 1x e fica visível).
-          final dedupKey = g.id;
+        // 🎯 Presentes tipo `chat` NUNCA disparam overlay — vão só pro chat
+        // (Fase 6/11). Não ocupam espaço visual desnecessário na tela.
+        if (!displayType.entersVisualQueue) continue;
 
-          if (isPremium) {
-            if (_shownPremium.contains(dedupKey)) continue;
-            _rememberShown(_shownPremium, dedupKey);
-            _showPremiumBurst(g);
-          } else {
-            if (_shownToast.contains(dedupKey)) continue;
-            _rememberShown(_shownToast, dedupKey);
-            _showGiftToast(g);
-          }
+        // 🎬 O ViewModel (`LiveRoomGiftsViewModel`) já controla A FILA e
+        // A PRIORIDADE — só marca `isAnimating=true` quando chegou a vez
+        // deste item animar (nunca dois ao mesmo tempo, sempre respeitando
+        // prioridade). O overlay só precisa REAGIR a essa borda de subida.
+        if (!g.isAnimating) continue;
+
+        // Chave única do gift (transaction_id). Em combos, o view-model
+        // mantém o mesmo `id` e só incrementa `quantity` → não re-dispara
+        // a animação (correto: TikTok-style, mostra 1x e fica visível).
+        final dedupKey = g.id;
+        if (_shownVisual.contains(dedupKey)) continue;
+        _rememberShown(dedupKey);
+
+        switch (displayType) {
+          case GiftDisplayType.centerSmall:
+            _showCenterSmall(g);
+          case GiftDisplayType.centerLarge:
+            _showCenterLarge(g);
+          case GiftDisplayType.fullscreen:
+            _showFullscreen(g);
+          case GiftDisplayType.chat:
+            break; // inalcançável (filtrado acima), mantém exaustividade
         }
-      },
-    );
+      }
+    });
 
     return const SizedBox.shrink();
   }
 
-  void _showGiftToast(LiveGift gift) {
+  void _showCenterSmall(LiveGift gift) {
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _GiftToast(
         gift: gift,
         onDone: () {
-          try { entry.remove(); } catch (_) {}
+          try {
+            entry.remove();
+          } catch (_) {}
         },
       ),
     );
     overlay.insert(entry);
   }
 
-  void _showPremiumBurst(LiveGift gift) {
+  void _showCenterLarge(LiveGift gift) {
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _CenterLargeBurst(
+        gift: gift,
+        onDone: () {
+          try {
+            entry.remove();
+          } catch (_) {}
+        },
+      ),
+    );
+    overlay.insert(entry);
+  }
+
+  void _showFullscreen(LiveGift gift) {
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
@@ -122,7 +274,8 @@ class _GiftToast extends StatefulWidget {
   State<_GiftToast> createState() => _GiftToastState();
 }
 
-class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMixin {
+class _GiftToastState extends State<_GiftToast>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;
@@ -135,9 +288,13 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
   @override
   void initState() {
     super.initState();
+    // 🎯 Duração dinâmica (Fase 7): vem do backend já clampada nos limites
+    // seguros do `resolvedDisplayType` (center_small: 2000-4000ms) e
+    // reclampada de novo aqui como defesa em profundidade — nunca confia
+    // só no valor da rede.
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2800),
+      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
     );
     // 🎯 Entra deslizando do lado em que vai ancorar:
     //   - solo / lado A → entra da esquerda (-1.2 → 0)
@@ -147,13 +304,12 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
     final beginOffset = _isRightSide
         ? const Offset(1.2, 0)
         : const Offset(-1.2, 0);
-    _slide = Tween<Offset>(
-      begin: beginOffset,
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _ctrl,
-      curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
-    ));
+    _slide = Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
+      ),
+    );
     _fade = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _ctrl,
@@ -182,22 +338,47 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
     if (n.contains('unicorn') || n.contains('unicórnio')) return '🦄';
     if (n.contains('rocket') || n.contains('foguete')) return '🚀';
     if (n.contains('bomb') || n.contains('bomba')) return '💣';
+    if (n.contains('butterfly') || n.contains('borboleta')) return '🦋';
+    if (n.contains('phone') || n.contains('fone')) return '🎧';
+    if (n.contains('moon') || n.contains('lua')) return '🌙';
+    if (n.contains('gamepad') || n.contains('game')) return '🎮';
     return '🎁';
   }
 
   @override
   Widget build(BuildContext context) {
+    // 📐 Posicionamento RESPONSIVO (Fase 12) — substitui o antigo valor
+    // fixo `bottom: 390`, que não respondia a tamanho de tela, notch,
+    // SafeArea, tablets ou landscape.
+    //
+    // Cálculo: ChatTicker ocupa uma faixa fixa de 240px de altura, ancorada
+    // em `bottom: 120` (ver live_player_screen.dart) + a SafeArea inferior
+    // do dispositivo (gestos/home indicator no iOS, barra de navegação no
+    // Android). O toast fica sempre ACIMA dessa faixa, com um respiro
+    // proporcional à altura da tela (nunca um pixel fixo arbitrário) —
+    // garante leitura confortável em iPhone SE até tablets em landscape.
+    final mediaQuery = MediaQuery.of(context);
+    const chatTickerHeight = 240.0;
+    const chatTickerBottomAnchor = 120.0;
+    final safeAreaBottom = mediaQuery.padding.bottom;
+    final screenHeight = mediaQuery.size.height;
+    // Respiro proporcional: 3% da altura da tela, com piso de 16px e teto
+    // de 40px — evita colar (telas pequenas) ou flutuar longe demais
+    // (tablets/telas grandes).
+    final breathingRoom = (screenHeight * 0.03).clamp(16.0, 40.0);
+    final responsiveBottom =
+        chatTickerBottomAnchor +
+        chatTickerHeight +
+        breathingRoom +
+        safeAreaBottom;
+
     // ⚠️ OverlayEntry NÃO tem ancestor Material/Directionality por padrão.
     // Qualquer Text descendente ganha a "linha amarela double underline" do
     // default textStyle de erro do Flutter. Por isso embrulhamos o conteúdo
     // em Directionality + Material(transparency) + DefaultTextStyle DENTRO
     // do Positioned (o Positioned precisa ser filho direto do Overlay Stack).
     return Positioned(
-      // ⬆️ Subimos para 220px (antes 200) para o toast NUNCA cobrir o
-      // LiveActionBar do broadcaster (Pausar/Batalha/Co-host/Mais/Encerrar).
-      // O action bar fica em bottom:16 + SafeArea + altura ~120 = ~180-200px,
-      // então 220 garante folga.
-      bottom: 220,
+      bottom: responsiveBottom,
       // 🎯 TikTok-style PK: o toast ancora no lado do streamer que recebeu
       // o gift. Sem isso (live solo) cai no canto esquerdo histórico.
       // Em batalha lado B mirror pra direita; lado A mantém esquerda.
@@ -227,7 +408,9 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.78),
                         borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.12),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -247,16 +430,24 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Chip de nível (💎 Lv34) estilo TikTok
+                                  // Chip de nível (💎 Lv34) estilo TikTok —
+                                  // altura reduzida (era o default 18px,
+                                  // grande o suficiente pra roubar a
+                                  // atenção do nome do remetente). 15px
+                                  // mantém legibilidade com discrição,
+                                  // combinando com o restante do toast.
                                   LevelChip(
                                     level: widget.gift.gifterLevel,
                                     badge: widget.gift.gifterBadge,
                                     colorHex: widget.gift.gifterColor,
                                     imageUrl: widget.gift.gifterImageUrl,
+                                    height: 15,
                                   ),
                                   const SizedBox(width: 6),
                                   ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 160),
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 160,
+                                    ),
                                     child: Text(
                                       widget.gift.senderName,
                                       maxLines: 1,
@@ -278,13 +469,17 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
                                   Text(
                                     'enviou ',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.7,
+                                      ),
                                       fontSize: 11,
                                       decoration: TextDecoration.none,
                                     ),
                                   ),
                                   ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 120),
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 120,
+                                    ),
                                     child: Text(
                                       widget.gift.giftName,
                                       maxLines: 1,
@@ -302,26 +497,23 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
                             ],
                           ),
                           const SizedBox(width: 10),
-                          // 3) Ícone do gift (à direita)
-                          if (widget.gift.giftIconUrl != null)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                widget.gift.giftIconUrl!,
-                                width: 36,
-                                height: 36,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => Text(
-                                  _giftEmoji(widget.gift.giftName),
-                                  style: const TextStyle(fontSize: 28, decoration: TextDecoration.none),
+                          // 3) Ícone/animação do gift (à direita) — usa Lottie
+                          // local se disponível para o slug (ver
+                          // `_kLottieTestAssets`), senão mantém o PNG remoto.
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: _GiftVisual(
+                              gift: widget.gift,
+                              size: 36,
+                              fallbackIcon: Text(
+                                _giftEmoji(widget.gift.giftName),
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  decoration: TextDecoration.none,
                                 ),
                               ),
-                            )
-                          else
-                            Text(
-                              _giftEmoji(widget.gift.giftName),
-                              style: const TextStyle(fontSize: 28, decoration: TextDecoration.none),
                             ),
+                          ),
                           // 4) Multiplicador xN
                           if (widget.gift.quantity > 1) ...[
                             const SizedBox(width: 4),
@@ -349,9 +541,10 @@ class _GiftToastState extends State<_GiftToast> with SingleTickerProviderStateMi
   }
 }
 
-
 // ────────────────────────────────────────────────────────────────────────
-// Premium burst (fullscreen, ~2.5s)
+// FULLSCREEN burst — presentes épicos (dragão, universo, etc.)
+// Duração dinâmica: 6000-12000ms, vinda do backend via
+// `resolvedDurationMs` (clampada nos limites seguros do tipo fullscreen).
 // ────────────────────────────────────────────────────────────────────────
 
 class _PremiumGiftBurst extends StatefulWidget {
@@ -370,9 +563,12 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
   @override
   void initState() {
     super.initState();
+    // 🎯 Duração dinâmica (Fase 7) — não mais hardcoded 2600ms. Vem do
+    // backend, já clampada nos limites de FULLSCREEN (6000-12000ms), e
+    // reclampada aqui como defesa em profundidade.
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
+      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
     )..forward().then((_) => widget.onDone());
   }
 
@@ -396,159 +592,337 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
         child: Material(
           type: MaterialType.transparency,
           child: DefaultTextStyle(
-          style: const TextStyle(
-            color: Colors.white,
-            decoration: TextDecoration.none,
-          ),
-          child: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, _) {
-          final t = _ctrl.value;
-          // Phase 1 (0..0.5) — light beam expands + icon scales up
-          // Phase 2 (0.5..0.85) — hold
-          // Phase 3 (0.85..1) — fade out
-          final opacity = t < 0.15
-              ? (t / 0.15)
-              : t > 0.85
-                  ? ((1 - t) / 0.15).clamp(0.0, 1.0)
-                  : 1.0;
-          final scale = t < 0.4
-              ? Curves.elasticOut.transform((t / 0.4).clamp(0.0, 1.0))
-              : 1.0;
-          final beam = (t < 0.7 ? (t / 0.7) : 1.0);
+            style: const TextStyle(
+              color: Colors.white,
+              decoration: TextDecoration.none,
+            ),
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, _) {
+                final t = _ctrl.value;
+                // Phase 1 (0..0.5) — light beam expands + icon scales up
+                // Phase 2 (0.5..0.85) — hold
+                // Phase 3 (0.85..1) — fade out
+                final opacity = t < 0.15
+                    ? (t / 0.15)
+                    : t > 0.85
+                    ? ((1 - t) / 0.15).clamp(0.0, 1.0)
+                    : 1.0;
+                final scale = t < 0.4
+                    ? Curves.elasticOut.transform((t / 0.4).clamp(0.0, 1.0))
+                    : 1.0;
+                final beam = (t < 0.7 ? (t / 0.7) : 1.0);
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // Backdrop dimmer (subtle)
-              Opacity(
-                opacity: opacity * 0.45,
-                child: Container(color: Colors.black),
-              ),
-              // Radial light beam
-              Center(
-                child: Opacity(
-                  opacity: opacity * 0.85,
-                  child: Container(
-                    width: 600 * beam,
-                    height: 600 * beam,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          Color(0xFFFFE08A),
-                          Color(0x66FF4D8B),
-                          Color(0x00000000),
-                        ],
-                        stops: [0.0, 0.5, 1.0],
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Backdrop dimmer (subtle)
+                    Opacity(
+                      opacity: opacity * 0.45,
+                      child: Container(color: Colors.black),
+                    ),
+                    // Radial light beam
+                    Center(
+                      child: Opacity(
+                        opacity: opacity * 0.85,
+                        child: Container(
+                          width: 600 * beam,
+                          height: 600 * beam,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                Color(0xFFFFE08A),
+                                Color(0x66FF4D8B),
+                                Color(0x00000000),
+                              ],
+                              stops: [0.0, 0.5, 1.0],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              // Center icon + label
-              Center(
-                child: Opacity(
-                  opacity: opacity,
-                  child: Transform.scale(
-                    scale: scale,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD166), Color(0xFFFF4D8B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                blurRadius: 60,
-                                spreadRadius: 4,
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(20),
-                          child: widget.gift.giftIconUrl != null
-                              ? Image.network(
-                                  widget.gift.giftIconUrl!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) => const Icon(
+                    // Center icon + label
+                    Center(
+                      child: Opacity(
+                        opacity: opacity,
+                        child: Transform.scale(
+                          scale: scale,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 160,
+                                height: 160,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFFFFD166),
+                                      Color(0xFFFF4D8B),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      blurRadius: 60,
+                                      spreadRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(20),
+                                // Ícone/animação central — usa Lottie local
+                                // se disponível para o slug (ver
+                                // `_kLottieTestAssets`), senão mantém o PNG
+                                // remoto + fallback de sempre.
+                                child: _GiftVisual(
+                                  gift: widget.gift,
+                                  size: 120,
+                                  fallbackIcon: const Icon(
                                     Icons.workspace_premium,
                                     size: 100,
                                     color: Colors.white,
                                   ),
-                                )
-                              : const Icon(
-                                  Icons.workspace_premium,
-                                  size: 100,
-                                  color: Colors.white,
                                 ),
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                                color: const Color(0xFFFFD166), width: 1.5),
-                          ),
-                          child: RichText(
-                            text: TextSpan(
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
                               ),
-                              children: [
-                                TextSpan(
-                                  text: widget.gift.senderName,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFD166),
-                                    fontWeight: FontWeight.w900,
+                              const SizedBox(height: 20),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black54,
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: const Color(0xFFFFD166),
+                                    width: 1.5,
                                   ),
                                 ),
-                                const TextSpan(text: ' '),
-                                TextSpan(
-                                  text: s.livePlayerGiftSentVerb.trim(),
-                                ),
-                                const TextSpan(text: ' '),
-                                TextSpan(
-                                  text: widget.gift.giftName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                if (widget.gift.quantity > 1)
-                                  TextSpan(
-                                    text: ' x${widget.gift.quantity}',
+                                child: RichText(
+                                  text: TextSpan(
                                     style: const TextStyle(
-                                      color: Color(0xFFFFD166),
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text: widget.gift.senderName,
+                                        style: const TextStyle(
+                                          color: Color(0xFFFFD166),
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const TextSpan(text: ' '),
+                                      TextSpan(
+                                        text: s.livePlayerGiftSentVerb.trim(),
+                                      ),
+                                      const TextSpan(text: ' '),
+                                      TextSpan(
+                                        text: widget.gift.giftName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      if (widget.gift.quantity > 1)
+                                        TextSpan(
+                                          text: ' x${widget.gift.quantity}',
+                                          style: const TextStyle(
+                                            color: Color(0xFFFFD166),
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────
+// CENTER_LARGE burst — presentes premium de maior impacto (foguete, urso,
+// galáxia, chuva de moedas, etc.). Fica entre o toast pequeno (CENTER_SMALL)
+// e o burst fullscreen: ocupa uma área central maior (~55% da largura),
+// mostra remetente com destaque, mas NÃO cobre a tela inteira nem bloqueia
+// interação — chat e controles continuam parcialmente visíveis.
+// Duração dinâmica: 4000-7000ms, vinda do backend via `resolvedDurationMs`.
+// ────────────────────────────────────────────────────────────────────────
+
+class _CenterLargeBurst extends StatefulWidget {
+  const _CenterLargeBurst({required this.gift, required this.onDone});
+  final LiveGift gift;
+  final VoidCallback onDone;
+
+  @override
+  State<_CenterLargeBurst> createState() => _CenterLargeBurstState();
+}
+
+class _CenterLargeBurstState extends State<_CenterLargeBurst>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _scale;
+  late final Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
+    );
+    _scale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.6,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.elasticOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 55),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.85), weight: 15),
+    ]).animate(_ctrl);
+    _fade = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 12),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 73),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
+    ]).animate(_ctrl);
+    _ctrl.forward().then((_) => widget.onDone());
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    // 📐 Responsivo (Fase 12): ~55% da largura da tela, com piso/teto
+    // seguros pra não ficar minúsculo em telas pequenas nem gigante em
+    // tablets — atende a faixa conceitual de 40%-75% pedida na
+    // especificação (usamos o meio da faixa como valor confortável).
+    final screenWidth = MediaQuery.of(context).size.width;
+    final visualSize = (screenWidth * 0.55).clamp(220.0, 420.0);
+
+    return IgnorePointer(
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          type: MaterialType.transparency,
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: Colors.white,
+              decoration: TextDecoration.none,
+            ),
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, _) {
+                return Center(
+                  // Levemente acima do centro geométrico — deixa a metade
+                  // inferior da tela (chat, controles) mais livre, como
+                  // pedido na Fase 5 (TIPO 3): "controles críticos
+                  // continuam acima" / "chat parcialmente visível".
+                  heightFactor: 0.75,
+                  child: Opacity(
+                    opacity: _fade.value,
+                    child: Transform.scale(
+                      scale: _scale.value,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: visualSize,
+                            height: visualSize,
+                            child: _GiftVisual(
+                              gift: widget.gift,
+                              size: visualSize,
+                              fallbackIcon: Icon(
+                                Icons.auto_awesome,
+                                size: visualSize * 0.6,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: const Color(0xFF3BB8FF),
+                                width: 1.2,
+                              ),
+                            ),
+                            child: RichText(
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: widget.gift.senderName,
+                                    style: const TextStyle(
+                                      color: Color(0xFF3BB8FF),
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
-                              ],
+                                  const TextSpan(text: ' '),
+                                  TextSpan(
+                                    text: s.livePlayerGiftSentVerb.trim(),
+                                  ),
+                                  const TextSpan(text: ' '),
+                                  TextSpan(
+                                    text: widget.gift.giftName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  if (widget.gift.quantity > 1)
+                                    TextSpan(
+                                      text: ' x${widget.gift.quantity}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF3BB8FF),
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -566,7 +940,9 @@ class _AvatarCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const double size = 36;
-    final initial = fallback.trim().isNotEmpty ? fallback.trim()[0].toUpperCase() : '?';
+    final initial = fallback.trim().isNotEmpty
+        ? fallback.trim()[0].toUpperCase()
+        : '?';
     final placeholder = Container(
       width: size,
       height: size,
@@ -604,13 +980,22 @@ class _AvatarCircle extends StatelessWidget {
 
 // ignore: unused_element
 class _LevelChip extends StatelessWidget {
-  const _LevelChip({required this.level, this.badge, this.colorHex, this.imageUrl});
+  const _LevelChip({
+    required this.level,
+    this.badge,
+    this.colorHex,
+    this.imageUrl,
+  });
   final int level;
   final String? badge;
   final String? colorHex;
   final String? imageUrl;
 
   @override
-  Widget build(BuildContext context) =>
-      LevelChip(level: level, badge: badge, colorHex: colorHex, imageUrl: imageUrl);
+  Widget build(BuildContext context) => LevelChip(
+    level: level,
+    badge: badge,
+    colorHex: colorHex,
+    imageUrl: imageUrl,
+  );
 }

@@ -3027,6 +3027,31 @@ class SEn extends S {
   String get broadcasterEnd => 'End';
 
   @override
+  String get liveSummaryTitle => 'Live summary';
+
+  @override
+  String get liveSummaryDuration => 'Duration';
+
+  @override
+  String get liveSummaryPeakViewers => 'Peak viewers';
+
+  @override
+  String get liveSummaryTotalViewers => 'Unique viewers';
+
+  @override
+  String get liveSummaryGiftsValue => 'Gifts received';
+
+  @override
+  String get liveSummaryMysteryGifts => 'Mystery gifts revealed';
+
+  @override
+  String get liveSummaryDone => 'Done';
+
+  @override
+  String get liveSummaryUnavailable =>
+      'Your live has ended. We couldn\'t load the full summary right now.';
+
+  @override
   String get broadcasterMoreResumeLive => 'Resume live';
 
   @override
@@ -4289,7 +4314,7 @@ class SEn extends S {
   String get navSounds => 'Sounds';
 
   @override
-  String get createSoundsTitle => 'Brawe Sounds';
+  String get createSoundsTitle => 'Sounds';
 
   @override
   String get createSoundsSubtitle => 'Add an original track to your post';

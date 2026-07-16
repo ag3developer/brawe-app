@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -48,6 +49,10 @@ class _ViewerBattleScreenState extends ConsumerState<ViewerBattleScreen>
   @override
   void initState() {
     super.initState();
+    // Fullscreen imersivo: esconde status bar e nav bar durante a batalha
+    // (vídeos ocupam 100% da tela). Restaurado no dispose. Ver
+    // ANDROID_EDGE_TO_EDGE_AUDIT.md, Fase E.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WakelockPlus.enable();
     _shakeCtrl = AnimationController(
       vsync: this,
@@ -65,6 +70,11 @@ class _ViewerBattleScreenState extends ConsumerState<ViewerBattleScreen>
     _alertSub?.cancel();
     _countdownClearTimer?.cancel();
     _shakeCtrl.dispose();
+    // Restaura as barras do sistema ao sair da batalha.
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+      overlays: SystemUiOverlay.values,
+    );
     super.dispose();
   }
 

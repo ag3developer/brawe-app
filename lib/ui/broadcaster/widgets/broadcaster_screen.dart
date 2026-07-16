@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -13,6 +14,7 @@ import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
+import 'live_summary_screen.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
@@ -87,9 +89,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   // Likes (atualizado em tempo real via socket like_count_update)
   // O valor inicial vem de widget.room.totalLikes e é sincronizado pelo LiveRoomCommentsViewModel.
 
+  // Chat visibility toggle
+  bool _showChat = false;
+
   @override
   void initState() {
     super.initState();
+    // Fullscreen imersivo: esconde status bar e nav bar durante o broadcast
+    // (câmera ocupa 100% da tela, igual Stories/TikTok Live). Restaurado no
+    // dispose. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md, Fase E.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _room = widget.room;
     _isPaused = widget.room.isPaused;
     WidgetsBinding.instance.addObserver(this);
@@ -691,19 +700,42 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       } catch (_) {}
     }
 
+    // ⚠️ BUG HISTÓRICO (Android): ao encerrar a live, o app ficava com uma
+    // tela branca travada — não existia nenhuma tela de destino após o
+    // `context.pop()`/`context.go('/home')` original, e se a chamada de
+    // API abaixo travasse indefinidamente (sem timeout), o usuário ficava
+    // preso pra sempre na tela do broadcaster já sem câmera ativa.
+    //
+    // Correção: 1) timeout de segurança na chamada de API — nunca trava
+    // indefinidamente; 2) SEMPRE navega para uma tela de destino real
+    // (LiveSummaryScreen) via `context.go` (substitui toda a pilha, não
+    // dá pop pra uma tela intermediária que possa estar em estado ruim);
+    // 3) fallback para `/home` se por algum motivo a navegação para o
+    // resumo falhar.
+    Map<String, dynamic> summaryData = const {};
     try {
-      await ref.read(liveRepositoryProvider).endLive(_room.id);
+      summaryData = await ref
+          .read(liveRepositoryProvider)
+          .endLive(_room.id)
+          .timeout(const Duration(seconds: 8));
     } catch (e) {
       debugPrint('endLive failed on close: $e');
+      // Segue mesmo assim — o resumo vai mostrar o estado "indisponível",
+      // mas o usuário NUNCA fica travado numa tela branca.
     }
 
     if (!mounted) return;
 
-    if (Navigator.of(context).canPop()) {
-      context.pop();
-      return;
+    try {
+      LiveSummaryScreen.show(
+        context,
+        data: LiveSummaryData.fromMap(summaryData),
+        roomTitle: _room.title,
+      );
+    } catch (e) {
+      debugPrint('Failed to navigate to LiveSummaryScreen: $e');
+      if (mounted) context.go('/home');
     }
-    context.go('/home');
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -1200,6 +1232,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // Libera a sessão de áudio para outras telas/apps usarem o microfone.
     BroadcastAudioSession.deactivate();
     WakelockPlus.disable();
+    // Restaura as barras do sistema ao sair do broadcast.
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+      overlays: SystemUiOverlay.values,
+    );
     super.dispose();
   }
 
@@ -1515,26 +1552,31 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
               ),
             ),
 
-            // Comments overlay — left-bottom floating
-            Positioned(
-              left: 14,
-              right: 80,
-              bottom: 90,
-              child:
-                  _isStreaming || _isPaused || commentsState.comments.isNotEmpty
-                  ? LiveCommentsOverlay(
-                      comments: commentsState.comments,
-                      isSending: commentsState.isSending,
-                      onSendComment: (message) => ref
-                          .read(
-                            liveRoomCommentsViewModelProvider(
-                              widget.room.id,
-                            ).notifier,
-                          )
-                          .sendComment(message),
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            // Comments overlay — toggle only when user taps chat icon
+            // Positioned ABOVE action bar so never obscured by buttons
+            if (_showChat)
+              Positioned(
+                left: 14,
+                right: 14,
+                bottom: 110, // Above action bar (which is at bottom: 16)
+                child: SafeArea(
+                  top: false,
+                  left: false,
+                  right: false,
+                  child: LiveCommentsOverlay(
+                    comments: commentsState.comments,
+                    isSending: commentsState.isSending,
+                    onSendComment: (message) => ref
+                        .read(
+                          liveRoomCommentsViewModelProvider(
+                            widget.room.id,
+                          ).notifier,
+                        )
+                        .sendComment(message),
+                    onClose: () => setState(() => _showChat = false),
+                  ),
+                ),
+              ),
 
             // Bottom action bar — floating glass pill
             if (!_showCountdown && (_isStreaming || _isPaused))
@@ -1554,6 +1596,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                     onPauseResume: _togglePause,
                     onEnd: _closeBroadcaster,
                     onMoreOptions: () => _showMoreOptions(context),
+                    showChat: _showChat,
+                    onChatToggle: () => setState(() => _showChat = !_showChat),
                   ),
                 ),
               ),

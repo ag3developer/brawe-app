@@ -76,9 +76,16 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
-            // Shrinking + obfuscação. ProGuard rules em proguard-rules.pro.
+            // ── R8 / Minificação (configuração segura) ──────────────────────
+            // Minificação + shrink de recursos habilitados. Regras customizadas
+            // ficam apenas em proguard-rules.pro (mínimas, justificadas por
+            // dependência real). Não usamos regras agressivas de otimização
+            // (optimizationpasses, repackageclasses, mergeinterfacesaggressively)
+            // pois aumentam risco de regressão sem ganho comprovado — ver
+            // ANDROID_R8_SAFE_IMPLEMENTATION_REPORT.md.
             isMinifyEnabled = true
             isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -89,6 +96,12 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // `WindowCompat.setDecorFitsSystemWindows()` (usado na MainActivity para
+    // edge-to-edge) vem de androidx.core. Fixamos explicitamente uma versão
+    // estável recente em vez de depender da versão transitiva do embedding
+    // do Flutter, evitando quebra silenciosa caso o Flutter baixe outra
+    // versão da dependência.
+    implementation("androidx.core:core-ktx:1.15.0")
 }
 
 flutter {

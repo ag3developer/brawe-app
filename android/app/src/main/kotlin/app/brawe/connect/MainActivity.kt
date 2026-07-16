@@ -1,5 +1,7 @@
 package app.brawe.connect
 
+import android.os.Bundle
+import androidx.core.view.WindowCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -8,6 +10,24 @@ class MainActivity : FlutterActivity() {
 
     private val CHANNEL = "com.brawe/audioProcessor"
     private val processor = AudioProcessor.instance
+
+    // Android 15 (targetSdk 35) exibe apps de ponta a ponta (edge-to-edge)
+    // por padrão. `FlutterActivity` estende `Activity` diretamente (não
+    // `ComponentActivity`), então a extension `enableEdgeToEdge()` do
+    // androidx.activity NÃO se aplica aqui — usamos diretamente
+    // `WindowCompat.setDecorFitsSystemWindows(window, false)`, que é a
+    // implementação subjacente usada por `enableEdgeToEdge()` e funciona
+    // com qualquer Activity. Deve ser chamado ANTES de `super.onCreate()`
+    // para que o sistema saiba, desde o primeiro frame, que o app vai
+    // desenhar por baixo das barras de status/navegação — evitando o
+    // "flash" de barras opacas antes do primeiro frame do Flutter. O
+    // tratamento de WindowInsets (SafeArea, MediaQuery.padding/viewInsets)
+    // continua sendo feito no lado Flutter. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md
+    // (Fase A) para detalhes.
+    override fun onCreate(savedInstanceState: Bundle?) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        super.onCreate(savedInstanceState)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lottie/lottie.dart';
 
 import '../../../domain/models/live_gift.dart';
 import '../view_models/live_room_gifts_view_model.dart';
@@ -8,6 +9,63 @@ import '../../../gen/l10n/app_localizations.dart';
 /// Limiar (em créditos) acima do qual o presente vira "premium" —
 /// dispara animação fullscreen com efeito de luz/blur.
 const int _kPremiumThreshold = 100;
+
+/// 🧪 TESTE (Fase de validação Lottie): slugs que têm asset Lottie local
+/// disponível em `assets/lottie_test/<slug>.json`. Fora desta lista, o
+/// comportamento é IDENTICO ao anterior (Image.network do ícone PNG).
+/// Espelha o mapa em `live/shared/widgets/overlays/gift_animation_overlay.dart`
+/// — os dois arquivos ainda são implementações paralelas (não unificadas).
+const Map<String, String> _kLottieTestAssets = {
+  'star': 'assets/lottie_test/estrela.json',
+};
+
+/// Widget central que decide o visual do gift: Lottie local (se o slug
+/// estiver mapeado em [_kLottieTestAssets]) → fallback para `Image.network`
+/// do ícone PNG remoto (comportamento original, preservado 100%) → fallback
+/// final para ícone genérico em caso de erro de carregamento.
+class _GiftVisual extends StatelessWidget {
+  const _GiftVisual({
+    required this.gift,
+    required this.size,
+    this.fallbackIcon,
+  });
+
+  final LiveGift gift;
+  final double size;
+  final Widget? fallbackIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final slug = gift.giftSlug;
+    final lottiePath = slug != null ? _kLottieTestAssets[slug] : null;
+
+    if (lottiePath != null) {
+      return Lottie.asset(
+        lottiePath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        repeat: false,
+        errorBuilder: (_, __, ___) => _iconFallback(),
+      );
+    }
+
+    if (gift.giftIconUrl != null) {
+      return Image.network(
+        gift.giftIconUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _iconFallback(),
+      );
+    }
+
+    return _iconFallback();
+  }
+
+  Widget _iconFallback() =>
+      fallbackIcon ?? const Icon(Icons.workspace_premium, color: Colors.white);
+}
 
 /// 🎁 Overlay de animações de presente — apenas premium burst fullscreen.
 ///
@@ -21,7 +79,8 @@ class GiftAnimationOverlay extends ConsumerStatefulWidget {
   const GiftAnimationOverlay({super.key, required this.roomId});
 
   @override
-  ConsumerState<GiftAnimationOverlay> createState() => _GiftAnimationOverlayState();
+  ConsumerState<GiftAnimationOverlay> createState() =>
+      _GiftAnimationOverlayState();
 }
 
 class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
@@ -29,29 +88,36 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<List<LiveGift>>(
-      liveRoomGiftsViewModelProvider(widget.roomId),
-      (prev, next) {
-        // Detecta novos combos premium (cruzaram o threshold após combo).
-        for (final g in next) {
-          if (g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
-              g.value >= _kPremiumThreshold) {
-            final key = '${g.senderId}::${g.giftId}::${g.quantity}';
-            if (_shownPremium.contains(key)) continue;
-            _shownPremium.add(key);
-            _showPremiumBurst(g);
-          }
+    ref.listen<List<LiveGift>>(liveRoomGiftsViewModelProvider(widget.roomId), (
+      prev,
+      next,
+    ) {
+      // 🎬 Detecta novos combos premium ainda animando (isAnimating=true).
+      // Quando animação termina, o overlay para de renderizar automaticamente.
+      for (final g in next) {
+        // ✅ Renderiza APENAS se:
+        // 1. É premium (value >= threshold)
+        // 2. Ainda está animando (isAnimating=true)
+        if ((g.quantity * (g.value > 0 ? g.value : 1) >= _kPremiumThreshold ||
+                g.value >= _kPremiumThreshold) &&
+            g.isAnimating) {
+          final key = '${g.senderId}::${g.giftId}::${g.quantity}';
+          if (_shownPremium.contains(key)) continue;
+          _shownPremium.add(key);
+          debugPrint('🎬 [OVERLAY] Mostrando burst premium (ID: $key)');
+          _showPremiumBurst(g);
         }
-      },
-    );
+      }
+    });
 
     final gifts = ref.watch(liveRoomGiftsViewModelProvider(widget.roomId));
     if (gifts.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // Combos comuns são renderizados no chat ticker (estilo TikTok).
+    // 🎬 Combos comuns são renderizados no chat ticker (estilo TikTok).
     // Aqui só observamos a lista para disparar o premium burst quando aplicável.
+    // Premium renderiza enquanto isAnimating=true, depois ChatTicker mostra notificação.
     return const SizedBox.shrink();
   }
 
@@ -118,8 +184,8 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
           final opacity = t < 0.15
               ? (t / 0.15)
               : t > 0.85
-                  ? ((1 - t) / 0.15).clamp(0.0, 1.0)
-                  : 1.0;
+              ? ((1 - t) / 0.15).clamp(0.0, 1.0)
+              : 1.0;
           final scale = t < 0.4
               ? Curves.elasticOut.transform((t / 0.4).clamp(0.0, 1.0))
               : 1.0;
@@ -154,7 +220,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
                   ),
                 ),
               ),
-              // Center icon + label
+              // Center icon + label (LOTTIE FULLSCREEN)
               Center(
                 child: Opacity(
                   opacity: opacity,
@@ -163,50 +229,49 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFD166), Color(0xFFFF4D8B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                blurRadius: 60,
-                                spreadRadius: 4,
+                        // 🎁 PRESENTE LOTTIE GRANDE (fullscreen)
+                        _GiftVisual(
+                          gift: widget.gift,
+                          size: 400, // ← Grande! Ocupa a tela
+                          fallbackIcon: Container(
+                            width: 400,
+                            height: 400,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFFFD166), Color(0xFFFF4D8B)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(20),
-                          child: widget.gift.giftIconUrl != null
-                              ? Image.network(
-                                  widget.gift.giftIconUrl!,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, _, _) => const Icon(
-                                    Icons.workspace_premium,
-                                    size: 100,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.workspace_premium,
-                                  size: 100,
-                                  color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  blurRadius: 60,
+                                  spreadRadius: 4,
                                 ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(20),
+                            child: const Icon(
+                              Icons.workspace_premium,
+                              size: 300,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black54,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                                color: const Color(0xFFFFD166), width: 1.5),
+                              color: const Color(0xFFFFD166),
+                              width: 1.5,
+                            ),
                           ),
                           child: RichText(
                             text: TextSpan(
@@ -224,9 +289,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
                                   ),
                                 ),
                                 const TextSpan(text: ' '),
-                                TextSpan(
-                                  text: s.livePlayerGiftSentVerb.trim(),
-                                ),
+                                TextSpan(text: s.livePlayerGiftSentVerb.trim()),
                                 const TextSpan(text: ' '),
                                 TextSpan(
                                   text: widget.gift.giftName,
