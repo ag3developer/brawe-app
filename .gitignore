@@ -43,6 +43,15 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+
+# iOS build artifacts
+/ios/build/
+/ios/Pods/
+/ios/Flutter/
+*.xcodeproj/
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
 
 # Secrets — NUNCA commitar
 /android/key.properties
@@ -56,3 +65,14 @@ app.*.map.json
 AGENTS.md
 GEMINI.md
 /docs/live_feature_tracking.md
+
+# iOS/Android project files que mudam constantemente (não commitamos)
+android/build/reports/
+ios/Pods/
+ios/Flutter/
+.dart_tool/
+
+# Xcode user data (muda a cada build)
+*.xcodeproj/xcshareddata/xcschemes/
+*.pbxproj
+releases/

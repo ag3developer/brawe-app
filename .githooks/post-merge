@@ -1,0 +1,20 @@
+#!/bin/bash
+
+###############################################################################
+#  Git Hook: post-merge                                                      #
+#  Executado automaticamente após fazer git pull ou git merge                #
+#  Limpa caches do Xcode para evitar problemas de versões obsoletas         #
+###############################################################################
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/scripts"
+
+# Verificar se houve mudanças em pubspec.yaml ou ios/Podfile
+if git diff HEAD@{1}..HEAD --name-only | grep -q -E "(pubspec\.yaml|ios/Podfile|ios/Podfile\.lock)"; then
+    echo ""
+    echo "🔄 Detectadas mudanças em dependências!"
+    echo "🧹 Executando limpeza automática de Xcode..."
+    echo ""
+    
+    # Executar script de limpeza
+    bash "$SCRIPT_DIR/auto_clean_xcode.sh"
+fi
