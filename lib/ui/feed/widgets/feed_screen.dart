@@ -11,6 +11,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/themes/brawe_colors.dart';
+import '../../../core/text/brawe_rich_text.dart';
+import '../../../core/text/link_preview_card.dart';
 import '../../core/widgets/badge_count.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_logo.dart';
@@ -992,9 +994,9 @@ class _PostCardState extends ConsumerState<PostCard>
                 16,
                 0,
                 16,
-                post.imageUrl != null ? 12 : 14,
+                post.imageUrl != null ? 0 : 14,
               ),
-              child: Text(
+              child: BraweRichText(
                 post.content,
                 style: TextStyle(
                   color: context.colors.textPrimary,
@@ -1004,6 +1006,10 @@ class _PostCardState extends ConsumerState<PostCard>
                 ),
               ),
             ),
+
+          // Link preview card — mostra preview de URLs (og:image, título, etc)
+          if (post.content.isNotEmpty)
+            _buildLinkPreviewCard(context, post.content),
 
           // Image — estilo Threads: full-bleed, sem cantos arredondados
           if (post.imageUrl != null)
@@ -1516,6 +1522,13 @@ class _PostCardState extends ConsumerState<PostCard>
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 30) return '${diff.inDays}d';
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Build link preview card para URLs encontradas no conteúdo do post
+  Widget _buildLinkPreviewCard(BuildContext context, String content) {
+    final url = BraweRichText.firstUrl(content);
+    if (url == null) return const SizedBox.shrink();
+    return LinkPreviewCard(url: url);
   }
 }
 

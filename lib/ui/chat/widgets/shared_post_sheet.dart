@@ -26,6 +26,7 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../data/services/feedback_service.dart';
 import '../../../domain/models/post.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/comments_sheet.dart';
@@ -402,7 +403,7 @@ class _SheetContent extends StatelessWidget {
               if (post.content.trim().isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-                  child: Text(
+                  child: BraweRichText(
                     post.content,
                     style: TextStyle(
                       color: context.colors.textPrimary,

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,12 +34,20 @@ class LinkPreviewCard extends ConsumerWidget {
     return previewAsync.when(
       data: (preview) {
         if (preview == null || !preview.hasContent) {
+          debugPrint('⚠️ LinkPreviewCard: Preview null ou sem conteúdo para $url');
           return const SizedBox.shrink();
         }
+        debugPrint('✅ LinkPreviewCard: Preview carregado - image=${preview.image}');
         return _LinkPreviewCardContent(preview: preview, compact: compact);
       },
-      loading: () => _LinkPreviewSkeleton(compact: compact),
-      error: (_, _) => const SizedBox.shrink(),
+      loading: () {
+        debugPrint('⏳ LinkPreviewCard: Carregando preview para $url');
+        return _LinkPreviewSkeleton(compact: compact);
+      },
+      error: (err, _) {
+        debugPrint('❌ LinkPreviewCard: Erro ao carregar preview: $err');
+        return const SizedBox.shrink();
+      },
     );
   }
 }
@@ -77,7 +86,17 @@ class _LinkPreviewCardContent extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: preview.image!,
                     fit: BoxFit.cover,
-                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                    placeholder: (_, __) => Container(
+                      color: context.colors.surface.withValues(alpha: 0.5),
+                    ),
+                    errorWidget: (_, __, ___) {
+                      debugPrint(
+                        '❌ LinkPreviewCard: Erro ao carregar imagem ${preview.image}',
+                      );
+                      return Container(
+                        color: context.colors.surface.withValues(alpha: 0.3),
+                      );
+                    },
                   ),
                 ),
               Padding(

@@ -19,6 +19,7 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/user.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/chat_detail_view_model.dart';
@@ -2566,7 +2567,7 @@ class _SharedPostPreview extends ConsumerWidget {
               ),
               if (post.content.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                Text(
+                BraweRichText(
                   post.content,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

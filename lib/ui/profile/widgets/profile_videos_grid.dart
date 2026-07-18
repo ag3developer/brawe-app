@@ -10,6 +10,7 @@ import 'dart:async';
 import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/post.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
@@ -754,12 +755,15 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                 ),
                 if (post.content.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    post.content,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      shadows: [Shadow(color: Colors.black87, blurRadius: 3)],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: BraweRichText(
+                      post.content,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        shadows: [Shadow(color: Colors.black87, blurRadius: 3)],
+                      ),
                     ),
                   ),
                 ],
