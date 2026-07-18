@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/brawe_logo.dart';
 import 'common/auth_action_button.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -20,20 +22,88 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late final Animation<double> _fadeIn;
   late final Animation<double> _scaleIn;
 
-  // Cada ícone tem posição angular, raio, tamanho e velocidade próprios
+  // 8 ícones (antes 12) distribuídos em 2 anéis concêntricos com
+  // espaçamento angular uniforme (2π/4 por anel, intercalados) — evita o
+  // aglomerado visual que existia antes (ícones muito próximos entre si).
+  // Anel interno: maior, mais lento, mais opaco (primeiro plano).
+  // Anel externo: menor, mais rápido, mais sutil (profundidade/parallax).
+  // Cada ícone usa uma cor da paleta de marca (accentPrimary/Secondary/
+  // Pink/Gold) em vez de uma única cor sólida — ecoa o gradiente do "B".
   static const _icons = [
-    _FloatingIconData(icon: Icons.videocam_rounded,         angle: 0.0,   radius: 0.38, size: 22, speed: 1.0,  opacity: 0.85),
-    _FloatingIconData(icon: Icons.music_note_rounded,       angle: 0.52,  radius: 0.42, size: 18, speed: 0.7,  opacity: 0.7),
-    _FloatingIconData(icon: Icons.live_tv_rounded,          angle: 1.05,  radius: 0.36, size: 20, speed: 1.2,  opacity: 0.9),
-    _FloatingIconData(icon: Icons.favorite_rounded,         angle: 1.67,  radius: 0.44, size: 16, speed: 0.9,  opacity: 0.65),
-    _FloatingIconData(icon: Icons.photo_camera_rounded,     angle: 2.20,  radius: 0.40, size: 22, speed: 0.8,  opacity: 0.8),
-    _FloatingIconData(icon: Icons.chat_bubble_rounded,      angle: 2.72,  radius: 0.37, size: 17, speed: 1.1,  opacity: 0.7),
-    _FloatingIconData(icon: Icons.star_rounded,             angle: 3.35,  radius: 0.43, size: 16, speed: 0.75, opacity: 0.6),
-    _FloatingIconData(icon: Icons.people_alt_rounded,       angle: 3.87,  radius: 0.39, size: 20, speed: 1.05, opacity: 0.8),
-    _FloatingIconData(icon: Icons.trending_up_rounded,      angle: 4.40,  radius: 0.45, size: 17, speed: 0.85, opacity: 0.65),
-    _FloatingIconData(icon: Icons.mic_rounded,              angle: 4.92,  radius: 0.38, size: 19, speed: 1.15, opacity: 0.75),
-    _FloatingIconData(icon: Icons.shopping_bag_rounded,     angle: 5.45,  radius: 0.41, size: 18, speed: 0.95, opacity: 0.7),
-    _FloatingIconData(icon: Icons.emoji_events_rounded,     angle: 5.97,  radius: 0.44, size: 16, speed: 1.0,  opacity: 0.6),
+    // Anel interno (raio 0.30) — 4 ícones a 90° um do outro.
+    _FloatingIconData(
+      icon: Icons.videocam_rounded,
+      angle: 0.0,
+      radius: 0.30,
+      size: 20,
+      speed: 0.55,
+      opacity: 0.8,
+      colorSlot: 0,
+    ),
+    _FloatingIconData(
+      icon: Icons.favorite_rounded,
+      angle: math.pi / 2,
+      radius: 0.30,
+      size: 18,
+      speed: 0.55,
+      opacity: 0.75,
+      colorSlot: 1,
+    ),
+    _FloatingIconData(
+      icon: Icons.live_tv_rounded,
+      angle: math.pi,
+      radius: 0.30,
+      size: 20,
+      speed: 0.55,
+      opacity: 0.8,
+      colorSlot: 2,
+    ),
+    _FloatingIconData(
+      icon: Icons.music_note_rounded,
+      angle: 3 * math.pi / 2,
+      radius: 0.30,
+      size: 18,
+      speed: 0.55,
+      opacity: 0.75,
+      colorSlot: 3,
+    ),
+    // Anel externo (raio 0.46) — 4 ícones, deslocados 45° do anel interno.
+    _FloatingIconData(
+      icon: Icons.chat_bubble_rounded,
+      angle: math.pi / 4,
+      radius: 0.46,
+      size: 15,
+      speed: 0.85,
+      opacity: 0.55,
+      colorSlot: 1,
+    ),
+    _FloatingIconData(
+      icon: Icons.star_rounded,
+      angle: 3 * math.pi / 4,
+      radius: 0.46,
+      size: 14,
+      speed: 0.85,
+      opacity: 0.5,
+      colorSlot: 2,
+    ),
+    _FloatingIconData(
+      icon: Icons.photo_camera_rounded,
+      angle: 5 * math.pi / 4,
+      radius: 0.46,
+      size: 16,
+      speed: 0.85,
+      opacity: 0.55,
+      colorSlot: 3,
+    ),
+    _FloatingIconData(
+      icon: Icons.people_alt_rounded,
+      angle: 7 * math.pi / 4,
+      radius: 0.46,
+      size: 15,
+      speed: 0.85,
+      opacity: 0.5,
+      colorSlot: 0,
+    ),
   ];
 
   @override
@@ -66,6 +136,22 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     super.dispose();
   }
 
+  /// Mapeia `colorSlot` (0-3) para a paleta de marca — os ícones passam a
+  /// variar entre roxo/ciano/rosa/dourado, ecoando o gradiente do "B" em
+  /// vez de usar uma única cor sólida (antes: `colors.accentPrimary` fixo).
+  Color _iconColor(BraweColors colors, int slot) {
+    switch (slot) {
+      case 1:
+        return colors.accentSecondary;
+      case 2:
+        return colors.accentPink;
+      case 3:
+        return colors.accentGold;
+      default:
+        return colors.accentPrimary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -78,24 +164,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         fit: StackFit.expand,
         children: [
           // ── Ícones orbitando ─────────────────────────────────────────
+          // Achatamento vertical reduzido (0.42, antes 0.55) para manter a
+          // órbita mais compacta e não sobrepor a tagline abaixo do logo.
           AnimatedBuilder(
             animation: _orbitController,
             builder: (context, _) {
               return Stack(
                 children: _icons.map((data) {
-                  final angle = data.angle +
+                  final angle =
+                      data.angle +
                       _orbitController.value * 2 * math.pi * data.speed;
                   // Raio adaptado ao tamanho da tela
                   final r = size.shortestSide * data.radius;
                   final cx = size.width / 2 + math.cos(angle) * r;
-                  final cy = size.height * 0.42 + math.sin(angle) * r * 0.55;
+                  final cy = size.height * 0.40 + math.sin(angle) * r * 0.42;
 
                   // Pulso sutil de opacidade
-                  final pulse = 0.6 +
+                  final pulse =
+                      0.6 +
                       0.4 *
                           math.sin(
-                              _orbitController.value * 2 * math.pi * 2 +
-                                  data.angle);
+                            _orbitController.value * 2 * math.pi * 2 +
+                                data.angle,
+                          );
 
                   return Positioned(
                     left: cx - data.size / 2,
@@ -105,7 +196,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       child: Icon(
                         data.icon,
                         size: data.size.toDouble(),
-                        color: colors.accentPrimary,
+                        color: _iconColor(colors, data.colorSlot),
                       ),
                     ),
                   );
@@ -148,22 +239,26 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Logo — já contém o nome BRAWE
-                            Image.asset(
-                              'assets/images/brawe_logo.png',
-                              width: 140,
-                              height: 140,
-                              color: colors.textPrimary,
-                            ),
+                            // Logo — widget de marca reutilizável
+                            // (mesmo ícone/gradiente usado em todo o app).
+                            const BraweLogo(iconSize: 140, showTagline: false),
                             const SizedBox(height: 16),
-                            Text(
-                              s.welcomeTagline,
+                            // Tagline "efeito de digitação": escreve cada
+                            // palavra/frase separadamente (apaga entre uma
+                            // e outra) e, na última passada, digita a frase
+                            // completa e mantém — dá um toque "vivo"/tech
+                            // à tela sem depender de texto hardcoded (usa
+                            // a mesma chave i18n `welcomeTagline`, dividida
+                            // em runtime pelos pontos ".").
+                            _TypewriterTagline(
+                              text: s.welcomeTagline,
                               style: TextStyle(
                                 color: colors.textSecondary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: 0.2,
                               ),
+                              cursorColor: colors.accentPrimary,
                             ),
                           ],
                         ),
@@ -249,11 +344,170 @@ class _FloatingIconData {
     required this.size,
     required this.speed,
     required this.opacity,
+    required this.colorSlot,
   });
   final IconData icon;
-  final double angle;  // ângulo inicial em radianos
+  final double angle; // ângulo inicial em radianos
   final double radius; // fração da shortestSide
   final int size;
-  final double speed;  // multiplicador de velocidade orbital
+  final double speed; // multiplicador de velocidade orbital
   final double opacity;
+
+  /// Índice (0-3) na paleta de marca — ver `_WelcomeScreenState._iconColor`.
+  /// Substitui a cor sólida única antiga, alinhando os ícones ao gradiente
+  /// multicolor do logo "B" em vez de um roxo monocromático.
+  final int colorSlot;
+}
+
+// ── Tagline com efeito "máquina de escrever" ──────────────────────────────
+//
+// Recebe a frase completa (ex.: "Conecte. Transmita. Cresça.") já traduzida
+// via i18n e a divide em segmentos pelo separador "." (sem hardcode de
+// texto — funciona em PT/ES/EN, cada um com número de frases que quiser).
+// Ciclo:
+//   1. Digita o 1º segmento, pausa, apaga.
+//   2. Digita o 2º segmento, pausa, apaga. (...para cada segmento restante)
+//   3. Na última rodada, digita a frase inteira (todos os segmentos juntos,
+//      com pontuação) e mantém fixa — não apaga mais.
+// Cursor "|" piscando ao final do texto enquanto anima, some no estado final.
+class _TypewriterTagline extends StatefulWidget {
+  const _TypewriterTagline({
+    required this.text,
+    required this.style,
+    required this.cursorColor,
+  });
+
+  final String text;
+  final TextStyle style;
+  final Color cursorColor;
+
+  @override
+  State<_TypewriterTagline> createState() => _TypewriterTaglineState();
+}
+
+class _TypewriterTaglineState extends State<_TypewriterTagline>
+    with SingleTickerProviderStateMixin {
+  late final List<String> _segments;
+  late final AnimationController _cursorBlink;
+
+  Timer? _typeTimer;
+  String _displayed = '';
+  int _segmentIndex = 0;
+  bool _finished = false;
+
+  static const _typeSpeed = Duration(milliseconds: 45);
+  static const _eraseSpeed = Duration(milliseconds: 28);
+  static const _holdAfterType = Duration(milliseconds: 900);
+  static const _holdAfterErase = Duration(milliseconds: 250);
+
+  @override
+  void initState() {
+    super.initState();
+    // Divide em frases pelo ponto, remove vazios e devolve o "." em cada uma
+    // (ex.: "Conecte. Transmita. Cresça." → ["Conecte.", "Transmita.",
+    // "Cresça."]) — funciona para qualquer idioma sem hardcode.
+    _segments = widget.text
+        .split('.')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((s) => '$s.')
+        .toList();
+    if (_segments.isEmpty) _segments.add(widget.text);
+
+    _cursorBlink = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+
+    _scheduleNextChar();
+  }
+
+  @override
+  void dispose() {
+    _typeTimer?.cancel();
+    _cursorBlink.dispose();
+    super.dispose();
+  }
+
+  /// Frase-alvo da rodada atual: cada segmento individual, e na última
+  /// rodada a junção de todos os segmentos com espaço entre eles.
+  String get _currentTarget {
+    final isLastRound = _segmentIndex >= _segments.length;
+    return isLastRound ? _segments.join(' ') : _segments[_segmentIndex];
+  }
+
+  void _scheduleNextChar() {
+    if (!mounted) return;
+    final target = _currentTarget;
+    final isLastRound = _segmentIndex >= _segments.length;
+
+    if (_displayed.length < target.length) {
+      // Ainda digitando o segmento atual.
+      _typeTimer = Timer(_typeSpeed, () {
+        if (!mounted) return;
+        setState(() => _displayed = target.substring(0, _displayed.length + 1));
+        _scheduleNextChar();
+      });
+      return;
+    }
+
+    // Terminou de digitar o segmento inteiro.
+    if (isLastRound) {
+      // Última rodada (frase completa) — mantém fixo, sem apagar.
+      setState(() => _finished = true);
+      _cursorBlink.stop();
+      return;
+    }
+
+    // Pausa com o segmento completo visível, depois começa a apagar.
+    _typeTimer = Timer(_holdAfterType, () {
+      if (!mounted) return;
+      _eraseCurrentSegment();
+    });
+  }
+
+  void _eraseCurrentSegment() {
+    if (!mounted) return;
+    if (_displayed.isNotEmpty) {
+      _typeTimer = Timer(_eraseSpeed, () {
+        if (!mounted) return;
+        setState(
+          () => _displayed = _displayed.substring(0, _displayed.length - 1),
+        );
+        _eraseCurrentSegment();
+      });
+      return;
+    }
+    // Terminou de apagar — avança para o próximo segmento (ou rodada final).
+    _typeTimer = Timer(_holdAfterErase, () {
+      if (!mounted) return;
+      setState(() => _segmentIndex++);
+      _scheduleNextChar();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        style: widget.style,
+        children: [
+          TextSpan(text: _displayed),
+          if (!_finished)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: FadeTransition(
+                opacity: _cursorBlink,
+                child: Container(
+                  width: 2,
+                  height: (widget.style.fontSize ?? 15) * 0.9,
+                  margin: const EdgeInsets.only(left: 2),
+                  color: widget.cursorColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

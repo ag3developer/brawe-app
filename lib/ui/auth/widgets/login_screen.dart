@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../core/widgets/brawe_logo.dart';
 import '../view_models/login_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
@@ -35,11 +36,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       duration: const Duration(milliseconds: 600),
     );
     _fadeIn = CurvedAnimation(parent: _entryController, curve: Curves.easeOut);
-    _slideUp = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(
-        CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic));
+    _slideUp = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
+        );
     _entryController.forward();
   }
 
@@ -92,19 +92,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Voltar ──────────────────────────────────────────
                       GestureDetector(
                         onTap: () => context.go('/welcome'),
-                        child: Icon(Icons.arrow_back,
-                            color: colors.textSecondary, size: 22),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: colors.textSecondary,
+                          size: 22,
+                        ),
                       ),
 
                       const SizedBox(height: 52),
 
                       // ── Logo + Título ────────────────────────────────────
-                      Image.asset(
-                        'assets/images/brawe_logo.png',
-                        width: 36,
-                        height: 36,
-                        color: colors.accentPrimary,
-                      ),
+                      // Widget de marca reutilizável, consistente com o
+                      // resto do app.
+                      const BraweLogo(iconSize: 36, showTagline: false),
                       const SizedBox(height: 24),
                       Text(
                         s.authWelcomeBackTitle,
@@ -167,7 +167,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: colors.danger.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10),
@@ -177,8 +179,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.error_outline,
-                                  color: colors.danger, size: 15),
+                              Icon(
+                                Icons.error_outline,
+                                color: colors.danger,
+                                size: 15,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -198,7 +203,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                       // ── Botão Entrar ──────────────────────────────────────
                       AuthActionButton(
-                        label: state.status.isLoading ? s.authLoggingIn : s.authEntrar,
+                        label: state.status.isLoading
+                            ? s.authLoggingIn
+                            : s.authEntrar,
                         onPressed: state.canSubmit ? _onSubmit : null,
                       ),
 

@@ -20,6 +20,7 @@ import '../../../domain/models/conversation.dart';
 import '../../../domain/models/user.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/text/brawe_rich_text.dart';
+import '../../../core/text/link_preview_card.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/chat_detail_view_model.dart';
@@ -1323,6 +1324,10 @@ class _TextBubbleContent extends ConsumerWidget {
         ? message.content
         : message.content.replaceFirst(match!.group(0)!, '').trim();
 
+    // Só busca link preview genérico quando a mensagem não for um
+    // "shared post" interno (esse já tem seu próprio card via postId).
+    final previewUrl = postId == null ? BraweRichText.firstUrl(caption) : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1331,7 +1336,7 @@ class _TextBubbleContent extends ConsumerWidget {
           const SizedBox(height: 6),
         ],
         if (caption.isNotEmpty)
-          Text(
+          BraweRichText(
             caption,
             style: TextStyle(
               // Balão próprio tem gradiente colorido → texto sempre branco
@@ -1340,10 +1345,14 @@ class _TextBubbleContent extends ConsumerWidget {
               fontSize: 14,
               height: 1.3,
             ),
+            linkColor: isMe ? Colors.white : null,
           ),
         if (postId != null) ...[
           if (caption.isNotEmpty) const SizedBox(height: 6),
           _SharedPostPreview(postId: postId, isMe: isMe),
+        ] else if (previewUrl != null) ...[
+          if (caption.isNotEmpty) const SizedBox(height: 6),
+          LinkPreviewCard(url: previewUrl, compact: true),
         ],
         const SizedBox(height: 4),
         Row(

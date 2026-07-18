@@ -166,15 +166,21 @@ class _TopBar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: colors.border),
               ),
-              child: Icon(LucideIcons.arrowLeft,
-                  color: colors.textPrimary, size: 20),
+              child: Icon(
+                LucideIcons.arrowLeft,
+                color: colors.textPrimary,
+                size: 20,
+              ),
             ),
           ),
         ),
         TextButton.icon(
           onPressed: () {},
-          icon: Icon(LucideIcons.helpCircle,
-              color: colors.textTertiary, size: 16),
+          icon: Icon(
+            LucideIcons.helpCircle,
+            color: colors.textTertiary,
+            size: 16,
+          ),
           label: Text(
             S.of(context).signupHelp,
             style: TextStyle(color: colors.textTertiary, fontSize: 13),
@@ -237,7 +243,7 @@ class _Hero extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Image.asset(
-                  'assets/images/brawe_logo.png',
+                  'assets/images/brawe-icon.png',
                   fit: BoxFit.contain,
                   color: colors.textOnAccent,
                 ),
@@ -377,8 +383,9 @@ class _SignupCardState extends State<_SignupCard> {
                     onPressed: () => setState(() => _showSponsor = true),
                     style: TextButton.styleFrom(
                       foregroundColor: colors.accentSecondary,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xs,
+                      ),
                       minimumSize: const Size(0, 32),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -386,7 +393,9 @@ class _SignupCardState extends State<_SignupCard> {
                     label: Text(
                       s.signupHaveReferral,
                       style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -403,8 +412,11 @@ class _SignupCardState extends State<_SignupCard> {
                   ),
                   child: Row(
                     children: [
-                      Icon(LucideIcons.alertCircle,
-                          color: colors.danger, size: 16),
+                      Icon(
+                        LucideIcons.alertCircle,
+                        color: colors.danger,
+                        size: 16,
+                      ),
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
@@ -439,8 +451,9 @@ class _SignupCardState extends State<_SignupCard> {
                     onPressed: () => context.push('/login'),
                     style: TextButton.styleFrom(
                       foregroundColor: colors.accentSecondary,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       minimumSize: const Size(0, 32),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -504,9 +517,7 @@ class _PasswordStrength extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               height: 4,
               decoration: BoxDecoration(
-                color: i < score
-                    ? color
-                    : tokens.surfaceHighest,
+                color: i < score ? color : tokens.surfaceHighest,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -555,18 +566,13 @@ class _TermsCheckbox extends StatelessWidget {
                 onChanged: (v) => onChanged(v ?? false),
                 activeColor: colors.accentPrimary,
                 checkColor: colors.textOnAccent,
-                side: BorderSide(
-                  color: colors.textTertiary,
-                  width: 1.4,
-                ),
+                side: BorderSide(color: colors.textTertiary, width: 1.4),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: _TermsRichText(),
-            ),
+            Expanded(child: _TermsRichText()),
           ],
         ),
       ),
@@ -587,8 +593,10 @@ class _TermsRichTextState extends State<_TermsRichText> {
   @override
   void initState() {
     super.initState();
-    _termsTap = TapGestureRecognizer()..onTap = () => _open(AppConstants.termsUrl);
-    _privacyTap = TapGestureRecognizer()..onTap = () => _open(AppConstants.privacyUrl);
+    _termsTap = TapGestureRecognizer()
+      ..onTap = () => _open(AppConstants.termsUrl);
+    _privacyTap = TapGestureRecognizer()
+      ..onTap = () => _open(AppConstants.privacyUrl);
   }
 
   Future<void> _open(String url) async {
@@ -628,9 +636,17 @@ class _TermsRichTextState extends State<_TermsRichText> {
         style: base,
         children: [
           TextSpan(text: s.signupTermsPrefix),
-          TextSpan(text: s.settingsTermsOfUse, style: link, recognizer: _termsTap),
+          TextSpan(
+            text: s.settingsTermsOfUse,
+            style: link,
+            recognizer: _termsTap,
+          ),
           TextSpan(text: s.signupTermsAnd),
-          TextSpan(text: s.settingsPrivacyPolicy, style: link, recognizer: _privacyTap),
+          TextSpan(
+            text: s.settingsPrivacyPolicy,
+            style: link,
+            recognizer: _privacyTap,
+          ),
           TextSpan(text: s.signupTermsSuffix),
         ],
       ),

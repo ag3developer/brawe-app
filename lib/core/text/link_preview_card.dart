@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import '../../ui/core/themes/brawe_colors.dart';
 import '../../data/services/link_preview_service.dart';
@@ -87,40 +88,9 @@ class _LinkPreviewCardContent extends StatelessWidget {
               if (preview.image != null && preview.image!.isNotEmpty)
                 AspectRatio(
                   aspectRatio: 1.91, // proporção padrão og:image (1200x630)
-                  child: CachedNetworkImage(
+                  child: _LinkPreviewImageLoader(
                     imageUrl: preview.image!,
-                    fit: BoxFit.cover,
-                    // Force www prefix para evitar redirects 308
-                    httpHeaders: const {
-                      'User-Agent':
-                          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)',
-                    },
-                    cacheKey: _normalizeCacheKey(preview.image!),
-                    placeholder: (_, __) => Container(
-                      color: context.colors.surface.withValues(alpha: 0.5),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    ),
-                    errorWidget: (_, __, ___) {
-                      debugPrint(
-                        '❌ LinkPreviewCard: Erro ao carregar imagem ${preview.image}',
-                      );
-                      return Container(
-                        color: context.colors.surface.withValues(alpha: 0.3),
-                        child: Center(
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            color: context.colors.textSecondary,
-                            size: 32,
-                          ),
-                        ),
-                      );
-                    },
+                    colors: context.colors,
                   ),
                 ),
               Padding(
@@ -185,15 +155,171 @@ class _LinkPreviewSkeleton extends StatelessWidget {
   }
 }
 
+/// Widget especial para carregar imagens de preview com tratamento de cache
+/// melhorado para URLs de brawe.io que podem ter problemas de redirect 308
+class _LinkPreviewImageLoader extends StatefulWidget {
+  const _LinkPreviewImageLoader({required this.imageUrl, required this.colors});
+
+  final String imageUrl;
+  final BraweColors colors;
+
+  @override
+  State<_LinkPreviewImageLoader> createState() =>
+      _LinkPreviewImageLoaderState();
+}
+
+class _LinkPreviewImageLoaderState extends State<_LinkPreviewImageLoader> {
+  @override
+  void initState() {
+    super.initState();
+    // Se for brawe.io, limpa cache antigo do domínio sem www
+    if (widget.imageUrl.contains('brawe.io')) {
+      _clearOldBraweImageCache();
+    }
+  }
+
+  Future<void> _clearOldBraweImageCache() async {
+    try {
+      // Remove cache da URL antiga (sem www)
+      final oldUrl = widget.imageUrl.replaceFirst(
+        'https://www.brawe.io',
+        'https://brawe.io',
+      );
+      if (oldUrl != widget.imageUrl) {
+        await DefaultCacheManager().removeFile(oldUrl);
+        debugPrint('🗑️ LinkPreviewCard: Limpou cache antigo de $oldUrl');
+      }
+
+      // Também limpa URLs sem https se necessário
+      final unsecureUrl = widget.imageUrl.replaceFirst('https://', 'http://');
+      if (unsecureUrl != widget.imageUrl) {
+        try {
+          await DefaultCacheManager().removeFile(unsecureUrl);
+          debugPrint('🗑️ LinkPreviewCard: Limpou cache http de $unsecureUrl');
+        } catch (_) {
+          // Ignora se não existir
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Erro ao limpar cache: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      imageUrl: widget.imageUrl,
+      fit: BoxFit.cover,
+      httpHeaders: _buildHeaders(widget.imageUrl),
+      cacheKey: _normalizeCacheKey(widget.imageUrl),
+      cacheManager: CacheManager(
+        Config(
+          'brawe_link_preview_images',
+          stalePeriod: const Duration(days: 7),
+          maxNrOfCacheObjects: 100,
+        ),
+      ),
+      placeholder: (_, __) => Container(
+        color: context.colors.surface.withValues(alpha: 0.5),
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      errorWidget: (_, __, ___) {
+        debugPrint(
+          '❌ LinkPreviewCard: Erro ao carregar imagem ${widget.imageUrl}',
+        );
+        return Container(
+          color: context.colors.surface.withValues(alpha: 0.3),
+          child: Center(
+            child: Icon(
+              Icons.image_not_supported_outlined,
+              color: context.colors.textSecondary,
+              size: 32,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Headers HTTP customizados por domínio para contornar restrições
+  Map<String, String> _buildHeaders(String url) {
+    final baseHeaders = {
+      'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+    };
+
+    // Netflix requer Referer e headers de navegador desktop
+    if (url.contains('netflix.com')) {
+      baseHeaders['Referer'] = 'https://www.netflix.com/';
+      baseHeaders['Sec-Fetch-Dest'] = 'image';
+      baseHeaders['Sec-Fetch-Mode'] = 'no-cors';
+    }
+
+    // Instagram requer headers específicos
+    if (url.contains('instagram.com') || url.contains('cdninstagram')) {
+      baseHeaders['Referer'] = 'https://www.instagram.com/';
+    }
+
+    // Twitter/X requer headers de navegador
+    if (url.contains('twitter.com') ||
+        url.contains('x.com') ||
+        url.contains('pbs.twimg.com')) {
+      baseHeaders['Referer'] = 'https://twitter.com/';
+    }
+
+    return baseHeaders;
+  }
+}
+
 /// Normaliza URL para cache, evitando problemas com redirects 308
+/// Estratégias:
+/// 1. Se brawe.io sem www, adiciona www (nosso caso específico)
+/// 2. Se domínio sem www mas site comum redireciona, tenta com www
 /// Exemplo: https://brawe.io/og-image-pt.png → https://www.brawe.io/og-image-pt.png
 String _normalizeCacheKey(String url) {
   try {
     final uri = Uri.parse(url);
-    // Se é brawe.io sem www, adiciona www para evitar redirect
-    if (uri.host == 'brawe.io') {
-      return uri.replace(host: 'www.brawe.io').toString();
+    final host = uri.host;
+
+    // Se já tem www ou é subdomínio específico, retorna como está
+    if (host.startsWith('www.') ||
+        host.contains('cdn') ||
+        host.contains('img') ||
+        host.contains('image') ||
+        host.startsWith('s.') ||
+        host.startsWith('i.')) {
+      return url;
     }
+
+    // Sites conhecidos que se beneficiam de normalização para www
+    const sitesComWWW = {
+      'brawe.io',
+      'netflix.com',
+      'instagram.com',
+      'twitter.com',
+      'facebook.com',
+      'youtube.com',
+      'github.com',
+      'reddit.com',
+      'medium.com',
+      'linkedin.com',
+    };
+
+    // Se é um site conhecido sem www, tenta adicionar
+    if (sitesComWWW.contains(host)) {
+      final normalizedHost = 'www.$host';
+      return uri.replace(host: normalizedHost).toString();
+    }
+
     return url;
   } catch (e) {
     debugPrint('⚠️ Erro ao normalizar URL: $e');
