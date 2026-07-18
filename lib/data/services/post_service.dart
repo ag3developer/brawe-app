@@ -105,6 +105,18 @@ class PostService {
     return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
+  Future<PostFeedResponseDto> getByHashtag(
+    String tag, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final response = await _dio.get(
+      '/posts/hashtag/$tag',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
   Future<void> createPost({
     required String content,
     String? imageUrl,

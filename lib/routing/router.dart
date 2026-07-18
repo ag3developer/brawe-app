@@ -44,6 +44,7 @@ import '../ui/find_friends/widgets/qr_scanner_screen.dart';
 import '../ui/follows/widgets/follows_screen.dart';
 import '../ui/edit_profile/widgets/edit_profile_screen.dart';
 import '../ui/explore/widgets/explore_screen.dart';
+import '../ui/explore/widgets/hashtag_results_screen.dart';
 import '../ui/follows/view_models/follows_view_model.dart';
 import '../ui/home/widgets/home_bottom_nav.dart';
 import '../ui/creator/widgets/creator_program_intro_screen.dart';
@@ -327,6 +328,13 @@ GoRouter router(Ref ref) {
           GoRoute(
             path: '/explore',
             builder: (context, state) => const ExploreScreen(),
+          ),
+          GoRoute(
+            path: '/explore/hashtag/:tag',
+            builder: (context, state) {
+              final tag = state.pathParameters['tag']!;
+              return HashtagResultsScreen(tag: tag);
+            },
           ),
           GoRoute(
             path: '/follows/:userId',

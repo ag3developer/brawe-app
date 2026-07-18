@@ -203,6 +203,25 @@ class PostRepository {
     }
   }
 
+  Future<List<Post>> getByHashtag(
+    String tag, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final responseDto = await _postService.getByHashtag(
+        tag,
+        limit: limit,
+        offset: offset,
+      );
+      return responseDto.posts.map((dto) => dto.toDomain()).toList();
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   /// Lista quem curtiu um post (com breakdown por reação).
   /// Tela: PostLikersScreen.
   Future<PostLikesPage> getLikers(

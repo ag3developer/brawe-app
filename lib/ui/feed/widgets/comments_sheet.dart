@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../domain/models/post_comment.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -371,7 +372,7 @@ class _CommentTile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      Text(
+                      BraweRichText(
                         comment.content,
                         style: TextStyle(
                           color: context.colors.textPrimary,

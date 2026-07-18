@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/live_comment.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../live/shared/widgets/level_chip.dart';
 
@@ -181,51 +182,56 @@ class _LiveCommentBubble extends StatelessWidget {
                   horizontal: 12,
                   vertical: 8,
                 ),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      // 🎖️ Level pin (TikTok-style) — só aparece se Lv > 1
-                      if (comment.gifterLevel > 1) ...[
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.middle,
-                          child: LevelChip(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header: Level pin + userName
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 🎖️ Level pin (TikTok-style) — só aparece se Lv > 1
+                        if (comment.gifterLevel > 1) ...[
+                          LevelChip(
                             level: comment.gifterLevel,
                             badge: comment.gifterBadge,
                             colorHex: comment.gifterColor,
                             imageUrl: comment.gifterImageUrl,
                             height: 16,
                           ),
+                          const SizedBox(width: 6),
+                        ],
+                        Text(
+                          comment.userName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
                         ),
-                        const WidgetSpan(child: SizedBox(width: 6)),
                       ],
-                      TextSpan(
-                        text: '${comment.userName} ',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                    ),
+                    // Message: com @menção e #hashtag clicáveis
+                    BraweRichText(
+                      comment.message,
+                      style: TextStyle(
+                        color: Colors.white.withValues(
+                          alpha: comment.isPending ? 0.72 : 0.88,
                         ),
+                        fontSize: 12,
                       ),
-                      TextSpan(
-                        text: comment.message,
+                    ),
+                    // Pending indicator
+                    if (comment.isPending)
+                      Text(
+                        s.liveCommentsSending,
                         style: TextStyle(
-                          color: Colors.white.withValues(
-                            alpha: comment.isPending ? 0.72 : 0.88,
-                          ),
-                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.45),
+                          fontSize: 11,
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
-                      if (comment.isPending)
-                        TextSpan(
-                          text: s.liveCommentsSending,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.45),
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
             ),
