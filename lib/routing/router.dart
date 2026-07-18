@@ -73,6 +73,47 @@ import '../ui/shop/pages/shop_payment_page.dart';
 
 part 'router.g.dart';
 
+/// Idiomas suportados pelo site Next.js (prefixo de locale nas URLs
+/// públicas, ex.: `brawe.app/pt/connect/...`). Mantido em paralelo aos
+/// `.arb` do app (`pt`, `es`, `en`) — usado só para stripar o prefixo de
+/// deep links recebidos, não define o idioma do app em si.
+const _kWebLocales = {'pt', 'es', 'en'};
+
+/// Normaliza um deep link (Universal Link/App Link) recebido de fora do
+/// app para uma rota conhecida pelo `GoRouter`, ou retorna `null` se a
+/// localização já é válida/não precisa de tradução.
+///
+/// Cobre dois casos que o AASA (`paths: ["*"]`) deixa passar direto para
+/// o app, mas que não existem como rota nativa:
+/// 1. Prefixo de idioma do site (`/pt/...`, `/es/...`, `/en/...`).
+/// 2. Rota interna do site `/connect/profile/:id` (usada em links DENTRO
+///    do Next.js), diferente da rota canônica de compartilhamento
+///    `/connect/u/:id` (única que o `GoRoute` abaixo reconhece).
+String? _normalizeDeepLink(Uri uri) {
+  var path = uri.path;
+
+  // 1) Remove prefixo de locale: "/pt/connect/..." → "/connect/...".
+  final segments = uri.pathSegments;
+  if (segments.isNotEmpty && _kWebLocales.contains(segments.first)) {
+    path = '/${segments.skip(1).join('/')}';
+  }
+
+  // 2) Alias interno do site → rota canônica de perfil do app.
+  //    "/connect/profile/:id" → "/connect/u/:id" (mesmo GoRoute de
+  //    `/connect/u/:userId`, que resolve para ProfileScreen).
+  const profileAlias = '/connect/profile/';
+  if (path.startsWith(profileAlias)) {
+    final id = path.substring(profileAlias.length);
+    path = '/connect/u/$id';
+  }
+
+  if (path == uri.path) {
+    return null; // nada mudou — deixa o redirect normal seguir
+  }
+  final query = uri.query.isNotEmpty ? '?${uri.query}' : '';
+  return '$path$query';
+}
+
 @riverpod
 GoRouter router(Ref ref) {
   final authState = ref.watch(authStateProvider);
@@ -81,6 +122,18 @@ GoRouter router(Ref ref) {
     initialLocation: '/home',
     refreshListenable: RouterRefreshListenable(ref),
     redirect: (context, state) {
+      // ── Normalização de Universal Links (iOS) / App Links (Android) ────
+      // O AASA/assetlinks está configurado com "paths": ["*"] — o app
+      // intercepta QUALQUER link de brawe.app, incluindo URLs que só
+      // existem no site Next.js (prefixo de idioma `/pt|es|en/...` e a
+      // rota interna `/connect/profile/:id`, usada nos links de dentro do
+      // próprio site, diferente do link canônico de compartilhamento
+      // `/connect/u/:id`). Sem essa normalização, abrir um link de perfil
+      // com o app instalado cai em `GoException: no routes for location`
+      // (tela de erro em branco) em vez de abrir o perfil.
+      final normalized = _normalizeDeepLink(state.uri);
+      if (normalized != null) return normalized;
+
       final isLoading = authState.isLoading;
       final user = authState.asData?.value;
       final isAuth = user != null;
