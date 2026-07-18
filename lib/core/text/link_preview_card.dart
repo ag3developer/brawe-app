@@ -34,10 +34,14 @@ class LinkPreviewCard extends ConsumerWidget {
     return previewAsync.when(
       data: (preview) {
         if (preview == null || !preview.hasContent) {
-          debugPrint('⚠️ LinkPreviewCard: Preview null ou sem conteúdo para $url');
+          debugPrint(
+            '⚠️ LinkPreviewCard: Preview null ou sem conteúdo para $url',
+          );
           return const SizedBox.shrink();
         }
-        debugPrint('✅ LinkPreviewCard: Preview carregado - image=${preview.image}');
+        debugPrint(
+          '✅ LinkPreviewCard: Preview carregado - image=${preview.image}',
+        );
         return _LinkPreviewCardContent(preview: preview, compact: compact);
       },
       loading: () {
@@ -86,8 +90,21 @@ class _LinkPreviewCardContent extends StatelessWidget {
                   child: CachedNetworkImage(
                     imageUrl: preview.image!,
                     fit: BoxFit.cover,
+                    // Force www prefix para evitar redirects 308
+                    httpHeaders: const {
+                      'User-Agent':
+                          'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko)',
+                    },
+                    cacheKey: _normalizeCacheKey(preview.image!),
                     placeholder: (_, __) => Container(
                       color: context.colors.surface.withValues(alpha: 0.5),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
                     ),
                     errorWidget: (_, __, ___) {
                       debugPrint(
@@ -95,6 +112,13 @@ class _LinkPreviewCardContent extends StatelessWidget {
                       );
                       return Container(
                         color: context.colors.surface.withValues(alpha: 0.3),
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: context.colors.textSecondary,
+                            size: 32,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -158,5 +182,21 @@ class _LinkPreviewSkeleton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Normaliza URL para cache, evitando problemas com redirects 308
+/// Exemplo: https://brawe.io/og-image-pt.png → https://www.brawe.io/og-image-pt.png
+String _normalizeCacheKey(String url) {
+  try {
+    final uri = Uri.parse(url);
+    // Se é brawe.io sem www, adiciona www para evitar redirect
+    if (uri.host == 'brawe.io') {
+      return uri.replace(host: 'www.brawe.io').toString();
+    }
+    return url;
+  } catch (e) {
+    debugPrint('⚠️ Erro ao normalizar URL: $e');
+    return url;
   }
 }
