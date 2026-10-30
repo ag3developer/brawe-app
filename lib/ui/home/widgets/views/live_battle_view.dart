@@ -486,7 +486,14 @@ class _GiftSheetState extends State<_GiftSheet> {
         color: AppColors.slate,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      // + viewPadding.bottom: conteúdo acima da barra de navegação do
+      // Android (edge-to-edge); o fundo continua indo até a borda.
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        32 + MediaQuery.of(context).viewPadding.bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

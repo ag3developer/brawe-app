@@ -667,7 +667,14 @@ class GifterDetailSheet extends ConsumerWidget {
             final g = details.user;
             return ListView(
               controller: controller,
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              // + viewPadding.bottom: fim da lista acima da barra de
+              // navegação do Android (edge-to-edge).
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                28 + MediaQuery.of(context).viewPadding.bottom,
+              ),
               children: [
                 Center(
                   child: Container(

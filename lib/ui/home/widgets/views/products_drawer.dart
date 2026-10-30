@@ -87,7 +87,14 @@ class ProductsDrawer extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   controller: scrollCtrl,
-                  padding: const EdgeInsets.all(16),
+                  // + viewPadding.bottom: último produto acima da barra de
+                  // navegação do Android (edge-to-edge).
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16,
+                    16,
+                    16 + MediaQuery.of(context).viewPadding.bottom,
+                  ),
                   itemCount: products.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (_, i) => _ProductTile(product: products[i]),

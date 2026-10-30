@@ -36,13 +36,18 @@
 -dontwarn androidx.media3.**
 
 # ── rtmp_broadcaster (live streaming) ───────────────────────────────────────
-# Plugin usa reflexão pra carregar codecs nativos.
--keep class com.takusemba.rtmppublisher.** { *; }
--keep class com.pedro.encoder.** { *; }
--keep class com.pedro.rtplibrary.** { *; }
--keep class com.pedro.rtmp.** { *; }
--dontwarn com.takusemba.**
+# Plugin vendorizado em packages/rtmp_broadcaster (pacote Kotlin
+# com.app.rtmp_publisher) + lib pedroSG94 rtplibrary 1.9.6, que usa os pacotes
+# com.pedro.* e net.ossrs.rtmp (callbacks ConnectCheckerRtmp chamados pelo
+# encoder/socket). Codecs/encoders são resolvidos por nome em runtime.
+-keep class com.app.rtmp_publisher.** { *; }
+-keep class com.pedro.** { *; }
+-keep class net.ossrs.rtmp.** { *; }
+-keep class com.github.faucamp.simplertmp.** { *; }
+-dontwarn com.app.rtmp_publisher.**
 -dontwarn com.pedro.**
+-dontwarn net.ossrs.**
+-dontwarn com.github.faucamp.**
 
 # ── flutter_local_notifications ─────────────────────────────────────────────
 -keep class com.dexterous.** { *; }

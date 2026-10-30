@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
 
@@ -16,9 +17,22 @@ class ForceDarkTheme extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: AppTheme.dark(),
-      child: child,
+    // Ícones claros nas barras do sistema enquanto a tela forçada escura
+    // estiver por baixo delas. Sem isso, com o app no tema CLARO, o
+    // AnnotatedRegion global (main.dart) deixava os ícones da status bar
+    // escuros sobre o vídeo/fundo preto (Home, lives) — invisíveis. Em
+    // sheets, só afeta a barra de navegação quando o sheet está sobre ela.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+      child: Theme(
+        data: AppTheme.dark(),
+        child: child,
+      ),
     );
   }
 }

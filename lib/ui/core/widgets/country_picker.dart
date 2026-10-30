@@ -193,6 +193,12 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
           ),
           Expanded(
             child: ListView.builder(
+              // Edge-to-edge (Android 15): últimos países ficam acessíveis
+              // acima do teclado e da barra de navegação.
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom +
+                    MediaQuery.of(context).viewPadding.bottom,
+              ),
               itemCount: filtered.length,
               itemBuilder: (_, i) {
                 final c = filtered[i];

@@ -44,6 +44,15 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   int _cameraIndex = 0;
   bool _initializing = true;
   String? _initError;
+
+  /// Câmera/microfone negados "para sempre" — o botão abre os Ajustes
+  /// (pedir de novo não mostra diálogo nenhum).
+  bool _permissionPermanentlyDenied = false;
+
+  /// Dispose nativo em andamento (background/flip). No Android não dá pra
+  /// abrir a câmera de novo antes dele terminar ("camera in use").
+  Future<void>? _releaseFuture;
+  bool _flipping = false;
   bool _showWarmup = false;
   List<String> _titleSuggestions = const [];
   final TextEditingController _titleCtrl = TextEditingController();
@@ -98,13 +107,20 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final c = _controller;
-    if (c == null || c.value.isInitialized != true) return;
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      c.dispose();
+      final c = _controller;
+      if (c == null || c.value.isInitialized != true) return;
+      // Tira da árvore antes do dispose (o rtmp_broadcaster mantém
+      // `isInitialized == true` depois do dispose → preview "zumbi").
+      _controller = null;
+      _releaseFuture = c.dispose();
+      if (mounted) setState(() {});
     } else if (state == AppLifecycleState.resumed) {
-      _bootstrapCamera();
+      // Reabre a câmera liberada no background e também cobre a volta dos
+      // Ajustes após liberar a permissão. `_initializing` evita um 2º
+      // bootstrap quando o `resumed` vem do próprio diálogo de permissão.
+      if (_controller == null && !_initializing) _bootstrapCamera();
     }
   }
 
@@ -113,20 +129,28 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     setState(() {
       _initializing = true;
       _initError = null;
+      _permissionPermanentlyDenied = false;
     });
 
     try {
       final cameraStatus = await Permission.camera.request();
       final micStatus = await Permission.microphone.request();
+      if (!mounted) return;
       if (!cameraStatus.isGranted || !micStatus.isGranted) {
         setState(() {
           _initializing = false;
           _initError = S.of(context).startLivePermissionDenied;
+          _permissionPermanentlyDenied =
+              cameraStatus.isPermanentlyDenied ||
+              micStatus.isPermanentlyDenied ||
+              cameraStatus.isRestricted ||
+              micStatus.isRestricted;
         });
         return;
       }
 
       final cameras = await availableCameras();
+      if (!mounted) return;
       if (cameras.isEmpty) {
         setState(() {
           _initializing = false;
@@ -134,12 +158,14 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
         });
         return;
       }
-      // Por padrão usa câmera frontal (selfie).
-      final frontIdx = cameras.indexWhere(
-        (c) => c.lensDirection == CameraLensDirection.front,
-      );
+      // Por padrão usa câmera frontal (selfie); ao reabrir (volta do
+      // background) mantém a direção que o criador tinha escolhido.
+      final lens = _cameras.isNotEmpty && _cameraIndex < _cameras.length
+          ? _cameras[_cameraIndex].lensDirection
+          : CameraLensDirection.front;
+      final lensIdx = cameras.indexWhere((c) => c.lensDirection == lens);
       _cameras = cameras;
-      _cameraIndex = frontIdx >= 0 ? frontIdx : 0;
+      _cameraIndex = lensIdx >= 0 ? lensIdx : 0;
       await _setupController(_cameras[_cameraIndex]);
       if (mounted) setState(() => _initializing = false);
     } catch (e) {
@@ -153,6 +179,14 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   }
 
   Future<void> _setupController(CameraDescription description) async {
+    final pending = _releaseFuture;
+    if (pending != null) {
+      try {
+        await pending;
+      } catch (_) {}
+      _releaseFuture = null;
+    }
+    if (!mounted) return;
     final controller = CameraController(
       description,
       ResolutionPreset.high,
@@ -170,12 +204,29 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
     }
   }
 
+  /// Alterna frontal ⇄ traseira PRINCIPAL (a 1ª de cada direção). Antes
+  /// usava `índice + 1`, que em aparelhos com várias lentes traseiras caía
+  /// na ultra-wide/tele e a frontal não voltava.
   Future<void> _flipCamera() async {
-    if (_cameras.length < 2 || !mounted) return;
-    _cameraIndex = (_cameraIndex + 1) % _cameras.length;
-    await _controller?.dispose();
-    if (!mounted) return; // Check again after dispose, as it's async
-    await _setupController(_cameras[_cameraIndex]);
+    if (_flipping || _cameras.length < 2 || !mounted) return;
+    final old = _controller;
+    if (old == null || old.value.isInitialized != true) return;
+    _flipping = true;
+    try {
+      final current = _cameras[_cameraIndex].lensDirection;
+      final target = current == CameraLensDirection.front
+          ? CameraLensDirection.back
+          : CameraLensDirection.front;
+      final idx = _cameras.indexWhere((c) => c.lensDirection == target);
+      _cameraIndex = idx >= 0 ? idx : (_cameraIndex + 1) % _cameras.length;
+      // Remove o preview antigo da árvore e ESPERA o dispose nativo antes
+      // de abrir a outra câmera (Android não abre 2 ao mesmo tempo).
+      setState(() => _controller = null);
+      _releaseFuture = old.dispose();
+      await _setupController(_cameras[_cameraIndex]);
+    } finally {
+      _flipping = false;
+    }
   }
 
   Future<void> _captureThumbnailFromCamera() async {
@@ -446,8 +497,14 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               ),
               const SizedBox(height: AppSpacing.lg),
               FilledButton(
-                onPressed: _bootstrapCamera,
-                child: Text(S.of(context).startLiveRetry),
+                onPressed: _permissionPermanentlyDenied
+                    ? openAppSettings
+                    : _bootstrapCamera,
+                child: Text(
+                  _permissionPermanentlyDenied
+                      ? S.of(context).composerOpenSettings
+                      : S.of(context).startLiveRetry,
+                ),
               ),
             ],
           ),

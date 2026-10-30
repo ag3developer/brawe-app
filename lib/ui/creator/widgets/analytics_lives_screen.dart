@@ -610,7 +610,8 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _DownloadSheet(item: item),
+      // SafeArea(bottom): botões acima da barra de navegação (edge-to-edge).
+      builder: (_) => SafeArea(top: false, child: _DownloadSheet(item: item)),
     );
   }
 }

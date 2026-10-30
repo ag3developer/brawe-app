@@ -152,6 +152,22 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     });
   }
 
+  /// Se a live era a rota atual no último `didChangeDependencies`.
+  bool _routeWasCurrent = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ao voltar de uma tela empilhada por cima (ex.: perfil, que restaura as
+    // barras do sistema), reaplica o modo imersivo da live. Idempotente —
+    // fechar um sheet por cima também passa aqui, sem efeito visível.
+    final isCurrent = ModalRoute.isCurrentOf(context) ?? true;
+    if (isCurrent && !_routeWasCurrent) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
+    _routeWasCurrent = isCurrent;
+  }
+
   @override
   void dispose() {
     _reactionFlushTimer?.cancel();

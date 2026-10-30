@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -195,12 +196,28 @@ GoRouter router(Ref ref) {
       //  • FABs dos Scaffolds internos flutuam logo acima do nav.
       //  • SafeArea funciona corretamente.
       ShellRoute(
-        builder: (context, state, child) => Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBody: false,
-          resizeToAvoidBottomInset: false,
-          body: child,
-          bottomNavigationBar: const HomeBottomNav(),
+        // Voltar do Android: as abas (feed, live, chat, perfil) são abertas
+        // com `context.go`, então ficam sozinhas na pilha — sem isto o
+        // voltar FECHAVA o app em qualquer aba. Agora, fora da Home, o
+        // voltar leva para /home; na Home, sai do app como de costume.
+        // Telas empilhadas com `push` dentro do shell são desempilhadas
+        // antes (o go_router consulta o navigator interno primeiro).
+        // No iOS não há botão voltar do sistema → sem efeito.
+        builder: (context, state, child) => PopScope(
+          canPop:
+              defaultTargetPlatform != TargetPlatform.android ||
+              state.uri.path == '/home',
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            context.go('/home');
+          },
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            extendBody: false,
+            resizeToAvoidBottomInset: false,
+            body: child,
+            bottomNavigationBar: const HomeBottomNav(),
+          ),
         ),
         routes: [
           // Telas imersivas de mídia continuam dark-fixo (padrão TikTok/IG).

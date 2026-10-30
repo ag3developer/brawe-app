@@ -363,7 +363,19 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: context.colors.border)),
               ),
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 12),
+              // Android 15 edge-to-edge: o sheet (sem useSafeArea) desenha
+              // atrás da barra de navegação — sem isso a barra de 3 botões
+              // cobria a toolbar com o teclado fechado. `padding.bottom` já
+              // vira 0 com o teclado aberto. iOS mantém o layout anterior.
+              padding: EdgeInsets.fromLTRB(
+                8,
+                8,
+                16,
+                12 +
+                    (Platform.isAndroid
+                        ? MediaQuery.paddingOf(context).bottom
+                        : 0),
+              ),
               child: Row(
                 children: [
                   _ToolbarBtn(icon: Icons.image_outlined, onTap: _pickImage),
@@ -538,7 +550,7 @@ class _SelectedSoundChip extends StatelessWidget {
                 width: 32,
                 height: 32,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallbackIcon(),
+                errorBuilder: (_, _, _) => _fallbackIcon(),
               ),
             )
           else

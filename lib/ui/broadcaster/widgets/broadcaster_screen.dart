@@ -142,7 +142,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final cameraStatus = await Permission.camera.request();
       final microphoneStatus = await Permission.microphone.request();
 
-      if (cameraStatus.isDenied || microphoneStatus.isDenied) {
+      // `!isGranted` (não só `isDenied`): "negado para sempre"/restrito
+      // seguia adiante e falhava no initialize com erro genérico.
+      if (!cameraStatus.isGranted || !microphoneStatus.isGranted) {
         if (mounted) {
           AppSnackBar.showError(
             context,
@@ -369,26 +371,41 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final CameraController? cameraController = _controller;
-    if (cameraController == null ||
-        cameraController.value.isInitialized != true) {
-      return;
-    }
-
     // Só `paused`/`hidden` (app realmente em segundo plano). `inactive`
     // dispara com Central de Controle, notificações e Face ID — antes isso
     // derrubava a câmera e pausava a live sem o criador sair do app.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
-      if (_isClosing) return;
-      unawaited(_onEnterBackground(cameraController));
+      final CameraController? cameraController = _controller;
+      if (cameraController == null ||
+          cameraController.value.isInitialized != true) {
+        return;
+      }
+      // `hidden` e `paused` chegam em sequência — libera uma vez só.
+      if (_isClosing || _cameraReleasedInBackground) return;
+      _cameraReleasedInBackground = true;
+      _backgroundRelease = _onEnterBackground(cameraController);
     } else if (state == AppLifecycleState.resumed) {
       // Recriar câmera; criador toca "Retomar" para voltar ao ar.
-      unawaited(_onReturnToForeground(cameraController.description));
+      // Antes o guard `_controller == null → return` vinha ANTES daqui: como
+      // o background já tinha zerado `_controller`, a câmera nunca era
+      // recriada (preview preto/spinner e contagem interrompida não
+      // retomava) até o criador tocar "Retomar".
+      if (!_cameraReleasedInBackground) return;
+      _cameraReleasedInBackground = false;
+      if (_cameras.isEmpty) return;
+      unawaited(_onReturnToForeground(_cameras[_currentCameraIndex]));
     }
   }
 
   bool _countdownInterrupted = false;
+
+  /// Câmera liberada ao ir pro background (reabrir no `resumed`).
+  bool _cameraReleasedInBackground = false;
+
+  /// Dispose em andamento do background — o `resumed` espera ele terminar
+  /// antes de abrir a câmera de novo (Android: "camera in use").
+  Future<void>? _backgroundRelease;
 
   Future<void> _onEnterBackground(CameraController camera) async {
     // Contagem "5…4…" em andamento: interrompe (senão ela entra ao vivo
@@ -419,7 +436,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   Future<void> _onReturnToForeground(CameraDescription description) async {
+    final pending = _backgroundRelease;
+    _backgroundRelease = null;
+    if (pending != null) {
+      try {
+        await pending;
+      } catch (_) {}
+    }
     if (_isClosing || !mounted) return;
+    // Já recriada por outro caminho (ex.: "Retomar" tocado muito rápido).
+    if (_controller != null) return;
     await _setupCameraController(description);
     if (_countdownInterrupted && mounted && !_isStreaming) {
       _countdownInterrupted = false;

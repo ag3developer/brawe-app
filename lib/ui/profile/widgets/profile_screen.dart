@@ -28,8 +28,9 @@ import '../../../domain/models/profile_state.dart';
 import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart'
-    show Clipboard, ClipboardData, SystemChrome, SystemUiMode;
+    show Clipboard, ClipboardData, SystemChrome, SystemUiMode, SystemUiOverlay;
 import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
@@ -60,18 +61,18 @@ final userStoriesProvider = FutureProvider.autoDispose
       }
     });
 
-void _openStoryViewer(
+Future<void> _openStoryViewer(
   BuildContext context,
   WidgetRef ref,
   List<Story> stories,
-) {
+) async {
   if (stories.isEmpty) return;
   // Abre no primeiro story não-visto, ou no primeiro caso todos vistos.
   final firstUnseen = stories.indexWhere((s) => !s.isSeen);
   final initial = firstUnseen >= 0 ? firstUnseen : 0;
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   // rootNavigator: true → cobre o BottomNavigationBar (ShellRoute)
-  Navigator.of(context, rootNavigator: true).push(
+  await Navigator.of(context, rootNavigator: true).push(
     PageRouteBuilder(
       opaque: true,
       fullscreenDialog: true,
@@ -91,6 +92,13 @@ void _openStoryViewer(
       transitionDuration: const Duration(milliseconds: 220),
       reverseTransitionDuration: const Duration(milliseconds: 180),
     ),
+  );
+  // Restaura as barras do sistema ao fechar o viewer. Sem isso, no Android
+  // a status bar e a barra de navegação ficavam escondidas (immersiveSticky)
+  // no perfil e no resto do app depois de ver um story pelo avatar.
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.edgeToEdge,
+    overlays: SystemUiOverlay.values,
   );
 }
 
@@ -116,6 +124,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabCount, vsync: this);
+    // O perfil pode ser aberto de dentro da live ("Ver perfil" / toque no
+    // chat), que roda em immersiveSticky. Sem isto, no Android o perfil
+    // abria SEM status bar e SEM barra de navegação. A live reaplica o
+    // modo imersivo quando volta a ser a tela atual.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+    }
   }
 
   @override

@@ -468,7 +468,13 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
         left: 20,
         right: 20,
         top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+        // Teclado aberto → acima dele; fechado → acima da barra de navegação
+        // do Android (edge-to-edge).
+        bottom:
+            (MediaQuery.of(context).viewInsets.bottom > 0
+                ? MediaQuery.of(context).viewInsets.bottom
+                : MediaQuery.of(context).viewPadding.bottom) +
+            28,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

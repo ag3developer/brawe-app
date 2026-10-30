@@ -9,11 +9,23 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 
-    <!-- Galeria (Android 13+ usa READ_MEDIA_*; <=12 usa READ_EXTERNAL_STORAGE) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"/>
+    <!-- Galeria: NÃO declaramos READ_MEDIA_IMAGES/READ_MEDIA_VIDEO nem
+         READ_EXTERNAL_STORAGE. Toda escolha de mídia passa pelo image_picker,
+         que usa o Photo Picker do sistema (Android 13+ nativo; backport via
+         Google Play services no 4.4–12) e copia o arquivo pro cache do app —
+         não precisa de permissão de leitura. Declarar READ_MEDIA_* exige o
+         formulário "Photo and video permissions" no Play Console e é recusado
+         para apps que só escolhem mídia ocasionalmente.
+
+         Salvar na galeria (pacote `gal`): Android 10+ grava via MediaStore sem
+         permissão; Android 7–9 (API 24–28) precisa de WRITE_EXTERNAL_STORAGE,
+         e o álbum "Brawe" no Android 10 (API 29) precisa também de
+         requestLegacyExternalStorage (ver README do gal). -->
+    <!-- camera_android_camerax declara a mesma permissão com maxSdk 28;
+         tools:replace faz valer o 29 daqui (necessário pro gal no Android 10). -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29"
+        tools:replace="android:maxSdkVersion"/>
 
     <!-- Push notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -60,6 +72,7 @@
         android:usesCleartextTraffic="false"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true"
         tools:replace="android:appComponentFactory"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory">
         <activity

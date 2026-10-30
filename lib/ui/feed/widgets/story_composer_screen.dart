@@ -127,6 +127,16 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
 
   /// Invalida inits em voo quando a câmera é trocada/parada.
   int _camGeneration = 0;
+
+  /// Fila serial de operações nativas da câmera (initialize/dispose).
+  /// No Android (CameraX) abrir um controller novo enquanto o anterior
+  /// ainda está inicializando/sendo descartado faz o `dispose` do antigo
+  /// desvincular a câmera do novo → preview preto ("camera in use").
+  /// Encadeando aqui, cada init só começa depois que o anterior terminou.
+  Future<void> _camQueue = Future<void>.value();
+
+  /// Trava síncrona do flip (toque duplo / double-tap no preview).
+  bool _flipping = false;
   double _minZoom = 1;
   double _maxZoom = 1;
   double _zoom = 1;
@@ -296,7 +306,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
   /// Inicializa a câmera na direção pedida (default: a atual, frontal no
   /// 1º acesso). Escolhe a PRIMEIRA lente daquela direção — devices com
   /// várias lentes traseiras não caem na ultra-wide/tele por índice.
-  Future<void> _initCameraPreview({CameraLensDirection? lens}) async {
+  Future<void> _initCameraPreview({CameraLensDirection? lens}) {
     final gen = ++_camGeneration;
     final target = lens ?? _lens;
     if (mounted) {
@@ -305,6 +315,18 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
         _camPermissionDenied = false;
       });
     }
+    return _enqueueCam(() => _doInitCamera(gen, target));
+  }
+
+  Future<void> _enqueueCam(Future<void> Function() op) {
+    final next = _camQueue.then((_) => op());
+    _camQueue = next.catchError((Object _) {});
+    return _camQueue;
+  }
+
+  Future<void> _doInitCamera(int gen, CameraLensDirection target) async {
+    // Já obsoleto quando chegou a vez na fila (flip/pausa/editor).
+    if (!mounted || gen != _camGeneration) return;
     try {
       if (_cameras.isEmpty) _cameras = await availableCameras();
       if (_cameras.isEmpty) {
@@ -385,27 +407,45 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
     'cameraPermission',
   };
 
-  Future<void> _stopCameraPreview() async {
+  Future<void> _stopCameraPreview() {
     _camGeneration++;
     final c = _camCtrl;
     _camCtrl = null;
     _camAvailable = false;
-    await c?.dispose();
+    // Qualquer init em voo será descartado (geração mudou).
+    _camInitializing = false;
+    return _enqueueCam(() async => c?.dispose());
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Só no picker (editor/repost não usam a câmera).
     if (_file != null || _isRepostMode) return;
+    // Só `paused` (app em 2º plano). `inactive` NÃO: no Android o diálogo
+    // de permissão da câmera (aberto pelo próprio `initialize()`) dispara
+    // `inactive` → liberar a câmera ali abortaria a 1ª abertura.
     if (state == AppLifecycleState.paused) {
-      if (!_isRecording && _camCtrl != null) {
+      // Android libera a câmera em background; também para durante uma
+      // gravação/inicialização em voo, senão volta com preview preto.
+      if (_isRecording) {
+        // iOS mantém o comportamento anterior (não interrompe a gravação).
+        if (!Platform.isAndroid) return;
+        _recordTicker?.cancel();
+        _recordTicker = null;
+        _isRecording = false;
+        _segmentStartedAt = null;
+        _currentSegmentElapsed = Duration.zero;
+      }
+      if (_camCtrl != null || _camInitializing) {
         _stopCameraPreview().then((_) {
           if (mounted) setState(() {});
         });
       }
     } else if (state == AppLifecycleState.resumed) {
       // Também cobre a volta dos Ajustes após liberar a permissão.
-      if (_camCtrl == null) _initCameraPreview();
+      // `_camInitializing` evita abrir 2 controllers quando o `resumed`
+      // vem do diálogo de permissão com o init original ainda em voo.
+      if (_camCtrl == null && !_camInitializing) _initCameraPreview();
     }
   }
 
@@ -434,6 +474,23 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
 
   bool _looksLikeVideo(String url) =>
       url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm');
+
+  /// Arquivo local vindo do seletor do sistema. No Android o image_picker
+  /// copia o `content://` pro cache com a extensão derivada do MIME
+  /// (`.mp4`, `.3gp`, `.mkv`, `.MOV`...) — antes `.3gp`/`.mkv`/maiúsculas
+  /// caíam como FOTO e o editor quebrava.
+  static const Set<String> _kVideoExts = {
+    'mp4', 'mov', 'm4v', 'webm', '3gp', '3g2', 'mkv', 'avi', 'ts',
+  };
+
+  bool _isLocalVideo(XFile x) {
+    final mime = x.mimeType;
+    if (mime != null && mime.isNotEmpty) return mime.startsWith('video/');
+    final path = x.path;
+    final dot = path.lastIndexOf('.');
+    if (dot < 0) return false;
+    return _kVideoExts.contains(path.substring(dot + 1).toLowerCase());
+  }
 
   Future<void> _setSelected(File file, {required bool isVideo}) async {
     await _stopCameraPreview();
@@ -640,18 +697,25 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
   /// Alterna entre a primeira câmera frontal e a primeira traseira.
   /// Zoom volta ao mínimo e o flash desliga (controller novo).
   Future<void> _flipCamera() async {
-    if (_isRecording || _camInitializing || !_canFlip) return;
-    HapticFeedback.selectionClick();
-    final next = _lens == CameraLensDirection.front
-        ? CameraLensDirection.back
-        : CameraLensDirection.front;
-    await _stopCameraPreview();
-    if (!mounted) return;
-    setState(() {
-      _lens = next;
-      _focusPoint = null;
-    });
-    await _initCameraPreview(lens: next);
+    if (_flipping || _isRecording || _camInitializing || !_canFlip) return;
+    _flipping = true;
+    try {
+      HapticFeedback.selectionClick();
+      final next = _lens == CameraLensDirection.front
+          ? CameraLensDirection.back
+          : CameraLensDirection.front;
+      // Dispõe o controller antigo ANTES de abrir o novo (serializado na
+      // fila) — Android não abre 2 câmeras ao mesmo tempo.
+      await _stopCameraPreview();
+      if (!mounted) return;
+      setState(() {
+        _lens = next;
+        _focusPoint = null;
+      });
+      await _initCameraPreview(lens: next);
+    } finally {
+      _flipping = false;
+    }
   }
 
   // ── Pinch-zoom / tap-to-focus no preview ─────────────────────────────
@@ -718,7 +782,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
     // Foto ou vídeo: ImagePicker não tem combinado; usamos pickMedia.
     final x = await ImagePicker().pickMedia();
     if (x == null) return;
-    final isVid = _looksLikeVideo(x.path);
+    final isVid = _isLocalVideo(x);
     await _setSelected(File(x.path), isVideo: isVid);
   }
 
@@ -884,7 +948,17 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
           top: false,
           child: _file != null
               ? _buildEditor()
-              : (_isRepostMode ? _buildRepostLoader() : _buildPicker()),
+              : (_isRepostMode
+                    ? _buildRepostLoader()
+                    // Voltar (Android) durante a gravação encerra o take e
+                    // abre o editor, em vez de sair da tela e perder o vídeo.
+                    : PopScope(
+                        canPop: !_isRecording,
+                        onPopInvokedWithResult: (didPop, _) {
+                          if (!didPop && _isRecording) _stopRecording();
+                        },
+                        child: _buildPicker(),
+                      )),
         ),
       ),
     );
@@ -2386,9 +2460,13 @@ class _StoryEditorState extends State<_StoryEditor> {
     if (_isSavingToDevice) return;
     setState(() => _isSavingToDevice = true);
     try {
-      final hasAccess = await Gal.hasAccess(toAlbum: false);
+      // Salvamos no álbum "Brawe": no Android 10 (API 29) gravar em álbum
+      // exige WRITE_EXTERNAL_STORAGE e `toAlbum: false` pulava o pedido
+      // (falhava no putImage). iOS segue com acesso só-adição.
+      final toAlbum = Platform.isAndroid;
+      final hasAccess = await Gal.hasAccess(toAlbum: toAlbum);
       if (!hasAccess) {
-        final granted = await Gal.requestAccess(toAlbum: false);
+        final granted = await Gal.requestAccess(toAlbum: toAlbum);
         if (!granted) {
           if (!mounted) return;
           AppSnackBar.showError(

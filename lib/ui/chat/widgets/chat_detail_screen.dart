@@ -384,66 +384,79 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }
 
-    return Scaffold(
-      backgroundColor: context.colors.background,
-      appBar: _AppBar(
-        name: _participantName,
-        avatarUrl: _participantAvatarUrl,
-        participantId: _participantId,
-        isTyping: state.isTyping,
-        onBack: () => context.go('/chat'),
-        onMoreTap: () => _showMoreMenu(context),
-      ),
-      body: Container(
-        decoration: BoxDecoration(color: context.colors.background),
-        child: Column(
-          children: [
-            if (state.errorMessage != null)
-              Container(
-                width: double.infinity,
-                color: AppColors.mutedRed.withValues(alpha: 0.15),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 6,
-                ),
-                child: Text(
-                  state.errorMessage!,
-                  style: const TextStyle(
-                    color: AppColors.mutedRed,
-                    fontSize: 12,
+    // Voltar do Android quando a conversa foi aberta com `go` (ex.: nova
+    // conversa) e não há nada embaixo na pilha: sem isto o app FECHAVA.
+    // Agora volta para a lista de conversas. No iOS: sem efeito.
+    final exitToList = Platform.isAndroid && !context.canPop();
+    return PopScope(
+      canPop: !exitToList,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && exitToList) context.go('/chat');
+      },
+      child: Scaffold(
+        backgroundColor: context.colors.background,
+        appBar: _AppBar(
+          name: _participantName,
+          avatarUrl: _participantAvatarUrl,
+          participantId: _participantId,
+          isTyping: state.isTyping,
+          // Volta para quem abriu a conversa (perfil, loja, carteira…), igual
+          // ao voltar do sistema/gesto; só cai na lista se não houver pilha.
+          onBack: () =>
+              context.canPop() ? context.pop() : context.go('/chat'),
+          onMoreTap: () => _showMoreMenu(context),
+        ),
+        body: Container(
+          decoration: BoxDecoration(color: context.colors.background),
+          child: Column(
+            children: [
+              if (state.errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  color: AppColors.mutedRed.withValues(alpha: 0.15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    state.errorMessage!,
+                    style: const TextStyle(
+                      color: AppColors.mutedRed,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
+              Expanded(
+                child: state.messages.isEmpty
+                    ? const _EmptyState()
+                    : _MessageList(
+                        conversationId: widget.conversationId,
+                        messages: state.messages,
+                        scrollController: _scrollCtrl,
+                        avatarUrl: _participantAvatarUrl,
+                        isLoadingMore: state.isLoadingMore,
+                        isTyping: state.isTyping,
+                        onReply: _setReply,
+                        onReact: _onReact,
+                      ),
               ),
-            Expanded(
-              child: state.messages.isEmpty
-                  ? const _EmptyState()
-                  : _MessageList(
-                      conversationId: widget.conversationId,
-                      messages: state.messages,
-                      scrollController: _scrollCtrl,
-                      avatarUrl: _participantAvatarUrl,
-                      isLoadingMore: state.isLoadingMore,
-                      isTyping: state.isTyping,
-                      onReply: _setReply,
-                      onReact: _onReact,
-                    ),
-            ),
-            _Composer(
-              controller: _messageCtrl,
-              conversationId: widget.conversationId,
-              hasText: _hasText,
-              isSending: state.isSending,
-              viewOnce: _viewOnce,
-              replyingTo: _replyingTo,
-              onClearReply: _clearReply,
-              onToggleViewOnce: () => setState(() => _viewOnce = !_viewOnce),
-              onChanged: _onTextChanged,
-              onSend: _send,
-              onPickImage: _pickAndSendImage,
-              onSendGif: _sendGif,
-              onScrollToBottom: _scrollToBottom,
-            ),
-          ],
+              _Composer(
+                controller: _messageCtrl,
+                conversationId: widget.conversationId,
+                hasText: _hasText,
+                isSending: state.isSending,
+                viewOnce: _viewOnce,
+                replyingTo: _replyingTo,
+                onClearReply: _clearReply,
+                onToggleViewOnce: () => setState(() => _viewOnce = !_viewOnce),
+                onChanged: _onTextChanged,
+                onSend: _send,
+                onPickImage: _pickAndSendImage,
+                onSendGif: _sendGif,
+                onScrollToBottom: _scrollToBottom,
+              ),
+            ],
+          ),
         ),
       ),
     );
