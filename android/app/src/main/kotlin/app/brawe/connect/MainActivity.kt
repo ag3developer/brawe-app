@@ -1,31 +1,30 @@
 package app.brawe.connect
 
+import android.graphics.Color
 import android.os.Bundle
-import androidx.core.view.WindowCompat
-import io.flutter.embedding.android.FlutterActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
 
     private val CHANNEL = "com.brawe/audioProcessor"
     private val processor = AudioProcessor.instance
 
-    // Android 15 (targetSdk 35) exibe apps de ponta a ponta (edge-to-edge)
-    // por padrão. `FlutterActivity` estende `Activity` diretamente (não
-    // `ComponentActivity`), então a extension `enableEdgeToEdge()` do
-    // androidx.activity NÃO se aplica aqui — usamos diretamente
-    // `WindowCompat.setDecorFitsSystemWindows(window, false)`, que é a
-    // implementação subjacente usada por `enableEdgeToEdge()` e funciona
-    // com qualquer Activity. Deve ser chamado ANTES de `super.onCreate()`
-    // para que o sistema saiba, desde o primeiro frame, que o app vai
-    // desenhar por baixo das barras de status/navegação — evitando o
-    // "flash" de barras opacas antes do primeiro frame do Flutter. O
-    // tratamento de WindowInsets (SafeArea, MediaQuery.padding/viewInsets)
-    // continua sendo feito no lado Flutter. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md
-    // (Fase A) para detalhes.
+    // Android 15 (targetSdk 35) mostra o app de ponta a ponta. Usamos o
+    // caminho oficial recomendado pelo Play Console, `enableEdgeToEdge()`,
+    // que também funciona nas versões antigas do Android (barras
+    // transparentes; ícones claros/escuros conforme o tema do sistema).
+    // `FlutterFragmentActivity` (e não `FlutterActivity`) porque a extensão
+    // vem de `ComponentActivity` — e é o tipo que a biometria (local_auth)
+    // também exige. Os recuos (SafeArea/MediaQuery) são tratados no Flutter.
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
     }
 

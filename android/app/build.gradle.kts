@@ -30,7 +30,8 @@ if (hasReleaseKeystore) {
 
 android {
     namespace = "app.brawe.connect"
-    compileSdk = flutter.compileSdkVersion
+    // Play Store exige targetSdk 36 (Android 16); compila com o mesmo nível.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -50,7 +51,7 @@ android {
         // flutter_local_notifications 21) exigem minSdk 24+. targetSdk 35 é
         // exigência do Google Play em 2025.
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // Camera + Firebase + video_player passam de 64K métodos.
@@ -102,6 +103,8 @@ dependencies {
     // do Flutter, evitando quebra silenciosa caso o Flutter baixe outra
     // versão da dependência.
     implementation("androidx.core:core-ktx:1.15.0")
+    // enableEdgeToEdge() (edge-to-edge oficial do Android 15)
+    implementation("androidx.activity:activity-ktx:1.9.3")
 }
 
 flutter {
