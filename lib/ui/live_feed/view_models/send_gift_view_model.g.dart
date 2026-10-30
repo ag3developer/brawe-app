@@ -41,7 +41,7 @@ final class SendGiftViewModelProvider
   }
 }
 
-String _$sendGiftViewModelHash() => r'7708c28a36fc3791072424c1d7c4ebed085674f2';
+String _$sendGiftViewModelHash() => r'd52cb6c627ce47edff5c7779a9e88b8885958ca0';
 
 abstract class _$SendGiftViewModel extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();

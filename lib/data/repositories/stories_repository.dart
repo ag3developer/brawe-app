@@ -267,6 +267,7 @@ class StoriesRepository {
       mediaUrl: (json['media_url'] ?? '') as String,
       mediaType: (json['media_type'] ?? 'photo') as String,
       thumbnailUrl: json['thumbnail_url'] as String?,
+      hlsUrl: json['hls_url'] as String?,
       overlayUrl: json['overlay_url'] as String?,
       caption: json['caption'] as String?,
       durationSeconds: json['duration_seconds'] as int?,

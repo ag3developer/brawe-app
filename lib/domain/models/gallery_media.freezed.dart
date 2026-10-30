@@ -16,7 +16,8 @@ T _$identity<T>(T value) => value;
 mixin _$GalleryMedia {
 
  String get id;@JsonKey(name: 'user_id') String get userId;@JsonKey(name: 'media_type') String get mediaType;// 'photo' | 'video'
- int get position; String get url;@JsonKey(name: 'thumbnail_url') String? get thumbnailUrl; String? get caption; int? get width; int? get height;@JsonKey(name: 'duration_seconds') int? get durationSeconds;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType;@JsonKey(name: 'views_count') int get viewsCount;@JsonKey(name: 'likes_count') int get likesCount;@JsonKey(name: 'is_liked') bool get isLiked;@JsonKey(name: 'created_at') String? get createdAt;
+ int get position; String get url;@JsonKey(name: 'thumbnail_url') String? get thumbnailUrl;/// Versão leve do vídeo (HLS do Bunny), quando já foi convertido.
+@JsonKey(name: 'hls_url') String? get hlsUrl; String? get caption; int? get width; int? get height;@JsonKey(name: 'duration_seconds') int? get durationSeconds;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType;@JsonKey(name: 'views_count') int get viewsCount;@JsonKey(name: 'likes_count') int get likesCount;@JsonKey(name: 'is_liked') bool get isLiked;@JsonKey(name: 'created_at') String? get createdAt;
 /// Create a copy of GalleryMedia
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +30,16 @@ $GalleryMediaCopyWith<GalleryMedia> get copyWith => _$GalleryMediaCopyWithImpl<G
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GalleryMedia&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.position, position) || other.position == position)&&(identical(other.url, url) || other.url == url)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.isLiked, isLiked) || other.isLiked == isLiked)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GalleryMedia&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.position, position) || other.position == position)&&(identical(other.url, url) || other.url == url)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.hlsUrl, hlsUrl) || other.hlsUrl == hlsUrl)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.isLiked, isLiked) || other.isLiked == isLiked)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,mediaType,position,url,thumbnailUrl,caption,width,height,durationSeconds,fileSize,mimeType,viewsCount,likesCount,isLiked,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,mediaType,position,url,thumbnailUrl,hlsUrl,caption,width,height,durationSeconds,fileSize,mimeType,viewsCount,likesCount,isLiked,createdAt);
 
 @override
 String toString() {
-  return 'GalleryMedia(id: $id, userId: $userId, mediaType: $mediaType, position: $position, url: $url, thumbnailUrl: $thumbnailUrl, caption: $caption, width: $width, height: $height, durationSeconds: $durationSeconds, fileSize: $fileSize, mimeType: $mimeType, viewsCount: $viewsCount, likesCount: $likesCount, isLiked: $isLiked, createdAt: $createdAt)';
+  return 'GalleryMedia(id: $id, userId: $userId, mediaType: $mediaType, position: $position, url: $url, thumbnailUrl: $thumbnailUrl, hlsUrl: $hlsUrl, caption: $caption, width: $width, height: $height, durationSeconds: $durationSeconds, fileSize: $fileSize, mimeType: $mimeType, viewsCount: $viewsCount, likesCount: $likesCount, isLiked: $isLiked, createdAt: $createdAt)';
 }
 
 
@@ -49,7 +50,7 @@ abstract mixin class $GalleryMediaCopyWith<$Res>  {
   factory $GalleryMediaCopyWith(GalleryMedia value, $Res Function(GalleryMedia) _then) = _$GalleryMediaCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'media_type') String mediaType, int position, String url,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl, String? caption, int? width, int? height,@JsonKey(name: 'duration_seconds') int? durationSeconds,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'created_at') String? createdAt
+ String id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'media_type') String mediaType, int position, String url,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'hls_url') String? hlsUrl, String? caption, int? width, int? height,@JsonKey(name: 'duration_seconds') int? durationSeconds,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -66,7 +67,7 @@ class _$GalleryMediaCopyWithImpl<$Res>
 
 /// Create a copy of GalleryMedia
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? mediaType = null,Object? position = null,Object? url = null,Object? thumbnailUrl = freezed,Object? caption = freezed,Object? width = freezed,Object? height = freezed,Object? durationSeconds = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? viewsCount = null,Object? likesCount = null,Object? isLiked = null,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? mediaType = null,Object? position = null,Object? url = null,Object? thumbnailUrl = freezed,Object? hlsUrl = freezed,Object? caption = freezed,Object? width = freezed,Object? height = freezed,Object? durationSeconds = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? viewsCount = null,Object? likesCount = null,Object? isLiked = null,Object? createdAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -74,6 +75,7 @@ as String,mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: 
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String?,hlsUrl: freezed == hlsUrl ? _self.hlsUrl : hlsUrl // ignore: cast_nullable_to_non_nullable
 as String?,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
@@ -166,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'hls_url')  String? hlsUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GalleryMedia() when $default != null:
-return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.hlsUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);case _:
   return orElse();
 
 }
@@ -187,10 +189,10 @@ return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'hls_url')  String? hlsUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _GalleryMedia():
-return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);}
+return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.hlsUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,10 +206,10 @@ return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String userId, @JsonKey(name: 'media_type')  String mediaType,  int position,  String url, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'hls_url')  String? hlsUrl,  String? caption,  int? width,  int? height, @JsonKey(name: 'duration_seconds')  int? durationSeconds, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType, @JsonKey(name: 'views_count')  int viewsCount, @JsonKey(name: 'likes_count')  int likesCount, @JsonKey(name: 'is_liked')  bool isLiked, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _GalleryMedia() when $default != null:
-return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_that.thumbnailUrl,_that.hlsUrl,_that.caption,_that.width,_that.height,_that.durationSeconds,_that.fileSize,_that.mimeType,_that.viewsCount,_that.likesCount,_that.isLiked,_that.createdAt);case _:
   return null;
 
 }
@@ -219,7 +221,7 @@ return $default(_that.id,_that.userId,_that.mediaType,_that.position,_that.url,_
 @JsonSerializable()
 
 class _GalleryMedia implements GalleryMedia {
-  const _GalleryMedia({required this.id, @JsonKey(name: 'user_id') required this.userId, @JsonKey(name: 'media_type') required this.mediaType, this.position = 0, required this.url, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, this.caption, this.width, this.height, @JsonKey(name: 'duration_seconds') this.durationSeconds, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, @JsonKey(name: 'views_count') this.viewsCount = 0, @JsonKey(name: 'likes_count') this.likesCount = 0, @JsonKey(name: 'is_liked') this.isLiked = false, @JsonKey(name: 'created_at') this.createdAt});
+  const _GalleryMedia({required this.id, @JsonKey(name: 'user_id') required this.userId, @JsonKey(name: 'media_type') required this.mediaType, this.position = 0, required this.url, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'hls_url') this.hlsUrl, this.caption, this.width, this.height, @JsonKey(name: 'duration_seconds') this.durationSeconds, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, @JsonKey(name: 'views_count') this.viewsCount = 0, @JsonKey(name: 'likes_count') this.likesCount = 0, @JsonKey(name: 'is_liked') this.isLiked = false, @JsonKey(name: 'created_at') this.createdAt});
   factory _GalleryMedia.fromJson(Map<String, dynamic> json) => _$GalleryMediaFromJson(json);
 
 @override final  String id;
@@ -229,6 +231,8 @@ class _GalleryMedia implements GalleryMedia {
 @override@JsonKey() final  int position;
 @override final  String url;
 @override@JsonKey(name: 'thumbnail_url') final  String? thumbnailUrl;
+/// Versão leve do vídeo (HLS do Bunny), quando já foi convertido.
+@override@JsonKey(name: 'hls_url') final  String? hlsUrl;
 @override final  String? caption;
 @override final  int? width;
 @override final  int? height;
@@ -253,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GalleryMedia&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.position, position) || other.position == position)&&(identical(other.url, url) || other.url == url)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.isLiked, isLiked) || other.isLiked == isLiked)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GalleryMedia&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.mediaType, mediaType) || other.mediaType == mediaType)&&(identical(other.position, position) || other.position == position)&&(identical(other.url, url) || other.url == url)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.hlsUrl, hlsUrl) || other.hlsUrl == hlsUrl)&&(identical(other.caption, caption) || other.caption == caption)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.durationSeconds, durationSeconds) || other.durationSeconds == durationSeconds)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.viewsCount, viewsCount) || other.viewsCount == viewsCount)&&(identical(other.likesCount, likesCount) || other.likesCount == likesCount)&&(identical(other.isLiked, isLiked) || other.isLiked == isLiked)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,mediaType,position,url,thumbnailUrl,caption,width,height,durationSeconds,fileSize,mimeType,viewsCount,likesCount,isLiked,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,mediaType,position,url,thumbnailUrl,hlsUrl,caption,width,height,durationSeconds,fileSize,mimeType,viewsCount,likesCount,isLiked,createdAt);
 
 @override
 String toString() {
-  return 'GalleryMedia(id: $id, userId: $userId, mediaType: $mediaType, position: $position, url: $url, thumbnailUrl: $thumbnailUrl, caption: $caption, width: $width, height: $height, durationSeconds: $durationSeconds, fileSize: $fileSize, mimeType: $mimeType, viewsCount: $viewsCount, likesCount: $likesCount, isLiked: $isLiked, createdAt: $createdAt)';
+  return 'GalleryMedia(id: $id, userId: $userId, mediaType: $mediaType, position: $position, url: $url, thumbnailUrl: $thumbnailUrl, hlsUrl: $hlsUrl, caption: $caption, width: $width, height: $height, durationSeconds: $durationSeconds, fileSize: $fileSize, mimeType: $mimeType, viewsCount: $viewsCount, likesCount: $likesCount, isLiked: $isLiked, createdAt: $createdAt)';
 }
 
 
@@ -273,7 +277,7 @@ abstract mixin class _$GalleryMediaCopyWith<$Res> implements $GalleryMediaCopyWi
   factory _$GalleryMediaCopyWith(_GalleryMedia value, $Res Function(_GalleryMedia) _then) = __$GalleryMediaCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'media_type') String mediaType, int position, String url,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl, String? caption, int? width, int? height,@JsonKey(name: 'duration_seconds') int? durationSeconds,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'created_at') String? createdAt
+ String id,@JsonKey(name: 'user_id') String userId,@JsonKey(name: 'media_type') String mediaType, int position, String url,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'hls_url') String? hlsUrl, String? caption, int? width, int? height,@JsonKey(name: 'duration_seconds') int? durationSeconds,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType,@JsonKey(name: 'views_count') int viewsCount,@JsonKey(name: 'likes_count') int likesCount,@JsonKey(name: 'is_liked') bool isLiked,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -290,7 +294,7 @@ class __$GalleryMediaCopyWithImpl<$Res>
 
 /// Create a copy of GalleryMedia
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? mediaType = null,Object? position = null,Object? url = null,Object? thumbnailUrl = freezed,Object? caption = freezed,Object? width = freezed,Object? height = freezed,Object? durationSeconds = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? viewsCount = null,Object? likesCount = null,Object? isLiked = null,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? mediaType = null,Object? position = null,Object? url = null,Object? thumbnailUrl = freezed,Object? hlsUrl = freezed,Object? caption = freezed,Object? width = freezed,Object? height = freezed,Object? durationSeconds = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? viewsCount = null,Object? likesCount = null,Object? isLiked = null,Object? createdAt = freezed,}) {
   return _then(_GalleryMedia(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -298,6 +302,7 @@ as String,mediaType: null == mediaType ? _self.mediaType : mediaType // ignore: 
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
+as String?,hlsUrl: freezed == hlsUrl ? _self.hlsUrl : hlsUrl // ignore: cast_nullable_to_non_nullable
 as String?,caption: freezed == caption ? _self.caption : caption // ignore: cast_nullable_to_non_nullable
 as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable

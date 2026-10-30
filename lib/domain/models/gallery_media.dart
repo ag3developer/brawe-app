@@ -12,6 +12,8 @@ sealed class GalleryMedia with _$GalleryMedia {
     @Default(0) int position,
     required String url,
     @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
+    /// Versão leve do vídeo (HLS do Bunny), quando já foi convertido.
+    @JsonKey(name: 'hls_url') String? hlsUrl,
     String? caption,
     int? width,
     int? height,

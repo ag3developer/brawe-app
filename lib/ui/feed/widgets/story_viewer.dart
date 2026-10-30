@@ -210,8 +210,8 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
     if (story.isVideo && story.mediaUrl.isNotEmpty) {
       final ctrl = VideoPlayerController.networkUrl(
-        Uri.parse(story.mediaUrl),
-        httpHeaders: mediaHeadersFor(story.mediaUrl),
+        Uri.parse(story.playbackUrl),
+        httpHeaders: mediaHeadersFor(story.playbackUrl),
       );
       _videoController = ctrl;
       try {
@@ -390,7 +390,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       if (s.mediaUrl.isNotEmpty) {
         if (s.isVideo) {
           // Warm-up assíncrono (DNS+TLS+manifest); não bloqueia UI.
-          unawaited(StoryMediaPrecache.warmUpVideo(s.mediaUrl));
+          unawaited(StoryMediaPrecache.warmUpVideo(s.playbackUrl));
         } else if (mounted) {
           unawaited(StoryMediaPrecache.precacheStoryImage(context, s.mediaUrl));
         }

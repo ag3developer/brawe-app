@@ -11,6 +11,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/gallery_view_model.dart';
+import '../../../core/network/media_headers.dart';
 
 /// Mini-galeria do perfil (até 6 fotos + 3 vídeos curtos).
 /// Paridade com `components/connect/ProfileGallery.tsx` do web.
@@ -399,7 +400,14 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
   void initState() {
     super.initState();
     if (widget.media.mediaType == 'video') {
-      _video = VideoPlayerController.networkUrl(Uri.parse(widget.media.url));
+      // Versão leve (HLS do Bunny) quando existe; senão o arquivo original.
+      final playUrl = (widget.media.hlsUrl?.isNotEmpty ?? false)
+          ? widget.media.hlsUrl!
+          : widget.media.url;
+      _video = VideoPlayerController.networkUrl(
+        Uri.parse(playUrl),
+        httpHeaders: mediaHeadersFor(playUrl),
+      );
       _video!.initialize().then((_) {
         if (!mounted) return;
         setState(() {

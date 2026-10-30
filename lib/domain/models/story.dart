@@ -10,6 +10,7 @@ class Story {
     required this.mediaUrl,
     this.mediaType = 'image',
     this.thumbnailUrl,
+    this.hlsUrl,
     this.overlayUrl,
     this.caption,
     this.durationSeconds,
@@ -35,6 +36,13 @@ class Story {
   final String mediaUrl;
   final String mediaType; // 'image' | 'video'
   final String? thumbnailUrl;
+
+  /// Versão leve do vídeo (HLS do Bunny), quando já foi convertido.
+  final String? hlsUrl;
+
+  /// URL para tocar: HLS leve quando existe, senão o arquivo original.
+  String get playbackUrl =>
+      (hlsUrl != null && hlsUrl!.isNotEmpty) ? hlsUrl! : mediaUrl;
 
   /// Camada de textos (PNG transparente 9:16) desenhada por cima da mídia.
   final String? overlayUrl;
@@ -107,6 +115,7 @@ class Story {
     mediaUrl: mediaUrl,
     mediaType: mediaType,
     thumbnailUrl: thumbnailUrl,
+    hlsUrl: hlsUrl,
     overlayUrl: overlayUrl,
     caption: caption,
     durationSeconds: durationSeconds,

@@ -10,49 +10,118 @@ part of 'live_room_gifts_view_model.dart';
 // ignore_for_file: type=lint, type=warning
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///
-/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-/// recebidos numa janela de 4s viram um único item com `quantity` somado
-/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+/// ============================================================================
+/// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+/// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+/// ============================================================================
 ///
-/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-/// ~5s após a última atualização — combos prorrogam o timer.
+/// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+/// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+/// enviar `display_type`).
 ///
-/// 🎬 FLUXO TIKTOK CORRETO:
-/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+/// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+/// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+/// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+/// animação (~3s de espera desnecessária).
+///
+/// **Fila visual com prioridade**: apenas presentes com
+/// `displayType.entersVisualQueue == true` (center_small, center_large,
+/// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+///   - Processa **1 animação por vez** — trivialmente garante que nunca
+///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+///     (fullscreen=30 > center_large=20 > center_small=10).
+///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+///
+/// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+/// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+/// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+/// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+///
+/// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+/// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+/// só no valor da rede, mesmo que o backend já valide (defesa em
+/// profundidade).
 
 @ProviderFor(LiveRoomGiftsViewModel)
 final liveRoomGiftsViewModelProvider = LiveRoomGiftsViewModelFamily._();
 
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///
-/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-/// recebidos numa janela de 4s viram um único item com `quantity` somado
-/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+/// ============================================================================
+/// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+/// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+/// ============================================================================
 ///
-/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-/// ~5s após a última atualização — combos prorrogam o timer.
+/// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+/// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+/// enviar `display_type`).
 ///
-/// 🎬 FLUXO TIKTOK CORRETO:
-/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+/// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+/// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+/// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+/// animação (~3s de espera desnecessária).
+///
+/// **Fila visual com prioridade**: apenas presentes com
+/// `displayType.entersVisualQueue == true` (center_small, center_large,
+/// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+///   - Processa **1 animação por vez** — trivialmente garante que nunca
+///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+///     (fullscreen=30 > center_large=20 > center_small=10).
+///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+///
+/// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+/// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+/// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+/// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+///
+/// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+/// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+/// só no valor da rede, mesmo que o backend já valide (defesa em
+/// profundidade).
 final class LiveRoomGiftsViewModelProvider
     extends $NotifierProvider<LiveRoomGiftsViewModel, List<LiveGift>> {
   /// 🎁 ViewModel das animações de presente em tempo real.
   ///
-  /// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-  /// recebidos numa janela de 4s viram um único item com `quantity` somado
-  /// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+  /// ============================================================================
+  /// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+  /// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+  /// ============================================================================
   ///
-  /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-  /// ~5s após a última atualização — combos prorrogam o timer.
+  /// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+  /// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+  /// enviar `display_type`).
   ///
-  /// 🎬 FLUXO TIKTOK CORRETO:
-  /// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-  /// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-  /// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+  /// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+  /// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+  /// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+  /// animação (~3s de espera desnecessária).
+  ///
+  /// **Fila visual com prioridade**: apenas presentes com
+  /// `displayType.entersVisualQueue == true` (center_small, center_large,
+  /// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+  ///   - Processa **1 animação por vez** — trivialmente garante que nunca
+  ///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+  ///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+  ///     (fullscreen=30 > center_large=20 > center_small=10).
+  ///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+  ///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+  ///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+  ///
+  /// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+  /// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+  /// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+  /// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+  ///
+  /// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+  /// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+  /// só no valor da rede, mesmo que o backend já valide (defesa em
+  /// profundidade).
   LiveRoomGiftsViewModelProvider._({
     required LiveRoomGiftsViewModelFamily super.from,
     required String super.argument,
@@ -99,21 +168,44 @@ final class LiveRoomGiftsViewModelProvider
 }
 
 String _$liveRoomGiftsViewModelHash() =>
-    r'a71907a812a7bf9ed6e59e248ae9027f0eb4d4cf';
+    r'a1943a1a79a887ffb1d1f271f854cb5f39a439d5';
 
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///
-/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-/// recebidos numa janela de 4s viram um único item com `quantity` somado
-/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+/// ============================================================================
+/// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+/// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+/// ============================================================================
 ///
-/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-/// ~5s após a última atualização — combos prorrogam o timer.
+/// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+/// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+/// enviar `display_type`).
 ///
-/// 🎬 FLUXO TIKTOK CORRETO:
-/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+/// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+/// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+/// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+/// animação (~3s de espera desnecessária).
+///
+/// **Fila visual com prioridade**: apenas presentes com
+/// `displayType.entersVisualQueue == true` (center_small, center_large,
+/// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+///   - Processa **1 animação por vez** — trivialmente garante que nunca
+///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+///     (fullscreen=30 > center_large=20 > center_small=10).
+///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+///
+/// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+/// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+/// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+/// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+///
+/// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+/// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+/// só no valor da rede, mesmo que o backend já valide (defesa em
+/// profundidade).
 
 final class LiveRoomGiftsViewModelFamily extends $Family
     with
@@ -135,17 +227,40 @@ final class LiveRoomGiftsViewModelFamily extends $Family
 
   /// 🎁 ViewModel das animações de presente em tempo real.
   ///
-  /// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-  /// recebidos numa janela de 4s viram um único item com `quantity` somado
-  /// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+  /// ============================================================================
+  /// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+  /// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+  /// ============================================================================
   ///
-  /// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-  /// ~5s após a última atualização — combos prorrogam o timer.
+  /// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+  /// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+  /// enviar `display_type`).
   ///
-  /// 🎬 FLUXO TIKTOK CORRETO:
-  /// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-  /// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-  /// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+  /// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+  /// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+  /// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+  /// animação (~3s de espera desnecessária).
+  ///
+  /// **Fila visual com prioridade**: apenas presentes com
+  /// `displayType.entersVisualQueue == true` (center_small, center_large,
+  /// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+  ///   - Processa **1 animação por vez** — trivialmente garante que nunca
+  ///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+  ///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+  ///     (fullscreen=30 > center_large=20 > center_small=10).
+  ///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+  ///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+  ///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+  ///
+  /// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+  /// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+  /// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+  /// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+  ///
+  /// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+  /// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+  /// só no valor da rede, mesmo que o backend já valide (defesa em
+  /// profundidade).
 
   LiveRoomGiftsViewModelProvider call(String roomId) =>
       LiveRoomGiftsViewModelProvider._(argument: roomId, from: this);
@@ -156,17 +271,40 @@ final class LiveRoomGiftsViewModelFamily extends $Family
 
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///
-/// Faz *combo* no estilo TikTok: presentes do mesmo `senderId+giftId`
-/// recebidos numa janela de 4s viram um único item com `quantity` somado
-/// (ex.: 10 rosas em rajada → "Jose Carlos enviou 🌹 x10").
+/// ============================================================================
+/// ARQUITETURA PROFISSIONAL DE EXIBIÇÃO (4 modos) — ver
+/// GIFT_DISPLAY_ARCHITECTURE_ANALYSIS.md e SVGA_NOT_SUPPORTED.md
+/// ============================================================================
 ///
-/// O state é uma lista das últimas 6 entradas; cada uma fica visível por
-/// ~5s após a última atualização — combos prorrogam o timer.
+/// Cada [LiveGift] resolve seu tipo via `LiveGift.resolvedDisplayType`
+/// (fallback retrocompatível baseado em `isFullscreen` se o backend não
+/// enviar `display_type`).
 ///
-/// 🎬 FLUXO TIKTOK CORRETO:
-/// 1. Gift chega com isAnimating=true (overlay renderiza por 3s)
-/// 2. Após 3s: isAnimating=false (ChatTicker agora renderiza por mais 5s)
-/// 3. Após mais 5s (8s total): Gift sai do state (desaparece)
+/// **Chat imediato**: TODO presente aparece IMEDIATAMENTE em `state` assim
+/// que chega — o chat (`ChatTicker`) não espera nenhuma animação terminar.
+/// Isso elimina o atraso histórico onde a mensagem só aparecia depois da
+/// animação (~3s de espera desnecessária).
+///
+/// **Fila visual com prioridade**: apenas presentes com
+/// `displayType.entersVisualQueue == true` (center_small, center_large,
+/// fullscreen — NUNCA chat) entram na fila de animações do overlay:
+///   - Processa **1 animação por vez** — trivialmente garante que nunca
+///     há dois fullscreen (ou dois de qualquer tipo) simultâneos.
+///   - Sempre escolhe a MAIOR prioridade pendente primeiro
+///     (fullscreen=30 > center_large=20 > center_small=10).
+///   - Dentro da mesma prioridade, respeita FIFO (ordem de chegada).
+///   - Tem tamanho máximo (`_maxVisualQueue`) — em overflow, descarta a
+///     entrada mais antiga da fila VISUAL (nunca a transação/chat).
+///
+/// **Combo**: mesmo sender+gift dentro da janela de 4s atualiza a entrada
+/// existente (soma quantity, atualiza timestamp) SEM reiniciar uma
+/// animação já em andamento ou já finalizada — o contador (`x5`, `x10`)
+/// simplesmente reflete o `quantity` atualizado do mesmo objeto.
+///
+/// **Duração dinâmica**: cada gift usa `LiveGift.resolvedDurationMs`, já
+/// clampado nos limites seguros do `resolvedDisplayType` — nunca confia
+/// só no valor da rede, mesmo que o backend já valide (defesa em
+/// profundidade).
 
 abstract class _$LiveRoomGiftsViewModel extends $Notifier<List<LiveGift>> {
   late final _$args = ref.$arg as String;
