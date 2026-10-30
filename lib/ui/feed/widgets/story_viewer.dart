@@ -1477,6 +1477,8 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       GiftFlightOverlay.play(
         context,
         label: result.giftName,
+        slug: result.giftSlug,
+        tier: result.giftTier,
         emoji: result.giftEmoji,
         iconUrl: result.iconUrl,
         quantity: result.quantity,

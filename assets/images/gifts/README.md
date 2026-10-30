@@ -15,9 +15,9 @@ Catálogo local de ícones de presentes usados na **galeria de seleção** duran
 ```
 assets/images/gifts/
 ├── free/             ← Tier FREE (1–9 créditos)
-│   ├── <slug>.png             (baseline 96×96 px)
-│   ├── 2.0x/<slug>.png        (192×192 px)
-│   └── 3.0x/<slug>.png        (288×288 px)
+│   ├── <slug>.png             (baseline 256×256 px)
+│   ├── 2.0x/<slug>.png        (512×512 px)
+│   └── 3.0x/<slug>.png        (768×768 px)
 ├── basic/            ← Tier BASIC (10–99 créditos)
 ├── premium/          ← Tier PREMIUM (100–999 créditos)
 ├── luxury/           ← Tier LUXURY (1k–9.9k créditos)
@@ -33,9 +33,9 @@ assets/images/gifts/
 ### Tamanho do canvas
 | Resolução | Tamanho | Onde usar |
 |---|---|---|
-| **1.0x (baseline)** | **96×96 px** | Para PNGs simples |
-| **2.0x** | **192×192 px** | Recomendado entregar |
-| **3.0x** | **288×288 px** | Recomendado entregar |
+| **1.0x (baseline)** | **256×256 px** | Para PNGs simples |
+| **2.0x** | **512×512 px** | Recomendado entregar |
+| **3.0x** | **768×768 px** | Recomendado entregar |
 | **Master art** | **512×512 px ou 1024×1024 px** | Arquivo fonte (vamos fazer downscale) |
 
 📝 **Se entregar apenas 1 PNG por gift**, faça em **1024×1024 px** que o script gera as 3 variantes automaticamente.

@@ -9,6 +9,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/widgets/gift_icon.dart';
 
 class GiftFlightOverlay {
   /// Mostra a animação. [endKey] aponta pro widget do avatar do creator;
@@ -16,6 +17,8 @@ class GiftFlightOverlay {
   static void play(
     BuildContext context, {
     required String label,
+    required String slug,
+    required String tier,
     String? emoji,
     String? iconUrl,
     int? quantity,
@@ -39,16 +42,23 @@ class GiftFlightOverlay {
 
     late OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _GiftFlight(
-        start: start,
-        end: end,
-        label: label,
-        emoji: emoji,
-        iconUrl: iconUrl,
-        quantity: quantity,
-        onDone: () {
-          entry.remove();
-        },
+      // Overlay raiz não tem Material acima: sem isto o Flutter pinta os
+      // textos (emoji, "x3") com o sublinhado amarelo de debug.
+      builder: (_) => Material(
+        type: MaterialType.transparency,
+        child: _GiftFlight(
+          start: start,
+          end: end,
+          label: label,
+          slug: slug,
+          tier: tier,
+          emoji: emoji,
+          iconUrl: iconUrl,
+          quantity: quantity,
+          onDone: () {
+            entry.remove();
+          },
+        ),
       ),
     );
     overlay.insert(entry);
@@ -60,6 +70,8 @@ class _GiftFlight extends StatefulWidget {
     required this.start,
     required this.end,
     required this.label,
+    required this.slug,
+    required this.tier,
     required this.onDone,
     this.emoji,
     this.iconUrl,
@@ -69,6 +81,8 @@ class _GiftFlight extends StatefulWidget {
   final Offset start;
   final Offset end;
   final String label;
+  final String slug;
+  final String tier;
   final String? emoji;
   final String? iconUrl;
   final int? quantity;
@@ -86,12 +100,13 @@ class _GiftFlightState extends State<_GiftFlight>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..addStatusListener((s) {
-        if (s == AnimationStatus.completed) widget.onDone();
-      });
+    _c =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 1400),
+        )..addStatusListener((s) {
+          if (s == AnimationStatus.completed) widget.onDone();
+        });
     _t = CurvedAnimation(parent: _c, curve: Curves.easeInOutCubic);
     _c.forward();
   }
@@ -111,10 +126,12 @@ class _GiftFlightState extends State<_GiftFlight>
       (s.dx + e.dx) / 2 + (e.dx - s.dx) * 0.15,
       math.min(s.dy, e.dy) - 80,
     );
-    final x = math.pow(1 - t, 2) * s.dx +
+    final x =
+        math.pow(1 - t, 2) * s.dx +
         2 * (1 - t) * t * ctrl.dx +
         math.pow(t, 2) * e.dx;
-    final y = math.pow(1 - t, 2) * s.dy +
+    final y =
+        math.pow(1 - t, 2) * s.dy +
         2 * (1 - t) * t * ctrl.dy +
         math.pow(t, 2) * e.dy;
     return Offset(x.toDouble(), y.toDouble());
@@ -162,6 +179,8 @@ class _GiftFlightState extends State<_GiftFlight>
                     child: Transform.scale(
                       scale: scale,
                       child: _GiftBubble(
+                        slug: widget.slug,
+                        tier: widget.tier,
                         emoji: widget.emoji,
                         iconUrl: widget.iconUrl,
                         quantity: widget.quantity,
@@ -179,7 +198,15 @@ class _GiftFlightState extends State<_GiftFlight>
 }
 
 class _GiftBubble extends StatelessWidget {
-  const _GiftBubble({this.emoji, this.iconUrl, this.quantity});
+  const _GiftBubble({
+    required this.slug,
+    required this.tier,
+    this.emoji,
+    this.iconUrl,
+    this.quantity,
+  });
+  final String slug;
+  final String tier;
   final String? emoji;
   final String? iconUrl;
   final int? quantity;
@@ -208,25 +235,14 @@ class _GiftBubble extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (iconUrl != null && iconUrl!.isNotEmpty)
-            SizedBox(
-              width: 50,
-              height: 50,
-              child: Image.network(
-                iconUrl!,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => _fallbackEmoji(),
-              ),
-            )
-          else
-            _fallbackEmoji(),
+          // PNG local do pacote de gifts (o icon_url do CDN ainda dá 404).
+          GiftIcon(slug: slug, tier: tier, iconUrl: iconUrl, size: 50),
           if (quantity != null && quantity! > 1)
             Positioned(
               right: 0,
               bottom: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: AppColors.braweSky,
                   borderRadius: BorderRadius.circular(10),
@@ -249,13 +265,6 @@ class _GiftBubble extends StatelessWidget {
             ),
         ],
       ),
-    );
-  }
-
-  Widget _fallbackEmoji() {
-    return Text(
-      (emoji != null && emoji!.isNotEmpty) ? emoji! : '��',
-      style: const TextStyle(fontSize: 38),
     );
   }
 }

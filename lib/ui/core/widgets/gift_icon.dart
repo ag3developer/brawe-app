@@ -55,17 +55,20 @@ class GiftIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _buildAssetChain(_assetCandidates, 0);
+    // Decodifica no tamanho exibido (o asset 3.0x tem 768px).
+    final cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    return _buildAssetChain(_assetCandidates, 0, cachePx);
   }
 
-  Widget _buildAssetChain(List<String> paths, int index) {
+  Widget _buildAssetChain(List<String> paths, int index, int cachePx) {
     if (index >= paths.length) return _buildNetworkOrFallback();
     return Image.asset(
       paths[index],
       width: size,
       height: size,
+      cacheWidth: cachePx,
       fit: BoxFit.contain,
-      errorBuilder: (_, _, _) => _buildAssetChain(paths, index + 1),
+      errorBuilder: (_, _, _) => _buildAssetChain(paths, index + 1, cachePx),
     );
   }
 

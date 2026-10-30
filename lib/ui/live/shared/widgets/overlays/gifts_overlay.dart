@@ -809,10 +809,14 @@ class _GiftIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final assetPath = 'assets/images/gifts/${gift.tier}/${gift.slug}.png';
+    // O asset 3.0x tem 768px (pensado pra animação grande); na sacola
+    // decodifica só no tamanho do tile pra não pesar na memória.
+    final cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
     return Image.asset(
       assetPath,
       width: size,
       height: size,
+      cacheWidth: cachePx,
       fit: BoxFit.contain,
       errorBuilder: (_, _, _) {
         if (gift.iconUrl != null && gift.iconUrl!.isNotEmpty) {

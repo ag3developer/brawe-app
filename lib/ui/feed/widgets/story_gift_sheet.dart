@@ -21,6 +21,8 @@ class StoryGiftResult {
   const StoryGiftResult({
     required this.giftId,
     required this.giftName,
+    required this.giftSlug,
+    required this.giftTier,
     required this.giftEmoji,
     required this.iconUrl,
     required this.quantity,
@@ -29,6 +31,8 @@ class StoryGiftResult {
 
   final String giftId;
   final String giftName;
+  final String giftSlug;
+  final String giftTier;
   final String? giftEmoji;
   final String? iconUrl;
   final int quantity;
@@ -113,6 +117,8 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
         StoryGiftResult(
           giftId: gift.id,
           giftName: gift.name,
+          giftSlug: gift.slug,
+          giftTier: gift.tier,
           giftEmoji: gift.emoji,
           iconUrl: gift.iconUrl,
           quantity: _quantity,
@@ -567,6 +573,7 @@ class _GiftIcon extends StatelessWidget {
         assetPath,
         width: _size,
         height: _size,
+        cacheWidth: (_size * MediaQuery.devicePixelRatioOf(context)).round(),
         fit: BoxFit.contain,
         errorBuilder: (_, _, _) {
           final iconUrl = gift.iconUrl;
