@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../core/themes/app_colors.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
@@ -16,12 +18,17 @@ class ShareLiveSheet extends ConsumerStatefulWidget {
     super.key,
     required this.roomId,
     required this.title,
+    this.slug,
     this.streamerName,
     this.thumbnailUrl,
   });
 
   final String roomId;
   final String title;
+
+  /// Slug do link público (`brawe.app/live/<slug>`) — habilita o
+  /// compartilhamento externo (WhatsApp, Instagram…).
+  final String? slug;
   final String? streamerName;
   final String? thumbnailUrl;
 
@@ -29,6 +36,7 @@ class ShareLiveSheet extends ConsumerStatefulWidget {
     BuildContext context, {
     required String roomId,
     required String title,
+    String? slug,
     String? streamerName,
     String? thumbnailUrl,
   }) {
@@ -40,6 +48,7 @@ class ShareLiveSheet extends ConsumerStatefulWidget {
       builder: (_) => ShareLiveSheet(
         roomId: roomId,
         title: title,
+        slug: slug,
         streamerName: streamerName,
         thumbnailUrl: thumbnailUrl,
       ),
@@ -122,7 +131,21 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         .toList(growable: false);
   }
 
+  /// Limite do backend por envio (`/live/rooms/{id}/share`).
+  static const _maxRecipients = 50;
+
   void _toggle(String userId) {
+    if (!_selectedUserIds.contains(userId) &&
+        _selectedUserIds.length >= _maxRecipients) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Você pode enviar para até 50 pessoas por vez'),
+          ),
+        );
+      return;
+    }
     setState(() {
       if (_selectedUserIds.contains(userId)) {
         _selectedUserIds.remove(userId);
@@ -130,6 +153,22 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         _selectedUserIds.add(userId);
       }
     });
+  }
+
+  /// Compartilhamento EXTERNO (sistema): WhatsApp, Instagram, SMS…
+  Future<void> _shareExternally() async {
+    final slug = widget.slug;
+    if (slug == null || slug.isEmpty) return;
+    final url = AppConstants.liveUrl(slug);
+    final who = widget.streamerName?.trim();
+    final text = who != null && who.isNotEmpty
+        ? '$who está ao vivo no Brawe: ${widget.title}\n$url'
+        : 'Estou ao vivo no Brawe: ${widget.title}\n$url';
+    try {
+      await SharePlus.instance.share(ShareParams(text: text));
+    } catch (e) {
+      debugPrint('[ShareLiveSheet] external share failed: $e');
+    }
   }
 
   Future<void> _send() async {
@@ -218,17 +257,27 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   );
 
   Widget _header() => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-    child: Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        S.of(context).shareLiveTitle,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+    padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            S.of(context).shareLiveTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ),
-      ),
+        if (widget.slug != null && widget.slug!.isNotEmpty)
+          TextButton.icon(
+            onPressed: _shareExternally,
+            icon: const Icon(Icons.ios_share_rounded, size: 18),
+            label: const Text('Outros apps'),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          ),
+      ],
     ),
   );
 

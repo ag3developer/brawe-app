@@ -37,6 +37,10 @@ sealed class PostResponseDto with _$PostResponseDto {
     required String id,
     required String content,
     @JsonKey(name: 'image_url') String? imageUrl,
+    // Versão convertida pelo Bunny Stream (HLS adaptativo + capa). Null
+    // enquanto converte ou se o servidor não tiver a conversão ativa.
+    @JsonKey(name: 'hls_url') String? hlsUrl,
+    @JsonKey(name: 'hls_thumbnail_url') String? hlsThumbnailUrl,
     @JsonKey(name: 'likes_count') required int likesCount,
     @JsonKey(name: 'comments_count') required int commentsCount,
     @JsonKey(name: 'reposts_count') required int repostsCount,
@@ -69,6 +73,8 @@ extension PostResponseDtoMapper on PostResponseDto {
       id: id,
       content: content,
       imageUrl: imageUrl,
+      hlsUrl: hlsUrl,
+      hlsThumbnailUrl: hlsThumbnailUrl,
       likesCount: likesCount,
       commentsCount: commentsCount,
       repostsCount: repostsCount,

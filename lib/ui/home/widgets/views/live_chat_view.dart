@@ -65,12 +65,13 @@ class LiveChatView extends StatelessWidget {
         ),
 
         // ── Bloco único inferior esquerdo (sem sobreposições) ──
-        // Margem direita generosa para o ActionRail (76px) + bottom acima
-        // da tab bar do app (~96px).
+        // Margem direita generosa para o ActionRail (76px). A base do card
+        // já é o topo da tab bar (extendBody: false) — antes somava os
+        // ~78pt da tab bar de novo.
         Positioned(
           left: 16,
           right: 88,
-          bottom: 96,
+          bottom: 18,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

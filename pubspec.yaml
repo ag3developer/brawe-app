@@ -59,7 +59,10 @@ dependencies:
   path_provider: ^2.1.5
   wakelock_plus: ^1.2.11
   permission_handler: ^11.3.1
-  rtmp_broadcaster: ^2.3.4
+  # Cópia local com patches da Brawe (gancho de processamento de áudio no
+  # iOS, bitrate). Ver packages/rtmp_broadcaster/BRAWE_PATCHES.md.
+  rtmp_broadcaster:
+    path: packages/rtmp_broadcaster
   share_plus: ^12.0.1
   cached_network_image: ^3.4.1
   # lucide_icons 0.257.0 está abandonada (3 anos sem manutenção) e usa
@@ -136,6 +139,7 @@ dependencies:
   # Versão do app (lida do pubspec/Info.plist/AndroidManifest em runtime).
   package_info_plus: ^8.0.0
   lottie: ^3.5.1
+  flutter_volume_controller: ^2.0.2
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que

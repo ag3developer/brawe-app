@@ -126,7 +126,8 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
       final post = await repo.getById(widget.postId);
       if (!mounted || session != _session) return;
       _post = post;
-      final url = widget.initialUrl ?? post.imageUrl;
+      // HLS leve (Bunny) quando já convertido; senão o original.
+      final url = post.hlsUrl ?? widget.initialUrl ?? post.imageUrl;
       if (url == null || url.isEmpty) {
         setState(() {
           _loading = false;
@@ -402,12 +403,11 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     final post = _post;
     if (post == null) return;
     ref.read(feedbackServiceProvider).share();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          ShareToChatSheet(postId: post.id, postCaption: post.content),
+    ShareToChatSheet.show(
+      context,
+      postId: post.id,
+      postCaption: post.content,
+      storyMediaUrl: post.imageUrl,
     );
   }
 

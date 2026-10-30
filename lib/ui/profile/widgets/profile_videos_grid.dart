@@ -108,10 +108,17 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
   bool _ready = false;
   bool _failed = false;
 
+  /// Capa gerada pelo Bunny: quando existe, a miniatura é só uma imagem —
+  /// sem abrir um player de vídeo por célula da grade.
+  String? get _posterUrl {
+    final u = widget.post.hlsThumbnailUrl;
+    return (u != null && u.isNotEmpty) ? u : null;
+  }
+
   @override
   void initState() {
     super.initState();
-    _initThumb();
+    if (_posterUrl == null) _initThumb();
   }
 
   /// Carrega o vídeo, posiciona no primeiro frame e mantém pausado
@@ -176,6 +183,13 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
             // Fundo escuro fallback
             Container(color: const Color(0xFF111122)),
 
+            if (_posterUrl != null)
+              Image.network(
+                _posterUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+
             // Frame real do vídeo (preview)
             if (_ready && _ctrl != null)
               ClipRRect(
@@ -191,7 +205,7 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
               ),
 
             // Loading shimmer-ish enquanto carrega
-            if (!_ready && !_failed)
+            if (_posterUrl == null && !_ready && !_failed)
               const Center(
                 child: SizedBox(
                   width: 18,
@@ -425,7 +439,9 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
     final url = post.imageUrl;
     if (url == null || url.isEmpty) return;
     HapticFeedback.selectionClick();
-    Navigator.of(context).push(
+    // rootNavigator: o editor de story é tela cheia — cobre a barra de
+    // navegação (antes abria dentro da aba e a nav ficava por cima).
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ForceDarkTheme(
@@ -576,7 +592,8 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
   }
 
   Future<void> _init() async {
-    final url = widget.post.imageUrl ?? '';
+    // HLS leve (Bunny) quando já convertido; senão o arquivo original.
+    final url = widget.post.hlsUrl ?? widget.post.imageUrl ?? '';
     if (url.isEmpty) {
       if (mounted) setState(() => _failed = true);
       return;

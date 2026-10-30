@@ -12,11 +12,14 @@ import 'package:camera/camera.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart'
+    show openAppSettings;
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../domain/models/sound.dart';
 import '../../shared/widgets/volume_mixer_sheet.dart';
@@ -36,12 +39,10 @@ import 'story_video_trim_screen.dart';
 ///    pelo botão "scissors" da top bar. Permite cortar o trecho que
 ///    quiser dentro do limite de 15s. Usa APIs nativas (sem ffmpeg).
 ///
-/// TODO(video-overlays): textos/transformações em vídeo ainda não são
-/// renderizados no arquivo final (somente em fotos via flatten PNG).
-/// Seria preciso ffmpeg_kit_flutter pra rasterizar overlays na timeline,
-/// o que custa ~25MB no APK + licenciamento LGPL/GPL — fora de escopo
-/// do MVP. Por ora vídeos publicam o arquivo original (cortado se passar
-/// pelo trim), e os overlays vivem só na composição.
+/// Textos em VÍDEO: o editor exporta só as camadas como um PNG
+/// transparente 1080×1920 ("overlay", enviado via `overlayPath` no
+/// `createStory`) que o viewer desenha por cima do vídeo — sem ffmpeg.
+/// Em FOTO o editor faz flatten (mídia + transform + textos) num PNG 9:16.
 class StoryComposerScreen extends ConsumerStatefulWidget {
   const StoryComposerScreen({
     super.key,
@@ -62,7 +63,8 @@ class StoryComposerScreen extends ConsumerStatefulWidget {
       _StoryComposerScreenState();
 }
 
-class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
+class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
+    with WidgetsBindingObserver {
   File? _file;
   bool _isVideo = false;
   bool _isLoading = false;
@@ -116,6 +118,23 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   CameraController? _camCtrl;
   Future<void>? _camInitFuture;
   bool _camAvailable = false;
+  bool _camInitializing = false;
+  bool _camPermissionDenied = false;
+  List<CameraDescription> _cameras = const [];
+
+  /// Direção atual — frontal (selfie) por padrão.
+  CameraLensDirection _lens = CameraLensDirection.front;
+
+  /// Invalida inits em voo quando a câmera é trocada/parada.
+  int _camGeneration = 0;
+  double _minZoom = 1;
+  double _maxZoom = 1;
+  double _zoom = 1;
+  double _zoomBase = 1;
+  final ValueNotifier<double?> _zoomLabel = ValueNotifier(null);
+  Timer? _zoomLabelTimer;
+  Offset? _focusPoint;
+  Timer? _focusTimer;
 
   /// Resolução-alvo da câmera (foto + vídeo do composer).
   ///
@@ -153,7 +172,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   Duration _previousSegmentsTotal = Duration.zero;
   Timer? _recordTicker;
   Duration _currentSegmentElapsed = Duration.zero;
-  bool _flashOn = false;
+  _StoryFlash _flash = _StoryFlash.off;
 
   // ── Repost de post remoto (initialRemoteUrl) ────────────────────────
   /// True enquanto a tela está em modo "repost" (mídia remota baixando).
@@ -161,9 +180,13 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   bool _isRepostMode = false;
   String? _remoteError;
 
+  /// Story "só texto" (placeholder PNG + fundo gradiente no editor).
+  bool _isTextOnly = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final remote = widget.initialRemoteUrl;
     if (remote != null && remote.isNotEmpty) {
       _isRepostMode = true;
@@ -175,7 +198,11 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _recordTicker?.cancel();
+    _zoomLabelTimer?.cancel();
+    _focusTimer?.cancel();
+    _zoomLabel.dispose();
     _videoCtrl?.dispose();
     _camCtrl?.dispose();
     ref.read(soundPlayerViewModelProvider.notifier).stop();
@@ -266,14 +293,32 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     );
   }
 
-  Future<void> _initCameraPreview() async {
+  /// Inicializa a câmera na direção pedida (default: a atual, frontal no
+  /// 1º acesso). Escolhe a PRIMEIRA lente daquela direção — devices com
+  /// várias lentes traseiras não caem na ultra-wide/tele por índice.
+  Future<void> _initCameraPreview({CameraLensDirection? lens}) async {
+    final gen = ++_camGeneration;
+    final target = lens ?? _lens;
+    if (mounted) {
+      setState(() {
+        _camInitializing = true;
+        _camPermissionDenied = false;
+      });
+    }
     try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) return;
-      // Prefer front camera (selfie) for stories
-      final cam = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.front,
-        orElse: () => cameras.first,
+      if (_cameras.isEmpty) _cameras = await availableCameras();
+      if (_cameras.isEmpty) {
+        if (mounted && gen == _camGeneration) {
+          setState(() {
+            _camAvailable = false;
+            _camInitializing = false;
+          });
+        }
+        return;
+      }
+      final cam = _cameras.firstWhere(
+        (c) => c.lensDirection == target,
+        orElse: () => _cameras.first,
       );
       final ctrl = CameraController(
         cam,
@@ -283,25 +328,85 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
       );
       _camInitFuture = ctrl.initialize();
       await _camInitFuture;
-      if (!mounted) {
+      // Corrida: a tela mudou (editor aberto, flip, app pausado) enquanto
+      // inicializava → descarta este controller.
+      if (!mounted || gen != _camGeneration || _file != null) {
+        await ctrl.dispose();
+        return;
+      }
+      var minZ = 1.0;
+      var maxZ = 1.0;
+      try {
+        minZ = await ctrl.getMinZoomLevel();
+        maxZ = await ctrl.getMaxZoomLevel();
+      } catch (_) {}
+      try {
+        await ctrl.setFlashMode(FlashMode.off);
+      } catch (_) {}
+      if (!mounted || gen != _camGeneration) {
         await ctrl.dispose();
         return;
       }
       setState(() {
         _camCtrl = ctrl;
         _camAvailable = true;
+        _camInitializing = false;
+        _lens = cam.lensDirection;
+        _minZoom = minZ;
+        _maxZoom = math.max(minZ, math.min(maxZ, 10.0));
+        _zoom = minZ;
+        _flash = _StoryFlash.off;
+      });
+    } on CameraException catch (e) {
+      debugPrint('[StoryComposer] Camera init: ${e.code} ${e.description}');
+      if (!mounted || gen != _camGeneration) return;
+      setState(() {
+        _camAvailable = false;
+        _camInitializing = false;
+        _camPermissionDenied = _kPermissionErrorCodes.contains(e.code);
       });
     } catch (_) {
-      // Sem permissão / sem câmera (simulador) → fallback gradiente
-      if (mounted) setState(() => _camAvailable = false);
+      // Sem câmera (simulador) → fallback gradiente + galeria/texto.
+      if (!mounted || gen != _camGeneration) return;
+      setState(() {
+        _camAvailable = false;
+        _camInitializing = false;
+      });
     }
   }
 
+  static const Set<String> _kPermissionErrorCodes = {
+    'CameraAccessDenied',
+    'CameraAccessDeniedWithoutPrompt',
+    'CameraAccessRestricted',
+    'AudioAccessDenied',
+    'AudioAccessDeniedWithoutPrompt',
+    'AudioAccessRestricted',
+    'cameraPermission',
+  };
+
   Future<void> _stopCameraPreview() async {
+    _camGeneration++;
     final c = _camCtrl;
     _camCtrl = null;
     _camAvailable = false;
     await c?.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Só no picker (editor/repost não usam a câmera).
+    if (_file != null || _isRepostMode) return;
+    if (state == AppLifecycleState.paused) {
+      if (!_isRecording && _camCtrl != null) {
+        _stopCameraPreview().then((_) {
+          if (mounted) setState(() {});
+        });
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      // Também cobre a volta dos Ajustes após liberar a permissão.
+      if (_camCtrl == null) _initCameraPreview();
+    }
   }
 
   Future<void> _prefetchRemote(String url) async {
@@ -384,6 +489,12 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     if (ctrl == null || !ctrl.value.isInitialized) return;
     if (_isRecording) return;
     try {
+      // Flash "on" em vídeo = lanterna durante a gravação.
+      if (_flash == _StoryFlash.on && _isBackCamera) {
+        try {
+          await ctrl.setFlashMode(FlashMode.torch);
+        } catch (_) {}
+      }
       await ctrl.startVideoRecording();
       HapticFeedback.mediumImpact();
       if (!mounted) return;
@@ -456,6 +567,11 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     }
     try {
       final file = await ctrl.stopVideoRecording();
+      if (_flash == _StoryFlash.on) {
+        try {
+          await ctrl.setFlashMode(_flashModeFor(_flash));
+        } catch (_) {}
+      }
       final segDuration = _currentSegmentElapsed;
       setState(() => _isRecording = false);
 
@@ -494,45 +610,108 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     }
   }
 
-  Future<void> _toggleFlash() async {
+  bool get _isBackCamera =>
+      _camCtrl?.description.lensDirection == CameraLensDirection.back;
+
+  bool get _canFlip =>
+      _cameras.any((c) => c.lensDirection == CameraLensDirection.front) &&
+      _cameras.any((c) => c.lensDirection == CameraLensDirection.back);
+
+  FlashMode _flashModeFor(_StoryFlash f) => switch (f) {
+    _StoryFlash.off => FlashMode.off,
+    _StoryFlash.auto => FlashMode.auto,
+    _StoryFlash.on => FlashMode.always,
+  };
+
+  /// off → auto → on (só câmera traseira; o botão some na frontal).
+  Future<void> _cycleFlash() async {
     final ctrl = _camCtrl;
-    if (ctrl == null || !ctrl.value.isInitialized) return;
+    if (ctrl == null || !ctrl.value.isInitialized || _isRecording) return;
+    final next = _StoryFlash.values[(_flash.index + 1) % 3];
     try {
-      final next = !_flashOn;
-      await ctrl.setFlashMode(next ? FlashMode.torch : FlashMode.off);
-      if (!mounted) return;
-      setState(() => _flashOn = next);
+      await ctrl.setFlashMode(_flashModeFor(next));
+    } catch (_) {
+      return;
+    }
+    HapticFeedback.selectionClick();
+    if (mounted) setState(() => _flash = next);
+  }
+
+  /// Alterna entre a primeira câmera frontal e a primeira traseira.
+  /// Zoom volta ao mínimo e o flash desliga (controller novo).
+  Future<void> _flipCamera() async {
+    if (_isRecording || _camInitializing || !_canFlip) return;
+    HapticFeedback.selectionClick();
+    final next = _lens == CameraLensDirection.front
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
+    await _stopCameraPreview();
+    if (!mounted) return;
+    setState(() {
+      _lens = next;
+      _focusPoint = null;
+    });
+    await _initCameraPreview(lens: next);
+  }
+
+  // ── Pinch-zoom / tap-to-focus no preview ─────────────────────────────
+  void _onPreviewScaleStart(ScaleStartDetails d) => _zoomBase = _zoom;
+
+  void _onPreviewScaleUpdate(ScaleUpdateDetails d) {
+    final ctrl = _camCtrl;
+    if (ctrl == null || !ctrl.value.isInitialized || d.pointerCount < 2) {
+      return;
+    }
+    final z = (_zoomBase * d.scale).clamp(_minZoom, _maxZoom);
+    if ((z - _zoom).abs() < 0.01) return;
+    _zoom = z;
+    _zoomLabel.value = z;
+    _applyZoom(ctrl, z);
+  }
+
+  void _onPreviewScaleEnd(ScaleEndDetails _) {
+    _zoomLabelTimer?.cancel();
+    _zoomLabelTimer = Timer(const Duration(milliseconds: 900), () {
+      if (mounted) _zoomLabel.value = null;
+    });
+  }
+
+  Future<void> _applyZoom(CameraController ctrl, double z) async {
+    try {
+      await ctrl.setZoomLevel(z);
     } catch (_) {}
   }
 
-  Future<void> _flipCamera() async {
-    final cameras = await availableCameras();
-    if (cameras.length < 2 || _camCtrl == null) return;
-    final current = _camCtrl!.description.lensDirection;
-    final next = cameras.firstWhere(
-      (c) => c.lensDirection != current,
-      orElse: () => cameras.first,
+  Future<void> _onPreviewTapUp(TapUpDetails d, Size size) async {
+    final ctrl = _camCtrl;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    setState(() => _focusPoint = d.localPosition);
+    _focusTimer?.cancel();
+    _focusTimer = Timer(const Duration(milliseconds: 900), () {
+      if (mounted) setState(() => _focusPoint = null);
+    });
+    // Converte o ponto do canvas (cover) para o frame inteiro do preview.
+    final pv = ctrl.value.previewSize;
+    var p = Offset(
+      d.localPosition.dx / size.width,
+      d.localPosition.dy / size.height,
     );
-    await _camCtrl?.dispose();
-    final ctrl = CameraController(
-      next,
-      _kCameraResolution,
-      enableAudio: true,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
-    try {
-      await ctrl.initialize();
-      if (!mounted) {
-        await ctrl.dispose();
-        return;
-      }
-      setState(() {
-        _camCtrl = ctrl;
-        _flashOn = false;
-      });
-    } catch (_) {
-      if (mounted) setState(() => _camAvailable = false);
+    if (pv != null && pv.width > 0 && pv.height > 0) {
+      final pw = pv.height; // preview em retrato
+      final ph = pv.width;
+      final scale = math.max(size.width / pw, size.height / ph);
+      final dw = pw * scale;
+      final dh = ph * scale;
+      p = Offset(
+        (d.localPosition.dx - (size.width - dw) / 2) / dw,
+        (d.localPosition.dy - (size.height - dh) / 2) / dh,
+      );
     }
+    p = Offset(p.dx.clamp(0.0, 1.0), p.dy.clamp(0.0, 1.0));
+    try {
+      if (ctrl.value.focusPointSupported) await ctrl.setFocusPoint(p);
+      if (ctrl.value.exposurePointSupported) await ctrl.setExposurePoint(p);
+    } catch (_) {}
   }
 
   Future<void> _pickFromGallery() async {
@@ -544,8 +723,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
   }
 
   Future<void> _publish({
-    required String? caption,
+    String? caption,
     File? flattenedImage,
+    File? overlayImage,
   }) async {
     if (_file == null) return;
 
@@ -600,6 +780,8 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             soundTrimEndMs: i == 0 ? _soundTrimEndMs : null,
             soundVolume: i == 0 ? _soundVolume : 1.0,
             originalAudioVolume: i == 0 ? _originalAudioVolume : 1.0,
+            // Textos do editor (PNG transparente) — só no 1º segmento.
+            overlayPath: i == 0 ? overlayImage?.path : null,
           );
         }
       } else {
@@ -619,6 +801,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
           // `VolumeMixerSheet` (default 1.0/1.0 quando não ajustado).
           soundVolume: _soundVolume,
           originalAudioVolume: _originalAudioVolume,
+          // Vídeo: camadas de texto como PNG transparente 9:16 que o
+          // viewer desenha por cima (null em foto/sem textos).
+          overlayPath: overlayImage?.path,
         );
       }
       if (!mounted) return;
@@ -684,13 +869,23 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        top: false,
-        child: _file != null
-            ? _buildEditor()
-            : (_isRepostMode ? _buildRepostLoader() : _buildPicker()),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.black,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        // O editor posiciona o modo texto acima do teclado via viewInsets;
+        // sem isso o canvas 9:16 encolheria quando o teclado abre.
+        resizeToAvoidBottomInset: false,
+        body: SafeArea(
+          top: false,
+          child: _file != null
+              ? _buildEditor()
+              : (_isRepostMode ? _buildRepostLoader() : _buildPicker()),
+        ),
       ),
     );
   }
@@ -768,13 +963,57 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     );
   }
 
+  /// Captura (UI 2026): preview full-bleed no MESMO canvas 9:16 do editor,
+  /// X + flash no topo, anel de captura com galeria (esq.) e virar câmera
+  /// (dir.), e o seletor de modo "STORY · TEXTO" abaixo.
   Widget _buildPicker() {
+    final topPad = MediaQuery.of(context).padding.top;
+    return Column(
+      children: [
+        SizedBox(height: topPad + 4),
+        Expanded(
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: 9 / 16,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: LayoutBuilder(
+                  builder: (_, c) => _buildCameraCanvas(c.biggest),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 68,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: _isRecording ? 0 : 1,
+            child: IgnorePointer(
+              ignoring: _isRecording,
+              child: _ModeSwitcher(
+                storyLabel: S.of(context).composerModeStory,
+                textLabel: S.of(context).composerModeText,
+                onText: _createTextOnly,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCameraCanvas(Size size) {
+    final s = S.of(context);
+    final ctrl = _camCtrl;
+    final ready = _camAvailable && ctrl != null && ctrl.value.isInitialized;
+    final focus = _focusPoint;
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background: gradiente como fallback
-        Container(
-          decoration: const BoxDecoration(
+        const DecoratedBox(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFF0B0F1A), Color(0xFF1A1240), Color(0xFF0B0F1A)],
               begin: Alignment.topLeft,
@@ -782,160 +1021,279 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
             ),
           ),
         ),
-        // Prévia ao vivo da câmera (selfie por padrão)
-        if (_camAvailable && _camCtrl != null && _camCtrl!.value.isInitialized)
-          Positioned.fill(
+        if (ready)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapUp: (d) => _onPreviewTapUp(d, size),
+            onDoubleTap: _flipCamera,
+            onScaleStart: _onPreviewScaleStart,
+            onScaleUpdate: _onPreviewScaleUpdate,
+            onScaleEnd: _onPreviewScaleEnd,
             child: ClipRect(
               child: FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(
-                  width: _camCtrl!.value.previewSize?.height ?? 1,
-                  height: _camCtrl!.value.previewSize?.width ?? 1,
-                  child: CameraPreview(_camCtrl!),
+                  width: ctrl.value.previewSize?.height ?? 1,
+                  height: ctrl.value.previewSize?.width ?? 1,
+                  child: CameraPreview(ctrl),
                 ),
               ),
             ),
+          )
+        else if (_camPermissionDenied)
+          _CameraPermissionView(
+            title: s.composerCameraPermissionTitle,
+            body: s.composerCameraPermissionBody,
+            action: s.composerOpenSettings,
+            onOpenSettings: openAppSettings,
+          )
+        else if (!_camInitializing)
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.videocam_off_outlined,
+                  color: Colors.white54,
+                  size: 40,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  s.composerNoCamera,
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
           ),
-        // Vinheta para destacar controles
-        if (_camAvailable)
-          Positioned.fill(
+
+        // Vinheta sutil para legibilidade dos controles.
+        const IgnorePointer(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0x59000000),
+                  Color(0x00000000),
+                  Color(0x00000000),
+                  Color(0x66000000),
+                ],
+                stops: [0.0, 0.18, 0.7, 1.0],
+              ),
+            ),
+          ),
+        ),
+
+        if (focus != null)
+          Positioned(
+            left: focus.dx - 32,
+            top: focus.dy - 32,
             child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.45),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.55),
-                    ],
-                    stops: const [0.0, 0.35, 1.0],
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1.4, end: 1.0),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                builder: (_, v, child) =>
+                    Transform.scale(scale: v, child: child),
+                child: Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
                   ),
                 ),
               ),
             ),
           ),
-        // Conteúdo
-        Column(
-          children: [
-            const SizedBox(height: 48),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _CircleIconBtn(
-                    icon: Icons.close,
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  const Spacer(),
-                  Text(
-                    S.of(context).composerCreateStory,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 17,
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_camAvailable && !_isRecording) ...[
-                    _CircleIconBtn(
-                      icon: _flashOn ? Icons.flash_on : Icons.flash_off,
-                      onTap: _toggleFlash,
-                    ),
-                    const SizedBox(width: 8),
-                    _CircleIconBtn(
-                      icon: Icons.flip_camera_ios_outlined,
-                      onTap: _flipCamera,
-                    ),
-                  ] else
-                    const SizedBox(width: 40),
-                ],
+
+        // Topo: X (esq.) e flash (dir., só câmera traseira).
+        if (!_isRecording) ...[
+          Positioned(
+            top: 6,
+            left: 4,
+            child: _RailButton(
+              tooltip: s.composerClose,
+              onTap: () => Navigator.of(context).maybePop(),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 28,
+                shadows: _kIconShadows,
               ),
             ),
-            const Spacer(),
-            if (_isLoading)
-              const CircularProgressIndicator(color: AppColors.electricPurple)
-            else
-              _CaptureRing(
-                isRecording: _isRecording,
-                segmentProgress:
-                    (_currentSegmentElapsed.inMilliseconds /
-                            _kSegmentMax.inMilliseconds)
-                        .clamp(0.0, 1.0),
-                totalProgress:
-                    ((_previousSegmentsTotal + _currentSegmentElapsed)
-                                .inMilliseconds /
-                            _kTotalMax.inMilliseconds)
-                        .clamp(0.0, 1.0),
-                segmentBreaks: _videoSegments.isEmpty
-                    ? const []
-                    : List<double>.generate(_videoSegments.length, (i) {
-                        // posição cumulativa de cada break sobre 60s
-                        double acc = 0;
-                        for (int k = 0; k <= i; k++) {
-                          // Aproxima usando _kSegmentMax (60s) por segmento.
-                          // No fluxo "Opção B" (vídeo único) só existe 1
-                          // segmento, então o break fica em 100% e visualmente
-                          // some — comportamento esperado.
-                          acc += _kSegmentMax.inMilliseconds.toDouble();
-                        }
-                        return (acc / _kTotalMax.inMilliseconds).clamp(
-                          0.0,
-                          1.0,
-                        );
-                      }),
-                onTap: _capturePhoto,
-                onLongPressStart: _startRecording,
-                onLongPressEnd: () => _stopRecording(),
+          ),
+          if (ready && _isBackCamera)
+            Positioned(
+              top: 6,
+              right: 4,
+              child: _RailButton(
+                tooltip: s.composerFlash,
+                onTap: _cycleFlash,
+                child: Icon(
+                  switch (_flash) {
+                    _StoryFlash.off => Icons.flash_off_rounded,
+                    _StoryFlash.auto => Icons.flash_auto_rounded,
+                    _StoryFlash.on => Icons.flash_on_rounded,
+                  },
+                  color: _flash == _StoryFlash.on
+                      ? AppColors.gold
+                      : Colors.white,
+                  size: 26,
+                  shadows: _kIconShadows,
+                ),
               ),
-            const SizedBox(height: 12),
-            // Timer + hint
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _isRecording
-                  ? Text(
-                      _formatRecordTime(
-                        _previousSegmentsTotal + _currentSegmentElapsed,
-                      ),
-                      key: const ValueKey('rec-timer'),
+            ),
+        ],
+
+        // Timer de gravação.
+        if (_isRecording)
+          Positioned(
+            top: 14,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.mutedRed,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _formatRecordTime(
+                    _previousSegmentsTotal + _currentSegmentElapsed,
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Indicador de zoom.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 132,
+          child: IgnorePointer(
+            child: ValueListenableBuilder<double?>(
+              valueListenable: _zoomLabel,
+              builder: (_, z, _) => AnimatedOpacity(
+                duration: const Duration(milliseconds: 150),
+                opacity: z == null ? 0 : 1,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(z ?? 1).toStringAsFixed(1)}x',
                       style: const TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: [FontFeature.tabularFigures()],
-                      ),
-                    )
-                  : Text(
-                      S.of(context).composerCaptureHint,
-                      key: const ValueKey('rec-hint'),
-                      style: const TextStyle(
-                        color: Colors.white60,
+                        color: Colors.white,
                         fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-            ),
-            const SizedBox(height: 32),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _PickerOption(
-                    icon: Icons.photo_library_outlined,
-                    label: S.of(context).composerGallery,
-                    onTap: _pickFromGallery,
                   ),
-                  _PickerOption(
-                    icon: Icons.text_fields,
-                    label: S.of(context).composerTextOnly,
-                    onTap: _createTextOnly,
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Base: galeria · anel · virar câmera.
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 20,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Opacidade (não remoção) → o anel não "pula" ao gravar.
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 150),
+                opacity: ready && !_isRecording ? 1 : 0,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(
+                    s.composerCaptureHint,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      shadows: _kIconShadows,
+                    ),
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: _isRecording
+                          ? const SizedBox.shrink()
+                          : _GalleryButton(
+                              tooltip: s.composerGallery,
+                              onTap: _pickFromGallery,
+                            ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 92,
+                    height: 92,
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          )
+                        : ready
+                        ? _CaptureRing(
+                            isRecording: _isRecording,
+                            segmentProgress:
+                                (_currentSegmentElapsed.inMilliseconds /
+                                        _kSegmentMax.inMilliseconds)
+                                    .clamp(0.0, 1.0),
+                            totalProgress:
+                                ((_previousSegmentsTotal +
+                                                _currentSegmentElapsed)
+                                            .inMilliseconds /
+                                        _kTotalMax.inMilliseconds)
+                                    .clamp(0.0, 1.0),
+                            segmentBreaks: const [],
+                            onTap: _capturePhoto,
+                            onLongPressStart: _startRecording,
+                            onLongPressEnd: () => _stopRecording(),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: _isRecording || !_canFlip
+                          ? const SizedBox.shrink()
+                          : _RoundGlassButton(
+                              tooltip: s.composerFlipCamera,
+                              icon: Icons.cameraswitch_rounded,
+                              onTap: _flipCamera,
+                            ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -953,6 +1311,8 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     );
     // Escreve PNG mínimo 1x1 (Flutter aceita; o editor mostra gradient).
     await tmp.writeAsBytes(_kTransparentPngBytes);
+    // Antes do _setSelected: o editor precisa nascer já em modo "só texto".
+    _isTextOnly = true;
     await _setSelected(tmp, isVideo: false);
   }
 
@@ -960,15 +1320,22 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
     return _StoryEditor(
       file: _file!,
       isVideo: _isVideo,
+      isTextOnly: _isTextOnly,
       videoCtrl: _videoCtrl,
       isPublishing: _isPublishing,
       isRepost: _isRepostMode,
+      avatarUrl: ref.watch(authStateProvider).value?.avatarUrl,
       selectedSound: _selectedSound,
       onPickSound: _pickSound,
       onEditSoundTrim: _editTrim,
       onRemoveSound: _removeSound,
       onOpenVolumeMixer: _openVolumeMixer,
       onBack: () async {
+        // Repost: não há câmera/picker para voltar — fecha a tela.
+        if (_isRepostMode) {
+          Navigator.of(context).pop();
+          return;
+        }
         await _videoCtrl?.dispose();
         _videoCtrl = null;
         // Reseta estado de captura para um próximo take.
@@ -980,6 +1347,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen> {
         setState(() {
           _file = null;
           _isVideo = false;
+          _isTextOnly = false;
         });
         // Reinicializa a câmera para o próximo take (foi parada no _setSelected).
         if (!_isRepostMode) {
@@ -1094,19 +1462,17 @@ class _CaptureRing extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: isRecording
                       ? const [Colors.redAccent, Color(0xFFFF3D6E)]
-                      : const [AppColors.electricPurple, AppColors.coolCyan],
+                      : const [Colors.white, Colors.white],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color:
-                        (isRecording
-                                ? Colors.redAccent
-                                : AppColors.electricPurple)
-                            .withValues(alpha: 0.55),
-                    blurRadius: 22,
-                    spreadRadius: 2,
+                    color: isRecording
+                        ? Colors.redAccent.withValues(alpha: 0.55)
+                        : Colors.black.withValues(alpha: 0.25),
+                    blurRadius: isRecording ? 22 : 12,
+                    spreadRadius: isRecording ? 2 : 0,
                   ),
                 ],
               ),
@@ -1192,56 +1558,210 @@ class _RingProgressPainter extends CustomPainter {
       old.progress != progress || old.breaks.length != breaks.length;
 }
 
-class _PickerOption extends StatelessWidget {
-  const _PickerOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
+// ─── Captura: widgets ────────────────────────────────────────────────────────
+
+enum _StoryFlash { off, auto, on }
+
+/// Seletor de modo estilo Instagram: "STORY · TEXTO".
+class _ModeSwitcher extends StatelessWidget {
+  const _ModeSwitcher({
+    required this.storyLabel,
+    required this.textLabel,
+    required this.onText,
   });
-  final IconData icon;
-  final String label;
+
+  final String storyLabel;
+  final String textLabel;
+  final VoidCallback onText;
+
+  @override
+  Widget build(BuildContext context) {
+    TextStyle style(bool selected) => TextStyle(
+      color: selected ? Colors.white : Colors.white54,
+      fontSize: 13,
+      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+      letterSpacing: 1.2,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Semantics(
+          selected: true,
+          button: true,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(storyLabel.toUpperCase(), style: style(true)),
+          ),
+        ),
+        Container(
+          width: 4,
+          height: 4,
+          decoration: const BoxDecoration(
+            color: Colors.white38,
+            shape: BoxShape.circle,
+          ),
+        ),
+        Semantics(
+          button: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onText();
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(textLabel.toUpperCase(), style: style(false)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CameraPermissionView extends StatelessWidget {
+  const _CameraPermissionView({
+    required this.title,
+    required this.body,
+    required this.action,
+    required this.onOpenSettings,
+  });
+
+  final String title;
+  final String body;
+  final String action;
+  final Future<bool> Function() onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.no_photography_outlined,
+              color: Colors.white70,
+              size: 44,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(
+              onPressed: () => onOpenSettings(),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 12,
+                ),
+                shape: const StadiumBorder(),
+              ),
+              child: Text(
+                action,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GalleryButton extends StatelessWidget {
+  const _GalleryButton({required this.tooltip, required this.onTap});
+
+  final String tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const Icon(
+              Icons.photo_library_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoundGlassButton extends StatelessWidget {
+  const _RoundGlassButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              color: Colors.black.withValues(alpha: 0.35),
             ),
             child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class _CircleIconBtn extends StatelessWidget {
-  const _CircleIconBtn({
-    required this.icon,
-    required this.onTap,
-    this.iconColor,
-  });
+  const _CircleIconBtn({required this.icon, required this.onTap});
   final IconData icon;
   // Aceita `null` para representar estado desabilitado (ex.: enquanto a ação
   // está em progresso). `GestureDetector.onTap` já aceita callback nulo.
   final VoidCallback? onTap;
-  // Cor customizada do ícone (ex.: destacar quando um estado está ativo).
-  // `null` usa o branco padrão.
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1255,13 +1775,99 @@ class _CircleIconBtn extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
         ),
-        child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
+        child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
   }
 }
 
-// ─── Editor pós-captura ──────────────────────────────────────────────────────
+// ─── Editor pós-captura (UI 2026: canvas 9:16 + tool rail vertical) ─────────
+//
+// Estrutura:
+//  • Canvas 9:16 com cantos arredondados, centralizado entre o topo e a
+//    bottom bar — é EXATAMENTE o enquadramento que o viewer mostra.
+//  • Dentro do canvas:
+//      [_flatKey] RepaintBoundary → fundo + mídia (+ transform da foto)
+//                                   + [_overlayKey] RepaintBoundary → camadas
+//      Superfície de gestos (uma só: decide se o gesto é de uma camada de
+//      texto ou da mídia), guias de snap, lixeira, chrome (X, rail, música).
+//  • Publicação:
+//      FOTO  → flatten de [_flatKey] em 1080×1920 → `flattenedImage`.
+//      VÍDEO → só as camadas ([_overlayKey], fundo transparente) em
+//              1080×1920 → `overlayImage` (o viewer desenha por cima).
+//  • Performance: gestos atualizam um ChangeNotifier ([_CanvasStore]) e
+//    um ValueNotifier ([_MediaXform]) — o State do editor NÃO faz setState
+//    por frame, então vídeo/imagem não são reconstruídos durante o arrasto.
+
+/// Largura do export (flatten/overlay) — 1080×1920 para o canvas 9:16.
+const double _kExportWidth = 1080;
+
+/// Tamanho base do texto relativo à LARGURA do canvas (≈28pt num canvas de
+/// 390pt). Tudo relativo → mesmo layout em qualquer tela e no export.
+const double _kBaseFontFactor = 0.072;
+const double _kTextMaxWidthFactor = 0.86;
+const double _kMinFontScale = 0.5;
+const double _kMaxFontScale = 2.4;
+const double _kSnapDistancePx = 8;
+const double _kTrashSize = 56;
+const double _kTrashBottom = 20;
+const double _kCanvasRadius = 16;
+
+const LinearGradient _kBrandGradient = LinearGradient(
+  colors: [AppColors.electricPurple, AppColors.coolCyan],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+
+const List<Shadow> _kIconShadows = [
+  Shadow(color: Color(0x73000000), blurRadius: 8, offset: Offset(0, 1)),
+];
+
+/// Fundos do story "só texto" (cicla no botão de swatch do rail).
+const List<Gradient> _kTextBackgrounds = [
+  LinearGradient(
+    colors: [Color(0xFF241A5E), AppColors.electricPurple, AppColors.coolCyan],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ),
+  LinearGradient(
+    colors: [AppColors.brandPink, AppColors.amber],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ),
+  LinearGradient(
+    colors: [AppColors.midnightBlue, AppColors.coolCyan],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  ),
+  LinearGradient(
+    colors: [AppColors.success, AppColors.coolCyan],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ),
+  LinearGradient(
+    colors: [AppColors.lightViolet, AppColors.electricPurple],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  ),
+  LinearGradient(
+    colors: [AppColors.gold, AppColors.mutedRed],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ),
+  LinearGradient(
+    colors: [AppColors.darkSurfaceHighest, AppColors.darkBackground],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  ),
+  LinearGradient(colors: [Colors.black, Colors.black]),
+];
+
+enum _StoryFont { classic, modern, serif, typewriter, neon }
+
+enum _TextBg { none, translucent, solid }
+
+enum _GestureTarget { none, layer, media }
 
 class _StoryEditor extends StatefulWidget {
   const _StoryEditor({
@@ -1273,6 +1879,8 @@ class _StoryEditor extends StatefulWidget {
     required this.onPublish,
     required this.onTrim,
     this.isRepost = false,
+    this.isTextOnly = false,
+    this.avatarUrl,
     this.selectedSound,
     required this.onPickSound,
     required this.onEditSoundTrim,
@@ -1285,8 +1893,23 @@ class _StoryEditor extends StatefulWidget {
   final VideoPlayerController? videoCtrl;
   final bool isPublishing;
   final bool isRepost;
+
+  /// Story "só texto": fundo gradiente Brawe (a mídia é um PNG 1×1
+  /// transparente placeholder) e o modo texto abre automaticamente.
+  final bool isTextOnly;
+
+  /// Avatar do usuário logado (pill "Seu story").
+  final String? avatarUrl;
   final VoidCallback onBack;
-  final Future<void> Function({required String? caption, File? flattenedImage})
+
+  /// FOTO: [flattenedImage] = PNG 1080×1920 (mídia + transform + textos).
+  /// VÍDEO: [overlayImage] = PNG transparente 1080×1920 só com os textos
+  /// (null se não houver camadas).
+  final Future<void> Function({
+    String? caption,
+    File? flattenedImage,
+    File? overlayImage,
+  })
   onPublish;
 
   /// Abre a tela de trim — implementada pelo parent
@@ -1304,9 +1927,7 @@ class _StoryEditor extends StatefulWidget {
   final Future<void> Function() onEditSoundTrim;
   final VoidCallback onRemoveSound;
 
-  /// Fase D: abre o `VolumeMixerSheet` para ajustar o volume da música e
-  /// do áudio original do vídeo (só relevante quando `isVideo &&
-  /// selectedSound != null` — o botão só é exibido nesse caso).
+  /// Fase D: abre o `VolumeMixerSheet` (só em vídeo com música).
   final Future<void> Function() onOpenVolumeMixer;
 
   @override
@@ -1314,238 +1935,457 @@ class _StoryEditor extends StatefulWidget {
 }
 
 class _StoryEditorState extends State<_StoryEditor> {
-  // ⚠️ Removida a `caption` inferior — padrão moderno (Instagram/TikTok):
-  // texto mora APENAS como overlay arrastável na própria mídia. A bottom
-  // bar agora é só "Seu story" + botão Compartilhar.
-  final List<_TextLayer> _layers = [];
-  Color _currentColor = Colors.white;
-  bool _composingText = false;
+  // ── Estado do canvas (notificado sem setState) ───────────────────────
+  final _CanvasStore _store = _CanvasStore();
+  final ValueNotifier<_MediaXform> _xform = ValueNotifier(
+    const _MediaXform.identity(),
+  );
+  final Map<String, GlobalKey> _layerKeys = {};
+  int _layerSeq = 0;
+
+  final GlobalKey _canvasKey = GlobalKey();
+  final GlobalKey _flatKey = GlobalKey();
+  final GlobalKey _overlayKey = GlobalKey();
+  Size _canvasSize = Size.zero;
+
+  // ── Gestos ───────────────────────────────────────────────────────────
+  _GestureTarget _target = _GestureTarget.none;
+  Offset _lastFocal = Offset.zero;
+  Offset _rawCenter = const Offset(0.5, 0.5);
+  double _baseScale = 1;
+  double _baseRotation = 0;
+  double _mediaBaseScale = 1;
+  Offset _mediaAnchor = Offset.zero;
+
+  // ── Modo texto (compose) ─────────────────────────────────────────────
+  bool _composing = false;
   final TextEditingController _composeCtrl = TextEditingController();
+  Color _cColor = Colors.white;
+  _TextBg _cBg = _TextBg.none;
+  TextAlign _cAlign = TextAlign.center;
+  _StoryFont _cFont = _StoryFont.classic;
+  double _cFontScale = 1.0;
 
-  // Estilo de fundo do texto sendo composto (cicla com botão "A").
-  // 0 = sem fundo, 1 = preto translúcido, 2 = branco sólido (cor invertida).
-  int _composeBgStyle = 0;
-
-  // Alinhamento do parágrafo enquanto compõe (cicla com botão).
-  // Aplica-se à camada quando ela é commitada e quando o texto quebra
-  // em múltiplas linhas (single-line não muda visualmente).
-  TextAlign _composeAlign = TextAlign.center;
-
-  // Tamanho da fonte (multiplica 28). Slider vertical na lateral
-  // esquerda do overlay de composição.
-  double _composeFontScale = 1.0;
-  static const double _kMinFontScale = 0.5;
-  static const double _kMaxFontScale = 2.4;
-
-  // ── Drag para lixeira ───────────────────────────────────────────────
-  int? _draggingLayerIdx;
-  bool _hoverTrash = false;
-
-  // ── Flatten/Capture (fidelidade ao publicar) ────────────────────────
-  // Envolvemos a tela em RepaintBoundary e renderizamos um PNG com o
-  // que o usuário vê (mídia + transformação + textos). Os controles são
-  // escondidos durante a captura via [_capturing].
-  final GlobalKey _captureKey = GlobalKey();
-  bool _capturing = false;
-
-  // ── Salvar no dispositivo ───────────────────────────────────────────
-  // Spinner do botão de download enquanto a mídia é renderizada e
-  // gravada no álbum "Brawe" da galeria. Funciona pra foto (com
-  // overlays via flatten PNG) e vídeo (arquivo já cortado, sem overlays
-  // — limitação sem ffmpeg).
-  bool _isSavingToDevice = false;
-
-  // Pinch-zoom / pan da mídia (estilo Instagram).
-  final TransformationController _transformCtrl = TransformationController();
-  bool _showGuides = false;
-  Timer? _guidesTimer;
-
-  // ── Moldura (frame) — double-tap cicla pelas opções ─────────────────
-  // 0=nenhuma, 1=polaroid branca, 2=gradiente brawe
+  // ── Outros ───────────────────────────────────────────────────────────
+  /// 0 = nenhuma, 1 = polaroid, 2 = gradiente Brawe (só foto).
   int _frameStyle = 0;
 
-  String _frameLabel(BuildContext context) {
-    final s = S.of(context);
-    switch (_frameStyle) {
-      case 1:
-        return s.composerFramePolaroid;
-      case 2:
-        return s.composerFrameBrawe;
-      default:
-        return s.composerFrameNone;
+  /// Índice em [_kTextBackgrounds] (só no story "só texto").
+  int _bgIndex = 0;
+  bool _isSavingToDevice = false;
+  bool _exporting = false;
+  final ValueNotifier<String?> _toast = ValueNotifier(null);
+  Timer? _toastTimer;
+
+  static const List<Color> _palette = [
+    Colors.white,
+    Colors.black,
+    AppColors.electricPurple,
+    AppColors.coolCyan,
+    AppColors.brandPink,
+    AppColors.mutedRed,
+    AppColors.amber,
+    AppColors.gold,
+    AppColors.success,
+    AppColors.lightViolet,
+    AppColors.midnightBlue,
+  ];
+
+  bool get _canTransformMedia => !widget.isVideo && !widget.isTextOnly;
+  bool get _canFrame => !widget.isVideo && !widget.isTextOnly;
+
+  bool get _hasEdits =>
+      _store.layers.isNotEmpty ||
+      _frameStyle != 0 ||
+      _bgIndex != 0 ||
+      !_xform.value.isIdentity ||
+      widget.selectedSound != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isTextOnly) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openCompose();
+      });
     }
+  }
+
+  @override
+  void dispose() {
+    _composeCtrl.dispose();
+    _store.dispose();
+    _xform.dispose();
+    _toast.dispose();
+    _toastTimer?.cancel();
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Camadas de texto
+  // ═══════════════════════════════════════════════════════════════════
+
+  GlobalKey _keyFor(String id) => _layerKeys.putIfAbsent(id, GlobalKey.new);
+
+  _TextLayer? _layerById(String? id) {
+    if (id == null) return null;
+    final i = _store.indexOf(id);
+    return i < 0 ? null : _store.layers[i];
+  }
+
+  void _openCompose([_TextLayer? layer]) {
+    if (widget.isPublishing || _exporting) return;
+    _composeCtrl.text = layer?.text ?? '';
+    _composeCtrl.selection = TextSelection.collapsed(
+      offset: _composeCtrl.text.length,
+    );
+    if (layer != null) {
+      _cColor = layer.color;
+      _cBg = layer.bg;
+      _cAlign = layer.align;
+      _cFont = layer.font;
+      _cFontScale = layer.fontScale;
+    }
+    // Camadas novas herdam o último estilo usado (padrão Instagram).
+    _store
+      ..editingId = layer?.id
+      ..changed();
+    setState(() => _composing = true);
+  }
+
+  void _commitCompose() {
+    if (!_composing) return;
+    final txt = _composeCtrl.text.trim();
+    final editing = _layerById(_store.editingId);
+    if (editing != null) {
+      final i = _store.indexOf(editing.id);
+      if (txt.isEmpty) {
+        _store.layers.removeAt(i);
+        _layerKeys.remove(editing.id);
+      } else {
+        _store.layers[i] = editing.copyWith(
+          text: txt,
+          color: _cColor,
+          bg: _cBg,
+          align: _cAlign,
+          font: _cFont,
+          fontScale: _cFontScale,
+        );
+      }
+    } else if (txt.isNotEmpty) {
+      _store.layers.add(
+        _TextLayer(
+          id: 'l${_layerSeq++}',
+          text: txt,
+          color: _cColor,
+          bg: _cBg,
+          align: _cAlign,
+          font: _cFont,
+          fontScale: _cFontScale,
+        ),
+      );
+    }
+    _store
+      ..editingId = null
+      ..changed();
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _composing = false);
+  }
+
+  String? _hitLayer(Offset global) {
+    for (final l in _store.layers.reversed) {
+      if (l.id == _store.editingId) continue;
+      final box = _layerKeys[l.id]?.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) continue;
+      final local = box.globalToLocal(global);
+      // Tolerância extra (em px de tela) para textos pequenos.
+      final slop = 14 / l.scale.clamp(0.5, 4.0);
+      if ((Offset.zero & box.size).inflate(slop).contains(local)) return l.id;
+    }
+    return null;
+  }
+
+  RenderBox? get _canvasBox {
+    final r = _canvasKey.currentContext?.findRenderObject();
+    return r is RenderBox && r.hasSize ? r : null;
+  }
+
+  Offset _trashCenter(Size size) =>
+      Offset(size.width / 2, size.height - _kTrashBottom - _kTrashSize / 2);
+
+  void _onTapUp(TapUpDetails d) {
+    if (_target != _GestureTarget.none) return;
+    final hit = _hitLayer(d.globalPosition);
+    _openCompose(_layerById(hit));
+  }
+
+  void _onScaleStart(ScaleStartDetails d) {
+    if (_target == _GestureTarget.layer &&
+        _layerById(_store.activeId) == null) {
+      _target = _GestureTarget.none;
+    }
+    if (_target == _GestureTarget.none) {
+      final hit = _hitLayer(d.focalPoint);
+      if (hit != null) {
+        _target = _GestureTarget.layer;
+        // Traz a camada para frente.
+        final i = _store.indexOf(hit);
+        _store.layers.add(_store.layers.removeAt(i));
+        _store.activeId = hit;
+        HapticFeedback.selectionClick();
+      } else if (_canTransformMedia) {
+        _target = _GestureTarget.media;
+      } else {
+        return;
+      }
+    }
+
+    // (Re)base — também chamado quando o nº de dedos muda no meio do gesto.
+    if (_target == _GestureTarget.layer) {
+      final l = _layerById(_store.activeId)!;
+      _lastFocal = d.focalPoint;
+      _rawCenter = l.center;
+      _baseScale = l.scale;
+      _baseRotation = l.rotation;
+    } else if (_target == _GestureTarget.media) {
+      final box = _canvasBox;
+      if (box == null) return;
+      final local =
+          box.globalToLocal(d.focalPoint) - box.size.center(Offset.zero);
+      final x = _xform.value;
+      _mediaBaseScale = x.scale;
+      _mediaAnchor = (local - x.offset) / x.scale;
+    }
+  }
+
+  void _onScaleUpdate(ScaleUpdateDetails d) {
+    final box = _canvasBox;
+    if (box == null) return;
+    final size = box.size;
+
+    if (_target == _GestureTarget.layer) {
+      final l = _layerById(_store.activeId);
+      if (l == null) return;
+      final delta = d.focalPoint - _lastFocal;
+      _lastFocal = d.focalPoint;
+      _rawCenter += Offset(delta.dx / size.width, delta.dy / size.height);
+
+      var c = _rawCenter;
+      final snapX = ((c.dx - 0.5) * size.width).abs() < _kSnapDistancePx;
+      final snapY = ((c.dy - 0.5) * size.height).abs() < _kSnapDistancePx;
+      if (snapX) c = Offset(0.5, c.dy);
+      if (snapY) c = Offset(c.dx, 0.5);
+      if ((snapX && !_store.snapX) || (snapY && !_store.snapY)) {
+        HapticFeedback.selectionClick();
+      }
+      c = Offset(c.dx.clamp(-0.1, 1.1), c.dy.clamp(-0.1, 1.1));
+
+      var rot = _baseRotation + d.rotation;
+      if (rot.abs() < 0.05) rot = 0;
+
+      final local = box.globalToLocal(d.focalPoint);
+      final hover =
+          (local - _trashCenter(size)).distance < _kTrashSize / 2 + 28;
+      if (hover != _store.hoverTrash) HapticFeedback.mediumImpact();
+
+      _store.layers[_store.indexOf(l.id)] = l.copyWith(
+        center: c,
+        scale: (_baseScale * d.scale).clamp(0.25, 6.0),
+        rotation: rot,
+      );
+      _store
+        ..dragging = true
+        ..hoverTrash = hover
+        ..snapX = snapX
+        ..snapY = snapY
+        ..changed();
+    } else if (_target == _GestureTarget.media) {
+      final local = box.globalToLocal(d.focalPoint) - size.center(Offset.zero);
+      final s = (_mediaBaseScale * d.scale).clamp(0.3, 6.0);
+      var t = local - _mediaAnchor * s;
+      final snapX = t.dx.abs() < _kSnapDistancePx;
+      final snapY = t.dy.abs() < _kSnapDistancePx;
+      if (snapX) t = Offset(0, t.dy);
+      if (snapY) t = Offset(t.dx, 0);
+      if ((snapX && !_store.snapX) || (snapY && !_store.snapY)) {
+        HapticFeedback.selectionClick();
+      }
+      _xform.value = _MediaXform(scale: s, offset: t);
+      if (snapX != _store.snapX || snapY != _store.snapY || !_store.guides) {
+        _store
+          ..snapX = snapX
+          ..snapY = snapY
+          ..guides = true
+          ..changed();
+      }
+    }
+  }
+
+  void _onScaleEnd(ScaleEndDetails d) {
+    // Dedos mudaram no meio do gesto: o recognizer chama onStart de novo
+    // (rebase) — não finaliza aqui.
+    if (d.pointerCount > 0) return;
+    if (_target == _GestureTarget.layer && _store.hoverTrash) {
+      final id = _store.activeId;
+      if (id != null) {
+        _store.layers.removeWhere((l) => l.id == id);
+        _layerKeys.remove(id);
+        HapticFeedback.heavyImpact();
+      }
+    }
+    _target = _GestureTarget.none;
+    _store
+      ..activeId = null
+      ..dragging = false
+      ..hoverTrash = false
+      ..snapX = false
+      ..snapY = false
+      ..guides = false
+      ..changed();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Ações
+  // ═══════════════════════════════════════════════════════════════════
+
+  void _showToast(String text) {
+    _toastTimer?.cancel();
+    _toast.value = text;
+    _toastTimer = Timer(const Duration(milliseconds: 1100), () {
+      if (mounted) _toast.value = null;
+    });
   }
 
   void _cycleFrame() {
     setState(() => _frameStyle = (_frameStyle + 1) % 3);
     HapticFeedback.selectionClick();
-  }
-
-  void _onInteractionStart(ScaleStartDetails _) {
-    _guidesTimer?.cancel();
-    if (!_showGuides) setState(() => _showGuides = true);
-  }
-
-  void _onInteractionEnd(ScaleEndDetails _) {
-    _guidesTimer?.cancel();
-    _guidesTimer = Timer(const Duration(milliseconds: 700), () {
-      if (mounted) setState(() => _showGuides = false);
-    });
+    final s = S.of(context);
+    final label = switch (_frameStyle) {
+      1 => s.composerFramePolaroid,
+      2 => s.composerFrameBrawe,
+      _ => s.composerFrameNone,
+    };
+    _showToast(_frameStyle == 0 ? label : s.composerFrameLabel(label));
   }
 
   void _resetTransform() {
-    _transformCtrl.value = Matrix4.identity();
+    _xform.value = const _MediaXform.identity();
     HapticFeedback.selectionClick();
   }
 
-  static const _palette = <Color>[
-    Colors.white,
-    Color(0xFF6E4DFF), // electric purple
-    Color(0xFF3BB8FF), // cool cyan
-    Color(0xFFFF5A6B), // muted red
-    Color(0xFFFFD54F), // amber
-    Color(0xFF66BB6A), // green
-    Colors.black,
-  ];
-
-  @override
-  void dispose() {
-    _composeCtrl.dispose();
-    _transformCtrl.dispose();
-    _guidesTimer?.cancel();
-    super.dispose();
-  }
-
-  void _startTextCompose() {
-    _composeCtrl.clear();
-    _composeBgStyle = 0;
-    _composeAlign = TextAlign.center;
-    _composeFontScale = 1.0;
-    setState(() => _composingText = true);
-  }
-
-  void _cycleComposeAlign() {
-    setState(() {
-      _composeAlign = switch (_composeAlign) {
-        TextAlign.center => TextAlign.left,
-        TextAlign.left => TextAlign.right,
-        _ => TextAlign.center,
-      };
-    });
-    HapticFeedback.selectionClick();
-  }
-
-  IconData _alignIcon(TextAlign a) => switch (a) {
-    TextAlign.left => Icons.format_align_left,
-    TextAlign.right => Icons.format_align_right,
-    _ => Icons.format_align_center,
-  };
-
-  void _commitTextLayer() {
-    final txt = _composeCtrl.text.trim();
-    if (txt.isNotEmpty) {
-      _layers.add(
-        _TextLayer(
-          text: txt,
-          color: _currentColor,
-          offset: const Offset(80, 200),
-          scale: _composeFontScale,
-          bgStyle: _composeBgStyle,
-          align: _composeAlign,
-        ),
-      );
+  Future<void> _handleClose() async {
+    if (widget.isPublishing || _exporting) return;
+    if (_composing) {
+      _commitCompose();
+      return;
     }
-    setState(() => _composingText = false);
+    if (_hasEdits) {
+      final discard = await _confirmDiscard();
+      if (discard != true || !mounted) return;
+    }
+    widget.onBack();
   }
 
-  /// Renderiza a tela inteira (mídia transformada + textos) em um PNG.
-  /// Retorna o [File] do PNG ou `null` se falhou. Compartilhado entre
-  /// "Publicar" (flatten + upload) e "Salvar no dispositivo".
-  ///
-  /// Importante: marca `_capturing = true` antes do snapshot para
-  /// esconder controles (top bar, lixeira, guias, chip de moldura). O
-  /// caller é responsável por restaurar `_capturing = false` no finally.
-  Future<File?> _captureFlatten() async {
-    setState(() => _capturing = true);
-    // Garante que a UI ocultou antes do snapshot.
-    await WidgetsBinding.instance.endOfFrame;
-    await Future<void>.delayed(const Duration(milliseconds: 16));
+  Future<bool?> _confirmDiscard() {
+    final s = S.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => Theme(
+        data: ThemeData.dark(useMaterial3: true),
+        child: AlertDialog(
+          backgroundColor: AppColors.darkSurfaceElevated,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(s.composerDiscardTitle),
+          content: Text(s.composerDiscardMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(
+                s.composerKeepEditing,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(
+                s.composerDiscard,
+                style: const TextStyle(
+                  color: AppColors.mutedRed,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+  /// Renderiza um RepaintBoundary do canvas em PNG 1080×1920.
+  Future<File?> _renderBoundary(GlobalKey key, String prefix) async {
     try {
-      final boundary =
-          _captureKey.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
-      if (boundary == null) return null;
-
-      // pixelRatio 3.0 ~= 1080p em devices comuns. Limita o teto para
-      // evitar uploads gigantes em iPads/devices grandes.
-      final dpr = MediaQuery.of(context).devicePixelRatio;
-      final ratio = math.min(3.0, dpr * 1.5);
-      final uiImage = await boundary.toImage(pixelRatio: ratio);
-      final bytes = await uiImage.toByteData(format: ui.ImageByteFormat.png);
-      uiImage.dispose();
+      await WidgetsBinding.instance.endOfFrame;
+      final ro = key.currentContext?.findRenderObject();
+      if (ro is! RenderRepaintBoundary || !ro.hasSize || ro.size.width <= 0) {
+        return null;
+      }
+      final image = await ro.toImage(pixelRatio: _kExportWidth / ro.size.width);
+      final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+      image.dispose();
       if (bytes == null) return null;
-
       final dir = await getTemporaryDirectory();
       final out = File(
-        '${dir.path}/story_flat_${DateTime.now().millisecondsSinceEpoch}.png',
+        '${dir.path}/${prefix}_${DateTime.now().millisecondsSinceEpoch}.png',
       );
-      await out.writeAsBytes(bytes.buffer.asUint8List());
+      await out.writeAsBytes(bytes.buffer.asUint8List(), flush: true);
       return out;
     } catch (e, st) {
-      debugPrint('[StoryComposer] Flatten falhou: $e\n$st');
+      debugPrint('[StoryComposer] Render $prefix falhou: $e\n$st');
       return null;
     }
   }
 
-  /// Renderiza a tela inteira (mídia transformada + textos) em um PNG
-  /// e dispara o [onPublish] com esse arquivo. Vídeos pulam o flatten
-  /// (não dá pra rasterizar — usam o arquivo original sem caption,
-  /// já que o texto agora vive como overlay na mídia).
-  Future<void> _flattenAndPublish() async {
-    // Defesa em camada extra: se o publish já está rolando (parent
-    // ainda processando o último onPublish), ignora silenciosamente
-    // este toque. O lock real fica em _StoryComposerScreenState mas
-    // aqui evitamos até começar o flatten.
-    if (widget.isPublishing) return;
-
-    // Vídeo: publica direto, sem flatten e sem caption (texto vive como
-    // overlay; pra renderizar overlay em vídeo precisaria ffmpeg).
-    if (widget.isVideo) {
-      await widget.onPublish(caption: null);
-      return;
-    }
-
-    File? flat;
+  /// FOTO → flatten (mídia + transform + moldura + textos) → flattenedImage.
+  /// VÍDEO → só as camadas (transparente) → overlayImage (null sem camadas).
+  Future<void> _publish() async {
+    if (widget.isPublishing || _exporting) return;
+    if (_composing) _commitCompose();
+    setState(() => _exporting = true);
     try {
-      flat = await _captureFlatten();
+      if (widget.isVideo) {
+        File? overlay;
+        if (_store.layers.isNotEmpty) {
+          overlay = await _renderBoundary(_overlayKey, 'story_overlay');
+          if (overlay == null) {
+            if (mounted) {
+              AppSnackBar.showError(
+                context,
+                S.of(context).composerOverlayError,
+              );
+            }
+            return;
+          }
+        }
+        if (!mounted) return;
+        await widget.onPublish(overlayImage: overlay);
+      } else {
+        final flat = await _renderBoundary(_flatKey, 'story_flat');
+        if (!mounted) return;
+        await widget.onPublish(flattenedImage: flat);
+      }
     } finally {
-      if (mounted) setState(() => _capturing = false);
+      if (mounted) setState(() => _exporting = false);
     }
-
-    await widget.onPublish(caption: null, flattenedImage: flat);
   }
 
-  /// Salva a mídia editada na galeria do dispositivo.
-  ///
-  /// Estratégia:
-  ///   • FOTO: renderiza o flatten PNG (com transform + textos) e salva
-  ///     via `Gal.putImage`.
-  ///   • VÍDEO: salva o arquivo original cortado (sem overlays — não
-  ///     temos ffmpeg pra rasterizar overlays na timeline). É o melhor
-  ///     que dá sem +25MB de package nativo.
-  ///
-  /// Pede permissão automaticamente. Em iOS 14+ usa "Add Only" (não
-  /// precisa de "Full Library Access"). Mostra snackbar de
-  /// sucesso/falha — feedback é importante para o usuário entender que
-  /// foi salvo (sem indicador visual ele vai pra galeria conferir).
+  /// Salva na galeria: FOTO → flatten (com textos); VÍDEO → arquivo (já
+  /// cortado), sem os textos (não há encoder de vídeo no app).
   Future<void> _handleSaveToDevice() async {
     if (_isSavingToDevice) return;
     setState(() => _isSavingToDevice = true);
-
     try {
-      // 1) Permissão: gal pede internamente, mas vale checar antes
-      // pra dar mensagem clara em caso de "Negar para sempre".
       final hasAccess = await Gal.hasAccess(toAlbum: false);
       if (!hasAccess) {
         final granted = await Gal.requestAccess(toAlbum: false);
@@ -1558,40 +2398,24 @@ class _StoryEditorState extends State<_StoryEditor> {
           return;
         }
       }
-
-      // 2) Foto: flatten primeiro
       if (!widget.isVideo) {
-        File? flat;
-        try {
-          flat = await _captureFlatten();
-        } finally {
-          if (mounted) setState(() => _capturing = false);
-        }
-        // Fail-safe: se o flatten falhou, salva o arquivo original mesmo
-        // sem overlays — é melhor do que nada.
-        final source = flat ?? widget.file;
-        await Gal.putImage(source.path, album: 'Brawe');
+        final flat = await _renderBoundary(_flatKey, 'story_save');
+        await Gal.putImage((flat ?? widget.file).path, album: 'Brawe');
       } else {
-        // 3) Vídeo: salva o arquivo (já cortado se passou pelo trim)
         await Gal.putVideo(widget.file.path, album: 'Brawe');
       }
-
       HapticFeedback.mediumImpact();
       if (!mounted) return;
       AppSnackBar.showSuccess(context, S.of(context).composerSavedToDevice);
     } on GalException catch (e, st) {
       debugPrint('[StoryComposer] Gal failed: ${e.type} $st');
       if (!mounted) return;
-      // Type específico de "sem permissão" tem mensagem dedicada;
-      // resto cai no genérico.
-      if (e.type == GalExceptionType.accessDenied) {
-        AppSnackBar.showError(
-          context,
-          S.of(context).composerSavePermissionDenied,
-        );
-      } else {
-        AppSnackBar.showError(context, S.of(context).composerSaveError);
-      }
+      AppSnackBar.showError(
+        context,
+        e.type == GalExceptionType.accessDenied
+            ? S.of(context).composerSavePermissionDenied
+            : S.of(context).composerSaveError,
+      );
     } catch (e, st) {
       debugPrint('[StoryComposer] Save failed: $e\n$st');
       if (!mounted) return;
@@ -1601,515 +2425,191 @@ class _StoryEditorState extends State<_StoryEditor> {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // Build
+  // ═══════════════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final topPad = MediaQuery.of(context).padding.top;
+    final s = S.of(context);
+    final busy = widget.isPublishing || _exporting;
 
-    return RepaintBoundary(
-      key: _captureKey,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleClose();
+      },
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Column(
+              children: [
+                SizedBox(height: topPad + 4),
+                Expanded(
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 9 / 16,
+                      child: LayoutBuilder(
+                        builder: (_, c) => _buildCanvas(c.biggest),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 68,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        _StoryDestinationPill(
+                          label: s.composerYourStory,
+                          avatarUrl: widget.avatarUrl,
+                        ),
+                        const Spacer(),
+                        _SendButton(
+                          loading: busy,
+                          tooltip: s.composerShare,
+                          onPressed: busy ? null : _publish,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_composing) Positioned.fill(child: _buildComposeOverlay()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCanvas(Size size) {
+    _canvasSize = size;
+    final media = RepaintBoundary(
+      child: _CanvasMedia(
+        file: widget.file,
+        isVideo: widget.isVideo,
+        isTextOnly: widget.isTextOnly,
+        videoCtrl: widget.videoCtrl,
+        frameStyle: _frameStyle,
+      ),
+    );
+
+    return ClipRRect(
+      key: _canvasKey,
+      borderRadius: BorderRadius.circular(_kCanvasRadius),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Fundo: blur da própria mídia (evita laterais pretas quando cabe inteira).
-          if (!widget.isVideo)
-            Positioned.fill(
-              child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 32, sigmaY: 32),
-                child: Image.file(
-                  widget.file,
-                  fit: BoxFit.cover,
-                  opacity: const AlwaysStoppedAnimation(0.55),
+          // ── Conteúdo exportável ──────────────────────────────────
+          RepaintBoundary(
+            key: _flatKey,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                RepaintBoundary(
+                  child: _CanvasBackground(
+                    file: widget.file,
+                    isVideo: widget.isVideo,
+                    isTextOnly: widget.isTextOnly,
+                    gradient: _kTextBackgrounds[_bgIndex],
+                  ),
                 ),
-              ),
+                if (_canTransformMedia)
+                  ValueListenableBuilder<_MediaXform>(
+                    valueListenable: _xform,
+                    child: media,
+                    builder: (_, x, child) => Transform.translate(
+                      offset: x.offset,
+                      child: Transform.scale(scale: x.scale, child: child),
+                    ),
+                  )
+                else
+                  media,
+                RepaintBoundary(
+                  key: _overlayKey,
+                  child: _LayersView(
+                    store: _store,
+                    canvasWidth: size.width,
+                    keyFor: _keyFor,
+                  ),
+                ),
+              ],
             ),
-          // Mídia com pinch-zoom / pan / 1 dedo (estilo Instagram Stories):
-          // permite mover livremente, diminuir e até sair dos limites da tela.
-          // Double-tap cicla pelas molduras antes de publicar.
+          ),
+
+          // ── Superfície de gestos ─────────────────────────────────
           Positioned.fill(
             child: GestureDetector(
-              onDoubleTap: _cycleFrame,
-              child: InteractiveViewer(
-                transformationController: _transformCtrl,
-                minScale: 0.2,
-                maxScale: 5.0,
-                panEnabled: true,
-                scaleEnabled: true,
-                // Permite arrastar pra fora da tela (igual Instagram).
-                boundaryMargin: const EdgeInsets.all(double.infinity),
-                // Sem clip: a mídia pode "vazar" pra fora durante o ajuste.
-                clipBehavior: Clip.none,
-                onInteractionStart: _onInteractionStart,
-                onInteractionEnd: _onInteractionEnd,
-                child: Center(child: _buildFramedMedia()),
+              behavior: HitTestBehavior.opaque,
+              onTapUp: _onTapUp,
+              onScaleStart: _onScaleStart,
+              onScaleUpdate: _onScaleUpdate,
+              onScaleEnd: _onScaleEnd,
+            ),
+          ),
+
+          // ── Guias de centro + lixeira ────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ListenableBuilder(
+                listenable: _store,
+                builder: (_, _) => Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _CenterGuides(
+                      vertical: _store.snapX && _store.isGesturing,
+                      horizontal: _store.snapY && _store.isGesturing,
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: _kTrashBottom,
+                      child: Center(
+                        child: _TrashTarget(
+                          visible: _store.dragging,
+                          hover: _store.hoverTrash,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
 
-          // Linhas guia (área de segurança 9:16) — aparecem durante o gesto.
-          if (!_capturing)
+          // ── Toast (moldura) ───────────────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ValueListenableBuilder<String?>(
+                valueListenable: _toast,
+                builder: (_, text, _) => AnimatedOpacity(
+                  duration: const Duration(milliseconds: 180),
+                  opacity: text == null ? 0 : 1,
+                  child: Center(child: _Pill(text: text ?? '')),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Chrome (some durante drag e no modo texto) ───────────
+          if (!_composing)
             Positioned.fill(
-              child: IgnorePointer(
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 220),
-                  opacity: _showGuides ? 1.0 : 0.0,
-                  child: const _SafeAreaGuides(),
-                ),
-              ),
-            ),
-
-          // Chip "Toque 2x para trocar moldura" (dica + label da moldura atual).
-          if (!_capturing)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 64,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Center(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 240),
-                    child: Container(
-                      key: ValueKey(_frameStyle),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        _frameStyle == 0
-                            ? S.of(context).composerFrameHint
-                            : S
-                                  .of(context)
-                                  .composerFrameLabel(_frameLabel(context)),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+              child: ListenableBuilder(
+                listenable: _store,
+                builder: (_, child) => IgnorePointer(
+                  ignoring: _store.dragging,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 150),
+                    opacity: _store.dragging ? 0 : 1,
+                    child: child,
                   ),
                 ),
-              ),
-            ),
-
-          // Camadas de texto draggable
-          ..._layers.asMap().entries.map((entry) {
-            final idx = entry.key;
-            final layer = entry.value;
-            return Positioned(
-              left: layer.offset.dx,
-              top: layer.offset.dy,
-              child: GestureDetector(
-                onPanStart: (_) {
-                  setState(() {
-                    _draggingLayerIdx = idx;
-                    _hoverTrash = false;
-                  });
-                  HapticFeedback.selectionClick();
-                },
-                onPanUpdate: (d) {
-                  final newOffset = Offset(
-                    layer.offset.dx + d.delta.dx,
-                    layer.offset.dy + d.delta.dy,
-                  );
-                  // Hit-test da lixeira usando a posição GLOBAL do dedo
-                  // (d.globalPosition), não a posição do widget. O widget
-                  // arrastado pode ser largo (texto longo) e o offset é o
-                  // canto superior-esquerdo — usar isso quebra a detecção
-                  // em ~70% dos casos. O dedo é a referência correta.
-                  //
-                  // A lixeira mora em: bottom = bottomPad + 32, tamanho 84
-                  // (estado expandido) → centro Y ≈ height - bottomPad - 74.
-                  // Usamos um raio de 64 (maior que o widget pra dar tolerância).
-                  final bottomPad = MediaQuery.of(context).padding.bottom;
-                  final trashCenter = Offset(
-                    size.width / 2,
-                    size.height - bottomPad - 74,
-                  );
-                  final dist = (d.globalPosition - trashCenter).distance;
-                  final onTrash = dist < 64;
-                  if (onTrash != _hoverTrash) {
-                    HapticFeedback.mediumImpact();
-                  }
-                  setState(() {
-                    _hoverTrash = onTrash;
-                    _layers[idx] = layer.copyWith(offset: newOffset);
-                  });
-                },
-                onPanEnd: (_) {
-                  if (_hoverTrash) {
-                    setState(() {
-                      _layers.removeAt(idx);
-                      _draggingLayerIdx = null;
-                      _hoverTrash = false;
-                    });
-                    HapticFeedback.heavyImpact();
-                  } else {
-                    // Clamp dentro da tela ao soltar (se não foi pra lixeira).
-                    final clamped = Offset(
-                      _layers[idx].offset.dx.clamp(0.0, size.width - 40),
-                      _layers[idx].offset.dy.clamp(0.0, size.height - 60),
-                    );
-                    setState(() {
-                      _layers[idx] = _layers[idx].copyWith(offset: clamped);
-                      _draggingLayerIdx = null;
-                      _hoverTrash = false;
-                    });
-                  }
-                },
-                // maxWidth = largura útil a partir da posição da camada,
-                // limitada a 88% da tela (mesmo limite do Instagram).
-                child: _TextLayerView(
-                  layer: layer,
-                  maxWidth: math.max(
-                    120.0,
-                    math.min(
-                      size.width * 0.88,
-                      size.width - layer.offset.dx - 8,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-
-          // Top bar — ferramentas estilo Instagram/TikTok.
-          // Ordem: voltar | (reset zoom) | spacer | Aa (texto) | moldura | cor.
-          // Padrão moderno: ações rápidas alinhadas à direita, voltar à esquerda.
-          if (!_capturing)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 12,
-              right: 12,
-              child: Row(
-                children: [
-                  _CircleIconBtn(icon: Icons.arrow_back, onTap: widget.onBack),
-                  const Spacer(),
-                  // Reset zoom — só aparece se houver transformação aplicada.
-                  AnimatedBuilder(
-                    animation: _transformCtrl,
-                    builder: (_, _) {
-                      final isIdentity =
-                          _transformCtrl.value == Matrix4.identity();
-                      if (isIdentity) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: _CircleIconBtn(
-                          icon: Icons.center_focus_strong,
-                          onTap: _resetTransform,
-                        ),
-                      );
-                    },
-                  ),
-                  // Botão "Aa" estilizado: o ícone padrão (text_fields)
-                  // não comunica que dá pra adicionar texto. Trocamos por
-                  // um botão maior com label "Aa" (linguagem universal).
-                  _AaTextButton(onTap: _startTextCompose),
-                  const SizedBox(width: 8),
-                  // Botão "scissors" — só aparece quando a mídia é vídeo.
-                  // Abre o StoryVideoTrimScreen pra cortar o trecho desejado.
-                  if (widget.isVideo) ...[
-                    _CircleIconBtn(
-                      icon: Icons.content_cut_rounded,
-                      onTap: () => widget.onTrim(),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  // Botão "música" — abre o catálogo do Brawe Sounds.
-                  // Ícone muda de cor quando já há música selecionada.
-                  _CircleIconBtn(
-                    icon: Icons.music_note_rounded,
-                    iconColor: widget.selectedSound != null
-                        ? const Color(0xFFE11D48)
-                        : null,
-                    onTap: () => widget.onPickSound(),
-                  ),
-                  const SizedBox(width: 8),
-                  // Botão "salvar no dispositivo" (download).
-                  // Ícone de seta-pra-baixo: padrão Instagram/TikTok.
-                  // Funciona pra foto (com overlays via flatten) e vídeo
-                  // (arquivo cortado, sem overlays). Mostra spinner
-                  // enquanto renderiza o flatten + grava no álbum "Brawe".
-                  _CircleIconBtn(
-                    icon: _isSavingToDevice
-                        ? Icons.hourglass_top_rounded
-                        : Icons.file_download_outlined,
-                    onTap: _isSavingToDevice
-                        ? null
-                        : () => _handleSaveToDevice(),
-                  ),
-                  const SizedBox(width: 8),
-                  _CircleIconBtn(
-                    icon: _frameStyle == 0
-                        ? Icons.crop_din
-                        : (_frameStyle == 1
-                              ? Icons.filter_frames
-                              : Icons.auto_awesome),
-                    onTap: _cycleFrame,
-                  ),
-                  const SizedBox(width: 8),
-                  _CircleIconBtn(
-                    icon: Icons.color_lens_outlined,
-                    onTap: () => _showColorPicker(),
-                  ),
-                ],
-              ),
-            ),
-
-          // Bottom bar — modernizada (Instagram/TikTok 2026):
-          // Não tem mais campo de "caption" inferior (texto vive como overlay
-          // na própria mídia). Em vez disso, uma pill "Seu story" indica
-          // o destino + botão "Compartilhar" pill grande à direita.
-          // Quando há música selecionada, mostra um chip acima da bottom bar.
-          if (!_capturing)
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.selectedSound != null) ...[
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: widget.onEditSoundTrim,
-                          child: _SelectedStorySoundChip(
-                            sound: widget.selectedSound!,
-                            onRemove: widget.onRemoveSound,
-                          ),
-                        ),
-                        // Fase D: mixer de volumes (música × áudio
-                        // original) — só faz sentido quando há um
-                        // ÁUDIO ORIGINAL para balancear, ou seja, em
-                        // stories de VÍDEO. Em foto, não há áudio
-                        // original e o slider único (soundVolume) já
-                        // é suficiente.
-                        if (widget.isVideo) ...[
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: widget.onOpenVolumeMixer,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.55),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.tune_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  Row(
-                    children: [
-                      _StoryDestinationPill(
-                        label: S.of(context).composerYourStory,
-                      ),
-                      const Spacer(),
-                      _ShareButton(
-                        loading: widget.isPublishing,
-                        onPressed: _flattenAndPublish,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-          // ── Overlay de composição de texto (estilo Instagram 2026) ──
-          // Layout:
-          //  • Top-right: botões verticais (alinhamento, fundo, "OK")
-          //  • Left side: slider vertical de tamanho da fonte
-          //  • Center: TextField (autofocus, multi-linha, com maxWidth)
-          //  • Bottom: paleta horizontal de cores
-          if (_composingText && !_capturing)
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: _commitTextLayer,
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.55),
-                  child: Stack(
-                    children: [
-                      // Centro: campo de texto.
-                      // Largura limitada a 84% da tela — alinhada com a
-                      // largura do _TextLayerView depois de commitado para
-                      // evitar "salto visual" entre composição e camada final.
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: _ComposeTextField(
-                            controller: _composeCtrl,
-                            color: _currentColor,
-                            bgStyle: _composeBgStyle,
-                            align: _composeAlign,
-                            fontScale: _composeFontScale,
-                            maxWidth: size.width * 0.84,
-                            onSubmitted: (_) => _commitTextLayer(),
-                          ),
-                        ),
-                      ),
-
-                      // Topo direito: botões verticais (align / bg / OK).
-                      // GestureDetector pra impedir que o tap no botão
-                      // suba até o overlay externo (que commita a camada).
-                      Positioned(
-                        top: MediaQuery.of(context).padding.top + 8,
-                        right: 12,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {},
-                          child: Column(
-                            children: [
-                              _CircleIconBtn(
-                                icon: _alignIcon(_composeAlign),
-                                onTap: _cycleComposeAlign,
-                              ),
-                              const SizedBox(height: 8),
-                              _CircleIconBtn(
-                                icon: _composeBgStyle == 0
-                                    ? Icons.format_color_text
-                                    : (_composeBgStyle == 1
-                                          ? Icons.title
-                                          : Icons.text_format),
-                                onTap: () {
-                                  setState(
-                                    () => _composeBgStyle =
-                                        (_composeBgStyle + 1) % 3,
-                                  );
-                                  HapticFeedback.selectionClick();
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              // "OK" pill — atalho explícito pra commitar.
-                              // Toque fora também funciona, mas o pill
-                              // ajuda usuários que não conhecem o gesto.
-                              GestureDetector(
-                                onTap: _commitTextLayer,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    'OK',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Lateral esquerda: slider vertical de tamanho.
-                      // Wrap em GestureDetector pra não commitar ao
-                      // arrastar o slider.
-                      Positioned(
-                        left: 8,
-                        top: MediaQuery.of(context).padding.top + 80,
-                        bottom: 140,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {},
-                          child: _FontSizeSlider(
-                            value: _composeFontScale,
-                            min: _kMinFontScale,
-                            max: _kMaxFontScale,
-                            onChanged: (v) =>
-                                setState(() => _composeFontScale = v),
-                          ),
-                        ),
-                      ),
-
-                      // Rodapé: paleta de cores horizontal (substitui o
-                      // bottom sheet bruto que tínhamos antes).
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: MediaQuery.of(context).padding.bottom + 24,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {},
-                          child: _InlineColorPalette(
-                            palette: _palette,
-                            selected: _currentColor,
-                            onSelect: (c) => setState(() => _currentColor = c),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-          // Lixeira (aparece enquanto arrasta uma camada de texto).
-          if (_draggingLayerIdx != null && !_capturing)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: MediaQuery.of(context).padding.bottom + 32,
-              child: IgnorePointer(
-                child: Center(
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    width: _hoverTrash ? 84 : 64,
-                    height: _hoverTrash ? 84 : 64,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _hoverTrash
-                          ? Colors.redAccent.withValues(alpha: 0.9)
-                          : Colors.black.withValues(alpha: 0.5),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        if (_hoverTrash)
-                          BoxShadow(
-                            color: Colors.redAccent.withValues(alpha: 0.5),
-                            blurRadius: 24,
-                            spreadRadius: 2,
-                          ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.delete_outline,
-                      color: Colors.white,
-                      size: _hoverTrash ? 36 : 28,
-                    ),
-                  ),
-                ),
+                child: _buildChrome(),
               ),
             ),
         ],
@@ -2117,74 +2617,637 @@ class _StoryEditorState extends State<_StoryEditor> {
     );
   }
 
-  Widget _buildFramedMedia() {
-    // Padrão Instagram Stories: a mídia entra na tela com BoxFit.contain
-    // — ou seja, cabe INTEIRA dentro da viewport (sem cortar nada).
-    // O usuário decide se quer aumentar/posicionar com 2 dedos.
-    //
-    // ⚠️ Não usar BoxFit.cover aqui: se a foto tem texto/elemento perto da
-    // borda (ex.: print de WhatsApp), o cover esconderia esse conteúdo.
-    //
-    // TODO(publish-fidelity): hoje o backend recebe o arquivo original, então
-    // a transformação aplicada (zoom/pan) NÃO é refletida no story publicado.
-    // Pra preservar 100% do que o usuário vê, será preciso renderizar a Stack
-    // inteira (mídia transformada + camadas de texto) em PNG via RepaintBoundary
-    // antes de chamar createStory.
-    final fit = BoxFit.contain;
-    final Widget inner;
-    if (widget.isVideo && widget.videoCtrl != null) {
-      final ctrl = widget.videoCtrl!;
-      inner = FittedBox(
-        fit: fit,
-        clipBehavior: Clip.hardEdge,
-        child: SizedBox(
-          width: ctrl.value.size.width,
-          height: ctrl.value.size.height,
+  Widget _buildChrome() {
+    final s = S.of(context);
+    final sound = widget.selectedSound;
+    return Stack(
+      children: [
+        Positioned(
+          top: 6,
+          left: 4,
+          child: _RailButton(
+            tooltip: s.composerClose,
+            onTap: _handleClose,
+            child: const Icon(
+              Icons.close_rounded,
+              color: Colors.white,
+              size: 28,
+              shadows: _kIconShadows,
+            ),
+          ),
+        ),
+        Positioned(
+          top: 6,
+          right: 4,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _RailButton(
+                tooltip: s.composerToolText,
+                onTap: () => _openCompose(),
+                child: const Text(
+                  'Aa',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                    shadows: _kIconShadows,
+                  ),
+                ),
+              ),
+              _RailButton(
+                tooltip: s.composerToolMusic,
+                onTap: () => widget.onPickSound(),
+                badge: sound != null,
+                child: const Icon(
+                  Icons.music_note_rounded,
+                  color: Colors.white,
+                  size: 24,
+                  shadows: _kIconShadows,
+                ),
+              ),
+              if (widget.isTextOnly)
+                _RailButton(
+                  tooltip: s.composerToolBackground,
+                  onTap: () => setState(
+                    () => _bgIndex = (_bgIndex + 1) % _kTextBackgrounds.length,
+                  ),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: _kTextBackgrounds[_bgIndex],
+                      border: Border.all(color: Colors.white, width: 2),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x40000000), blurRadius: 6),
+                      ],
+                    ),
+                  ),
+                ),
+              if (widget.isVideo)
+                _RailButton(
+                  tooltip: s.composerToolTrim,
+                  onTap: () => widget.onTrim(),
+                  child: const Icon(
+                    Icons.content_cut_rounded,
+                    color: Colors.white,
+                    size: 24,
+                    shadows: _kIconShadows,
+                  ),
+                ),
+              _RailButton(
+                tooltip: s.composerToolSave,
+                onTap: _isSavingToDevice ? null : _handleSaveToDevice,
+                child: _isSavingToDevice
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.download_rounded,
+                        color: Colors.white,
+                        size: 24,
+                        shadows: _kIconShadows,
+                      ),
+              ),
+              if (_canFrame)
+                _RailButton(
+                  tooltip: s.composerToolFrame,
+                  onTap: _cycleFrame,
+                  badge: _frameStyle != 0,
+                  child: Icon(
+                    switch (_frameStyle) {
+                      1 => Icons.filter_frames_outlined,
+                      2 => Icons.auto_awesome_outlined,
+                      _ => Icons.crop_square_rounded,
+                    },
+                    color: Colors.white,
+                    size: 24,
+                    shadows: _kIconShadows,
+                  ),
+                ),
+              if (_canTransformMedia)
+                ValueListenableBuilder<_MediaXform>(
+                  valueListenable: _xform,
+                  builder: (_, x, _) => x.isIdentity
+                      ? const SizedBox.shrink()
+                      : _RailButton(
+                          tooltip: s.composerToolResetZoom,
+                          onTap: _resetTransform,
+                          child: const Icon(
+                            Icons.fit_screen_rounded,
+                            color: Colors.white,
+                            size: 24,
+                            shadows: _kIconShadows,
+                          ),
+                        ),
+                ),
+            ],
+          ),
+        ),
+        if (sound != null)
+          Positioned(
+            top: 12,
+            left: 56,
+            right: 56,
+            child: Center(
+              child: _SelectedStorySoundChip(
+                sound: sound,
+                onTap: () => widget.onEditSoundTrim(),
+                onRemove: widget.onRemoveSound,
+                onMixer: widget.isVideo
+                    ? () => widget.onOpenVolumeMixer()
+                    : null,
+                mixerTooltip: s.composerVolumeMix,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Overlay do modo texto (Instagram-like) ──────────────────────────
+  Widget _buildComposeOverlay() {
+    final s = S.of(context);
+    final mq = MediaQuery.of(context);
+    final kb = mq.viewInsets.bottom;
+    final topPad = mq.padding.top;
+    final canvasW = _canvasSize.width > 0 ? _canvasSize.width : mq.size.width;
+
+    void absorb() {}
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _commitCompose,
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.62),
+        child: Stack(
+          children: [
+            // Campo de texto, centrado na área acima do teclado.
+            Positioned(
+              left: 44,
+              right: 44,
+              top: topPad + 64,
+              bottom: kb + 72,
+              child: Center(
+                child: SingleChildScrollView(
+                  child: _ComposeTextField(
+                    controller: _composeCtrl,
+                    color: _cColor,
+                    bg: _cBg,
+                    align: _cAlign,
+                    font: _cFont,
+                    fontSize: canvasW * _kBaseFontFactor * _cFontScale,
+                    maxWidth: canvasW * _kTextMaxWidthFactor,
+                    hint: s.composerTextHint,
+                  ),
+                ),
+              ),
+            ),
+
+            // Topo: estilos + Concluir.
+            Positioned(
+              top: topPad + 8,
+              left: 8,
+              right: 12,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: absorb,
+                child: Row(
+                  children: [
+                    _RailButton(
+                      tooltip: s.composerTextAlignTooltip,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(
+                          () => _cAlign = switch (_cAlign) {
+                            TextAlign.center => TextAlign.left,
+                            TextAlign.left => TextAlign.right,
+                            _ => TextAlign.center,
+                          },
+                        );
+                      },
+                      child: Icon(
+                        switch (_cAlign) {
+                          TextAlign.left => Icons.format_align_left_rounded,
+                          TextAlign.right => Icons.format_align_right_rounded,
+                          _ => Icons.format_align_center_rounded,
+                        },
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    _RailButton(
+                      tooltip: s.composerTextBackgroundTooltip,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(
+                          () => _cBg = _TextBg
+                              .values[(_cBg.index + 1) % _TextBg.values.length],
+                        );
+                      },
+                      child: Icon(
+                        switch (_cBg) {
+                          _TextBg.none => Icons.font_download_off_outlined,
+                          _TextBg.translucent => Icons.font_download_outlined,
+                          _TextBg.solid => Icons.font_download_rounded,
+                        },
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    _FontChip(
+                      label: _fontLabel(s, _cFont),
+                      style: _TextLook.baseFor(_cFont, 15),
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(
+                          () => _cFont =
+                              _StoryFont.values[(_cFont.index + 1) %
+                                  _StoryFont.values.length],
+                        );
+                      },
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: _commitCompose,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      child: Text(
+                        s.composerDone,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Lateral esquerda: tamanho.
+            Positioned(
+              left: 4,
+              top: topPad + 80,
+              height: math.max(140.0, mq.size.height - topPad - 80 - kb - 96),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: absorb,
+                child: _FontSizeSlider(
+                  value: _cFontScale,
+                  min: _kMinFontScale,
+                  max: _kMaxFontScale,
+                  onChanged: (v) => setState(() => _cFontScale = v),
+                ),
+              ),
+            ),
+
+            // Paleta logo acima do teclado.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: kb + 12,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: absorb,
+                child: _InlineColorPalette(
+                  palette: _palette,
+                  selected: _cColor,
+                  onSelect: (c) => setState(() => _cColor = c),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Estado do canvas ────────────────────────────────────────────────────────
+
+class _CanvasStore extends ChangeNotifier {
+  final List<_TextLayer> layers = [];
+
+  /// Camada aberta no modo texto (escondida no canvas enquanto edita).
+  String? editingId;
+
+  /// Camada sob o gesto atual.
+  String? activeId;
+
+  /// Camada sendo movida (mostra lixeira, esconde o chrome).
+  bool dragging = false;
+  bool hoverTrash = false;
+  bool snapX = false;
+  bool snapY = false;
+
+  /// Gesto da mídia (foto) em andamento.
+  bool guides = false;
+
+  bool get isGesturing => dragging || guides;
+
+  int indexOf(String id) => layers.indexWhere((l) => l.id == id);
+
+  void changed() => notifyListeners();
+}
+
+@immutable
+class _MediaXform {
+  const _MediaXform({required this.scale, required this.offset});
+  const _MediaXform.identity() : scale = 1, offset = Offset.zero;
+
+  final double scale;
+  final Offset offset;
+
+  bool get isIdentity => scale == 1 && offset == Offset.zero;
+}
+
+@immutable
+class _TextLayer {
+  const _TextLayer({
+    required this.id,
+    required this.text,
+    required this.color,
+    this.center = const Offset(0.5, 0.5),
+    this.scale = 1,
+    this.rotation = 0,
+    this.fontScale = 1,
+    this.bg = _TextBg.none,
+    this.align = TextAlign.center,
+    this.font = _StoryFont.classic,
+  });
+
+  final String id;
+  final String text;
+  final Color color;
+
+  /// Centro NORMALIZADO (0..1) no canvas 9:16 — independe da tela.
+  final Offset center;
+
+  /// Escala do gesto de pinça (multiplica o tamanho base).
+  final double scale;
+
+  /// Rotação em radianos.
+  final double rotation;
+
+  /// Tamanho escolhido no slider do modo texto.
+  final double fontScale;
+  final _TextBg bg;
+  final TextAlign align;
+  final _StoryFont font;
+
+  _TextLayer copyWith({
+    String? text,
+    Color? color,
+    Offset? center,
+    double? scale,
+    double? rotation,
+    double? fontScale,
+    _TextBg? bg,
+    TextAlign? align,
+    _StoryFont? font,
+  }) => _TextLayer(
+    id: id,
+    text: text ?? this.text,
+    color: color ?? this.color,
+    center: center ?? this.center,
+    scale: scale ?? this.scale,
+    rotation: rotation ?? this.rotation,
+    fontScale: fontScale ?? this.fontScale,
+    bg: bg ?? this.bg,
+    align: align ?? this.align,
+    font: font ?? this.font,
+  );
+}
+
+String _fontLabel(S s, _StoryFont f) => switch (f) {
+  _StoryFont.classic => s.composerFontClassic,
+  _StoryFont.modern => s.composerFontModern,
+  _StoryFont.serif => s.composerFontSerif,
+  _StoryFont.typewriter => s.composerFontTypewriter,
+  _StoryFont.neon => s.composerFontNeon,
+};
+
+/// Estilo visual compartilhado entre a camada no canvas e o campo do modo
+/// texto — garante que o que se digita é exatamente o que fica no story.
+abstract final class _TextLook {
+  static String get _serif => Platform.isIOS ? 'Georgia' : 'serif';
+  static String get _mono => Platform.isIOS ? 'Courier' : 'monospace';
+
+  static TextStyle baseFor(_StoryFont font, double fontSize) => switch (font) {
+    _StoryFont.classic => TextStyle(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.18,
+    ),
+    _StoryFont.modern => TextStyle(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w900,
+      height: 1.04,
+      letterSpacing: -fontSize * 0.03,
+    ),
+    _StoryFont.serif => TextStyle(
+      fontSize: fontSize,
+      fontFamily: _serif,
+      fontFamilyFallback: const ['Georgia', 'Times New Roman', 'serif'],
+      fontWeight: FontWeight.w600,
+      height: 1.15,
+    ),
+    _StoryFont.typewriter => TextStyle(
+      fontSize: fontSize,
+      fontFamily: _mono,
+      fontFamilyFallback: const ['Courier', 'Courier New', 'monospace'],
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+    ),
+    _StoryFont.neon => TextStyle(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w700,
+      height: 1.15,
+    ),
+  };
+
+  static Color _contrastOn(Color c) =>
+      c.computeLuminance() > 0.55 ? Colors.black : Colors.white;
+
+  static TextStyle style({
+    required Color color,
+    required _TextBg bg,
+    required _StoryFont font,
+    required double fontSize,
+  }) {
+    var fg = bg == _TextBg.solid ? _contrastOn(color) : color;
+    List<Shadow>? shadows;
+    if (font == _StoryFont.neon) {
+      final glow = bg == _TextBg.solid ? fg : color;
+      if (bg != _TextBg.solid) fg = Color.lerp(Colors.white, color, 0.12)!;
+      shadows = [
+        Shadow(color: glow, blurRadius: fontSize * 0.2),
+        Shadow(color: glow, blurRadius: fontSize * 0.5),
+        Shadow(color: glow.withValues(alpha: 0.8), blurRadius: fontSize),
+      ];
+    } else if (bg == _TextBg.none) {
+      shadows = [
+        Shadow(
+          color: Colors.black.withValues(alpha: 0.35),
+          blurRadius: fontSize * 0.18,
+          offset: Offset(0, fontSize * 0.03),
+        ),
+      ];
+    }
+    return baseFor(font, fontSize).copyWith(color: fg, shadows: shadows);
+  }
+
+  static BoxDecoration? decoration(Color color, _TextBg bg, double fontSize) {
+    switch (bg) {
+      case _TextBg.none:
+        return null;
+      case _TextBg.translucent:
+        return BoxDecoration(
+          color: color.computeLuminance() > 0.35
+              ? Colors.black.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.72),
+          borderRadius: BorderRadius.circular(fontSize * 0.32),
+        );
+      case _TextBg.solid:
+        return BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(fontSize * 0.32),
+        );
+    }
+  }
+
+  static EdgeInsets padding(_TextBg bg, double fontSize) => bg == _TextBg.none
+      ? EdgeInsets.zero
+      : EdgeInsets.symmetric(
+          horizontal: fontSize * 0.38,
+          vertical: fontSize * 0.16,
+        );
+}
+
+// ─── Widgets do canvas ───────────────────────────────────────────────────────
+
+/// Fundo do canvas: gradiente (só texto), preto (vídeo) ou a própria foto
+/// desfocada (aparece ao reduzir a foto ou com moldura).
+class _CanvasBackground extends StatelessWidget {
+  const _CanvasBackground({
+    required this.file,
+    required this.isVideo,
+    required this.isTextOnly,
+    required this.gradient,
+  });
+
+  final File file;
+  final bool isVideo;
+  final bool isTextOnly;
+  final Gradient gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isTextOnly) {
+      return DecoratedBox(decoration: BoxDecoration(gradient: gradient));
+    }
+    if (isVideo) return const ColoredBox(color: Colors.black);
+    return ColoredBox(
+      color: Colors.black,
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+        child: Image.file(
+          file,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          opacity: const AlwaysStoppedAnimation(0.55),
+          gaplessPlayback: true,
+        ),
+      ),
+    );
+  }
+}
+
+/// Mídia no canvas. FOTO: BoxFit.cover no 9:16 (o flatten publica
+/// exatamente isso). VÍDEO: mesmo enquadramento do viewer
+/// (`BraweStoryMedia`: AspectRatio centralizado) — sem transform, já que o
+/// arquivo é publicado como está.
+class _CanvasMedia extends StatelessWidget {
+  const _CanvasMedia({
+    required this.file,
+    required this.isVideo,
+    required this.isTextOnly,
+    required this.videoCtrl,
+    required this.frameStyle,
+  });
+
+  final File file;
+  final bool isVideo;
+  final bool isTextOnly;
+  final VideoPlayerController? videoCtrl;
+  final int frameStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isTextOnly) return const SizedBox.expand();
+    if (isVideo) {
+      final ctrl = videoCtrl;
+      if (ctrl == null || !ctrl.value.isInitialized) {
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.white54),
+        );
+      }
+      return Center(
+        child: AspectRatio(
+          aspectRatio: ctrl.value.aspectRatio,
           child: VideoPlayer(ctrl),
         ),
       );
-    } else {
-      inner = Image.file(widget.file, fit: fit);
     }
-    return _applyFrame(inner);
-  }
-
-  Widget _applyFrame(Widget child) {
-    switch (_frameStyle) {
-      case 1: // Polaroid branca
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 64),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 56),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: AspectRatio(aspectRatio: 1, child: child),
+    final image = Image.file(
+      file,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      gaplessPlayback: true,
+    );
+    switch (frameStyle) {
+      case 1: // Polaroid
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 52),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: AspectRatio(aspectRatio: 4 / 5, child: image),
             ),
           ),
         );
       case 2: // Gradiente Brawe
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 56),
           child: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [AppColors.electricPurple, AppColors.coolCyan],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: _kBrandGradient,
               boxShadow: [
                 BoxShadow(
                   color: AppColors.electricPurple.withValues(alpha: 0.45),
@@ -2195,548 +3258,352 @@ class _StoryEditorState extends State<_StoryEditor> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
-              child: child,
+              child: image,
             ),
           ),
         );
-      case 0:
       default:
-        return child;
+        return image;
     }
   }
+}
 
-  void _showColorPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
-        decoration: const BoxDecoration(
-          color: Color(0xFF15192A),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 12,
-          runSpacing: 12,
-          children: _palette.map((c) {
-            final selected = c.toARGB32() == _currentColor.toARGB32();
-            return GestureDetector(
-              onTap: () {
-                setState(() => _currentColor = c);
-                Navigator.pop(context);
-              },
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: c,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected ? Colors.white : Colors.transparent,
-                    width: 3,
+/// Camadas de texto posicionadas pelo centro normalizado, com escala e
+/// rotação. Rebuilda só com o [_CanvasStore] (não reconstrói a mídia).
+class _LayersView extends StatelessWidget {
+  const _LayersView({
+    required this.store,
+    required this.canvasWidth,
+    required this.keyFor,
+  });
+
+  final _CanvasStore store;
+  final double canvasWidth;
+  final GlobalKey Function(String id) keyFor;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (_, c) => ListenableBuilder(
+        listenable: store,
+        builder: (_, _) => Stack(
+          clipBehavior: Clip.none,
+          children: [
+            for (final l in store.layers)
+              if (l.id != store.editingId)
+                Positioned(
+                  left: l.center.dx * c.maxWidth,
+                  top: l.center.dy * c.maxHeight,
+                  child: FractionalTranslation(
+                    translation: const Offset(-0.5, -0.5),
+                    child: Transform.rotate(
+                      angle: l.rotation,
+                      child: Transform.scale(
+                        scale: l.scale,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 120),
+                          opacity: store.hoverTrash && store.activeId == l.id
+                              ? 0.45
+                              : 1,
+                          child: KeyedSubtree(
+                            key: keyFor(l.id),
+                            child: _TextLayerView(
+                              layer: l,
+                              canvasWidth: canvasWidth,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+          ],
         ),
       ),
     );
   }
 }
 
-class _TextLayer {
-  _TextLayer({
-    required this.text,
-    required this.color,
-    required this.offset,
-    required this.scale,
-    this.bgStyle = 0,
-    this.align = TextAlign.center,
-  });
-
-  final String text;
-  final Color color;
-  final Offset offset;
-  final double scale;
-
-  /// 0 = sem fundo (com sombra)
-  /// 1 = fundo preto translúcido (plaquinha)
-  /// 2 = fundo branco sólido (texto inverte pra cor)
-  final int bgStyle;
-
-  /// Alinhamento do parágrafo (relevante quando o texto quebra em
-  /// múltiplas linhas — single-line não muda nada visualmente).
-  final TextAlign align;
-
-  _TextLayer copyWith({
-    Offset? offset,
-    double? scale,
-    Color? color,
-    int? bgStyle,
-    TextAlign? align,
-  }) => _TextLayer(
-    text: text,
-    color: color ?? this.color,
-    offset: offset ?? this.offset,
-    scale: scale ?? this.scale,
-    bgStyle: bgStyle ?? this.bgStyle,
-    align: align ?? this.align,
-  );
-}
-
-/// Renderiza uma camada de texto com 3 estilos de fundo + alinhamento.
-/// Limita a largura a `maxWidth` (passada pelo pai) — assim, mesmo um
-/// texto colado-sem-espaço quebra em múltiplas linhas em vez de sair da
-/// tela. O `align` controla o paragraph wrap quando há quebras.
-///
-/// 0 = sem fundo, sombra para legibilidade
-/// 1 = "plaquinha" preta translúcida
-/// 2 = fundo branco sólido com cor do texto invertida
 class _TextLayerView extends StatelessWidget {
-  const _TextLayerView({required this.layer, required this.maxWidth});
+  const _TextLayerView({required this.layer, required this.canvasWidth});
 
   final _TextLayer layer;
-  final double maxWidth;
+  final double canvasWidth;
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = 28 * layer.scale;
-    final txtStyle = TextStyle(
-      color: layer.bgStyle == 2 ? _invertOnWhite(layer.color) : layer.color,
-      fontSize: fontSize,
-      fontWeight: FontWeight.w700,
-      height: 1.15,
-      shadows: layer.bgStyle == 0
-          ? const [Shadow(blurRadius: 6, color: Colors.black54)]
-          : null,
-    );
-
-    final text = Text(
+    final fs = canvasWidth * _kBaseFontFactor * layer.fontScale;
+    Widget child = Text(
       layer.text,
       textAlign: layer.align,
-      softWrap: true,
-      style: txtStyle,
+      textWidthBasis: TextWidthBasis.longestLine,
+      style: _TextLook.style(
+        color: layer.color,
+        bg: layer.bg,
+        font: layer.font,
+        fontSize: fs,
+      ),
     );
-
-    final Widget content;
-    switch (layer.bgStyle) {
-      case 1:
-        content = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: text,
-        );
-        break;
-      case 2:
-        content = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: text,
-        );
-        break;
-      case 0:
-      default:
-        content = text;
+    final deco = _TextLook.decoration(layer.color, layer.bg, fs);
+    if (deco != null) {
+      child = DecoratedBox(
+        decoration: deco,
+        child: Padding(padding: _TextLook.padding(layer.bg, fs), child: child),
+      );
     }
-
-    // ConstrainedBox garante que mesmo um caractere de 200px não
-    // estoure os limites do story (9:16). Sem isso, qualquer texto
-    // longo "vaza" pra direita até sumir da tela.
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: content,
+      constraints: BoxConstraints(maxWidth: canvasWidth * _kTextMaxWidthFactor),
+      child: child,
     );
-  }
-
-  /// Se a cor escolhida é muito clara, no fundo branco usamos preto;
-  /// se é escura, mantém a própria cor.
-  static Color _invertOnWhite(Color c) {
-    final luminance = c.computeLuminance();
-    return luminance > 0.7 ? Colors.black : c;
   }
 }
 
-/// TextField do overlay de composição com fundo (plaquinha) opcional,
-/// alinhamento configurável e font-size dinâmico (slider lateral).
-/// Limita a largura ao `maxWidth` para evitar overflow durante a digitação.
+/// Campo do modo texto — mesmo visual da camada final.
 class _ComposeTextField extends StatelessWidget {
   const _ComposeTextField({
     required this.controller,
     required this.color,
-    required this.bgStyle,
+    required this.bg,
     required this.align,
-    required this.fontScale,
+    required this.font,
+    required this.fontSize,
     required this.maxWidth,
-    required this.onSubmitted,
+    required this.hint,
   });
 
   final TextEditingController controller;
   final Color color;
-  final int bgStyle;
+  final _TextBg bg;
   final TextAlign align;
-  final double fontScale;
+  final _StoryFont font;
+  final double fontSize;
   final double maxWidth;
-  final ValueChanged<String> onSubmitted;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
-    final textColor = bgStyle == 2
-        ? _TextLayerView._invertOnWhite(color)
-        : color;
-    final field = TextField(
-      controller: controller,
-      autofocus: true,
-      textAlign: align,
-      maxLines: null,
-      keyboardType: TextInputType.multiline,
-      textInputAction: TextInputAction.newline,
-      cursorColor: textColor,
-      style: TextStyle(
-        color: textColor,
-        fontSize: 28 * fontScale,
-        fontWeight: FontWeight.w700,
-        height: 1.15,
-        shadows: bgStyle == 0
-            ? const [Shadow(blurRadius: 6, color: Colors.black54)]
-            : null,
-      ),
-      decoration: InputDecoration(
-        hintText: S.of(context).composerTextHint,
-        hintStyle: TextStyle(
-          color: bgStyle == 2 ? Colors.black38 : Colors.white54,
-          fontSize: 28 * fontScale,
-        ),
-        border: InputBorder.none,
-        isCollapsed: true,
-        contentPadding: EdgeInsets.zero,
-      ),
-      onSubmitted: onSubmitted,
+    final style = _TextLook.style(
+      color: color,
+      bg: bg,
+      font: font,
+      fontSize: fontSize,
     );
-
-    final Widget wrapped;
-    switch (bgStyle) {
-      case 1:
-        wrapped = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(8),
+    Widget field = IntrinsicWidth(
+      child: TextField(
+        controller: controller,
+        autofocus: true,
+        textAlign: align,
+        maxLines: null,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
+        textCapitalization: TextCapitalization.sentences,
+        cursorColor: style.color,
+        style: style,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: style.copyWith(
+            color: (style.color ?? Colors.white).withValues(alpha: 0.45),
+            shadows: const [],
           ),
-          child: field,
-        );
-        break;
-      case 2:
-        wrapped = Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: field,
-        );
-        break;
-      case 0:
-      default:
-        wrapped = field;
+          border: InputBorder.none,
+          isCollapsed: true,
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+    );
+    final deco = _TextLook.decoration(color, bg, fontSize);
+    if (deco != null) {
+      field = DecoratedBox(
+        decoration: deco,
+        child: Padding(padding: _TextLook.padding(bg, fontSize), child: field),
+      );
     }
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: wrapped,
+    return Align(
+      alignment: switch (align) {
+        TextAlign.left => Alignment.centerLeft,
+        TextAlign.right => Alignment.centerRight,
+        _ => Alignment.center,
+      },
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: field,
+      ),
     );
   }
 }
 
-// PNG 1x1 transparente (mínimo para criar um arquivo válido).
-final List<int> _kTransparentPngBytes = <int>[
-  0x89,
-  0x50,
-  0x4E,
-  0x47,
-  0x0D,
-  0x0A,
-  0x1A,
-  0x0A,
-  0x00,
-  0x00,
-  0x00,
-  0x0D,
-  0x49,
-  0x48,
-  0x44,
-  0x52,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x00,
-  0x01,
-  0x08,
-  0x06,
-  0x00,
-  0x00,
-  0x00,
-  0x1F,
-  0x15,
-  0xC4,
-  0x89,
-  0x00,
-  0x00,
-  0x00,
-  0x0D,
-  0x49,
-  0x44,
-  0x41,
-  0x54,
-  0x78,
-  0x9C,
-  0x63,
-  0x00,
-  0x01,
-  0x00,
-  0x00,
-  0x05,
-  0x00,
-  0x01,
-  0x0D,
-  0x0A,
-  0x2D,
-  0xB4,
-  0x00,
-  0x00,
-  0x00,
-  0x00,
-  0x49,
-  0x45,
-  0x4E,
-  0x44,
-  0xAE,
-  0x42,
-  0x60,
-  0x82,
-];
+class _CenterGuides extends StatelessWidget {
+  const _CenterGuides({required this.vertical, required this.horizontal});
 
-// Suppress unused-warning shim
-// ignore: unused_element
-void _keepMathImport() => math.pi;
-
-/// Linhas guia tipo Instagram: mostra a "área de segurança" (top/bottom)
-/// para o usuário enquadrar bem a publicação durante o pinch-zoom.
-class _SafeAreaGuides extends StatelessWidget {
-  const _SafeAreaGuides();
+  final bool vertical;
+  final bool horizontal;
 
   @override
   Widget build(BuildContext context) {
-    final padding = MediaQuery.of(context).padding;
-    // Área de segurança aproximada do Instagram Stories:
-    // ~14% do topo (status bar + header) e ~20% inferior (caption + ações).
-    final topGuide = padding.top + 72;
-    final bottomGuide = padding.bottom + 140;
-
+    const color = AppColors.coolCyan;
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // Linha superior
-        Positioned(
-          left: 0,
-          right: 0,
-          top: topGuide,
-          child: _GuideLine(label: S.of(context).composerGuideTop),
-        ),
-        // Linha inferior
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: bottomGuide,
-          child: _GuideLine(
-            label: S.of(context).composerGuideBottom,
-            alignEnd: true,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GuideLine extends StatelessWidget {
-  const _GuideLine({required this.label, this.alignEnd = false});
-  final String label;
-  final bool alignEnd;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: alignEnd
-          ? CrossAxisAlignment.end
-          : CrossAxisAlignment.start,
-      children: [
-        if (!alignEnd)
-          Padding(
-            padding: const EdgeInsets.only(left: 14, bottom: 4),
-            child: _GuideTag(text: label),
-          ),
-        Container(
-          height: 1,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.0),
-                Colors.white.withValues(alpha: 0.85),
-                Colors.white.withValues(alpha: 0.0),
-              ],
+        Center(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 120),
+            opacity: vertical ? 1 : 0,
+            child: const SizedBox(
+              width: 1,
+              height: double.infinity,
+              child: ColoredBox(color: color),
             ),
           ),
         ),
-        if (alignEnd)
-          Padding(
-            padding: const EdgeInsets.only(right: 14, top: 4),
-            child: _GuideTag(text: label),
+        Center(
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 120),
+            opacity: horizontal ? 1 : 0,
+            child: const SizedBox(
+              height: 1,
+              width: double.infinity,
+              child: ColoredBox(color: color),
+            ),
           ),
+        ),
       ],
     );
   }
 }
 
-class _GuideTag extends StatelessWidget {
-  const _GuideTag({required this.text});
-  final String text;
+class _TrashTarget extends StatelessWidget {
+  const _TrashTarget({required this.visible, required this.hover});
+
+  final bool visible;
+  final bool hover;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.2,
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 160),
+      opacity: visible ? 1 : 0,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutBack,
+        scale: hover ? 1.25 : 1,
+        child: Container(
+          width: _kTrashSize,
+          height: _kTrashSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: hover
+                ? AppColors.mutedRed
+                : Colors.black.withValues(alpha: 0.35),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.8),
+              width: 1.5,
+            ),
+          ),
+          child: const Icon(
+            Icons.delete_outline_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Modernização (UI 2026) ──────────────────────────────────────────────────
-//
-// Widgets adicionados nessa rodada:
-//  • _AaTextButton        — botão "Aa" da top bar (gateway pro modo texto)
-//  • _StoryDestinationPill — pill esquerda da bottom bar ("Seu story")
-//  • _ShareButton         — pill direita da bottom bar ("Compartilhar →")
-//  • _FontSizeSlider      — slider vertical lateral (tamanho da fonte no compose)
-//  • _InlineColorPalette  — paleta horizontal flutuante no rodapé do compose
-//
-// Substitui a antiga "caption inferior" (tipo Insta de 2014) pelo padrão
-// moderno: texto vive como overlay arrastável, bottom bar é só destino +
-// CTA de publicar.
+// ─── Chrome ──────────────────────────────────────────────────────────────────
 
-/// Chip da música selecionada (Brawe Sounds) exibido acima da bottom bar
-/// do editor de stories. Espelha `_SelectedSoundChip` do
-/// `create_post_sheet.dart` — mesmo visual (cor de destaque rosa/red,
-/// cover thumbnail, título + artista, botão de remover).
-class _SelectedStorySoundChip extends StatelessWidget {
-  const _SelectedStorySoundChip({required this.sound, required this.onRemove});
-  final Sound sound;
-  final VoidCallback onRemove;
+/// Botão do rail: ícone sem círculo de fundo, sombra sutil, área de toque
+/// de 44pt. O rótulo fica no tooltip/semantics (UI limpa).
+class _RailButton extends StatelessWidget {
+  const _RailButton({
+    required this.child,
+    required this.tooltip,
+    required this.onTap,
+    this.badge = false,
+  });
+
+  final Widget child;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool badge;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE11D48).withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (sound.coverUrl != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.network(
-                sound.coverUrl!,
-                width: 28,
-                height: 28,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallbackIcon(),
-              ),
-            )
-          else
-            _fallbackIcon(),
-          const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 160),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Tooltip(
+      message: tooltip,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap == null
+              ? null
+              : () {
+                  HapticFeedback.selectionClick();
+                  onTap!();
+                },
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Text(
-                  sound.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (sound.artist?.artistName != null)
-                  Text(
-                    sound.artist!.artistName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 10,
+                child,
+                if (badge)
+                  Positioned(
+                    right: 8,
+                    top: 9,
+                    child: Container(
+                      width: 7,
+                      height: 7,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: _kBrandGradient,
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 6),
-          GestureDetector(
-            onTap: onRemove,
-            child: const Icon(Icons.close, color: Colors.white, size: 16),
-          ),
-        ],
+        ),
       ),
     );
   }
-
-  Widget _fallbackIcon() => Container(
-    width: 28,
-    height: 28,
-    decoration: BoxDecoration(
-      color: const Color(0xFFE11D48).withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: const Icon(Icons.music_note, color: Color(0xFFE11D48), size: 16),
-  );
 }
 
-/// Botão "Aa" da top bar — versão mais legível e moderna do antigo
-/// `_CircleIconBtn(icon: Icons.text_fields)`. Usa label de texto "Aa" no
-/// lugar do ícone genérico, padrão Instagram/TikTok.
-class _AaTextButton extends StatelessWidget {
-  const _AaTextButton({required this.onTap});
+class _Pill extends StatelessWidget {
+  const _Pill({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _FontChip extends StatelessWidget {
+  const _FontChip({
+    required this.label,
+    required this.style,
+    required this.onTap,
+  });
+
+  final String label;
+  final TextStyle style;
   final VoidCallback onTap;
 
   @override
@@ -2744,59 +3611,184 @@ class _AaTextButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+          color: Colors.white.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
         ),
-        alignment: Alignment.center,
-        child: const Text(
-          'Aa',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.3,
+        child: Text(label, style: style.copyWith(color: Colors.white)),
+      ),
+    );
+  }
+}
+
+/// Chip compacto da música (topo do canvas): tap = ajustar trecho,
+/// ícone de mixer (só vídeo) e X = remover.
+class _SelectedStorySoundChip extends StatelessWidget {
+  const _SelectedStorySoundChip({
+    required this.sound,
+    required this.onTap,
+    required this.onRemove,
+    required this.onMixer,
+    required this.mixerTooltip,
+  });
+
+  final Sound sound;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+  final VoidCallback? onMixer;
+  final String mixerTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final artist = sound.artist?.artistName;
+    return Container(
+      height: 34,
+      padding: const EdgeInsets.only(left: 4, right: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(17),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTap,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipOval(
+                    child: sound.coverUrl != null
+                        ? Image.network(
+                            sound.coverUrl!,
+                            width: 26,
+                            height: 26,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _fallback(),
+                          )
+                        : _fallback(),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      artist != null && artist.isNotEmpty
+                          ? '${sound.title} · $artist'
+                          : sound.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+          if (onMixer != null)
+            _ChipIcon(
+              icon: Icons.tune_rounded,
+              tooltip: mixerTooltip,
+              onTap: onMixer!,
+            ),
+          _ChipIcon(
+            icon: Icons.close_rounded,
+            tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
+            onTap: onRemove,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _fallback() => Container(
+    width: 26,
+    height: 26,
+    decoration: const BoxDecoration(gradient: _kBrandGradient),
+    child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 15),
+  );
+}
+
+class _ChipIcon extends StatelessWidget {
+  const _ChipIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 30,
+          height: 34,
+          child: Icon(icon, color: Colors.white, size: 17),
         ),
       ),
     );
   }
 }
 
-/// Pill "Seu story" na bottom bar. Versão moderna do que antes era um
-/// TextField vazio de caption — agora indica claramente o destino da
-/// publicação (futuramente pode virar um seletor: Story / Close Friends).
+/// Pill "Seu story" (destino) com o avatar do usuário.
 class _StoryDestinationPill extends StatelessWidget {
-  const _StoryDestinationPill({required this.label});
+  const _StoryDestinationPill({required this.label, this.avatarUrl});
   final String label;
+  final String? avatarUrl;
 
   @override
   Widget build(BuildContext context) {
+    final url = avatarUrl;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(5, 5, 16, 5),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 34,
+            height: 34,
+            padding: const EdgeInsets.all(1.5),
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [AppColors.electricPurple, AppColors.coolCyan],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              gradient: _kBrandGradient,
+            ),
+            child: ClipOval(
+              child: ColoredBox(
+                color: AppColors.darkSurfaceElevated,
+                child: url != null && url.isNotEmpty
+                    ? Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.person_rounded,
+                          color: Colors.white70,
+                          size: 20,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
               ),
             ),
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 10),
           Text(
@@ -2813,80 +3805,71 @@ class _StoryDestinationPill extends StatelessWidget {
   }
 }
 
-/// Botão "Compartilhar" da bottom bar — pill grande com gradiente Brawe.
-/// Versão moderna do antigo `_PublishFab` (FAB circular com ícone send),
-/// segue padrão Instagram (pill horizontal com label "Compartilhar →").
-class _ShareButton extends StatelessWidget {
-  const _ShareButton({required this.loading, required this.onPressed});
+/// Botão enviar circular com gradiente Brawe (spinner durante publish).
+class _SendButton extends StatelessWidget {
+  const _SendButton({
+    required this.loading,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
   final bool loading;
-  final VoidCallback onPressed;
+  final String tooltip;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: loading ? null : onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(
-          horizontal: loading ? 18 : 22,
-          vertical: 12,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.electricPurple, AppColors.coolCyan],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.electricPurple.withValues(alpha: 0.5),
-              blurRadius: 16,
-              spreadRadius: 1,
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      label: tooltip,
+      child: GestureDetector(
+        onTap: onPressed == null
+            ? null
+            : () {
+                HapticFeedback.lightImpact();
+                onPressed!();
+              },
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: loading ? 0.8 : 1,
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: _kBrandGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  blurRadius: 16,
+                ),
+              ],
             ),
-          ],
-        ),
-        child: loading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: Colors.white,
-                ),
-              )
-            : Builder(
-                builder: (context) => Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      S.of(context).composerShare,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.arrow_forward_rounded,
+            alignment: Alignment.center,
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
                       color: Colors.white,
-                      size: 18,
                     ),
-                  ],
-                ),
-              ),
+                  )
+                : const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Slider vertical de tamanho da fonte (lateral esquerda do compose).
-/// Padrão Instagram Stories / WhatsApp Status: fonte fica menor pra cima
-/// e maior pra baixo? Não — invertemos pra "intuitivo": maior em cima
-/// (puxa pra cima = aumenta), menor embaixo. RotationY -1 para inverter
-/// a direção do slider sem inverter os ticks visuais.
+/// Slider vertical de tamanho da fonte (lateral esquerda do modo texto):
+/// puxar pra cima = maior.
 class _FontSizeSlider extends StatelessWidget {
   const _FontSizeSlider({
     required this.value,
@@ -2904,74 +3887,31 @@ class _FontSizeSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 36,
-      child: Column(
-        children: [
-          // Tick maior (topo)
-          Container(
-            width: 22,
-            height: 22,
-            alignment: Alignment.center,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-            ),
+      child: RotatedBox(
+        quarterTurns: 3,
+        child: SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3,
+            activeTrackColor: Colors.white,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.25),
+            thumbColor: Colors.white,
+            overlayColor: Colors.white.withValues(alpha: 0.14),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
           ),
-          Expanded(
-            child: RotatedBox(
-              quarterTurns: 3, // vertical (slider rotaciona 90° anti-horário)
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 3,
-                  activeTrackColor: Colors.white,
-                  inactiveTrackColor: Colors.white.withValues(alpha: 0.25),
-                  thumbColor: Colors.white,
-                  overlayColor: Colors.white.withValues(alpha: 0.14),
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 10,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 18,
-                  ),
-                ),
-                child: Slider(
-                  value: value.clamp(min, max),
-                  min: min,
-                  max: max,
-                  onChanged: (v) {
-                    onChanged(v);
-                    HapticFeedback.selectionClick();
-                  },
-                ),
-              ),
-            ),
+          child: Slider(
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            onChanged: onChanged,
           ),
-          // Tick menor (base)
-          Container(
-            width: 22,
-            height: 22,
-            alignment: Alignment.center,
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// Paleta de cores horizontal flutuante no rodapé do overlay de
-/// composição. Substitui o bottom sheet bruto que abria fora da
-/// tela. Padrão moderno: troca de cor instantânea, sem modal.
+/// Paleta horizontal (logo acima do teclado no modo texto).
 class _InlineColorPalette extends StatelessWidget {
   const _InlineColorPalette({
     required this.palette,
@@ -2986,12 +3926,12 @@ class _InlineColorPalette extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: palette.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
           final c = palette[i];
           final isSelected = c.toARGB32() == selected.toARGB32();
@@ -3000,28 +3940,19 @@ class _InlineColorPalette extends StatelessWidget {
               onSelect(c);
               HapticFeedback.selectionClick();
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: isSelected ? 38 : 32,
-              height: isSelected ? 38 : 32,
-              decoration: BoxDecoration(
-                color: c,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.white.withValues(alpha: 0.4),
-                  width: isSelected ? 3 : 1.5,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: isSelected ? 34 : 28,
+                height: isSelected ? 34 : 28,
+                decoration: BoxDecoration(
+                  color: c,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: isSelected ? 3 : 2,
+                  ),
                 ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: c.withValues(alpha: 0.6),
-                          blurRadius: 12,
-                          spreadRadius: 1,
-                        ),
-                      ]
-                    : null,
               ),
             ),
           );
@@ -3030,3 +3961,13 @@ class _InlineColorPalette extends StatelessWidget {
     );
   }
 }
+
+// PNG 1x1 transparente (placeholder do story "só texto").
+const List<int> _kTransparentPngBytes = <int>[
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, //
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, //
+  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, //
+  0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, //
+  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, //
+  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82, //
+];

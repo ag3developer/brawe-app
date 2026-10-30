@@ -23,22 +23,36 @@ class LiveRoomCommentsState {
     this.errorMessage,
     this.recentViewerAvatars = const <String>[],
     this.gifterRanking = const <GifterEntry>[],
+    this.myUsername,
+    this.chatGifts = const <LiveGift>[],
   });
 
   final List<LiveComment> comments;
   final int viewerCount;
   final int likeCount;
   final int totalComments;
+
   /// 💎 Total acumulado em USDT (aproximado) de gifts recebidos na sala.
   final double totalGiftsValue;
   final bool isSending;
   final String? errorMessage;
+
   /// Avatares reais dos últimos viewers que entraram (máx. 3, FIFO).
   /// Alimentado pelo evento `viewer_joined` do socket.
   final List<String> recentViewerAvatars;
+
   /// Ranking de presenteadores acumulado em tempo real via socket.
   /// Ordenado por `totalValue` desc. Máx. 10 entradas (só Top 3 é exibido).
   final List<GifterEntry> gifterRanking;
+
+  /// Meu @username (aprendido do eco das minhas mensagens) — usado para
+  /// destacar mensagens que me mencionam.
+  final String? myUsername;
+
+  /// Presentes que aparecem como linha no chat. Separado da fila de
+  /// animações (`LiveRoomGiftsViewModel`, que expira em 8s) — no chat o
+  /// presente fica no histórico como as mensagens.
+  final List<LiveGift> chatGifts;
 
   LiveRoomCommentsState copyWith({
     List<LiveComment>? comments,
@@ -51,6 +65,8 @@ class LiveRoomCommentsState {
     bool clearErrorMessage = false,
     List<String>? recentViewerAvatars,
     List<GifterEntry>? gifterRanking,
+    String? myUsername,
+    List<LiveGift>? chatGifts,
   }) {
     return LiveRoomCommentsState(
       comments: comments ?? this.comments,
@@ -64,6 +80,8 @@ class LiveRoomCommentsState {
           : errorMessage ?? this.errorMessage,
       recentViewerAvatars: recentViewerAvatars ?? this.recentViewerAvatars,
       gifterRanking: gifterRanking ?? this.gifterRanking,
+      myUsername: myUsername ?? this.myUsername,
+      chatGifts: chatGifts ?? this.chatGifts,
     );
   }
 }
@@ -81,18 +99,20 @@ class GifterEntry {
   final String userId;
   final String name;
   final String? avatarUrl;
+
   /// Soma total de `value` (coins) dos gifts enviados nesta sessão.
   final int totalValue;
+
   /// Quantidade de gifts enviados.
   final int giftCount;
 
   GifterEntry addGift(int value) => GifterEntry(
-        userId: userId,
-        name: name,
-        avatarUrl: avatarUrl,
-        totalValue: totalValue + value,
-        giftCount: giftCount + 1,
-      );
+    userId: userId,
+    name: name,
+    avatarUrl: avatarUrl,
+    totalValue: totalValue + value,
+    giftCount: giftCount + 1,
+  );
 }
 
 @riverpod
@@ -105,6 +125,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<double>? _giftTotalSubscription;
   StreamSubscription<LiveViewerEvent>? _viewerEventSubscription;
   StreamSubscription<LiveGift>? _giftsRankingSubscription;
+  final Set<String> _seenGiftIds = {};
 
   @override
   LiveRoomCommentsState build(String roomId) {
@@ -123,7 +144,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     });
 
     _initialize(roomId);
-    
+
     // Check if we already have a room with a viewer count in a list somewhere
     // For now we just start at 0, but _initialize will catch up soon.
     return const LiveRoomCommentsState();
@@ -141,24 +162,24 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     _likeCountSubscription = repository
         .watchLikeCount(roomId)
         .listen((count) => state = state.copyWith(likeCount: count));
-    _commentCountSubscription = repository
-        .watchCommentCount(roomId)
-        .listen((count) {
-          // Sempre adota o valor do servidor (fonte de verdade), exceto
-          // se já estivermos com um valor maior local (otimismo recente).
-          if (count > state.totalComments) {
-            state = state.copyWith(totalComments: count);
-          }
-        });
+    _commentCountSubscription = repository.watchCommentCount(roomId).listen((
+      count,
+    ) {
+      // Sempre adota o valor do servidor (fonte de verdade), exceto
+      // se já estivermos com um valor maior local (otimismo recente).
+      if (count > state.totalComments) {
+        state = state.copyWith(totalComments: count);
+      }
+    });
     _giftTotalSubscription = repository
         .watchGiftTotal(roomId)
         .listen((total) => state = state.copyWith(totalGiftsValue: total));
 
     // Avatares reais dos viewers: mantém os 3 mais recentes (FIFO).
     // Alimenta o ViewersStack no top bar — substitui os placeholders coloridos.
-    _viewerEventSubscription = repository
-        .watchViewerEvents(roomId)
-        .listen((event) {
+    _viewerEventSubscription = repository.watchViewerEvents(roomId).listen((
+      event,
+    ) {
       final avatar = event.viewerAvatar;
       if (avatar == null || avatar.isEmpty) return;
       if (!event.joined) return; // só adiciona quando entra
@@ -172,22 +193,30 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     // Ranking de presenteadores: acumula value de cada gift em tempo real.
     // Ordenado por totalValue desc, mantém máx 10 entradas para não crescer
     // indefinidamente. O sheet exibe só os Top 3.
-    _giftsRankingSubscription = repository
-        .watchGifts(roomId)
-        .listen((gift) {
+    _giftsRankingSubscription = repository.watchGifts(roomId).listen((gift) {
+      // Mesmo presente pode chegar 2× (reconexão) — conta uma vez só.
+      if (gift.id.isNotEmpty && !_seenGiftIds.add(gift.id)) return;
+      if (gift.showInChat) {
+        final chat = [...state.chatGifts, gift];
+        state = state.copyWith(
+          chatGifts: chat.length > 30 ? chat.sublist(chat.length - 30) : chat,
+        );
+      }
       if (gift.senderId.isEmpty) return;
       final ranking = List<GifterEntry>.from(state.gifterRanking);
       final idx = ranking.indexWhere((e) => e.userId == gift.senderId);
       if (idx >= 0) {
         ranking[idx] = ranking[idx].addGift(gift.value * gift.quantity);
       } else {
-        ranking.add(GifterEntry(
-          userId: gift.senderId,
-          name: gift.senderName,
-          avatarUrl: gift.senderAvatarUrl,
-          totalValue: gift.value * gift.quantity,
-          giftCount: gift.quantity,
-        ));
+        ranking.add(
+          GifterEntry(
+            userId: gift.senderId,
+            name: gift.senderName,
+            avatarUrl: gift.senderAvatarUrl,
+            totalValue: gift.value * gift.quantity,
+            giftCount: gift.quantity,
+          ),
+        );
       }
       ranking.sort((a, b) => b.totalValue.compareTo(a.totalValue));
       if (ranking.length > 10) ranking.length = 10;
@@ -221,17 +250,24 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       final topGifters = await repository.getTopGifters(roomId, limit: 10);
       if (!ref.mounted) return;
       if (topGifters.isNotEmpty) {
-        final initialRanking = topGifters.map((raw) {
-          return GifterEntry(
-            userId: raw['user_id']?.toString() ?? '',
-            name: raw['display_name']?.toString() ??
-                raw['name']?.toString() ?? 'Alguém',
-            avatarUrl: raw['avatar_url']?.toString(),
-            totalValue: (raw['total_coins'] as num?)?.toInt() ??
-                (raw['total_value'] as num?)?.toInt() ?? 0,
-            giftCount: (raw['gift_count'] as num?)?.toInt() ?? 0,
-          );
-        }).where((e) => e.userId.isNotEmpty).toList();
+        final initialRanking = topGifters
+            .map((raw) {
+              return GifterEntry(
+                userId: raw['user_id']?.toString() ?? '',
+                name:
+                    raw['display_name']?.toString() ??
+                    raw['name']?.toString() ??
+                    'Alguém',
+                avatarUrl: raw['avatar_url']?.toString(),
+                totalValue:
+                    (raw['total_coins'] as num?)?.toInt() ??
+                    (raw['total_value'] as num?)?.toInt() ??
+                    0,
+                giftCount: (raw['gift_count'] as num?)?.toInt() ?? 0,
+              );
+            })
+            .where((e) => e.userId.isNotEmpty)
+            .toList();
         // O socket pode já ter adicionado entradas — merge: API tem precedência
         // para entradas existentes (histórico > streaming parcial).
         final merged = List<GifterEntry>.from(state.gifterRanking);
@@ -263,17 +299,14 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     }
   }
 
-  Future<dynamic> _fetchRoomWithRetry(
-    dynamic repository,
-    String roomId,
-  ) async {
+  Future<dynamic> _fetchRoomWithRetry(dynamic repository, String roomId) async {
     try {
       return await repository.getRoom(roomId);
     } on Failure catch (failure) {
       // Em caso de "not found"/network bem cedo no ciclo, esperar 600ms e tentar 1x.
       final isNotFound =
           failure.toDisplayMessage().toLowerCase().contains('not found') ||
-              failure.toDisplayMessage().toLowerCase().contains('internet');
+          failure.toDisplayMessage().toLowerCase().contains('internet');
       if (!isNotFound) rethrow;
       await Future<void>.delayed(const Duration(milliseconds: 600));
       if (!ref.mounted) return null;
@@ -281,10 +314,13 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     }
   }
 
-  Future<void> sendComment(String message) async {
+  /// Envia um comentário com eco otimista (aparece na hora no chat).
+  /// Retorna `false` se o envio falhou — a tela devolve o texto ao input
+  /// para o usuário não perder o que digitou.
+  Future<bool> sendComment(String message) async {
     final trimmedMessage = message.trim();
     if (trimmedMessage.isEmpty) {
-      return;
+      return false;
     }
 
     final optimisticComment = _buildOptimisticComment(trimmedMessage);
@@ -295,20 +331,27 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       await ref
           .read(liveRepositoryProvider)
           .sendComment(roomId: _roomId, message: trimmedMessage);
+      // Usuário pode ter saído da live durante o request.
+      if (!ref.mounted) return true;
       _markCommentAsSent(optimisticComment.id);
       state = state.copyWith(isSending: false);
+      return true;
     } on Failure catch (failure) {
+      if (!ref.mounted) return false;
       _removeComment(optimisticComment.id);
       state = state.copyWith(
         isSending: false,
         errorMessage: failure.toDisplayMessage(),
       );
+      return false;
     } catch (_) {
+      if (!ref.mounted) return false;
       _removeComment(optimisticComment.id);
       state = state.copyWith(
         isSending: false,
         errorMessage: const Failure.unknown().toDisplayMessage(),
       );
+      return false;
     }
   }
 
@@ -338,7 +381,16 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     state = state.copyWith(
       comments: _trimComments(comments),
       clearErrorMessage: true,
+      myUsername: state.myUsername == null && _isMine(comment)
+          ? comment.username
+          : null,
     );
+  }
+
+  bool _isMine(LiveComment comment) {
+    final authState = ref.read(authStateProvider);
+    final me = authState is AsyncData<User?> ? authState.value : null;
+    return me != null && comment.userId == me.id;
   }
 
   LiveComment _buildOptimisticComment(String message) {

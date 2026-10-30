@@ -122,10 +122,18 @@ class StoriesService {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    String? overlayPath,
   }) async {
     final hasSound = soundId != null && soundId.isNotEmpty;
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath),
+      // Camada de textos (PNG transparente 9:16) desenhada por cima da
+      // mídia no visualizador — é o que mantém texto em stories de VÍDEO.
+      if (overlayPath != null)
+        'overlay': await MultipartFile.fromFile(
+          overlayPath,
+          filename: 'overlay.png',
+        ),
       if (caption != null && caption.trim().isNotEmpty)
         'caption': caption.trim(),
       'duration_seconds': ?durationSeconds,

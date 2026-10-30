@@ -3,16 +3,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../data/repositories/explore_repository.dart';
-import '../../../../../data/repositories/live_repository.dart';
-import '../../../../../domain/models/live_room.dart';
+import '../../../../../data/services/battle_service.dart';
+import '../../../../../domain/models/battle_candidate.dart';
 import '../../../../core/themes/app_colors.dart';
 
 /// Bottom sheet to pick a live creator and invite them for a battle.
 ///
-/// Loads the live feed by default and switches to search results when the
-/// user types (with a 450 ms debounce). The [onInvite] callback receives the
-/// selected target room id and the chosen battle duration in seconds.
+/// Lista vem de `GET /live/battle/candidates` — só criadores ao vivo que
+/// podem batalhar AGORA (sem o próprio usuário, sem quem já está em
+/// batalha/convite pendente, sem lives privadas). Quem você segue aparece
+/// primeiro. Busca com debounce, paginação infinita e pull-to-refresh.
+///
+/// [onInvite] faz o request e devolve `null` em sucesso (o sheet fecha) ou
+/// a mensagem de erro (o sheet continua aberto mostrando o motivo, para o
+/// streamer escolher outra pessoa).
 class BattleInviteSheet extends ConsumerStatefulWidget {
   const BattleInviteSheet({
     super.key,
@@ -21,7 +25,8 @@ class BattleInviteSheet extends ConsumerStatefulWidget {
   });
 
   final String myRoomId;
-  final void Function(String targetRoomId, int durationSeconds) onInvite;
+  final Future<String?> Function(BattleCandidate candidate, int durationSeconds)
+  onInvite;
 
   @override
   ConsumerState<BattleInviteSheet> createState() => _BattleInviteSheetState();
@@ -30,17 +35,31 @@ class BattleInviteSheet extends ConsumerStatefulWidget {
 class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
   final _searchCtrl = TextEditingController();
   Timer? _debounce;
-  List<LiveRoom> _rooms = [];
+
+  List<BattleCandidate> _items = [];
+  String? _nextCursor;
   bool _loading = true;
+  bool _loadingMore = false;
   String? _error;
-  LiveRoom? _selected;
+
+  /// Query efetivamente carregada — evita recarregar quando o listener do
+  /// controller dispara por mudança de cursor/seleção (não de texto).
+  String _query = '';
+
+  /// Token da requisição atual: respostas de buscas antigas que chegam
+  /// depois são descartadas (antes resultados velhos sobrescreviam novos).
+  int _requestId = 0;
+
+  BattleCandidate? _selected;
   int _durationSeconds = 300;
+  bool _sending = false;
+  String? _inviteError;
 
   @override
   void initState() {
     super.initState();
-    _loadFeed();
     _searchCtrl.addListener(_onSearchChanged);
+    _load(reset: true);
   }
 
   @override
@@ -50,399 +69,694 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
     super.dispose();
   }
 
-  Future<void> _loadFeed() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final rooms = await ref.read(liveRepositoryProvider).getLiveFeed(limit: 20);
-      if (mounted) {
-        setState(() {
-          _rooms = rooms.where((r) => r.id != widget.myRoomId).toList();
-          _loading = false;
-        });
+  void _onSearchChanged() {
+    final q = _searchCtrl.text.trim();
+    if (q == _query) return;
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      _query = q;
+      _load(reset: true);
+    });
+  }
+
+  Future<void> _load({required bool reset}) async {
+    if (!reset && (_loadingMore || _nextCursor == null)) return;
+    final requestId = ++_requestId;
+    setState(() {
+      if (reset) {
+        _loading = true;
+        _error = null;
+      } else {
+        _loadingMore = true;
       }
+    });
+    try {
+      final (items, next) = await ref
+          .read(battleServiceProvider)
+          .getCandidates(query: _query, cursor: reset ? null : _nextCursor);
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        final merged = reset ? items : [..._items, ...items];
+        // Defesa extra: nunca listar a própria sala nem duplicados.
+        final seen = <String>{};
+        _items = merged
+            .where((c) => c.roomId != widget.myRoomId && seen.add(c.roomId))
+            .toList();
+        _nextCursor = next;
+        _loading = false;
+        _loadingMore = false;
+        // Selecionado saiu da lista (entrou em batalha, encerrou a live).
+        if (_selected != null &&
+            !_items.any((c) => c.roomId == _selected!.roomId)) {
+          _selected = null;
+        }
+      });
     } catch (e) {
-      if (mounted) setState(() { _error = 'Não foi possível carregar criadores ao vivo'; _loading = false; });
+      if (!mounted || requestId != _requestId) return;
+      setState(() {
+        _loading = false;
+        _loadingMore = false;
+        if (reset) {
+          _error = BattleService.errorMessage(
+            e,
+            'Não foi possível carregar criadores ao vivo',
+          );
+        }
+      });
     }
   }
 
-  void _onSearchChanged() {
-    _debounce?.cancel();
-    final q = _searchCtrl.text.trim();
-    if (q.isEmpty) {
-      _loadFeed();
+  Future<void> _invite() async {
+    final target = _selected;
+    if (target == null || _sending) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _sending = true;
+      _inviteError = null;
+    });
+    final error = await widget.onInvite(target, _durationSeconds);
+    if (!mounted) return;
+    if (error == null) {
+      Navigator.of(context).pop();
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 450), () => _search(q));
+    setState(() {
+      _sending = false;
+      _inviteError = error;
+    });
+    // O motivo mais comum é o oponente ter ficado ocupado — atualiza a lista.
+    unawaited(_load(reset: true));
   }
 
-  Future<void> _search(String q) async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final results = await ref.read(exploreRepositoryProvider).search(q);
-      // Convert live-type results to LiveRoom objects
-      final liveRooms = results
-          .where((r) => r.type == 'live' && r.id != widget.myRoomId)
-          .map((r) => LiveRoom(
-                id: r.id,
-                slug: r.id,
-                title: r.title,
-                liveType: 'live',
-                isPrivate: false,
-                status: 'live',
-                streamerId: (r.metadata['streamer_id'] ?? r.id).toString(),
-                streamerName: r.subtitle ?? r.title,
-                streamerAvatarUrl: r.thumbnail,
-                viewerCount: (r.metadata['viewer_count'] as num?)?.toInt() ?? 0,
-              ))
-          .toList();
-      if (mounted) setState(() { _rooms = liveRooms; _loading = false; });
-    } catch (e) {
-      if (mounted) setState(() { _error = 'Erro na busca'; _loading = false; });
+  bool _onScroll(ScrollNotification n) {
+    if (n.metrics.pixels >= n.metrics.maxScrollExtent - 200) {
+      _load(reset: false);
     }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.7,
-      minChildSize: 0.5,
-      maxChildSize: 0.92,
-      expand: false,
-      builder: (ctx, scrollCtrl) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0E0E14),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.electricPurple.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.sports_kabaddi_rounded,
-                          color: AppColors.electricPurple, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Iniciar Batalha',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
-                        Text('Escolha um criador ao vivo',
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Search field
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
-                  controller: _searchCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar criador...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, color: Colors.white38, size: 18),
-                            onPressed: () { _searchCtrl.clear(); },
-                          )
-                        : null,
-                    filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.07),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.electricPurple, width: 1.5),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Duration picker
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Text('Duração:',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 13)),
-                    const SizedBox(width: 10),
-                    ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((opt) {
-                      final selected = _durationSeconds == opt.$2;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _durationSeconds = opt.$2),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? AppColors.electricPurple.withValues(alpha: 0.25)
-                                  : Colors.white.withValues(alpha: 0.07),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: selected
-                                    ? AppColors.electricPurple.withValues(alpha: 0.7)
-                                    : Colors.white.withValues(alpha: 0.1),
-                              ),
-                            ),
-                            child: Text(opt.$1,
-                                style: TextStyle(
-                                  color: selected ? AppColors.electricPurple : Colors.white60,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                )),
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Divider(color: Colors.white12, height: 20),
-              // Rooms list
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.electricPurple))
-                    : _error != null
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.wifi_off_rounded, color: Colors.white38, size: 36),
-                                const SizedBox(height: 8),
-                                Text(_error!, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-                                const SizedBox(height: 12),
-                                TextButton(onPressed: _loadFeed, child: const Text('Tentar novamente',
-                                    style: TextStyle(color: AppColors.electricPurple))),
-                              ],
-                            ),
-                          )
-                        : _rooms.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.live_tv_rounded, color: Colors.white24, size: 40),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      _searchCtrl.text.isNotEmpty
-                                          ? 'Nenhum criador ao vivo encontrado'
-                                          : 'Nenhum criador ao vivo agora',
-                                      style: const TextStyle(color: Colors.white38, fontSize: 13),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: scrollCtrl,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                itemCount: _rooms.length,
-                                itemBuilder: (_, i) {
-                                  final room = _rooms[i];
-                                  final isSelected = _selected?.id == room.id;
-                                  return GestureDetector(
-                                    onTap: () => setState(() =>
-                                        _selected = isSelected ? null : room),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      margin: const EdgeInsets.symmetric(vertical: 4),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? AppColors.electricPurple.withValues(alpha: 0.15)
-                                            : Colors.white.withValues(alpha: 0.04),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? AppColors.electricPurple.withValues(alpha: 0.5)
-                                              : Colors.white.withValues(alpha: 0.07),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // Avatar with live badge
-                                          Stack(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 24,
-                                                backgroundColor: AppColors.electricPurple.withValues(alpha: 0.3),
-                                                backgroundImage: room.streamerAvatarUrl != null
-                                                    ? NetworkImage(room.streamerAvatarUrl!)
-                                                    : null,
-                                                child: room.streamerAvatarUrl == null
-                                                    ? Text(
-                                                        room.streamerName.isNotEmpty
-                                                            ? room.streamerName[0].toUpperCase()
-                                                            : '?',
-                                                        style: const TextStyle(
-                                                            color: Colors.white, fontWeight: FontWeight.w700))
-                                                    : null,
-                                              ),
-                                              Positioned(
-                                                bottom: 0, right: 0,
-                                                child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.red,
-                                                    borderRadius: BorderRadius.circular(6),
-                                                    border: Border.all(color: const Color(0xFF0E0E14), width: 1.5),
-                                                  ),
-                                                  child: const Text('AO VIVO',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 7,
-                                                          fontWeight: FontWeight.w900,
-                                                          letterSpacing: 0.3)),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(room.streamerName,
-                                                    style: const TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight: FontWeight.w700,
-                                                        fontSize: 14),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis),
-                                                const SizedBox(height: 2),
-                                                if (room.title.isNotEmpty)
-                                                  Text(room.title,
-                                                      style: TextStyle(
-                                                          color: Colors.white.withValues(alpha: 0.45),
-                                                          fontSize: 12),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  const Icon(Icons.remove_red_eye_rounded,
-                                                      color: Colors.white38, size: 12),
-                                                  const SizedBox(width: 3),
-                                                  Text('${room.viewerCount}',
-                                                      style: const TextStyle(
-                                                          color: Colors.white38,
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.w600)),
-                                                ],
-                                              ),
-                                              if (isSelected)
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 4),
-                                                  child: Icon(Icons.check_circle_rounded,
-                                                      color: AppColors.electricPurple, size: 18),
-                                                ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-              ),
-              // Invite button
-              Padding(
-                padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.of(context).padding.bottom + 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: DecoratedBox(
+    // ⌨️ O sheet sobe com o teclado da busca — o botão "Convidar" nunca
+    // fica escondido.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.92,
+        expand: false,
+        builder: (ctx, scrollCtrl) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF0E0E14),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
                     decoration: BoxDecoration(
-                      gradient: _selected != null
-                          ? const LinearGradient(colors: [Color(0xFF7C3AED), AppColors.electricPurple])
-                          : null,
-                      color: _selected == null ? Colors.white.withValues(alpha: 0.07) : null,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: _selected != null
-                          ? [BoxShadow(
-                              color: AppColors.electricPurple.withValues(alpha: 0.35),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            )]
-                          : null,
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: _selected == null
-                            ? null
-                            : () => widget.onInvite(_selected!.id, _durationSeconds),
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.send_rounded,
-                                  color: _selected != null ? Colors.white : Colors.white30, size: 18),
-                              const SizedBox(width: 8),
-                              Text(
-                                _selected != null
-                                    ? 'Convidar ${_selected!.streamerName}'
-                                    : 'Selecione um criador',
-                                style: TextStyle(
-                                  color: _selected != null ? Colors.white : Colors.white30,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                  letterSpacing: 0.3,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                _buildHeader(),
+                const SizedBox(height: 16),
+                _buildSearchField(),
+                const SizedBox(height: 12),
+                _buildDurationPicker(),
+                const SizedBox(height: 4),
+                const Divider(color: Colors.white12, height: 20),
+                Expanded(child: _buildList(scrollCtrl)),
+                _buildInviteButton(keyboardOpen: keyboard > 0),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.electricPurple.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.sports_kabaddi_rounded,
+              color: AppColors.electricPurple,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Iniciar Batalha',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'Criadores ao vivo disponíveis agora',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 13,
                 ),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _searchCtrl,
+        builder: (_, value, _) => TextField(
+          controller: _searchCtrl,
+          style: const TextStyle(color: Colors.white),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Buscar criador ao vivo...',
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+            prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+            suffixIcon: value.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.clear_rounded,
+                      color: Colors.white38,
+                      size: 18,
+                    ),
+                    onPressed: _searchCtrl.clear,
+                  )
+                : null,
+            filled: true,
+            fillColor: Colors.white.withValues(alpha: 0.07),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: AppColors.electricPurple,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDurationPicker() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Text(
+            'Duração:',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(width: 10),
+          ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((opt) {
+            final selected = _durationSeconds == opt.$2;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => setState(() => _durationSeconds = opt.$2),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.electricPurple.withValues(alpha: 0.25)
+                        : Colors.white.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.electricPurple.withValues(alpha: 0.7)
+                          : Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: Text(
+                    opt.$1,
+                    style: TextStyle(
+                      color: selected
+                          ? AppColors.electricPurple
+                          : Colors.white60,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList(ScrollController scrollCtrl) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.electricPurple),
+      );
+    }
+    if (_error != null) {
+      return _CenteredMessage(
+        icon: Icons.wifi_off_rounded,
+        message: _error!,
+        actionLabel: 'Tentar novamente',
+        onAction: () => _load(reset: true),
+      );
+    }
+    if (_items.isEmpty) {
+      return RefreshIndicator(
+        color: AppColors.electricPurple,
+        onRefresh: () => _load(reset: true),
+        // ListView para o pull-to-refresh funcionar com a lista vazia.
+        child: ListView(
+          controller: scrollCtrl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            const SizedBox(height: 40),
+            _CenteredMessage(
+              icon: Icons.live_tv_rounded,
+              message: _query.isNotEmpty
+                  ? 'Nenhum criador disponível com "$_query"'
+                  : 'Nenhum criador disponível para batalha agora.\n'
+                        'Puxe para atualizar.',
+            ),
+          ],
+        ),
+      );
+    }
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScroll,
+      child: RefreshIndicator(
+        color: AppColors.electricPurple,
+        onRefresh: () => _load(reset: true),
+        child: ListView.builder(
+          controller: scrollCtrl,
+          physics: const AlwaysScrollableScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          itemCount: _items.length + (_loadingMore ? 1 : 0),
+          itemBuilder: (_, i) {
+            if (i >= _items.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.electricPurple,
+                    ),
+                  ),
+                ),
+              );
+            }
+            final c = _items[i];
+            final isSelected = _selected?.roomId == c.roomId;
+            return _CandidateTile(
+              candidate: c,
+              selected: isSelected,
+              onTap: _sending
+                  ? null
+                  : () => setState(() {
+                      _selected = isSelected ? null : c;
+                      _inviteError = null;
+                    }),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInviteButton({required bool keyboardOpen}) {
+    final enabled = _selected != null && !_sending;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        8,
+        20,
+        (keyboardOpen ? 0 : MediaQuery.paddingOf(context).bottom) + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_inviteError != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: Color(0xFFFF6B6B),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _inviteError!,
+                      style: const TextStyle(
+                        color: Color(0xFFFF6B6B),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: enabled
+                    ? const LinearGradient(
+                        colors: [Color(0xFF7C3AED), AppColors.electricPurple],
+                      )
+                    : null,
+                color: enabled ? null : Colors.white.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: enabled ? _invite : null,
+                  child: Center(
+                    child: _sending
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.send_rounded,
+                                color: enabled ? Colors.white : Colors.white30,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  _selected != null
+                                      ? 'Convidar ${_selected!.displayName}'
+                                      : 'Selecione um criador',
+                                  style: TextStyle(
+                                    color: enabled
+                                        ? Colors.white
+                                        : Colors.white30,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                    letterSpacing: 0.3,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CandidateTile extends StatelessWidget {
+  const _CandidateTile({
+    required this.candidate,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final BattleCandidate candidate;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = candidate;
+    final avatar = c.avatarUrl;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.electricPurple.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? AppColors.electricPurple.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.07),
+          ),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: AppColors.electricPurple.withValues(
+                    alpha: 0.3,
+                  ),
+                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
+                  child: avatar == null
+                      ? Text(
+                          c.displayName.replaceFirst('@', '').isNotEmpty
+                              ? c.displayName
+                                    .replaceFirst('@', '')[0]
+                                    .toUpperCase()
+                              : '?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : null,
+                ),
+                Positioned(
+                  bottom: -2,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF0E0E14),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Text(
+                        'AO VIVO',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 7,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          c.displayName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (c.isFollowing) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Seguindo',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  if (c.title.isNotEmpty)
+                    Text(
+                      c.title,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.45),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.remove_red_eye_rounded,
+                      color: Colors.white38,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${c.viewerCount}',
+                      style: const TextStyle(
+                        color: Colors.white38,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                if (selected)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: AppColors.electricPurple,
+                      size: 18,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CenteredMessage extends StatelessWidget {
+  const _CenteredMessage({
+    required this.icon,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final IconData icon;
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white24, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white38, fontSize: 13),
+            ),
+            if (actionLabel != null) ...[
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: onAction,
+                child: Text(
+                  actionLabel!,
+                  style: const TextStyle(color: AppColors.electricPurple),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

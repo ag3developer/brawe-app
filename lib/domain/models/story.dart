@@ -10,6 +10,7 @@ class Story {
     required this.mediaUrl,
     this.mediaType = 'image',
     this.thumbnailUrl,
+    this.overlayUrl,
     this.caption,
     this.durationSeconds,
     this.viewsCount = 0,
@@ -34,6 +35,9 @@ class Story {
   final String mediaUrl;
   final String mediaType; // 'image' | 'video'
   final String? thumbnailUrl;
+
+  /// Camada de textos (PNG transparente 9:16) desenhada por cima da mídia.
+  final String? overlayUrl;
   final String? caption;
   final int? durationSeconds;
   final int viewsCount;
@@ -103,6 +107,7 @@ class Story {
     mediaUrl: mediaUrl,
     mediaType: mediaType,
     thumbnailUrl: thumbnailUrl,
+    overlayUrl: overlayUrl,
     caption: caption,
     durationSeconds: durationSeconds,
     viewsCount: viewsCount,

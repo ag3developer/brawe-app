@@ -27,6 +27,19 @@ enum AudioEQPreset {
   studio,
 }
 
+/// Nome amigável do preset (antes a UI mostrava o nome interno do enum,
+/// ex.: "voiceEnhancement").
+extension AudioEQPresetLabel on AudioEQPreset {
+  String get label => switch (this) {
+    AudioEQPreset.flat => 'Sem efeito',
+    AudioEQPreset.voiceEnhancement => 'Voz clara',
+    AudioEQPreset.musicBoost => 'Música',
+    AudioEQPreset.gaming => 'Games',
+    AudioEQPreset.podcast => 'Podcast',
+    AudioEQPreset.studio => 'Estúdio',
+  };
+}
+
 /// Parâmetros de compressor para controle de dinâmica
 class CompressorConfig {
   final double threshold; // dB (-40 a 0)

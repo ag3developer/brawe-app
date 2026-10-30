@@ -11,14 +11,17 @@ import '../../../../../domain/models/live_comment.dart';
 import '../../../../../domain/models/live_room.dart';
 import '../../../../../domain/models/profile.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../view_models/feed_video_mute_provider.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 
 /// 👤 Provider que busca o perfil completo de um streamer pelo id,
 /// usado para garantir que avatar + nome real sempre apareçam no card de
 /// live no For You (mesmo quando o endpoint /lives não devolve avatar).
-final streamerProfileProvider =
-    FutureProvider.family<Profile?, String>((ref, userId) async {
+final streamerProfileProvider = FutureProvider.family<Profile?, String>((
+  ref,
+  userId,
+) async {
   if (userId.isEmpty) return null;
   try {
     return await ref.read(profileRepositoryProvider).getUserProfile(userId);
@@ -29,10 +32,16 @@ final streamerProfileProvider =
 
 /// 🔴 Live Peek — fundo "vivo" do card de live no For You.
 ///
-/// Diferenciais vs TikTok:
-/// - Autoplay mudo do `streamUrl` (HLS) com fallback de thumbnail.
-/// - Pausa o player quando não é a página ativa (poupa banda/CPU).
-/// - Tap em qualquer lugar → entra na live com som.
+/// - Autoplay do `streamUrl` (HLS) COM SOM — o espectador "bisbilhota" a
+///   live sem entrar (TikTok). Respeita o mudo global do feed
+///   (`feedVideoMuteProvider`, o mesmo botão dos vídeos).
+/// - Leve: limita a prévia a 480p (`max_resolution`) — o Mux adapta o
+///   bitrate; o áudio (~128 kbps) pesa pouco perto do vídeo.
+/// - Só toca quando é a página ativa E a tela está visível (TickerMode):
+///   ao entrar na live ou abrir outra tela por cima, a prévia pausa — sem
+///   isso o som da prévia continuaria por baixo da live.
+/// - Fallback de thumbnail; retry enquanto o Mux ainda não serve o HLS.
+/// - Tap em qualquer lugar → entra na live.
 /// - Após 5s de preview, sinaliza "interesse" pro ranking.
 class LivePeekBackground extends ConsumerStatefulWidget {
   const LivePeekBackground({
@@ -57,6 +66,22 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
   bool _ready = false;
   Timer? _interestTimer;
 
+  /// Evita 2 boots simultâneos (initState + didUpdateWidget durante o
+  /// `initialize`) — antes criava 2 players e um ficava vazando.
+  bool _booting = false;
+
+  /// Retry: uma live recém-iniciada leva alguns segundos até o Mux servir
+  /// segmentos HLS. Antes a 1ª falha era engolida e o card ficava cinza
+  /// para sempre.
+  Timer? _retryTimer;
+  int _attempts = 0;
+  static const _retryDelays = [2, 4, 6, 10, 15, 20];
+
+  /// `false` quando outra rota cobre o feed (ex.: entrou na live).
+  bool _routeVisible = true;
+
+  bool get _active => widget.isActive && _routeVisible;
+
   @override
   void initState() {
     super.initState();
@@ -65,23 +90,72 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible != _routeVisible) {
+      _routeVisible = visible;
+      _applyPlayback();
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant LivePeekBackground oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
-      _bootPlayer();
-      _ctrl?.play();
-      _scheduleInterest();
-    } else if (!widget.isActive && oldWidget.isActive) {
-      _ctrl?.pause();
-      _interestTimer?.cancel();
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        _attempts = 0;
+        _scheduleInterest();
+      } else {
+        _interestTimer?.cancel();
+        _retryTimer?.cancel();
+      }
+      _applyPlayback();
     }
+  }
+
+  double get _targetVolume =>
+      _active && !ref.read(feedVideoMuteProvider) ? 1.0 : 0.0;
+
+  /// Toca com som só quando ativo e visível; senão pausa e silencia.
+  void _applyPlayback() {
+    final c = _ctrl;
+    if (_active) {
+      if (c == null) {
+        _bootPlayer();
+        return;
+      }
+      // Volta para o "ao vivo" (a pausa deixou o player atrasado).
+      final duration = c.value.duration;
+      if (duration > Duration.zero) c.seekTo(duration);
+      c
+        ..setVolume(_targetVolume)
+        ..play();
+    } else {
+      c
+        ?..setVolume(0)
+        ..pause();
+    }
+  }
+
+  /// URL leve para a prévia: no Mux, `max_resolution=480p` limita a
+  /// escada de qualidade do HLS (menos dados para quem só está rolando).
+  String _previewUrl(String url) {
+    if (!url.contains('stream.mux.com') || url.contains('max_resolution')) {
+      return url;
+    }
+    return url.contains('?')
+        ? '$url&max_resolution=480p'
+        : '$url?max_resolution=480p';
   }
 
   Future<void> _bootPlayer() async {
     final url = widget.streamUrl;
-    if (_ctrl != null || url == null || url.isEmpty) return;
+    if (_ctrl != null || _booting || url == null || url.isEmpty) return;
+    _booting = true;
+    _retryTimer?.cancel();
     final ctrl = VideoPlayerController.networkUrl(
-      Uri.parse(url),
+      Uri.parse(_previewUrl(url)),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     try {
@@ -90,22 +164,53 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
         await ctrl.dispose();
         return;
       }
-      await ctrl.setVolume(0); // preview SEM som
-      await ctrl.setLooping(true);
-      await ctrl.play();
+      // Live HLS: vai pro live edge (sem loop — é stream contínuo).
+      final duration = ctrl.value.duration;
+      if (duration > Duration.zero) await ctrl.seekTo(duration);
+      await ctrl.setVolume(_targetVolume);
+      if (_active) await ctrl.play();
+      if (!mounted) {
+        await ctrl.dispose();
+        return;
+      }
       setState(() {
         _ctrl = ctrl;
         _ready = true;
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint('LivePeek: preview init failed (try ${_attempts + 1}): $e');
       await ctrl.dispose();
+      _scheduleRetry();
+    } finally {
+      _booting = false;
     }
+  }
+
+  void _scheduleRetry() {
+    if (!mounted || !_active || _attempts >= _retryDelays.length) {
+      return;
+    }
+    final delay = _retryDelays[_attempts++];
+    _retryTimer = Timer(Duration(seconds: delay), () {
+      if (mounted && _active) _bootPlayer();
+    });
+  }
+
+  /// Sem thumbnail no backend → usa o último frame da live via Mux Image
+  /// API (aparece enquanto o vídeo carrega, em vez do fundo cinza).
+  String? get _posterUrl {
+    if (widget.thumbnailUrl.isNotEmpty) return widget.thumbnailUrl;
+    final url = widget.streamUrl;
+    if (url == null) return null;
+    final m = RegExp(r'stream\.mux\.com/([^/.?]+)').firstMatch(url);
+    if (m == null) return null;
+    return 'https://image.mux.com/${m.group(1)}/thumbnail.jpg?width=720';
   }
 
   void _scheduleInterest() {
     _interestTimer?.cancel();
     _interestTimer = Timer(const Duration(seconds: 5), () {
-      if (!mounted || !widget.isActive) return;
+      if (!mounted || !_active) return;
       ref
           .read(liveRepositoryProvider)
           .signalPreviewInterest(widget.roomId)
@@ -116,12 +221,19 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
   @override
   void dispose() {
     _interestTimer?.cancel();
+    _retryTimer?.cancel();
     _ctrl?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Mudo global do feed (mesmo botão dos vídeos) → aplica na hora.
+    ref.listen<bool>(feedVideoMuteProvider, (_, _) {
+      _ctrl?.setVolume(_targetVolume);
+    });
+    final muted = ref.watch(feedVideoMuteProvider);
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -134,9 +246,9 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
               child: VideoPlayer(_ctrl!),
             ),
           )
-        else if (widget.thumbnailUrl.isNotEmpty)
+        else if (_posterUrl != null)
           Image.network(
-            widget.thumbnailUrl,
+            _posterUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => Container(color: AppColors.slate),
           )
@@ -148,16 +260,54 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0x55000000),
-                Color(0x00000000),
-                Color(0xCC000000),
-              ],
+              colors: [Color(0x55000000), Color(0x00000000), Color(0xCC000000)],
               stops: [0.0, 0.4, 1.0],
             ),
           ),
         ),
+        // 🔊 Som da prévia — mesmo estado (e posição) do botão dos vídeos.
+        if (_ready)
+          Positioned(
+            left: 16,
+            top: MediaQuery.paddingOf(context).top + 64,
+            child: _PeekMuteButton(
+              muted: muted,
+              onTap: () => ref.read(feedVideoMuteProvider.notifier).toggle(),
+            ),
+          ),
       ],
+    );
+  }
+}
+
+class _PeekMuteButton extends StatelessWidget {
+  const _PeekMuteButton({required this.muted, required this.onTap});
+  final bool muted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withValues(alpha: 0.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          ),
+          alignment: Alignment.center,
+          child: Icon(
+            muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -260,8 +410,11 @@ class ViewerCountChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.remove_red_eye_outlined,
-              color: Colors.white70, size: 12),
+          const Icon(
+            Icons.remove_red_eye_outlined,
+            color: Colors.white70,
+            size: 12,
+          ),
           const SizedBox(width: 4),
           Text(
             _fmt(count),
@@ -405,7 +558,9 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
       // Atraso de fase por barra
       Future.delayed(
         Duration(milliseconds: (_phases[i] * _durations[i]).round()),
-        () { if (mounted) c.repeat(reverse: true); },
+        () {
+          if (mounted) c.repeat(reverse: true);
+        },
       );
       return c;
     });
@@ -413,7 +568,9 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
 
   @override
   void dispose() {
-    for (final c in _ctrls) { c.dispose(); }
+    for (final c in _ctrls) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -456,7 +613,9 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
                         width: 3,
                         height: h,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.85 + _ctrls[i].value * 0.15),
+                          color: Colors.white.withValues(
+                            alpha: 0.85 + _ctrls[i].value * 0.15,
+                          ),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       );
@@ -515,10 +674,7 @@ class StreamerIdentity extends ConsumerWidget {
         ? ref.watch(streamerProfileProvider(userId))
         : const AsyncValue<Profile?>.data(null);
 
-    final fetched = asyncProfile.maybeWhen(
-      data: (p) => p,
-      orElse: () => null,
-    );
+    final fetched = asyncProfile.maybeWhen(data: (p) => p, orElse: () => null);
 
     final effectiveAvatar = (avatarUrl != null && avatarUrl!.isNotEmpty)
         ? avatarUrl!
@@ -526,8 +682,9 @@ class StreamerIdentity extends ConsumerWidget {
     final effectiveName = name.isNotEmpty
         ? name
         : (fetched?.displayName ?? fetched?.username ?? '');
-    final effectiveUsername =
-        username.isNotEmpty ? username : (fetched?.username ?? '');
+    final effectiveUsername = username.isNotEmpty
+        ? username
+        : (fetched?.username ?? '');
     final effectiveVerified = isVerified || (fetched?.isVerified ?? false);
 
     return GestureDetector(
@@ -571,15 +728,18 @@ class StreamerIdentity extends ConsumerWidget {
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                           shadows: [
-                            Shadow(color: Colors.black54, blurRadius: 6)
+                            Shadow(color: Colors.black54, blurRadius: 6),
                           ],
                         ),
                       ),
                     ),
                     if (effectiveVerified) ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.verified,
-                          color: Color(0xFFB6A6FF), size: 15),
+                      const Icon(
+                        Icons.verified,
+                        color: Color(0xFFB6A6FF),
+                        size: 15,
+                      ),
                     ],
                   ],
                 ),
@@ -593,7 +753,7 @@ class StreamerIdentity extends ConsumerWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       shadows: const [
-                        Shadow(color: Colors.black54, blurRadius: 4)
+                        Shadow(color: Colors.black54, blurRadius: 4),
                       ],
                     ),
                   ),
@@ -613,9 +773,9 @@ class StreamerIdentity extends ConsumerWidget {
 /// Se [room] for null, cai no `_LiveRoomResolver` (deep link / push notif).
 void openLiveRoom(BuildContext context, String roomId, [LiveRoom? room]) {
   if (roomId.isEmpty || roomId == 'missing_id') {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Live indisponível')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Live indisponível')));
     return;
   }
   context.push('/live/$roomId', extra: room);

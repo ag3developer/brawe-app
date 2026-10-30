@@ -9,6 +9,10 @@ sealed class Post with _$Post {
     required String id,
     required String content,
     String? imageUrl,
+    /// HLS adaptativo (Bunny) — usar para TOCAR o vídeo quando presente.
+    /// `imageUrl` segue com o arquivo original (download/repost no story).
+    String? hlsUrl,
+    String? hlsThumbnailUrl,
     required int likesCount,
     required int commentsCount,
     required int repostsCount,

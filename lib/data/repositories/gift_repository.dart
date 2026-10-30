@@ -28,16 +28,20 @@ class GiftRepository {
       final data = await _giftService.getGiftCatalog();
       // Expecting { "basic": [...], "premium": [...], "exclusive": [...] }
       final List<GiftTier> tiers = [];
-      
+
       data.forEach((key, value) {
         if (value is List) {
-          tiers.add(GiftTier(
-            name: key,
-            gifts: value.map((g) => Gift.fromJson(g as Map<String, dynamic>)).toList(),
-          ));
+          tiers.add(
+            GiftTier(
+              name: key,
+              gifts: value
+                  .map((g) => Gift.fromJson(g as Map<String, dynamic>))
+                  .toList(),
+            ),
+          );
         }
       });
-      
+
       // Sort by some order if needed, but for now just return as is
       return tiers;
     } on DioException catch (e) {
@@ -118,9 +122,20 @@ class GiftRepository {
     if (statusCode == 401 || statusCode == 403) {
       return const Failure.unauthorized();
     }
-    if (statusCode == 400 && exception.response?.data?['detail'] != null) {
-      // Could be insufficient balance
-      return Failure.validation(exception.response?.data?['detail'].toString() ?? 'Validation error');
+    final data = exception.response?.data;
+    final detail = data is Map ? data['detail'] : null;
+    final detailText = detail is String
+        ? detail
+        : (detail is Map ? detail['message']?.toString() : null);
+    if ((statusCode == 400 || statusCode == 422) && detailText != null) {
+      // Ex.: saldo insuficiente, presente indisponível, quantidade inválida.
+      return Failure.validation(detailText);
+    }
+    if (statusCode == 429) {
+      // Cooldown/rate limit — antes virava "erro de rede".
+      return Failure.validation(
+        detailText ?? 'Calma! Aguarde um instante para enviar de novo.',
+      );
     }
     if (statusCode != null && statusCode >= 500) {
       return const Failure.server();

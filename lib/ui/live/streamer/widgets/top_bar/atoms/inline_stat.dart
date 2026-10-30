@@ -33,6 +33,8 @@ class InlineStat extends StatelessWidget {
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w700,
+              // Dígitos de largura fixa: o cronômetro não "treme".
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
         ],

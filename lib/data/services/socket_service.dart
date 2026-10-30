@@ -41,6 +41,26 @@ class SocketService {
       return _connectFuture!;
     }
 
+    // Socket já existe mas caiu: RECONECTA o mesmo objeto. Antes criávamos
+    // um socket novo (`enableForceNew`) e todos os listeners registrados no
+    // antigo (chat, presentes, viewers da LiveRepository) ficavam órfãos —
+    // o criador parava de receber mensagens e presentes após uma queda.
+    final existing = _socket;
+    if (existing != null) {
+      final reconnected = Completer<void>();
+      existing.once('connect', (_) {
+        if (!reconnected.isCompleted) reconnected.complete();
+      });
+      _connectFuture = reconnected.future;
+      existing.connect();
+      try {
+        await reconnected.future.timeout(AppConstants.defaultTimeout);
+      } finally {
+        _connectFuture = null;
+      }
+      return;
+    }
+
     final token = await _storageService.getToken();
     if (token == null) {
       debugPrint('Socket.IO: No token found, cannot connect');

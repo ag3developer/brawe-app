@@ -132,11 +132,11 @@ void main() {
       );
     });
 
-    testWidgets('ícone do input começa como emoji quando texto vazio',
+    testWidgets('ícone do input começa como chat quando texto vazio',
         (tester) async {
       await pumpBar(tester);
-      // Texto vazio → ícone emoji (não send).
-      expect(find.byIcon(Icons.emoji_emotions_outlined), findsOneWidget);
+      // Texto vazio → ícone de chat (abre o teclado), não send.
+      expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
       // O Icons.send_rounded existe SÓ no botão "Compartilhar" da linha
       // de ações (ainda assim aparece — mas não no input).
       // Validamos pelo Row do TextField que NÃO contém send_rounded.
@@ -148,6 +148,30 @@ void main() {
         matching: find.byIcon(Icons.send_rounded),
       );
       expect(sendInsideInput, findsNothing);
+    });
+
+    testWidgets('ao digitar, as ações somem e o input ocupa a linha',
+        (tester) async {
+      await pumpBar(tester);
+      expect(find.text('Curtir'), findsOneWidget);
+
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      expect(find.text('Curtir'), findsNothing);
+      expect(find.text('Presente'), findsNothing);
+
+      // Toque fora da barra fecha o teclado e as ações voltam.
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pump();
+      expect(find.text('Curtir'), findsOneWidget);
+    });
+
+    testWidgets('limita a mensagem a 150 caracteres', (tester) async {
+      await pumpBar(tester);
+      await tester.enterText(find.byType(TextField), 'a' * 200);
+      await tester.pump();
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text.length, LiveBottomBar.maxMessageLength);
     });
   });
 }

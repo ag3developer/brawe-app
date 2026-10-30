@@ -256,7 +256,10 @@ class ForYouFeedRepository {
         caption: post.content,
         viewsCount: post.viewsCount,
         videoUrl: url,
-        thumbnailUrl: url,
+        hlsUrl: post.hlsUrl,
+        // Capa gerada pelo Bunny (antes apontava para o próprio vídeo e o
+        // Image.network falhava — ficava tela preta até o player iniciar).
+        thumbnailUrl: post.hlsThumbnailUrl ?? url,
         duration: Duration.zero,
         sound: post.sound,
         soundVolume: post.soundVolume,
@@ -278,7 +281,8 @@ class ForYouFeedRepository {
       caption: post.content,
       viewsCount: post.viewsCount,
       videoUrl: url,
-      thumbnailUrl: url,
+      hlsUrl: post.hlsUrl,
+      thumbnailUrl: post.hlsThumbnailUrl ?? url,
       duration: Duration.zero,
       sound: post.sound,
       soundVolume: post.soundVolume,

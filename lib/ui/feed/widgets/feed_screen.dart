@@ -883,7 +883,9 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   void _shareAsStory(String imageUrl) {
-    Navigator.of(context).push(
+    // rootNavigator: o editor de story é tela cheia — cobre a barra de
+    // navegação (antes abria dentro da aba e a nav ficava por cima).
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => StoryComposerScreen(
@@ -1491,14 +1493,11 @@ class _PostCardState extends ConsumerState<PostCard>
               label: S.of(context).shareToFollowers,
               onTap: () {
                 Navigator.pop(context);
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => ShareToChatSheet(
-                    postId: post.id,
-                    postCaption: post.content,
-                  ),
+                ShareToChatSheet.show(
+                  context,
+                  postId: post.id,
+                  postCaption: post.content,
+                  storyMediaUrl: post.imageUrl,
                 );
               },
             ),

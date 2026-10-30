@@ -6,6 +6,7 @@ class LiveComment {
     required this.message,
     required this.timestamp,
     this.avatarUrl,
+    this.username,
     this.isPending = false,
     this.gifterLevel = 1,
     this.gifterBadge,
@@ -20,6 +21,10 @@ class LiveComment {
   final String message;
   final DateTime timestamp;
   final String? avatarUrl;
+
+  /// @username do autor (sem o "@"), resolvido pelo servidor. Usado para
+  /// "Responder" com menção. Pode ser null em servidores antigos.
+  final String? username;
   final bool isPending;
   // ─── Gifter level pin (TikTok-style) ───
   final int gifterLevel;
@@ -35,6 +40,7 @@ class LiveComment {
     String? message,
     DateTime? timestamp,
     String? avatarUrl,
+    String? username,
     bool? isPending,
     int? gifterLevel,
     String? gifterBadge,
@@ -49,6 +55,7 @@ class LiveComment {
       message: message ?? this.message,
       timestamp: timestamp ?? this.timestamp,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      username: username ?? this.username,
       isPending: isPending ?? this.isPending,
       gifterLevel: gifterLevel ?? this.gifterLevel,
       gifterBadge: gifterBadge ?? this.gifterBadge,

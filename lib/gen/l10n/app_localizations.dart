@@ -9368,6 +9368,228 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Recompensa já coletada'**
   String get questsAlreadyClaimed;
+
+  /// No description provided for @shareSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get shareSheetTitle;
+
+  /// No description provided for @shareSentBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviado'**
+  String get shareSentBadge;
+
+  /// No description provided for @shareRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get shareRetry;
+
+  /// No description provided for @shareActionStories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Stories'**
+  String get shareActionStories;
+
+  /// No description provided for @shareActionRepost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar'**
+  String get shareActionRepost;
+
+  /// No description provided for @shareActionCopyLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar link'**
+  String get shareActionCopyLink;
+
+  /// No description provided for @shareActionMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais'**
+  String get shareActionMore;
+
+  /// No description provided for @composerToolText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Texto'**
+  String get composerToolText;
+
+  /// No description provided for @composerToolMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música'**
+  String get composerToolMusic;
+
+  /// No description provided for @composerToolTrim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cortar'**
+  String get composerToolTrim;
+
+  /// No description provided for @composerToolSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get composerToolSave;
+
+  /// No description provided for @composerToolFrame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moldura'**
+  String get composerToolFrame;
+
+  /// No description provided for @composerToolResetZoom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reajustar'**
+  String get composerToolResetZoom;
+
+  /// No description provided for @composerToolBackground.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fundo'**
+  String get composerToolBackground;
+
+  /// No description provided for @composerDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get composerDone;
+
+  /// No description provided for @composerClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get composerClose;
+
+  /// No description provided for @composerTextAlignTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alinhamento'**
+  String get composerTextAlignTooltip;
+
+  /// No description provided for @composerTextBackgroundTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fundo do texto'**
+  String get composerTextBackgroundTooltip;
+
+  /// No description provided for @composerFontClassic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Clássico'**
+  String get composerFontClassic;
+
+  /// No description provided for @composerFontModern.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moderno'**
+  String get composerFontModern;
+
+  /// No description provided for @composerFontSerif.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serif'**
+  String get composerFontSerif;
+
+  /// No description provided for @composerFontTypewriter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Máquina'**
+  String get composerFontTypewriter;
+
+  /// No description provided for @composerFontNeon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Neon'**
+  String get composerFontNeon;
+
+  /// No description provided for @composerDiscardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descartar story?'**
+  String get composerDiscardTitle;
+
+  /// No description provided for @composerDiscardMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas edições serão perdidas.'**
+  String get composerDiscardMessage;
+
+  /// No description provided for @composerDiscard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descartar'**
+  String get composerDiscard;
+
+  /// No description provided for @composerKeepEditing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar editando'**
+  String get composerKeepEditing;
+
+  /// No description provided for @composerVolumeMix.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volumes'**
+  String get composerVolumeMix;
+
+  /// No description provided for @composerOverlayError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível aplicar o texto ao vídeo.'**
+  String get composerOverlayError;
+
+  /// No description provided for @composerModeStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story'**
+  String get composerModeStory;
+
+  /// No description provided for @composerModeText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Texto'**
+  String get composerModeText;
+
+  /// No description provided for @composerFlipCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Virar câmera'**
+  String get composerFlipCamera;
+
+  /// No description provided for @composerFlash.
+  ///
+  /// In pt, this message translates to:
+  /// **'Flash'**
+  String get composerFlash;
+
+  /// No description provided for @composerCameraPermissionTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permita o acesso à câmera'**
+  String get composerCameraPermissionTitle;
+
+  /// No description provided for @composerCameraPermissionBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para criar stories com foto e vídeo, o Brawe precisa da câmera e do microfone.'**
+  String get composerCameraPermissionBody;
+
+  /// No description provided for @composerOpenSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir ajustes'**
+  String get composerOpenSettings;
+
+  /// No description provided for @composerNoCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera indisponível'**
+  String get composerNoCamera;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

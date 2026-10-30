@@ -71,7 +71,7 @@ class _VideoViewState extends ConsumerState<VideoView> {
   @override
   void didUpdateWidget(covariant VideoView old) {
     super.didUpdateWidget(old);
-    if (old.item.videoUrl != widget.item.videoUrl) {
+    if (old.item.playbackUrl != widget.item.playbackUrl) {
       _disposeController();
       _initController();
     } else if (old.isActive != widget.isActive) {
@@ -80,7 +80,8 @@ class _VideoViewState extends ConsumerState<VideoView> {
   }
 
   Future<void> _initController() async {
-    final url = widget.item.videoUrl;
+    // HLS leve (Bunny) quando já convertido; senão o arquivo original.
+    final url = widget.item.playbackUrl;
     if (url.isEmpty) {
       setState(() => _failed = true);
       return;
@@ -261,23 +262,6 @@ class _VideoViewState extends ConsumerState<VideoView> {
     if (mounted && wasPlaying) _ctrl?.play();
   }
 
-  void _repostAsStory() {
-    final url = widget.item.videoUrl;
-    if (url.isEmpty) return;
-    HapticFeedback.selectionClick();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        fullscreenDialog: true,
-        builder: (_) => ForceDarkTheme(
-          child: StoryComposerScreen(
-            initialRemoteUrl: url,
-            initialOriginPostId: widget.item.id,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     // Reage a mudanças globais de mute (ex: outro vídeo desmutou)
@@ -419,27 +403,10 @@ class _VideoViewState extends ConsumerState<VideoView> {
               ),
             ),
 
-          // ── Botão de mute (canto inferior-esquerdo, acima da legenda) ─
-          // Fora da coluna de ações (curtir/comentar/share) e longe da
-          // top bar (Seguindo/Para Você + lupa), pra não dar conflito de tap.
-          Positioned(
-            left: 16,
-            bottom: 170,
-            child: _MuteButton(muted: muted, onTap: _toggleMute),
-          ),
-
-          // ── Repostar no Stories (mesmo ícone do atalho de criar Story
-          // no bottom nav — LucideIcons.aperture — p/ reforçar memória).
-          Positioned(
-            left: 16,
-            bottom: 220,
-            child: _RepostStoryButton(onTap: _repostAsStory),
-          ),
-
           // ── Rail de ações (curtir/comentar/share) ──────────────
           Positioned(
             right: 8,
-            bottom: 140,
+            bottom: 62,
             child: FeedActionsRail(item: widget.item),
           ),
 
@@ -447,11 +414,21 @@ class _VideoViewState extends ConsumerState<VideoView> {
           Positioned(
             left: 16,
             right: 90,
-            bottom: 100,
+            // A base do vídeo já é o topo da bottom nav (extendBody:false);
+            // antes os offsets somavam a altura da nav de novo e sobrava
+            // uma faixa morta de ~78pt sob a legenda.
+            bottom: 22,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Botão de som: na MESMA coluna da legenda,
+                // logo acima dela. Antes ficavam em posições fixas
+                // (bottom 170/220) e a legenda — que cresce para cima
+                // conforme o texto — ficava por cima do botão de som.
+                // (Repostar no Stories agora fica no botão Compartilhar.)
+                _MuteButton(muted: muted, onTap: _toggleMute),
+                const SizedBox(height: 12),
                 if (widget.item.sound != null) ...[
                   ContentSoundAttribution(
                     trackId: widget.item.sound!.id,
@@ -477,12 +454,15 @@ class _VideoViewState extends ConsumerState<VideoView> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 78, // acima da bottom nav
-              child: IgnorePointer(
+              // Colada na base do vídeo (logo acima da bottom nav), como
+              // no TikTok/Reels. Arrastável para avançar/voltar; o padding
+              // superior aumenta a área de toque sem engrossar a barra.
+              bottom: 0,
+              child: SizedBox(
                 child: VideoProgressIndicator(
                   _ctrl!,
-                  allowScrubbing: false,
-                  padding: EdgeInsets.zero,
+                  allowScrubbing: true,
+                  padding: const EdgeInsets.only(top: 14),
                   colors: VideoProgressColors(
                     playedColor: Colors.white,
                     bufferedColor: Colors.white.withValues(alpha: 0.25),
@@ -530,39 +510,3 @@ class _MuteButton extends StatelessWidget {
   }
 }
 
-/// Botão circular para repostar o vídeo como Story (mesmo estilo do mute).
-/// Usa o ícone `LucideIcons.aperture` — idêntico ao atalho de criar Story
-/// no bottom nav — para o usuário associar visualmente.
-class _RepostStoryButton extends StatelessWidget {
-  const _RepostStoryButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Tooltip(
-          message: S.of(context).videoTooltipRepostStory,
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withValues(alpha: 0.5),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              LucideIcons.aperture,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

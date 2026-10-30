@@ -140,14 +140,23 @@ class VideoFeedItem extends FeedItem {
     required this.videoUrl,
     required this.thumbnailUrl,
     required this.duration,
+    this.hlsUrl,
     this.sound,
     this.soundVolume = 1.0,
     this.originalAudioVolume = 1.0,
   });
 
+  /// Arquivo original (usado para repostar no Stories/baixar).
   final String videoUrl;
   final String thumbnailUrl;
   final Duration duration;
+
+  /// Versão leve (HLS adaptativo do Bunny). Quando presente, é a que toca.
+  final String? hlsUrl;
+
+  /// URL para reprodução: HLS leve quando disponível, senão o original.
+  String get playbackUrl =>
+      (hlsUrl != null && hlsUrl!.isNotEmpty) ? hlsUrl! : videoUrl;
 
   /// Música do Brawe Sounds anexada a este Reel/vídeo (opcional).
   final SoundPreview? sound;

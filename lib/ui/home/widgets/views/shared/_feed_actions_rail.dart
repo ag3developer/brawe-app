@@ -10,6 +10,7 @@ import '../../../../../domain/models/feed_item.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../feed/widgets/comments_sheet.dart';
+import '../../../../feed/widgets/share_to_chat_sheet.dart';
 import '../../../../feed/widgets/reactions_bar.dart';
 import '../../action_rail.dart';
 
@@ -98,6 +99,31 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
 
   Future<void> _onShare() async {
     ref.read(feedbackServiceProvider).share();
+    // Posts: tela "Compartilhar" do app — enviar para pessoas (DM com
+    // prévia do post), Stories e outros apps. Lives seguem no share do
+    // sistema (o convite in-app de live é feito pelo streamer).
+    final item = widget.item;
+    if (item is VideoFeedItem || item is PhotoPostFeedItem) {
+      final media = switch (item) {
+        VideoFeedItem() => item.videoUrl,
+        PhotoPostFeedItem() => item.imageUrl,
+        _ => null,
+      };
+      final preview = switch (item) {
+        VideoFeedItem() => item.thumbnailUrl,
+        PhotoPostFeedItem() => item.imageUrl,
+        _ => null,
+      };
+      await ShareToChatSheet.show(
+        context,
+        postId: item.id,
+        postCaption: item.caption,
+        postImageUrl: preview,
+        authorName: item.author.name,
+        storyMediaUrl: media,
+      );
+      return;
+    }
     // URL canônica para o app abrir (deep link). Posts: /post/:id, lives: /live/:id.
     // Ambas estão registradas no router e no intent-filter do AndroidManifest.
     final url = _isPost

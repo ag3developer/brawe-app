@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
+import '../../../domain/models/live_comment.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
@@ -18,7 +20,8 @@ import 'live_summary_screen.dart';
 import '../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
-import '../../live_feed/widgets/live_comments_overlay.dart';
+import '../../live/shared/widgets/actions/actions.dart';
+import '../../live/shared/widgets/chat/chat.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
 import '../../core/themes/app_colors.dart';
@@ -76,21 +79,33 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   // Battle state
   String? _activeBattleId;
-  // ignore: unused_field
-  String? _pendingBattleId;
-  // ignore: unused_field
-  String? _pendingBattleFromName;
-  Timer? _battleInviteTimeoutTimer;
+  SocketService? _battleSocket;
   // Anti double-click: a UI do dialog de convite tem 2 botões grandes
   // e o usuário ansioso aperta "Aceitar" 2x rápido → 2 HTTP calls → o
   // 2º falha com 400 "Este convite já foi respondido". Gate simples.
   bool _isAcceptingBattle = false;
 
+  /// Convite RECEBIDO com dialog aberto (sou o streamer B).
+  String? _incomingInviteId;
+  GlobalKey? _incomingDialogKey;
+
+  /// Convite ENVIADO aguardando resposta (sou o streamer A).
+  _OutgoingInvite? _outgoingInvite;
+
   // Likes (atualizado em tempo real via socket like_count_update)
   // O valor inicial vem de widget.room.totalLikes e é sincronizado pelo LiveRoomCommentsViewModel.
 
-  // Chat visibility toggle
-  bool _showChat = false;
+  // Pausa ("Já voltamos"): prazo para retomar antes do encerramento.
+  DateTime? _pausedUntil;
+  Timer? _pauseTicker;
+
+  /// Encerramento em andamento (trava botões e re-entrada).
+  bool _isClosing = false;
+
+  // Chat do criador: mensagens sempre visíveis; o input abre sob demanda.
+  bool _showChatInput = false;
+  final TextEditingController _chatCtrl = TextEditingController();
+  final FocusNode _chatFocus = FocusNode();
 
   @override
   void initState() {
@@ -132,7 +147,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             context,
             S.of(context).broadcasterPermissionDenied,
           );
-          _closeBroadcaster();
+          _closeBroadcaster(force: true);
         }
         return;
       }
@@ -143,7 +158,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       if (_cameras.isEmpty) {
         if (mounted) {
           AppSnackBar.showError(context, S.of(context).broadcasterNoCamera);
-          _closeBroadcaster();
+          _closeBroadcaster(force: true);
         }
         return;
       }
@@ -169,7 +184,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           context,
           S.of(context).broadcasterInitCameraError(e.toString()),
         );
-        _closeBroadcaster();
+        _closeBroadcaster(force: true);
       }
     }
   }
@@ -206,9 +221,14 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     });
   }
 
-  Future<void> _setupCameraController(CameraDescription description) async {
-    if (_controller != null) {
-      await _controller!.dispose();
+  /// Cria e inicializa o controller da câmera. Retorna `false` se falhou.
+  Future<bool> _setupCameraController(CameraDescription description) async {
+    final old = _controller;
+    if (old != null) {
+      // Tira o controller antigo da árvore ANTES do dispose — senão o
+      // CameraPreview desenha um controller já descartado durante a troca.
+      if (mounted) setState(() => _controller = null);
+      await old.dispose();
     }
 
     // ⭐ Configura AVAudioSession (iOS) / AudioFocus (Android) em modo
@@ -248,16 +268,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     try {
       await controller.initialize();
-      if (!mounted) return;
+      if (!mounted) return false;
       setState(() => _isInitialized = true);
+      return true;
     } catch (e) {
       debugPrint('Failed to initialize camera controller: $e');
-      if (mounted) {
+      if (mounted && !_isSwitchingCamera) {
         AppSnackBar.showError(
           context,
           S.of(context).broadcasterInitCameraFailed,
         );
       }
+      return false;
     }
   }
 
@@ -285,6 +307,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   Future<void> _goLiveAutomatically() async {
     await _toggleStreaming();
+    // Só marca a live como iniciada se o RTMP realmente subiu.
+    if (!_isStreaming) return;
     try {
       await ref.read(liveRepositoryProvider).startLive(_room.id);
     } catch (e) {
@@ -313,7 +337,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (
       timer,
     ) async {
-      if (!mounted || !_isStreaming) {
+      // Durante a pausa o RTMP está parado, mas a live continua — o
+      // heartbeat segue para o servidor não encerrá-la por inatividade.
+      if (!mounted || (!_isStreaming && !_isPaused)) {
         _stopHeartbeat();
         return;
       }
@@ -348,23 +374,55 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       return;
     }
 
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      cameraController.dispose();
-      if (_isStreaming) {
-        // BACKGROUND PAUSE: marca paused, mantém live no backend (BRB).
-        unawaited(_silentPauseOnBackground());
-        if (mounted) {
-          setState(() {
-            _isStreaming = false;
-            _isPaused = true;
-          });
-        }
-        _stopLiveElapsedTicker();
-      }
+    // Só `paused`/`hidden` (app realmente em segundo plano). `inactive`
+    // dispara com Central de Controle, notificações e Face ID — antes isso
+    // derrubava a câmera e pausava a live sem o criador sair do app.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      if (_isClosing) return;
+      unawaited(_onEnterBackground(cameraController));
     } else if (state == AppLifecycleState.resumed) {
-      // Recriar câmera; user precisa clicar "Resume Live" para voltar ao ar.
-      _setupCameraController(cameraController.description);
+      // Recriar câmera; criador toca "Retomar" para voltar ao ar.
+      unawaited(_onReturnToForeground(cameraController.description));
+    }
+  }
+
+  bool _countdownInterrupted = false;
+
+  Future<void> _onEnterBackground(CameraController camera) async {
+    // Contagem "5…4…" em andamento: interrompe (senão ela entra ao vivo
+    // com a câmera já descartada e o erro encerrava a live).
+    if (_showCountdown) {
+      _countdownTimer?.cancel();
+      _countdownInterrupted = true;
+      if (mounted) setState(() => _showCountdown = false);
+    }
+    if (_isStreaming) {
+      // BACKGROUND PAUSE: para o RTMP ANTES de descartar a câmera (depois
+      // do dispose o stop não chega ao nativo e a conexão RTMP vazava).
+      if (mounted) {
+        setState(() {
+          _isStreaming = false;
+          _isPaused = true;
+          _pausedUntil = DateTime.now().add(_maxPause);
+        });
+      }
+      _stopLiveElapsedTicker();
+      _startPauseTicker();
+      await _silentPauseOnBackground();
+    }
+    await camera.dispose();
+    if (identical(_controller, camera) && mounted) {
+      setState(() => _controller = null);
+    }
+  }
+
+  Future<void> _onReturnToForeground(CameraDescription description) async {
+    if (_isClosing || !mounted) return;
+    await _setupCameraController(description);
+    if (_countdownInterrupted && mounted && !_isStreaming) {
+      _countdownInterrupted = false;
+      _startCountdown();
     }
   }
 
@@ -500,10 +558,43 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           S.of(context).broadcasterStreamStartError(error.toString()),
         );
       }
-      try {
-        await ref.read(liveRepositoryProvider).endLive(_room.id);
-      } catch (_) {}
+      // Não encerra a live aqui: uma falha momentânea (rede, câmera
+      // voltando do background) matava a sala. O criador pode tentar de
+      // novo ou encerrar pelo botão.
     }
+  }
+
+  /// Tempo máximo de pausa — igual a `LIVE_MAX_PAUSE_SECONDS` no backend.
+  /// O `reconnect_window` do Mux é esse valor + 60s; passou disso o Mux
+  /// encerraria a transmissão.
+  static const _maxPause = Duration(minutes: 5);
+
+  void _startPauseTicker() {
+    _pauseTicker?.cancel();
+    _pauseTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      final until = _pausedUntil;
+      if (!mounted || !_isPaused || until == null) {
+        _pauseTicker?.cancel();
+        return;
+      }
+      final left = until.difference(DateTime.now());
+      if (left <= Duration.zero) {
+        _pauseTicker?.cancel();
+        AppSnackBar.showError(
+          context,
+          'A pausa passou de 5 minutos e a live foi encerrada.',
+        );
+        _closeBroadcaster(force: true);
+        return;
+      }
+      if (left.inSeconds == 60) {
+        AppSnackBar.showError(
+          context,
+          'Falta 1 minuto: retome a live ou ela será encerrada.',
+        );
+      }
+      setState(() {}); // atualiza o contador do painel de pausa
+    });
   }
 
   Future<void> _togglePause() async {
@@ -533,11 +624,19 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             );
           }
         }
-        await ref.read(liveRepositoryProvider).resumeLive(_room.id);
+        try {
+          await ref.read(liveRepositoryProvider).resumeLive(_room.id);
+        } catch (e) {
+          // Ex.: servidor já não considera a live pausada — o RTMP já
+          // voltou, então seguimos retomados.
+          debugPrint('resumeLive falhou (seguindo): $e');
+        }
+        _pauseTicker?.cancel();
         if (mounted) {
           setState(() {
             _isPaused = false;
             _isStreaming = true;
+            _pausedUntil = null;
           });
           _startHeartbeat();
           _startLiveElapsedTicker();
@@ -548,10 +647,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         }
       } else {
         if (!_isStreaming) return;
+        // 1. Servidor primeiro: marca a pausa e avisa os espectadores na
+        //    hora (socket `live_paused`). Se falhar, a live segue no ar.
         await ref.read(liveRepositoryProvider).pauseLive(_room.id);
+        // 2. PARA o RTMP de verdade — antes a "pausa" só mudava um flag e
+        //    câmera + microfone continuavam sendo transmitidos. Com o RTMP
+        //    parado o Mux exibe o slate "Já voltamos" aos espectadores.
+        try {
+          await _controller?.stopVideoStreaming();
+        } catch (e) {
+          debugPrint('Pause: stopVideoStreaming falhou: $e');
+        }
         if (mounted) {
-          setState(() => _isPaused = true);
+          setState(() {
+            _isPaused = true;
+            _isStreaming = false;
+            _pausedUntil = DateTime.now().add(_maxPause);
+          });
           _stopLiveElapsedTicker();
+          _startPauseTicker();
           AppSnackBar.showSuccess(context, S.of(context).broadcasterLivePaused);
         }
       }
@@ -567,17 +681,37 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
   }
 
+  /// Próxima câmera ao alternar: frontal ⇄ traseira PRINCIPAL.
+  ///
+  /// iPhones expõem várias lentes traseiras (grande-angular, ultra, tele) em
+  /// `availableCameras()`. Antes usávamos `índice + 1`, que caía em outra
+  /// lente traseira — a frontal quase nunca voltava.
+  int _nextCameraIndex() {
+    final current = _cameras[_currentCameraIndex].lensDirection;
+    final target = current == CameraLensDirection.front
+        ? CameraLensDirection.back
+        : CameraLensDirection.front;
+    // A 1ª câmera de cada direção é a principal (grande-angular).
+    final idx = _cameras.indexWhere((c) => c.lensDirection == target);
+    return idx >= 0 ? idx : (_currentCameraIndex + 1) % _cameras.length;
+  }
+
+  /// Troca de câmera com a live no ar.
+  ///
+  /// O `rtmp_broadcaster` não troca a câmera com o stream ativo: é preciso
+  /// parar o RTMP, recriar o controller e reconectar. Durante esse ~1-2s o
+  /// Mux mostra o "slate" (ampulheta) para quem assiste — por isso a troca
+  /// é feita o mais rápido possível e SEMPRE reconecta (antes, se a nova
+  /// câmera falhasse, o RTMP nunca voltava e o slate ficava para sempre).
   Future<void> _switchCamera() async {
     if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
     // Evita múltiplos taps enquanto troca
     if (_isSwitchingCamera) return;
     setState(() => _isSwitchingCamera = true);
 
-    _currentCameraIndex = (_currentCameraIndex + 1) % _cameras.length;
-
+    final previousIndex = _currentCameraIndex;
+    final nextIndex = _nextCameraIndex();
     final wasStreaming = _isStreaming;
-    final rtmpUrl = _room.rtmpUrl?.trim();
-    final streamKey = _room.streamKey?.trim();
 
     try {
       // 1. Para RTMP silenciosamente (SEM parar heartbeat — live continua ativa)
@@ -587,28 +721,57 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         } catch (_) {}
       }
 
-      // 2. Troca o controller para a nova câmera (dispose + init)
-      await _setupCameraController(_cameras[_currentCameraIndex]);
+      // 2. Troca o controller para a nova câmera (dispose + init). Se a
+      //    nova câmera falhar, volta para a anterior.
+      _currentCameraIndex = nextIndex;
+      final ok = await _setupCameraController(_cameras[nextIndex]);
+      if (!ok && mounted) {
+        _currentCameraIndex = previousIndex;
+        await _setupCameraController(_cameras[previousIndex]);
+        if (mounted) {
+          AppSnackBar.showError(context, 'Não foi possível trocar a câmera');
+        }
+      }
 
-      // 3. Reinicia o RTMP imediatamente com o novo bitrate da câmera
-      if (wasStreaming &&
-          mounted &&
-          rtmpUrl != null &&
-          rtmpUrl.isNotEmpty &&
-          streamKey != null &&
-          streamKey.isNotEmpty) {
-        final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
+      // 3. Reconecta o RTMP (com retry) — a live nunca pode ficar no slate.
+      if (wasStreaming && mounted) await _restartStreamAfterSwitch();
+    } catch (e) {
+      debugPrint('_switchCamera error: $e');
+    } finally {
+      if (mounted) setState(() => _isSwitchingCamera = false);
+    }
+  }
+
+  Future<void> _restartStreamAfterSwitch() async {
+    final rtmpUrl = _room.rtmpUrl?.trim();
+    final streamKey = _room.streamKey?.trim();
+    if (rtmpUrl == null ||
+        rtmpUrl.isEmpty ||
+        streamKey == null ||
+        streamKey.isEmpty) {
+      return;
+    }
+    final fullUrl = _buildStreamUrl(rtmpUrl, streamKey);
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
         await _controller?.startVideoStreaming(
           fullUrl,
           bitrate: _streamBitrate,
           androidUseOpenGL: true,
         );
         if (mounted) setState(() => _isStreaming = true);
+        return;
+      } catch (e) {
+        debugPrint('_switchCamera: restart RTMP falhou ($attempt/3): $e');
+        await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
       }
-    } catch (e) {
-      debugPrint('_switchCamera error: $e');
-    } finally {
-      if (mounted) setState(() => _isSwitchingCamera = false);
+    }
+    if (mounted) {
+      setState(() => _isStreaming = false);
+      AppSnackBar.showError(
+        context,
+        'A transmissão caiu ao trocar a câmera. Toque em Retomar.',
+      );
     }
   }
 
@@ -684,21 +847,28 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     return confirm ?? false;
   }
 
-  Future<void> _closeBroadcaster() async {
-    if (!mounted) return;
+  /// [force] encerra sem perguntar (pausa expirada, câmera/permissão
+  /// indisponível) — antes esses casos abriam o "Encerrar live?" e, se o
+  /// criador tocasse em continuar, ficava preso sem câmera nem controles.
+  Future<void> _closeBroadcaster({bool force = false}) async {
+    if (!mounted || _isClosing) return;
 
-    final confirmed = await _confirmCloseDialog();
-    if (!confirmed || !mounted) return;
+    if (!force) {
+      final confirmed = await _confirmCloseDialog();
+      if (!confirmed || !mounted || _isClosing) return;
+    }
+    // Trava re-entrada: X, "Encerrar" e "Mais" continuavam ativos durante
+    // os até 8s do endLive → 2º diálogo, 2º endLive, 2ª navegação.
+    setState(() => _isClosing = true);
+    _pauseTicker?.cancel();
 
     _stopHeartbeat();
     _stopLiveElapsedTicker();
     _countdownTimer?.cancel();
 
-    if (_isStreaming) {
-      try {
-        await _controller?.stopVideoStreaming();
-      } catch (_) {}
-    }
+    try {
+      await _controller?.stopVideoStreaming();
+    } catch (_) {}
 
     // ⚠️ BUG HISTÓRICO (Android): ao encerrar a live, o app ficava com uma
     // tela branca travada — não existia nenhuma tela de destino após o
@@ -713,15 +883,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // 3) fallback para `/home` se por algum motivo a navegação para o
     // resumo falhar.
     Map<String, dynamic> summaryData = const {};
-    try {
-      summaryData = await ref
-          .read(liveRepositoryProvider)
-          .endLive(_room.id)
-          .timeout(const Duration(seconds: 8));
-    } catch (e) {
-      debugPrint('endLive failed on close: $e');
-      // Segue mesmo assim — o resumo vai mostrar o estado "indisponível",
-      // mas o usuário NUNCA fica travado numa tela branca.
+    // 2 tentativas: se o encerramento falhar, a live ficaria "AO VIVO" no
+    // feed (sem vídeo) até o monitor do servidor limpar.
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        summaryData = await ref
+            .read(liveRepositoryProvider)
+            .endLive(_room.id)
+            .timeout(const Duration(seconds: 8));
+        break;
+      } catch (e) {
+        debugPrint('endLive failed on close ($attempt/2): $e');
+        // Segue mesmo assim — o resumo mostra o estado "indisponível",
+        // mas o usuário NUNCA fica travado numa tela branca.
+      }
     }
 
     if (!mounted) return;
@@ -788,33 +963,54 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     _checkExistingActiveBattle();
   }
 
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE — socket wiring
+  // ════════════════════════════════════════════════════════════════
+  //
+  // ⚠️ Sempre `off(evento, handler)`: `off(evento)` sem handler remove os
+  // listeners de TODAS as telas/view models (ex.: BattleViewModel) — era
+  // por isso que a 2ª batalha nunca aparecia.
+
   void _subscribeToBattleEvents() {
-    final socket = ref.read(socketServiceProvider);
-    socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
-    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    _battleSocket = ref.read(socketServiceProvider);
+    _attachBattleHandlers();
     // 🔁 Re-anexar handlers automaticamente após reconexões do socket.
     // O socket interno do socket_io_client é recriado nesses casos, então
-    // qualquer `on(...)` chamado antes vira no-op. Sem este callback uma
-    // queda momentânea de rede deixaria o broadcaster surdo para battle.
-    socket.addReconnectCallback(_reattachBattleHandlers);
+    // qualquer `on(...)` chamado antes vira no-op.
+    _battleSocket!.addReconnectCallback(_reattachBattleHandlers);
+  }
+
+  void _attachBattleHandlers() {
+    final socket = _battleSocket;
+    if (socket == null) return;
+    _detachBattleHandlers();
+    socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.on(AppConstants.eventBattleInviteStatus, _onBattleInviteStatus);
+    socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
+  }
+
+  void _detachBattleHandlers() {
+    final socket = _battleSocket;
+    if (socket == null) return;
+    socket.off(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.off(AppConstants.eventBattleInviteStatus, _onBattleInviteStatus);
+    socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
   }
 
   void _reattachBattleHandlers() {
-    final socket = ref.read(socketServiceProvider);
-    socket.off(AppConstants.eventBattleInvite);
-    socket.off(AppConstants.eventBattleStarted);
-    socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
-    socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    if (!mounted) return;
+    _attachBattleHandlers();
     // Após reconectar também checamos batalha ativa por REST — cobre o caso
     // de o `started` ter sido emitido enquanto estávamos offline.
     _checkExistingActiveBattle();
   }
 
   void _unsubscribeFromBattleEvents() {
-    final socket = ref.read(socketServiceProvider);
-    socket.off(AppConstants.eventBattleInvite);
-    socket.off(AppConstants.eventBattleStarted);
-    socket.removeReconnectCallback(_reattachBattleHandlers);
+    _detachBattleHandlers();
+    _battleSocket?.removeReconnectCallback(_reattachBattleHandlers);
+    _battleSocket = null;
   }
 
   /// Fallback REST para descobrir batalha ativa quando o app foi aberto
@@ -828,28 +1024,30 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           .getActiveBattleForRoom(_room.id);
       final battleId = result['battle_id'] as String?;
       if (!mounted || battleId == null || battleId.isEmpty) return;
-      setState(() {
-        _activeBattleId = battleId;
-        // Atualiza o liveType em memória — outras telas podem reagir.
-        _room = _room.copyWith(liveType: 'battle');
-      });
+      _enterBattle(battleId);
     } catch (_) {
       // 404 = sem batalha ativa — silencioso.
     }
   }
 
-  void _onBattleInvite(dynamic raw) {
+  void _enterBattle(String battleId) {
     if (!mounted) return;
-    final data = _parseSocketPayload(raw);
-    if (data == null) return;
-    final battleId = data['battle_id'] as String?;
-    final fromName = data['from_streamer'] as String?;
-    if (battleId == null || battleId.isEmpty) return;
     setState(() {
-      _pendingBattleId = battleId;
-      _pendingBattleFromName = fromName ?? '?';
+      _activeBattleId = battleId;
+      if (_outgoingInvite?.battleId == battleId) _outgoingInvite = null;
+      // Sincroniza liveType em memória — antes o app continuava achando
+      // que estava em SOLO mesmo após o backend ter virado BATTLE.
+      _room = _room.copyWith(liveType: 'battle');
     });
-    _showBattleInviteDialog(battleId, fromName ?? '?');
+  }
+
+  /// Volta para a live normal (fim, saída ou cancelamento da batalha).
+  void _leaveBattle() {
+    if (!mounted) return;
+    setState(() {
+      _activeBattleId = null;
+      _room = _room.copyWith(liveType: 'solo');
+    });
   }
 
   void _onBattleStarted(dynamic raw) {
@@ -858,20 +1056,29 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (data == null) return;
     final battleId = data['battle_id'] as String?;
     if (battleId == null || battleId.isEmpty) return;
-    setState(() {
-      _activeBattleId = battleId;
-      _pendingBattleId = null;
-      // Sincroniza liveType em memória — antes o app continuava achando
-      // que estava em SOLO mesmo após o backend ter virado BATTLE.
-      _room = _room.copyWith(liveType: 'battle');
-    });
+    final roomA = data['room_a_id'] as String?;
+    final roomB = data['room_b_id'] as String?;
+    if ((roomA != null || roomB != null) &&
+        roomA != _room.id &&
+        roomB != _room.id) {
+      return; // batalha de outra sala
+    }
+    _enterBattle(battleId);
+  }
+
+  /// Batalha cancelada (ex.: oponente encerrou a live na contagem).
+  void _onBattleCancelled(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['battle_id'] != _activeBattleId) return;
+    _leaveBattle();
+    AppSnackBar.showError(context, 'A batalha foi cancelada');
   }
 
   /// Converte o payload bruto do socket em Map.
   /// O `socket_io_client` pode entregar o evento já decodificado (`Map`)
   /// ou como `String` JSON — depende do transport (websocket vs polling)
-  /// e do encoding no servidor. Tratamos os 2 casos para nunca perder
-  /// eventos críticos como `connect:battle:started`.
+  /// e do encoding no servidor.
   Map<String, dynamic>? _parseSocketPayload(dynamic raw) {
     try {
       if (raw is Map<String, dynamic>) return raw;
@@ -886,62 +1093,214 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     return null;
   }
 
-  Future<void> _showBattleInviteDialog(String battleId, String fromName) async {
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE — convite RECEBIDO (sou o streamer B)
+  // ════════════════════════════════════════════════════════════════
+
+  void _onBattleInvite(dynamic raw) {
     if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final battleId = data['battle_id'] as String?;
+    if (battleId == null || battleId.isEmpty) return;
+    if (battleId == _incomingInviteId) return; // evento duplicado
+    final fromName = (data['from_streamer'] as String?)?.trim();
+
+    // Ocupado (em batalha, com outro convite aberto ou aguardando resposta
+    // de um convite meu): recusa na hora — quem convidou recebe o aviso
+    // imediatamente em vez de esperar 60s. Antes os dialogs empilhavam.
+    if (_activeBattleId != null ||
+        _incomingInviteId != null ||
+        _outgoingInvite != null) {
+      unawaited(
+        ref
+            .read(battleServiceProvider)
+            .declineBattle(battleId)
+            .then((_) {}, onError: (_) {}),
+      );
+      return;
+    }
+
+    final expiresIn = (data['expires_in_seconds'] as num?)?.toInt() ?? 60;
+    _showBattleInviteDialog(
+      battleId,
+      fromName == null || fromName.isEmpty ? 'Um criador' : fromName,
+      // Margem de 3s para a resposta chegar antes do backend expirar.
+      (expiresIn - 3).clamp(5, 60),
+    );
+  }
+
+  Future<void> _showBattleInviteDialog(
+    String battleId,
+    String fromName,
+    int seconds,
+  ) async {
+    if (!mounted) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     final l10n = S.of(context);
-
-    // Fechar o dialog automaticamente quando o convite expirar no backend (60s).
-    // Usamos uma GlobalKey para poder fechar programaticamente.
     final dialogKey = GlobalKey();
-    _battleInviteTimeoutTimer?.cancel();
-    _battleInviteTimeoutTimer = Timer(const Duration(seconds: 55), () {
-      if (!mounted) return;
-      // Fecha o dialog se ainda estiver aberto
-      final ctx = dialogKey.currentContext;
-      if (ctx != null && Navigator.of(ctx, rootNavigator: true).canPop()) {
-        Navigator.of(ctx, rootNavigator: true).pop(false);
-      }
-      setState(() => _pendingBattleId = null);
-      AppSnackBar.showError(context, 'Convite de batalha expirou');
-    });
+    _incomingInviteId = battleId;
+    _incomingDialogKey = dialogKey;
 
+    // true = aceitou · false = recusou/expirou localmente ·
+    // null = fechado pelo app (convite cancelado/expirado no servidor).
     final accepted = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) =>
-          _BattleInviteDialog(key: dialogKey, fromName: fromName, l10n: l10n),
+      builder: (ctx) => _BattleInviteDialog(
+        key: dialogKey,
+        fromName: fromName,
+        totalSeconds: seconds,
+        l10n: l10n,
+      ),
     );
 
-    _battleInviteTimeoutTimer?.cancel();
+    _incomingInviteId = null;
+    _incomingDialogKey = null;
+    if (!mounted || accepted == null) return;
 
-    if (!mounted) return;
-    if (accepted == true) {
-      // 🛡️ Gate anti double-click: o dialog não usa await na callback do
-      // botão "Aceitar", então 2 taps rápidos podiam disparar 2 requests.
+    if (accepted) {
+      // 🛡️ Gate anti double-click.
       if (_isAcceptingBattle) return;
       _isAcceptingBattle = true;
       try {
         await ref.read(battleServiceProvider).acceptBattle(battleId);
-        if (mounted) setState(() => _activeBattleId = battleId);
+        // HUD já abre em "contagem" — o `started` chega em seguida.
+        _enterBattle(battleId);
       } catch (e) {
-        if (mounted) AppSnackBar.showError(context, 'Erro ao aceitar batalha');
+        if (mounted) {
+          AppSnackBar.showError(
+            context,
+            BattleService.errorMessage(e, 'Não foi possível aceitar a batalha'),
+          );
+        }
       } finally {
         _isAcceptingBattle = false;
       }
     } else {
       try {
         await ref.read(battleServiceProvider).declineBattle(battleId);
-      } catch (_) {}
-      setState(() => _pendingBattleId = null);
+      } catch (_) {
+        // Já expirado/cancelado no servidor — nada a fazer.
+      }
+    }
+  }
+
+  /// Fecha o dialog de convite recebido sem responder (o servidor já
+  /// cancelou/expirou o convite).
+  void _closeIncomingDialog() {
+    final ctx = _incomingDialogKey?.currentContext;
+    if (ctx != null) Navigator.of(ctx).pop();
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE — estado do convite (eventos do servidor p/ os 2 streamers)
+  // ════════════════════════════════════════════════════════════════
+
+  void _onBattleInviteStatus(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final battleId = data['battle_id'] as String?;
+    final status = data['status'] as String?;
+    if (battleId == null || status == null) return;
+
+    final iAmInviter = data['streamer_a_id'] == _room.streamerId;
+    final outgoing = _outgoingInvite;
+    final isMyOutgoing = outgoing?.battleId == battleId;
+    final opponent = outgoing?.opponentName ?? 'O criador';
+
+    switch (status) {
+      case 'pending':
+        // Cobre convites criados fora do sheet (ex.: revanche).
+        if (iAmInviter && !isMyOutgoing && _activeBattleId == null) {
+          _startOutgoingInvite(
+            battleId,
+            'o oponente',
+            (data['expires_in_seconds'] as num?)?.toInt() ?? 60,
+          );
+        }
+      case 'accepted':
+        if (isMyOutgoing) {
+          AppSnackBar.showSuccess(context, '$opponent aceitou! Prepare-se ⚔');
+          _enterBattle(battleId);
+        }
+      case 'declined':
+        if (isMyOutgoing) {
+          setState(() => _outgoingInvite = null);
+          AppSnackBar.showError(context, '$opponent recusou o convite');
+        }
+      case 'expired':
+        if (isMyOutgoing) {
+          setState(() => _outgoingInvite = null);
+          AppSnackBar.showError(context, '$opponent não respondeu a tempo');
+        } else if (_incomingInviteId == battleId) {
+          _closeIncomingDialog();
+          AppSnackBar.showError(context, 'O convite de batalha expirou');
+        }
+      case 'cancelled':
+        if (isMyOutgoing) {
+          setState(() => _outgoingInvite = null);
+        } else if (_incomingInviteId == battleId) {
+          _closeIncomingDialog();
+          AppSnackBar.showError(context, 'O convite de batalha foi cancelado');
+        }
+        if (_activeBattleId == battleId) _leaveBattle();
     }
   }
 
   // ════════════════════════════════════════════════════════════════
-  // BATTLE SHEET — convidar para batalha
+  // BATTLE — convite ENVIADO (sou o streamer A)
   // ════════════════════════════════════════════════════════════════
+
+  void _startOutgoingInvite(String battleId, String opponentName, int seconds) {
+    if (!mounted) return;
+    setState(() {
+      _outgoingInvite = _OutgoingInvite(
+        battleId: battleId,
+        opponentName: opponentName,
+        expiresAt: DateTime.now().add(Duration(seconds: seconds)),
+      );
+    });
+  }
+
+  Future<void> _cancelOutgoingInvite() async {
+    final invite = _outgoingInvite;
+    if (invite == null) return;
+    setState(() => _outgoingInvite = null);
+    try {
+      await ref.read(battleServiceProvider).cancelInvite(invite.battleId);
+    } catch (e) {
+      // 409/410: já respondido/expirado — o evento de status resolve a UI.
+      debugPrint('Broadcaster: cancel invite failed: $e');
+    }
+  }
+
+  /// Sem evento do servidor depois do prazo (socket caiu): libera a UI
+  /// para o streamer poder convidar de novo.
+  void _onOutgoingInviteTimeout(String battleId) {
+    if (!mounted || _outgoingInvite?.battleId != battleId) return;
+    setState(() => _outgoingInvite = null);
+    AppSnackBar.showError(context, 'Sem resposta ao convite de batalha');
+  }
+
+  static String? _extractBattleId(Map<String, dynamic> resp) {
+    final data = resp['data'];
+    final source = data is Map ? data : resp;
+    final id = source['battle_id'] ?? source['id'];
+    return id is String && id.isNotEmpty ? id : null;
+  }
 
   Future<void> _showBattleSheet(BuildContext context) async {
     if (_activeBattleId != null) return; // já em batalha
+    if (_outgoingInvite != null) {
+      AppSnackBar.showError(
+        context,
+        'Aguarde a resposta do convite atual ou cancele-o',
+      );
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
 
     // Verificar elegibilidade antes de abrir o sheet (UX antecipado)
     try {
@@ -954,7 +1313,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         final reason =
             battleData['reason'] as String? ??
             'Você ainda não pode iniciar batalhas';
-        AppSnackBar.showError(context, reason);
+        AppSnackBar.showError(this.context, reason);
         return;
       }
     } catch (_) {
@@ -963,7 +1322,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     if (!mounted) return;
     await showModalBottomSheet<void>(
-      context: context,
+      context: this.context,
       backgroundColor: const Color(0xFF0E0E14),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -971,23 +1330,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       ),
       builder: (ctx) => BattleInviteSheet(
         myRoomId: _room.id,
-        onInvite: (targetRoomId, durationSeconds) async {
-          Navigator.pop(ctx);
+        onInvite: (candidate, durationSeconds) async {
           try {
-            await ref
+            final resp = await ref
                 .read(battleServiceProvider)
                 .inviteBattle(
                   roomId: _room.id,
-                  targetRoomId: targetRoomId,
+                  targetRoomId: candidate.roomId,
                   durationSeconds: durationSeconds,
                 );
-            if (mounted) {
-              AppSnackBar.showSuccess(context, 'Convite de batalha enviado!');
+            final battleId = _extractBattleId(resp);
+            if (battleId != null) {
+              _startOutgoingInvite(battleId, candidate.displayName, 60);
             }
+            return null;
           } catch (e) {
-            if (mounted) {
-              AppSnackBar.showError(context, 'Erro ao enviar convite');
-            }
+            return BattleService.errorMessage(
+              e,
+              'Não foi possível enviar o convite',
+            );
           }
         },
       ),
@@ -995,229 +1356,65 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   // ════════════════════════════════════════════════════════════════
-  // CO-HOST SHEET — convidar co-apresentador
+  // CHAT do criador
   // ════════════════════════════════════════════════════════════════
+  //
+  // As mensagens ficam SEMPRE visíveis (antes o chat começava escondido e
+  // o criador não via o que o público escrevia). O botão "Chat" só abre o
+  // campo para o criador responder.
 
-  Future<void> _showCoHostSheet(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF0E0E14),
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.people_alt_rounded,
-                        color: Color(0xFF0EA5E9),
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Convidar Co-host',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 18,
-                          ),
-                        ),
-                        Text(
-                          'Transmita junto com outro criador',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Como funciona
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0EA5E9).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF0EA5E9).withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Como funciona:',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ...[
-                        '📲 O co-host recebe uma notificação',
-                        '🎥 A tela divide automaticamente',
-                        '💬 Vocês compartilham o chat ao vivo',
-                        '⏱ Sem limite de tempo',
-                      ].map(
-                        (t) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            t,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Seguidores online (placeholder)
-                Text(
-                  'Seguidores online',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 72,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 5,
-                    itemBuilder: (_, i) => Padding(
-                      padding: const EdgeInsets.only(right: 14),
-                      child: Column(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white.withValues(alpha: 0.08),
-                              border: Border.all(color: Colors.white12),
-                            ),
-                            child: const Icon(
-                              Icons.person_outline,
-                              color: Colors.white38,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '• • •',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0284C7), Color(0xFF0EA5E9)],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(
-                            0xFF0EA5E9,
-                          ).withValues(alpha: 0.35),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () {
-                          Navigator.pop(ctx);
-                          // TODO: integrar co-host invite
-                          AppSnackBar.showSuccess(context, 'Co-host em breve!');
-                        },
-                        child: const Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.link_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'Enviar Convite de Co-host',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  void _toggleChatInput() {
+    if (_showChatInput) {
+      _closeChatInput();
+      return;
+    }
+    setState(() => _showChatInput = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _chatFocus.requestFocus();
+    });
+  }
+
+  void _closeChatInput() {
+    _chatFocus.unfocus();
+    setState(() => _showChatInput = false);
+  }
+
+  /// Toque numa mensagem do público → "Responder" com @menção.
+  Future<void> _onCommentTap(LiveComment comment) async {
+    final action = await ChatUserSheet.show(
+      context,
+      comment,
+      allowProfile: false,
     );
+    if (!mounted || action != ChatUserAction.reply) return;
+    ChatUserSheet.insertMention(_chatCtrl, comment);
+    setState(() => _showChatInput = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _chatFocus.requestFocus();
+    });
+  }
+
+  Future<void> _sendCreatorComment() async {
+    final text = _chatCtrl.text.trim();
+    if (text.isEmpty) return;
+    _chatCtrl.clear();
+    _closeChatInput();
+    final sent = await ref
+        .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
+        .sendComment(text);
+    if (!sent && mounted && _chatCtrl.text.isEmpty) {
+      // Devolve o texto para o criador não perder o que digitou.
+      _chatCtrl.text = text;
+      setState(() => _showChatInput = true);
+    }
   }
 
   @override
   void dispose() {
     _unsubscribeFromBattleEvents();
-    _battleInviteTimeoutTimer?.cancel();
+    _pauseTicker?.cancel();
+    _chatCtrl.dispose();
+    _chatFocus.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     _viewerToastTimer?.cancel();
@@ -1307,60 +1504,67 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       _switchCamera();
                     },
                   ),
-                // ── Modo de áudio ──────────────────────────────────────
-                MoreOptionTile(
-                  icon: _audioMode == BroadcastAudioMode.quality
-                      ? Icons.music_note_rounded
-                      : Icons.record_voice_over_rounded,
-                  iconColor: _audioMode == BroadcastAudioMode.quality
-                      ? const Color(0xFFFF3D6E)
-                      : const Color(0xFF4FC3F7),
-                  title: _audioMode == BroadcastAudioMode.quality
-                      ? 'Áudio: Qualidade'
-                      : 'Áudio: Redução de ruído',
-                  subtitle: _audioMode == BroadcastAudioMode.quality
-                      ? 'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.'
-                      : 'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.',
-                  onTap: () async {
-                    Navigator.pop(ctx);
-                    final newMode = _audioMode == BroadcastAudioMode.quality
-                        ? BroadcastAudioMode.voice
-                        : BroadcastAudioMode.quality;
-                    setState(() => _audioMode = newMode);
-                    await BroadcastAudioSession.activate(mode: newMode);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            newMode == BroadcastAudioMode.voice
-                                ? '🎙️ Redução de ruído ativada'
-                                : '🎵 Modo qualidade ativado',
+                // ── Áudio (só iOS) ─────────────────────────────────────
+                // No Android o processamento (Equalizer/DynamicsProcessing)
+                // só afeta sessões de REPRODUÇÃO, não o microfone do RTMP, e
+                // o modo de áudio só muda atributos de playback — as opções
+                // não tinham efeito nenhum na live. Escondidas lá.
+                if (Platform.isIOS) ...[
+                  // ── Modo de áudio ──────────────────────────────────────
+                  MoreOptionTile(
+                    icon: _audioMode == BroadcastAudioMode.quality
+                        ? Icons.music_note_rounded
+                        : Icons.record_voice_over_rounded,
+                    iconColor: _audioMode == BroadcastAudioMode.quality
+                        ? const Color(0xFFFF3D6E)
+                        : const Color(0xFF4FC3F7),
+                    title: _audioMode == BroadcastAudioMode.quality
+                        ? 'Áudio: Qualidade'
+                        : 'Áudio: Redução de ruído',
+                    subtitle: _audioMode == BroadcastAudioMode.quality
+                        ? 'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.'
+                        : 'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.',
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      final newMode = _audioMode == BroadcastAudioMode.quality
+                          ? BroadcastAudioMode.voice
+                          : BroadcastAudioMode.quality;
+                      setState(() => _audioMode = newMode);
+                      await BroadcastAudioSession.activate(mode: newMode);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              newMode == BroadcastAudioMode.voice
+                                  ? '🎙️ Redução de ruído ativada'
+                                  : '🎵 Modo qualidade ativado',
+                            ),
+                            duration: const Duration(seconds: 2),
                           ),
-                          duration: const Duration(seconds: 2),
+                        );
+                      }
+                    },
+                  ),
+                  // ── Processador de Áudio (EQ + Compressor) ─────────────────
+                  MoreOptionTile(
+                    icon: Icons.graphic_eq_rounded,
+                    iconColor: Colors.pink.shade300,
+                    title: '🎛️ Processador de áudio',
+                    subtitle:
+                        'Equalizador + compressor — ${BroadcastAudioProcessing.currentPreset.label}',
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        isScrollControlled: true,
+                        builder: (bCtx) => AudioProcessorPanel(
+                          onClose: () => Navigator.pop(bCtx),
                         ),
                       );
-                    }
-                  },
-                ),
-                // ── Processador de Áudio (EQ + Compressor) ─────────────────
-                MoreOptionTile(
-                  icon: Icons.graphic_eq_rounded,
-                  iconColor: Colors.pink.shade300,
-                  title: '🎛️ Audio Processor',
-                  subtitle:
-                      'EQ profissional + Compressor — ${BroadcastAudioProcessing.currentPreset.name}',
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.transparent,
-                      isScrollControlled: true,
-                      builder: (bCtx) => AudioProcessorPanel(
-                        onClose: () => Navigator.pop(bCtx),
-                      ),
-                    );
-                  },
-                ),
+                    },
+                  ),
+                ],
                 MoreOptionTile(
                   icon: Icons.share_outlined,
                   iconColor: Colors.white,
@@ -1372,6 +1576,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       context,
                       roomId: widget.room.id,
                       title: widget.room.title,
+                      slug: _room.slug,
                       streamerName: widget.room.streamerName,
                       thumbnailUrl: widget.room.thumbnailUrl,
                     );
@@ -1401,6 +1606,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       liveRoomCommentsViewModelProvider(widget.room.id),
     );
 
+    // Mantém a fila de animações viva (o overlay lê o mesmo provider).
     ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
 
     ref.listen<LiveRoomCommentsState>(
@@ -1419,189 +1625,235 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       },
     );
 
-    if (!_isInitialized ||
-        _controller == null ||
-        _controller!.value.isInitialized != true) {
+    final controller = _controller;
+    final cameraReady =
+        controller != null && controller.value.isInitialized == true;
+    // Spinner de tela cheia só na abertura. Durante a troca de câmera o
+    // controller fica nulo por um instante — mantemos chat/HUD montados e
+    // mostramos só um fundo preto no lugar do preview.
+    if (!cameraReady && !_isSwitchingCamera) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    final size = MediaQuery.of(context).size;
+    // sizeOf: não reconstrói a câmera a cada frame da animação do teclado.
+    final size = MediaQuery.sizeOf(context);
     final screenRatio = size.aspectRatio;
-    final cameraRatio = _controller!.value.aspectRatio;
+    final cameraRatio = cameraReady ? controller.value.aspectRatio : 9 / 16;
     double scale = screenRatio < cameraRatio
         ? cameraRatio / screenRatio
         : screenRatio / cameraRatio;
 
     final viewerEvent = _lastViewerEvent;
 
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        resizeToAvoidBottomInset: false,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            // ===== Camera Preview =====
-            Center(
-              child: Transform.scale(
-                scale: scale,
-                child: AspectRatio(
-                  aspectRatio: cameraRatio,
-                  child: CameraPreview(_controller!),
-                ),
-              ),
-            ),
-            // ===== Gradient overlay (top + bottom) =====
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black87,
-                    Colors.transparent,
-                    Colors.transparent,
-                    Colors.black87,
-                  ],
-                  stops: [0.0, 0.18, 0.55, 1.0],
-                ),
-              ),
-            ),
-
-            // ===== Countdown =====
-            if (_showCountdown)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24, width: 2),
+    // Voltar (gesto Android / swipe iOS) passa pelo fluxo de encerramento —
+    // antes fechava a tela sem chamar endLive e a sala ficava "AO VIVO".
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _closeBroadcaster();
+      },
+      child: GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          backgroundColor: Colors.black,
+          resizeToAvoidBottomInset: false,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              // ===== Camera Preview =====
+              if (cameraReady)
+                Center(
+                  child: Transform.scale(
+                    scale: scale,
+                    child: AspectRatio(
+                      aspectRatio: cameraRatio,
+                      child: CameraPreview(controller),
+                    ),
                   ),
-                  child: Text(
-                    '$_countdownSeconds',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 100,
-                      fontWeight: FontWeight.bold,
+                )
+              else
+                const ColoredBox(
+                  color: Colors.black,
+                  child: Center(
+                    child: CircularProgressIndicator(color: Colors.white54),
+                  ),
+                ),
+              // ===== Gradient overlay (top + bottom) =====
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black87,
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black87,
+                    ],
+                    stops: [0.0, 0.18, 0.55, 1.0],
+                  ),
+                ),
+              ),
+
+              // ===== Countdown =====
+              if (_showCountdown)
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white24, width: 2),
+                    ),
+                    child: Text(
+                      '$_countdownSeconds',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 100,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+              // ===== Gift animations =====
+              GiftAnimationOverlay(roomId: widget.room.id),
+
+              // ===== Battle HUD (streamer) =====
+              if (_activeBattleId != null)
+                Positioned.fill(
+                  child: StreamerBattleHud(
+                    battleId: _activeBattleId!,
+                    myStreamerId: _room.streamerId,
+                    // Sair da batalha / fechar banner de resultado:
+                    // volta o broadcaster pra "live normal" (inclusive o
+                    // liveType) sem esperar o socket. Idempotente.
+                    onBattleClosed: _leaveBattle,
+                  ),
+                ),
+
+              // ===== UI Layers =====
+              // Top bar (HUD) — floating
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BroadcasterTopBar(
+                          isStreaming: _isStreaming,
+                          isPaused: _isPaused,
+                          viewerCount: commentsState.viewerCount,
+                          likes: commentsState.likeCount,
+                          messages: commentsState.totalComments,
+                          totalGiftsValue: commentsState.totalGiftsValue,
+                          elapsedLabel: _formatDuration(_liveElapsed),
+                          countFormatter: _formatCount,
+                          onClose: _closeBroadcaster,
+                          onSwitchCamera: _cameras.length > 1
+                              ? _switchCamera
+                              : null,
+                        ),
+                        const SizedBox(height: 6),
+                        if (viewerEvent != null)
+                          ViewerJoinedToast(
+                            event: viewerEvent,
+                            controller: _toastAnimController!,
+                          ),
+                      ],
                     ),
                   ),
                 ),
               ),
 
-            // ===== Gift animations =====
-            GiftAnimationOverlay(roomId: widget.room.id),
-
-            // ===== Battle HUD (streamer) =====
-            if (_activeBattleId != null)
-              Positioned.fill(
-                child: StreamerBattleHud(
-                  battleId: _activeBattleId!,
-                  myStreamerId: _room.streamerId,
-                  onBattleClosed: () {
-                    // Sair da batalha / fechar banner de resultado:
-                    // volta o broadcaster pra "live normal" sem precisar
-                    // esperar o broadcast socket chegar. Idempotente — se
-                    // o socket vier depois, só vai re-zerar pra null.
-                    if (mounted) setState(() => _activeBattleId = null);
-                  },
+              // ===== Painel de pausa (só o criador vê) =====
+              if (_isPaused && _pausedUntil != null)
+                Center(
+                  child: _PausedPanel(
+                    remaining: _pausedUntil!.difference(DateTime.now()),
+                    isBusy: _isTogglingPause,
+                    onResume: _togglePause,
+                  ),
                 ),
-              ),
 
-            // ===== UI Layers =====
-            // Top bar (HUD) — floating
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BroadcasterTopBar(
-                        isStreaming: _isStreaming,
-                        isPaused: _isPaused,
-                        viewerCount: commentsState.viewerCount,
-                        likes: commentsState.likeCount,
-                        messages: commentsState.totalComments,
-                        totalGiftsValue: commentsState.totalGiftsValue,
-                        elapsedLabel: _formatDuration(_liveElapsed),
-                        countFormatter: _formatCount,
-                        onClose: _closeBroadcaster,
-                        onSwitchCamera: _cameras.length > 1
-                            ? _switchCamera
-                            : null,
-                      ),
-                      const SizedBox(height: 6),
-                      if (viewerEvent != null)
-                        ViewerJoinedToast(
-                          event: viewerEvent,
-                          controller: _toastAnimController!,
+              // ===== Dock inferior: convite pendente + chat + input + ações =====
+              // Único widget que acompanha o teclado (a câmera não mexe).
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _BroadcasterChatDock(
+                  banner: _outgoingInvite == null
+                      ? null
+                      : _OutgoingInviteBanner(
+                          key: ValueKey(_outgoingInvite!.battleId),
+                          invite: _outgoingInvite!,
+                          onCancel: _cancelOutgoingInvite,
+                          onTimeout: () => _onOutgoingInviteTimeout(
+                            _outgoingInvite!.battleId,
+                          ),
                         ),
-                    ],
+                  // Criador lê o chat de longe (celular no tripé) — texto
+                  // ~12% maior que o do espectador.
+                  tickerBuilder: (maxHeight) => Builder(
+                    // Builder: dependência de MediaQuery fica só aqui, não no
+                    // State da tela (que reconstruiria a câmera no teclado).
+                    builder: (ctx) => MediaQuery(
+                      data: MediaQuery.of(ctx).copyWith(
+                        textScaler: MediaQuery.textScalerOf(
+                          ctx,
+                        ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
+                      ),
+                      child: ChatTicker(
+                        comments: commentsState.comments,
+                        gifts: commentsState.chatGifts,
+                        hostUserId: _room.streamerId,
+                        myUserId: _room.streamerId,
+                        myUsername: commentsState.myUsername,
+                        onCommentTap: _onCommentTap,
+                        maxHeight: maxHeight,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
-
-            // Comments overlay — toggle only when user taps chat icon
-            // Positioned ABOVE action bar so never obscured by buttons
-            if (_showChat)
-              Positioned(
-                left: 14,
-                right: 14,
-                bottom: 110, // Above action bar (which is at bottom: 16)
-                child: SafeArea(
-                  top: false,
-                  left: false,
-                  right: false,
-                  child: LiveCommentsOverlay(
-                    comments: commentsState.comments,
-                    isSending: commentsState.isSending,
-                    onSendComment: (message) => ref
-                        .read(
-                          liveRoomCommentsViewModelProvider(
-                            widget.room.id,
-                          ).notifier,
+                  input: _showChatInput
+                      ? _CreatorChatInput(
+                          controller: _chatCtrl,
+                          focusNode: _chatFocus,
+                          hint: S.of(context).liveCommentsHint,
+                          onSend: _sendCreatorComment,
+                          onClose: _closeChatInput,
                         )
-                        .sendComment(message),
-                    onClose: () => setState(() => _showChat = false),
-                  ),
+                      : null,
+                  actionBar: !_showCountdown && (_isStreaming || _isPaused)
+                      ? LiveActionBar(
+                          isPaused: _isPaused,
+                          isTogglingPause: _isTogglingPause,
+                          isTogglingStream: _isTogglingStream,
+                          hasBattle: _activeBattleId != null,
+                          onBattle: () => _showBattleSheet(context),
+                          // Co-host desativado até existir mídia em tempo
+                          // real (ver diagnóstico) — botão escondido.
+                          onCoHost: null,
+                          onPauseResume: _togglePause,
+                          onEnd: _closeBroadcaster,
+                          onMoreOptions: () => _showMoreOptions(context),
+                          showChat: _showChatInput,
+                          onChatToggle: _toggleChatInput,
+                        )
+                      : null,
                 ),
               ),
-
-            // Bottom action bar — floating glass pill
-            if (!_showCountdown && (_isStreaming || _isPaused))
-              Positioned(
-                left: 14,
-                right: 14,
-                bottom: 16,
-                child: SafeArea(
-                  top: false,
-                  child: LiveActionBar(
-                    isPaused: _isPaused,
-                    isTogglingPause: _isTogglingPause,
-                    isTogglingStream: _isTogglingStream,
-                    hasBattle: _activeBattleId != null,
-                    onBattle: () => _showBattleSheet(context),
-                    onCoHost: () => _showCoHostSheet(context),
-                    onPauseResume: _togglePause,
-                    onEnd: _closeBroadcaster,
-                    onMoreOptions: () => _showMoreOptions(context),
-                    showChat: _showChat,
-                    onChatToggle: () => setState(() => _showChat = !_showChat),
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1611,16 +1863,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 // ── Battle Invite Dialog ───────────────────────────────────────────────────
 //
 // AlertDialog isolado em StatefulWidget para gerenciar o timer de expiração
-// visual (55 → 0 seg) sem depender do estado pai.
+// visual (N → 0 seg) sem depender do estado pai.
 
 class _BattleInviteDialog extends StatefulWidget {
   const _BattleInviteDialog({
     super.key,
     required this.fromName,
+    required this.totalSeconds,
     required this.l10n,
   });
 
   final String fromName;
+
+  /// Segundos até o convite expirar (vem do `expires_in_seconds` do evento).
+  final int totalSeconds;
   final S l10n;
 
   @override
@@ -1628,8 +1884,7 @@ class _BattleInviteDialog extends StatefulWidget {
 }
 
 class _BattleInviteDialogState extends State<_BattleInviteDialog> {
-  static const _totalSeconds = 55;
-  int _remaining = _totalSeconds;
+  late int _remaining = widget.totalSeconds;
   Timer? _tick;
 
   @override
@@ -1656,7 +1911,7 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final progress = _remaining / _totalSeconds;
+    final progress = _remaining / widget.totalSeconds;
     return AlertDialog(
       backgroundColor: AppColors.slate,
       title: Row(
@@ -1714,6 +1969,353 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
           child: Text(widget.l10n.battleAccept),
         ),
       ],
+    );
+  }
+}
+
+// ── Convite enviado (streamer A) ────────────────────────────────────────────
+
+class _OutgoingInvite {
+  const _OutgoingInvite({
+    required this.battleId,
+    required this.opponentName,
+    required this.expiresAt,
+  });
+
+  final String battleId;
+  final String opponentName;
+  final DateTime expiresAt;
+}
+
+/// Pílula "Aguardando @fulano… 42s · Cancelar" enquanto o convite enviado
+/// não é respondido. Timer próprio — não reconstrói a tela da câmera.
+class _OutgoingInviteBanner extends StatefulWidget {
+  const _OutgoingInviteBanner({
+    super.key,
+    required this.invite,
+    required this.onCancel,
+    required this.onTimeout,
+  });
+
+  final _OutgoingInvite invite;
+  final VoidCallback onCancel;
+
+  /// Chamado se nenhum evento do servidor chegar até o prazo + 5s.
+  final VoidCallback onTimeout;
+
+  @override
+  State<_OutgoingInviteBanner> createState() => _OutgoingInviteBannerState();
+}
+
+class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
+  Timer? _tick;
+
+  int get _remaining =>
+      widget.invite.expiresAt.difference(DateTime.now()).inSeconds;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (_remaining <= -5) {
+        _tick?.cancel();
+        widget.onTimeout();
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = _remaining.clamp(0, 999);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.electricPurple.withValues(alpha: 0.6),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.electricPurple,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              'Aguardando ${widget.invite.opponentName} aceitar… ${remaining}s',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onCancel,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              minimumSize: const Size(0, 30),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(
+                color: Color(0xFFFF6B6B),
+                fontWeight: FontWeight.w700,
+                fontSize: 12.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Dock inferior do criador ───────────────────────────────────────────────
+
+/// Convite pendente + chat (sempre visível) + input (sob demanda) + ações.
+///
+/// Único widget que lê `viewInsets`: só ele acompanha a animação do
+/// teclado — a câmera não reconstrói. Com o teclado aberto a barra de
+/// ações some e o chat encolhe para caber acima do input.
+class _BroadcasterChatDock extends StatelessWidget {
+  const _BroadcasterChatDock({
+    required this.tickerBuilder,
+    this.banner,
+    this.input,
+    this.actionBar,
+  });
+
+  final Widget Function(double maxHeight) tickerBuilder;
+  final Widget? banner;
+  final Widget? input;
+  final Widget? actionBar;
+
+  /// Status bar + BroadcasterTopBar + toast de viewer.
+  static const _topReserved = 150.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final padding = MediaQuery.paddingOf(context);
+    final size = MediaQuery.sizeOf(context);
+    final typing = keyboard > 0;
+
+    final bottomInset = typing ? keyboard + 8 : padding.bottom + 16;
+    final below =
+        (input != null ? 56.0 : 0) + (!typing && actionBar != null ? 84.0 : 0);
+    final free = size.height - padding.top - _topReserved - below - bottomInset;
+    final tickerMax = typing
+        ? (free * 0.75).clamp(60.0, 200.0)
+        : free.clamp(80.0, 220.0);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(14, 0, 14, bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (banner != null) ...[
+            Align(alignment: Alignment.centerLeft, child: banner),
+            const SizedBox(height: 8),
+          ],
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: size.width * 0.8),
+              child: tickerBuilder(tickerMax),
+            ),
+          ),
+          if (input != null) ...[const SizedBox(height: 8), input!],
+          if (!typing && actionBar != null) ...[
+            const SizedBox(height: 10),
+            actionBar!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Campo para o criador responder no chat da própria live.
+class _CreatorChatInput extends StatelessWidget {
+  const _CreatorChatInput({
+    required this.controller,
+    required this.focusNode,
+    required this.hint,
+    required this.onSend,
+    required this.onClose,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final String hint;
+  final VoidCallback onSend;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+            ),
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              textInputAction: TextInputAction.send,
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: LiveBottomBar.maxMessageLength,
+              onSubmitted: (_) => onSend(),
+              onEditingComplete: () {},
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              cursorColor: Colors.white,
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
+                border: InputBorder.none,
+                isDense: true,
+                counterText: '',
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 11,
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        IconButton(
+          onPressed: onSend,
+          icon: const Icon(Icons.send_rounded, color: Color(0xFFFF4F8B)),
+        ),
+        IconButton(
+          onPressed: onClose,
+          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+        ),
+      ],
+    );
+  }
+}
+
+/// Painel central exibido ao criador enquanto a live está pausada.
+class _PausedPanel extends StatelessWidget {
+  const _PausedPanel({
+    required this.remaining,
+    required this.isBusy,
+    required this.onResume,
+  });
+
+  final Duration remaining;
+  final bool isBusy;
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    final secs = remaining.inSeconds.clamp(0, 3600);
+    final mm = (secs ~/ 60).toString();
+    final ss = (secs % 60).toString().padLeft(2, '0');
+    final urgent = secs <= 60;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.pause_circle_filled_rounded,
+            color: Colors.orange,
+            size: 44,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Live pausada',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Câmera e microfone desligados. Seus espectadores estão vendo '
+            'a tela "Já voltamos!".',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Retome em $mm:$ss',
+            style: TextStyle(
+              color: urgent ? const Color(0xFFFF6B6B) : Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: isBusy ? null : onResume,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF22C55E),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: isBusy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.play_arrow_rounded),
+              label: const Text(
+                'Retomar live',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

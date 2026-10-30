@@ -1096,25 +1096,30 @@ class _BannerSection extends ConsumerStatefulWidget {
 }
 
 class _BannerSectionState extends ConsumerState<_BannerSection> {
+  /// Guardado no initState: `ref` não pode ser usado no dispose (o widget
+  /// já está desmontado → StateError "Using ref when unmounted").
+  late final PresenceCache _presence;
+
   @override
   void initState() {
     super.initState();
     // Registrar userId para polling de presença
-    ref.read(presenceCacheProvider.notifier).watch(widget.userId);
+    _presence = ref.read(presenceCacheProvider.notifier);
+    _presence.watch(widget.userId);
   }
 
   @override
   void didUpdateWidget(_BannerSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userId != widget.userId) {
-      ref.read(presenceCacheProvider.notifier).unwatch(oldWidget.userId);
-      ref.read(presenceCacheProvider.notifier).watch(widget.userId);
+      _presence.unwatch(oldWidget.userId);
+      _presence.watch(widget.userId);
     }
   }
 
   @override
   void dispose() {
-    ref.read(presenceCacheProvider.notifier).unwatch(widget.userId);
+    _presence.unwatch(widget.userId);
     super.dispose();
   }
 

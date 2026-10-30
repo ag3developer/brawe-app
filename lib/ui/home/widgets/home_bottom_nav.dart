@@ -243,7 +243,9 @@ class _CreateOverlayState extends ConsumerState<_CreateOverlay>
 
   void _openStory() {
     _close();
-    Navigator.of(context).push(
+    // rootNavigator: o editor de story é tela cheia — cobre a barra de
+    // navegação (antes abria dentro da aba e a nav ficava por cima).
+    Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => const ForceDarkTheme(child: StoryComposerScreen()),

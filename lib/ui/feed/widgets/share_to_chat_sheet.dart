@@ -1,20 +1,34 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
-
 import 'dart:async';
 
-import '../../core/themes/app_colors.dart';
-import '../../core/themes/brawe_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
+
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/post_service.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/follow_user.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
+import 'story_composer_screen.dart';
 
-/// Instagram-style "Send to..." bottom sheet.
+/// Folha "Compartilhar" de um post — minimalista, no padrão dos apps de
+/// vídeo curto atuais (TikTok/Instagram):
+///
+/// 1. **Pessoas** (conversas recentes + quem você segue) numa linha de
+///    avatares. **Um toque envia** — sem seleção + botão "Enviar". O avatar
+///    mostra "Enviado" e não envia duas vezes.
+/// 2. **Ações** em ícones redondos: Stories · Repostar · Copiar link · Mais.
+///
+/// Cores do tema do app (claro/escuro, via `context.colors`) e textos
+/// traduzidos (`S`). A folha usa o tema do app mesmo quando aberta de uma
+/// tela com tema escuro forçado (ex.: For You).
 class ShareToChatSheet extends ConsumerStatefulWidget {
   const ShareToChatSheet({
     super.key,
@@ -22,12 +36,19 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
     required this.postCaption,
     this.postImageUrl,
     this.authorName,
+    this.storyMediaUrl,
   });
 
   final String postId;
   final String postCaption;
+
+  /// Mantidos por compatibilidade com quem chama (não exibidos).
   final String? postImageUrl;
   final String? authorName;
+
+  /// Mídia (vídeo ou imagem) do post. Quando informada, aparece a ação
+  /// "Stories" — reposta o post como story dentro do app.
+  final String? storyMediaUrl;
 
   static Future<void> show(
     BuildContext context, {
@@ -35,17 +56,22 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
     required String postCaption,
     String? postImageUrl,
     String? authorName,
+    String? storyMediaUrl,
   }) {
+    // Contexto do navigator raiz: a folha herda o tema do APP (claro ou
+    // escuro), não o tema escuro forçado do feed de onde foi aberta.
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
     return showModalBottomSheet<void>(
-      context: context,
+      context: rootContext,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       useSafeArea: true,
+      backgroundColor: Colors.transparent,
       builder: (_) => ShareToChatSheet(
         postId: postId,
         postCaption: postCaption,
         postImageUrl: postImageUrl,
         authorName: authorName,
+        storyMediaUrl: storyMediaUrl,
       ),
     );
   }
@@ -54,25 +80,45 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
   ConsumerState<ShareToChatSheet> createState() => _ShareToChatSheetState();
 }
 
+enum _SendState { sending, sent, failed }
+
+class _Recipient {
+  const _Recipient({
+    required this.userId,
+    required this.name,
+    required this.username,
+    this.avatarUrl,
+    this.conversationId,
+  });
+
+  final String userId;
+  final String name;
+  final String username;
+  final String? avatarUrl;
+  final String? conversationId;
+}
+
 class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
   final TextEditingController _searchCtrl = TextEditingController();
-  final TextEditingController _commentCtrl = TextEditingController();
-  final Set<String> _selectedUserIds = <String>{};
 
   bool _loading = true;
-  bool _sending = false;
-  String? _error;
-  List<Conversation> _recent = const [];
-  List<FollowUser> _following = const [];
+  bool _loadFailed = false;
+  List<_Recipient> _people = const [];
+  final Map<String, _SendState> _sendState = {};
+  bool _tracked = false;
   String _query = '';
 
   String get _postUrl => 'https://brawe.app/connect/p/${widget.postId}';
+
+  bool get _canStory =>
+      widget.storyMediaUrl != null && widget.storyMediaUrl!.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     _searchCtrl.addListener(() {
-      setState(() => _query = _searchCtrl.text.trim().toLowerCase());
+      final q = _searchCtrl.text.trim().toLowerCase();
+      if (q != _query) setState(() => _query = q);
     });
     _load();
   }
@@ -80,583 +126,457 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _commentCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     setState(() {
       _loading = true;
-      _error = null;
+      _loadFailed = false;
     });
     final chatRepo = ref.read(chatRepositoryProvider);
     final socialRepo = ref.read(socialRepositoryProvider);
     final me = ref.read(authStateProvider).asData?.value;
 
-    // Carrega em paralelo, mas tratando erros de forma independente: se uma
-    // falhar a outra continua disponível.
+    // Em paralelo e independentes: se uma falhar, a outra ainda aparece.
     final recentFuture = chatRepo
         .listConversations(page: 1, limit: 20)
         .then<List<Conversation>>((v) => v)
-        .catchError((e, st) {
+        .catchError((Object e) {
           debugPrint('[ShareToChatSheet] listConversations failed: $e');
           return <Conversation>[];
         });
-
-    final followingFuture = (me != null)
-        ? socialRepo
+    final followingFuture = me == null
+        ? Future.value(<FollowUser>[])
+        : socialRepo
               .getUserFollowing(me.id, page: 1, limit: 50)
               .then<List<FollowUser>>((r) => r.items)
-              .catchError((e, st) {
+              .catchError((Object e) {
                 debugPrint('[ShareToChatSheet] getUserFollowing failed: $e');
                 return <FollowUser>[];
-              })
-        : Future.value(<FollowUser>[]);
+              });
 
-    try {
-      final recent = await recentFuture;
-      final following = await followingFuture;
-      if (!mounted) return;
-      setState(() {
-        _recent = recent;
-        _following = following;
-        _loading = false;
-        _error = (recent.isEmpty && following.isEmpty)
-            ? S.of(context).shareLoadError
-            : null;
-      });
-    } catch (e, st) {
-      debugPrint('[ShareToChatSheet] load failed: $e\n$st');
-      if (!mounted) return;
-      setState(() {
-        _error = S.of(context).shareLoadError;
-        _loading = false;
-      });
-    }
-  }
+    final recent = await recentFuture;
+    final following = await followingFuture;
+    if (!mounted) return;
 
-  bool _matches(String q, {String? a, String? b}) {
-    if (q.isEmpty) return true;
-    return (a ?? '').toLowerCase().contains(q) ||
-        (b ?? '').toLowerCase().contains(q);
-  }
+    // Recentes primeiro, depois quem você segue (sem repetir pessoas).
+    final seen = <String>{};
+    final people = <_Recipient>[
+      for (final c in recent)
+        if (c.participantId.isNotEmpty && seen.add(c.participantId))
+          _Recipient(
+            userId: c.participantId,
+            name: c.participantName,
+            username: c.participantUsername ?? '',
+            avatarUrl: c.participantAvatarUrl,
+            conversationId: c.id,
+          ),
+      for (final f in following)
+        if (f.userId.isNotEmpty && seen.add(f.userId))
+          _Recipient(
+            userId: f.userId,
+            name: (f.displayName?.trim().isNotEmpty ?? false)
+                ? f.displayName!.trim()
+                : f.username,
+            username: f.username,
+            avatarUrl: f.avatarUrl,
+          ),
+    ];
 
-  List<Conversation> get _filteredRecent => _recent
-      .where(
-        (c) => _matches(_query, a: c.participantName, b: c.participantUsername),
-      )
-      .toList(growable: false);
-
-  List<FollowUser> get _filteredFollowing => _following
-      .where((p) => _matches(_query, a: p.displayName, b: p.username))
-      .toList(growable: false);
-
-  void _toggle(String userId) {
     setState(() {
-      if (_selectedUserIds.contains(userId)) {
-        _selectedUserIds.remove(userId);
-      } else {
-        _selectedUserIds.add(userId);
-      }
+      _people = people;
+      _loading = false;
+      _loadFailed = people.isEmpty && me != null;
     });
   }
 
-  Future<void> _send() async {
-    if (_selectedUserIds.isEmpty || _sending) return;
-    setState(() => _sending = true);
-    final chatRepo = ref.read(chatRepositoryProvider);
-
-    final comment = _commentCtrl.text.trim();
-    final content = comment.isEmpty ? _postUrl : '$comment\n\n$_postUrl';
-
-    final Map<String, String> userIdToConv = {
-      for (final c in _recent) c.participantId: c.id,
-    };
-
-    int sent = 0;
-    final failures = <String>[];
-
-    for (final userId in _selectedUserIds) {
-      try {
-        String? conversationId = userIdToConv[userId];
-        if (conversationId == null) {
-          final profile = _following.firstWhere(
-            (p) => p.userId == userId,
-            orElse: () => const FollowUser(userId: ''),
-          );
-          final slug = profile.username.isNotEmpty ? profile.username : userId;
-          final result = await chatRepo.getOrCreateConversationByUser(slug);
-          conversationId = result.conversationId;
-        }
-        await chatRepo.sendMessage(
-          conversationId: conversationId,
-          message: content,
-        );
-        sent++;
-      } catch (_) {
-        failures.add(userId);
-      }
-    }
-
-    if (!mounted) return;
-    Navigator.of(context).pop();
-    // Quest progress: share_1_post (best-effort, não bloqueia UX)
-    if (sent > 0) {
-      unawaited(ref.read(postServiceProvider).trackShare(widget.postId));
-    }
-    final s = S.of(context);
-    final msg = failures.isEmpty
-        ? s.shareSentSuccess(sent)
-        : s.shareSentPartial(sent, failures.length);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  List<_Recipient> get _visiblePeople {
+    if (_query.isEmpty) return _people;
+    return _people
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(_query) ||
+              p.username.toLowerCase().contains(_query),
+        )
+        .toList(growable: false);
   }
 
-  Future<void> _externalShare() async {
+  void _trackShareOnce() {
+    if (_tracked) return;
+    _tracked = true;
+    unawaited(ref.read(postServiceProvider).trackShare(widget.postId));
+  }
+
+  /// Um toque = envia o post para a pessoa (DM com o link → o chat mostra
+  /// o card de prévia). Tocar de novo só reenvia se o envio falhou.
+  Future<void> _sendTo(_Recipient person) async {
+    final state = _sendState[person.userId];
+    if (state == _SendState.sending || state == _SendState.sent) return;
+    HapticFeedback.selectionClick();
+    setState(() => _sendState[person.userId] = _SendState.sending);
+    final chatRepo = ref.read(chatRepositoryProvider);
+    try {
+      var conversationId = person.conversationId;
+      if (conversationId == null) {
+        final slug = person.username.isNotEmpty
+            ? person.username
+            : person.userId;
+        conversationId = (await chatRepo.getOrCreateConversationByUser(
+          slug,
+        )).conversationId;
+      }
+      await chatRepo.sendMessage(
+        conversationId: conversationId,
+        message: _postUrl,
+      );
+      _trackShareOnce();
+      if (mounted) setState(() => _sendState[person.userId] = _SendState.sent);
+    } catch (e) {
+      debugPrint('[ShareToChatSheet] send failed: $e');
+      if (mounted) {
+        setState(() => _sendState[person.userId] = _SendState.failed);
+      }
+    }
+  }
+
+  // ── Ações ──────────────────────────────────────────────────────────────
+
+  void _shareToStory() {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    Navigator.of(context).pop();
+    _trackShareOnce();
+    navigator.push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => ForceDarkTheme(
+          child: StoryComposerScreen(
+            initialRemoteUrl: widget.storyMediaUrl,
+            initialOriginPostId: widget.postId,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _repost() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final s = S.of(context);
+    Navigator.of(context).pop();
+    try {
+      await ref.read(postRepositoryProvider).toggleRepost(widget.postId, false);
+      _trackShareOnce();
+      messenger.showSnackBar(SnackBar(content: Text(s.feedReposted)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.feedCannotShare)));
+    }
+  }
+
+  Future<void> _copyLink() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final s = S.of(context);
+    await Clipboard.setData(ClipboardData(text: _postUrl));
+    _trackShareOnce();
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    messenger.showSnackBar(SnackBar(content: Text(s.feedLinkCopied)));
+  }
+
+  Future<void> _shareMore() async {
     final text = widget.postCaption.isNotEmpty
         ? '${widget.postCaption}\n\n$_postUrl'
         : _postUrl;
     try {
-      await Share.share(text);
-      // Quest progress: share_1_post (best-effort)
-      unawaited(ref.read(postServiceProvider).trackShare(widget.postId));
+      await SharePlus.instance.share(ShareParams(text: text));
+      _trackShareOnce();
     } catch (_) {
-      /* ignore */
+      /* usuário cancelou / indisponível */
     }
   }
 
+  // ── UI ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
+    final colors = context.colors;
+    final s = S.of(context);
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+
     return Padding(
-      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: BoxDecoration(
-              color: context.colors.background,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                _grabber(),
-                _header(),
-                _postPreview(),
-                _searchField(),
-                Expanded(
-                  child: _loading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.electricPurple,
-                          ),
-                        )
-                      : _error != null
-                      ? _errorState()
-                      : _list(scrollController),
-                ),
-                if (_selectedUserIds.isNotEmpty) _commentBar(),
-                _bottomActions(),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _grabber() => Container(
-    margin: const EdgeInsets.only(top: 8),
-    width: 40,
-    height: 4,
-    decoration: BoxDecoration(
-      color: context.colors.textSecondary.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(2),
-    ),
-  );
-
-  Widget _header() => Padding(
-    padding: EdgeInsets.fromLTRB(20, 16, 20, 8),
-    child: Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        S.of(context).shareTitle,
-        style: TextStyle(
-          color: context.colors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-      ),
-    ),
-  );
-
-  Widget _postPreview() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child:
-                  widget.postImageUrl != null && widget.postImageUrl!.isNotEmpty
-                  ? Image.network(
-                      widget.postImageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _previewFallback(),
-                    )
-                  : _previewFallback(),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.authorName != null && widget.authorName!.isNotEmpty)
-                  Text(
-                    widget.authorName!,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                Text(
-                  widget.postCaption.isNotEmpty
-                      ? widget.postCaption
-                      : S.of(context).sharePostFallback,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.colors.textSecondary,
-                    fontSize: 12,
-                  ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.border,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _previewFallback() => Container(
-    color: AppColors.deepBlue,
-    child: Icon(
-      Icons.image_outlined,
-      color: context.colors.textTertiary,
-      size: 20,
-    ),
-  );
-
-  Widget _searchField() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-      child: TextField(
-        controller: _searchCtrl,
-        style: TextStyle(color: context.colors.textPrimary),
-        decoration: InputDecoration(
-          hintText: S.of(context).shareSearchHint,
-          hintStyle: TextStyle(color: context.colors.textSecondary),
-          prefixIcon: Icon(Icons.search, color: context.colors.textSecondary),
-          filled: true,
-          fillColor: context.colors.surfaceElevated,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+              ),
+              _header(colors, s),
+              _searchField(colors, s),
+              const SizedBox(height: 12),
+              SizedBox(height: 96, child: _peopleRow(colors, s)),
+              Divider(height: 1, color: colors.divider),
+              const SizedBox(height: 14),
+              _actionsRow(colors, s),
+              const SizedBox(height: 10),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _errorState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+  Widget _header(BraweColors colors, S s) {
+    return SizedBox(
+      height: 48,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
           Text(
-            _error ?? S.of(context).shareErrorGeneric,
-            style: TextStyle(color: context.colors.textSecondary),
+            s.shareSheetTitle,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: _load,
-            child: Text(S.of(context).shareTryAgain),
+          Positioned(
+            right: 4,
+            child: IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+              iconSize: 22,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _list(ScrollController controller) {
-    final recents = _filteredRecent;
-    final recentIds = recents.map((c) => c.participantId).toSet();
-    final filteredFollowing = _filteredFollowing
-        .where((p) => !recentIds.contains(p.userId))
-        .toList(growable: false);
-
-    return CustomScrollView(
-      controller: controller,
-      slivers: [
-        if (recents.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 8),
-              child: Text(
-                S.of(context).shareRecents,
-                style: TextStyle(
-                  color: context.colors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 96,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                itemCount: recents.length,
-                itemBuilder: (_, i) {
-                  final c = recents[i];
-                  final selected = _selectedUserIds.contains(c.participantId);
-                  return _QuickRecipient(
-                    name: c.participantName,
-                    avatarUrl: c.participantAvatarUrl,
-                    selected: selected,
-                    onTap: () => _toggle(c.participantId),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-        if (filteredFollowing.isNotEmpty) ...[
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: Text(
-                S.of(context).shareFollowers,
-                style: TextStyle(
-                  color: context.colors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-          SliverList.builder(
-            itemCount: filteredFollowing.length,
-            itemBuilder: (_, i) {
-              final p = filteredFollowing[i];
-              final selected = _selectedUserIds.contains(p.userId);
-              return _RecipientTile(
-                name: (p.displayName != null && p.displayName!.isNotEmpty)
-                    ? p.displayName!
-                    : (p.username.isNotEmpty
-                          ? p.username
-                          : S.of(context).shareUserFallback),
-                username: p.username.isNotEmpty ? p.username : null,
-                avatarUrl: p.avatarUrl,
-                isVerified: p.isVerified,
-                isLive: p.isLive,
-                selected: selected,
-                onTap: () => _toggle(p.userId),
-              );
-            },
-          ),
-        ],
-        if (recents.isEmpty && filteredFollowing.isEmpty)
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  S.of(context).shareNoContacts,
-                  style: TextStyle(color: context.colors.textSecondary),
-                ),
-              ),
-            ),
-          ),
-        const SliverToBoxAdapter(child: SizedBox(height: 12)),
-      ],
-    );
-  }
-
-  Widget _commentBar() {
+  Widget _searchField(BraweColors colors, S s) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-      child: TextField(
-        controller: _commentCtrl,
-        style: TextStyle(color: context.colors.textPrimary),
-        maxLines: 2,
-        minLines: 1,
-        decoration: InputDecoration(
-          hintText: S.of(context).shareCommentHint,
-          hintStyle: TextStyle(color: context.colors.textSecondary),
-          filled: true,
-          fillColor: context.colors.surfaceElevated,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 10,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SizedBox(
+        height: 38,
+        child: TextField(
+          controller: _searchCtrl,
+          style: TextStyle(color: colors.textPrimary, fontSize: 14),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: s.shareSearchHint,
+            hintStyle: TextStyle(color: colors.textTertiary, fontSize: 14),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: colors.textTertiary,
+              size: 20,
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40),
+            filled: true,
+            fillColor: colors.surfaceHighest,
+            isDense: true,
+            contentPadding: EdgeInsets.zero,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _bottomActions() {
-    final count = _selectedUserIds.length;
-    final hasSelection = count > 0;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _externalShare,
-                icon: const Icon(Icons.ios_share, size: 18),
-                label: Text(S.of(context).shareOutsideBrawe),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: context.colors.textPrimary,
-                  side: BorderSide(
-                    color: context.colors.textSecondary.withValues(alpha: 0.4),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: hasSelection && !_sending ? _send : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricPurple,
-                  disabledBackgroundColor: AppColors.electricPurple.withValues(
-                    alpha: 0.3,
-                  ),
-                  foregroundColor: context.colors.textPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _sending
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: context.colors.textPrimary,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        hasSelection
-                            ? S.of(context).shareSendWithCount(count)
-                            : S.of(context).shareSend,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-              ),
-            ),
-          ],
+  Widget _peopleRow(BraweColors colors, S s) {
+    if (_loading) {
+      return Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: colors.textTertiary,
+          ),
         ),
+      );
+    }
+    if (_loadFailed) {
+      return Center(
+        child: TextButton(
+          onPressed: _load,
+          child: Text(
+            '${s.shareLoadError} ${s.shareTryAgain}',
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
+          ),
+        ),
+      );
+    }
+    final people = _visiblePeople;
+    if (people.isEmpty) {
+      return Center(
+        child: Text(
+          s.shareNoContacts,
+          style: TextStyle(color: colors.textTertiary, fontSize: 13),
+        ),
+      );
+    }
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: people.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 14),
+      itemBuilder: (_, i) {
+        final p = people[i];
+        return _PersonTile(
+          person: p,
+          state: _sendState[p.userId],
+          sentLabel: s.shareSentBadge,
+          retryLabel: s.shareRetry,
+          fallbackName: s.shareUserFallback,
+          onTap: () => _sendTo(p),
+        );
+      },
+    );
+  }
+
+  Widget _actionsRow(BraweColors colors, S s) {
+    final actions = <Widget>[
+      if (_canStory)
+        _ActionButton(
+          icon: LucideIcons.aperture,
+          label: s.shareActionStories,
+          gradient: LinearGradient(
+            colors: [colors.accentPink, colors.accentPrimary],
+          ),
+          onTap: _shareToStory,
+        ),
+      _ActionButton(
+        icon: LucideIcons.repeat2,
+        label: s.shareActionRepost,
+        onTap: _repost,
+      ),
+      _ActionButton(
+        icon: LucideIcons.link,
+        label: s.shareActionCopyLink,
+        onTap: _copyLink,
+      ),
+      _ActionButton(
+        icon: LucideIcons.ellipsis,
+        label: s.shareActionMore,
+        onTap: _shareMore,
+      ),
+    ];
+    return SizedBox(
+      height: 76,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: actions.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 18),
+        itemBuilder: (_, i) => actions[i],
       ),
     );
   }
 }
 
-class _QuickRecipient extends StatelessWidget {
-  const _QuickRecipient({
-    required this.name,
-    required this.avatarUrl,
-    required this.selected,
+/// Avatar + nome. Um toque envia; mostra enviando / "Enviado" / falha.
+class _PersonTile extends StatelessWidget {
+  const _PersonTile({
+    required this.person,
+    required this.state,
+    required this.sentLabel,
+    required this.retryLabel,
+    required this.fallbackName,
     required this.onTap,
   });
 
-  final String name;
-  final String? avatarUrl;
-  final bool selected;
+  final _Recipient person;
+  final _SendState? state;
+  final String sentLabel;
+  final String retryLabel;
+  final String fallbackName;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final avatar = person.avatarUrl;
+    final hasAvatar = avatar != null && avatar.isNotEmpty;
+    final name = person.name.trim().isEmpty ? fallbackName : person.name;
+    final sent = state == _SendState.sent;
+    final failed = state == _SendState.failed;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 72,
-        margin: const EdgeInsets.symmetric(horizontal: 6),
+      child: SizedBox(
+        width: 62,
         child: Column(
           children: [
             Stack(
+              clipBehavior: Clip.none,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.electricPurple
-                          : Colors.transparent,
-                      width: 2.4,
-                    ),
-                  ),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: sent ? 0.55 : 1,
                   child: CircleAvatar(
                     radius: 28,
-                    backgroundColor: context.colors.surfaceElevated,
-                    backgroundImage:
-                        (avatarUrl != null && avatarUrl!.isNotEmpty)
-                        ? NetworkImage(avatarUrl!)
-                        : null,
-                    child: (avatarUrl == null || avatarUrl!.isEmpty)
-                        ? Icon(
-                            Icons.person,
-                            color: context.colors.textTertiary,
-                            size: 24,
-                          )
-                        : null,
+                    backgroundColor: colors.surfaceHighest,
+                    backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
+                    child: hasAvatar
+                        ? null
+                        : Text(
+                            name.characters.first.toUpperCase(),
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                 ),
-                if (selected)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.electricPurple,
-                        shape: BoxShape.circle,
+                if (state == _SendState.sending)
+                  Positioned.fill(
+                    child: Center(
+                      child: SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colors.accentPrimary,
+                        ),
                       ),
-                      padding: const EdgeInsets.all(2),
+                    ),
+                  ),
+                if (sent || failed)
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: failed ? colors.danger : colors.accentPrimary,
+                        border: Border.all(
+                          color: colors.surfaceElevated,
+                          width: 2,
+                        ),
+                      ),
                       child: Icon(
-                        Icons.check,
-                        color: context.colors.textPrimary,
+                        failed ? Icons.refresh_rounded : Icons.check_rounded,
                         size: 12,
+                        color: colors.textOnAccent,
                       ),
                     ),
                   ),
@@ -664,145 +584,18 @@ class _QuickRecipient extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              name,
+              sent ? sentLabel : (failed ? retryLabel : name),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(color: context.colors.textPrimary, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RecipientTile extends StatelessWidget {
-  const _RecipientTile({
-    required this.name,
-    required this.username,
-    required this.avatarUrl,
-    required this.isVerified,
-    required this.isLive,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String name;
-  final String? username;
-  final String? avatarUrl;
-  final bool isVerified;
-  final bool isLive;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        child: Row(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: isLive
-                        ? Border.all(color: AppColors.mutedRed, width: 2)
-                        : null,
-                  ),
-                  padding: EdgeInsets.all(isLive ? 2 : 0),
-                  child: CircleAvatar(
-                    radius: 22,
-                    backgroundColor: context.colors.surfaceElevated,
-                    backgroundImage:
-                        (avatarUrl != null && avatarUrl!.isNotEmpty)
-                        ? NetworkImage(avatarUrl!)
-                        : null,
-                    child: (avatarUrl == null || avatarUrl!.isEmpty)
-                        ? Icon(
-                            Icons.person,
-                            color: context.colors.textTertiary,
-                            size: 22,
-                          )
-                        : null,
-                  ),
-                ),
-                if (isLive)
-                  Positioned(
-                    bottom: -2,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.mutedRed,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          S.of(context).storiesLiveBadge,
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: context.colors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      if (isVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: AppColors.coolCyan,
-                        ),
-                      ],
-                    ],
-                  ),
-                  if (username != null && username!.isNotEmpty)
-                    Text(
-                      '@$username',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: context.colors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
+              style: TextStyle(
+                color: sent
+                    ? colors.accentPrimary
+                    : (failed ? colors.danger : colors.textSecondary),
+                fontSize: 11.5,
+                fontWeight: sent ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
-            _Checkmark(selected: selected),
           ],
         ),
       ),
@@ -810,25 +603,57 @@ class _RecipientTile extends StatelessWidget {
   }
 }
 
-class _Checkmark extends StatelessWidget {
-  const _Checkmark({required this.selected});
-  final bool selected;
+/// Ação redonda (ícone + rótulo), no padrão dos apps de vídeo curto.
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.gradient,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Gradient? gradient;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: selected ? AppColors.electricPurple : Colors.transparent,
-        border: Border.all(
-          color: selected
-              ? AppColors.electricPurple
-              : context.colors.textSecondary.withValues(alpha: 0.5),
-          width: 1.6,
+    final colors = context.colors;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 60,
+        child: Column(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: gradient == null ? colors.surfaceHighest : null,
+                gradient: gradient,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: gradient == null
+                    ? colors.textPrimary
+                    : colors.textOnAccent,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
+            ),
+          ],
         ),
       ),
-      child: selected ? Icon(Icons.check, size: 16, color: Colors.white) : null,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -388,6 +389,12 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           unawaited(StoryMediaPrecache.warmUpVideo(s.mediaUrl));
         } else if (mounted) {
           unawaited(StoryMediaPrecache.precacheStoryImage(context, s.mediaUrl));
+        }
+        // Pré-carrega a camada de textos para aparecer junto com a mídia.
+        if (mounted && s.overlayUrl != null && s.overlayUrl!.isNotEmpty) {
+          unawaited(
+            StoryMediaPrecache.precacheStoryImage(context, s.overlayUrl!),
+          );
         }
       }
     }
@@ -853,24 +860,76 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Mídia (imagem ou vídeo) — usa BraweStoryMedia para um
-              // loading profissional sem expor a "letra inicial gigante"
-              // enquanto o vídeo está inicializando ou a imagem baixando.
-              // Ver `lib/ui/core/widgets/brawe_story_media.dart`.
-              BraweStoryMedia(
-                isVideo: story.isVideo,
-                mediaUrl: story.mediaUrl,
-                videoController: _videoController,
-                authorName: story.authorName.isNotEmpty
-                    ? story.authorName
-                    : story.authorUsername,
-                authorAvatarUrl: story.authorAvatarUrl,
-                onRetry: _startStory,
-                // Dimensões reais da mídia — disponíveis quando publicado via web.
-                // Permitem detectar imagens landscape e aplicar contain + fundo blur
-                // em vez de cover (que cortaria a imagem de forma indesejada).
-                mediaWidth: story.mediaWidth,
-                mediaHeight: story.mediaHeight,
+              // ── Quadro 9:16 (padrão Instagram atual) ──────────────────
+              // O story fica num quadro 9:16 com cantos arredondados a
+              // partir do topo; em celulares altos sobra espaço embaixo
+              // para a barra de resposta. Antes a mídia era "cover" na tela
+              // inteira (19.5:9) e as laterais eram cortadas — texto que o
+              // autor pôs perto da borda no editor (canvas 9:16) sumia.
+              // Agora o que o autor vê no editor é o que o espectador vê.
+              Positioned.fill(
+                child: SafeArea(
+                  bottom: false,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: AspectRatio(
+                      aspectRatio: 9 / 16,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Mídia (imagem ou vídeo) — usa BraweStoryMedia para um
+                            // loading profissional sem expor a "letra inicial gigante"
+                            // enquanto o vídeo está inicializando ou a imagem baixando.
+                            // Ver `lib/ui/core/widgets/brawe_story_media.dart`.
+                            BraweStoryMedia(
+                              isVideo: story.isVideo,
+                              mediaUrl: story.mediaUrl,
+                              videoController: _videoController,
+                              authorName: story.authorName.isNotEmpty
+                                  ? story.authorName
+                                  : story.authorUsername,
+                              authorAvatarUrl: story.authorAvatarUrl,
+                              onRetry: _startStory,
+                              // Dimensões reais da mídia — disponíveis quando publicado via web.
+                              // Permitem detectar imagens landscape e aplicar contain + fundo blur
+                              // em vez de cover (que cortaria a imagem de forma indesejada).
+                              mediaWidth: story.mediaWidth,
+                              mediaHeight: story.mediaHeight,
+                            ),
+
+                            // Camada de textos do editor (PNG transparente 9:16). Usa o
+                            // MESMO enquadramento da mídia (caixa 9:16 em BoxFit.cover)
+                            // para o texto cair exatamente onde o autor colocou.
+                            if (story.overlayUrl != null &&
+                                story.overlayUrl!.isNotEmpty)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: ClipRect(
+                                    child: FittedBox(
+                                      fit: BoxFit.cover,
+                                      child: SizedBox(
+                                        width: 1080,
+                                        height: 1920,
+                                        child: Image.network(
+                                          story.overlayUrl!,
+                                          fit: BoxFit.fill,
+                                          gaplessPlayback: true,
+                                          errorBuilder: (_, _, _) =>
+                                              const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
 
               // Gradient overlay
@@ -1085,9 +1144,12 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   child: GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
-                      // TODO: navegar para post detail quando a rota existir.
-                      // Por ora, fecha o viewer para o usuário voltar ao feed.
+                      // Fecha o viewer e abre o post original (rota
+                      // /post/:postId). Antes só fechava o story.
+                      final router = GoRouter.of(context);
+                      final postId = story.originPostId!;
                       Navigator.of(context).maybePop();
+                      router.push('/post/$postId');
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(

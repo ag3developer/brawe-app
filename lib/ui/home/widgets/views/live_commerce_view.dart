@@ -80,7 +80,7 @@ class LiveCommerceView extends StatelessWidget {
         Positioned(
           left: 16,
           right: 16,
-          bottom: 280,
+          bottom: 202,
           child: IgnorePointer(
             child: RealCommentsTicker(roomId: item.id, isActive: isActive),
           ),
@@ -89,7 +89,7 @@ class LiveCommerceView extends StatelessWidget {
         Positioned(
           left: 16,
           right: 16,
-          bottom: 200,
+          bottom: 122,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -135,7 +135,7 @@ class LiveCommerceView extends StatelessWidget {
         Positioned(
           left: 16,
           right: 16,
-          bottom: 100,
+          bottom: 22,
           child: _FeaturedProductCard(
             product: _featured,
             totalProducts: item.products.length,

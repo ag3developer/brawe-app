@@ -2,8 +2,17 @@ class AppConstants {
   const AppConstants._();
 
   // API URLs
-  static const String connectApiBaseUrl = 'https://connect.brawe.io';
-  static const String appApiBaseUrl = 'https://app.brawe.io';
+  // Produção por padrão. Para apontar para backends locais:
+  //   flutter run --dart-define=CONNECT_API_URL=http://localhost:8001 \
+  //               --dart-define=APP_API_URL=http://localhost:8000
+  static const String connectApiBaseUrl = String.fromEnvironment(
+    'CONNECT_API_URL',
+    defaultValue: 'https://connect.brawe.io',
+  );
+  static const String appApiBaseUrl = String.fromEnvironment(
+    'APP_API_URL',
+    defaultValue: 'https://app.brawe.io',
+  );
 
   static const String connectApiV1Url = '$connectApiBaseUrl/api/v1';
   static const String appApiV1Url = '$appApiBaseUrl/api/v1';
@@ -59,6 +68,8 @@ class AppConstants {
   static const String eventLiveReaction = 'live_reaction';
   static const String eventSendReaction = 'live_reaction';
   static const String eventLiveEnded = 'live_ended';
+  static const String eventLivePaused = 'live_paused';
+  static const String eventLiveResumed = 'live_resumed';
   static const String eventLikeCountUpdate = 'like_count_update';
   static const String eventCommentCountUpdate = 'comment_count_update';
 
@@ -82,6 +93,10 @@ class AppConstants {
   static const String eventBattleStarted = 'connect:battle:started';
   static const String eventBattleScoreUpdate = 'connect:battle:score_update';
   static const String eventBattleEnded = 'connect:battle:ended';
+  static const String eventBattleCancelled = 'connect:battle:cancelled';
+  /// Mudanças de estado do convite (pending/accepted/declined/expired/
+  /// cancelled) — emitido para a sala `user:{id}` dos 2 streamers.
+  static const String eventBattleInviteStatus = 'connect:battle:invite_status';
 
   // Live Room Statuses
   static const String statusWaiting = 'waiting';

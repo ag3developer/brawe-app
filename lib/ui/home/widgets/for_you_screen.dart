@@ -202,6 +202,10 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                 child: PageView.builder(
                   controller: _ctrl,
                   scrollDirection: Axis.vertical,
+                  // Pré-carrega a página vizinha: o próximo vídeo já monta,
+                  // inicializa e bufferiza (pausado) enquanto o atual toca —
+                  // ao arrastar ele começa na hora, em vez de baixar do zero.
+                  allowImplicitScrolling: true,
                   itemCount: items.length,
                   onPageChanged: (i) => setState(() => _currentIndex = i),
                   itemBuilder: (_, i) =>

@@ -15,7 +15,7 @@ class LiveActionBar extends StatelessWidget {
     required this.isTogglingStream,
     required this.hasBattle,
     required this.onBattle,
-    required this.onCoHost,
+    this.onCoHost,
     required this.onPauseResume,
     required this.onEnd,
     required this.onMoreOptions,
@@ -28,7 +28,9 @@ class LiveActionBar extends StatelessWidget {
   final bool isTogglingStream;
   final bool hasBattle;
   final VoidCallback onBattle;
-  final VoidCallback onCoHost;
+
+  /// `null` esconde o botão (co-host ainda sem mídia em tempo real).
+  final VoidCallback? onCoHost;
   final VoidCallback onPauseResume;
   final VoidCallback onEnd;
   final VoidCallback onMoreOptions;
@@ -69,12 +71,13 @@ class LiveActionBar extends StatelessWidget {
                 onTap: hasBattle ? null : onBattle,
               ),
               // 👥 Co-host
-              ActionBtn(
-                icon: Icons.people_alt_rounded,
-                label: 'Co-host',
-                color: const Color(0xFF0EA5E9),
-                onTap: onCoHost,
-              ),
+              if (onCoHost != null)
+                ActionBtn(
+                  icon: Icons.people_alt_rounded,
+                  label: 'Co-host',
+                  color: const Color(0xFF0EA5E9),
+                  onTap: onCoHost,
+                ),
               // 💬 Chat
               ActionBtn(
                 icon: Icons.chat_bubble_outline_rounded,

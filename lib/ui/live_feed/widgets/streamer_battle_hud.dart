@@ -95,7 +95,10 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text(
               'Sair',
-              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -127,9 +130,9 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao encerrar batalha: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao encerrar batalha: $e')));
       }
     } finally {
       if (mounted) setState(() => _isBusy = false);
@@ -153,9 +156,9 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao pedir revanche: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao pedir revanche: $e')));
       }
     } finally {
       if (mounted) setState(() => _isBusy = false);
@@ -199,8 +202,15 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
     );
 
     return asyncState.when(
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      // Antes: loading/erro renderizavam nada, mas o broadcaster seguia
+      // "em batalha" (botão travado, sem como sair). Agora mostra o estado
+      // e permite fechar.
+      loading: () => const _HudStatusChip(label: 'Carregando batalha…'),
+      error: (_, _) => _HudStatusChip(
+        label: 'Não foi possível carregar a batalha',
+        actionLabel: 'Fechar',
+        onAction: widget.onBattleClosed,
+      ),
       data: (battle) {
         if (battle.isOver) {
           return _ResultBanner(
@@ -232,11 +242,16 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                   filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.38),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.12),
+                      ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -290,7 +305,10 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                           child: TextButton.icon(
                             onPressed: _isBusy ? null : _confirmAndEndBattle,
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 0,
+                              ),
                               minimumSize: const Size(0, 28),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               foregroundColor: Colors.white60,
@@ -304,10 +322,16 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                                       color: Colors.white60,
                                     ),
                                   )
-                                : const Icon(Icons.exit_to_app_rounded, size: 14),
+                                : const Icon(
+                                    Icons.exit_to_app_rounded,
+                                    size: 14,
+                                  ),
                             label: const Text(
                               'Sair da batalha',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
@@ -325,15 +349,17 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: _toasts
                         .take(2)
-                        .map((t) => Padding(
-                              padding: const EdgeInsets.only(bottom: 3),
-                              child: BattleGiftAlert(
-                                senderName: t.sender,
-                                giftName: t.gift,
-                                side: t.side,
-                                mode: GiftAlertMode.toast,
-                              ),
-                            ))
+                        .map(
+                          (t) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: BattleGiftAlert(
+                              senderName: t.sender,
+                              giftName: t.gift,
+                              side: t.side,
+                              mode: GiftAlertMode.toast,
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ),
@@ -366,10 +392,12 @@ class _ResultBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDraw = battle.isDraw;
-    final winnerName = battle.winnerName ??
+    final winnerName =
+        battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
-    final winnerColor =
-        battle.isLeadingA ? AppColors.electricPurple : AppColors.hotPink;
+    final winnerColor = battle.isLeadingA
+        ? AppColors.electricPurple
+        : AppColors.hotPink;
 
     return SafeArea(
       child: ClipRRect(
@@ -383,7 +411,9 @@ class _ResultBanner extends StatelessWidget {
               color: Colors.black.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDraw ? Colors.white24 : winnerColor.withValues(alpha: 0.6),
+                color: isDraw
+                    ? Colors.white24
+                    : winnerColor.withValues(alpha: 0.6),
               ),
             ),
             child: Column(
@@ -394,7 +424,9 @@ class _ResultBanner extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      isDraw ? Icons.handshake_outlined : Icons.workspace_premium,
+                      isDraw
+                          ? Icons.handshake_outlined
+                          : Icons.workspace_premium,
                       color: isDraw ? Colors.white54 : winnerColor,
                       size: 28,
                     ),
@@ -406,10 +438,15 @@ class _ResultBanner extends StatelessWidget {
                         children: [
                           Text(
                             l10n.battleEnded,
-                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11,
+                            ),
                           ),
                           Text(
-                            isDraw ? l10n.battleDraw : '${l10n.battleWinner}: $winnerName',
+                            isDraw
+                                ? l10n.battleDraw
+                                : '${l10n.battleWinner}: $winnerName',
                             style: TextStyle(
                               color: isDraw ? Colors.white70 : winnerColor,
                               fontWeight: FontWeight.w700,
@@ -432,11 +469,16 @@ class _ResultBanner extends StatelessWidget {
                         onPressed: isBusy ? null : onClose,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white70,
-                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.2),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                         icon: const Icon(Icons.close_rounded, size: 16),
-                        label: const Text('Fechar', style: TextStyle(fontSize: 13)),
+                        label: const Text(
+                          'Fechar',
+                          style: TextStyle(fontSize: 13),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -461,7 +503,10 @@ class _ResultBanner extends StatelessWidget {
                             : const Icon(Icons.replay_rounded, size: 18),
                         label: const Text(
                           'Pedir revanche',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
@@ -483,4 +528,60 @@ class _ToastAlert {
   final String sender;
   final String gift;
   final String side;
+}
+
+/// Chip no topo para estados de carregamento/erro do HUD.
+class _HudStatusChip extends StatelessWidget {
+  const _HudStatusChip({required this.label, this.actionLabel, this.onAction});
+
+  final String label;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 64),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (actionLabel == null) ...[
+                  const SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  label,
+                  style: const TextStyle(color: Colors.white, fontSize: 12.5),
+                ),
+                if (actionLabel != null)
+                  TextButton(
+                    onPressed: onAction,
+                    child: Text(
+                      actionLabel!,
+                      style: const TextStyle(color: Color(0xFFFF6B6B)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

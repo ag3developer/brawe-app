@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/live_repository.dart';
+import '../../../domain/models/gift_display_type.dart';
 import '../../../domain/models/live_gift.dart';
 
 part 'live_room_gifts_view_model.g.dart';
@@ -55,7 +56,26 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
   StreamSubscription<LiveGift>? _subscription;
   final Map<String, Timer> _expiryTimers = {};
 
-  // ── Fila visual com prioridade (apenas displayType.entersVisualQueue) ──
+  /// IDs de transação já processados — o mesmo presente pode chegar mais
+  /// de uma vez (reconexão, emissões duplicadas do servidor). Sem isso 1
+  /// rosa virava "x3" via combo.
+  final Set<String> _seenIds = {};
+  static const int _maxSeenIds = 300;
+
+  // ── Faixas de presentes pequenos (centerSmall) — estilo TikTok ──
+  // Até 2 avisos ao mesmo tempo, cada um na sua faixa, INDEPENDENTES das
+  // animações grandes. Antes tudo passava por uma fila única: um presente
+  // pequeno esperava uma animação épica (6-12s) e acabava descartado.
+  static const int laneCount = 2;
+  final List<String?> _laneKeys = List<String?>.filled(laneCount, null);
+  final List<Timer?> _laneTimers = List<Timer?>.filled(laneCount, null);
+  final List<String> _smallQueue = [];
+  final Map<String, int> _laneByGiftId = {};
+
+  /// Faixa (0 = de baixo, 1 = de cima) em que o presente [giftId] está.
+  int? laneOf(String giftId) => _laneByGiftId[giftId];
+
+  // ── Fila das animações grandes (centerLarge / fullscreen) ──
   final List<String> _pendingQueue = []; // combo keys, ordem de chegada
   String? _currentlyAnimatingKey;
   Timer? _animationTimer;
@@ -64,19 +84,39 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
   List<LiveGift> build(String roomId) {
     final repository = ref.read(liveRepositoryProvider);
     _subscribe();
-    unawaited(repository.connectToRoom(roomId));
+    unawaited(_connectWithRetry(roomId));
     ref.onDispose(() {
       _subscription?.cancel();
       for (final t in _expiryTimers.values) {
         t.cancel();
       }
       _animationTimer?.cancel();
+      for (final t in _laneTimers) {
+        t?.cancel();
+      }
       _expiryTimers.clear();
       _pendingQueue.clear();
+      _smallQueue.clear();
       _currentlyAnimatingKey = null;
       repository.disconnectFromRoom(roomId);
     });
     return [];
+  }
+
+  /// Entra na sala do socket com retry — antes uma falha de rede no join
+  /// ficava sem tratamento e o criador nunca recebia os presentes.
+  Future<void> _connectWithRetry(String roomId) async {
+    final repository = ref.read(liveRepositoryProvider);
+    for (var attempt = 0; attempt < 5; attempt++) {
+      try {
+        await repository.connectToRoom(roomId);
+        return;
+      } catch (e) {
+        debugPrint('🎁 [GIFT] connectToRoom falhou (${attempt + 1}/5): $e');
+        await Future<void>.delayed(Duration(seconds: 1 << attempt));
+        if (!ref.mounted) return;
+      }
+    }
   }
 
   void _subscribe() {
@@ -90,6 +130,8 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
   String _comboKey(LiveGift gift) => '${gift.senderId}::${gift.giftId}';
 
   void _handleIncoming(LiveGift gift) {
+    if (gift.id.isNotEmpty && !_seenIds.add(gift.id)) return; // duplicado
+    if (_seenIds.length > _maxSeenIds) _seenIds.remove(_seenIds.first);
     final key = _comboKey(gift);
     final now = DateTime.now();
 
@@ -124,10 +166,16 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
     }
 
     if (next.length > _maxVisible) {
-      final dropped = next.removeAt(0);
+      // Descarta primeiro o mais antigo que NÃO está na tela nem na fila.
+      var dropAt = next.indexWhere((g) => !_isBusy(_comboKey(g)));
+      if (dropAt < 0) dropAt = 0;
+      final dropped = next.removeAt(dropAt);
       final droppedKey = _comboKey(dropped);
       _expiryTimers.remove(droppedKey)?.cancel();
       _pendingQueue.remove(droppedKey);
+      _smallQueue.remove(droppedKey);
+      final lane = _laneKeys.indexOf(droppedKey);
+      if (lane >= 0) _releaseLane(lane, notify: false);
       if (_currentlyAnimatingKey == droppedKey) {
         _currentlyAnimatingKey = null;
         _animationTimer?.cancel();
@@ -136,26 +184,109 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
     state = next;
 
     // TTL de exibição — prorroga o timer a cada atualização (combo).
+    _scheduleExpiry(key);
+
+    // ── Exibição visual (tipo "chat" não anima — só aparece no chat) ──
+    final displayType = entry.resolvedDisplayType;
+    if (displayType == GiftDisplayType.centerSmall) {
+      final lane = _laneKeys.indexOf(key);
+      if (lane >= 0) {
+        // Combo com o aviso ainda na tela: o "xN" atualiza no próprio
+        // aviso e o tempo dele é prorrogado (TikTok).
+        _startLaneTimer(lane, key, entry);
+      } else if (isNewEntry) {
+        _enqueueSmall(key);
+      }
+      _tryStartSmall();
+    } else if (displayType.entersVisualQueue) {
+      if (isNewEntry) _enqueueVisual(key);
+      _tryStartNext();
+    }
+  }
+
+  bool _isBusy(String key) =>
+      _currentlyAnimatingKey == key ||
+      _pendingQueue.contains(key) ||
+      _laneKeys.contains(key) ||
+      _smallQueue.contains(key);
+
+  LiveGift? _entryFor(String key) {
+    for (final g in state) {
+      if (_comboKey(g) == key) return g;
+    }
+    return null;
+  }
+
+  void _setAnimating(String key, bool value) {
+    state = state
+        .map((g) => _comboKey(g) == key ? g.copyWith(isAnimating: value) : g)
+        .toList();
+  }
+
+  void _enqueueSmall(String key) {
+    if (_smallQueue.contains(key)) return;
+    _smallQueue.add(key);
+    if (_smallQueue.length > _maxVisualQueue) {
+      final discarded = _smallQueue.removeAt(0);
+      debugPrint('🎁 [GIFT-LANES] Fila cheia — descartando aviso $discarded');
+    }
+  }
+
+  /// Ocupa as faixas livres com os próximos presentes pequenos da fila.
+  void _tryStartSmall() {
+    while (_smallQueue.isNotEmpty) {
+      final lane = _laneKeys.indexOf(null);
+      if (lane < 0) return; // as 2 faixas ocupadas
+      final key = _smallQueue.removeAt(0);
+      final gift = _entryFor(key);
+      if (gift == null) continue; // já expirou do state
+      _laneKeys[lane] = key;
+      _laneByGiftId[gift.id] = lane;
+      _setAnimating(key, true);
+      _startLaneTimer(lane, key, gift);
+    }
+  }
+
+  void _startLaneTimer(int lane, String key, LiveGift gift) {
+    _laneTimers[lane]?.cancel();
+    _laneTimers[lane] = Timer(
+      Duration(milliseconds: gift.resolvedDurationMs),
+      () {
+        if (!ref.mounted || _laneKeys[lane] != key) return;
+        _releaseLane(lane);
+      },
+    );
+  }
+
+  void _releaseLane(int lane, {bool notify = true}) {
+    final key = _laneKeys[lane];
+    _laneTimers[lane]?.cancel();
+    _laneTimers[lane] = null;
+    _laneKeys[lane] = null;
+    if (key == null) return;
+    final gift = _entryFor(key);
+    if (gift != null) _laneByGiftId.remove(gift.id);
+    if (notify) {
+      _setAnimating(key, false);
+      _tryStartSmall();
+    }
+  }
+
+  /// TTL de exibição. Nunca remove uma entrada que está animando nem uma
+  /// que ainda espera na fila visual — antes o TTL (8s) cortava animações
+  /// fullscreen (6-12s) no meio e descartava as que esperavam na fila.
+  void _scheduleExpiry(String key, [Duration delay = _displayTtl]) {
     _expiryTimers.remove(key)?.cancel();
-    _expiryTimers[key] = Timer(_displayTtl, () {
+    _expiryTimers[key] = Timer(delay, () {
       if (!ref.mounted) return;
+      if (_isBusy(key)) {
+        _scheduleExpiry(key, const Duration(seconds: 2));
+        return;
+      }
       debugPrint('🎬 [GIFT] Removido do state (ID: $key)');
       state = state.where((g) => _comboKey(g) != key).toList();
       _expiryTimers.remove(key);
-      _pendingQueue.remove(key);
-      if (_currentlyAnimatingKey == key) {
-        _currentlyAnimatingKey = null;
-        _animationTimer?.cancel();
-        _tryStartNext();
-      }
     });
-
-    // ── Fila visual (apenas para tipos diferentes de "chat") ──
-    final displayType = entry.resolvedDisplayType;
-    if (displayType.entersVisualQueue && isNewEntry) {
-      _enqueueVisual(key);
-    }
-    _tryStartNext();
   }
 
   void _enqueueVisual(String key) {

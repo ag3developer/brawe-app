@@ -5148,4 +5148,116 @@ class SEs extends S {
 
   @override
   String get questsAlreadyClaimed => 'Recompensa ya recolectada';
+
+  @override
+  String get shareSheetTitle => 'Compartir';
+
+  @override
+  String get shareSentBadge => 'Enviado';
+
+  @override
+  String get shareRetry => 'Reintentar';
+
+  @override
+  String get shareActionStories => 'Stories';
+
+  @override
+  String get shareActionRepost => 'Republicar';
+
+  @override
+  String get shareActionCopyLink => 'Copiar enlace';
+
+  @override
+  String get shareActionMore => 'Más';
+
+  @override
+  String get composerToolText => 'Texto';
+
+  @override
+  String get composerToolMusic => 'Música';
+
+  @override
+  String get composerToolTrim => 'Recortar';
+
+  @override
+  String get composerToolSave => 'Guardar';
+
+  @override
+  String get composerToolFrame => 'Marco';
+
+  @override
+  String get composerToolResetZoom => 'Restablecer zoom';
+
+  @override
+  String get composerToolBackground => 'Fondo';
+
+  @override
+  String get composerDone => 'Listo';
+
+  @override
+  String get composerClose => 'Cerrar';
+
+  @override
+  String get composerTextAlignTooltip => 'Alineación';
+
+  @override
+  String get composerTextBackgroundTooltip => 'Fondo del texto';
+
+  @override
+  String get composerFontClassic => 'Clásico';
+
+  @override
+  String get composerFontModern => 'Moderno';
+
+  @override
+  String get composerFontSerif => 'Serif';
+
+  @override
+  String get composerFontTypewriter => 'Máquina';
+
+  @override
+  String get composerFontNeon => 'Neón';
+
+  @override
+  String get composerDiscardTitle => '¿Descartar historia?';
+
+  @override
+  String get composerDiscardMessage => 'Se perderán tus ediciones.';
+
+  @override
+  String get composerDiscard => 'Descartar';
+
+  @override
+  String get composerKeepEditing => 'Seguir editando';
+
+  @override
+  String get composerVolumeMix => 'Volúmenes';
+
+  @override
+  String get composerOverlayError => 'No se pudo aplicar el texto al video.';
+
+  @override
+  String get composerModeStory => 'Historia';
+
+  @override
+  String get composerModeText => 'Texto';
+
+  @override
+  String get composerFlipCamera => 'Girar cámara';
+
+  @override
+  String get composerFlash => 'Flash';
+
+  @override
+  String get composerCameraPermissionTitle => 'Permite el acceso a la cámara';
+
+  @override
+  String get composerCameraPermissionBody =>
+      'Para crear historias con foto y video, Brawe necesita la cámara y el micrófono.';
+
+  @override
+  String get composerOpenSettings => 'Abrir ajustes';
+
+  @override
+  String get composerNoCamera => 'Cámara no disponible';
 }

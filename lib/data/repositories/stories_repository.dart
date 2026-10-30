@@ -124,9 +124,11 @@ class StoriesRepository {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    String? overlayPath,
   }) async {
     try {
       await _service.createStory(
+        overlayPath: overlayPath,
         filePath: localFilePath,
         caption: caption,
         durationSeconds: durationSeconds,
@@ -265,6 +267,7 @@ class StoriesRepository {
       mediaUrl: (json['media_url'] ?? '') as String,
       mediaType: (json['media_type'] ?? 'photo') as String,
       thumbnailUrl: json['thumbnail_url'] as String?,
+      overlayUrl: json['overlay_url'] as String?,
       caption: json['caption'] as String?,
       durationSeconds: json['duration_seconds'] as int?,
       mediaWidth: json['width'] as int?,

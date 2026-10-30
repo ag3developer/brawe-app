@@ -94,6 +94,7 @@ class StoriesViewModel extends _$StoriesViewModel {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    String? overlayPath,
   }) async {
     await ref
         .read(storiesRepositoryProvider)
@@ -108,6 +109,7 @@ class StoriesViewModel extends _$StoriesViewModel {
           soundTrimEndMs: soundTrimEndMs,
           soundVolume: soundVolume,
           originalAudioVolume: originalAudioVolume,
+          overlayPath: overlayPath,
         );
     // Recarrega o feed para mostrar o novo story imediatamente.
     state = const AsyncValue.loading();

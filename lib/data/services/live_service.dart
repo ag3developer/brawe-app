@@ -142,37 +142,52 @@ class LiveService {
     return _toMap(response.data);
   }
 
+  // ⚠️ Antes eram stubs que devolviam `{'status':'ok'}` sem chamar a API:
+  // a pausa nunca chegava ao servidor (espectadores sem aviso), o heartbeat
+  // nunca era enviado (o monitor encerrava a live após 90s sem RTMP) e o
+  // "compartilhar com seguidores" não enviava nada.
+
   Future<Map<String, dynamic>> pauseLive(String roomId) async {
-    // API does not have a dedicated pause endpoint — local-only state.
-    // Fire-and-forget update via end/start is not applicable here; just return success.
-    return {'status': 'ok'};
+    final response = await _dio.post('/live/rooms/$roomId/pause');
+    return _toMap(response.data);
   }
 
   Future<Map<String, dynamic>> resumeLive(String roomId) async {
-    // API does not have a dedicated resume endpoint — local-only state.
-    return {'status': 'ok'};
+    final response = await _dio.post('/live/rooms/$roomId/resume');
+    return _toMap(response.data);
   }
 
   Future<Map<String, dynamic>> sendHeartbeat(String roomId) async {
-    // API does not have a heartbeat endpoint — no-op graceful fallback.
-    return {'status': 'ok'};
+    final response = await _dio.post('/live/rooms/$roomId/heartbeat');
+    return _toMap(response.data);
   }
 
-  /// Compartilha a live com seguidores via DM (endpoint não disponível — no-op).
+  /// Compartilha a live com seguidores via DM (máx. 50 por envio).
   Future<Map<String, dynamic>> shareLive(
     String roomId, {
     required List<String> userIds,
     String? note,
   }) async {
-    return {'status': 'ok'};
+    final response = await _dio.post(
+      '/live/rooms/$roomId/share',
+      data: {
+        'user_ids': userIds,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+    return _toMap(response.data);
   }
 
-  /// Warm-up: avisa seguidores que a live vai comecar (endpoint não disponível — no-op).
+  /// Warm-up: avisa seguidores que a live vai começar.
   Future<Map<String, dynamic>> announceLive(
     String roomId, {
     int? secondsUntilLive,
   }) async {
-    return {'status': 'ok'};
+    final response = await _dio.post(
+      '/live/rooms/$roomId/announce',
+      data: {'seconds_until_live': ?secondsUntilLive},
+    );
+    return _toMap(response.data);
   }
 
   Future<Map<String, dynamic>> getStreamStatus(String roomId) async {

@@ -97,47 +97,57 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     // Debounce — bloqueia novos taps enquanto este request está em voo
     setState(() => _isSending = true);
 
-    // ── POP OTIMISTA: fecha a tela imediatamente ──
-    // A animação do gift já disparou via socket assim que o backend
-    // processa — o usuário não precisa esperar a resposta HTTP.
-    if (mounted) Navigator.of(context).pop();
-
-    // Envia em background; resultado chega via snackbar no contexto pai
+    // Captura TUDO que será usado depois do await ANTES do pop: o sheet é
+    // desmontado no pop e `ref`/`context` dele deixam de ser utilizáveis
+    // (antes o erro era engolido e o saldo nunca atualizava).
+    final sendNotifier = ref.read(sendGiftViewModelProvider.notifier);
+    final creditsNotifier = ref.read(creditsViewModelProvider.notifier);
+    final levelNotifier = ref.read(gifterLevelViewModelProvider.notifier);
     final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
-    final success = await ref
-        .read(sendGiftViewModelProvider.notifier)
-        .sendGift(
-          roomId: widget.roomId,
-          giftId: gift.id,
-          receiverId: widget.streamerId,
-          battleId: widget.battleId,
-        );
+    final navigator = Navigator.of(context);
+    final reason = widget.battleId != null ? 'battle' : 'gift';
 
-    if (!mounted) {
-      // Tela já foi descartada — atualiza saldo em background mesmo assim
-      if (success) {
-        ref.read(creditsViewModelProvider.notifier).refresh();
-        ref.read(gifterLevelViewModelProvider.notifier).refresh();
-      }
-      return;
-    }
+    // ── POP OTIMISTA: fecha a tela imediatamente ──
+    // A animação do gift dispara via socket assim que o backend processa —
+    // o usuário não precisa esperar a resposta HTTP.
+    navigator.pop();
 
-    setState(() => _isSending = false);
+    final success = await sendNotifier.sendGift(
+      roomId: widget.roomId,
+      giftId: gift.id,
+      receiverId: widget.streamerId,
+      battleId: widget.battleId,
+    );
 
     if (success) {
-      ref.read(creditsViewModelProvider.notifier).refresh();
-      ref.read(gifterLevelViewModelProvider.notifier).refresh();
-      scaffoldMessenger?.showSnackBar(
-        SnackBar(content: Text(s.giftsSent(gift.name))),
-      );
-    } else {
-      scaffoldMessenger?.showSnackBar(
+      creditsNotifier.refresh();
+      levelNotifier.refresh();
+      return; // a animação na tela já é a confirmação
+    }
+
+    final message =
+        sendNotifier.lastErrorMessage ?? s.giftsError('Tente novamente');
+    scaffoldMessenger
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(
         SnackBar(
-          content: Text(s.giftsError('Tente novamente')),
+          content: Text(message),
           backgroundColor: Colors.red.shade700,
+          action: sendNotifier.lastErrorIsBalance && gift.isMonetary
+              ? SnackBarAction(
+                  label: 'Recarregar',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    if (navigator.mounted) {
+                      TopUpCoinsSheet.show(navigator.context, reason: reason);
+                    }
+                  },
+                )
+              : null,
         ),
       );
-    }
+    // Saldo pode ter mudado (ex.: outro dispositivo) — ressincroniza.
+    creditsNotifier.refresh();
   }
 
   @override

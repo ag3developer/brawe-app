@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
+import '../../domain/models/battle_candidate.dart';
 
 part 'battle_service.g.dart';
 
@@ -24,7 +25,8 @@ class BattleService {
   /// Invite another streamer to a battle.
   /// API: POST /live/battle/invite { opponent_room_id, duration_seconds }
   Future<Map<String, dynamic>> inviteBattle({
-    required String roomId,       // kept for compatibility (not sent — JWT identifies caller)
+    required String
+    roomId, // kept for compatibility (not sent — JWT identifies caller)
     required String targetRoomId,
     int durationSeconds = 300,
   }) async {
@@ -41,6 +43,41 @@ class BattleService {
   /// Accept a pending battle invitation.
   Future<Map<String, dynamic>> acceptBattle(String battleId) async {
     final response = await _dio.post('/live/battle/$battleId/accept');
+    return _toMap(response.data);
+  }
+
+  /// Criadores ao vivo que podem ser convidados agora (paginado).
+  /// API: GET /live/battle/candidates?q=&limit=&cursor=
+  /// Retorna `(items, nextCursor)`; `nextCursor == null` = fim da lista.
+  Future<(List<BattleCandidate>, String?)> getCandidates({
+    String? query,
+    String? cursor,
+    int limit = 20,
+  }) async {
+    final response = await _dio.get(
+      '/live/battle/candidates',
+      queryParameters: {
+        if (query != null && query.isNotEmpty) 'q': query,
+        if (cursor != null) 'cursor': cursor,
+        'limit': limit,
+      },
+    );
+    final envelope = _toMap(response.data);
+    final data = envelope['data'] is Map
+        ? Map<String, dynamic>.from(envelope['data'] as Map)
+        : envelope;
+    final items = (data['items'] as List? ?? const [])
+        .whereType<Map>()
+        .map((e) => BattleCandidate.fromJson(Map<String, dynamic>.from(e)))
+        .where((c) => c.roomId.isNotEmpty)
+        .toList();
+    final next = data['next_cursor']?.toString();
+    return (items, next == null || next.isEmpty ? null : next);
+  }
+
+  /// Cancela um convite que EU enviei e ainda está pendente.
+  Future<Map<String, dynamic>> cancelInvite(String battleId) async {
+    final response = await _dio.post('/live/battle/$battleId/cancel');
     return _toMap(response.data);
   }
 
@@ -102,11 +139,35 @@ class BattleService {
   /// Check if there is an active battle for a given room (mid-battle detection).
   /// Returns a map with `battle_id` on success; throws DioException(404) if none.
   Future<Map<String, dynamic>> getActiveBattleForRoom(String roomId) async {
-    final response = await _dio.get('/live/battle/active', queryParameters: {'room_id': roomId});
+    final response = await _dio.get(
+      '/live/battle/active',
+      queryParameters: {'room_id': roomId},
+    );
     final envelope = _toMap(response.data);
     return (envelope['data'] is Map)
         ? Map<String, dynamic>.from(envelope['data'] as Map)
         : envelope;
+  }
+
+  /// Mensagem amigável para erros de batalha: usa o `detail` do backend
+  /// (que explica o motivo: oponente ocupado, convite expirado, etc.) e
+  /// cai no [fallback] para erros de rede/desconhecidos.
+  static String errorMessage(Object error, String fallback) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final detail = data['detail'];
+        if (detail is String && detail.isNotEmpty) return detail;
+        if (detail is Map && detail['message'] is String) {
+          return detail['message'] as String;
+        }
+      }
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout) {
+        return 'Sem conexão. Verifique sua internet.';
+      }
+    }
+    return fallback;
   }
 
   Map<String, dynamic> _toMap(dynamic data) {

@@ -46,6 +46,114 @@ void main() {
     expect(state.single.quantity, 2);
   });
 
+  test('ignora o mesmo presente recebido mais de uma vez (sem "x3")', () async {
+    final repository = _FakeGiftsRepository();
+    final container = ProviderContainer(
+      overrides: [liveRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+
+    final subscription = container.listen(
+      liveRoomGiftsViewModelProvider('room-1'),
+      (_, _) {},
+      fireImmediately: true,
+    );
+    addTearDown(subscription.close);
+    await Future<void>.delayed(Duration.zero);
+
+    final rose = LiveGift(
+      id: 'tx-1',
+      senderId: 'user-1',
+      senderName: 'Alice',
+      giftId: 'rose',
+      giftName: 'Rose',
+      quantity: 1,
+      timestamp: DateTime.utc(2026, 3, 24, 2),
+    );
+    // Mesmo evento chegando 3× (emissões duplicadas / reconexão).
+    repository
+      ..pushGift(rose)
+      ..pushGift(rose)
+      ..pushGift(rose);
+    await Future<void>.delayed(Duration.zero);
+
+    final state = container.read(liveRoomGiftsViewModelProvider('room-1'));
+    expect(state, hasLength(1));
+    expect(state.single.quantity, 1);
+  });
+
+  group('faixas de presentes pequenos (estilo TikTok)', () {
+    late _FakeGiftsRepository repository;
+    late ProviderContainer container;
+
+    setUp(() async {
+      repository = _FakeGiftsRepository();
+      container = ProviderContainer(
+        overrides: [liveRepositoryProvider.overrideWithValue(repository)],
+      );
+      final sub = container.listen(
+        liveRoomGiftsViewModelProvider('room-1'),
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(() {
+        sub.close();
+        container.dispose();
+      });
+      await Future<void>.delayed(Duration.zero);
+    });
+
+    LiveGift small(String id, String sender) => LiveGift(
+      id: id,
+      senderId: sender,
+      senderName: sender,
+      giftId: 'star',
+      giftName: 'Estrela',
+      quantity: 1,
+      timestamp: DateTime.utc(2026, 3, 24, 2),
+    );
+
+    test('mostra até 2 ao mesmo tempo, em faixas diferentes', () async {
+      repository
+        ..pushGift(small('a', 'u1'))
+        ..pushGift(small('b', 'u2'))
+        ..pushGift(small('c', 'u3'));
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(liveRoomGiftsViewModelProvider('room-1'));
+      final animating = state.where((g) => g.isAnimating).map((g) => g.id);
+      expect(animating, unorderedEquals(['a', 'b']));
+
+      final vm = container.read(
+        liveRoomGiftsViewModelProvider('room-1').notifier,
+      );
+      expect({vm.laneOf('a'), vm.laneOf('b')}, {0, 1});
+      expect(vm.laneOf('c'), isNull); // aguardando faixa livre
+    });
+
+    test('animação grande não bloqueia os presentes pequenos', () async {
+      repository
+        ..pushGift(
+          LiveGift(
+            id: 'big',
+            senderId: 'u9',
+            senderName: 'u9',
+            giftId: 'dragon',
+            giftName: 'Dragão',
+            quantity: 1,
+            isFullscreen: true,
+            timestamp: DateTime.utc(2026, 3, 24, 2),
+          ),
+        )
+        ..pushGift(small('s1', 'u1'));
+      await Future<void>.delayed(Duration.zero);
+
+      final state = container.read(liveRoomGiftsViewModelProvider('room-1'));
+      expect(state.firstWhere((g) => g.id == 'big').isAnimating, isTrue);
+      expect(state.firstWhere((g) => g.id == 's1').isAnimating, isTrue);
+    });
+  });
+
   test('keeps at most five visible gifts in the queue', () async {
     final repository = _FakeGiftsRepository();
     final container = ProviderContainer(

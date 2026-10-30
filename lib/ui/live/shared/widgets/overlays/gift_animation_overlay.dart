@@ -1,3 +1,5 @@
+import 'dart:async';
+
 // ignore_for_file: unused_element_parameter
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -214,10 +216,17 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
 
   void _showCenterSmall(LiveGift gift) {
     final overlay = Overlay.of(context, rootOverlay: true);
+    final lane =
+        ref
+            .read(liveRoomGiftsViewModelProvider(widget.roomId).notifier)
+            .laneOf(gift.id) ??
+        0;
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _GiftToast(
         gift: gift,
+        roomId: widget.roomId,
+        lane: lane,
         onDone: () {
           try {
             entry.remove();
@@ -265,20 +274,43 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
 // Small gift toast (bottom-left, 3s)
 // ────────────────────────────────────────────────────────────────────────
 
-class _GiftToast extends StatefulWidget {
-  const _GiftToast({required this.gift, required this.onDone});
+/// Aviso de presente pequeno (centerSmall) — estilo TikTok.
+///
+/// Fica em uma de 2 faixas ([lane] 0 = de baixo, 1 = de cima) e permanece na
+/// tela enquanto o `LiveRoomGiftsViewModel` mantiver o presente ativo
+/// (`isAnimating`). Combos do mesmo remetente+presente atualizam o "xN"
+/// AQUI, com um "pulo", e prorrogam o tempo do aviso.
+class _GiftToast extends ConsumerStatefulWidget {
+  const _GiftToast({
+    required this.gift,
+    required this.roomId,
+    required this.lane,
+    required this.onDone,
+  });
   final LiveGift gift;
+  final String roomId;
+  final int lane;
   final VoidCallback onDone;
 
+  /// Distância vertical entre as 2 faixas.
+  static const double laneSpacing = 62;
+
   @override
-  State<_GiftToast> createState() => _GiftToastState();
+  ConsumerState<_GiftToast> createState() => _GiftToastState();
 }
 
-class _GiftToastState extends State<_GiftToast>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
+class _GiftToastState extends ConsumerState<_GiftToast>
+    with TickerProviderStateMixin {
+  late final AnimationController _ctrl; // entrada
+  late final AnimationController _exitCtrl; // saída
+  late final AnimationController _pulseCtrl; // "pulo" do xN no combo
   late final Animation<Offset> _slide;
   late final Animation<double> _fade;
+  late final Animation<double> _pulse;
+  late final Listenable _anim;
+  Timer? _safetyTimer;
+  bool _exiting = false;
+  int _lastQuantity = 0;
 
   /// `true` quando o toast deve aparecer no lado direito da tela (lado B
   /// da batalha). Calculado uma vez aqui pra os 2 animations + Positioned
@@ -288,40 +320,56 @@ class _GiftToastState extends State<_GiftToast>
   @override
   void initState() {
     super.initState();
-    // 🎯 Duração dinâmica (Fase 7): vem do backend já clampada nos limites
-    // seguros do `resolvedDisplayType` (center_small: 2000-4000ms) e
-    // reclampada de novo aqui como defesa em profundidade — nunca confia
-    // só no valor da rede.
+    _lastQuantity = widget.gift.quantity;
     _ctrl = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
+      duration: const Duration(milliseconds: 280),
+    );
+    _exitCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
     );
     // 🎯 Entra deslizando do lado em que vai ancorar:
     //   - solo / lado A → entra da esquerda (-1.2 → 0)
     //   - lado B → entra da direita (+1.2 → 0)
-    // Sem isso o toast do lado B faria "swoosh atravessando a tela",
-    // chamando atenção em cima do streamer A — quebra a leitura.
     final beginOffset = _isRightSide
         ? const Offset(1.2, 0)
         : const Offset(-1.2, 0);
-    _slide = Tween<Offset>(begin: beginOffset, end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.0, 0.25, curve: Curves.easeOut),
-      ),
-    );
-    _fade = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.75, 1.0, curve: Curves.easeIn),
-      ),
-    );
-    _ctrl.forward().then((_) => widget.onDone());
+    _slide = Tween<Offset>(
+      begin: beginOffset,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+    _fade = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _exitCtrl, curve: Curves.easeIn));
+    _pulse = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0), weight: 1),
+    ]).animate(_pulseCtrl);
+    _anim = Listenable.merge([_ctrl, _exitCtrl, _pulseCtrl]);
+    _ctrl.forward();
+    // Garantia: nunca fica preso na tela se o estado se perder.
+    _safetyTimer = Timer(const Duration(seconds: 30), _exit);
+  }
+
+  void _exit() {
+    if (_exiting || !mounted) return;
+    _exiting = true;
+    _safetyTimer?.cancel();
+    _exitCtrl.forward().then((_) => widget.onDone());
   }
 
   @override
   void dispose() {
+    _safetyTimer?.cancel();
     _ctrl.dispose();
+    _exitCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -357,11 +405,35 @@ class _GiftToastState extends State<_GiftToast>
     // Android). O toast fica sempre ACIMA dessa faixa, com um respiro
     // proporcional à altura da tela (nunca um pixel fixo arbitrário) —
     // garante leitura confortável em iPhone SE até tablets em landscape.
-    final mediaQuery = MediaQuery.of(context);
+    // Leituras granulares (sizeOf/paddingOf/viewInsetsOf): o toast só
+    // reconstrói quando a dimensão que ele usa muda.
+    // Estado atual deste presente no ViewModel (quantidade do combo e se
+    // ainda deve ficar na tela).
+    final live = ref.watch(
+      liveRoomGiftsViewModelProvider(widget.roomId).select((list) {
+        for (final g in list) {
+          if (g.id == widget.gift.id) return g;
+        }
+        return null;
+      }),
+    );
+    if (live == null || !live.isAnimating) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _exit());
+    }
+    final gift = live ?? widget.gift;
+    if (gift.quantity > _lastQuantity) {
+      _lastQuantity = gift.quantity;
+      _pulseCtrl.forward(from: 0);
+    }
+
     const chatTickerHeight = 240.0;
     const chatTickerBottomAnchor = 120.0;
-    final safeAreaBottom = mediaQuery.padding.bottom;
-    final screenHeight = mediaQuery.size.height;
+    final safeAreaBottom = MediaQuery.paddingOf(context).bottom;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    // ⌨️ Com o teclado aberto o chat sobe junto e o toast colidiria com
+    // ele / com o top bar. Escondemos o toast enquanto o usuário digita —
+    // o presente continua aparecendo na linha do chat (GiftChatLine).
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     // Respiro proporcional: 3% da altura da tela, com piso de 16px e teto
     // de 40px — evita colar (telas pequenas) ou flutuar longe demais
     // (tablets/telas grandes).
@@ -370,7 +442,8 @@ class _GiftToastState extends State<_GiftToast>
         chatTickerBottomAnchor +
         chatTickerHeight +
         breathingRoom +
-        safeAreaBottom;
+        safeAreaBottom +
+        widget.lane * _GiftToast.laneSpacing;
 
     // ⚠️ OverlayEntry NÃO tem ancestor Material/Directionality por padrão.
     // Qualquer Text descendente ganha a "linha amarela double underline" do
@@ -397,137 +470,143 @@ class _GiftToastState extends State<_GiftToast>
               decorationThickness: 0,
             ),
             child: IgnorePointer(
-              child: AnimatedBuilder(
-                animation: _ctrl,
-                builder: (_, __) => SlideTransition(
-                  position: _slide,
-                  child: FadeTransition(
-                    opacity: _fade,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.78),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // 1) Avatar circular
-                          _AvatarCircle(
-                            url: widget.gift.senderAvatarUrl,
-                            fallback: widget.gift.senderName,
+              child: Offstage(
+                offstage: keyboardOpen,
+                child: AnimatedBuilder(
+                  animation: _anim,
+                  builder: (_, __) => SlideTransition(
+                    position: _slide,
+                    child: FadeTransition(
+                      opacity: _fade,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.78),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12),
                           ),
-                          const SizedBox(width: 8),
-                          // 2) Nome + chip de level + "enviou {gift}"
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Chip de nível (💎 Lv34) estilo TikTok —
-                                  // altura reduzida (era o default 18px,
-                                  // grande o suficiente pra roubar a
-                                  // atenção do nome do remetente). 15px
-                                  // mantém legibilidade com discrição,
-                                  // combinando com o restante do toast.
-                                  LevelChip(
-                                    level: widget.gift.gifterLevel,
-                                    badge: widget.gift.gifterBadge,
-                                    colorHex: widget.gift.gifterColor,
-                                    imageUrl: widget.gift.gifterImageUrl,
-                                    height: 15,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 160,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // 1) Avatar circular
+                            _AvatarCircle(
+                              url: gift.senderAvatarUrl,
+                              fallback: gift.senderName,
+                            ),
+                            const SizedBox(width: 8),
+                            // 2) Nome + chip de level + "enviou {gift}"
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Chip de nível (💎 Lv34) estilo TikTok —
+                                    // altura reduzida (era o default 18px,
+                                    // grande o suficiente pra roubar a
+                                    // atenção do nome do remetente). 15px
+                                    // mantém legibilidade com discrição,
+                                    // combinando com o restante do toast.
+                                    LevelChip(
+                                      level: gift.gifterLevel,
+                                      badge: gift.gifterBadge,
+                                      colorHex: gift.gifterColor,
+                                      imageUrl: gift.gifterImageUrl,
+                                      height: 15,
                                     ),
-                                    child: Text(
-                                      widget.gift.senderName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13,
-                                        decoration: TextDecoration.none,
+                                    const SizedBox(width: 6),
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 160,
+                                      ),
+                                      child: Text(
+                                        gift.senderName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 13,
+                                          decoration: TextDecoration.none,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'enviou ',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.7,
-                                      ),
-                                      fontSize: 11,
-                                      decoration: TextDecoration.none,
-                                    ),
-                                  ),
-                                  ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 120,
-                                    ),
-                                    child: Text(
-                                      widget.gift.giftName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Color(0xFFFFD166),
-                                        fontWeight: FontWeight.w700,
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'enviou ',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
                                         fontSize: 11,
                                         decoration: TextDecoration.none,
                                       ),
                                     ),
+                                    ConstrainedBox(
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 120,
+                                      ),
+                                      child: Text(
+                                        gift.giftName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Color(0xFFFFD166),
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                          decoration: TextDecoration.none,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 10),
+                            // 3) Ícone/animação do gift (à direita) — usa Lottie
+                            // local se disponível para o slug (ver
+                            // `_kLottieTestAssets`), senão mantém o PNG remoto.
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: _GiftVisual(
+                                gift: gift,
+                                size: 36,
+                                fallbackIcon: Text(
+                                  _giftEmoji(gift.giftName),
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    decoration: TextDecoration.none,
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 10),
-                          // 3) Ícone/animação do gift (à direita) — usa Lottie
-                          // local se disponível para o slug (ver
-                          // `_kLottieTestAssets`), senão mantém o PNG remoto.
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: _GiftVisual(
-                              gift: widget.gift,
-                              size: 36,
-                              fallbackIcon: Text(
-                                _giftEmoji(widget.gift.giftName),
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  decoration: TextDecoration.none,
                                 ),
                               ),
                             ),
-                          ),
-                          // 4) Multiplicador xN
-                          if (widget.gift.quantity > 1) ...[
-                            const SizedBox(width: 4),
-                            Text(
-                              'x${widget.gift.quantity}',
-                              style: const TextStyle(
-                                color: Color(0xFFFF4D8B),
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                decoration: TextDecoration.none,
+                            // 4) Multiplicador xN
+                            if (gift.quantity > 1) ...[
+                              const SizedBox(width: 4),
+                              ScaleTransition(
+                                scale: _pulse,
+                                child: Text(
+                                  'x${gift.quantity}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF4D8B),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 16,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),

@@ -36,7 +36,9 @@ class BattleViewModel extends _$BattleViewModel {
 
   Future<void> _init() async {
     try {
-      final json = await ref.read(battleServiceProvider).getLiveScores(battleId);
+      final json = await ref
+          .read(battleServiceProvider)
+          .getLiveScores(battleId);
       final data = (json['data'] as Map<String, dynamic>?) ?? json;
 
       // Buscar detalhes completos (campos planos de streamer + room ids)
@@ -49,56 +51,76 @@ class BattleViewModel extends _$BattleViewModel {
       // O endpoint DB devolve campos planos (streamer_a_id, streamer_a_name, …)
       // e também objetos aninhados (streamer_a.score, streamer_b.score).
       // Priorizamos campos planos; fazemos fallback para aninhados quando ausentes.
-      final nestedA = (battleDetail['streamer_a'] as Map?)?.cast<String, dynamic>() ?? {};
-      final nestedB = (battleDetail['streamer_b'] as Map?)?.cast<String, dynamic>() ?? {};
+      final nestedA =
+          (battleDetail['streamer_a'] as Map?)?.cast<String, dynamic>() ?? {};
+      final nestedB =
+          (battleDetail['streamer_b'] as Map?)?.cast<String, dynamic>() ?? {};
 
       // Scores iniciais: prefere dados frescos do Redis (data), senão usa DB.
-      final scoreA = (data['score_a'] as num?)?.toDouble()
-          ?? (nestedA['score'] as num?)?.toDouble()
-          ?? 0.0;
-      final scoreB = (data['score_b'] as num?)?.toDouble()
-          ?? (nestedB['score'] as num?)?.toDouble()
-          ?? 0.0;
+      final scoreA =
+          (data['score_a'] as num?)?.toDouble() ??
+          (nestedA['score'] as num?)?.toDouble() ??
+          0.0;
+      final scoreB =
+          (data['score_b'] as num?)?.toDouble() ??
+          (nestedB['score'] as num?)?.toDouble() ??
+          0.0;
 
       final initial = BattleState(
         battleId: battleId,
         scoreA: scoreA,
         scoreB: scoreB,
-        giftsCountA: (data['gifts_count_a'] as int?)
-            ?? (nestedA['gifts_count'] as int?)
-            ?? 0,
-        giftsCountB: (data['gifts_count_b'] as int?)
-            ?? (nestedB['gifts_count'] as int?)
-            ?? 0,
+        giftsCountA:
+            (data['gifts_count_a'] as int?) ??
+            (nestedA['gifts_count'] as int?) ??
+            0,
+        giftsCountB:
+            (data['gifts_count_b'] as int?) ??
+            (nestedB['gifts_count'] as int?) ??
+            0,
         timeRemaining: Duration(
           seconds: (data['time_remaining_seconds'] as int?) ?? 300,
         ),
-        streamerAId: battleDetail['streamer_a_id'] as String?
-            ?? nestedA['id'] as String? ?? '',
-        streamerAName: battleDetail['streamer_a_name'] as String?
-            ?? nestedA['name'] as String? ?? '',
-        streamerBId: battleDetail['streamer_b_id'] as String?
-            ?? nestedB['id'] as String? ?? '',
-        streamerBName: battleDetail['streamer_b_name'] as String?
-            ?? nestedB['name'] as String? ?? '',
-        streamerAAvatarUrl: battleDetail['streamer_a_avatar'] as String?
-            ?? nestedA['avatar'] as String?,
-        streamerBAvatarUrl: battleDetail['streamer_b_avatar'] as String?
-            ?? nestedB['avatar'] as String?,
+        streamerAId:
+            battleDetail['streamer_a_id'] as String? ??
+            nestedA['id'] as String? ??
+            '',
+        streamerAName:
+            battleDetail['streamer_a_name'] as String? ??
+            nestedA['name'] as String? ??
+            '',
+        streamerBId:
+            battleDetail['streamer_b_id'] as String? ??
+            nestedB['id'] as String? ??
+            '',
+        streamerBName:
+            battleDetail['streamer_b_name'] as String? ??
+            nestedB['name'] as String? ??
+            '',
+        streamerAAvatarUrl:
+            battleDetail['streamer_a_avatar'] as String? ??
+            nestedA['avatar'] as String?,
+        streamerBAvatarUrl:
+            battleDetail['streamer_b_avatar'] as String? ??
+            nestedB['avatar'] as String?,
         roomAId: battleDetail['room_a_id'] as String?,
         roomBId: battleDetail['room_b_id'] as String?,
         // 🎬 HLS playback URLs — alimentam o split-screen no viewer.
         // Backend devolve em campos planos (stream_url_a/b) e também
         // dentro do objeto aninhado (streamer_a.stream_url) — aceitamos
         // qualquer um para resiliência.
-        streamUrlA: _nonEmpty(battleDetail['stream_url_a'])
-            ?? _nonEmpty(nestedA['stream_url']),
-        streamUrlB: _nonEmpty(battleDetail['stream_url_b'])
-            ?? _nonEmpty(nestedB['stream_url']),
-        playbackIdA: _nonEmpty(battleDetail['playback_id_a'])
-            ?? _nonEmpty(nestedA['playback_id']),
-        playbackIdB: _nonEmpty(battleDetail['playback_id_b'])
-            ?? _nonEmpty(nestedB['playback_id']),
+        streamUrlA:
+            _nonEmpty(battleDetail['stream_url_a']) ??
+            _nonEmpty(nestedA['stream_url']),
+        streamUrlB:
+            _nonEmpty(battleDetail['stream_url_b']) ??
+            _nonEmpty(nestedB['stream_url']),
+        playbackIdA:
+            _nonEmpty(battleDetail['playback_id_a']) ??
+            _nonEmpty(nestedA['playback_id']),
+        playbackIdB:
+            _nonEmpty(battleDetail['playback_id_b']) ??
+            _nonEmpty(nestedB['playback_id']),
         phase: _phaseFromStatus(data['status'] as String? ?? ''),
         // 🔥/🏅 Sincroniza Power Moment + MVP ao entrar mid-battle.
         powerMoment: data['power_moment'] as bool? ?? false,
@@ -119,42 +141,98 @@ class BattleViewModel extends _$BattleViewModel {
 
   void _subscribeToSocket() {
     final socket = ref.read(socketServiceProvider);
+    // Guardar referência para poder des-registrar no dispose sem usar ref
+    _cachedSocket = socket;
+    _attachHandlers();
+    // 🔁 O socket interno é recriado em reconexões — re-anexa os handlers
+    // e ressincroniza o placar/fase via REST.
+    socket.addReconnectCallback(_onReconnect);
+  }
 
+  void _attachHandlers() {
+    final socket = _cachedSocket;
+    if (socket == null) return;
+    _detachHandlers();
     socket.on(AppConstants.eventBattleStarted, _onStarted);
     socket.on(AppConstants.eventBattleCountdown, _onCountdown);
     socket.on(AppConstants.eventBattleScoreUpdate, _onScoreUpdate);
     socket.on(AppConstants.eventBattleEnded, _onEnded);
+  }
 
-    // Guardar referência para poder des-registrar no dispose sem usar ref
-    _cachedSocket = socket;
+  /// ⚠️ Sempre `off(evento, handler)`: `off(evento)` sem handler removia
+  /// os listeners das telas (BroadcasterScreen/LivePlayerScreen) também —
+  /// depois da 1ª batalha, a 2ª nunca aparecia.
+  void _detachHandlers() {
+    final socket = _cachedSocket;
+    if (socket == null) return;
+    socket.off(AppConstants.eventBattleStarted, _onStarted);
+    socket.off(AppConstants.eventBattleCountdown, _onCountdown);
+    socket.off(AppConstants.eventBattleScoreUpdate, _onScoreUpdate);
+    socket.off(AppConstants.eventBattleEnded, _onEnded);
+  }
+
+  void _onReconnect() {
+    _attachHandlers();
+    unawaited(_resyncScores());
+  }
+
+  /// Ressincroniza placar/fase após reconexão (eventos perdidos offline).
+  Future<void> _resyncScores() async {
+    final socket = _cachedSocket;
+    if (socket == null) return;
+    try {
+      final json = await ref
+          .read(battleServiceProvider)
+          .getLiveScores(battleId);
+      if (_cachedSocket == null) return; // disposed durante o request
+      final data = (json['data'] as Map<String, dynamic>?) ?? json;
+      final status = data['status'] as String?;
+      // Sem status no payload → mantém a fase atual.
+      final phase = status == null || status.isEmpty
+          ? null
+          : _phaseFromStatus(status);
+      _update(
+        (s) => s.copyWith(
+          scoreA: (data['score_a'] as num?)?.toDouble() ?? s.scoreA,
+          scoreB: (data['score_b'] as num?)?.toDouble() ?? s.scoreB,
+          timeRemaining: Duration(
+            seconds:
+                (data['time_remaining_seconds'] as int?) ??
+                s.timeRemaining.inSeconds,
+          ),
+          phase: phase ?? s.phase,
+        ),
+      );
+      if (phase == BattlePhase.active) _startLocalTick();
+    } catch (_) {}
   }
 
   void _unsubscribeFromSocket() {
     // Usa a referência cacheada — ref pode já estar inválida no dispose
-    _cachedSocket?.off(AppConstants.eventBattleStarted);
-    _cachedSocket?.off(AppConstants.eventBattleCountdown);
-    _cachedSocket?.off(AppConstants.eventBattleScoreUpdate);
-    _cachedSocket?.off(AppConstants.eventBattleEnded);
+    _detachHandlers();
+    _cachedSocket?.removeReconnectCallback(_onReconnect);
     _cachedSocket = null;
   }
 
   void _onStarted(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
-    _update((s) => s.copyWith(
-      phase: BattlePhase.active,
-      timeRemaining: Duration(
-        seconds: json['duration_seconds'] as int? ?? 300,
+    _update(
+      (s) => s.copyWith(
+        phase: BattlePhase.active,
+        timeRemaining: Duration(
+          seconds: json['duration_seconds'] as int? ?? 300,
+        ),
+        // 🎬 Atualiza URLs do split-screen — fallback caso o REST inicial
+        // tenha sido feito quando a sala ainda não tinha stream provisionado.
+        streamUrlA: _nonEmpty(json['stream_url_a']),
+        streamUrlB: _nonEmpty(json['stream_url_b']),
+        playbackIdA: _nonEmpty(json['playback_id_a']),
+        playbackIdB: _nonEmpty(json['playback_id_b']),
+        roomAId: _nonEmpty(json['room_a_id']),
+        roomBId: _nonEmpty(json['room_b_id']),
       ),
-      // 🎬 Atualiza URLs do split-screen — fallback caso o REST inicial
-      // tenha sido feito quando a sala ainda não tinha stream provisionado.
-      streamUrlA: _nonEmpty(json['stream_url_a']),
-      streamUrlB: _nonEmpty(json['stream_url_b']),
-      playbackIdA: _nonEmpty(json['playback_id_a']),
-      playbackIdB: _nonEmpty(json['playback_id_b']),
-      roomAId: _nonEmpty(json['room_a_id']),
-      roomBId: _nonEmpty(json['room_b_id']),
-    ));
+    );
     _startLocalTick();
   }
 
@@ -167,21 +245,25 @@ class BattleViewModel extends _$BattleViewModel {
   void _onScoreUpdate(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
-    _update((s) => s.copyWith(
-      scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
-      scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
-      giftsCountA: json['gifts_count_a'] as int? ?? s.giftsCountA,
-      giftsCountB: json['gifts_count_b'] as int? ?? s.giftsCountB,
-      timeRemaining: Duration(seconds: json['time_remaining'] as int? ?? s.timeRemaining.inSeconds),
-      lastGiftSender: json['last_gift_sender'] as String?,
-      lastGiftName: json['last_gift_name'] as String?,
-      lastUpdatedSide: json['updated_side'] as String?,
-      // 🔥 Power Moment + 🏅 MVP (campos enriquecidos pelo backend).
-      multiplier: (json['multiplier'] as num?)?.toDouble() ?? 1.0,
-      powerMoment: json['power_moment'] as bool? ?? false,
-      topGifterA: _parseGifter(json['top_gifter_a']),
-      topGifterB: _parseGifter(json['top_gifter_b']),
-    ));
+    _update(
+      (s) => s.copyWith(
+        scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
+        scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
+        giftsCountA: json['gifts_count_a'] as int? ?? s.giftsCountA,
+        giftsCountB: json['gifts_count_b'] as int? ?? s.giftsCountB,
+        timeRemaining: Duration(
+          seconds: json['time_remaining'] as int? ?? s.timeRemaining.inSeconds,
+        ),
+        lastGiftSender: json['last_gift_sender'] as String?,
+        lastGiftName: json['last_gift_name'] as String?,
+        lastUpdatedSide: json['updated_side'] as String?,
+        // 🔥 Power Moment + 🏅 MVP (campos enriquecidos pelo backend).
+        multiplier: (json['multiplier'] as num?)?.toDouble() ?? 1.0,
+        powerMoment: json['power_moment'] as bool? ?? false,
+        topGifterA: _parseGifter(json['top_gifter_a']),
+        topGifterB: _parseGifter(json['top_gifter_b']),
+      ),
+    );
   }
 
   /// Converte o sub-objeto `top_gifter_*` do payload em [BattleGifter].
@@ -195,14 +277,16 @@ class BattleViewModel extends _$BattleViewModel {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
     _tickTimer?.cancel();
-    _update((s) => s.copyWith(
-      phase: BattlePhase.finished,
-      scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
-      scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
-      winnerId: json['winner_id'] as String?,
-      winnerName: json['winner_name'] as String?,
-      timeRemaining: Duration.zero,
-    ));
+    _update(
+      (s) => s.copyWith(
+        phase: BattlePhase.finished,
+        scoreA: (json['score_a'] as num?)?.toDouble() ?? s.scoreA,
+        scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
+        winnerId: json['winner_id'] as String?,
+        winnerName: json['winner_name'] as String?,
+        timeRemaining: Duration.zero,
+      ),
+    );
   }
 
   // ── Local countdown tick ──────────────────────────────────────────────────

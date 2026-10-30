@@ -30,11 +30,12 @@ class BroadcasterTopBar extends StatelessWidget {
   final VoidCallback onClose;
   final VoidCallback? onSwitchCamera;
 
+  /// Valor recebido em presentes — é USD (USDT), não "diamantes".
   String _formatGiftValue(double v) {
-    if (v <= 0) return '0';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    if (v >= 10) return v.toStringAsFixed(0);
-    return v.toStringAsFixed(2);
+    if (v <= 0) return '\$0';
+    if (v >= 1000) return '\$${(v / 1000).toStringAsFixed(1)}K';
+    if (v >= 10) return '\$${v.toStringAsFixed(0)}';
+    return '\$${v.toStringAsFixed(2)}';
   }
 
   @override
@@ -45,7 +46,13 @@ class BroadcasterTopBar extends StatelessWidget {
         CircleIconButton(icon: Icons.close, onTap: onClose),
         const SizedBox(width: 8),
         LiveOrPausedBadge(isStreaming: isStreaming, isPaused: isPaused),
-        const SizedBox(width: 8),
+        // Cronômetro FIXO ao lado do selo — antes era o último item de uma
+        // linha rolável e aparecia cortado ("26:…") sem indicação de scroll.
+        if (showStats) ...[
+          const SizedBox(width: 6),
+          InlineStat(icon: Icons.timer_outlined, label: elapsedLabel),
+        ],
+        const SizedBox(width: 6),
         if (showStats)
           Expanded(
             child: SingleChildScrollView(
@@ -56,16 +63,14 @@ class BroadcasterTopBar extends StatelessWidget {
                   InlineStat(icon: Icons.visibility, label: countFormatter(viewerCount)),
                   const SizedBox(width: 6),
                   InlineStat(
-                    icon: Icons.diamond_outlined,
+                    icon: Icons.card_giftcard_rounded,
                     label: _formatGiftValue(totalGiftsValue),
-                    iconColor: const Color(0xFF7DD3FC),
+                    iconColor: const Color(0xFF4ADE80),
                   ),
                   const SizedBox(width: 6),
                   InlineStat(icon: Icons.favorite, label: countFormatter(likes), iconColor: Colors.redAccent),
                   const SizedBox(width: 6),
                   InlineStat(icon: Icons.chat_bubble_outline, label: countFormatter(messages)),
-                  const SizedBox(width: 6),
-                  InlineStat(icon: Icons.timer_outlined, label: elapsedLabel),
                 ],
               ),
             ),

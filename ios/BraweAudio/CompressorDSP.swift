@@ -20,7 +20,7 @@ class CompressorDSP {
   private var thresholdLinear: Float = 1.0
   private var makeupGainLinear: Float = 1.0
 
-  private let sampleRate: Float
+  private var sampleRate: Float
 
   init(
     threshold: Float = -12.0,
@@ -71,8 +71,13 @@ class CompressorDSP {
       gainReduction = 1.0  // abaixo do threshold: sem compressão
     }
 
-    // 3. Suavizar envelope (attack quando comprimindo, release quando relaxando)
-    let coeff = gainReduction < envelope ? attackCoeff : releaseCoeff
+    // 3. Suavizar envelope (attack quando comprimindo, release quando
+    //    relaxando). O envelope anda UMA vez por bloco de `count` amostras,
+    //    então o coeficiente por amostra precisa ser elevado ao tamanho do
+    //    bloco — antes o attack de 5 ms virava ~5 s e o compressor quase
+    //    não agia (e "bombeava").
+    let perSample = gainReduction < envelope ? attackCoeff : releaseCoeff
+    let coeff = 1.0 - pow(1.0 - perSample, Float(count))
     envelope += coeff * (gainReduction - envelope)
 
     // 4. Ganho final = envelope * makeup, aplicado via vDSP_vsmul (1 call)
@@ -94,6 +99,13 @@ class CompressorDSP {
 
   func reset() {
     envelope = 1.0
+  }
+
+  /// Ajusta à taxa de amostragem real do microfone (44,1/48 kHz).
+  func setSampleRate(_ rate: Float) {
+    guard rate > 0, rate != sampleRate else { return }
+    sampleRate = rate
+    updateCoefficients()
   }
 }
 

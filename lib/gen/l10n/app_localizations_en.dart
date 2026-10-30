@@ -5123,4 +5123,116 @@ class SEn extends S {
 
   @override
   String get questsAlreadyClaimed => 'Reward already claimed';
+
+  @override
+  String get shareSheetTitle => 'Share';
+
+  @override
+  String get shareSentBadge => 'Sent';
+
+  @override
+  String get shareRetry => 'Retry';
+
+  @override
+  String get shareActionStories => 'Stories';
+
+  @override
+  String get shareActionRepost => 'Repost';
+
+  @override
+  String get shareActionCopyLink => 'Copy link';
+
+  @override
+  String get shareActionMore => 'More';
+
+  @override
+  String get composerToolText => 'Text';
+
+  @override
+  String get composerToolMusic => 'Music';
+
+  @override
+  String get composerToolTrim => 'Trim';
+
+  @override
+  String get composerToolSave => 'Save';
+
+  @override
+  String get composerToolFrame => 'Frame';
+
+  @override
+  String get composerToolResetZoom => 'Reset zoom';
+
+  @override
+  String get composerToolBackground => 'Background';
+
+  @override
+  String get composerDone => 'Done';
+
+  @override
+  String get composerClose => 'Close';
+
+  @override
+  String get composerTextAlignTooltip => 'Alignment';
+
+  @override
+  String get composerTextBackgroundTooltip => 'Text background';
+
+  @override
+  String get composerFontClassic => 'Classic';
+
+  @override
+  String get composerFontModern => 'Modern';
+
+  @override
+  String get composerFontSerif => 'Serif';
+
+  @override
+  String get composerFontTypewriter => 'Typewriter';
+
+  @override
+  String get composerFontNeon => 'Neon';
+
+  @override
+  String get composerDiscardTitle => 'Discard story?';
+
+  @override
+  String get composerDiscardMessage => 'Your edits will be lost.';
+
+  @override
+  String get composerDiscard => 'Discard';
+
+  @override
+  String get composerKeepEditing => 'Keep editing';
+
+  @override
+  String get composerVolumeMix => 'Volume mix';
+
+  @override
+  String get composerOverlayError => 'Couldn\'t apply the text to the video.';
+
+  @override
+  String get composerModeStory => 'Story';
+
+  @override
+  String get composerModeText => 'Text';
+
+  @override
+  String get composerFlipCamera => 'Flip camera';
+
+  @override
+  String get composerFlash => 'Flash';
+
+  @override
+  String get composerCameraPermissionTitle => 'Allow camera access';
+
+  @override
+  String get composerCameraPermissionBody =>
+      'To create photo and video stories, Brawe needs your camera and microphone.';
+
+  @override
+  String get composerOpenSettings => 'Open settings';
+
+  @override
+  String get composerNoCamera => 'Camera unavailable';
 }

@@ -844,8 +844,11 @@ class LiveRepository {
       final targetController = controllers[targetRoomId];
       if (targetController != null && !targetController.isClosed) {
         targetController.add(value);
-        return;
       }
+      // Evento de OUTRA sala (sem controller aqui): descarta. Antes caía no
+      // broadcast abaixo e presentes/mensagens de uma live apareciam na
+      // tela de outro criador.
+      return;
     }
 
     final activeControllers = controllers.entries
@@ -865,6 +868,11 @@ class LiveRepository {
       }
       controller.add(value);
     }
+  }
+
+  String? _nonEmptyString(dynamic v) {
+    final s = v?.toString().trim();
+    return s == null || s.isEmpty || s == 'null' ? null : s;
   }
 
   LiveComment? _parseLiveComment(dynamic data) {
@@ -890,6 +898,7 @@ class LiveRepository {
       avatarUrl:
           payload['sender_avatar']?.toString() ??
           payload['avatar_url']?.toString(),
+      username: _nonEmptyString(payload['sender_username']),
       message: message,
       timestamp: timestamp,
       // ─── Gifter level pin (TikTok-style) ───
@@ -964,7 +973,9 @@ class LiveRepository {
       isFullscreen: payload['is_fullscreen'] == true,
       emoji: payload['gift_emoji']?.toString(),
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
-      value: int.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0,
+      // Backend envia float ("1.0") — int.tryParse dava sempre 0.
+      value: (num.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0)
+          .round(),
       timestamp: timestamp,
       // ─── Gifter level (TikTok-style chip) ───
       gifterLevel:

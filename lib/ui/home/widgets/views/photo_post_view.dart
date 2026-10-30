@@ -43,12 +43,12 @@ class PhotoPostView extends StatelessWidget {
             ),
           ),
 
-        Positioned(right: 8, bottom: 140, child: FeedActionsRail(item: item)),
+        Positioned(right: 8, bottom: 62, child: FeedActionsRail(item: item)),
         if (item.imageUrl != null)
           Positioned(
             left: 16,
             right: 90,
-            bottom: 100,
+            bottom: 22, // base do card = topo da bottom nav
             child: CaptionBlock(author: item.author, caption: item.caption),
           ),
       ],

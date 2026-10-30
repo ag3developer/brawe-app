@@ -26,6 +26,12 @@ import Accelerate
   private var masterGainLinear: Float = 1.0
   private var limiterLinear: Float = 1.0      // amplitude max (1.0 = 0dBFS)
   private var eqBiquads: [BiquadFilter] = []  // cadeia de filtros EQ
+  /// Parâmetros das bandas (para recalcular os coeficientes quando a taxa
+  /// de amostragem real do microfone for diferente — iPhone costuma
+  /// capturar a 48 kHz; antes estava fixo em 44,1 kHz e as bandas ficavam
+  /// ~9% deslocadas).
+  private var eqBands: [(frequency: Float, gainDb: Float, q: Float)] = []
+  private var eqSampleRate: Float = 0
   private var isSetup = false
 
   override private init() { super.init() }
@@ -78,27 +84,30 @@ import Accelerate
     vDSP_vsmul(&floats, 1, &scale, &normalized, 1, vDSP_Length(frameCount))
     floats = normalized
 
+    // O lock cobre o processamento inteiro: o estado dos filtros e do
+    // compressor precisa persistir ENTRE buffers e não pode ser trocado
+    // por um preset no meio do bloco. Chamadas do MethodChannel são raras.
     lock.lock()
-    let comp = compressor
-    let compEnabled = compressorEnabled
     let gain = masterGainLinear
     let limiter = limiterLinear
-    let biquads = eqBiquads
-    lock.unlock()
 
-    // 1. EQ: aplicar filtros biquad em cascata
-    if !biquads.isEmpty {
-      var buf = floats
-      for var filter in biquads {
-        filter.process(&buf, count: frameCount)
-        floats = buf
+    // 1. EQ: filtros biquad em cascata, processados NO PRÓPRIO array.
+    //    Antes `for var filter in biquads` processava uma CÓPIA e o
+    //    histórico (x1/x2/y1/y2) era descartado a cada buffer → cliques e
+    //    zumbido ~43×/s (pior no reforço de graves).
+    if !eqBands.isEmpty {
+      if eqSampleRate != sampleRate { rebuildBiquads(sampleRate: sampleRate) }
+      for i in eqBiquads.indices {
+        eqBiquads[i].process(&floats, count: frameCount)
       }
     }
 
     // 2. Compressor
-    if compEnabled, let c = comp {
+    if compressorEnabled, let c = compressor {
+      c.setSampleRate(sampleRate)
       c.processInPlace(&floats, count: frameCount)
     }
+    lock.unlock()
 
     // 3. Master gain (out-of-place para evitar overlapping access)
     if gain != 1.0 {
@@ -108,14 +117,14 @@ import Accelerate
       floats = result
     }
 
-    // 4. Limiter (hard clip, out-of-place)
-    if limiter < 1.0 {
-      var pos =  limiter
-      var neg = -limiter
-      var result = [Float](repeating: 0, count: frameCount)
-      vDSP_vclip(&floats, 1, &neg, &pos, &result, 1, vDSP_Length(frameCount))
-      floats = result
-    }
+    // 4. Limiter / proteção de clip — SEMPRE aplicado. Com EQ +4 dB e
+    //    makeup +4 dB o sinal passa de 0 dBFS e o vDSP_vfix16 abaixo não
+    //    satura: valores acima do fundo de escala viravam distorção.
+    var pos =  min(limiter, 1.0)
+    var neg = -pos
+    var clipped = [Float](repeating: 0, count: frameCount)
+    vDSP_vclip(&floats, 1, &neg, &pos, &clipped, 1, vDSP_Length(frameCount))
+    floats = clipped
 
     // Float32 → Int16 (de volta para o CMSampleBuffer)
     var scaleBack: Float = Float(Int16.max)
@@ -128,14 +137,29 @@ import Accelerate
 
   @objc func applyEQPreset(preset: String, bands: [[String: NSNumber]]) {
     lock.lock(); defer { lock.unlock() }
-    // Converter bandas em filtros biquad peak (parametric EQ)
-    eqBiquads = bands.compactMap { b in
+    // Guarda as bandas; os coeficientes são (re)calculados com a taxa de
+    // amostragem real do primeiro buffer (ver processCMSampleBuffer).
+    eqBands = bands.compactMap { b in
       guard let freq = b["frequency"]?.floatValue,
             let gainDb = b["gain"]?.floatValue,
             let q = b["q"]?.floatValue else { return nil }
-      return BiquadFilter.peakingEQ(frequency: freq, gainDb: gainDb, q: q, sampleRate: 44100)
+      return (freq, gainDb, q)
     }
+    rebuildBiquads(sampleRate: eqSampleRate > 0 ? eqSampleRate : 48000)
     print("✅ EQ '\(preset)': \(eqBiquads.count) filtros ativos")
+  }
+
+  /// Recalcula os filtros (chamar com `lock` adquirido).
+  private func rebuildBiquads(sampleRate: Float) {
+    eqSampleRate = sampleRate
+    eqBiquads = eqBands
+      .filter { $0.frequency < sampleRate / 2 }
+      .map {
+        BiquadFilter.peakingEQ(
+          frequency: $0.frequency, gainDb: $0.gainDb, q: $0.q,
+          sampleRate: sampleRate
+        )
+      }
   }
 
   @objc func setCompressor(
@@ -172,6 +196,7 @@ import Accelerate
 
   @objc func resetAudio() {
     lock.lock(); defer { lock.unlock() }
+    eqBands = []
     eqBiquads = []
     compressor?.reset()
     compressor?.updateParameters(threshold: -12, ratio: 4, attackTime: 5, releaseTime: 50, makeupGain: 4)
@@ -184,6 +209,7 @@ import Accelerate
   @objc func shutdown() {
     lock.lock(); defer { lock.unlock() }
     isSetup = false
+    eqBands = []
     eqBiquads = []
     print("✅ AVAudioEngineProcessor shutdown")
   }

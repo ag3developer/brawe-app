@@ -18,6 +18,8 @@ import '../../../data/repositories/gift_repository.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/services/battle_service.dart';
 import '../../../data/services/socket_service.dart';
+import '../../../domain/models/failure.dart';
+import '../../../domain/models/live_comment.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../domain/models/live_reaction_event.dart';
 import '../../../domain/models/user.dart';
@@ -31,6 +33,7 @@ import 'viewer_battle_hud.dart';
 import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../wallet/widgets/top_up_coins_sheet.dart';
 
 // ── Qualidade de stream ───────────────────────────────────────────────────────
 
@@ -101,9 +104,20 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   // Battle
   String? _activeBattleId;
 
+  /// Pausa do criador (overlay "Já voltamos" / "Voltando…").
+  _StreamerPauseState _pauseState = _StreamerPauseState.none;
+  Timer? _resumeOverlayTimer;
+
+  /// Último modo aplicado ao player solo (null = ainda não aplicado).
+  bool? _soloPlaying;
+
   // Floating hearts overlay key (para spawn local imediato)
   final GlobalKey<FloatingHeartsOverlayState> _heartsKey =
       GlobalKey<FloatingHeartsOverlayState>();
+
+  /// Capturado no initState (ver `_fireRoseRequest`).
+  late final GiftRepository _giftRepo;
+  late final LiveRepository _liveRepo;
 
   // Chat input
   final TextEditingController _chatCtrl = TextEditingController();
@@ -117,6 +131,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // dispose. Ver ANDROID_EDGE_TO_EDGE_AUDIT.md, Fase E.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _likesCount = widget.room.totalLikes;
+    _giftRepo = ref.read(giftRepositoryProvider);
+    _liveRepo = ref.read(liveRepositoryProvider);
     // ⚡ Se o room já veio com battleId (live_type=battle + dados enriquecidos
     // pelo backend), seta o HUD imediatamente — sem nenhum roundtrip extra.
     // Isso elimina a tela de loading dupla ao entrar em live de batalha.
@@ -143,6 +159,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _flushRoses(force: true);
     _reactionSub?.cancel();
     _battleCheckDebounce?.cancel();
+    _resumeOverlayTimer?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
     _controller?.dispose();
@@ -158,9 +175,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   // ── Battle events ──────────────────────────────────────────────────────────
 
+  // ⚠️ Sempre `off(evento, handler)`: `off(evento)` sem handler remove os
+  // listeners de TODAS as telas/view models (ex.: o BattleViewModel) e a
+  // 2ª batalha deixava de aparecer.
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.on(AppConstants.eventLivePaused, _onLivePaused);
+    socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     // 🔁 Re-anexar handler em reconexões (idêntico ao broadcaster).
     socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
@@ -170,8 +193,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _reattachBattleHandlers() {
     if (!mounted) return; // widget pode ter sido descartado antes do callback
     final socket = ref.read(socketServiceProvider);
-    socket.off(AppConstants.eventBattleStarted);
+    socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.off(AppConstants.eventLivePaused, _onLivePaused);
+    socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
+    socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.on(AppConstants.eventLivePaused, _onLivePaused);
+    socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     // Após reconectar, valida via REST se uma batalha começou durante
     // a queda de conexão — com debounce de 5s para evitar spam em
     // reconexões rápidas (ex: restart do servidor durante deploy).
@@ -181,7 +210,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _unsubscribeFromBattleEvents() {
     try {
       final socket = ref.read(socketServiceProvider);
-      socket.off(AppConstants.eventBattleStarted);
+      socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
+      socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
+      socket.off(AppConstants.eventLivePaused, _onLivePaused);
+      socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
       socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
   }
@@ -252,8 +284,55 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (data == null) return;
     final battleId = data['battle_id'] as String?;
     if (battleId == null || battleId.isEmpty) return;
+    if (!_isEventForThisRoom(data)) return;
     // Overlay (não navega): mostra o HUD de batalha por cima da live atual.
     setState(() => _activeBattleId = battleId);
+  }
+
+  /// Batalha cancelada (ex.: streamer encerrou a live durante a contagem).
+  void _onBattleCancelled(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['battle_id'] != _activeBattleId) return;
+    setState(() => _activeBattleId = null);
+  }
+
+  // ── Pausa do criador ("Já voltamos") ─────────────────────────────────
+  //
+  // O socket avisa na hora; o vídeo HLS só reflete a pausa/retomada
+  // 12-20s depois (latência "reduced" do Mux). Por isso, ao retomar,
+  // mostramos "Voltando…" por esse intervalo em vez de sumir com o aviso
+  // enquanto o slate ainda está na tela.
+
+  void _onLivePaused(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['room_id'] != widget.room.id) return;
+    _resumeOverlayTimer?.cancel();
+    _dismissKeyboard();
+    setState(() => _pauseState = _StreamerPauseState.paused);
+  }
+
+  void _onLiveResumed(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['room_id'] != widget.room.id) return;
+    if (_pauseState == _StreamerPauseState.none) return;
+    setState(() => _pauseState = _StreamerPauseState.resuming);
+    _resumeOverlayTimer?.cancel();
+    _resumeOverlayTimer = Timer(const Duration(seconds: 15), () {
+      if (mounted) setState(() => _pauseState = _StreamerPauseState.none);
+    });
+  }
+
+  /// O socket pode entregar eventos de batalha de outra sala (ex.: viewer
+  /// que trocou de live no feed). Só aceita se esta sala participa.
+  /// Payload sem room ids (backend antigo) → aceita, por compat.
+  bool _isEventForThisRoom(Map<String, dynamic> data) {
+    final roomA = data['room_a_id'] as String?;
+    final roomB = data['room_b_id'] as String?;
+    if (roomA == null && roomB == null) return true;
+    return roomA == widget.room.id || roomB == widget.room.id;
   }
 
   /// Converte o payload bruto do socket em Map.
@@ -309,6 +388,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         await _controller!.seekTo(duration);
       }
 
+      _soloPlaying = null;
       setState(() => _isInitialized = true);
       _controller!
         ..play()
@@ -338,6 +418,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   void _showQualitySelector() {
+    _dismissKeyboard();
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
@@ -386,11 +467,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (_pendingReactions <= 0) return;
     final count = _pendingReactions;
     _pendingReactions = 0;
+    // `_liveRepo` (capturado no initState): também roda no dispose.
     unawaited(
-      ref
-          .read(liveRepositoryProvider)
-          .sendReaction(widget.room.id, count: count)
-          .catchError((_) {}),
+      _liveRepo.sendReaction(widget.room.id, count: count).catchError((_) {}),
     );
   }
 
@@ -409,6 +488,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   void _openGifts() {
+    _dismissKeyboard();
     GiftsOverlay.show(
       context,
       widget.room.id,
@@ -421,6 +501,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// Abre o quick sheet do streamer (mesmo usado ao tocar no avatar do topo).
   /// Single source of truth do fluxo de follow.
   void _openStreamerSheet() {
+    _dismissKeyboard();
     final room = widget.room;
     final rawName = room.streamerName.trim();
     final looksGeneric =
@@ -474,11 +555,24 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _sendRose() {
     HapticFeedback.lightImpact();
     _pendingRoses += 1;
-    _roseFlushTimer?.cancel();
-    _roseFlushTimer = Timer(const Duration(milliseconds: 400), _flushRoses);
+    // Teto do backend por request (quantity ≤ 99): envia já ao atingir —
+    // antes, toques contínuos passavam de 99 e o lote inteiro era recusado.
+    if (_pendingRoses >= _maxRosesPerRequest) {
+      _roseFlushTimer?.cancel();
+      _flushRoses();
+      return;
+    }
+    // Throttle: o 1º toque abre a janela de 400ms; toques seguintes entram
+    // no mesmo lote (antes cada toque reiniciava o timer e nada era
+    // enviado enquanto o usuário continuasse tocando).
+    _roseFlushTimer ??= Timer(const Duration(milliseconds: 400), _flushRoses);
   }
 
+  static const _maxRosesPerRequest = 99;
+
   void _flushRoses({bool force = false}) {
+    _roseFlushTimer?.cancel();
+    _roseFlushTimer = null;
     if (_pendingRoses <= 0) return;
     final qty = _pendingRoses;
     _pendingRoses = 0;
@@ -486,9 +580,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   Future<void> _fireRoseRequest({int quantity = 1}) async {
-    // Captura o repository ANTES do await — ref não pode ser lido
-    // depois que o widget foi disposed.
-    final repo = ref.read(giftRepositoryProvider);
+    // Repository capturado no initState: este método também roda a partir
+    // do dispose (flush das rosas pendentes ao sair), quando `ref` já não
+    // pode ser usado.
+    final repo = _giftRepo;
     try {
       await repo.sendGift(
         roomId: widget.room.id,
@@ -499,27 +594,71 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final message = e is Failure
+          ? e.toDisplayMessage()
+          : 'Não foi possível enviar a rosa';
+      final isBalance =
+          message.toLowerCase().contains('saldo') ||
+          message.toLowerCase().contains('insuficiente');
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text(
-              'Erro ao enviar rosa: ${e.toString().replaceFirst('Exception: ', '')}',
-            ),
-            duration: const Duration(seconds: 2),
+            content: Text(message),
+            duration: const Duration(seconds: 3),
+            action: isBalance
+                ? SnackBarAction(
+                    label: 'Recarregar',
+                    onPressed: () => TopUpCoinsSheet.show(
+                      context,
+                      reason: _activeBattleId != null ? 'battle' : 'gift',
+                    ),
+                  )
+                : null,
           ),
         );
     }
   }
 
-  void _sendComment() {
+  /// Envia o comentário: limpa o input e fecha o teclado na hora (a
+  /// mensagem aparece imediatamente no chat via eco otimista). Se o envio
+  /// falhar, devolve o texto ao input para o usuário não perder o que
+  /// digitou.
+  Future<void> _sendComment() async {
     final text = _chatCtrl.text.trim();
     if (text.isEmpty) return;
-    ref
+    _chatCtrl.clear();
+    _chatFocus.unfocus();
+    final sent = await ref
         .read(liveRoomCommentsViewModelProvider(widget.room.id).notifier)
         .sendComment(text);
-    _chatCtrl.clear();
+    if (!sent && mounted && _chatCtrl.text.isEmpty) {
+      _chatCtrl.text = text;
+      _chatCtrl.selection = TextSelection.collapsed(offset: text.length);
+    }
   }
+
+  /// Toque numa mensagem do chat → cartão do autor. "Responder" insere a
+  /// @menção no input e abre o teclado (TikTok).
+  Future<void> _onCommentTap(LiveComment comment) async {
+    final action = await ChatUserSheet.show(context, comment);
+    if (!mounted || action == null) return;
+    switch (action) {
+      case ChatUserAction.reply:
+        ChatUserSheet.insertMention(_chatCtrl, comment);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _chatFocus.requestFocus();
+        });
+      case ChatUserAction.viewProfile:
+        if (comment.userId.isNotEmpty) {
+          context.push('/profile/${comment.userId}');
+        }
+    }
+  }
+
+  /// Fecha o teclado antes de abrir sheets — sem isso o Flutter devolve o
+  /// foco ao input quando o sheet fecha e o teclado reabre sozinho.
+  void _dismissKeyboard() => FocusManager.instance.primaryFocus?.unfocus();
 
   // ────────────────────── Build ──────────────────────
 
@@ -528,7 +667,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final commentsState = ref.watch(
       liveRoomCommentsViewModelProvider(widget.room.id),
     );
-    final gifts = ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
+    // Mantém a fila de animações viva (o overlay lê o mesmo provider).
+    ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
 
     ref.listen<LiveRoomCommentsState>(
       liveRoomCommentsViewModelProvider(widget.room.id),
@@ -548,12 +688,24 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1A),
-      resizeToAvoidBottomInset: true,
+      // ⌨️ O vídeo NUNCA redimensiona com o teclado (antes o body inteiro
+      // encolhia → vídeo dava zoom/pulo e o split da batalha estourava).
+      // Só o `_ViewerChatDock` sobe acompanhando o teclado.
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
           // ── 1. Video / thumbnail background ──
           _buildVideoLayer(),
+
+          // ── 1.5 Criador pausou a live ──
+          if (_pauseState != _StreamerPauseState.none)
+            Positioned.fill(
+              child: _StreamerPausedOverlay(
+                streamerName: widget.room.streamerName,
+                resuming: _pauseState == _StreamerPauseState.resuming,
+              ),
+            ),
 
           // ── 2. Gradients para legibilidade ──
           const LiveTopGradient(),
@@ -599,34 +751,23 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           // ── 5. Gift combos (canto inf. esq, acima do chat) ──
           GiftAnimationOverlay(roomId: widget.room.id),
 
-          // ── 6. Chat ticker (sobe da base, ACIMA do bottom bar) ──
-          // bottom bar = chat input (52) + spacing (10) + actions (52) + safearea
-          // ✨ Otimizado: 140 → 120px (mais espaço pro vídeo principal!)
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 120, // ✨ -20px (era 140px) - Video agora ocupa 75%!
-            child: IgnorePointer(
-              child: ChatTicker(comments: commentsState.comments, gifts: gifts),
-            ),
-          ),
-
-          // ── 6.5. Pinned product (event-driven, slide-in quando streamer pinar) ──
+          // ── 6. Dock inferior: produto fixado + chat + input/ações ──
           Positioned(
             left: 0,
             right: 0,
-            bottom: 250,
-            child: PinnedProductBar(roomId: widget.room.id),
-          ),
-
-          // ── 7. Bottom bar: chat input + ações inline (TikTok Live style) ──
-          Positioned(
-            left: 12,
-            right: 12,
-            bottom: 12,
-            child: SafeArea(
-              top: false,
-              child: LiveBottomBar(
+            bottom: 0,
+            child: _ViewerChatDock(
+              pinnedProduct: PinnedProductBar(roomId: widget.room.id),
+              tickerBuilder: (maxHeight) => ChatTicker(
+                comments: commentsState.comments,
+                gifts: commentsState.chatGifts,
+                hostUserId: widget.room.streamerId,
+                myUserId: ref.watch(authStateProvider).value?.id,
+                myUsername: commentsState.myUsername,
+                onCommentTap: _onCommentTap,
+                maxHeight: maxHeight,
+              ),
+              bottomBar: LiveBottomBar(
                 controller: _chatCtrl,
                 focusNode: _chatFocus,
                 isSending: commentsState.isSending,
@@ -677,12 +818,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       final battle = asyncBattle.value;
       if (battle != null &&
           (battle.streamUrlA != null || battle.streamUrlB != null)) {
-        // Pausar o single-controller pra não competir por áudio/CPU.
-        if (_controller?.value.isInitialized == true &&
-            _controller!.value.isPlaying) {
-          _controller!.pause();
-          _controller!.setVolume(0.0);
-        }
+        _scheduleSoloPlayback(playing: false);
 
         // TikTok PK layout: fundo preto ocupa 100% da tela; o DualHlsPlayer
         // fica numa faixa vertical restrita entre o top bar e o bottom bar.
@@ -694,15 +830,19 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         //  ├─────────────────────────────────┤
         //  │  Chat + ações  ~140px + bottom  │  (preto)
         //  └─────────────────────────────────┘
-        final mq = MediaQuery.of(context);
+        //
+        // sizeOf/paddingOf: não reconstrói a cada frame do teclado, e como
+        // o Scaffold não redimensiona mais, a altura é sempre a da tela.
+        final screenH = MediaQuery.sizeOf(context).height;
+        final padding = MediaQuery.paddingOf(context);
         const kTopBarH =
             80.0; // altura estimada do LiveTopBar (abaixo SafeArea)
         const kBottomBarH = 140.0; // LiveBottomBar + padding inferior
-        final topOffset = mq.padding.top + kTopBarH;
-        final bottomOffset = mq.padding.bottom + kBottomBarH;
-        final videoH = (mq.size.height - topOffset - bottomOffset).clamp(
+        final topOffset = padding.top + kTopBarH;
+        final bottomOffset = padding.bottom + kBottomBarH;
+        final videoH = (screenH - topOffset - bottomOffset).clamp(
           200.0,
-          mq.size.height * 0.62,
+          screenH * 0.62,
         );
 
         return Container(
@@ -729,15 +869,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       // Fallback: batalha ativa mas URLs ainda não chegaram (raríssimo —
       // backend já envia tudo no `started`). Cai pro single-controller
       // do streamer dono dessa sala enquanto o REST/socket sincroniza.
-    } else {
-      // Voltou pro modo solo: garantir que o single-controller esteja
-      // tocando com áudio (caso tenha sido pausado durante a batalha).
-      if (_controller?.value.isInitialized == true &&
-          !_controller!.value.isPlaying) {
-        _controller!.play();
-        _controller!.setVolume(1.0);
-      }
     }
+    // Solo (ou fallback): garantir que o single-controller esteja tocando
+    // com áudio (caso tenha sido pausado durante a batalha).
+    _scheduleSoloPlayback(playing: true);
 
     // ── Modo SOLO (default) ──
     if (_isInitialized && _controller != null) {
@@ -762,12 +897,173 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     return _placeholder();
   }
 
+  /// Pausa/retoma o player solo FORA do build (efeitos colaterais no
+  /// build rodavam a cada rebuild — inclusive a cada frame do teclado).
+  /// Só age quando o modo muda.
+  void _scheduleSoloPlayback({required bool playing}) {
+    if (_soloPlaying == playing) return;
+    _soloPlaying = playing;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final c = _controller;
+      if (!mounted || c == null || !c.value.isInitialized) {
+        _soloPlaying = null; // reavalia no próximo build
+        return;
+      }
+      if (playing) {
+        c
+          ..play()
+          ..setVolume(1.0);
+      } else {
+        c
+          ..pause()
+          ..setVolume(0.0);
+      }
+    });
+  }
+
   Widget _placeholder() => Container(
     color: const Color(0xFF1B2B6B),
     child: const Center(
       child: Icon(Icons.live_tv, color: Colors.white24, size: 64),
     ),
   );
+}
+
+enum _StreamerPauseState { none, paused, resuming }
+
+/// Aviso ao espectador quando o criador pausa a live — aparece na hora
+/// (via socket), antes mesmo do slate "Já voltamos" chegar pelo vídeo.
+class _StreamerPausedOverlay extends StatelessWidget {
+  const _StreamerPausedOverlay({
+    required this.streamerName,
+    required this.resuming,
+  });
+
+  final String streamerName;
+  final bool resuming;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = streamerName.trim().isEmpty ? 'O criador' : streamerName;
+    return ColoredBox(
+      color: const Color(0xE60B0F1A),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              resuming
+                  ? const SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.coffee_rounded,
+                      color: Colors.white,
+                      size: 46,
+                    ),
+              const SizedBox(height: 16),
+              Text(
+                resuming ? 'Voltando…' : 'Já voltamos!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                resuming
+                    ? '$name retomou a live. O vídeo aparece em instantes.'
+                    : '$name pausou a live por alguns minutos. Fique por aqui!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ⌨️ Dock inferior do espectador: produto fixado + chat + input/ações.
+///
+/// Único widget que lê `viewInsets` — só ele reconstrói durante a animação
+/// do teclado (vídeo, top bar e overlays ficam parados). Com o teclado
+/// aberto:
+/// - o dock sobe junto, colado no teclado;
+/// - a altura do chat encolhe para caber entre o top bar e o input;
+/// - o produto fixado some (fica montado, só escondido, para não perder
+///   o estado do pin).
+class _ViewerChatDock extends StatelessWidget {
+  const _ViewerChatDock({
+    required this.pinnedProduct,
+    required this.tickerBuilder,
+    required this.bottomBar,
+  });
+
+  final Widget pinnedProduct;
+  final Widget Function(double maxHeight) tickerBuilder;
+  final Widget bottomBar;
+
+  /// Altura reservada no topo (status bar + LiveTopBar + identidade).
+  static const _topReserved = 130.0;
+
+  /// Altura aproximada da barra de input/ações + espaçamentos.
+  static const _bottomBarH = 64.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    final padding = MediaQuery.paddingOf(context);
+    final size = MediaQuery.sizeOf(context);
+    final typing = keyboard > 0;
+
+    final bottomInset = typing ? keyboard + 8 : padding.bottom + 12;
+    final free =
+        size.height - padding.top - _topReserved - _bottomBarH - bottomInset;
+    final tickerMax = typing
+        ? (free * 0.75).clamp(60.0, 220.0)
+        : free.clamp(80.0, 240.0);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Offstage(offstage: typing, child: pinnedProduct),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              // Chat ocupa ~78% da largura: a faixa direita fica livre
+              // para os corações e toques no vídeo.
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: size.width * 0.78),
+                child: tickerBuilder(tickerMax),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: bottomBar,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ⚠️ _TopBar migrado para lib/ui/live/shared/widgets/hud/live_top_bar.dart
