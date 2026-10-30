@@ -76,7 +76,7 @@ class CreatorDashboardScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            color: AppColors.electricPurple,
+            color: AppColors.braweBlue,
             onRefresh: () async {
               ref.invalidate(myCreatorProfileProvider);
               ref.invalidate(creatorDashboardKpisProvider);
@@ -200,7 +200,7 @@ class _AnalyticsGrid extends ConsumerWidget {
             Expanded(
               child: _AnalyticsCard(
                 icon: LucideIcons.users,
-                color: const Color(0xFF8B5CF6),
+                color: context.colors.accentPrimary,
                 label: s.creatorDashboardCardFollowers,
                 valueAsync: socialAsync.when(
                   data: (d) => _formatCount(
@@ -406,7 +406,7 @@ class _QuickAction extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.electricPurple, size: 18),
+              Icon(icon, color: AppColors.braweBlue, size: 18),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(

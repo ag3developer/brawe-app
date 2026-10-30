@@ -227,9 +227,7 @@ class _CatalogTab extends ConsumerWidget {
                     .setGenre(key),
                 selectedColor: AppColors.mutedRed,
                 checkmarkColor: Colors.white,
-                backgroundColor: context.colors.surfaceHighest.withValues(
-                  alpha: 0.08,
-                ),
+                backgroundColor: context.colors.surfaceHighest,
                 labelStyle: TextStyle(
                   color: selected ? Colors.white : context.colors.textSecondary,
                   fontSize: 12,

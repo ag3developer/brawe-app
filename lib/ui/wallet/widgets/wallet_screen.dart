@@ -83,7 +83,7 @@ class _BalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.electricPurple, AppColors.coolCyan],
+          colors: [AppColors.braweBlue, AppColors.braweSky],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -142,7 +142,7 @@ class _BalanceCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: context.colors.surfaceHighest.withValues(alpha: 0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -254,7 +254,7 @@ class _PackageCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: highlight
-                ? AppColors.electricPurple
+                ? AppColors.braweBlue
                 : Theme.of(context).dividerColor,
             width: highlight ? 1.4 : 1,
           ),
@@ -273,7 +273,7 @@ class _PackageCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.electricPurple,
+                        color: AppColors.braweBlue,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -316,7 +316,7 @@ class _PackageCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.electricPurple.withValues(alpha: 0.13),
+                color: AppColors.braweBlue.withValues(alpha: 0.13),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -326,7 +326,7 @@ class _PackageCard extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: AppColors.electricPurple,
+                  color: AppColors.braweBlue,
                   fontSize: 11,
                 ),
               ),
@@ -436,7 +436,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
                       _PackageCard._formatInt(widget.package.coins),
                     ),
               ),
-              backgroundColor: AppColors.electricPurple,
+              backgroundColor: AppColors.braweBlue,
             ),
           );
           Navigator.of(context).pop();
@@ -479,7 +479,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
             height: 4,
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: context.colors.surfaceHighest.withValues(alpha: 0.2),
+              color: context.colors.textTertiary.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -506,7 +506,7 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
                     Text(
                       priceLabel,
                       style: const TextStyle(
-                        color: AppColors.electricPurple,
+                        color: AppColors.braweBlue,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -519,15 +519,15 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.electricPurple.withValues(alpha: 0.12),
+              color: AppColors.braweBlue.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.electricPurple.withValues(alpha: 0.3),
+                color: AppColors.braweBlue.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.electricPurple),
+                const Icon(Icons.info_outline, color: AppColors.braweBlue),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -569,9 +569,9 @@ class _PurchaseSheetState extends ConsumerState<_PurchaseSheet> {
                   ? null
                   : _onBuy,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.electricPurple,
+                backgroundColor: AppColors.braweBlue,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                disabledBackgroundColor: AppColors.electricPurple.withValues(
+                disabledBackgroundColor: AppColors.braweBlue.withValues(
                   alpha: 0.4,
                 ),
               ),
@@ -654,7 +654,7 @@ class _InfoCard extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(it.$1, color: AppColors.electricPurple, size: 20),
+                  Icon(it.$1, color: AppColors.braweBlue, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -776,7 +776,7 @@ class _ActionButton extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Icon(icon, color: AppColors.electricPurple, size: 22),
+              Icon(icon, color: AppColors.braweBlue, size: 22),
               const SizedBox(height: 6),
               Text(
                 label,

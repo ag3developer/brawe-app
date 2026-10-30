@@ -116,7 +116,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
         children: [
           asyncItems.when(
             loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.electricPurple),
+              child: CircularProgressIndicator(color: AppColors.braweBlue),
             ),
             error: (_, __) => Center(
               child: Padding(
@@ -137,7 +137,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                       icon: const Icon(Icons.refresh),
                       label: Text(s.actionRetry),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.electricPurple,
+                        backgroundColor: AppColors.braweBlue,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -182,12 +182,12 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                           onPressed: onRefresh,
                           icon: const Icon(
                             Icons.refresh,
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                           ),
                           label: Text(
                             s.actionRefresh,
                             style: const TextStyle(
-                              color: AppColors.electricPurple,
+                              color: AppColors.braweBlue,
                             ),
                           ),
                         ),
@@ -197,7 +197,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                 );
               }
               return RefreshIndicator(
-                color: AppColors.electricPurple,
+                color: AppColors.braweBlue,
                 onRefresh: () async => onRefresh(),
                 child: PageView.builder(
                   controller: _ctrl,
@@ -282,7 +282,7 @@ class _TopTab extends StatelessWidget {
             width: 24,
             height: 3,
             decoration: BoxDecoration(
-              color: selected ? AppColors.electricPurple : Colors.transparent,
+              color: selected ? AppColors.braweBlue : Colors.transparent,
               borderRadius: BorderRadius.circular(2),
             ),
           ),

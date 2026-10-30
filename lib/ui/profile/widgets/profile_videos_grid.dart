@@ -47,7 +47,7 @@ class ProfileVideosGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return postsState.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
       error: (_, _) => _EmptyVideos(
         icon: Icons.error_outline,
@@ -368,7 +368,7 @@ Future<void> _confirmDelete(
           onPressed: () => Navigator.pop(ctx, true),
           child: Text(
             S.of(ctx).profileVideoDelete,
-            style: const TextStyle(color: Colors.red),
+            style: TextStyle(color: ctx.colors.danger),
           ),
         ),
       ],
@@ -457,7 +457,8 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.colors.background,
+      // Fullscreen video viewer: always dark behind the media.
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           PageView.builder(
@@ -491,7 +492,7 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                 if (widget.isMe)
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, color: Colors.white),
-                    color: const Color(0xFF1C1C2E),
+                    color: context.colors.surfaceElevated,
                     onSelected: (v) async {
                       if (v == 'delete') {
                         await _handleDelete(widget.videos[_currentIndex]);
@@ -504,15 +505,15 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         value: 'story',
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               LucideIcons.aperture,
-                              color: Colors.white70,
+                              color: ctx.colors.textSecondary,
                               size: 18,
                             ),
                             const SizedBox(width: 10),
                             Text(
                               S.of(ctx).profileVideoRepostStory,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: ctx.colors.textPrimary),
                             ),
                           ],
                         ),
@@ -521,14 +522,14 @@ class _VideoPostViewerState extends ConsumerState<_VideoPostViewer> {
                         value: 'delete',
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.delete_outline,
-                              color: Colors.redAccent,
+                              color: ctx.colors.danger,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               S.of(ctx).profileVideoDeleteAction,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: ctx.colors.textPrimary),
                             ),
                           ],
                         ),
@@ -692,7 +693,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
             ),
           if (!_initialized && !_failed)
             const Center(
-              child: CircularProgressIndicator(color: AppColors.electricPurple),
+              child: CircularProgressIndicator(color: AppColors.braweBlue),
             ),
           if (_failed)
             Center(
@@ -820,7 +821,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
                   allowScrubbing: false,
                   padding: EdgeInsets.zero,
                   colors: VideoProgressColors(
-                    playedColor: AppColors.electricPurple,
+                    playedColor: AppColors.braweBlue,
                     bufferedColor: Colors.white.withValues(alpha: 0.25),
                     backgroundColor: Colors.white.withValues(alpha: 0.08),
                   ),
@@ -933,9 +934,12 @@ class _EmptyVideos extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 48, color: Colors.white24),
+                Icon(icon, size: 48, color: context.colors.textTertiary),
                 const SizedBox(height: 8),
-                Text(message, style: const TextStyle(color: Colors.white54)),
+                Text(
+                  message,
+                  style: TextStyle(color: context.colors.textSecondary),
+                ),
               ],
             ),
           ),

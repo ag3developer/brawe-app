@@ -82,7 +82,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                     items: [
                       AnalyticsKpiItem(
                         icon: LucideIcons.users,
-                        color: const Color(0xFF8B5CF6),
+                        color: context.colors.accentPrimary,
                         label: 'Seguidores',
                         value: analyticsFormatCount(
                           (d['followers_count'] as num?)?.toInt() ?? 0,
@@ -119,7 +119,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 10),
                 AnalyticsLegendDot(
-                  color: const Color(0xFF8B5CF6),
+                  color: context.colors.accentPrimary,
                   label: s.analyticsFollowersLegendEngagement,
                 ),
                 const SizedBox(height: 8),
@@ -131,7 +131,7 @@ class AnalyticsFollowersScreen extends ConsumerWidget {
                     child: CustomPaint(
                       painter: _GrowthChartPainter(
                         points: points,
-                        color: const Color(0xFF8B5CF6),
+                        color: context.colors.accentPrimary,
                         isDark: isDark,
                       ),
                     ),
@@ -298,7 +298,7 @@ class _FollowerBreakdown extends StatelessWidget {
             label: S.of(context).analyticsFollowersSummaryFollowers,
             value: analyticsFormatCount(followers),
             icon: LucideIcons.users,
-            color: const Color(0xFF8B5CF6),
+            color: context.colors.accentPrimary,
           ),
           const Divider(height: 16),
           _StatRow(
@@ -428,7 +428,7 @@ class _GrowthTips extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(t.$1, size: 18, color: AppColors.electricPurple),
+                Icon(t.$1, size: 18, color: AppColors.braweBlue),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(

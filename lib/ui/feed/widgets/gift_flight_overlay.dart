@@ -193,13 +193,13 @@ class _GiftBubble extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           colors: [
-            AppColors.electricPurple.withValues(alpha: 0.55),
-            AppColors.electricPurple.withValues(alpha: 0.0),
+            AppColors.braweBlue.withValues(alpha: 0.55),
+            AppColors.braweBlue.withValues(alpha: 0.0),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.electricPurple.withValues(alpha: 0.55),
+            color: AppColors.braweBlue.withValues(alpha: 0.55),
             blurRadius: 20,
             spreadRadius: 2,
           ),
@@ -228,11 +228,11 @@ class _GiftBubble extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.coolCyan,
+                  color: AppColors.braweSky,
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.coolCyan.withValues(alpha: 0.55),
+                      color: AppColors.braweSky.withValues(alpha: 0.55),
                       blurRadius: 6,
                     ),
                   ],

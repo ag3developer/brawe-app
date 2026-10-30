@@ -113,11 +113,11 @@ class _GiftersTabs extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.electricPurple : scheme.surface,
+            color: selected ? AppColors.braweBlue : scheme.surface,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
-                  ? AppColors.electricPurple
+                  ? AppColors.braweBlue
                   : Theme.of(context).dividerColor,
             ),
           ),
@@ -230,7 +230,7 @@ class _GifterCard extends ConsumerWidget {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.electricPurple.withValues(
+                                color: AppColors.braweBlue.withValues(
                                   alpha: 0.14,
                                 ),
                                 borderRadius: BorderRadius.circular(6),
@@ -240,7 +240,7 @@ class _GifterCard extends ConsumerWidget {
                                 style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.electricPurple,
+                                  color: AppColors.braweBlue,
                                 ),
                               ),
                             ),
@@ -393,7 +393,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.electricPurple.withValues(alpha: 0.15),
+        color: AppColors.braweBlue.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         image: hasUrl
             ? DecorationImage(image: NetworkImage(url!), fit: BoxFit.cover)
@@ -404,7 +404,7 @@ class _Avatar extends StatelessWidget {
           : Icon(
               Icons.person,
               size: size * 0.55,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
             ),
     );
   }
@@ -419,7 +419,7 @@ class _RankPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: AppColors.electricPurple.withValues(alpha: 0.18),
+        color: AppColors.braweBlue.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -427,7 +427,7 @@ class _RankPill extends StatelessWidget {
         style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
-          color: AppColors.electricPurple,
+          color: AppColors.braweBlue,
           letterSpacing: 0.3,
         ),
       ),
@@ -493,14 +493,14 @@ class _ActionBtn extends StatelessWidget {
         ? Colors.white
         : muted
         ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
-        : AppColors.electricPurple;
+        : AppColors.braweBlue;
     final bg = filled
-        ? AppColors.electricPurple
+        ? AppColors.braweBlue
         : muted
         ? Theme.of(
             context,
           ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-        : AppColors.electricPurple.withValues(alpha: 0.10);
+        : AppColors.braweBlue.withValues(alpha: 0.10);
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(10),
@@ -561,7 +561,7 @@ class _EmptyView extends StatelessWidget {
             errorBuilder: (_, _, _) => const Icon(
               Icons.card_giftcard_outlined,
               size: 60,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
             ),
           ),
           const SizedBox(height: 14),
@@ -726,10 +726,10 @@ class GifterDetailSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.electricPurple.withValues(alpha: 0.10),
+                    color: AppColors.braweBlue.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.electricPurple.withValues(alpha: 0.25),
+                      color: AppColors.braweBlue.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Row(

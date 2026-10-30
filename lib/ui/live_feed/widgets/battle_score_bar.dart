@@ -77,8 +77,8 @@ class BattleScoreBar extends StatelessWidget {
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              AppColors.electricPurple,
-                              AppColors.softViolet,
+                              AppColors.braweBlue,
+                              AppColors.braweBlueLight,
                             ],
                           ),
                         ),

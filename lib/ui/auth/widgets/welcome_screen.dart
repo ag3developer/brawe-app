@@ -241,7 +241,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           children: [
                             // Logo — widget de marca reutilizável
                             // (mesmo ícone/gradiente usado em todo o app).
-                            const BraweLogo(iconSize: 140, showTagline: false),
+                            const BraweLogo(size: 140),
                             const SizedBox(height: 16),
                             // Tagline "efeito de digitação": escreve cada
                             // palavra/frase separadamente (apaga entre uma

@@ -1038,7 +1038,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                           const SizedBox(width: 4),
                                           const Icon(
                                             Icons.verified,
-                                            color: AppColors.electricPurple,
+                                            color: AppColors.braweBlue,
                                             size: 14,
                                           ),
                                         ],
@@ -1379,7 +1379,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 child: TextField(
                   controller: _replyController,
                   focusNode: _replyFocus,
-                  cursorColor: AppColors.electricPurple,
+                  cursorColor: AppColors.braweBlue,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                   minLines: 1,
                   maxLines: 3,
@@ -1429,13 +1429,13 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [AppColors.electricPurple, AppColors.coolCyan],
+                colors: [AppColors.braweBlue, AppColors.braweSky],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  color: AppColors.braweBlue.withValues(alpha: 0.45),
                   blurRadius: 14,
                   spreadRadius: 1,
                 ),
@@ -1488,7 +1488,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         : '🎁';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: AppColors.electricPurple.withValues(alpha: 0.92),
+        backgroundColor: AppColors.braweBlue.withValues(alpha: 0.92),
         duration: const Duration(seconds: 2),
         content: Row(
           children: [
@@ -1606,7 +1606,7 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
             child: _loading
                 ? const Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                   )
                 : _error != null
@@ -1647,7 +1647,7 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                               const SizedBox(width: 4),
                               const Icon(
                                 Icons.verified,
-                                color: AppColors.electricPurple,
+                                color: AppColors.braweBlue,
                                 size: 14,
                               ),
                             ],

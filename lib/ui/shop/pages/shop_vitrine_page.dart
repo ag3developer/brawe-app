@@ -69,7 +69,7 @@ class _ShopVitrinePageState extends ConsumerState<ShopVitrinePage> {
               child: storefrontAsync.when(
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                   ),
                 ),
                 error: (_, _) => _EmptyStorefront(isMe: isMe),
@@ -352,7 +352,7 @@ class _PartnerBadge extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             const Color(0xFFFF9500).withValues(alpha: 0.16),
-            AppColors.electricPurple.withValues(alpha: 0.12),
+            AppColors.braweBlue.withValues(alpha: 0.12),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -392,7 +392,7 @@ class _PartnerBadge extends StatelessWidget {
             child: Text(
               S.of(context).shopVitrinePartnerItemsCount(productsCount),
               style: TextStyle(
-                color: context.colors.textPrimary,
+                color: Colors.white,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -426,7 +426,7 @@ class _EmptyStorefront extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.electricPurple, AppColors.hotPink],
+                  colors: [AppColors.braweBlue, AppColors.braweSky],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -738,7 +738,7 @@ class _VitrineProductCard extends ConsumerWidget {
                               .of(context)
                               .profileProductLastStock(product.quantity),
                           style: TextStyle(
-                            color: context.colors.textPrimary,
+                            color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -774,8 +774,8 @@ class _VitrineProductCard extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     'R\$ ${product.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      color: AppColors.coolCyan,
+                    style: TextStyle(
+                      color: context.colors.accentPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),

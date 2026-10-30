@@ -34,14 +34,14 @@ class ViewerJoinedToast extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.electricPurple.withValues(alpha: 0.85),
-                  AppColors.electricPurple.withValues(alpha: 0.4),
+                  AppColors.braweBlue.withValues(alpha: 0.85),
+                  AppColors.braweBlue.withValues(alpha: 0.4),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.4),
+                  color: AppColors.braweBlue.withValues(alpha: 0.4),
                   blurRadius: 12,
                   spreadRadius: 1,
                 ),

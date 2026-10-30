@@ -36,7 +36,10 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
   late bool _liked;
   late int _likesCount;
   late bool _following;
+  late bool _reposted;
+  late int _repostsCount;
   bool _busyFollow = false;
+  bool _busyRepost = false;
 
   bool get _isPost =>
       widget.item is VideoFeedItem || widget.item is PhotoPostFeedItem;
@@ -47,6 +50,44 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     _liked = widget.item.userLiked;
     _likesCount = widget.item.likesCount;
     _following = widget.item.userFollowingAuthor;
+    _reposted = widget.item.userReposted;
+    _repostsCount = widget.item.sharesCount;
+  }
+
+  /// Repostar / desfazer (toque longo no compartilhar). Otimista: marca na
+  /// hora e reverte se a API falhar. Um novo toque longo desfaz o repost.
+  Future<void> _toggleRepost() async {
+    if (_busyRepost) return;
+    _busyRepost = true;
+    final was = _reposted;
+    ref.read(feedbackServiceProvider).repost();
+    setState(() {
+      _reposted = !was;
+      _repostsCount = (_repostsCount + (was ? -1 : 1)).clamp(0, 1 << 30);
+    });
+    try {
+      await ref.read(postRepositoryProvider).toggleRepost(widget.item.id, was);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            was ? S.of(context).feedRepostUndone : S.of(context).feedReposted,
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _reposted = was;
+        _repostsCount = (_repostsCount + (was ? 1 : -1)).clamp(0, 1 << 30);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(S.of(context).feedCannotShare)),
+      );
+    } finally {
+      _busyRepost = false;
+    }
   }
 
   Future<void> _onLike() async {
@@ -121,6 +162,15 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
         postImageUrl: preview,
         authorName: item.author.name,
         storyMediaUrl: media,
+        isReposted: _reposted,
+        onRepostChanged: (reposted) {
+          if (!mounted) return;
+          setState(() {
+            _reposted = reposted;
+            _repostsCount =
+                (_repostsCount + (reposted ? 1 : -1)).clamp(0, 1 << 30);
+          });
+        },
       );
       return;
     }
@@ -232,28 +282,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       onLikeCountTap: _isPost
           ? () => context.push('/post/${widget.item.id}/likes')
           : null,
-      onShareLongPress: _isPost
-          ? () async {
-              ref.read(feedbackServiceProvider).repost();
-              try {
-                await ref
-                    .read(postRepositoryProvider)
-                    .toggleRepost(widget.item.id, false);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(S.of(context).feedReposted),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              } catch (_) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(S.of(context).feedCannotShare)),
-                );
-              }
-            }
-          : null,
+      onShareLongPress: _isPost ? _toggleRepost : null,
     );
   }
 
@@ -268,12 +297,14 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
         author: i.author,
         likesCount: _likesCount,
         commentsCount: i.commentsCount,
-        sharesCount: i.sharesCount,
+        sharesCount: _repostsCount,
         userLiked: _liked,
         userFollowingAuthor: _following,
         caption: i.caption,
         viewsCount: i.viewsCount,
+        userReposted: _reposted,
         videoUrl: i.videoUrl,
+        hlsUrl: i.hlsUrl,
         thumbnailUrl: i.thumbnailUrl,
         duration: i.duration,
         sound: i.sound,
@@ -285,11 +316,12 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
         author: i.author,
         likesCount: _likesCount,
         commentsCount: i.commentsCount,
-        sharesCount: i.sharesCount,
+        sharesCount: _repostsCount,
         userLiked: _liked,
         userFollowingAuthor: _following,
         caption: i.caption,
         viewsCount: i.viewsCount,
+        userReposted: _reposted,
         imageUrl: i.imageUrl,
         createdAt: i.createdAt,
       ),

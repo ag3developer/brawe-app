@@ -16,6 +16,7 @@ sealed class FeedItem {
     required this.userFollowingAuthor,
     required this.caption,
     this.viewsCount = 0,
+    this.userReposted = false,
   });
 
   final String id;
@@ -27,6 +28,9 @@ sealed class FeedItem {
   final bool userLiked;
   final bool userFollowingAuthor;
   final String caption;
+
+  /// O usuário atual já repostou este item (só posts; lives são sempre false).
+  final bool userReposted;
 }
 
 class FeedAuthor {
@@ -57,6 +61,7 @@ class LiveCommerceItem extends FeedItem {
     required super.userFollowingAuthor,
     required super.caption,
     super.viewsCount,
+    super.userReposted,
     required this.thumbnailUrl,
     required this.viewerCount,
     required this.products,
@@ -85,6 +90,7 @@ class LiveBattleItem extends FeedItem {
     required super.userFollowingAuthor,
     required super.caption,
     super.viewsCount,
+    super.userReposted,
     required this.opponent,
     required this.thumbnailUrlA,
     required this.thumbnailUrlB,
@@ -111,6 +117,7 @@ class LiveChatItem extends FeedItem {
     required super.userFollowingAuthor,
     required super.caption,
     super.viewsCount,
+    super.userReposted,
     required this.thumbnailUrl,
     required this.viewerCount,
     required this.topic,
@@ -137,6 +144,7 @@ class VideoFeedItem extends FeedItem {
     required super.userFollowingAuthor,
     required super.caption,
     super.viewsCount,
+    super.userReposted,
     required this.videoUrl,
     required this.thumbnailUrl,
     required this.duration,
@@ -188,6 +196,7 @@ class PhotoPostFeedItem extends FeedItem {
     required super.userFollowingAuthor,
     required super.caption,
     super.viewsCount,
+    super.userReposted,
     this.imageUrl,
     required this.createdAt,
   });

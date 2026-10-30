@@ -84,6 +84,6 @@ class GiftIcon extends StatelessWidget {
   Widget _fallback() => Icon(
         Icons.card_giftcard,
         size: size * 0.78,
-        color: fallbackColor ?? AppColors.electricPurple,
+        color: fallbackColor ?? AppColors.braweBlue,
       );
 }

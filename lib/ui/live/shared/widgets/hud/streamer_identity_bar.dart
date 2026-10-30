@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../../domain/models/live_room.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../core/ui/follow_button.dart';
 import '../../../../core/view_models/follow_view_model.dart';
 
@@ -45,13 +46,15 @@ class StreamerIdentityBar extends ConsumerWidget {
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.5),
-      builder: (_) => StreamerQuickSheet(
-        room: room,
-        displayName: displayStreamerName(room),
-        isFollowing: isFollowing,
-        onToggleFollow: () => ref
-            .read(followViewModelProvider(room.streamerId).notifier)
-            .toggleFollow(),
+      builder: (_) => ForceDarkTheme(
+        child: StreamerQuickSheet(
+          room: room,
+          displayName: displayStreamerName(room),
+          isFollowing: isFollowing,
+          onToggleFollow: () => ref
+              .read(followViewModelProvider(room.streamerId).notifier)
+              .toggleFollow(),
+        ),
       ),
     );
   }
@@ -82,7 +85,7 @@ class StreamerIdentityBar extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 14,
-                  backgroundColor: AppColors.electricPurple,
+                  backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
                       ? NetworkImage(room.streamerAvatarUrl!)
                       : null,
@@ -107,7 +110,7 @@ class StreamerIdentityBar extends ConsumerWidget {
                 if (room.streamerVerified) ...[
                   const SizedBox(width: 3),
                   const Icon(Icons.verified,
-                      color: Color(0xFFB6A6FF), size: 13),
+                      color: AppColors.braweSky, size: 13),
                 ],
                 // Botão "Seguir" só aparece se NÃO segue (HUD limpo para fãs).
                 if (!isFollowing) ...[
@@ -172,7 +175,7 @@ class StreamerQuickSheet extends StatelessWidget {
                 ),
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor: AppColors.electricPurple,
+                  backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
                       ? NetworkImage(room.streamerAvatarUrl!)
                       : null,
@@ -199,7 +202,7 @@ class StreamerQuickSheet extends StatelessWidget {
                     if (room.streamerVerified) ...[
                       const SizedBox(width: 6),
                       const Icon(Icons.verified,
-                          color: Color(0xFFB6A6FF), size: 18),
+                          color: AppColors.braweSky, size: 18),
                     ],
                   ],
                 ),
@@ -274,7 +277,7 @@ class _QuickSheetButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: filled
               ? const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFFB44CF0)],
+                  colors: [AppColors.braweBlue, AppColors.braweSky],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )

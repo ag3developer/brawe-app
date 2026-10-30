@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Raw, brand-level color palette.
 ///
-/// These are the **unchanging** values that identify Brawe (purples, cyans,
-/// pinks, gold). They do NOT change between light and dark mode.
+/// These are the **unchanging** values that identify Brawe (the blues and
+/// oranges of the symbol, plus gold and status colors). They do NOT change between light and dark mode.
 ///
 /// For surface/text/divider colors that DO change between themes, use
 /// [BraweColors] via `context.colors` instead.
@@ -11,10 +11,21 @@ class AppColors {
   const AppColors._();
 
   // ── Brand (fixed across themes) ─────────────────────────────────────────────
-  static const Color electricPurple = Color(0xFF6E4DFF);
-  static const Color softViolet = Color(0xFF8C6BFF);
-  static const Color lightViolet = Color(0xFFB6A6FF);
-  static const Color coolCyan = Color(0xFF3BB8FF);
+  // Cores do símbolo Brawe (guia de marca). O roxo antigo (#6E4DFF) saiu.
+  static const Color braweBlue = Color(0xFF0061F3); // ação no tema claro
+  static const Color braweBlueBright = Color(0xFF1A6DFF); // ação no tema escuro
+  static const Color braweBlueLight = Color(0xFF3D84FF);
+  static const Color braweBlueSoft = Color(0xFF8DB8FF);
+  static const Color braweSky = Color(0xFF0098FE);
+  static const Color braweDeep = Color(0xFF042BCA);
+  static const Color braweOrange = Color(0xFFFF8300); // comércio e lives
+  static const Color braweEmber = Color(0xFFFF6A09);
+  static const Color braweSpark = Color(0xFFFF9000);
+  static const Color liveRed = Color(0xFFE5123D); // só o selo AO VIVO
+
+  /// Degradê do símbolo: anel de stories, destaques de marca.
+  static const List<Color> brandGradient = [braweDeep, braweBlue, braweOrange];
+
   static const Color hotPink = Color(0xFFEC4899);
   static const Color brandPink = Color(0xFFFF4D8B);
   static const Color gold = Color(0xFFFFD166);

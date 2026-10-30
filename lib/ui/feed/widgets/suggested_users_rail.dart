@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/services/social_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 part 'suggested_users_rail.g.dart';
@@ -41,13 +42,13 @@ class _T {
   static const LinearGradient brand = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFA855F7), Color(0xFFEC4899), Color(0xFFF59E0B)],
+    colors: AppColors.brandGradient,
   );
 
   static const LinearGradient storyRing = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
+    colors: AppColors.brandGradient,
   );
 
   static const Color live = Color(0xFFFF3B7E);

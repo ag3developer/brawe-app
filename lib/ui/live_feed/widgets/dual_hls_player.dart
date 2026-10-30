@@ -185,7 +185,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    AppColors.electricPurple.withValues(alpha: 0.85),
+                    AppColors.braweBlue.withValues(alpha: 0.85),
                     Colors.white.withValues(alpha: 0.95),
                     AppColors.hotPink.withValues(alpha: 0.85),
                   ],
@@ -193,7 +193,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.electricPurple.withValues(alpha: 0.45),
+                    color: AppColors.braweBlue.withValues(alpha: 0.45),
                     blurRadius: 6,
                     offset: const Offset(-1, 0),
                   ),

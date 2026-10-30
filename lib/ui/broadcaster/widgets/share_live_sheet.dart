@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/social_repository.dart';
@@ -45,12 +46,14 @@ class ShareLiveSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useSafeArea: true,
-      builder: (_) => ShareLiveSheet(
-        roomId: roomId,
-        title: title,
-        slug: slug,
-        streamerName: streamerName,
-        thumbnailUrl: thumbnailUrl,
+      builder: (_) => ForceDarkTheme(
+        child: ShareLiveSheet(
+          roomId: roomId,
+          title: title,
+          slug: slug,
+          streamerName: streamerName,
+          thumbnailUrl: thumbnailUrl,
+        ),
       ),
     );
   }
@@ -187,7 +190,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          backgroundColor: AppColors.electricPurple,
+          backgroundColor: AppColors.braweBlue,
           content: Text(s.shareLiveSentToCount(sent)),
         ),
       );
@@ -229,7 +232,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                   child: _loading
                       ? const Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                           ),
                         )
                       : _error != null
@@ -289,7 +292,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         color: AppColors.slate,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.electricPurple.withValues(alpha: 0.25),
+          color: AppColors.braweBlue.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -485,8 +488,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
           child: ElevatedButton(
             onPressed: hasSelection && !_sending ? _send : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.electricPurple,
-              disabledBackgroundColor: AppColors.electricPurple.withValues(
+              backgroundColor: AppColors.braweBlue,
+              disabledBackgroundColor: AppColors.braweBlue.withValues(
                 alpha: 0.3,
               ),
               foregroundColor: Colors.white,
@@ -576,7 +579,7 @@ class _RecipientTile extends StatelessWidget {
                         const Icon(
                           Icons.verified,
                           size: 14,
-                          color: AppColors.coolCyan,
+                          color: AppColors.braweSky,
                         ),
                       ],
                     ],
@@ -599,10 +602,10 @@ class _RecipientTile extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? AppColors.electricPurple : Colors.transparent,
+                color: selected ? AppColors.braweBlue : Colors.transparent,
                 border: Border.all(
                   color: selected
-                      ? AppColors.electricPurple
+                      ? AppColors.braweBlue
                       : AppColors.coolGray.withValues(alpha: 0.5),
                   width: 1.6,
                 ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:brawe_app/core/services/broadcast_audio_processing.dart';
 
+import '../../core/themes/app_colors.dart';
+
 /// Painel de áudio minimalista — design moderno, glassmorphism, ícones Lucide.
 class AudioProcessorPanel extends StatefulWidget {
   final VoidCallback? onClose;
@@ -129,7 +131,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                       min: -12,
                       max: 12,
                       divisions: 48,
-                      color: const Color(0xFFFF3D6E),
+                      color: AppColors.braweBlueLight,
                       displayValue:
                           '${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}',
                       onChanged: (v) {
@@ -185,12 +187,12 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: const Color(0xFFFF3D6E).withValues(alpha: 0.15),
+          color: AppColors.braweBlueLight.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(
           LucideIcons.waves,
-          color: Color(0xFFFF3D6E),
+          color: AppColors.braweBlueLight,
           size: 18,
         ),
       ),
@@ -254,12 +256,12 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
               width: 68,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFFFF3D6E).withValues(alpha: 0.18)
+                    ? AppColors.braweBlueLight.withValues(alpha: 0.18)
                     : Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFFFF3D6E).withValues(alpha: 0.7)
+                      ? AppColors.braweBlueLight.withValues(alpha: 0.7)
                       : Colors.white.withValues(alpha: 0.07),
                   width: isSelected ? 1.5 : 1,
                 ),
@@ -271,7 +273,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                     meta.icon,
                     size: 20,
                     color: isSelected
-                        ? const Color(0xFFFF3D6E)
+                        ? AppColors.braweBlueLight
                         : const Color(0xFF888888),
                   ),
                   const SizedBox(height: 5),

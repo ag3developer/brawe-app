@@ -82,9 +82,9 @@ class _UserStatusSheet extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.colors.surface,
+        color: context.colors.surfaceElevated,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: context.colors.surfaceHighest.withValues(alpha: 0.06)),
+        border: Border.all(color: context.colors.border),
       ),
       child: SafeArea(
         top: false,
@@ -100,15 +100,15 @@ class _UserStatusSheet extends ConsumerWidget {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: context.colors.surfaceHighest.withValues(alpha: 0.15),
+                    color: context.colors.textTertiary.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 18),
               ShaderMask(
-                shaderCallback: (b) => const LinearGradient(
-                  colors: [Colors.white, AppColors.coolCyan],
+                shaderCallback: (b) => LinearGradient(
+                  colors: [context.colors.textPrimary, context.colors.accentPrimary],
                 ).createShader(b),
                 child: Text(
                   S.of(context).chatStatusSheetTitle,
@@ -145,12 +145,12 @@ class _UserStatusSheet extends ConsumerWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: selected
-                          ? AppColors.electricPurple.withValues(alpha: 0.15)
-                          : context.colors.surfaceHighest.withValues(alpha: 0.03),
+                          ? AppColors.braweBlue.withValues(alpha: 0.15)
+                          : context.colors.surfaceHighest,
                       border: Border.all(
                         color: selected
-                            ? AppColors.electricPurple.withValues(alpha: 0.55)
-                            : context.colors.surfaceHighest.withValues(alpha: 0.06),
+                            ? AppColors.braweBlue.withValues(alpha: 0.55)
+                            : context.colors.border,
                         width: 1.5,
                       ),
                     ),
@@ -194,13 +194,13 @@ class _UserStatusSheet extends ConsumerWidget {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.electricPurple,
-                                  AppColors.coolCyan,
+                                  AppColors.braweBlue,
+                                  AppColors.braweSky,
                                 ],
                               ),
                             ),
                             child: Icon(Icons.check,
-                                color: context.colors.textPrimary, size: 14),
+                                color: Colors.white, size: 14),
                           ),
                       ],
                     ),

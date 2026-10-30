@@ -62,7 +62,7 @@ class _FollowsScreenState extends ConsumerState<FollowsScreen>
           controller: _tabController,
           labelColor: context.colors.textPrimary,
           unselectedLabelColor: context.colors.textSecondary,
-          indicatorColor: AppColors.mutedRed,
+          indicatorColor: AppColors.braweBlue,
           indicatorWeight: 2,
           tabs: [
             Tab(text: s.followsTabFollowers),
@@ -114,7 +114,7 @@ class _SearchBar extends StatelessWidget {
           hintStyle: TextStyle(color: context.colors.textSecondary),
           prefixIcon: Icon(Icons.search, color: context.colors.textSecondary),
           filled: true,
-          fillColor: Colors.white10,
+          fillColor: context.colors.surfaceHighest,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(24),
@@ -178,7 +178,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
 
     return asyncState.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.mutedRed),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
       error: (e, _) => Center(
         child: Column(
@@ -206,7 +206,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
                   .refresh(),
               child: Text(
                 S.of(context).followsTryAgain,
-                style: const TextStyle(color: AppColors.mutedRed),
+                style: const TextStyle(color: AppColors.braweBlue),
               ),
             ),
           ],
@@ -252,7 +252,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
         }
 
         return RefreshIndicator(
-          color: AppColors.mutedRed,
+          color: AppColors.braweBlue,
           backgroundColor: context.colors.background,
           onRefresh: () => ref
               .read(
@@ -272,7 +272,7 @@ class _FollowsListState extends ConsumerState<_FollowsList>
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.mutedRed,
+                      color: AppColors.braweBlue,
                       strokeWidth: 2,
                     ),
                   ),
@@ -342,14 +342,14 @@ class _UserRow extends StatelessWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.mutedRed,
+                        color: AppColors.liveRed,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.black, width: 1.5),
+                        border: Border.all(color: context.colors.background, width: 1.5),
                       ),
                       child: Text(
                         S.of(context).followsLiveBadge,
                         style: TextStyle(
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           fontSize: 8,
                           fontWeight: FontWeight.w800,
                         ),
@@ -380,10 +380,10 @@ class _UserRow extends StatelessWidget {
                       ),
                       if (user.isVerified) ...[
                         const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.verified,
                           size: 14,
-                          color: Colors.lightBlueAccent,
+                          color: context.colors.accentPrimary,
                         ),
                       ],
                     ],
@@ -430,7 +430,9 @@ class _FollowChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isFollowing ? Colors.white10 : AppColors.mutedRed,
+      color: isFollowing
+          ? context.colors.surfaceHighest
+          : AppColors.braweBlue,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -440,7 +442,7 @@ class _FollowChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isFollowing ? Colors.white24 : Colors.transparent,
+              color: isFollowing ? context.colors.border : Colors.transparent,
             ),
           ),
           child: Text(
@@ -448,7 +450,9 @@ class _FollowChip extends StatelessWidget {
                 ? S.of(context).actionUnfollow
                 : S.of(context).actionFollow,
             style: TextStyle(
-              color: context.colors.textPrimary,
+              color: isFollowing
+                  ? context.colors.textPrimary
+                  : context.colors.textOnAccent,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),

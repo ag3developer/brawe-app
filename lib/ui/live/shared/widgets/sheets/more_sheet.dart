@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 
 /// Bottom sheet moderno (glassmorphism + dark) que substitui o
@@ -24,7 +25,7 @@ class MoreSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.55),
       isScrollControlled: true,
-      builder: (_) => MoreSheet._(onShare: onShare),
+      builder: (_) => ForceDarkTheme(child: MoreSheet._(onShare: onShare)),
     );
   }
 
@@ -62,7 +63,7 @@ class MoreSheet extends StatelessWidget {
                   ),
                   _MoreTile(
                     icon: Icons.send_rounded,
-                    iconColor: AppColors.electricPurple,
+                    iconColor: AppColors.braweBlue,
                     title: s.livePlayerShareTitle,
                     subtitle: s.livePlayerShareSubtitle,
                     onTap: () {

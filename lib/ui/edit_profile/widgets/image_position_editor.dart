@@ -225,7 +225,7 @@ class _ImagePositionEditorState extends State<ImagePositionEditor> {
                 : Text(
                     S.of(context).editProfileImageDone,
                     style: const TextStyle(
-                      color: AppColors.mutedRed,
+                      color: AppColors.braweBlueBright,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -234,7 +234,7 @@ class _ImagePositionEditorState extends State<ImagePositionEditor> {
       ),
       body: _image == null
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.mutedRed),
+              child: CircularProgressIndicator(color: AppColors.braweBlueBright),
             )
           : LayoutBuilder(
               builder: (context, constraints) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/themes/app_colors.dart';
 
 /// Bottom bar da live no estilo TikTok Live (TELA DO ESPECTADOR):
 ///
@@ -156,7 +157,7 @@ class LiveBottomBar extends StatelessWidget {
                                     : Icons.chat_bubble_outline_rounded,
                                 key: ValueKey(hasText),
                                 color: hasText
-                                    ? const Color(0xFFFF4F8B)
+                                    ? AppColors.braweBlueLight
                                     : Colors.white.withValues(alpha: 0.85),
                                 size: 20,
                               ),
@@ -191,11 +192,11 @@ class LiveBottomBar extends StatelessWidget {
             label: 'Rosa',
             onTap: onSendRose,
           ),
-          // 🎁 Presentes — abre o catálogo. Ícone rosa de marca (sutil destaque).
+          // 🎁 Presentes — abre o catálogo. Ícone laranja de marca (sutil destaque).
           _LiveActionButton(
             icon: Icons.card_giftcard_rounded,
             label: 'Presente',
-            iconColor: const Color(0xFFFF4F8B),
+            iconColor: AppColors.braweOrange,
             onTap: onGifts,
           ),
           if (hasStorefront)

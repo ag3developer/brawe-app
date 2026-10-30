@@ -98,7 +98,7 @@ class ChatLine extends StatelessWidget {
 
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
                       image: NetworkImage(comment.avatarUrl!),
@@ -162,7 +162,7 @@ class ChatLine extends StatelessWidget {
                       style: TextStyle(
                         color: isHost
                             ? const Color(0xFFFFD166)
-                            : const Color(0xFFC9B6FF),
+                            : AppColors.braweBlueSoft,
                         fontWeight: FontWeight.w700,
                         fontSize: 12.5,
                       ),

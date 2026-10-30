@@ -110,7 +110,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.electricPurple.withValues(
+                          color: AppColors.braweBlue.withValues(
                             alpha: 0.2,
                           ),
                           borderRadius: BorderRadius.circular(10),
@@ -118,7 +118,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                         child: Text(
                           '${comments.length}',
                           style: const TextStyle(
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -137,7 +137,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 child: commentsState.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                   ),
                   error: (_, _) => Center(
@@ -194,7 +194,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     children: [
                       const Icon(
                         Icons.reply,
-                        color: AppColors.electricPurple,
+                        color: AppColors.braweBlue,
                         size: 16,
                       ),
                       const SizedBox(width: 8),
@@ -280,7 +280,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                         width: 36,
                         height: 36,
                         decoration: const BoxDecoration(
-                          color: AppColors.electricPurple,
+                          color: AppColors.braweBlue,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -320,7 +320,7 @@ class _CommentTile extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       color: highlighted
-          ? AppColors.electricPurple.withValues(alpha: 0.10)
+          ? AppColors.braweBlue.withValues(alpha: 0.10)
           : Colors.transparent,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -357,7 +357,7 @@ class _CommentTile extends StatelessWidget {
                             const SizedBox(width: 3),
                             const Icon(
                               Icons.verified,
-                              color: AppColors.electricPurple,
+                              color: AppColors.braweBlue,
                               size: 13,
                             ),
                           ],

@@ -34,6 +34,7 @@ import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../wallet/widgets/top_up_coins_sheet.dart';
+import '../../core/themes/app_colors.dart';
 
 // ── Qualidade de stream ───────────────────────────────────────────────────────
 
@@ -1089,45 +1090,6 @@ class _ViewerChatDock extends StatelessWidget {
 
 // ── Seletor de qualidade de stream ───────────────────────────────────────────
 
-/// Botão compacto que exibe a qualidade atual e abre o seletor.
-// ignore: unused_element, unused_field, unused_element_parameter
-class _QualityButton extends StatelessWidget {
-  final StreamQuality quality;
-  final VoidCallback onTap;
-
-  const _QualityButton({required this.quality, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.settings, color: Colors.white, size: 13),
-            const SizedBox(width: 4),
-            Text(
-              quality.label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Bottom sheet para selecionar qualidade do stream.
 class _QualitySheet extends StatelessWidget {
   final StreamQuality current;
@@ -1221,7 +1183,7 @@ class _QualityTile extends StatelessWidget {
             // Ícone de qualidade
             Icon(
               _iconFor(quality),
-              color: isSelected ? const Color(0xFFE91E8C) : Colors.white54,
+              color: isSelected ? AppColors.braweBlueLight : Colors.white54,
               size: 20,
             ),
             const SizedBox(width: 12),
@@ -1252,7 +1214,7 @@ class _QualityTile extends StatelessWidget {
             if (isSelected)
               const Icon(
                 Icons.check_circle,
-                color: Color(0xFFE91E8C),
+                color: AppColors.braweBlueLight,
                 size: 20,
               ),
           ],

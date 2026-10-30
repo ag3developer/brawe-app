@@ -1,4 +1,3 @@
-// ignore_for_file: unused_element_parameter
 import 'dart:async';
 import 'dart:io';
 
@@ -154,8 +153,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _sendGif(String gifUrl) async {
     // Send GIF as image message with the remote URL
-    // ignore: unused_local_variable
-    final optimisticId = 'local-gif-${DateTime.now().microsecondsSinceEpoch}';
     ref
         .read(chatDetailViewModelProvider(widget.conversationId).notifier)
         .sendMessage('gif:$gifUrl');
@@ -233,7 +230,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void _showMoreMenu(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
-      backgroundColor: ctx.colors.surface,
+      backgroundColor: ctx.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -249,7 +246,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 18),
                 decoration: BoxDecoration(
-                  color: context.colors.surfaceHighest.withValues(alpha: 0.15),
+                  color: context.colors.textTertiary.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -447,10 +444,10 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
     Color statusColor;
     if (isTyping) {
       statusText = S.of(context).chatDetailStatusTyping;
-      statusColor = AppColors.coolCyan;
+      statusColor = context.colors.accentPrimary;
     } else if (isOnline) {
       statusText = S.of(context).chatDetailStatusOnline;
-      statusColor = Colors.greenAccent.shade400;
+      statusColor = context.colors.success;
     } else if (lastSeen != null) {
       statusText = S
           .of(context)
@@ -550,7 +547,7 @@ class _AppBarAction extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 10),
       child: Material(
-        color: context.colors.surfaceHighest.withValues(alpha: 0.04),
+        color: context.colors.surfaceHighest,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -561,7 +558,7 @@ class _AppBarAction extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+                color: context.colors.border,
               ),
             ),
             child: Icon(icon, color: context.colors.textPrimary, size: 19),
@@ -612,11 +609,11 @@ class _TypingDotsState extends State<_TypingDots>
                 width: 4,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.coolCyan.withValues(alpha: 0.35 + v * 0.6),
+                  color: AppColors.braweSky.withValues(alpha: 0.35 + v * 0.6),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.coolCyan.withValues(alpha: 0.4 * v),
+                      color: AppColors.braweSky.withValues(alpha: 0.4 * v),
                       blurRadius: 4,
                     ),
                   ],
@@ -680,7 +677,7 @@ class _MessageList extends ConsumerWidget {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.electricPurple,
+                  color: AppColors.braweBlue,
                 ),
               ),
             ),
@@ -781,11 +778,11 @@ class _TypingBubbleState extends State<_TypingBubble>
                 bottomLeft: Radius.circular(4),
               ),
               border: Border.all(
-                color: AppColors.electricPurple.withValues(alpha: 0.25),
+                color: AppColors.braweBlue.withValues(alpha: 0.25),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.12),
+                  color: AppColors.braweBlue.withValues(alpha: 0.12),
                   blurRadius: 8,
                 ),
               ],
@@ -813,10 +810,10 @@ class _TypingBubbleState extends State<_TypingBubble>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              AppColors.coolCyan.withValues(
+                              AppColors.braweSky.withValues(
                                 alpha: 0.6 + v * 0.4,
                               ),
-                              AppColors.electricPurple.withValues(
+                              AppColors.braweBlue.withValues(
                                 alpha: 0.5 + v * 0.4,
                               ),
                             ],
@@ -824,7 +821,7 @@ class _TypingBubbleState extends State<_TypingBubble>
                           borderRadius: BorderRadius.circular(4),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.coolCyan.withValues(
+                              color: AppColors.braweSky.withValues(
                                 alpha: 0.3 * v,
                               ),
                               blurRadius: 6,
@@ -867,17 +864,17 @@ class _DateSeparator extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.electricPurple.withValues(alpha: 0.18),
-                AppColors.coolCyan.withValues(alpha: 0.18),
+                AppColors.braweBlue.withValues(alpha: 0.18),
+                AppColors.braweSky.withValues(alpha: 0.18),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+              color: context.colors.border,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.electricPurple.withValues(alpha: 0.12),
+                color: AppColors.braweBlue.withValues(alpha: 0.12),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -1003,7 +1000,7 @@ class _MessageBubble extends ConsumerWidget {
                 ? const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                   )
                 : null,
             color: (!isMe || _isImage || message.isBurned)
@@ -1017,7 +1014,7 @@ class _MessageBubble extends ConsumerWidget {
             boxShadow: isMe && !_isImage && !message.isBurned
                 ? [
                     BoxShadow(
-                      color: AppColors.electricPurple.withValues(alpha: 0.35),
+                      color: AppColors.braweBlue.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -1129,15 +1126,13 @@ class _MessageBubble extends ConsumerWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.electricPurple.withValues(alpha: 0.18),
-                        AppColors.coolCyan.withValues(alpha: 0.18),
+                        AppColors.braweBlue.withValues(alpha: 0.18),
+                        AppColors.braweSky.withValues(alpha: 0.18),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: context.colors.surfaceHighest.withValues(
-                        alpha: 0.08,
-                      ),
+                      color: context.colors.border,
                     ),
                   ),
                   child: Row(
@@ -1171,9 +1166,7 @@ class _MessageBubble extends ConsumerWidget {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: context.colors.surfaceHighest.withValues(
-                              alpha: 0.06,
-                            ),
+                            color: context.colors.surfaceHighest,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -1190,7 +1183,7 @@ class _MessageBubble extends ConsumerWidget {
             const SizedBox(height: 4),
             if (!message.isBurned)
               ListTile(
-                leading: const Icon(Icons.reply, color: AppColors.coolCyan),
+                leading: const Icon(Icons.reply, color: AppColors.braweSky),
                 title: Text(
                   S.of(context).chatDetailReply,
                   style: TextStyle(color: context.colors.textPrimary),
@@ -1362,7 +1355,7 @@ class _TextBubbleContent extends ConsumerWidget {
               _formatTime(message.timestamp),
               style: TextStyle(
                 color: isMe
-                    ? context.colors.textSecondary
+                    ? Colors.white70
                     : context.colors.textSecondary,
                 fontSize: 10,
               ),
@@ -1372,7 +1365,7 @@ class _TextBubbleContent extends ConsumerWidget {
               if (message.isRead)
                 ShaderMask(
                   shaderCallback: (r) => const LinearGradient(
-                    colors: [AppColors.coolCyan, AppColors.electricPurple],
+                    colors: [AppColors.braweSky, AppColors.braweBlue],
                   ).createShader(r),
                   blendMode: BlendMode.srcIn,
                   child: Icon(
@@ -1432,7 +1425,7 @@ class _GifBubbleContent extends StatelessWidget {
                 child: const Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                   ),
                 ),
               );
@@ -1450,7 +1443,7 @@ class _GifBubbleContent extends StatelessWidget {
               child: Text(
                 'GIF',
                 style: TextStyle(
-                  color: context.colors.textPrimary,
+                  color: Colors.white,
                   fontSize: 9,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1502,7 +1495,7 @@ class _ImageBubbleContent extends StatelessWidget {
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                           ),
                         ),
                       ),
@@ -1537,7 +1530,7 @@ class _ImageBubbleContent extends StatelessWidget {
                       Text(
                         S.of(context).chatDetailViewOnceBadge,
                         style: TextStyle(
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           fontSize: 10,
                         ),
                       ),
@@ -1554,7 +1547,7 @@ class _ImageBubbleContent extends StatelessWidget {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: context.colors.textPrimary,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -1633,7 +1626,7 @@ class _ImageViewerPage extends StatelessWidget {
                   imageUrl: message.content,
                   fit: BoxFit.contain,
                   placeholder: (_, _) => const CircularProgressIndicator(
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                   ),
                   errorWidget: (_, _, _) => Icon(
                     Icons.broken_image,
@@ -1661,8 +1654,8 @@ class _EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.electricPurple.withValues(alpha: 0.30),
-                  AppColors.coolCyan.withValues(alpha: 0.0),
+                  AppColors.braweBlue.withValues(alpha: 0.30),
+                  AppColors.braweSky.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -1743,8 +1736,6 @@ class _ComposerState extends ConsumerState<_Composer>
   String? _recordingPath;
   int _recordingSeconds = 0;
   Timer? _recordTimer;
-  // ignore: unused_field
-  double _dragOffset = 0;
 
   // ── animation (pulse while recording) ──
   late final AnimationController _pulseCtrl;
@@ -1800,7 +1791,6 @@ class _ComposerState extends ConsumerState<_Composer>
       _isCancelling = false;
       _recordingPath = path;
       _recordingSeconds = 0;
-      _dragOffset = 0;
     });
     _pulseCtrl.repeat(reverse: true);
     _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -1819,7 +1809,6 @@ class _ComposerState extends ConsumerState<_Composer>
     setState(() {
       _isRecording = false;
       _isCancelling = false;
-      _dragOffset = 0;
     });
     if (path == null || secs < 1) return; // muito curto → descartar
     await ref
@@ -1843,7 +1832,6 @@ class _ComposerState extends ConsumerState<_Composer>
     setState(() {
       _isRecording = false;
       _isCancelling = false;
-      _dragOffset = 0;
     });
     HapticFeedback.heavyImpact();
   }
@@ -1855,7 +1843,7 @@ class _ComposerState extends ConsumerState<_Composer>
         color: context.colors.surface,
         border: Border(
           top: BorderSide(
-            color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+            color: context.colors.border,
           ),
         ),
       ),
@@ -1875,14 +1863,10 @@ class _ComposerState extends ConsumerState<_Composer>
                       child: Container(
                         padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
                         decoration: BoxDecoration(
-                          color: context.colors.surfaceHighest.withValues(
-                            alpha: 0.04,
-                          ),
+                          color: context.colors.surfaceHighest,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: context.colors.textPrimary.withValues(
-                              alpha: 0.06,
-                            ),
+                            color: context.colors.border,
                           ),
                         ),
                         child: Row(
@@ -1896,8 +1880,8 @@ class _ComposerState extends ConsumerState<_Composer>
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    AppColors.electricPurple,
-                                    AppColors.coolCyan,
+                                    AppColors.braweBlue,
+                                    AppColors.braweSky,
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(2),
@@ -1912,7 +1896,7 @@ class _ComposerState extends ConsumerState<_Composer>
                                   Text(
                                     S.of(context).chatDetailReplying,
                                     style: TextStyle(
-                                      color: AppColors.electricPurple,
+                                      color: AppColors.braweBlue,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -2063,7 +2047,6 @@ class _ComposerState extends ConsumerState<_Composer>
                                           e.localPosition.dx -
                                           23; // centro do botão 46/2
                                       setState(() {
-                                        _dragOffset = dx;
                                         _isCancelling = dx < -60;
                                       });
                                     },
@@ -2225,7 +2208,7 @@ class _MicButton extends StatelessWidget {
                         : [Colors.redAccent, Colors.red],
                   )
                 : const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                   ),
           ),
           child: Icon(
@@ -2241,7 +2224,6 @@ class _MicButton extends StatelessWidget {
 
 class _IconRoundButton extends StatelessWidget {
   const _IconRoundButton({
-    super.key,
     required this.icon,
     required this.onTap,
     this.tint,
@@ -2281,7 +2263,7 @@ class _SendButton extends StatelessWidget {
         height: 46,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.electricPurple, AppColors.coolCyan],
+            colors: [AppColors.braweBlue, AppColors.braweSky],
           ),
           shape: BoxShape.circle,
         ),
@@ -2321,7 +2303,7 @@ class _AttachOption extends StatelessWidget {
                 color: context.colors.background,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: AppColors.electricPurple, size: 26),
+              child: Icon(icon, color: AppColors.braweBlue, size: 26),
             ),
             const SizedBox(height: 6),
             Text(
@@ -2369,7 +2351,7 @@ class _MoreMenuItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             color: isDanger
                 ? AppColors.mutedRed.withValues(alpha: 0.07)
-                : context.colors.surfaceHighest.withValues(alpha: 0.03),
+                : context.colors.surfaceHighest,
           ),
           child: Row(
             children: [
@@ -2432,11 +2414,11 @@ class _SharedPostPreview extends ConsumerWidget {
     final asyncPost = ref.watch(sharedPostPreviewProvider(postId));
 
     final bg = isMe
-        ? context.colors.surfaceHighest.withValues(alpha: 0.12)
+        ? context.colors.surface
         : context.colors.background.withValues(alpha: 0.55);
     final border = isMe
         ? Colors.white24
-        : context.colors.surfaceHighest.withValues(alpha: 0.06);
+        : context.colors.border;
 
     return GestureDetector(
       onTap: () => _openPost(context),
@@ -2568,7 +2550,7 @@ class _SharedPostPreview extends ConsumerWidget {
                     const SizedBox(width: 3),
                     const Icon(
                       Icons.verified,
-                      color: AppColors.coolCyan,
+                      color: AppColors.braweSky,
                       size: 13,
                     ),
                   ],
@@ -2620,8 +2602,8 @@ class _SharedPostPreview extends ConsumerWidget {
                   const Spacer(),
                   Text(
                     S.of(context).chatDetailViewPost,
-                    style: const TextStyle(
-                      color: AppColors.coolCyan,
+                    style: TextStyle(
+                      color: context.colors.accentPrimary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -2745,7 +2727,7 @@ class _WaveformPreviewState extends State<_WaveformPreview>
                 gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [AppColors.electricPurple, AppColors.coolCyan],
+                  colors: [AppColors.braweBlue, AppColors.braweSky],
                 ),
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -2923,7 +2905,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [AppColors.electricPurple, AppColors.coolCyan],
+                colors: [AppColors.braweBlue, AppColors.braweSky],
               ),
             ),
             child: Icon(
@@ -2980,7 +2962,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.electricPurple),
+                      side: BorderSide(color: AppColors.braweBlue),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -2989,14 +2971,14 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                     onPressed: _togglePlay,
                     icon: Icon(
                       _isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                     label: Text(
                       _isPlaying
                           ? '${_fmt(_playPosition.inSeconds)} / ${_fmt(_playDuration.inSeconds)}'
                           : 'Ouvir',
                       style: TextStyle(
-                        color: AppColors.electricPurple,
+                        color: AppColors.braweBlue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3007,7 +2989,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.electricPurple,
+                      backgroundColor: AppColors.braweBlue,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -3162,7 +3144,7 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
-                  colors: [AppColors.electricPurple, AppColors.coolCyan],
+                  colors: [AppColors.braweBlue, AppColors.braweSky],
                 ),
               ),
               child: _isLoading
@@ -3190,9 +3172,9 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: progressValue,
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation(
-                      AppColors.electricPurple,
+                    backgroundColor: widget.isMe ? Colors.white.withValues(alpha: 0.2) : context.colors.border,
+                    valueColor: AlwaysStoppedAnimation(
+                      widget.isMe ? Colors.white : context.colors.accentPrimary,
                     ),
                     minHeight: 3,
                   ),
@@ -3246,12 +3228,12 @@ class _ReplyQuote extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       decoration: BoxDecoration(
         color: isMe
-            ? context.colors.surfaceHighest.withValues(alpha: 0.18)
-            : context.colors.surfaceHighest.withValues(alpha: 0.05),
+            ? Colors.white.withValues(alpha: 0.18)
+            : context.colors.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border(
           left: BorderSide(
-            color: isMe ? Colors.white : AppColors.coolCyan,
+            color: isMe ? Colors.white : AppColors.braweSky,
             width: 3,
           ),
         ),
@@ -3263,7 +3245,7 @@ class _ReplyQuote extends StatelessWidget {
           Text(
             s.chatDetailReplying,
             style: TextStyle(
-              color: isMe ? context.colors.textPrimary : AppColors.coolCyan,
+              color: isMe ? Colors.white : context.colors.accentPrimary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.3,
@@ -3276,7 +3258,7 @@ class _ReplyQuote extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: isMe
-                  ? context.colors.textSecondary
+                  ? Colors.white70
                   : context.colors.textSecondary,
               fontSize: 12,
               height: 1.2,
@@ -3311,13 +3293,13 @@ class _ReactionChips extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.electricPurple.withValues(alpha: 0.22),
-                      AppColors.coolCyan.withValues(alpha: 0.22),
+                      AppColors.braweBlue.withValues(alpha: 0.22),
+                      AppColors.braweSky.withValues(alpha: 0.22),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: context.colors.surfaceHighest.withValues(alpha: 0.1),
+                    color: context.colors.border,
                   ),
                 ),
                 child: Row(
@@ -3828,7 +3810,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: context.colors.surfaceHighest.withValues(alpha: 0.18),
+                color: context.colors.textTertiary.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -3856,22 +3838,20 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                         gradient: selected
                             ? const LinearGradient(
                                 colors: [
-                                  AppColors.electricPurple,
-                                  AppColors.coolCyan,
+                                  AppColors.braweBlue,
+                                  AppColors.braweSky,
                                 ],
                               )
                             : null,
                         color: selected
                             ? null
                             : isGif
-                            ? AppColors.electricPurple.withValues(alpha: 0.12)
-                            : context.colors.surfaceHighest.withValues(
-                                alpha: 0.05,
-                              ),
+                            ? AppColors.braweBlue.withValues(alpha: 0.12)
+                            : context.colors.surfaceHighest,
                         borderRadius: BorderRadius.circular(20),
                         border: isGif && !selected
                             ? Border.all(
-                                color: AppColors.electricPurple.withValues(
+                                color: AppColors.braweBlue.withValues(
                                   alpha: 0.35,
                                 ),
                               )
@@ -3883,7 +3863,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                               children: [
                                 Icon(
                                   Icons.gif,
-                                  color: context.colors.textPrimary,
+                                  color: selected ? Colors.white : context.colors.accentPrimary,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 4),
@@ -3891,8 +3871,8 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                                   'GIF',
                                   style: TextStyle(
                                     color: selected
-                                        ? context.colors.textPrimary
-                                        : AppColors.electricPurple,
+                                        ? Colors.white
+                                        : context.colors.accentPrimary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -3903,7 +3883,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                               allTabs[i],
                               style: TextStyle(
                                 color: selected
-                                    ? context.colors.textPrimary
+                                    ? Colors.white
                                     : context.colors.textSecondary,
                                 fontSize: 13,
                                 fontWeight: selected
@@ -4020,7 +4000,7 @@ class _GifGrid extends StatelessWidget {
                       child: const Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.electricPurple,
+                          color: AppColors.braweBlue,
                         ),
                       ),
                     );
@@ -4042,7 +4022,7 @@ class _GifGrid extends StatelessWidget {
                     child: Text(
                       'GIF',
                       style: TextStyle(
-                        color: context.colors.textPrimary,
+                        color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
                       ),
@@ -4096,18 +4076,14 @@ class _LiveInviteCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0F2E), Color(0xFF2D1B4D)],
-        ),
+        color: context.colors.surface,
         border: Border.all(
-          color: AppColors.electricPurple.withValues(alpha: 0.35),
+          color: AppColors.braweBlue.withValues(alpha: 0.35),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.electricPurple.withValues(alpha: 0.18),
+            color: AppColors.braweBlue.withValues(alpha: 0.18),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -4144,8 +4120,8 @@ class _LiveInviteCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              AppColors.electricPurple,
-                              AppColors.coolCyan,
+                              AppColors.braweBlue,
+                              AppColors.braweSky,
                             ],
                           ),
                         ),
@@ -4197,14 +4173,14 @@ class _LiveInviteCard extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.circle,
-                                color: context.colors.textPrimary,
+                                color: Colors.white,
                                 size: 8,
                               ),
                               SizedBox(width: 4),
                               Text(
                                 S.of(context).liveBadgeLive,
                                 style: TextStyle(
-                                  color: context.colors.textPrimary,
+                                  color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 0.5,
@@ -4218,7 +4194,7 @@ class _LiveInviteCard extends StatelessWidget {
                     Center(
                       child: Icon(
                         Icons.play_circle_fill,
-                        color: context.colors.textPrimary,
+                        color: Colors.white,
                         size: 56,
                       ),
                     ),
@@ -4287,9 +4263,7 @@ class _LiveInviteCard extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: context.colors.surfaceHighest.withValues(
-                            alpha: 0.06,
-                          ),
+                          color: context.colors.surfaceHighest,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -4310,7 +4284,7 @@ class _LiveInviteCard extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.play_arrow_rounded,
-                          color: AppColors.coolCyan,
+                          color: AppColors.braweSky,
                           size: 18,
                         ),
                         const SizedBox(width: 4),
@@ -4318,8 +4292,8 @@ class _LiveInviteCard extends StatelessWidget {
                           isLive
                               ? S.of(context).chatDetailLiveTapToWatch
                               : S.of(context).chatDetailLiveSeeDetails,
-                          style: const TextStyle(
-                            color: AppColors.coolCyan,
+                          style: TextStyle(
+                            color: context.colors.accentPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 12,
                             letterSpacing: 0.3,

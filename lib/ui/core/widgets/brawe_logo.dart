@@ -1,50 +1,40 @@
 import 'package:flutter/material.dart';
 
-/// Reusable Brawe brand mark: "B" icon + "Live your way" tagline,
-/// matching the web app header (frontend/components: ConnectLayoutClient).
+/// Marca Brawe (guia de marca, "Aplicações da marca"). Funciona nos temas
+/// claro e escuro.
+///
+/// - [BraweLogo.new]: o símbolo (o "B" com as faíscas). Padrão dentro do app.
+/// - [BraweLogo.wordmark]: só o nome "Brawe", tinta no claro e branco no
+///   escuro. Usado no topo do feed antes de rolar; nunca ao lado do símbolo.
 class BraweLogo extends StatelessWidget {
-  final double iconSize;
-  final bool showTagline;
-  final Color? taglineColor;
-  final MainAxisAlignment alignment;
+  /// Símbolo: lado da área da imagem. Nome: altura do texto.
+  final double size;
+  final bool _wordmark;
 
-  const BraweLogo({
-    super.key,
-    this.iconSize = 44,
-    this.showTagline = true,
-    this.taglineColor,
-    this.alignment = MainAxisAlignment.center,
-  });
+  const BraweLogo({super.key, this.size = 44}) : _wordmark = false;
+
+  const BraweLogo.wordmark({super.key, this.size = 24}) : _wordmark = true;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tagColor = taglineColor ??
-        (isDark ? Colors.white.withValues(alpha: 0.5) : Colors.grey.shade600);
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: alignment,
-      children: [
-        Image.asset(
-          'assets/images/brawe-icon.png',
-          width: iconSize,
-          height: iconSize,
-          fit: BoxFit.contain,
-        ),
-        if (showTagline) ...[
-          const SizedBox(width: 10),
-          Text(
-            'Live your way',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
-              color: tagColor,
-            ),
-          ),
-        ],
-      ],
+    final String asset;
+    if (_wordmark) {
+      asset = Theme.of(context).brightness == Brightness.dark
+          ? 'assets/images/brawe_wordmark_white.png'
+          : 'assets/images/brawe_wordmark.png';
+    } else {
+      asset = 'assets/images/brawe-icon.png';
+    }
+    return Semantics(
+      label: 'Brawe',
+      image: true,
+      child: Image.asset(
+        asset,
+        width: _wordmark ? null : size,
+        height: size,
+        fit: BoxFit.contain,
+        excludeFromSemantics: true,
+      ),
     );
   }
 }

@@ -506,7 +506,7 @@ class _CommentBubble extends StatelessWidget {
             TextSpan(
               text: '${comment.userName}  ',
               style: const TextStyle(
-                color: Color(0xFFB6A6FF),
+                color: AppColors.braweBlueSoft,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -582,14 +582,14 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF7B2FFF), Color(0xFFBF3DFF)],
+            colors: [AppColors.braweBlue, AppColors.braweSky],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7B2FFF).withValues(alpha: 0.55),
+              color: AppColors.braweBlue.withValues(alpha: 0.45),
               blurRadius: 18,
               offset: const Offset(0, 4),
             ),
@@ -696,7 +696,7 @@ class StreamerIdentity extends ConsumerWidget {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.electricPurple, width: 2),
+              border: Border.all(color: AppColors.braweBlue, width: 2),
             ),
             child: CircleAvatar(
               radius: 18,
@@ -737,7 +737,7 @@ class StreamerIdentity extends ConsumerWidget {
                       const SizedBox(width: 4),
                       const Icon(
                         Icons.verified,
-                        color: Color(0xFFB6A6FF),
+                        color: AppColors.braweBlueSoft,
                         size: 15,
                       ),
                     ],

@@ -62,8 +62,11 @@ class ActionRail extends StatelessWidget {
         // Mystery Gift — animated, signature button
         _MysteryGiftButton(onTap: onGift),
         const SizedBox(height: 18),
+        // Toque: compartilhar. Toque longo: repostar/desfazer — quando já
+        // repostado, o ícone vira "repetir" em verde.
         _RailButton(
-          icon: Icons.send_rounded,
+          icon: item.userReposted ? Icons.repeat_rounded : Icons.send_rounded,
+          color: item.userReposted ? AppColors.success : Colors.white,
           label: _format(item.sharesCount),
           onTap: onShare,
           onLongPress: onShareLongPress,
@@ -140,7 +143,7 @@ class _AvatarFollow extends StatelessWidget {
                   width: 22,
                   height: 22,
                   decoration: const BoxDecoration(
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.add, color: Colors.white, size: 14),
@@ -294,7 +297,7 @@ class _MysteryGiftButtonState extends State<_MysteryGiftButton>
                       colors: [
                         Color(0xFFFFD54F),
                         Color(0xFFFF6F61),
-                        AppColors.electricPurple,
+                        AppColors.braweBlue,
                       ],
                     ),
                     shape: BoxShape.circle,

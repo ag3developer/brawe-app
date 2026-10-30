@@ -118,7 +118,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
             ),
           );
           await Future.delayed(const Duration(seconds: 2));
-          if (mounted) context.go('/shop/orders/${widget.orderId}');
+          if (mounted) context.go('/home');
         }
       } catch (e) {
         // Silently continue polling on transient errors.
@@ -178,7 +178,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.electricPurple),
+          const CircularProgressIndicator(color: AppColors.braweBlue),
           const SizedBox(height: 16),
           Text(
             'Preparando pagamento...',
@@ -235,7 +235,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
               child: ElevatedButton(
                 onPressed: _retry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricPurple,
+                  backgroundColor: AppColors.braweBlue,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -333,7 +333,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isPaid ? AppColors.success : AppColors.electricPurple;
+    final color = isPaid ? AppColors.success : AppColors.braweBlue;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -377,13 +377,13 @@ class _AmountCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.electricPurple.withValues(alpha: 0.10),
-            AppColors.coolCyan.withValues(alpha: 0.08),
+            AppColors.braweBlue.withValues(alpha: 0.10),
+            AppColors.braweSky.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.electricPurple.withValues(alpha: 0.15),
+          color: AppColors.braweBlue.withValues(alpha: 0.15),
         ),
       ),
       child: Column(
@@ -401,7 +401,7 @@ class _AmountCard extends StatelessWidget {
             child: Text(
               'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
               style: const TextStyle(
-                color: AppColors.electricPurple,
+                color: AppColors.braweBlue,
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
@@ -581,7 +581,7 @@ class _CopyPasteField extends StatelessWidget {
                             LucideIcons.copy,
                             key: ValueKey('copy'),
                             size: 20,
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                           ),
                   ),
                 ],
@@ -679,7 +679,7 @@ class _InstructionsCard extends StatelessWidget {
                     height: 22,
                     margin: const EdgeInsets.only(top: 1),
                     decoration: const BoxDecoration(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -727,7 +727,7 @@ class _PollingIndicator extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation(
-                AppColors.electricPurple.withValues(alpha: 0.5),
+                AppColors.braweBlue.withValues(alpha: 0.5),
               ),
             ),
           ),

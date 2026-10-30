@@ -212,10 +212,6 @@ class BroadcastAudioProcessing {
   static bool _isInitialized = false;
 
   // Callbacks para UI (usados na visualização em tempo real)
-  // ignore: unused_field
-  static Function(List<double> spectrum)? _onSpectrumUpdate;
-  // ignore: unused_field
-  static Function(double level)? _onLevelUpdate;
 
   static AudioEQPreset get currentPreset => _currentPreset;
   static CompressorConfig get compressorConfig => _compressorConfig;
@@ -365,16 +361,6 @@ class BroadcastAudioProcessing {
         debugPrint('[BroadcastAudioProcessing] ⚠️ Limiter error: $e');
       }
     }
-  }
-
-  /// Registra callback para visualização de espectro em tempo real
-  static void onSpectrumUpdate(Function(List<double> spectrum) callback) {
-    _onSpectrumUpdate = callback;
-  }
-
-  /// Registra callback para nível de áudio em tempo real (0-1)
-  static void onLevelUpdate(Function(double level) callback) {
-    _onLevelUpdate = callback;
   }
 
   /// Obtém informações sobre o preset atual

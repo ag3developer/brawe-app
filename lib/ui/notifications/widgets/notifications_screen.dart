@@ -225,16 +225,16 @@ class _NotificationTile extends StatelessWidget {
   (IconData, Color) _iconFor(String type) {
     switch (type) {
       case 'follow':
-        return (LucideIcons.userPlus, AppColors.electricPurple);
+        return (LucideIcons.userPlus, AppColors.braweBlue);
       case 'like':
       case 'post_liked':
         return (LucideIcons.heart, AppColors.mutedRed);
       case 'comment':
       case 'post_commented':
-        return (LucideIcons.messageCircle, AppColors.coolCyan);
+        return (LucideIcons.messageCircle, AppColors.braweSky);
       case 'reply':
       case 'comment_replied':
-        return (LucideIcons.cornerUpLeft, AppColors.coolCyan);
+        return (LucideIcons.cornerUpLeft, AppColors.braweSky);
       case 'gift':
       case 'gift_received':
         return (LucideIcons.gift, Colors.amber);
@@ -245,24 +245,24 @@ class _NotificationTile extends StatelessWidget {
         return (LucideIcons.clock, AppColors.mutedRed);
       case 'message':
       case 'new_message':
-        return (LucideIcons.messageSquare, AppColors.coolCyan);
+        return (LucideIcons.messageSquare, AppColors.braweSky);
       case 'quest':
       case 'quest_completed':
-        return (LucideIcons.trophy, AppColors.electricPurple);
+        return (LucideIcons.trophy, AppColors.braweBlue);
       case 'quest_reminder':
-        return (LucideIcons.target, AppColors.electricPurple);
+        return (LucideIcons.target, AppColors.braweBlue);
       case 'new_post':
-        return (LucideIcons.image, AppColors.electricPurple);
+        return (LucideIcons.image, AppColors.braweBlue);
       case 'purchase':
         return (LucideIcons.shoppingBag, Colors.green);
       case 'battle_invite':
         return (LucideIcons.swords, AppColors.mutedRed);
       case 'creator_approved':
-        return (LucideIcons.badgeCheck, AppColors.electricPurple);
+        return (LucideIcons.badgeCheck, AppColors.braweBlue);
       case 'creator_level_up':
-        return (LucideIcons.trendingUp, AppColors.electricPurple);
+        return (LucideIcons.trendingUp, AppColors.braweBlue);
       default:
-        return (LucideIcons.bell, AppColors.electricPurple);
+        return (LucideIcons.bell, AppColors.braweBlue);
     }
   }
 

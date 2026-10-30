@@ -157,7 +157,7 @@ class ShopCartPage extends ConsumerWidget {
                 if (context.canPop()) {
                   context.pop();
                 } else {
-                  context.go('/shop');
+                  context.go('/home');
                 }
               },
             ),

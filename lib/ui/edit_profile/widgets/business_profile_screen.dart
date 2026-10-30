@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/profile_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,7 +177,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const accent = Color(0xFF3B82F6);
+    const accent = AppColors.braweBlue;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -644,7 +645,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+      dropdownColor: context.colors.surfaceElevated,
       style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,

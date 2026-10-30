@@ -20,14 +20,12 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/social_actions_service.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/providers/marketplace_providers.dart';
-import '../../../domain/models/live_room.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/marketplace_models.dart' show Product;
 import '../../../domain/models/profile.dart';
 import 'profile_videos_grid.dart';
 import '../../../domain/models/profile_state.dart';
 import '../../../domain/models/social_stats.dart';
-import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
 import 'package:flutter/services.dart'
@@ -36,6 +34,7 @@ import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
 import '../../chat/view_models/presence_provider.dart';
+import '../view_models/profile_reposts_provider.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
 /// Filtra valores vazios, IDs internos (ex.: BF-10006, AF-2023) e UUIDs.
@@ -107,11 +106,11 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
-  // Abas: Posts, Vídeos, Galeria.
+  // Abas: Posts, Reposts, Vídeos, Galeria.
   // A Vitrine NUNCA fica lado a lado com posts/vídeos/galeria — ela abre
   // como página dedicada fullscreen (/shop/creator/:userId), estilo TikTok
   // Shop, acessível pelo ícone de loja no AppBar.
-  int _tabCount = 3;
+  int _tabCount = 4;
 
   @override
   void initState() {
@@ -150,6 +149,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       Tab(
         icon: const Icon(Icons.article_outlined, size: 20),
         text: s.profileTabPosts,
+      ),
+      Tab(
+        icon: const Icon(Icons.repeat_rounded, size: 20),
+        text: s.profileTabReposts,
       ),
       Tab(
         icon: const Icon(Icons.play_circle_outline, size: 20),
@@ -266,7 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                                 color: Colors.redAccent,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: Colors.black,
+                                  color: context.colors.background,
                                   width: 1,
                                 ),
                               ),
@@ -316,7 +319,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             delegate: _SliverAppBarDelegate(
               TabBar(
                 controller: _tabController,
-                indicatorColor: AppColors.electricPurple,
+                indicatorColor: AppColors.braweBlue,
                 indicatorWeight: 2,
                 labelColor: context.colors.textPrimary,
                 unselectedLabelColor: context.colors.textSecondary,
@@ -330,14 +333,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ),
         ],
         body: RefreshIndicator(
-          onRefresh: () => ref
-              .read(profileViewModelProvider(widget.userId).notifier)
-              .refresh(),
-          color: AppColors.electricPurple,
+          onRefresh: () {
+            ref.invalidate(profileRepostsProvider(widget.userId));
+            return ref
+                .read(profileViewModelProvider(widget.userId).notifier)
+                .refresh();
+          },
+          color: AppColors.braweBlue,
           child: TabBarView(
             controller: _tabController,
             children: [
               _PostsGrid(postsState: profileState.posts),
+              _RepostsList(userId: widget.userId),
               ProfileVideosGrid(
                 userId: widget.userId,
                 isMe: isMe,
@@ -349,19 +356,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         ),
       ),
     );
-  }
-
-  // ignore: unused_element, unused_field, unused_element_parameter
-  Future<void> _openCreatePostSheet(BuildContext context) async {
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const CreatePostSheet(),
-    );
-    if (!mounted) return;
-    // Atualiza posts para refletir a nova publicação na galeria.
-    await ref.read(profileViewModelProvider(widget.userId).notifier).refresh();
   }
 
   // ---- Sprint 3: Share / Block / Report --------------------------------
@@ -729,7 +723,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            style: TextButton.styleFrom(foregroundColor: Colors.white70),
+            style: TextButton.styleFrom(
+              foregroundColor: context.colors.textSecondary,
+            ),
             child: Text(S.of(ctx).actionCancel),
           ),
           TextButton(
@@ -851,7 +847,7 @@ class _ProfileHeader extends ConsumerWidget {
                     const SizedBox(width: 6),
                     const Icon(
                       Icons.verified,
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                       size: 20,
                     ),
                   ],
@@ -1189,17 +1185,13 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
                         ? const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFFE040FB),
-                              Color(0xFFFF6B35),
-                              Color(0xFF7C4DFF),
-                            ],
+                            colors: AppColors.brandGradient,
                           )
                         : null,
                     color: hasUnviewedStories
                         ? null
                         : hasStories
-                        ? Colors.white24
+                        ? context.colors.border
                         : Colors.transparent,
                   ),
                   child: Container(
@@ -1261,7 +1253,8 @@ class _BannerActionChip extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(icon, color: context.colors.textPrimary, size: 18),
+        // Fixed dark scrim behind the icon (sits over the cover photo).
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
     if (tooltip == null) return btn;
@@ -1291,7 +1284,7 @@ class _CompactStats extends StatelessWidget {
         _InlineStat(
           value: _fmt(stats.followersCount),
           label: s.profileFollowers,
-          valueColor: AppColors.electricPurple,
+          valueColor: AppColors.braweBlue,
           onTap: () => context.push('/follows/$userId?tab=followers'),
         ),
         _InlineStat(
@@ -1342,107 +1335,6 @@ class _InlineStat extends StatelessWidget {
   }
 }
 
-// ── Stats Card ────────────────────────────────────────────────────────────────
-// ignore: unused_element, unused_field, unused_element_parameter
-class _StatsCard extends StatelessWidget {
-  const _StatsCard({required this.stats, required this.userId});
-  final SocialStats stats;
-  final String userId;
-
-  String _fmt(int v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return '$v';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: context.colors.surfaceHighest.withValues(alpha: 0.06),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _StatsCol(
-            value: _fmt(stats.followersCount),
-            label: s.profileStatFollowers,
-            valueColor: AppColors.electricPurple,
-            onTap: () => context.push('/follows/$userId?tab=followers'),
-          ),
-          _Divider(),
-          _StatsCol(
-            value: _fmt(stats.followingCount),
-            label: s.profileStatFollowing,
-            onTap: () => context.push('/follows/$userId?tab=following'),
-          ),
-          _Divider(),
-          _Divider(),
-          _StatsCol(value: _fmt(stats.totalViews), label: s.profileStatViews),
-        ],
-      ),
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1,
-    height: 28,
-    color: context.colors.surfaceHighest.withValues(alpha: 0.08),
-  );
-}
-
-class _StatsCol extends StatelessWidget {
-  const _StatsCol({
-    required this.value,
-    required this.label,
-    this.valueColor = Colors.white,
-    this.onTap,
-  });
-  final String value;
-  final String label;
-  final Color valueColor;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final col = Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
-        ),
-      ],
-    );
-    if (onTap == null) return col;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: col,
-      ),
-    );
-  }
-}
-
 // ── Links Sociais ─────────────────────────────────────────────────────────────
 class _SocialLinks extends StatelessWidget {
   const _SocialLinks({required this.links});
@@ -1455,14 +1347,14 @@ class _SocialLinks extends StatelessWidget {
   static final Map<String, _SocialLinkStyle> _config = {
     'website': _SocialLinkStyle(
       color: const Color(0xFF1A1428),
-      border: const Color(0xFFB39DDB),
+      border: AppColors.braweBlue,
       label: 'Website',
       icon: Icons.public,
       isNative: true,
     ),
     'site': _SocialLinkStyle(
       color: const Color(0xFF1A1428),
-      border: const Color(0xFFB39DDB),
+      border: AppColors.braweBlue,
       label: 'Site',
       icon: Icons.public,
       isNative: true,
@@ -1577,7 +1469,7 @@ class _SocialLinks extends StatelessWidget {
   /// usa globo Material (Icons.public) — comportamento de link de site externo.
   static _SocialLinkStyle _fallbackStyle(String label) => _SocialLinkStyle(
     color: const Color(0xFF1A1A2E),
-    border: const Color(0xFFB39DDB),
+    border: AppColors.braweBlue,
     label: label,
     icon: Icons.public,
     isNative: true,
@@ -1605,7 +1497,7 @@ class _SocialLinks extends StatelessWidget {
         ...custom.map((c) {
           final style = _SocialLinkStyle(
             color: const Color(0xFF1A1A2E),
-            border: const Color(0xFFB39DDB),
+            border: AppColors.braweBlue,
             label: c.title,
             icon: _customIconFor(c.icon),
             isNative: true,
@@ -1888,7 +1780,7 @@ class _Avatar extends StatelessWidget {
             height: 22,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
             ),
           ),
         ),
@@ -1914,7 +1806,7 @@ class _AvatarFallback extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.electricPurple, AppColors.softViolet],
+          colors: [AppColors.braweBlue, AppColors.braweBlueLight],
         ),
       ),
       alignment: Alignment.center,
@@ -2063,12 +1955,12 @@ class _PostsGrid extends StatelessWidget {
           padding: const EdgeInsets.only(top: 4, bottom: 16),
           itemCount: posts.length,
           separatorBuilder: (_, __) =>
-              const Divider(color: Colors.white10, height: 1),
+              Divider(color: context.colors.divider, height: 1),
           itemBuilder: (context, index) => PostCard(post: posts[index]),
         );
       },
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
       error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
@@ -2078,87 +1970,37 @@ class _PostsGrid extends StatelessWidget {
   }
 }
 
-// ── LIVES GRID ──────────────────────────────────────────────────────────────
-// ignore: unused_element, unused_field, unused_element_parameter
-class _LivesGrid extends StatelessWidget {
-  final AsyncValue<List<LiveRoom>> livesState;
-  const _LivesGrid({required this.livesState});
+// ── REPOSTS ─────────────────────────────────────────────────────────────────
+/// Posts de outras pessoas que o usuário repostou, do mais recente ao mais
+/// antigo. O cartão já mostra "Fulano repostou" acima do post original.
+class _RepostsList extends ConsumerWidget {
+  final String userId;
+  const _RepostsList({required this.userId});
 
   @override
-  Widget build(BuildContext context) {
-    return livesState.when(
-      data: (lives) {
-        if (lives.isEmpty) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref.watch(profileRepostsProvider(userId)).when(
+      data: (posts) {
+        if (posts.isEmpty) {
           return _EmptyState(
-            icon: Icons.live_tv_outlined,
-            message: S.of(context).profileNoLives,
+            icon: Icons.repeat_rounded,
+            message: S.of(context).profileNoReposts,
           );
         }
-        return GridView.builder(
-          padding: const EdgeInsets.all(2),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-            childAspectRatio: 0.75,
-          ),
-          itemCount: lives.length,
-          itemBuilder: (context, index) {
-            final live = lives[index];
-            return Container(
-              decoration: BoxDecoration(
-                color: context.colors.surfaceElevated,
-                image: live.thumbnailUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(live.thumbnailUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: 4,
-                    left: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.mutedRed,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        S.of(context).profileLiveBadge,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (live.thumbnailUrl == null)
-                    Center(
-                      child: Icon(
-                        Icons.play_circle_outline,
-                        color: context.colors.border,
-                        size: 32,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
+        return ListView.separated(
+          padding: const EdgeInsets.only(top: 4, bottom: 16),
+          itemCount: posts.length,
+          separatorBuilder: (_, __) =>
+              Divider(color: context.colors.divider, height: 1),
+          itemBuilder: (context, index) => PostCard(post: posts[index]),
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: context.colors.accentPrimary),
       ),
       error: (_, __) => _EmptyState(
         icon: Icons.error_outline,
-        message: S.of(context).profileLivesLoadError,
+        message: S.of(context).profilePostsLoadError,
       ),
     );
   }

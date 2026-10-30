@@ -212,12 +212,12 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.electricPurple.withValues(alpha: 0.15),
+              color: AppColors.braweBlue.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.sports_kabaddi_rounded,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
               size: 22,
             ),
           ),
@@ -283,7 +283,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                color: AppColors.electricPurple,
+                color: AppColors.braweBlue,
                 width: 1.5,
               ),
             ),
@@ -320,12 +320,12 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                   ),
                   decoration: BoxDecoration(
                     color: selected
-                        ? AppColors.electricPurple.withValues(alpha: 0.25)
+                        ? AppColors.braweBlue.withValues(alpha: 0.25)
                         : Colors.white.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: selected
-                          ? AppColors.electricPurple.withValues(alpha: 0.7)
+                          ? AppColors.braweBlue.withValues(alpha: 0.7)
                           : Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
@@ -333,7 +333,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                     opt.$1,
                     style: TextStyle(
                       color: selected
-                          ? AppColors.electricPurple
+                          ? AppColors.braweBlue
                           : Colors.white60,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -351,7 +351,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
   Widget _buildList(ScrollController scrollCtrl) {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       );
     }
     if (_error != null) {
@@ -364,7 +364,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
     }
     if (_items.isEmpty) {
       return RefreshIndicator(
-        color: AppColors.electricPurple,
+        color: AppColors.braweBlue,
         onRefresh: () => _load(reset: true),
         // ListView para o pull-to-refresh funcionar com a lista vazia.
         child: ListView(
@@ -386,7 +386,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: RefreshIndicator(
-        color: AppColors.electricPurple,
+        color: AppColors.braweBlue,
         onRefresh: () => _load(reset: true),
         child: ListView.builder(
           controller: scrollCtrl,
@@ -404,7 +404,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                   ),
                 ),
@@ -470,7 +470,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
               decoration: BoxDecoration(
                 gradient: enabled
                     ? const LinearGradient(
-                        colors: [Color(0xFF7C3AED), AppColors.electricPurple],
+                        colors: [AppColors.braweBlue, AppColors.braweSky],
                       )
                     : null,
                 color: enabled ? null : Colors.white.withValues(alpha: 0.07),
@@ -553,12 +553,12 @@ class _CandidateTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.electricPurple.withValues(alpha: 0.15)
+              ? AppColors.braweBlue.withValues(alpha: 0.15)
               : Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
-                ? AppColors.electricPurple.withValues(alpha: 0.5)
+                ? AppColors.braweBlue.withValues(alpha: 0.5)
                 : Colors.white.withValues(alpha: 0.07),
           ),
         ),
@@ -569,7 +569,7 @@ class _CandidateTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.electricPurple.withValues(
+                  backgroundColor: AppColors.braweBlue.withValues(
                     alpha: 0.3,
                   ),
                   backgroundImage: avatar != null ? NetworkImage(avatar) : null,
@@ -598,7 +598,7 @@ class _CandidateTile extends StatelessWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: AppColors.liveRed,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: const Color(0xFF0E0E14),
@@ -703,7 +703,7 @@ class _CandidateTile extends StatelessWidget {
                     padding: EdgeInsets.only(top: 4),
                     child: Icon(
                       Icons.check_circle_rounded,
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                       size: 18,
                     ),
                   ),
@@ -750,7 +750,7 @@ class _CenteredMessage extends StatelessWidget {
                 onPressed: onAction,
                 child: Text(
                   actionLabel!,
-                  style: const TextStyle(color: AppColors.electricPurple),
+                  style: const TextStyle(color: AppColors.braweBlue),
                 ),
               ),
             ],

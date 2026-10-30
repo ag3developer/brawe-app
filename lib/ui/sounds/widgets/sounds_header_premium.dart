@@ -103,8 +103,8 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.electricPurple.withValues(alpha: 0.12),
-                AppColors.coolCyan.withValues(alpha: 0.08),
+                AppColors.braweBlue.withValues(alpha: 0.12),
+                AppColors.braweSky.withValues(alpha: 0.08),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -126,8 +126,8 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.electricPurple,
-                            AppColors.coolCyan,
+                            AppColors.braweBlue,
+                            AppColors.braweSky,
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -135,7 +135,7 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.electricPurple.withValues(
+                            color: AppColors.braweBlue.withValues(
                               alpha: 0.4,
                             ),
                             blurRadius: 20,
@@ -217,7 +217,7 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: AppColors.electricPurple.withValues(alpha: 0.08),
+            color: AppColors.braweBlue.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -260,7 +260,7 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
                 : const SizedBox.shrink(),
           ),
           filled: true,
-          fillColor: colors.surfaceHighest.withValues(alpha: 0.05),
+          fillColor: colors.surfaceHighest,
           contentPadding: const EdgeInsets.symmetric(vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -279,7 +279,7 @@ class _SoundsPremiumHeaderState extends State<SoundsPremiumHeader>
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: AppColors.electricPurple.withValues(alpha: 0.4),
+              color: AppColors.braweBlue.withValues(alpha: 0.4),
               width: 1.5,
             ),
           ),

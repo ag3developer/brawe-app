@@ -418,7 +418,7 @@ class _MonetizationSummary extends StatelessWidget {
                 value: kpis.totalLives > 0
                     ? '${(kpis.totalEarnings / kpis.totalLives).toStringAsFixed(2)} U'
                     : '—',
-                color: AppColors.electricPurple,
+                color: AppColors.braweBlue,
               ),
             ],
           ),

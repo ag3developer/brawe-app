@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
 
 /// 🏆 Bottom sheet com ranking de presenteadores da live atual.
@@ -24,7 +25,8 @@ class GifterRankingSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.60),
       isScrollControlled: true,
-      builder: (_) => GifterRankingSheet._(ranking: ranking),
+      builder: (_) =>
+          ForceDarkTheme(child: GifterRankingSheet._(ranking: ranking)),
     );
   }
 

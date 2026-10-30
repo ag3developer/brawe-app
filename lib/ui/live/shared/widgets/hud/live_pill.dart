@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/themes/app_colors.dart';
 
 /// Pílula `LIVE` vermelha (estilo TikTok / Instagram Live).
 ///
@@ -14,11 +15,11 @@ class LivePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFE63946),
+        color: AppColors.liveRed,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE63946).withValues(alpha: 0.35),
+            color: AppColors.liveRed.withValues(alpha: 0.35),
             blurRadius: 10,
           ),
         ],

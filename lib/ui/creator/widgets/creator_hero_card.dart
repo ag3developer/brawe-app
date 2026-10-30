@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/themes/app_colors.dart';
+
 /// Card "wow" gradient — usado na landing do programa e no dashboard.
 class CreatorHeroCard extends StatelessWidget {
   const CreatorHeroCard({
@@ -7,7 +9,7 @@ class CreatorHeroCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.icon = Icons.workspace_premium_rounded,
-    this.gradient = const [Color(0xFFA855F7), Color(0xFFEC4899), Color(0xFFF59E0B)],
+    this.gradient = AppColors.brandGradient,
     this.actionLabel,
     this.onAction,
   });

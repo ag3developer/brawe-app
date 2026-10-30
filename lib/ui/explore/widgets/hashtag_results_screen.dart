@@ -32,7 +32,7 @@ class HashtagResultsScreen extends ConsumerWidget {
         ),
       ),
       body: RefreshIndicator(
-        color: const Color(0xFFA855F7),
+        color: context.colors.accentPrimary,
         backgroundColor: context.colors.surface,
         onRefresh: () =>
             ref.read(hashtagPostsViewModelProvider(tag).notifier).refresh(),

@@ -11,7 +11,6 @@ import '../../../data/services/push_notification_service.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
-import '../../core/widgets/brawe_logo.dart';
 import '../view_models/settings_view_model.dart';
 import '../view_models/theme_view_model.dart';
 import 'language_picker_sheet.dart';
@@ -35,7 +34,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const BraweLogo(iconSize: 40),
+        title: Text(s.settingsTitle),
         centerTitle: true,
         leading: const BackButton(),
       ),
@@ -214,18 +213,6 @@ class SettingsScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  // ignore: unused_element, unused_field, unused_element_parameter
-  Future<void> _openExternal(BuildContext context, String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).settingsCantOpenUrl(url))),
-        );
-      }
-    }
   }
 
   void _openLegal(

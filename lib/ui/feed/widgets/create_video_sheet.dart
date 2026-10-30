@@ -17,6 +17,7 @@ import '../../shared/widgets/volume_mixer_sheet.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
+import '../../core/themes/app_colors.dart';
 import '../view_models/feed_view_model.dart';
 
 /// Bottom sheet de criação de post de **vídeo** (Reels / Shorts).
@@ -47,8 +48,8 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   double _originalAudioVolume = 1.0;
   late final AnimationController _pulseCtrl;
 
-  static const Color _accent1 = Color(0xFFEC4899);
-  static const Color _accent2 = Color(0xFF8B5CF6);
+  static const Color _accent1 = AppColors.braweBlue;
+  static const Color _accent2 = AppColors.braweSky;
 
   static const int _maxBytes = 100 * 1024 * 1024;
   static const Duration _maxDuration = Duration(minutes: 3);
@@ -247,7 +248,7 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: isError ? Colors.red.shade700 : _accent2,
+        backgroundColor: isError ? Colors.red.shade700 : _accent1,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),

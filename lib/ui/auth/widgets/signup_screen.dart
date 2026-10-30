@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_radius.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -17,6 +16,7 @@ import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
 import '../../../core/constants/app_constants.dart';
 import 'common/auth_input_field.dart';
+import '../../core/widgets/brawe_logo.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -202,55 +202,7 @@ class _Hero extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 88,
-              height: 88,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    colors.accentPrimary.withValues(alpha: 0.6),
-                    colors.accentPrimary.withValues(alpha: 0),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    colors.accentPrimary,
-                    AppColors.softViolet,
-                    colors.accentSecondary,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.accentPrimary.withValues(alpha: 0.55),
-                    blurRadius: 22,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Image.asset(
-                  'assets/images/brawe-icon.png',
-                  fit: BoxFit.contain,
-                  color: colors.textOnAccent,
-                ),
-              ),
-            ),
-          ],
-        ),
+        const BraweLogo(size: 36),
         const SizedBox(height: AppSpacing.lg),
         Text(
           s.signupTitle,

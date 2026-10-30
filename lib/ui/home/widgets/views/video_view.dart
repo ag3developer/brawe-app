@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import 'dart:async';
@@ -13,8 +12,6 @@ import '../../../../domain/models/feed_item.dart';
 import '../../../../domain/models/sound_preview.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
-import '../../../core/themes/force_dark_theme.dart';
-import '../../../feed/widgets/story_composer_screen.dart';
 import '../../../shared/widgets/content_sound_attribution.dart';
 import '../../../sounds/view_models/sound_player_view_model.dart';
 import '../../../sounds/widgets/sound_player_bottom_sheet.dart';

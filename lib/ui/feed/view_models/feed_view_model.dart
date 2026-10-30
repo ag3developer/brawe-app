@@ -104,6 +104,16 @@ class FeedViewModel extends _$FeedViewModel {
     }
   }
 
+  /// Atualiza localmente o(s) item(ns) do post [postId] SEM chamar a API.
+  /// Usado pelo `PostCard` para sincronizar o feed depois de uma ação
+  /// otimista feita no próprio card (ex.: card no perfil ou em outra aba).
+  void patchPost(String postId, Post Function(Post) update) {
+    final posts = state.value;
+    if (posts == null) return;
+    if (!posts.any((p) => p.id == postId)) return;
+    state = AsyncData([for (final p in posts) p.id == postId ? update(p) : p]);
+  }
+
   Future<bool> deletePost(String postId) async {
     final posts = state.value;
     if (posts == null) return false;
@@ -135,6 +145,16 @@ class FollowingFeedViewModel extends _$FollowingFeedViewModel {
     state = await AsyncValue.guard(
       () => ref.read(postRepositoryProvider).getFollowingFeed(limit: 20),
     );
+  }
+
+  /// Atualiza localmente o(s) item(ns) do post [postId] SEM chamar a API.
+  /// Usado pelo `PostCard` para sincronizar o feed depois de uma ação
+  /// otimista feita no próprio card (ex.: card no perfil ou em outra aba).
+  void patchPost(String postId, Post Function(Post) update) {
+    final posts = state.value;
+    if (posts == null) return;
+    if (!posts.any((p) => p.id == postId)) return;
+    state = AsyncData([for (final p in posts) p.id == postId ? update(p) : p]);
   }
 
   Future<void> toggleLike(String postId) async {

@@ -2235,5 +2235,9 @@
   "composerCameraPermissionTitle": "Allow camera access",
   "composerCameraPermissionBody": "To create photo and video stories, Brawe needs your camera and microphone.",
   "composerOpenSettings": "Open settings",
-  "composerNoCamera": "Camera unavailable"
+  "composerNoCamera": "Camera unavailable",
+  "feedViewsCount": "{count, plural, =1{1 view} other{{formatted} views}}",
+  "feedRepostUndone": "Repost removed",
+  "profileTabReposts": "Reposts",
+  "profileNoReposts": "No reposts yet"
 }

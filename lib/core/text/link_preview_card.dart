@@ -57,14 +57,35 @@ class LinkPreviewCard extends ConsumerWidget {
   }
 }
 
-class _LinkPreviewCardContent extends StatelessWidget {
+class _LinkPreviewCardContent extends StatefulWidget {
   const _LinkPreviewCardContent({required this.preview, this.compact = false});
 
   final LinkPreview preview;
   final bool compact;
 
   @override
+  State<_LinkPreviewCardContent> createState() =>
+      _LinkPreviewCardContentState();
+}
+
+class _LinkPreviewCardContentState extends State<_LinkPreviewCardContent> {
+  /// A imagem do site falhou (404, bloqueio, formato inválido) → o card vira
+  /// a versão compacta. Antes ficava um quadro grande com ícone quebrado.
+  bool _imageFailed = false;
+
+  void _onImageError() {
+    if (_imageFailed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _imageFailed = true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final preview = widget.preview;
+    final compact = widget.compact;
+    final hasImage =
+        !_imageFailed && preview.image != null && preview.image!.isNotEmpty;
     return Padding(
       padding: compact
           ? EdgeInsets.zero
@@ -82,52 +103,108 @@ class _LinkPreviewCardContent extends StatelessWidget {
             border: Border.all(color: context.colors.border),
             color: context.colors.surface,
           ),
+          child: hasImage
+              ? _buildLarge(context, preview)
+              : _buildCompact(context, preview),
+        ),
+      ),
+    );
+  }
+
+  /// Sem imagem: linha compacta (ícone · site · título), padrão WhatsApp/
+  /// iMessage para links sem prévia visual.
+  Widget _buildCompact(BuildContext context, LinkPreview preview) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.surfaceHighest,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.link_rounded, color: colors.textSecondary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (preview.title != null && preview.title!.isNotEmpty)
+                  Text(
+                    preview.title!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                const SizedBox(height: 2),
+                Text(
+                  preview.siteName ?? preview.domain,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLarge(BuildContext context, LinkPreview preview) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AspectRatio(
+          aspectRatio: 1.91, // proporção padrão og:image (1200x630)
+          child: _LinkPreviewImageLoader(
+            imageUrl: preview.image!,
+            colors: context.colors,
+            onError: _onImageError,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (preview.image != null && preview.image!.isNotEmpty)
-                AspectRatio(
-                  aspectRatio: 1.91, // proporção padrão og:image (1200x630)
-                  child: _LinkPreviewImageLoader(
-                    imageUrl: preview.image!,
-                    colors: context.colors,
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      (preview.siteName ?? preview.domain).toUpperCase(),
-                      style: TextStyle(
-                        color: context.colors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                    if (preview.title != null && preview.title!.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        preview.title!,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ],
+              Text(
+                (preview.siteName ?? preview.domain).toUpperCase(),
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.4,
                 ),
               ),
+              if (preview.title != null && preview.title!.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(
+                  preview.title!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -158,10 +235,17 @@ class _LinkPreviewSkeleton extends StatelessWidget {
 /// Widget especial para carregar imagens de preview com tratamento de cache
 /// melhorado para URLs de brawe.io que podem ter problemas de redirect 308
 class _LinkPreviewImageLoader extends StatefulWidget {
-  const _LinkPreviewImageLoader({required this.imageUrl, required this.colors});
+  const _LinkPreviewImageLoader({
+    required this.imageUrl,
+    required this.colors,
+    this.onError,
+  });
 
   final String imageUrl;
   final BraweColors colors;
+
+  /// Chamado quando a imagem não carrega (o card troca para o compacto).
+  final VoidCallback? onError;
 
   @override
   State<_LinkPreviewImageLoader> createState() =>
@@ -169,6 +253,15 @@ class _LinkPreviewImageLoader extends StatefulWidget {
 }
 
 class _LinkPreviewImageLoaderState extends State<_LinkPreviewImageLoader> {
+  /// Uma instância só (antes era recriada a cada build do card).
+  static final CacheManager _cacheManager = CacheManager(
+    Config(
+      'brawe_link_preview_images',
+      stalePeriod: const Duration(days: 7),
+      maxNrOfCacheObjects: 100,
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -212,13 +305,7 @@ class _LinkPreviewImageLoaderState extends State<_LinkPreviewImageLoader> {
       fit: BoxFit.cover,
       httpHeaders: _buildHeaders(widget.imageUrl),
       cacheKey: _normalizeCacheKey(widget.imageUrl),
-      cacheManager: CacheManager(
-        Config(
-          'brawe_link_preview_images',
-          stalePeriod: const Duration(days: 7),
-          maxNrOfCacheObjects: 100,
-        ),
-      ),
+      cacheManager: _cacheManager,
       placeholder: (_, __) => Container(
         color: context.colors.surface.withValues(alpha: 0.5),
         child: const Center(
@@ -233,6 +320,7 @@ class _LinkPreviewImageLoaderState extends State<_LinkPreviewImageLoader> {
         debugPrint(
           '❌ LinkPreviewCard: Erro ao carregar imagem ${widget.imageUrl}',
         );
+        widget.onError?.call();
         return Container(
           color: context.colors.surface.withValues(alpha: 0.3),
           child: Center(

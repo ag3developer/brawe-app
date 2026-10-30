@@ -105,6 +105,19 @@ class PostService {
     return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// Posts de outras pessoas que [userId] repostou (aba Reposts do perfil).
+  Future<PostFeedResponseDto> getUserReposts(
+    String userId, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final response = await _dio.get(
+      '/posts/user/$userId/reposts',
+      queryParameters: {'limit': limit, 'offset': offset},
+    );
+    return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
   Future<PostFeedResponseDto> getByHashtag(
     String tag, {
     int limit = 20,

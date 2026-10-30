@@ -54,7 +54,7 @@ class EarningsScreen extends ConsumerWidget {
                         const Icon(
                           Icons.check,
                           size: 16,
-                          color: AppColors.electricPurple,
+                          color: AppColors.braweBlue,
                         )
                       else
                         const SizedBox(width: 16),
@@ -140,7 +140,7 @@ class _BalanceCards extends StatelessWidget {
               data.coinsValueInCurrency,
               data.currency,
             ),
-            gradient: const [AppColors.electricPurple, AppColors.coolCyan],
+            gradient: const [AppColors.braweBlue, AppColors.braweSky],
             icon: const BraweCoin(size: 28, glow: true),
           ),
         ),
@@ -153,7 +153,7 @@ class _BalanceCards extends StatelessWidget {
               data.diamondsValueInCurrency,
               data.currency,
             ),
-            gradient: const [Color(0xFF00C2FF), Color(0xFF7B5BFF)],
+            gradient: const [AppColors.braweSky, AppColors.braweDeep],
             icon: Image.asset(
               'assets/images/illustrations/diamond_3d.png',
               width: 32,
@@ -316,7 +316,7 @@ class _StatRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.electricPurple),
+        Icon(icon, size: 18, color: AppColors.braweBlue),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -460,7 +460,7 @@ class _PurchaseOrderTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.electricPurple.withValues(alpha: 0.12),
+              color: AppColors.braweBlue.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Center(child: BraweCoin(size: 22)),

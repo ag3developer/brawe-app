@@ -65,7 +65,7 @@ class LiveActionBar extends StatelessWidget {
               ActionBtn(
                 icon: Icons.sports_kabaddi_rounded,
                 label: hasBattle ? 'Em batalha' : 'Batalha',
-                color: AppColors.electricPurple,
+                color: AppColors.braweBlue,
                 glow: !hasBattle,
                 badge: hasBattle ? '⚔' : null,
                 onTap: hasBattle ? null : onBattle,
@@ -82,7 +82,7 @@ class LiveActionBar extends StatelessWidget {
               ActionBtn(
                 icon: Icons.chat_bubble_outline_rounded,
                 label: 'Chat',
-                color: showChat ? AppColors.electricPurple : Colors.white24,
+                color: showChat ? AppColors.braweBlue : Colors.white24,
                 onTap: onChatToggle,
                 flat: !showChat,
               ),

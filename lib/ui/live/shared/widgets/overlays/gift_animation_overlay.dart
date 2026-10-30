@@ -1,6 +1,5 @@
 import 'dart:async';
 
-// ignore_for_file: unused_element_parameter
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
@@ -10,6 +9,7 @@ import '../../../../../domain/models/gift_display_type.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../level_chip.dart';
+import '../../../../core/themes/app_colors.dart';
 
 /// 🧪 TESTE (Fase de validação Lottie): slugs que têm asset Lottie local
 /// disponível em `assets/lottie_test/<slug>.json`. Fora desta lista, o
@@ -597,7 +597,7 @@ class _GiftToastState extends ConsumerState<_GiftToast>
                                 child: Text(
                                   'x${gift.quantity}',
                                   style: const TextStyle(
-                                    color: Color(0xFFFF4D8B),
+                                    color: AppColors.braweEmber,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,
                                     decoration: TextDecoration.none,
@@ -712,7 +712,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
                             gradient: RadialGradient(
                               colors: [
                                 Color(0xFFFFE08A),
-                                Color(0x66FF4D8B),
+                                Color(0x66FF6A09),
                                 Color(0x00000000),
                               ],
                               stops: [0.0, 0.5, 1.0],
@@ -738,7 +738,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
                                   gradient: const LinearGradient(
                                     colors: [
                                       Color(0xFFFFD166),
-                                      Color(0xFFFF4D8B),
+                                      AppColors.braweEmber,
                                     ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
@@ -951,7 +951,7 @@ class _CenterLargeBurstState extends State<_CenterLargeBurst>
                               color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: const Color(0xFF3BB8FF),
+                                color: AppColors.braweSky,
                                 width: 1.2,
                               ),
                             ),
@@ -966,7 +966,7 @@ class _CenterLargeBurstState extends State<_CenterLargeBurst>
                                   TextSpan(
                                     text: widget.gift.senderName,
                                     style: const TextStyle(
-                                      color: Color(0xFF3BB8FF),
+                                      color: AppColors.braweSky,
                                       fontWeight: FontWeight.w900,
                                     ),
                                   ),
@@ -985,7 +985,7 @@ class _CenterLargeBurstState extends State<_CenterLargeBurst>
                                     TextSpan(
                                       text: ' x${widget.gift.quantity}',
                                       style: const TextStyle(
-                                        color: Color(0xFF3BB8FF),
+                                        color: AppColors.braweSky,
                                         fontWeight: FontWeight.w900,
                                       ),
                                     ),
@@ -1028,7 +1028,7 @@ class _AvatarCircle extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: const LinearGradient(
-          colors: [Color(0xFFFF4D8B), Color(0xFFFFD166)],
+          colors: [AppColors.braweEmber, Color(0xFFFFD166)],
         ),
       ),
       alignment: Alignment.center,
@@ -1057,24 +1057,3 @@ class _AvatarCircle extends StatelessWidget {
   }
 }
 
-// ignore: unused_element
-class _LevelChip extends StatelessWidget {
-  const _LevelChip({
-    required this.level,
-    this.badge,
-    this.colorHex,
-    this.imageUrl,
-  });
-  final int level;
-  final String? badge;
-  final String? colorHex;
-  final String? imageUrl;
-
-  @override
-  Widget build(BuildContext context) => LevelChip(
-    level: level,
-    badge: badge,
-    colorHex: colorHex,
-    imageUrl: imageUrl,
-  );
-}

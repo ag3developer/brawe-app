@@ -72,7 +72,7 @@ class _BattleGiftAlertState extends State<BattleGiftAlert>
   @override
   Widget build(BuildContext context) {
     final isA = widget.side == 'a';
-    final color = isA ? AppColors.electricPurple : AppColors.hotPink;
+    final color = isA ? AppColors.braweBlue : AppColors.hotPink;
 
     if (widget.mode == GiftAlertMode.toast) {
       // Modo compacto — tela do streamer

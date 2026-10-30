@@ -390,7 +390,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                             editorProperties: TrimEditorProperties(
-                              borderPaintColor: AppColors.electricPurple,
+                              borderPaintColor: AppColors.braweBlue,
                               borderWidth: 3,
                               borderRadius: 6,
                               // Bola dos handles maior pra ficar
@@ -398,7 +398,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                               // muito pequeno em dedos grandes).
                               circleSize: 12,
                               circleSizeOnDrag: 16,
-                              circlePaintColor: AppColors.coolCyan,
+                              circlePaintColor: AppColors.braweSky,
                               scrubberPaintColor: Colors.white,
                               scrubberWidth: 2,
                             ),
@@ -441,7 +441,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                   color: Colors.black,
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                   ),
                 ),
@@ -457,7 +457,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const CircularProgressIndicator(
-                          color: AppColors.electricPurple,
+                          color: AppColors.braweBlue,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -505,7 +505,7 @@ class _TopBarButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: accent && !disabled
               ? const LinearGradient(
-                  colors: [AppColors.electricPurple, AppColors.coolCyan],
+                  colors: [AppColors.braweBlue, AppColors.braweSky],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
@@ -522,7 +522,7 @@ class _TopBarButton extends StatelessWidget {
           boxShadow: accent && !disabled
               ? [
                   BoxShadow(
-                    color: AppColors.electricPurple.withValues(alpha: 0.45),
+                    color: AppColors.braweBlue.withValues(alpha: 0.45),
                     blurRadius: 14,
                     spreadRadius: 1,
                   ),

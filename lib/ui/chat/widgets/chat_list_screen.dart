@@ -102,8 +102,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
         title: Row(
           children: [
             ShaderMask(
-              shaderCallback: (b) => const LinearGradient(
-                colors: [Colors.white, AppColors.coolCyan],
+              shaderCallback: (b) => LinearGradient(
+                colors: [context.colors.textPrimary, context.colors.accentPrimary],
               ).createShader(b),
               child: Text(
                 S.of(context).chatListTitle,
@@ -121,12 +121,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.electricPurple.withValues(alpha: 0.55),
+                      color: AppColors.braweBlue.withValues(alpha: 0.55),
                       blurRadius: 10,
                     ),
                   ],
@@ -134,7 +134,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                 child: Text(
                   '$totalUnread',
                   style: TextStyle(
-                    color: context.colors.textPrimary,
+                    color: context.colors.textOnAccent,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                   ),
@@ -160,13 +160,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                     margin: const EdgeInsets.only(right: 4),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      color: context.colors.surfaceHighest.withValues(
-                        alpha: 0.05,
-                      ),
+                      color: context.colors.surfaceHighest,
                       border: Border.all(
-                        color: context.colors.surfaceHighest.withValues(
-                          alpha: 0.1,
-                        ),
+                        color: context.colors.border,
                       ),
                     ),
                     child: Row(
@@ -208,14 +204,12 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                     borderRadius: BorderRadius.circular(16),
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.electricPurple.withValues(alpha: 0.10),
-                        AppColors.coolCyan.withValues(alpha: 0.05),
+                        AppColors.braweBlue.withValues(alpha: 0.10),
+                        AppColors.braweSky.withValues(alpha: 0.05),
                       ],
                     ),
                     border: Border.all(
-                      color: context.colors.surfaceHighest.withValues(
-                        alpha: 0.08,
-                      ),
+                      color: context.colors.border,
                     ),
                   ),
                   child: TextField(
@@ -264,7 +258,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: TabBar(
                   controller: _tabController,
-                  labelColor: context.colors.textPrimary,
+                  labelColor: context.colors.textOnAccent,
                   unselectedLabelColor: context.colors.textSecondary,
                   indicatorPadding: const EdgeInsets.symmetric(
                     vertical: 6,
@@ -273,11 +267,11 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                   indicator: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     gradient: const LinearGradient(
-                      colors: [AppColors.electricPurple, AppColors.coolCyan],
+                      colors: [AppColors.braweBlue, AppColors.braweSky],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.electricPurple.withValues(alpha: 0.45),
+                        color: AppColors.braweBlue.withValues(alpha: 0.45),
                         blurRadius: 10,
                       ),
                     ],
@@ -304,7 +298,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
       ),
       body: chatState.isLoading && conversations.isEmpty
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.electricPurple),
+              child: CircularProgressIndicator(color: AppColors.braweBlue),
             )
           : Column(
               children: [
@@ -343,8 +337,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                               .refresh(),
                           child: Text(
                             S.of(context).chatListRetry,
-                            style: const TextStyle(
-                              color: AppColors.coolCyan,
+                            style: TextStyle(
+                              color: context.colors.accentPrimary,
                               fontSize: 12,
                             ),
                           ),
@@ -390,11 +384,11 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.electricPurple, AppColors.coolCyan],
+            colors: [AppColors.braweBlue, AppColors.braweSky],
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.electricPurple.withValues(alpha: 0.55),
+              color: AppColors.braweBlue.withValues(alpha: 0.55),
               blurRadius: 22,
               spreadRadius: 1,
               offset: const Offset(0, 6),
@@ -443,8 +437,8 @@ class _ConversationList extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.electricPurple.withValues(alpha: 0.30),
-                    AppColors.electricPurple.withValues(alpha: 0.0),
+                    AppColors.braweBlue.withValues(alpha: 0.30),
+                    AppColors.braweBlue.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -483,7 +477,7 @@ class _ConversationList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: AppColors.electricPurple,
+      color: AppColors.braweBlue,
       child: ListView.separated(
         padding: const EdgeInsets.only(top: 8, bottom: 16),
         itemCount: conversations.length,
@@ -541,12 +535,12 @@ class _ConversationTile extends ConsumerWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
               color: hasUnread
-                  ? AppColors.electricPurple.withValues(alpha: 0.07)
-                  : context.colors.surfaceHighest.withValues(alpha: 0.02),
+                  ? AppColors.braweBlue.withValues(alpha: 0.07)
+                  : context.colors.surface,
               border: Border.all(
                 color: hasUnread
-                    ? AppColors.electricPurple.withValues(alpha: 0.35)
-                    : context.colors.surfaceHighest.withValues(alpha: 0.05),
+                    ? AppColors.braweBlue.withValues(alpha: 0.35)
+                    : context.colors.border,
               ),
             ),
             child: Row(
@@ -591,7 +585,7 @@ class _ConversationTile extends ConsumerWidget {
                             _formatTime(context, conversation.updatedAt),
                             style: TextStyle(
                               color: hasUnread
-                                  ? AppColors.coolCyan
+                                  ? context.colors.accentPrimary
                                   : context.colors.textSecondary,
                               fontSize: 11,
                               fontWeight: hasUnread
@@ -632,14 +626,14 @@ class _ConversationTile extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
-                                    AppColors.electricPurple,
-                                    AppColors.coolCyan,
+                                    AppColors.braweBlue,
+                                    AppColors.braweSky,
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.electricPurple.withValues(
+                                    color: AppColors.braweBlue.withValues(
                                       alpha: 0.55,
                                     ),
                                     blurRadius: 8,
@@ -652,7 +646,7 @@ class _ConversationTile extends ConsumerWidget {
                                     : '${conversation.unreadCount}',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: context.colors.textPrimary,
+                                  color: context.colors.textOnAccent,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -688,21 +682,21 @@ class _SwipeableConversationTile extends ConsumerWidget {
       background: Container(
         color: archivedMode
             ? Colors.blueGrey.shade700
-            : AppColors.electricPurple.withValues(alpha: 0.8),
+            : AppColors.braweBlue.withValues(alpha: 0.8),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
             Icon(
               archivedMode ? Icons.unarchive : Icons.archive,
-              color: context.colors.textPrimary,
+              color: context.colors.textOnAccent,
             ),
             const SizedBox(width: 8),
             Text(
               archivedMode
                   ? S.of(context).chatListUnarchive
                   : S.of(context).chatListArchive,
-              style: TextStyle(color: context.colors.textPrimary),
+              style: TextStyle(color: context.colors.textOnAccent),
             ),
           ],
         ),
@@ -716,10 +710,10 @@ class _SwipeableConversationTile extends ConsumerWidget {
           children: [
             Text(
               S.of(context).chatListDelete,
-              style: TextStyle(color: context.colors.textPrimary),
+              style: TextStyle(color: context.colors.textOnAccent),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.delete, color: context.colors.textPrimary),
+            Icon(Icons.delete, color: context.colors.textOnAccent),
           ],
         ),
       ),

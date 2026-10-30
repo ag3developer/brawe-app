@@ -24,6 +24,7 @@ import 'routing/router.dart';
 import 'ui/core/themes/app_theme.dart';
 import 'ui/core/view_models/app_badge_controller.dart';
 import 'ui/settings/view_models/theme_view_model.dart';
+import 'ui/core/themes/app_colors.dart';
 
 Future<void> main() async {
   runZonedGuarded<Future<void>>(
@@ -284,7 +285,7 @@ class _GlobalErrorFallback extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6E4DFF),
+                    backgroundColor: AppColors.braweBlue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,

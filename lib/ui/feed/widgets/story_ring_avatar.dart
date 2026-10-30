@@ -6,6 +6,7 @@ import '../../../data/providers/story_active_status_provider.dart';
 import '../../../data/repositories/stories_repository.dart';
 import '../../../domain/models/story.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
 import 'story_viewer.dart';
@@ -55,11 +56,11 @@ class StoryRingAvatar extends ConsumerWidget {
   static const _unviewedGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFE040FB), Color(0xFFFF6B35), Color(0xFF7C4DFF)],
+    colors: AppColors.brandGradient,
   );
 
   static const _onlineGradient = LinearGradient(
-    colors: [AppColors.electricPurple, AppColors.coolCyan],
+    colors: [AppColors.braweBlue, AppColors.braweSky],
   );
 
   @override
@@ -79,7 +80,7 @@ class StoryRingAvatar extends ConsumerWidget {
     if (hasUnviewed) {
       gradient = _unviewedGradient;
     } else if (hasStories) {
-      ringColor = Colors.white24;
+      ringColor = context.colors.border;
     } else if (showOnline) {
       gradient = _onlineGradient;
     }
@@ -103,7 +104,11 @@ class StoryRingAvatar extends ConsumerWidget {
                     ? fallbackText![0].toUpperCase()
                     : '?',
                 style: TextStyle(
-                  color: Colors.white,
+                  // Com fundo do tema (backgroundColor) a inicial usa
+                  // textPrimary — branco fixo sumia no tema claro.
+                  color: backgroundColor != null
+                      ? context.colors.textPrimary
+                      : Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: radius * 0.85,
                 ),
@@ -129,7 +134,10 @@ class StoryRingAvatar extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: Colors.greenAccent.shade400,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.nearBlack, width: 1.8),
+                  border: Border.all(
+                    color: context.colors.background,
+                    width: 1.8,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.greenAccent.withValues(alpha: 0.6),

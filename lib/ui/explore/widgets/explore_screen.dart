@@ -97,9 +97,9 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen>
             ? null
             : TabBar(
                 controller: _tabs,
-                labelColor: AppColors.electricPurple,
+                labelColor: AppColors.braweBlue,
                 unselectedLabelColor: context.colors.textSecondary,
-                indicatorColor: AppColors.electricPurple,
+                indicatorColor: AppColors.braweBlue,
                 tabs: [
                   Tab(text: s.exploreTabTrending),
                   Tab(text: s.exploreTabCategories),
@@ -129,11 +129,11 @@ class _TrendingTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trending = ref.watch(trendingExploreProvider);
     return RefreshIndicator(
-      color: AppColors.electricPurple,
+      color: AppColors.braweBlue,
       onRefresh: () async => ref.refresh(trendingExploreProvider.future),
       child: trending.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.electricPurple),
+          child: CircularProgressIndicator(color: AppColors.braweBlue),
         ),
         error: (_, _) => const _ErrorView(),
         data: (data) => ListView(
@@ -189,11 +189,11 @@ class _CategoriesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(exploreCategoriesProvider);
     return RefreshIndicator(
-      color: AppColors.electricPurple,
+      color: AppColors.braweBlue,
       onRefresh: () async => ref.refresh(exploreCategoriesProvider.future),
       child: categories.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.electricPurple),
+          child: CircularProgressIndicator(color: AppColors.braweBlue),
         ),
         error: (_, _) => const _ErrorView(),
         data: (cats) => cats.isEmpty
@@ -232,11 +232,11 @@ class _RecommendedTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rec = ref.watch(recommendedExploreProvider);
     return RefreshIndicator(
-      color: AppColors.electricPurple,
+      color: AppColors.braweBlue,
       onRefresh: () async => ref.refresh(recommendedExploreProvider.future),
       child: rec.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.electricPurple),
+          child: CircularProgressIndicator(color: AppColors.braweBlue),
         ),
         error: (_, _) => const _ErrorView(),
         data: (data) {
@@ -299,7 +299,7 @@ class _SearchResults extends ConsumerWidget {
     final results = ref.watch(searchControllerProvider);
     return results.when(
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
       error: (_, _) => const _ErrorView(),
       data: (list) => list.isEmpty
@@ -313,7 +313,7 @@ class _SearchResults extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: list.length,
               separatorBuilder: (_, _) =>
-                  const Divider(color: Colors.white10, height: 1),
+                  Divider(color: context.colors.divider, height: 1),
               itemBuilder: (_, i) => _SearchTile(result: list[i]),
             ),
     );
@@ -329,7 +329,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: AppColors.electricPurple, size: 18),
+        Icon(icon, color: AppColors.braweBlue, size: 18),
         const SizedBox(width: 8),
         Text(
           title,
@@ -387,13 +387,13 @@ class _LiveCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.red,
+                        color: AppColors.liveRed,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         S.of(context).liveBadge,
                         style: TextStyle(
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -417,14 +417,14 @@ class _LiveCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.visibility,
-                            color: context.colors.textPrimary,
+                            color: Colors.white,
                             size: 12,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${live.viewerCount}',
                             style: TextStyle(
-                              color: context.colors.textPrimary,
+                              color: Colors.white,
                               fontSize: 11,
                             ),
                           ),
@@ -508,7 +508,7 @@ class _StreamerTile extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.liveRed,
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
                     color: context.colors.background,
@@ -518,7 +518,7 @@ class _StreamerTile extends StatelessWidget {
                 child: Text(
                   S.of(context).followsLiveBadge,
                   style: TextStyle(
-                    color: context.colors.textPrimary,
+                    color: Colors.white,
                     fontSize: 8,
                     fontWeight: FontWeight.bold,
                   ),
@@ -556,7 +556,7 @@ class _CategoryCard extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.electricPurple, AppColors.coolCyan],
+            colors: [AppColors.braweBlue, AppColors.braweSky],
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -640,13 +640,13 @@ class _SearchTile extends StatelessWidget {
               margin: const EdgeInsets.only(right: 6),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: AppColors.liveRed,
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text(
                 S.of(context).followsLiveBadge,
                 style: TextStyle(
-                  color: context.colors.textPrimary,
+                  color: Colors.white,
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                 ),

@@ -1,4 +1,3 @@
-// ignore_for_file: unused_element_parameter
 import 'dart:async';
 import 'dart:ui';
 
@@ -218,7 +217,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       appBar: _buildAppBar(s, async, isDark),
       body: async.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.mutedRed),
+          child: CircularProgressIndicator(color: AppColors.braweBlue),
         ),
         error: (e, _) => _ErrorView(message: s.editProfileLoadError),
         data: (state) {
@@ -266,7 +265,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
           child: FilledButton(
             onPressed: isSaving ? null : _onSave,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.mutedRed,
+              backgroundColor: AppColors.braweBlue,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
@@ -406,7 +405,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                 _RowDivider(),
                 _SocialRow(
                   icon: LucideIcons.globe,
-                  color: AppColors.mutedRed,
+                  color: AppColors.braweBlue,
                   label: 'Website',
                   controller: _siteCtrl,
                   hint: s.editProfileSocialUrlHint,
@@ -787,7 +786,7 @@ class _AccountTypeCard extends StatelessWidget {
       case AccountType.creator:
         return _AccountTypeConfig(
           icon: LucideIcons.award,
-          color: const Color(0xFF8B5CF6), // violeta
+          color: AppColors.braweBlue,
           title: s.creatorProgramTitle,
           subtitle: 'Lives, monetização e ferramentas de criador.',
         );
@@ -858,7 +857,7 @@ class _SectionCard extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Row(
               children: [
-                Icon(icon, size: 13, color: AppColors.mutedRed),
+                Icon(icon, size: 13, color: AppColors.braweBlue),
                 const SizedBox(width: 6),
                 Text(
                   title.toUpperCase(),
@@ -1235,7 +1234,7 @@ class _MusicianFieldsState extends State<_MusicianFields> {
 }
 
 class _MusicianFields extends StatefulWidget {
-  const _MusicianFields({super.key});
+  const _MusicianFields();
   @override
   State<_MusicianFields> createState() => _MusicianFieldsState();
 }

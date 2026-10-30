@@ -37,7 +37,7 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
   // Sem palette aleatória aqui: a leitura visual é "purple sobe = lado A
   // está sendo torcido", "pink sobe = lado B". Ajuda o espectador a
   // entender quem está bombando sem precisar olhar o placar.
-  static const Color _kBattleSideAColor = Color(0xFFB6A6FF); // purple
+  static const Color _kBattleSideAColor = Color(0xFF8DB8FF); // brawe blue soft (lado A)
   static const Color _kBattleSideBColor = Color(0xFFFF4D8B); // pink
 
   final List<_HeartSpec> _hearts = [];

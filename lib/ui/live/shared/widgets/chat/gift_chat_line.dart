@@ -57,7 +57,7 @@ class GiftChatLine extends StatelessWidget {
 
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
                       image: NetworkImage(gift.senderAvatarUrl!),
@@ -105,7 +105,7 @@ class GiftChatLine extends StatelessWidget {
                           TextSpan(
                             text: '${gift.senderName} ',
                             style: const TextStyle(
-                              color: Color(0xFFC9B6FF),
+                              color: AppColors.braweBlueSoft,
                               fontWeight: FontWeight.w700,
                               fontSize: 12.5,
                             ),

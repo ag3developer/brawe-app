@@ -504,7 +504,7 @@ class _ResultBanner extends StatelessWidget {
     final winnerName = battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
     final winnerColor =
-        battle.isLeadingA ? AppColors.electricPurple : AppColors.hotPink;
+        battle.isLeadingA ? AppColors.braweBlue : AppColors.hotPink;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -612,7 +612,7 @@ class _MomentumBadgeState extends State<_MomentumBadge>
   @override
   Widget build(BuildContext context) {
     final color =
-        widget.side == 'a' ? AppColors.electricPurple : AppColors.hotPink;
+        widget.side == 'a' ? AppColors.braweBlue : AppColors.hotPink;
     return ScaleTransition(
       scale: _pulse,
       child: Container(
@@ -707,7 +707,7 @@ class _FinalStretchBannerState extends State<_FinalStretchBanner>
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [AppColors.mutedRed, AppColors.hotPink],
+              colors: [AppColors.mutedRed, AppColors.braweEmber],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
@@ -826,7 +826,7 @@ class _LeadChangeFlashState extends State<_LeadChangeFlash>
   @override
   Widget build(BuildContext context) {
     final color =
-        widget.side == 'a' ? AppColors.electricPurple : AppColors.hotPink;
+        widget.side == 'a' ? AppColors.braweBlue : AppColors.hotPink;
     return Center(
       child: FadeTransition(
         opacity: _fade,

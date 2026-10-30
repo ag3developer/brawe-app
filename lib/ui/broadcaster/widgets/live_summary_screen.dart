@@ -111,11 +111,11 @@ class LiveSummaryScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFF4F8B), Color(0xFFB44CF0)],
+                      colors: AppColors.brandGradient,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFB44CF0).withValues(alpha: 0.35),
+                        color: AppColors.braweBlue.withValues(alpha: 0.35),
                         blurRadius: 24,
                         spreadRadius: -4,
                       ),
@@ -179,14 +179,14 @@ class LiveSummaryScreen extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [AppColors.electricPurple, AppColors.coolCyan],
+                        colors: [AppColors.braweBlue, AppColors.braweSky],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.electricPurple.withValues(
+                          color: AppColors.braweBlue.withValues(
                             alpha: 0.4,
                           ),
                           blurRadius: 16,
@@ -313,7 +313,7 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(item.icon, color: AppColors.coolCyan, size: 22),
+          Icon(item.icon, color: AppColors.braweSky, size: 22),
           const SizedBox(height: 8),
           Text(
             item.value,

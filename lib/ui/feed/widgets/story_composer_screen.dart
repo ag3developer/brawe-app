@@ -899,7 +899,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0B0F1A), Color(0xFF1A1240), Color(0xFF0B0F1A)],
+              colors: [Color(0xFF0B0F1A), Color(0xFF0B1A3D), Color(0xFF0B0F1A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -946,7 +946,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const CircularProgressIndicator(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -1015,7 +1015,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
         const DecoratedBox(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0B0F1A), Color(0xFF1A1240), Color(0xFF0B0F1A)],
+              colors: [Color(0xFF0B0F1A), Color(0xFF0B1A3D), Color(0xFF0B0F1A)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -1518,9 +1518,9 @@ class _RingProgressPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round
         ..shader = const SweepGradient(
           colors: [
-            AppColors.electricPurple,
-            AppColors.coolCyan,
-            AppColors.electricPurple,
+            AppColors.braweBlue,
+            AppColors.braweSky,
+            AppColors.braweBlue,
           ],
           stops: [0.0, 0.5, 1.0],
         ).createShader(Rect.fromCircle(center: center, radius: radius));
@@ -1814,7 +1814,7 @@ const double _kTrashBottom = 20;
 const double _kCanvasRadius = 16;
 
 const LinearGradient _kBrandGradient = LinearGradient(
-  colors: [AppColors.electricPurple, AppColors.coolCyan],
+  colors: [AppColors.braweBlue, AppColors.braweSky],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
 );
@@ -1826,7 +1826,7 @@ const List<Shadow> _kIconShadows = [
 /// Fundos do story "só texto" (cicla no botão de swatch do rail).
 const List<Gradient> _kTextBackgrounds = [
   LinearGradient(
-    colors: [Color(0xFF241A5E), AppColors.electricPurple, AppColors.coolCyan],
+    colors: [AppColors.braweDeep, AppColors.braweBlue, AppColors.braweSky],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   ),
@@ -1836,17 +1836,17 @@ const List<Gradient> _kTextBackgrounds = [
     end: Alignment.bottomRight,
   ),
   LinearGradient(
-    colors: [AppColors.midnightBlue, AppColors.coolCyan],
+    colors: [AppColors.midnightBlue, AppColors.braweSky],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   ),
   LinearGradient(
-    colors: [AppColors.success, AppColors.coolCyan],
+    colors: [AppColors.success, AppColors.braweSky],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   ),
   LinearGradient(
-    colors: [AppColors.lightViolet, AppColors.electricPurple],
+    colors: [AppColors.braweBlueSoft, AppColors.braweBlue],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   ),
@@ -1980,14 +1980,14 @@ class _StoryEditorState extends State<_StoryEditor> {
   static const List<Color> _palette = [
     Colors.white,
     Colors.black,
-    AppColors.electricPurple,
-    AppColors.coolCyan,
+    AppColors.braweBlue,
+    AppColors.braweSky,
     AppColors.brandPink,
     AppColors.mutedRed,
     AppColors.amber,
     AppColors.gold,
     AppColors.success,
-    AppColors.lightViolet,
+    AppColors.braweBlueSoft,
     AppColors.midnightBlue,
   ];
 
@@ -3250,7 +3250,7 @@ class _CanvasMedia extends StatelessWidget {
               gradient: _kBrandGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  color: AppColors.braweBlue.withValues(alpha: 0.45),
                   blurRadius: 28,
                   spreadRadius: 1,
                 ),
@@ -3440,7 +3440,7 @@ class _CenterGuides extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = AppColors.coolCyan;
+    const color = AppColors.braweSky;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -3841,7 +3841,7 @@ class _SendButton extends StatelessWidget {
               gradient: _kBrandGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.45),
+                  color: AppColors.braweBlue.withValues(alpha: 0.45),
                   blurRadius: 16,
                 ),
               ],

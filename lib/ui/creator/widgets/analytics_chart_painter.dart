@@ -324,7 +324,7 @@ class AnalyticsPeriodPicker extends StatelessWidget {
             margin: const EdgeInsets.only(right: 4),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: active ? AppColors.electricPurple : Colors.transparent,
+              color: active ? AppColors.braweBlue : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(

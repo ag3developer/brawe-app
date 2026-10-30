@@ -43,12 +43,12 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
     final asyncData = ref.watch(galleryViewModelProvider(widget.userId));
 
     return RefreshIndicator(
-      color: AppColors.electricPurple,
+      color: AppColors.braweBlue,
       onRefresh: () =>
           ref.read(galleryViewModelProvider(widget.userId).notifier).refresh(),
       child: asyncData.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.electricPurple),
+          child: CircularProgressIndicator(color: AppColors.braweBlue),
         ),
         error: (_, _) => ListView(
           children: [
@@ -67,7 +67,7 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
               color: context.colors.background,
               child: TabBar(
                 controller: _tab,
-                indicatorColor: AppColors.electricPurple,
+                indicatorColor: AppColors.braweBlue,
                 labelColor: context.colors.textPrimary,
                 unselectedLabelColor: context.colors.textSecondary,
                 tabs: [
@@ -155,7 +155,7 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
     );
   }
@@ -329,8 +329,8 @@ class _MediaTile extends ConsumerWidget {
                     const SizedBox(width: 3),
                     Text(
                       media.likesCount.toString(),
-                      style: TextStyle(
-                        color: context.colors.textPrimary,
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 11,
                       ),
                     ),
@@ -368,7 +368,7 @@ class _MediaTile extends ConsumerWidget {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               S.of(ctx).profileGalleryRemove,
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: ctx.colors.danger),
             ),
           ),
         ],
@@ -409,8 +409,8 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
             looping: true,
             allowMuting: true,
             materialProgressColors: ChewieProgressColors(
-              playedColor: AppColors.electricPurple,
-              handleColor: AppColors.electricPurple,
+              playedColor: AppColors.braweBlue,
+              handleColor: AppColors.braweBlue,
               backgroundColor: Colors.white24,
               bufferedColor: Colors.white38,
             ),
@@ -433,7 +433,8 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
     final isVideo = m.mediaType == 'video';
 
     return Scaffold(
-      backgroundColor: context.colors.background,
+      // Fullscreen media viewer: always dark behind the photo/video.
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -445,14 +446,14 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
             ? (_chewie != null
                   ? Chewie(controller: _chewie!)
                   : const CircularProgressIndicator(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ))
             : InteractiveViewer(
                 child: CachedNetworkImage(
                   imageUrl: m.url,
                   fit: BoxFit.contain,
                   placeholder: (_, _) => const CircularProgressIndicator(
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../gen/l10n/app_localizations.dart';
+import '../../../../../core/themes/app_colors.dart';
 
 /// Red "LIVE" / orange "PAUSED" badge shown on the streamer top bar.
 class LiveOrPausedBadge extends StatelessWidget {
@@ -23,7 +24,7 @@ class LiveOrPausedBadge extends StatelessWidget {
     }
 
     final s = S.of(context);
-    final color = showPaused ? Colors.orange : Colors.red;
+    final color = showPaused ? Colors.orange : AppColors.liveRed;
     final label = showPaused ? s.broadcasterBadgePaused : s.broadcasterBadgeLive;
 
     return Container(

@@ -173,8 +173,8 @@ class _HalfPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final glowColor = side == _Side.left
-        ? AppColors.electricPurple
-        : AppColors.coolCyan;
+        ? AppColors.braweBlue
+        : AppColors.braweSky;
 
     return Stack(
       fit: StackFit.expand,
@@ -252,7 +252,7 @@ class _BattleBar extends StatelessWidget {
                   '${b.scoreA}',
                   textAlign: TextAlign.left,
                   style: const TextStyle(
-                    color: AppColors.electricPurple,
+                    color: AppColors.braweBlue,
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
                     shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
@@ -267,12 +267,12 @@ class _BattleBar extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.mutedRed],
+                    colors: [AppColors.braweBlue, AppColors.mutedRed],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.electricPurple.withValues(alpha: 0.55),
+                      color: AppColors.braweBlue.withValues(alpha: 0.55),
                       blurRadius: 14,
                     ),
                   ],
@@ -293,7 +293,7 @@ class _BattleBar extends StatelessWidget {
                   '${b.scoreB}',
                   textAlign: TextAlign.right,
                   style: const TextStyle(
-                    color: AppColors.coolCyan,
+                    color: AppColors.braweSky,
                     fontSize: 30,
                     fontWeight: FontWeight.bold,
                     shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
@@ -312,11 +312,11 @@ class _BattleBar extends StatelessWidget {
                 children: [
                   Expanded(
                     flex: (b.progressA * 1000).round(),
-                    child: Container(color: AppColors.electricPurple),
+                    child: Container(color: AppColors.braweBlue),
                   ),
                   Expanded(
                     flex: (b.progressB * 1000).round(),
-                    child: Container(color: AppColors.coolCyan),
+                    child: Container(color: AppColors.braweSky),
                   ),
                 ],
               ),
@@ -370,7 +370,7 @@ class _StreamerTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = side == 'A' ? AppColors.electricPurple : AppColors.coolCyan;
+    final color = side == 'A' ? AppColors.braweBlue : AppColors.braweSky;
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
       decoration: BoxDecoration(
@@ -551,8 +551,8 @@ class _GiftSheetState extends State<_GiftSheet> {
             child: SwitchListTile(
               value: _anonymous,
               onChanged: (v) => setState(() => _anonymous = v),
-              activeThumbColor: AppColors.electricPurple,
-              activeTrackColor: AppColors.electricPurple.withValues(alpha: 0.4),
+              activeThumbColor: AppColors.braweBlue,
+              activeTrackColor: AppColors.braweBlue.withValues(alpha: 0.4),
               title: Text(
                 s.giftSendAnonymous,
                 style: const TextStyle(color: Colors.white, fontSize: 14),

@@ -47,7 +47,7 @@ class ProductsDrawer extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.shopping_bag,
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -113,7 +113,7 @@ class _ProductTile extends StatelessWidget {
         color: AppColors.slate,
         borderRadius: BorderRadius.circular(14),
         border: product.isFeatured
-            ? Border.all(color: AppColors.electricPurple, width: 1.5)
+            ? Border.all(color: AppColors.braweBlue, width: 1.5)
             : null,
       ),
       child: Row(
@@ -149,7 +149,7 @@ class _ProductTile extends StatelessWidget {
                     ),
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.electricPurple,
+                      color: AppColors.braweBlue,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -176,7 +176,7 @@ class _ProductTile extends StatelessWidget {
                     Text(
                       'R\$ ${product.price.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        color: AppColors.coolCyan,
+                        color: AppColors.braweSky,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -237,7 +237,7 @@ class _ProductTile extends StatelessWidget {
           ElevatedButton(
             onPressed: product.isSoldOut ? null : () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.electricPurple,
+              backgroundColor: AppColors.braweBlue,
               disabledBackgroundColor: AppColors.slate,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(

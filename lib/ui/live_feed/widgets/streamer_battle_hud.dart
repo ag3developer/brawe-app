@@ -396,7 +396,7 @@ class _ResultBanner extends StatelessWidget {
         battle.winnerName ??
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
     final winnerColor = battle.isLeadingA
-        ? AppColors.electricPurple
+        ? AppColors.braweBlue
         : AppColors.hotPink;
 
     return SafeArea(

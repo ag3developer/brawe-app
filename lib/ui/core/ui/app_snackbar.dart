@@ -11,7 +11,7 @@ class AppSnackBar {
           children: [
             const Icon(
               Icons.check_circle_outline,
-              color: AppColors.coolCyan,
+              color: AppColors.braweSky,
               size: 20,
             ),
             const SizedBox(width: 12),

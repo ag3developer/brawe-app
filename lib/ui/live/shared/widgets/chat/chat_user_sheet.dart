@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/themes/force_dark_theme.dart';
 import '../level_chip.dart';
 
 /// Ação escolhida no cartão do autor de uma mensagem do chat.
@@ -36,8 +37,9 @@ class ChatUserSheet extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) =>
-          ChatUserSheet(comment: comment, allowProfile: allowProfile),
+      builder: (_) => ForceDarkTheme(
+        child: ChatUserSheet(comment: comment, allowProfile: allowProfile),
+      ),
     );
   }
 
@@ -94,7 +96,7 @@ class ChatUserSheet extends StatelessWidget {
             const SizedBox(height: 16),
             CircleAvatar(
               radius: 32,
-              backgroundColor: AppColors.electricPurple,
+              backgroundColor: AppColors.braweBlue,
               backgroundImage: hasAvatar ? NetworkImage(c.avatarUrl!) : null,
               child: hasAvatar
                   ? null

@@ -5235,4 +5235,24 @@ class SEn extends S {
 
   @override
   String get composerNoCamera => 'Camera unavailable';
+
+  @override
+  String feedViewsCount(int count, String formatted) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$formatted views',
+      one: '1 view',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedRepostUndone => 'Repost removed';
+
+  @override
+  String get profileTabReposts => 'Reposts';
+
+  @override
+  String get profileNoReposts => 'No reposts yet';
 }

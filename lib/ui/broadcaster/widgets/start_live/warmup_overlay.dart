@@ -113,13 +113,13 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.electricPurple.withValues(alpha: 0.6),
+                          AppColors.braweBlue.withValues(alpha: 0.6),
                           Colors.transparent,
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.electricPurple.withValues(alpha: 0.5),
+                          color: AppColors.braweBlue.withValues(alpha: 0.5),
                           blurRadius: 40,
                           spreadRadius: 8,
                         ),
@@ -154,7 +154,7 @@ class _WarmupOverlayState extends State<WarmupOverlay>
                         child: FilledButton(
                           onPressed: _skip,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.electricPurple,
+                            backgroundColor: AppColors.braweBlue,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                             ),

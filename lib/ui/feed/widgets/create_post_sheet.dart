@@ -67,7 +67,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(s.postPublishedSuccess),
-          backgroundColor: AppColors.electricPurple,
+          backgroundColor: AppColors.braweBlue,
           duration: const Duration(seconds: 2),
         ),
       );
@@ -214,7 +214,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: AppColors.electricPurple.withValues(
+                          color: AppColors.braweBlue.withValues(
                             alpha: 0.5,
                           ),
                         ),
@@ -226,7 +226,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           Text(
                             _audienceLabel(s, _audience),
                             style: const TextStyle(
-                              color: AppColors.electricPurple,
+                              color: AppColors.braweBlue,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -234,7 +234,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           const SizedBox(width: 4),
                           const Icon(
                             Icons.keyboard_arrow_down,
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                             size: 14,
                           ),
                         ],
@@ -246,7 +246,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     onPressed: canPost && !_isPosting ? _post : null,
                     style: TextButton.styleFrom(
                       backgroundColor: canPost && !_isPosting
-                          ? AppColors.electricPurple
+                          ? AppColors.braweBlue
                           : context.colors.surfaceElevated,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -331,9 +331,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                                   color: Colors.black54,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.close,
-                                  color: context.colors.textPrimary,
+                                  color: Colors.white,
                                   size: 16,
                                 ),
                               ),
@@ -392,7 +392,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                             backgroundColor: context.colors.border,
                             color: _charCount > _maxChars * 0.9
                                 ? Colors.orange
-                                : AppColors.electricPurple,
+                                : AppColors.braweBlue,
                           ),
                           if (_charCount > _maxChars * 0.8)
                             Text(
@@ -456,14 +456,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       ? Icons.people
                       : Icons.lock,
                   color: _audience == option
-                      ? AppColors.electricPurple
-                      : Colors.white,
+                      ? AppColors.braweBlue
+                      : context.colors.textPrimary,
                 ),
                 title: Text(
                   _audienceLabel(S.of(context), option),
                   style: TextStyle(
                     color: _audience == option
-                        ? AppColors.electricPurple
+                        ? AppColors.braweBlue
                         : context.colors.textPrimary,
                     fontWeight: _audience == option
                         ? FontWeight.bold
@@ -471,7 +471,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   ),
                 ),
                 trailing: _audience == option
-                    ? const Icon(Icons.check, color: AppColors.electricPurple)
+                    ? const Icon(Icons.check, color: AppColors.braweBlue)
                     : null,
                 onTap: () {
                   setState(() => _audience = option);
@@ -501,7 +501,7 @@ class _ToolbarBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active
-        ? (activeColor ?? AppColors.electricPurple)
+        ? (activeColor ?? AppColors.braweBlue)
         : context.colors.textSecondary;
     return IconButton(
       icon: Icon(icon, color: color, size: 22),

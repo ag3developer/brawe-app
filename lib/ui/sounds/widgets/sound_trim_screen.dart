@@ -464,7 +464,7 @@ class _Handle extends StatelessWidget {
         child: Container(
           width: 18,
           decoration: BoxDecoration(
-            color: AppColors.electricPurple,
+            color: AppColors.braweBlue,
             borderRadius: BorderRadius.circular(4),
             border: Border.all(color: Colors.white, width: 1.5),
           ),

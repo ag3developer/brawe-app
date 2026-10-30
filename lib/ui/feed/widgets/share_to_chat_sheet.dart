@@ -37,6 +37,8 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
     this.postImageUrl,
     this.authorName,
     this.storyMediaUrl,
+    this.isReposted = false,
+    this.onRepostChanged,
   });
 
   final String postId;
@@ -50,6 +52,10 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
   /// "Stories" — reposta o post como story dentro do app.
   final String? storyMediaUrl;
 
+  /// Estado atual do repost do usuário (o botão vira "Desfazer repost").
+  final bool isReposted;
+  final ValueChanged<bool>? onRepostChanged;
+
   static Future<void> show(
     BuildContext context, {
     required String postId,
@@ -57,6 +63,8 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
     String? postImageUrl,
     String? authorName,
     String? storyMediaUrl,
+    bool isReposted = false,
+    ValueChanged<bool>? onRepostChanged,
   }) {
     // Contexto do navigator raiz: a folha herda o tema do APP (claro ou
     // escuro), não o tema escuro forçado do feed de onde foi aberta.
@@ -72,6 +80,8 @@ class ShareToChatSheet extends ConsumerStatefulWidget {
         postImageUrl: postImageUrl,
         authorName: authorName,
         storyMediaUrl: storyMediaUrl,
+        isReposted: isReposted,
+        onRepostChanged: onRepostChanged,
       ),
     );
   }
@@ -259,14 +269,19 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
     );
   }
 
+  /// Repostar ou, se já repostado, desfazer o repost.
   Future<void> _repost() async {
     final messenger = ScaffoldMessenger.of(context);
     final s = S.of(context);
+    final was = widget.isReposted;
     Navigator.of(context).pop();
     try {
-      await ref.read(postRepositoryProvider).toggleRepost(widget.postId, false);
-      _trackShareOnce();
-      messenger.showSnackBar(SnackBar(content: Text(s.feedReposted)));
+      await ref.read(postRepositoryProvider).toggleRepost(widget.postId, was);
+      if (!was) _trackShareOnce();
+      widget.onRepostChanged?.call(!was);
+      messenger.showSnackBar(
+        SnackBar(content: Text(was ? s.feedRepostUndone : s.feedReposted)),
+      );
     } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(s.feedCannotShare)));
     }
@@ -463,7 +478,7 @@ class _ShareToChatSheetState extends ConsumerState<ShareToChatSheet> {
         ),
       _ActionButton(
         icon: LucideIcons.repeat2,
-        label: s.shareActionRepost,
+        label: widget.isReposted ? s.feedRepostUndo : s.shareActionRepost,
         onTap: _repost,
       ),
       _ActionButton(

@@ -12,6 +12,7 @@ import '../../../domain/models/failure.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/sound_preview.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
 import '../../shared/widgets/content_sound_attribution.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_player_bottom_sheet.dart';
@@ -432,7 +433,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
               // Vídeo
               if (_loading)
                 const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFA855F7)),
+                  child: CircularProgressIndicator(color: AppColors.braweBlue),
                 )
               else if (_error || _ctrl == null)
                 Center(
@@ -616,7 +617,7 @@ class _ProgressBar extends StatelessWidget {
             trackHeight: 2,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: SliderComponentShape.noOverlay,
-            activeTrackColor: const Color(0xFFA855F7),
+            activeTrackColor: AppColors.braweBlue,
             inactiveTrackColor: Colors.white24,
             thumbColor: Colors.white,
           ),

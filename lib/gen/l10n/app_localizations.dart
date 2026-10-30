@@ -9590,6 +9590,30 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Câmera indisponível'**
   String get composerNoCamera;
+
+  /// No description provided for @feedViewsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 visualização} other{{formatted} visualizações}}'**
+  String feedViewsCount(int count, String formatted);
+
+  /// No description provided for @feedRepostUndone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repost desfeito'**
+  String get feedRepostUndone;
+
+  /// No description provided for @profileTabReposts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reposts'**
+  String get profileTabReposts;
+
+  /// No description provided for @profileNoReposts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum repost ainda'**
+  String get profileNoReposts;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

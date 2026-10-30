@@ -167,12 +167,12 @@ class _FeaturedProductCard extends StatelessWidget {
           color: AppColors.nearBlack.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.electricPurple.withValues(alpha: 0.6),
+            color: AppColors.braweBlue.withValues(alpha: 0.6),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.electricPurple.withValues(alpha: 0.25),
+              color: AppColors.braweBlue.withValues(alpha: 0.25),
               blurRadius: 18,
             ),
           ],
@@ -251,7 +251,7 @@ class _FeaturedProductCard extends StatelessWidget {
                       Text(
                         'R\$ ${product.price.toStringAsFixed(2)}',
                         style: const TextStyle(
-                          color: AppColors.coolCyan,
+                          color: AppColors.braweSky,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -282,7 +282,7 @@ class _FeaturedProductCard extends StatelessWidget {
                   height: 46,
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [AppColors.electricPurple, AppColors.coolCyan],
+                      colors: [AppColors.braweBlue, AppColors.braweSky],
                     ),
                     shape: BoxShape.circle,
                   ),

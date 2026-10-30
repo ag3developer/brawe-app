@@ -135,7 +135,7 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
           }
 
           return RefreshIndicator(
-            color: AppColors.electricPurple,
+            color: AppColors.braweBlue,
             onRefresh: () async {
               ref.invalidate(liveHistoryPageProvider);
               setState(() {
@@ -446,12 +446,12 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
     // ── Replay pode estar sendo processado → botão "Carregar" ────────
     if (item.replayMayBePending) {
       return _loading
-          ? const SizedBox(
+          ? SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFF8B5CF6),
+                color: context.colors.accentPrimary,
               ),
             )
           : GestureDetector(
@@ -459,25 +459,25 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                  color: context.colors.accentPrimary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                    color: context.colors.accentPrimary.withValues(alpha: 0.4),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       LucideIcons.refreshCw,
                       size: 10,
-                      color: Color(0xFF8B5CF6),
+                      color: context.colors.accentPrimary,
                     ),
                     SizedBox(width: 4),
                     Text(
                       'Ver replay',
                       style: TextStyle(
-                        color: Color(0xFF8B5CF6),
+                        color: context.colors.accentPrimary,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
@@ -502,7 +502,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+            colors: [AppColors.braweBlue, AppColors.braweSky],
           ),
           borderRadius: BorderRadius.circular(6),
         ),
@@ -597,7 +597,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
         content: Text(msg),
         backgroundColor: isError
             ? Colors.red.shade700
-            : const Color(0xFF8B5CF6),
+            : context.colors.accentPrimary,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -606,7 +606,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
   void _showDownloadSheet(BuildContext context, LiveHistoryItem item) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -651,9 +651,9 @@ class _LiveReplayPlayerState extends State<_LiveReplayPlayer> {
         allowMuting: true,
         showControlsOnInitialize: true,
         materialProgressColors: ChewieProgressColors(
-          playedColor: AppColors.electricPurple,
-          handleColor: AppColors.electricPurple,
-          bufferedColor: AppColors.electricPurple.withValues(alpha: 0.3),
+          playedColor: AppColors.braweBlue,
+          handleColor: AppColors.braweBlue,
+          bufferedColor: AppColors.braweBlue.withValues(alpha: 0.3),
         ),
       );
       if (mounted) setState(() {});
@@ -909,8 +909,8 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? Colors.white : Colors.black87;
-    final textSec = isDark ? Colors.white54 : Colors.black45;
+    final textPrimary = context.colors.textPrimary;
+    final textSec = context.colors.textSecondary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -975,7 +975,7 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
         _QualityButton(
           label: '1080p (Alta qualidade)',
           icon: LucideIcons.video,
-          color: const Color(0xFF8B5CF6),
+          color: context.colors.accentPrimary,
           onTap: () => _startDownload('high'),
         ),
         const SizedBox(height: 8),
@@ -1120,9 +1120,9 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
             icon: const Icon(LucideIcons.scissors, size: 16),
             label: const Text('Cortar / editar vídeo'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.electricPurple,
+              foregroundColor: AppColors.braweBlue,
               side: BorderSide(
-                color: AppColors.electricPurple.withValues(alpha: 0.5),
+                color: AppColors.braweBlue.withValues(alpha: 0.5),
               ),
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(

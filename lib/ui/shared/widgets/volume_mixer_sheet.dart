@@ -117,7 +117,7 @@ class _VolumeMixerSheetState extends State<VolumeMixerSheet> {
               icon: Icons.music_note_rounded,
               label: widget.musicTitle ?? s.volumeMixerMusicLabel,
               value: _musicVolume,
-              accentColor: AppColors.hotPink,
+              accentColor: AppColors.braweOrange,
               onChanged: (v) {
                 setState(() => _musicVolume = v);
                 widget.onMusicVolumeChanged(v);
@@ -128,7 +128,7 @@ class _VolumeMixerSheetState extends State<VolumeMixerSheet> {
               icon: Icons.videocam_rounded,
               label: s.volumeMixerOriginalLabel,
               value: _originalVolume,
-              accentColor: AppColors.coolCyan,
+              accentColor: AppColors.braweSky,
               onChanged: (v) {
                 setState(() => _originalVolume = v);
                 widget.onOriginalVolumeChanged(v);
@@ -141,7 +141,7 @@ class _VolumeMixerSheetState extends State<VolumeMixerSheet> {
                 onPressed: () =>
                     Navigator.of(context).pop((_musicVolume, _originalVolume)),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.electricPurple,
+                  backgroundColor: AppColors.braweBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

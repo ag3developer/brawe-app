@@ -104,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Logo + Título ────────────────────────────────────
                       // Widget de marca reutilizável, consistente com o
                       // resto do app.
-                      const BraweLogo(iconSize: 36, showTagline: false),
+                      const BraweLogo(size: 36),
                       const SizedBox(height: 24),
                       Text(
                         s.authWelcomeBackTitle,

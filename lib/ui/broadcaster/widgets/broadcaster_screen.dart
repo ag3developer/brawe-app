@@ -25,6 +25,7 @@ import '../../live/shared/widgets/chat/chat.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/services/battle_service.dart';
@@ -1328,29 +1329,31 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => BattleInviteSheet(
-        myRoomId: _room.id,
-        onInvite: (candidate, durationSeconds) async {
-          try {
-            final resp = await ref
-                .read(battleServiceProvider)
-                .inviteBattle(
-                  roomId: _room.id,
-                  targetRoomId: candidate.roomId,
-                  durationSeconds: durationSeconds,
-                );
-            final battleId = _extractBattleId(resp);
-            if (battleId != null) {
-              _startOutgoingInvite(battleId, candidate.displayName, 60);
+      builder: (ctx) => ForceDarkTheme(
+        child: BattleInviteSheet(
+          myRoomId: _room.id,
+          onInvite: (candidate, durationSeconds) async {
+            try {
+              final resp = await ref
+                  .read(battleServiceProvider)
+                  .inviteBattle(
+                    roomId: _room.id,
+                    targetRoomId: candidate.roomId,
+                    durationSeconds: durationSeconds,
+                  );
+              final battleId = _extractBattleId(resp);
+              if (battleId != null) {
+                _startOutgoingInvite(battleId, candidate.displayName, 60);
+              }
+              return null;
+            } catch (e) {
+              return BattleService.errorMessage(
+                e,
+                'Não foi possível enviar o convite',
+              );
             }
-            return null;
-          } catch (e) {
-            return BattleService.errorMessage(
-              e,
-              'Não foi possível enviar o convite',
-            );
-          }
-        },
+          },
+        ),
       ),
     );
   }
@@ -1516,7 +1519,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ? Icons.music_note_rounded
                         : Icons.record_voice_over_rounded,
                     iconColor: _audioMode == BroadcastAudioMode.quality
-                        ? const Color(0xFFFF3D6E)
+                        ? AppColors.braweBlueLight
                         : const Color(0xFF4FC3F7),
                     title: _audioMode == BroadcastAudioMode.quality
                         ? 'Áudio: Qualidade'
@@ -1548,7 +1551,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   // ── Processador de Áudio (EQ + Compressor) ─────────────────
                   MoreOptionTile(
                     icon: Icons.graphic_eq_rounded,
-                    iconColor: Colors.pink.shade300,
+                    iconColor: AppColors.braweSky,
                     title: '🎛️ Processador de áudio',
                     subtitle:
                         'Equalizador + compressor — ${BroadcastAudioProcessing.currentPreset.label}',
@@ -1558,8 +1561,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         context: context,
                         backgroundColor: Colors.transparent,
                         isScrollControlled: true,
-                        builder: (bCtx) => AudioProcessorPanel(
-                          onClose: () => Navigator.pop(bCtx),
+                        builder: (bCtx) => ForceDarkTheme(
+                          child: AudioProcessorPanel(
+                            onClose: () => Navigator.pop(bCtx),
+                          ),
                         ),
                       );
                     },
@@ -1916,7 +1921,7 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
       backgroundColor: AppColors.slate,
       title: Row(
         children: [
-          const Icon(Icons.sports_kabaddi, color: AppColors.electricPurple),
+          const Icon(Icons.sports_kabaddi, color: AppColors.braweBlue),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1937,7 +1942,7 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
               backgroundColor: Colors.white12,
               valueColor: AlwaysStoppedAnimation<Color>(
                 _remaining > 15
-                    ? AppColors.electricPurple
+                    ? AppColors.braweBlue
                     : const Color(0xFFEF4444),
               ),
               minHeight: 5,
@@ -1964,7 +1969,7 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.electricPurple,
+            backgroundColor: AppColors.braweBlue,
           ),
           child: Text(widget.l10n.battleAccept),
         ),
@@ -2042,7 +2047,7 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
         color: Colors.black.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: AppColors.electricPurple.withValues(alpha: 0.6),
+          color: AppColors.braweBlue.withValues(alpha: 0.6),
         ),
       ),
       child: Row(
@@ -2053,7 +2058,7 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.electricPurple,
+              color: AppColors.braweBlue,
             ),
           ),
           const SizedBox(width: 10),
@@ -2211,7 +2216,7 @@ class _CreatorChatInput extends StatelessWidget {
         const SizedBox(width: 6),
         IconButton(
           onPressed: onSend,
-          icon: const Icon(Icons.send_rounded, color: Color(0xFFFF4F8B)),
+          icon: const Icon(Icons.send_rounded, color: AppColors.braweBlueLight),
         ),
         IconButton(
           onPressed: onClose,

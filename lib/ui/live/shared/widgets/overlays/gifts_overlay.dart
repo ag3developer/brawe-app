@@ -13,6 +13,7 @@ import '../../../../../domain/models/gift.dart';
 import '../../../../../domain/models/gifter_level.dart';
 import '../../../../../domain/models/user.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../core/themes/force_dark_theme.dart';
 
 /// 🎁 Catálogo de presentes — layout TikTok-style.
 class GiftsOverlay extends ConsumerStatefulWidget {
@@ -37,10 +38,13 @@ class GiftsOverlay extends ConsumerStatefulWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => GiftsOverlay(
-        roomId: roomId,
-        streamerId: streamerId,
-        battleId: battleId,
+      // Sheet da live: sempre dark, igual à tela que o abriu.
+      builder: (context) => ForceDarkTheme(
+        child: GiftsOverlay(
+          roomId: roomId,
+          streamerId: streamerId,
+          battleId: battleId,
+        ),
       ),
     );
   }
@@ -162,7 +166,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF2A1247), Color(0xFF160922), Color(0xFF0A0612)],
+          colors: [Color(0xFF0F1C4D), Color(0xFF0A1230), Color(0xFF070A18)],
           stops: [0.0, 0.45, 1.0],
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -174,7 +178,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB44CF0).withValues(alpha: 0.25),
+            color: AppColors.braweOrange.withValues(alpha: 0.25),
             blurRadius: 30,
             spreadRadius: -8,
             offset: const Offset(0, -4),
@@ -195,8 +199,8 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                     center: Alignment.topCenter,
                     radius: 0.9,
                     colors: [
-                      const Color(0xFFFF4F8B).withValues(alpha: 0.18),
-                      const Color(0xFFB44CF0).withValues(alpha: 0.10),
+                      AppColors.braweOrange.withValues(alpha: 0.18),
+                      AppColors.braweEmber.withValues(alpha: 0.10),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 0.5, 1.0],
@@ -248,7 +252,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
               TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                indicatorColor: AppColors.electricPurple,
+                indicatorColor: AppColors.braweBlue,
                 indicatorWeight: 2.5,
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.white54,
@@ -298,7 +302,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         );
       },
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.electricPurple),
+        child: CircularProgressIndicator(color: AppColors.braweBlue),
       ),
       error: (e, _) => Center(
         child: Text(
@@ -344,11 +348,11 @@ class _GamerLevelHeader extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFF4F8B), Color(0xFFB44CF0)],
+                    colors: [AppColors.braweSpark, AppColors.braweEmber],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFB44CF0).withValues(alpha: 0.35),
+                      color: AppColors.braweEmber.withValues(alpha: 0.35),
                       blurRadius: 10,
                       spreadRadius: -1,
                     ),
@@ -378,7 +382,7 @@ class _GamerLevelHeader extends ConsumerWidget {
                     color: badgeColor,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: const Color(0xFF160922),
+                      color: const Color(0xFF0A1230),
                       width: 1.5,
                     ),
                   ),
@@ -444,11 +448,7 @@ class _GamerLevelHeader extends ConsumerWidget {
                           height: 6,
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [
-                                Color(0xFF7C3AED),
-                                Color(0xFFB44CF0),
-                                Color(0xFFFF4F8B),
-                              ],
+                              colors: AppColors.brandGradient,
                             ),
                           ),
                         ),
@@ -474,7 +474,7 @@ class _GamerLevelHeader extends ConsumerWidget {
         ? user!.firstName[0].toUpperCase()
         : '?';
     return Container(
-      color: const Color(0xFF1F1232),
+      color: AppColors.deepBlue,
       alignment: Alignment.center,
       child: Text(
         initial,
@@ -582,17 +582,17 @@ class _GiftTile extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.electricPurple.withValues(alpha: 0.18)
+              ? AppColors.braweBlue.withValues(alpha: 0.18)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.electricPurple : Colors.transparent,
+            color: isSelected ? AppColors.braweBlue : Colors.transparent,
             width: 1.5,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.electricPurple.withValues(alpha: 0.35),
+                    color: AppColors.braweBlue.withValues(alpha: 0.35),
                     blurRadius: 14,
                     spreadRadius: -2,
                   ),
@@ -704,7 +704,7 @@ class _BalanceFooter extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
-                        color: Color(0xFFFF4F8B),
+                        color: AppColors.braweOrange,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -722,7 +722,7 @@ class _BalanceFooter extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: !canSend || isSending ? null : onSend,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF4F8B),
+                    backgroundColor: AppColors.braweOrange,
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: Colors.white12,
                     disabledForegroundColor: Colors.white38,
@@ -731,7 +731,7 @@ class _BalanceFooter extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(22),
                     ),
                     elevation: canSend ? 6 : 0,
-                    shadowColor: const Color(0xFFFF4F8B).withValues(alpha: 0.5),
+                    shadowColor: AppColors.braweOrange.withValues(alpha: 0.5),
                   ),
                   child: isSending
                       ? const SizedBox(

@@ -5259,4 +5259,24 @@ class SPt extends S {
 
   @override
   String get composerNoCamera => 'Câmera indisponível';
+
+  @override
+  String feedViewsCount(int count, String formatted) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$formatted visualizações',
+      one: '1 visualização',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedRepostUndone => 'Repost desfeito';
+
+  @override
+  String get profileTabReposts => 'Reposts';
+
+  @override
+  String get profileNoReposts => 'Nenhum repost ainda';
 }

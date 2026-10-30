@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 
 class ForYouLiveListScreen extends ConsumerStatefulWidget {
   const ForYouLiveListScreen({super.key});
@@ -42,18 +44,19 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
   Widget build(BuildContext context) {
     final s = S.of(context);
     final liveFeedState = ref.watch(liveFeedViewModelProvider);
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F1A),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F1A),
+        backgroundColor: colors.background,
         title: Text(
           s.liveFeedCategoryForYou,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: colors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -64,20 +67,20 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.videocam_off_outlined,
-                    color: Colors.white24,
+                    color: colors.textTertiary,
                     size: 64,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     s.liveFeedEmptyForYou,
-                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     s.liveFeedEmptyHint,
-                    style: const TextStyle(color: Colors.white38, fontSize: 14),
+                    style: TextStyle(color: colors.textTertiary, fontSize: 14),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
@@ -86,8 +89,8 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
                     icon: const Icon(Icons.refresh),
                     label: Text(s.liveFeedRefresh),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6E4DFF),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.accentPrimary,
+                      foregroundColor: colors.textOnAccent,
                     ),
                   ),
                 ],
@@ -124,7 +127,7 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
             children: [
               Text(
                 s.liveFeedError(error.toString()),
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: colors.danger),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -191,7 +194,7 @@ class _LiveThumbnailCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.liveRed,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(

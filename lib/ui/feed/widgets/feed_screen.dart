@@ -1,6 +1,5 @@
 // ignore_for_file: unused_element_parameter
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +10,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../core/themes/brawe_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../core/text/link_preview_card.dart';
 import '../../core/widgets/badge_count.dart';
@@ -19,6 +19,7 @@ import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/sound_preview.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/feedback_service.dart';
 import '../../../data/services/social_actions_service.dart';
@@ -30,7 +31,6 @@ import '../../sounds/view_models/sound_player_view_model.dart';
 import '../view_models/feed_view_model.dart';
 import '../view_models/stories_view_model.dart';
 import 'comments_sheet.dart';
-import 'create_post_sheet.dart';
 import 'reactions_bar.dart';
 import 'story_composer_screen.dart';
 import 'share_to_chat_sheet.dart';
@@ -39,36 +39,15 @@ import 'story_ring_avatar.dart';
 import 'suggested_users_rail.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
-/// Paleta dedicada ao redesign 2026: dark mais profundo, accents premium,
-/// gradientes consistentes com o web.
-// ignore_for_file: unused_field
+/// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
+/// próprio é o vermelho do "curtir", que é semântico (coração) e não muda
+/// com o tema.
 class _FeedTokens {
-  static const Color bg = Color(0xFF07070C);
-  static const Color surface = Color(0xFF101019);
-  static const Color surfaceHi = Color(0xFF181826);
-  static const Color outline = Color(0x1AFFFFFF); // white 10%
-  static const Color outlineSoft = Color(0x0DFFFFFF); // white 5%
-
-  static const Color textHi = Color(0xFFF5F5FA);
-  static const Color textMd = Color(0xFFB4B4C7);
-  static const Color textLo = Color(0xFF7A7A92);
-
   static const Color likeRed = Color(0xFFFF3B7E);
-  static const Color saveGold = Color(0xFFFFC857);
-  static const Color repostGreen = Color(0xFF22D39A);
-
-  static const LinearGradient brandGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFA855F7), Color(0xFFEC4899), Color(0xFFF59E0B)],
-  );
-
-  static const LinearGradient verifiedRing = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
-  );
 }
+
+/// Offset (px) a partir do qual o header troca o wordmark pelo símbolo "B".
+const double _kHeaderCollapseOffset = 48;
 
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -80,20 +59,30 @@ class FeedScreen extends ConsumerStatefulWidget {
 class _FeedScreenState extends ConsumerState<FeedScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
-  final ScrollController _scrollController = ScrollController();
-  double _scrollOffset = 0;
+
+  /// Um controller por aba — o header colapsa de acordo com a aba ativa.
+  final List<ScrollController> _scrollControllers = [
+    ScrollController(),
+    ScrollController(),
+  ];
+  bool _collapsed = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _tabController = TabController(length: 2, vsync: this);
-    _scrollController.addListener(() {
-      final off = _scrollController.offset.clamp(0.0, 80.0);
-      if ((off - _scrollOffset).abs() > 1) {
-        setState(() => _scrollOffset = off);
-      }
-    });
+    _tabController = TabController(length: 2, vsync: this)
+      ..addListener(_syncCollapsed);
+    for (final c in _scrollControllers) {
+      c.addListener(_syncCollapsed);
+    }
+  }
+
+  void _syncCollapsed() {
+    final c = _scrollControllers[_tabController.index];
+    final offset = c.hasClients ? c.offset : 0.0;
+    final collapsed = offset > _kHeaderCollapseOffset;
+    if (collapsed != _collapsed) setState(() => _collapsed = collapsed);
   }
 
   @override
@@ -107,135 +96,82 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _tabController.dispose();
-    _scrollController.dispose();
+    for (final c in _scrollControllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  void _openCreatePost() {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const CreatePostSheet(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final blur = (_scrollOffset / 80) * 24;
+    // Sem FAB: o "+" central da HomeBottomNav já abre o menu de criação
+    // (post, story, vídeo, live) — o FAB do feed era duplicado.
     return Scaffold(
       backgroundColor: context.colors.background,
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          // Aurora background — gradient orbs leves
-          const _AuroraBackdrop(),
-
-          // Conteúdo
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                _GlassTopBar(
-                  blur: blur,
-                  onSearch: () => context.push('/explore'),
-                  onMessages: () => context.push('/chat'),
-                  onNotifications: () => context.push('/notifications'),
-                ),
-                _PillTabBar(controller: _tabController),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    physics: const BouncingScrollPhysics(),
-                    children: [
-                      _FeedTab(
-                        tabType: FeedTabType.forYou,
-                        scrollController: _scrollController,
-                      ),
-                      _FeedTab(
-                        tabType: FeedTabType.following,
-                        scrollController: null,
-                      ),
-                    ],
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // Header + abas fixos (sticky) acima da lista.
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: context.colors.background,
+                border: Border(
+                  bottom: BorderSide(
+                    color: _collapsed
+                        ? context.colors.divider
+                        : context.colors.divider.withValues(alpha: 0),
+                    width: 0.5,
                   ),
                 ),
-              ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _FeedHeader(
+                    collapsed: _collapsed,
+                    onSearch: () => context.push('/explore'),
+                    onMessages: () => context.push('/chat'),
+                    onNotifications: () => context.push('/notifications'),
+                  ),
+                  _FeedTabs(controller: _tabController),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: _GradientFab(onTap: _openCreatePost),
-    );
-  }
-}
-
-/// ─── Aurora Backdrop ──────────────────────────────────────────────────────
-class _AuroraBackdrop extends StatelessWidget {
-  const _AuroraBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          Positioned(
-            top: -120,
-            left: -80,
-            child: _Orb(
-              color: const Color(0xFFA855F7).withValues(alpha: 0.22),
-              size: 320,
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _FeedTab(
+                    tabType: FeedTabType.forYou,
+                    scrollController: _scrollControllers[0],
+                  ),
+                  _FeedTab(
+                    tabType: FeedTabType.following,
+                    scrollController: _scrollControllers[1],
+                  ),
+                ],
+              ),
             ),
-          ),
-          Positioned(
-            top: 60,
-            right: -100,
-            child: _Orb(
-              color: const Color(0xFFEC4899).withValues(alpha: 0.18),
-              size: 280,
-            ),
-          ),
-          Positioned(
-            bottom: -150,
-            left: 40,
-            child: _Orb(
-              color: const Color(0xFF3BB8FF).withValues(alpha: 0.12),
-              size: 360,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _Orb extends StatelessWidget {
-  const _Orb({required this.color, required this.size});
-  final Color color;
-  final double size;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-      ),
-    );
-  }
-}
-
-/// ─── Top Bar (glass + blur on scroll) ─────────────────────────────────────
-class _GlassTopBar extends ConsumerWidget {
-  const _GlassTopBar({
-    required this.blur,
+/// ─── Header minimalista ───────────────────────────────────────────────────
+/// No topo: wordmark "Brawe". Ao rolar: só o símbolo "B" (cross-fade 200ms).
+/// À direita: busca, mensagens e notificações como ícones simples.
+class _FeedHeader extends ConsumerWidget {
+  const _FeedHeader({
+    required this.collapsed,
     required this.onSearch,
     required this.onMessages,
     required this.onNotifications,
   });
-  final double blur;
+  final bool collapsed;
   final VoidCallback onSearch;
   final VoidCallback onMessages;
   final VoidCallback onNotifications;
@@ -246,108 +182,121 @@ class _GlassTopBar extends ConsumerWidget {
     final notifications =
         ref.watch(notificationsUnreadCountProvider).asData?.value ?? 0;
     final messages = ref.watch(unreadCountProvider);
+    final s = S.of(context);
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 10),
-          decoration: BoxDecoration(
-            color: context.colors.background.withValues(
-              alpha: blur > 4 ? 0.55 : 0.0,
-            ),
-            border: Border(
-              bottom: BorderSide(
-                color: context.colors.border.withValues(
-                  alpha: blur > 4 ? 1 : 0,
+    return SizedBox(
+      height: 52,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [...previous, ?current],
                 ),
-                width: 0.5,
+                child: collapsed
+                    // O PNG do símbolo tem respiro (~53% visível): caixa de
+                    // 44 ≈ marca de 24pt. Desloca para alinhar a marca
+                    // visível com a margem de 16.
+                    ? Transform.translate(
+                        key: const ValueKey('symbol'),
+                        offset: const Offset(-10, 0),
+                        child: const BraweLogo(size: 44),
+                      )
+                    : const BraweLogo.wordmark(
+                        key: ValueKey('wordmark'),
+                        size: 24,
+                      ),
               ),
             ),
-          ),
-          child: Row(
-            children: [
-              const BraweLogo(iconSize: 44),
-              const Spacer(),
-              _IconChip(icon: LucideIcons.search, onTap: onSearch),
-              const SizedBox(width: 6),
-              _IconChip(
-                icon: LucideIcons.send,
-                onTap: onMessages,
-                count: messages,
-              ),
-              const SizedBox(width: 6),
-              _IconChip(
-                icon: LucideIcons.bell,
-                onTap: onNotifications,
-                count: notifications,
-              ),
-            ],
-          ),
+            _HeaderIcon(
+              icon: LucideIcons.search,
+              tooltip: s.shareSearchHint,
+              onTap: onSearch,
+            ),
+            _HeaderIcon(
+              icon: LucideIcons.send,
+              tooltip: s.chatListTitle,
+              onTap: onMessages,
+              count: messages,
+            ),
+            _HeaderIcon(
+              icon: LucideIcons.bell,
+              tooltip: s.notificationsTitle,
+              onTap: onNotifications,
+              count: notifications,
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _IconChip extends StatelessWidget {
-  const _IconChip({required this.icon, required this.onTap, this.count = 0});
+class _HeaderIcon extends StatelessWidget {
+  const _HeaderIcon({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.count = 0,
+  });
   final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
 
   /// Quantidade de itens não lidos. `0` esconde o badge; `> 0` mostra a bolha
-  /// numérica (até "9+"). Substitui o antigo `badge` booleano hardcoded.
+  /// numérica (até "9+").
   final int count;
 
   @override
   Widget build(BuildContext context) {
     final showBadge = BadgeCount.isVisible(count);
-    final label = BadgeCount.label(count);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: InkResponse(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: context.colors.border),
-          ),
+        radius: 22,
+        child: SizedBox(
+          width: 44,
+          height: 44,
           child: Stack(
             alignment: Alignment.center,
+            clipBehavior: Clip.none,
             children: [
-              Icon(icon, color: context.colors.textPrimary, size: 20),
+              Icon(icon, color: context.colors.textPrimary, size: 24),
               if (showBadge)
                 Positioned(
-                  top: 4,
+                  top: 5,
                   right: 4,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
+                      minWidth: 17,
+                      minHeight: 17,
                     ),
                     decoration: BoxDecoration(
-                      gradient: _FeedTokens.brandGradient,
-                      borderRadius: BorderRadius.circular(8),
+                      color: context.colors.accentPrimary,
+                      borderRadius: BorderRadius.circular(9),
                       border: Border.all(
-                        color: context.colors.surface,
+                        color: context.colors.background,
                         width: 1.5,
                       ),
                     ),
                     child: Center(
                       child: Text(
-                        label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
+                        BadgeCount.label(count),
+                        style: TextStyle(
+                          color: context.colors.textOnAccent,
+                          fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           height: 1,
                         ),
@@ -363,85 +312,74 @@ class _IconChip extends StatelessWidget {
   }
 }
 
-/// ─── Pill Tabs ────────────────────────────────────────────────────────────
-class _PillTabBar extends StatelessWidget {
-  const _PillTabBar({required this.controller});
+/// ─── Abas de texto (estilo Threads/TikTok) ───────────────────────────────
+class _FeedTabs extends StatelessWidget {
+  const _FeedTabs({required this.controller});
   final TabController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-      child: Container(
-        height: 42,
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: context.colors.border),
+    return SizedBox(
+      height: 40,
+      child: TabBar(
+        controller: controller,
+        onTap: (_) => HapticFeedback.selectionClick(),
+        isScrollable: true,
+        tabAlignment: TabAlignment.center,
+        labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+        dividerColor: Colors.transparent,
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        indicatorSize: TabBarIndicatorSize.label,
+        indicator: _ShortUnderlineIndicator(
+          color: context.colors.accentPrimary,
         ),
-        child: TabBar(
-          controller: controller,
-          onTap: (_) => HapticFeedback.selectionClick(),
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicatorPadding: const EdgeInsets.all(4),
-          dividerColor: Colors.transparent,
-          indicator: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            gradient: _FeedTokens.brandGradient,
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFA855F7).withValues(alpha: 0.35),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          labelColor: context.colors.textPrimary,
-          unselectedLabelColor: context.colors.textSecondary,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 13.5,
-            letterSpacing: 0.2,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13.5,
-          ),
-          tabs: [
-            Tab(text: S.of(context).feedTabForYou),
-            Tab(text: S.of(context).feedTabFollowing),
-          ],
+        labelColor: context.colors.textPrimary,
+        unselectedLabelColor: context.colors.textSecondary,
+        labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
         ),
+        tabs: [
+          Tab(text: S.of(context).feedTabForYou),
+          Tab(text: S.of(context).feedTabFollowing),
+        ],
       ),
     );
   }
 }
 
-/// ─── Gradient FAB ─────────────────────────────────────────────────────────
-class _GradientFab extends StatelessWidget {
-  const _GradientFab({required this.onTap});
-  final VoidCallback onTap;
+/// Sublinhado curto (20 × 2.5, arredondado) centralizado sob o rótulo.
+class _ShortUnderlineIndicator extends Decoration {
+  const _ShortUnderlineIndicator({required this.color});
+  final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 58,
-        height: 58,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: _FeedTokens.brandGradient,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFEC4899).withValues(alpha: 0.45),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Icon(Icons.add_rounded, color: Colors.white, size: 30),
-      ),
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _ShortUnderlinePainter(color);
+}
+
+class _ShortUnderlinePainter extends BoxPainter {
+  _ShortUnderlinePainter(this.color);
+  final Color color;
+
+  static const double _width = 20;
+  static const double _height = 2.5;
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration configuration) {
+    final size = configuration.size;
+    if (size == null) return;
+    final rect = Rect.fromLTWH(
+      offset.dx + (size.width - _width) / 2,
+      offset.dy + size.height - _height - 3,
+      _width,
+      _height,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(_height)),
+      Paint()..color = color,
     );
   }
 }
@@ -466,7 +404,7 @@ class _FeedTab extends ConsumerWidget {
         : ref.read(feedViewModelProvider.notifier).refresh();
 
     return RefreshIndicator(
-      color: const Color(0xFFA855F7),
+      color: context.colors.accentPrimary,
       backgroundColor: context.colors.surface,
       onRefresh: () async => onRefresh(),
       child: feedState.when(
@@ -476,9 +414,15 @@ class _FeedTab extends ConsumerWidget {
             parent: BouncingScrollPhysics(),
           ),
           slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 6)),
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
             const SliverToBoxAdapter(child: StoriesRail()),
-            const SliverToBoxAdapter(child: SizedBox(height: 10)),
+            SliverToBoxAdapter(
+              child: Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: context.colors.divider,
+              ),
+            ),
             if (posts.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
@@ -505,15 +449,15 @@ class _FeedTab extends ConsumerWidget {
                 }, childCount: posts.length),
               ),
             ],
-            const SliverToBoxAdapter(child: SizedBox(height: 110)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
         loading: () => ListView.builder(
-          padding: const EdgeInsets.fromLTRB(0, 6, 0, 80),
+          padding: const EdgeInsets.fromLTRB(0, 6, 0, 24),
           itemCount: 4,
-          itemBuilder: (_, __) => const _PostSkeleton(),
+          itemBuilder: (_, _) => const _PostSkeleton(),
         ),
-        error: (_, __) => _ErrorState(onRetry: onRefresh),
+        error: (_, _) => _ErrorState(onRetry: onRefresh),
       ),
     );
   }
@@ -533,20 +477,14 @@ class _EmptyFeed extends StatelessWidget {
               width: 76,
               height: 76,
               decoration: BoxDecoration(
-                gradient: _FeedTokens.brandGradient,
+                color: context.colors.surface,
                 borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFEC4899).withValues(alpha: 0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                border: Border.all(color: context.colors.border),
               ),
               child: Icon(
-                Icons.bolt_rounded,
-                color: context.colors.textPrimary,
-                size: 38,
+                LucideIcons.sparkles,
+                color: context.colors.accentPrimary,
+                size: 32,
               ),
             ),
             const SizedBox(height: 18),
@@ -662,25 +600,20 @@ class _ErrorState extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Center(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: _FeedTokens.brandGradient,
-              borderRadius: BorderRadius.circular(14),
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.accentPrimary,
+              foregroundColor: context.colors.textOnAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
-            child: TextButton.icon(
-              style: TextButton.styleFrom(
-                foregroundColor: context.colors.textPrimary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 12,
-                ),
-              ),
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(
-                S.of(context).feedRetry,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(
+              S.of(context).feedRetry,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ),
@@ -717,7 +650,7 @@ class _PostSkeletonState extends State<_PostSkeleton>
   Widget _block(double w, double h, {double r = 8}) {
     return AnimatedBuilder(
       animation: _ctrl,
-      builder: (_, __) {
+      builder: (_, _) {
         final t = _ctrl.value;
         return Container(
           width: w,
@@ -727,10 +660,10 @@ class _PostSkeletonState extends State<_PostSkeleton>
             gradient: LinearGradient(
               begin: Alignment(-1 + t * 2, 0),
               end: Alignment(1 + t * 2, 0),
-              colors: const [
-                Color(0xFF181826),
-                Color(0xFF242438),
-                Color(0xFF181826),
+              colors: [
+                context.colors.shimmerBase,
+                context.colors.shimmerHighlight,
+                context.colors.shimmerBase,
               ],
             ),
           ),
@@ -742,10 +675,10 @@ class _PostSkeletonState extends State<_PostSkeleton>
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: context.colors.border, width: 0.5),
+          bottom: BorderSide(color: context.colors.divider, width: 0.5),
         ),
       ),
       child: Column(
@@ -794,6 +727,14 @@ class _PostCardState extends ConsumerState<PostCard>
   bool _showHeart = false;
   bool _saved = false;
 
+  /// Estado otimista local (curtida/reação/repost). Permite que o card
+  /// funcione sozinho em qualquer lugar (feed "Para você", "Seguindo",
+  /// perfil, detalhe…) sem depender de o post existir no `feedViewModel`.
+  /// É descartado quando o pai entrega um `post` novo (já sincronizado).
+  Post? _local;
+
+  Post get _post => _local ?? widget.post;
+
   @override
   void initState() {
     super.initState();
@@ -817,15 +758,115 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 
   @override
+  void didUpdateWidget(covariant PostCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.post != widget.post) _local = null;
+  }
+
+  @override
   void dispose() {
     _heartController.dispose();
     super.dispose();
   }
 
-  void _doubleTapLike() {
-    if (!widget.post.userLiked) {
-      ref.read(feedViewModelProvider.notifier).toggleLike(widget.post.id);
+  // ── Ações otimistas (independentes do feed) ─────────────────────────────
+
+  /// Aplica [next] localmente e espelha os campos de interação nos feeds
+  /// em memória (sem nova chamada à API).
+  void _applyLocal(Post next) {
+    if (!mounted) return;
+    setState(() => _local = next);
+    Post patch(Post p) => p.copyWith(
+      userLiked: next.userLiked,
+      likesCount: next.likesCount,
+      userReactionType: next.userReactionType,
+      userReposted: next.userReposted,
+      repostsCount: next.repostsCount,
+    );
+    ref.read(feedViewModelProvider.notifier).patchPost(next.id, patch);
+    ref.read(followingFeedViewModelProvider.notifier).patchPost(next.id, patch);
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  Future<void> _toggleLike() async {
+    final prev = _post;
+    final liked = !prev.userLiked;
+    _applyLocal(
+      prev.copyWith(
+        userLiked: liked,
+        likesCount: liked
+            ? prev.likesCount + 1
+            : (prev.likesCount - 1).clamp(0, 1 << 30),
+        userReactionType: liked ? prev.userReactionType : null,
+      ),
+    );
+    try {
+      await ref
+          .read(postRepositoryProvider)
+          .toggleLike(prev.id, prev.userLiked);
+    } catch (_) {
+      _applyLocal(prev);
+      if (mounted) _showError(S.of(context).feedCannotLike);
     }
+  }
+
+  Future<void> _react(String reactionType) async {
+    final prev = _post;
+    _applyLocal(
+      prev.copyWith(
+        userLiked: true,
+        userReactionType: reactionType,
+        likesCount: prev.userLiked ? prev.likesCount : prev.likesCount + 1,
+      ),
+    );
+    try {
+      await ref.read(postRepositoryProvider).react(prev.id, reactionType);
+    } catch (_) {
+      _applyLocal(prev);
+      if (mounted) _showError(S.of(context).feedCannotLike);
+    }
+  }
+
+  Future<void> _toggleRepost() async {
+    final prev = _post;
+    final wasReposted = prev.userReposted;
+    _applyLocal(
+      prev.copyWith(
+        userReposted: !wasReposted,
+        repostsCount: wasReposted
+            ? (prev.repostsCount - 1).clamp(0, 1 << 30)
+            : prev.repostsCount + 1,
+      ),
+    );
+    ref.read(feedbackServiceProvider).repost();
+    try {
+      await ref.read(postRepositoryProvider).toggleRepost(prev.id, wasReposted);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            wasReposted
+                ? S.of(context).feedRepostUndone
+                : S.of(context).feedReposted,
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      _applyLocal(prev);
+      if (mounted) _showError(S.of(context).feedCannotShare);
+    }
+  }
+
+  void _doubleTapLike() {
+    if (!_post.userLiked) _toggleLike();
     setState(() => _showHeart = true);
     ref.read(feedbackServiceProvider).like();
     _heartController.forward();
@@ -839,7 +880,6 @@ class _PostCardState extends ConsumerState<PostCard>
         content: Text(
           _saved ? S.of(context).feedSaved : S.of(context).feedUnsaved,
         ),
-        backgroundColor: context.colors.surfaceElevated,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -848,35 +888,49 @@ class _PostCardState extends ConsumerState<PostCard>
 
   Future<void> _sharePost() async {
     ref.read(feedbackServiceProvider).share();
-    final post = widget.post;
+    final post = _post;
     await ShareToChatSheet.show(
       context,
       postId: post.id,
       postCaption: post.content,
       postImageUrl: post.imageUrl,
       authorName: post.author.name,
+      isReposted: post.userReposted,
+      onRepostChanged: (reposted) => _applyLocal(
+        _post.copyWith(
+          userReposted: reposted,
+          repostsCount: (_post.repostsCount + (reposted ? 1 : -1))
+              .clamp(0, 1 << 30),
+        ),
+      ),
     );
   }
 
   void _openImageLightbox(BuildContext context, String imageUrl) {
+    final post = _post;
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black,
         transitionDuration: const Duration(milliseconds: 220),
-        pageBuilder: (_, __, ___) => _ImageLightbox(
+        pageBuilder: (_, _, _) => _ImageLightbox(
           imageUrl: imageUrl,
-          heroTag: 'post-image-${widget.post.id}',
-          postId: widget.post.id,
-          caption: widget.post.content,
-          authorName: widget.post.author.name,
-          authorUsername: widget.post.author.username,
-          authorAvatarUrl: widget.post.author.avatarUrl,
+          heroTag: 'post-image-${post.id}',
+          postId: post.id,
+          caption: post.content,
+          authorName: post.author.name,
+          authorUsername: post.author.username,
+          authorAvatarUrl: post.author.avatarUrl,
           // Brawe Sound: Fase C — preserva a música anexada ao abrir a
-          // imagem em fullscreen (antes o lightbox não recebia nenhum
-          // dado musical e a faixa nunca era iniciada).
-          sound: widget.post.sound,
-          soundVolume: widget.post.soundVolume,
+          // imagem em fullscreen.
+          sound: post.sound,
+          soundVolume: post.soundVolume,
+          initialLiked: post.userLiked,
+          initialLikesCount: post.likesCount,
+          commentsCount: post.commentsCount,
+          onLikeChanged: (liked, count) => _applyLocal(
+            _post.copyWith(userLiked: liked, likesCount: count),
+          ),
         ),
       ),
     );
@@ -888,9 +942,11 @@ class _PostCardState extends ConsumerState<PostCard>
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => StoryComposerScreen(
-          initialRemoteUrl: imageUrl,
-          initialOriginPostId: widget.post.id,
+        builder: (_) => ForceDarkTheme(
+          child: StoryComposerScreen(
+            initialRemoteUrl: imageUrl,
+            initialOriginPostId: _post.id,
+          ),
         ),
       ),
     );
@@ -898,373 +954,352 @@ class _PostCardState extends ConsumerState<PostCard>
 
   @override
   Widget build(BuildContext context) {
-    final post = widget.post;
-    return Container(
-      color: context.colors.background,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Banner "X repostou" — só aparece quando o item é fruto de
-          // um repost de alguém (geralmente um usuário seguido).
-          if (post.repostedBy != null)
-            _RepostBanner(reposter: post.repostedBy!),
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 8, 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _AuthorAvatar(
-                  userId: post.author.id,
-                  avatarUrl: post.author.avatarUrl,
-                  name: post.author.name,
-                  isVerified: post.author.isVerified,
-                  onTap: () => context.push('/profile/${post.author.id}'),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              post.author.name,
-                              style: TextStyle(
-                                color: context.colors.textPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14.5,
-                                letterSpacing: -0.1,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+    final post = _post;
+    final isVideo = post.imageUrl != null && _isVideoUrl(post.imageUrl!);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Banner "X repostou" — só aparece quando o item é fruto de
+        // um repost de alguém (geralmente um usuário seguido).
+        if (post.repostedBy != null) _RepostBanner(reposter: post.repostedBy!),
+        // Header
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            post.repostedBy != null ? 8 : 14,
+            4,
+            10,
+          ),
+          child: Row(
+            children: [
+              _AuthorAvatar(
+                userId: post.author.id,
+                avatarUrl: post.author.avatarUrl,
+                name: post.author.name,
+                onTap: () => context.push('/profile/${post.author.id}'),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            post.author.name,
+                            style: TextStyle(
+                              color: context.colors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14.5,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (post.author.isVerified) ...[
-                            const SizedBox(width: 4),
-                            const Icon(
-                              Icons.verified_rounded,
-                              color: Color(0xFFA855F7),
-                              size: 15,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 1),
-                      Text(
-                        '@${post.author.username} · ${_timeAgo(context, post.createdAt)}',
-                        style: TextStyle(
-                          color: context.colors.textTertiary,
-                          fontSize: 12,
                         ),
+                        if (post.author.isVerified) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.verified_rounded,
+                            color: context.colors.accentPrimary,
+                            size: 15,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '@${post.author.username} · ${_timeAgo(context, post.createdAt)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: context.colors.textTertiary,
+                        fontSize: 12,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
+                icon: Icon(
+                  LucideIcons.ellipsis,
+                  color: context.colors.textSecondary,
+                  size: 20,
+                ),
+                onPressed: () => _showPostOptions(context),
+              ),
+            ],
+          ),
+        ),
+
+        // Brawe Sound: atribuição musical compacta, logo abaixo do header.
+        if (post.sound != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SoundPreviewChip(
+                sound: post.sound!,
+                volume: post.soundVolume,
+              ),
+            ),
+          ),
+
+        // Content text
+        if (post.content.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              0,
+              16,
+              post.imageUrl != null ? 10 : 6,
+            ),
+            child: BraweRichText(
+              post.content,
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontSize: 15,
+                height: 1.45,
+              ),
+            ),
+          ),
+
+        // Link preview card — mostra preview de URLs (og:image, título, etc)
+        if (post.content.isNotEmpty)
+          _buildLinkPreviewCard(context, post.content),
+
+        // Mídia
+        if (post.imageUrl != null)
+          GestureDetector(
+            onTap: () => isVideo
+                ? context.push(
+                    '/post/${post.id}/video?url=${Uri.encodeQueryComponent(post.imageUrl!)}',
+                  )
+                : _openImageLightbox(context, post.imageUrl!),
+            onDoubleTap: _doubleTapLike,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.width * 1.25,
+                      ),
+                      child: isVideo
+                          ? _FeedVideoTile(url: post.imageUrl!)
+                          : CachedNetworkImage(
+                              imageUrl: post.imageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              fadeInDuration: const Duration(milliseconds: 180),
+                              placeholder: (ctx, _) => AspectRatio(
+                                aspectRatio: 4 / 5,
+                                child: Container(
+                                  color: context.colors.surfaceHighest,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: context.colors.accentPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (_, _, _) => Container(
+                                height: 200,
+                                color: context.colors.surfaceHighest,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image_rounded,
+                                    color: context.colors.textTertiary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    Icons.more_horiz_rounded,
-                    color: context.colors.textSecondary,
-                    size: 22,
+                // Coração do duplo toque — desenhado SOBRE a mídia, por
+                // isso branco fixo (antes usava textPrimary: preto no claro).
+                if (_showHeart)
+                  ScaleTransition(
+                    scale: _heartScale,
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: Colors.white,
+                      size: 104,
+                      shadows: [Shadow(blurRadius: 24, color: Colors.black38)],
+                    ),
                   ),
-                  onPressed: () => _showPostOptions(context),
-                ),
               ],
             ),
           ),
 
-          // Brawe Sound: atribuição musical compacta, logo abaixo do
-          // header (nome do autor) — informação contextual da publicação,
-          // não um card separado. Mesmo componente/posicionamento usado
-          // nos Stories (ver `ContentSoundAttribution`).
-          if (post.sound != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: SoundPreviewChip(
-                  sound: post.sound!,
-                  volume: post.soundVolume,
-                ),
+        // Action bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+          child: Row(
+            children: [
+              _LikeReactionPill(
+                post: post,
+                onTap: () {
+                  ref.read(feedbackServiceProvider).like();
+                  _toggleLike();
+                },
+                onPickReaction: (reaction) {
+                  ref.read(feedbackServiceProvider).reaction();
+                  _react(reaction.key);
+                },
+                onOpenLikers: () => context.push('/post/${post.id}/likes'),
               ),
-            ),
-
-          // Content text
-          if (post.content.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                0,
-                16,
-                post.imageUrl != null ? 0 : 14,
+              _ActionPill(
+                icon: LucideIcons.messageCircle,
+                label: _formatCount(post.commentsCount),
+                color: context.colors.textSecondary,
+                onTap: () {
+                  ref.read(feedbackServiceProvider).share();
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    useRootNavigator: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => CommentsSheet(postId: post.id),
+                  );
+                },
               ),
-              child: BraweRichText(
-                post.content,
-                style: TextStyle(
-                  color: context.colors.textPrimary,
-                  fontSize: 15,
-                  height: 1.45,
-                  letterSpacing: -0.1,
-                ),
+              _ActionPill(
+                icon: LucideIcons.repeat2,
+                label: _formatCount(post.repostsCount),
+                color: post.userReposted
+                    ? context.colors.success
+                    : context.colors.textSecondary,
+                active: post.userReposted,
+                onTap: () => _confirmRepost(context),
               ),
-            ),
-
-          // Link preview card — mostra preview de URLs (og:image, título, etc)
-          if (post.content.isNotEmpty)
-            _buildLinkPreviewCard(context, post.content),
-
-          // Image — estilo Threads: full-bleed, sem cantos arredondados
-          if (post.imageUrl != null)
-            GestureDetector(
-              onTap: () => _isVideoUrl(post.imageUrl!)
-                  ? context.push(
-                      '/post/${post.id}/video?url=${Uri.encodeQueryComponent(post.imageUrl!)}',
-                    )
-                  : _openImageLightbox(context, post.imageUrl!),
-              onDoubleTap: _doubleTapLike,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: MediaQuery.of(context).size.width * 1.25,
-                        ),
-                        child: _isVideoUrl(post.imageUrl!)
-                            ? _FeedVideoTile(url: post.imageUrl!)
-                            : CachedNetworkImage(
-                                imageUrl: post.imageUrl!,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                fadeInDuration: const Duration(
-                                  milliseconds: 180,
-                                ),
-                                placeholder: (ctx, _) => AspectRatio(
-                                  aspectRatio: 4 / 5,
-                                  child: Container(
-                                    color: context.colors.surfaceElevated,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Color(0xFFA855F7),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (_, __, ___) => Container(
-                                  height: 200,
-                                  color: context.colors.surfaceElevated,
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.broken_image_rounded,
-                                      color: context.colors.textTertiary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                  if (_showHeart)
-                    ScaleTransition(
-                      scale: _heartScale,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: _FeedTokens.likeRed.withValues(alpha: 0.6),
-                              blurRadius: 40,
-                              spreadRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.favorite_rounded,
-                          color: context.colors.textPrimary,
-                          size: 110,
-                        ),
-                      ),
-                    ),
-                ],
+              const Spacer(),
+              _IconAction(
+                icon: _saved ? Icons.bookmark_rounded : LucideIcons.bookmark,
+                color: _saved
+                    ? context.colors.textPrimary
+                    : context.colors.textSecondary,
+                onTap: _toggleSave,
               ),
-            ),
-
-          // Action bar
+              _IconAction(
+                icon: LucideIcons.send,
+                color: context.colors.textSecondary,
+                onTap: _sharePost,
+              ),
+            ],
+          ),
+        ),
+        // Linha de views — discreta, estilo Twitter/X.
+        if (post.viewsCount > 0)
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               children: [
-                _LikeReactionPill(
-                  post: post,
-                  onTap: () {
-                    ref.read(feedbackServiceProvider).like();
-                    ref
-                        .read(feedViewModelProvider.notifier)
-                        .toggleLike(post.id);
-                  },
-                  onPickReaction: (reaction) async {
-                    ref.read(feedbackServiceProvider).reaction();
-                    try {
-                      await ref
-                          .read(feedViewModelProvider.notifier)
-                          .reactToPost(post.id, reaction.key);
-                    } catch (_) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(S.of(context).feedCannotLike)),
-                      );
-                    }
-                  },
-                  onOpenLikers: () {
-                    context.push('/post/${post.id}/likes');
-                  },
-                ),
-                _ActionPill(
-                  icon: Icons.mode_comment_outlined,
-                  label: _formatCount(post.commentsCount),
-                  color: context.colors.textSecondary,
-                  onTap: () {
-                    ref.read(feedbackServiceProvider).share();
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => CommentsSheet(postId: post.id),
-                    );
-                  },
-                ),
-                _ActionPill(
-                  icon: Icons.repeat_rounded,
-                  label: _formatCount(post.repostsCount),
-                  color: post.userReposted
-                      ? _FeedTokens.repostGreen
-                      : context.colors.textSecondary,
-                  active: post.userReposted,
-                  activeBg: _FeedTokens.repostGreen.withValues(alpha: 0.14),
-                  onTap: () => _confirmRepost(context, post),
-                ),
-                const Spacer(),
-                _IconAction(
-                  icon: _saved
-                      ? Icons.bookmark_rounded
-                      : Icons.bookmark_border_rounded,
-                  color: _saved
-                      ? _FeedTokens.saveGold
-                      : context.colors.textSecondary,
-                  onTap: _toggleSave,
+                Icon(
+                  LucideIcons.chartNoAxesColumn,
+                  size: 13,
+                  color: context.colors.textTertiary,
                 ),
                 const SizedBox(width: 4),
-                _IconAction(
-                  icon: Icons.send_rounded,
-                  color: context.colors.textSecondary,
-                  onTap: _sharePost,
+                Text(
+                  S
+                      .of(context)
+                      .feedViewsCount(
+                        post.viewsCount,
+                        _formatCount(post.viewsCount),
+                      ),
+                  style: TextStyle(
+                    color: context.colors.textTertiary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
-          ),
-          // Linha de views — discreta, estilo Twitter/X.
-          if (post.viewsCount > 0)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.bar_chart_rounded,
-                    size: 14,
-                    color: context.colors.textSecondary.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    post.viewsCount == 1
-                        ? '1 visualização'
-                        : '${_formatCount(post.viewsCount)} visualizações',
-                    style: TextStyle(
-                      color: context.colors.textSecondary.withValues(
-                        alpha: 0.7,
-                      ),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Divider estilo Threads
-          Container(
-            height: 0.5,
-            margin: const EdgeInsets.symmetric(horizontal: 14),
-            color: context.colors.border,
-          ),
-        ],
-      ),
+          )
+        else
+          const SizedBox(height: 8),
+        // Separador hairline entre posts.
+        Divider(height: 0.5, thickness: 0.5, color: context.colors.divider),
+      ],
     );
   }
 
   void _showPostOptions(BuildContext context) {
     HapticFeedback.selectionClick();
-    final post = widget.post;
+    final post = _post;
     final currentUserId = ref.read(authStateProvider).value?.id;
     final isOwn = currentUserId != null && currentUserId == post.author.id;
+    final imageUrl = post.imageUrl;
+    // "Compartilhar no story" só faz sentido com imagem (vídeo não é
+    // suportado pelo composer a partir de URL remota).
+    final canShareStory =
+        imageUrl != null && imageUrl.isNotEmpty && !_isVideoUrl(imageUrl);
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      // O sheet fecha a si mesmo (via o próprio context) antes de chamar a
+      // ação — as ações usam o context/estado do card.
       builder: (_) => _PostOptionsSheet(
         isOwn: isOwn,
-        hasImage: post.imageUrl != null && post.imageUrl!.isNotEmpty,
+        canShareStory: canShareStory,
         onCopyLink: () async {
-          Navigator.pop(context);
           await Clipboard.setData(
             ClipboardData(text: 'https://brawe.app/connect/p/${post.id}'),
           );
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(S.of(context).feedLinkCopied)));
+          if (!mounted) return;
+          ScaffoldMessenger.of(this.context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(this.context).feedLinkCopied),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         },
         onShareStory: () {
-          Navigator.pop(context);
-          if (post.imageUrl != null) _shareAsStory(post.imageUrl!);
+          if (canShareStory) _shareAsStory(imageUrl);
         },
-        onUnfollow: () {
-          Navigator.pop(context);
-          _unfollowAuthor();
-        },
-        onBlock: () {
-          Navigator.pop(context);
-          _blockAuthor();
-        },
-        onReport: () {
-          Navigator.pop(context);
-          _reportPost();
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _deletePost();
-        },
+        onUnfollow: _unfollowAuthor,
+        onBlock: _blockAuthor,
+        onReport: _reportPost,
+        onDelete: _deletePost,
       ),
     );
   }
 
-  Future<void> _deletePost() async {
-    final confirmed = await showDialog<bool>(
+  Future<bool?> _confirmDialog({
+    required String title,
+    required String message,
+    required String confirmLabel,
+  }) {
+    return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: ctx.colors.surface,
+        backgroundColor: ctx.colors.surfaceElevated,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          S.of(ctx).feedDeletePostTitle,
-          style: TextStyle(color: ctx.colors.textPrimary),
+          title,
+          style: TextStyle(
+            color: ctx.colors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
-          S.of(ctx).feedDeleteConfirm,
-          style: TextStyle(color: ctx.colors.textSecondary),
+          message,
+          style: TextStyle(color: ctx.colors.textSecondary, height: 1.4),
         ),
         actions: [
+          // IMPORTANTE: pop com o context do DIÁLOGO (`ctx`). O diálogo vive
+          // no navigator raiz; o context do card pertence ao navigator do
+          // ShellRoute — usar ele fechava a rota errada.
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
@@ -1275,178 +1310,146 @@ class _PostCardState extends ConsumerState<PostCard>
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              S.of(ctx).feedDelete,
-              style: const TextStyle(color: Color(0xFFFF3B7E)),
+              confirmLabel,
+              style: TextStyle(
+                color: ctx.colors.danger,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _deletePost() async {
+    final s = S.of(context);
+    final confirmed = await _confirmDialog(
+      title: s.feedDeletePostTitle,
+      message: s.feedDeleteConfirm,
+      confirmLabel: s.feedDelete,
+    );
     if (confirmed != true || !mounted) return;
     final ok = await ref
         .read(feedViewModelProvider.notifier)
-        .deletePost(widget.post.id);
+        .deletePost(_post.id);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? S.of(context).feedPostDeleted
-              : S.of(context).feedPostDeleteError,
-        ),
-      ),
+    // Recarrega a aba "Seguindo" para o post sumir de lá também.
+    if (ok) ref.invalidate(followingFeedViewModelProvider);
+    _showError(
+      ok ? S.of(context).feedPostDeleted : S.of(context).feedPostDeleteError,
     );
   }
 
   Future<void> _unfollowAuthor() async {
     try {
-      await ref
-          .read(socialRepositoryProvider)
-          .unfollowUser(widget.post.author.id);
+      await ref.read(socialRepositoryProvider).unfollowUser(_post.author.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            S.of(context).feedUnfollowed(widget.post.author.username),
-          ),
-        ),
-      );
+      _showError(S.of(context).feedUnfollowed(_post.author.username));
+      // A aba "Seguindo" não deve mais mostrar posts desse autor.
+      ref.read(followingFeedViewModelProvider.notifier).refresh();
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(S.of(context).feedUnfollowError)));
+      if (mounted) _showError(S.of(context).feedUnfollowError);
     }
   }
 
   Future<void> _blockAuthor() async {
-    final author = widget.post.author;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: context.colors.surfaceElevated,
-        title: Text(
-          S.of(context).feedBlockUserTitle,
-          style: TextStyle(color: context.colors.textPrimary),
-        ),
-        content: Text(
-          S.of(context).feedBlockConfirm(author.username),
-          style: TextStyle(color: context.colors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              S.of(context).feedCancel,
-              style: TextStyle(color: context.colors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              S.of(context).feedBlock,
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+    final author = _post.author;
+    final s = S.of(context);
+    final confirmed = await _confirmDialog(
+      title: s.feedBlockUserTitle,
+      message: s.feedBlockConfirm(author.username),
+      confirmLabel: s.feedBlock,
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
     try {
       await ref
           .read(socialActionsServiceProvider)
           .blockUser(author.username.isNotEmpty ? author.username : author.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).feedBlocked(author.username))),
-      );
+      _showError(S.of(context).feedBlocked(author.username));
       ref.read(feedViewModelProvider.notifier).refresh();
+      ref.read(followingFeedViewModelProvider.notifier).refresh();
     } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(S.of(context).feedBlockError)));
+      if (mounted) _showError(S.of(context).feedBlockError);
     }
   }
 
   Future<void> _reportPost() async {
+    // Valores aceitos por POST /messages/reports — não traduzir.
     final reason = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        final s = S.of(sheetCtx);
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const _SheetHandle(),
+              const _ReportReasonHeader(),
+              _ReportReasonTile(reason: 'spam', label: s.feedReportSpam),
+              _ReportReasonTile(
+                reason: 'harassment',
+                label: s.feedReportHarassment,
+              ),
+              _ReportReasonTile(
+                reason: 'inappropriate',
+                label: s.feedReportInappropriate,
+              ),
+              _ReportReasonTile(
+                reason: 'impersonation',
+                label: s.feedReportImpersonation,
+              ),
+              _ReportReasonTile(reason: 'other', label: s.feedReportOther),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+    if (reason == null || !mounted) return;
+    try {
+      await ref
+          .read(socialActionsServiceProvider)
+          .report(targetType: 'post', targetId: _post.id, reason: reason);
+      if (!mounted) return;
+      _showError(S.of(context).feedReportSent);
+    } catch (_) {
+      if (mounted) _showError(S.of(context).feedReportError);
+    }
+  }
+
+  void _confirmRepost(BuildContext context) {
+    HapticFeedback.selectionClick();
+    final post = _post;
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: context.colors.surfaceElevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetCtx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const _SheetHandle(),
-            const _ReportReasonHeader(),
-            _ReportReasonTile(
-              reason: 'spam',
-              label: S.of(sheetCtx).feedReportSpam,
-            ),
-            _ReportReasonTile(
-              reason: 'harassment',
-              label: S.of(sheetCtx).feedReportHarassment,
-            ),
-            _ReportReasonTile(
-              reason: 'inappropriate',
-              label: S.of(sheetCtx).feedReportInappropriate,
-            ),
-            _ReportReasonTile(
-              reason: 'impersonation',
-              label: S.of(sheetCtx).feedReportImpersonation,
-            ),
-            _ReportReasonTile(
-              reason: 'other',
-              label: S.of(sheetCtx).feedReportOther,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (reason == null) return;
-    try {
-      await ref
-          .read(socialActionsServiceProvider)
-          .report(targetType: 'post', targetId: widget.post.id, reason: reason);
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(S.of(context).feedReportSent)));
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(S.of(context).feedReportError)));
-    }
-  }
-
-  void _confirmRepost(BuildContext context, Post post) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: context.colors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const _SheetHandle(),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   post.userReposted
-                      ? S.of(context).feedRepostUndoConfirm
-                      : S.of(context).feedRepostConfirm,
+                      ? S.of(sheetCtx).feedRepostUndoConfirm
+                      : S.of(sheetCtx).feedRepostConfirm,
                   style: TextStyle(
-                    color: context.colors.textPrimary,
+                    color: sheetCtx.colors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1454,52 +1457,22 @@ class _PostCardState extends ConsumerState<PostCard>
               ),
             ),
             _SheetTile(
-              icon: Icons.repeat_rounded,
-              iconColor: _FeedTokens.repostGreen,
-              iconBg: _FeedTokens.repostGreen.withValues(alpha: 0.18),
+              icon: LucideIcons.repeat2,
+              color: post.userReposted ? sheetCtx.colors.success : null,
               label: post.userReposted
-                  ? S.of(context).feedRepostUndo
-                  : S.of(context).feedRepost,
-              onTap: () async {
-                Navigator.pop(context);
-                ref.read(feedbackServiceProvider).repost();
-                try {
-                  await ref
-                      .read(feedViewModelProvider.notifier)
-                      .toggleRepost(post.id);
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        post.userReposted
-                            ? S.of(context).feedRepostUndo
-                            : S.of(context).feedReposted,
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                } catch (_) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(S.of(context).feedCannotShare)),
-                  );
-                }
-              },
+                  ? S.of(sheetCtx).feedRepostUndo
+                  : S.of(sheetCtx).feedRepost,
+              onTap: _toggleRepost,
             ),
             _SheetTile(
-              icon: Icons.send_rounded,
-              iconColor: context.colors.textPrimary,
-              iconBg: Colors.white12,
-              label: S.of(context).shareToFollowers,
-              onTap: () {
-                Navigator.pop(context);
-                ShareToChatSheet.show(
-                  context,
-                  postId: post.id,
-                  postCaption: post.content,
-                  storyMediaUrl: post.imageUrl,
-                );
-              },
+              icon: LucideIcons.send,
+              label: S.of(sheetCtx).shareToFollowers,
+              onTap: () => ShareToChatSheet.show(
+                this.context,
+                postId: post.id,
+                postCaption: post.content,
+                storyMediaUrl: post.imageUrl,
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -1531,8 +1504,7 @@ class _PostCardState extends ConsumerState<PostCard>
   }
 }
 
-/// ─── Banner discreto exibido no topo do card quando o post aparece no feed
-/// como resultado de um repost de alguém seguido.
+/// ─── Banner discreto "X repostou" no topo do post.
 class _RepostBanner extends StatelessWidget {
   const _RepostBanner({required this.reposter});
   final PostAuthor reposter;
@@ -1540,18 +1512,25 @@ class _RepostBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+      // Alinha o texto com o nome do autor (avatar 42 + gap 12).
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: GestureDetector(
         onTap: () => context.push('/profile/${reposter.id}'),
         behavior: HitTestBehavior.opaque,
         child: Row(
           children: [
-            Icon(
-              Icons.repeat_rounded,
-              size: 14,
-              color: _FeedTokens.repostGreen.withValues(alpha: 0.85),
+            SizedBox(
+              width: 42,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  LucideIcons.repeat2,
+                  size: 13,
+                  color: context.colors.textSecondary,
+                ),
+              ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 12),
             Flexible(
               child: Text(
                 S.of(context).feedRepostBanner(reposter.name),
@@ -1560,8 +1539,7 @@ class _RepostBanner extends StatelessWidget {
                 style: TextStyle(
                   color: context.colors.textSecondary,
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.1,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -1577,88 +1555,69 @@ class _AuthorAvatar extends ConsumerWidget {
     required this.userId,
     required this.avatarUrl,
     required this.name,
-    required this.isVerified,
     required this.onTap,
   });
   final String userId;
   final String? avatarUrl;
   final String name;
-  final bool isVerified;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Se o autor tem stories ativos, o anel do story PRECEDE o de "verified".
-    // Caso contrário, mantemos o visual antigo (anel de verificado / borda).
+    // Se o autor tem stories ativos, o anel do story aparece no avatar.
     return StoryRingAvatar(
       userId: userId,
       avatarUrl: avatarUrl,
       fallbackText: name,
       radius: 21,
-      backgroundColor: context.colors.surfaceElevated,
+      backgroundColor: context.colors.surfaceHighest,
       onTapWithoutStories: onTap,
     );
   }
 }
 
-/// ─── Action pill (com contador) — Like/Comment/Repost ─────────────────────
+/// ─── Ação com contador — Comentar/Repostar ────────────────────────────────
 class _ActionPill extends StatelessWidget {
   const _ActionPill({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
-    this.onLongPress,
     this.active = false,
-    this.activeBg,
   });
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-  final VoidCallback? onLongPress;
   final bool active;
-  final Color? activeBg;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(12),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: active ? activeBg : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              ),
             ),
-            child: Row(
-              children: [
-                Icon(icon, color: color, size: 19),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 13,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Pílula composta para o botão de like:
+/// Botão de like:
 /// - Tap → toggle like
 /// - Long-press → abre [showReactionsBar] flutuante
 /// - Tap no número de curtidas → abre tela "Quem curtiu"
@@ -1691,62 +1650,48 @@ class _LikeReactionPill extends StatelessWidget {
           )
         : null;
     final color = liked ? _FeedTokens.likeRed : context.colors.textSecondary;
-    final activeBg = _FeedTokens.likeRed.withValues(alpha: 0.14);
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-        decoration: BoxDecoration(
-          color: liked ? activeBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: onTap,
-              onLongPressStart: (d) async {
-                HapticFeedback.mediumImpact();
-                final picked = await showReactionsBar(
-                  context,
-                  globalPosition: d.globalPosition,
-                );
-                if (picked != null) onPickReaction(picked);
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: reaction != null && reaction != BraweReaction.like
-                    ? Text(reaction.emoji, style: const TextStyle(fontSize: 17))
-                    : Icon(
-                        liked
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_outline_rounded,
-                        color: color,
-                        size: 19,
-                      ),
-              ),
-            ),
-            InkWell(
-              onTap: onOpenLikers,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
-                child: Text(
-                  _fmt(post.likesCount),
-                  style: TextStyle(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          onLongPressStart: (d) async {
+            HapticFeedback.mediumImpact();
+            final picked = await showReactionsBar(
+              context,
+              globalPosition: d.globalPosition,
+            );
+            if (picked != null) onPickReaction(picked);
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 4, 8),
+            child: reaction != null && reaction != BraweReaction.like
+                ? Text(reaction.emoji, style: const TextStyle(fontSize: 18))
+                : Icon(
+                    liked ? Icons.favorite_rounded : LucideIcons.heart,
                     color: color,
-                    fontSize: 13,
-                    fontWeight: liked ? FontWeight.w700 : FontWeight.w600,
+                    size: 20,
                   ),
-                ),
+          ),
+        ),
+        InkWell(
+          onTap: onOpenLikers,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(2, 8, 8, 8),
+            child: Text(
+              _fmt(post.likesCount),
+              style: TextStyle(
+                color: color,
+                fontSize: 13,
+                fontWeight: liked ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1762,25 +1707,24 @@ class _IconAction extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 22,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: color, size: 21),
-        ),
+    return InkResponse(
+      onTap: onTap,
+      radius: 22,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
 }
 
-/// ─── Post Options Bottom Sheet (modernizado) ──────────────────────────────
+/// ─── Menu "⋯" do post ─────────────────────────────────────────────────────
+/// Ações neutras primeiro; destrutivas (vermelho) agrupadas no fim, após um
+/// separador. Cada linha fecha o sheet e então executa a ação.
 class _PostOptionsSheet extends StatelessWidget {
   const _PostOptionsSheet({
     required this.isOwn,
-    required this.hasImage,
+    required this.canShareStory,
     required this.onCopyLink,
     required this.onShareStory,
     required this.onUnfollow,
@@ -1789,7 +1733,7 @@ class _PostOptionsSheet extends StatelessWidget {
     required this.onDelete,
   });
   final bool isOwn;
-  final bool hasImage;
+  final bool canShareStory;
   final VoidCallback onCopyLink;
   final VoidCallback onShareStory;
   final VoidCallback onUnfollow;
@@ -1799,66 +1743,64 @@ class _PostOptionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+    final danger = context.colors.danger;
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surfaceElevated,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const _SheetHandle(),
-            const SizedBox(height: 4),
             _SheetTile(
-              icon: Icons.link_rounded,
-              iconColor: const Color(0xFFA855F7),
-              iconBg: const Color(0xFFA855F7).withValues(alpha: 0.18),
-              label: S.of(context).feedCopyLink,
+              icon: LucideIcons.link,
+              label: s.feedCopyLink,
               onTap: onCopyLink,
             ),
-            if (hasImage)
+            if (canShareStory)
               _SheetTile(
-                icon: Icons.auto_stories_rounded,
-                iconColor: const Color(0xFFEC4899),
-                iconBg: const Color(0xFFEC4899).withValues(alpha: 0.18),
-                label: S.of(context).feedShareAsStory,
+                icon: LucideIcons.circlePlus,
+                label: s.feedShareAsStory,
                 onTap: onShareStory,
               ),
             if (!isOwn)
               _SheetTile(
-                icon: Icons.person_remove_rounded,
-                iconColor: const Color(0xFFFFC857),
-                iconBg: const Color(0xFFFFC857).withValues(alpha: 0.16),
-                label: S.of(context).feedUnfollow,
+                icon: LucideIcons.userMinus,
+                label: s.feedUnfollow,
                 onTap: onUnfollow,
               ),
-            if (!isOwn)
-              _SheetTile(
-                icon: Icons.block_rounded,
-                iconColor: context.colors.textPrimary,
-                iconBg: context.colors.surfaceHighest,
-                label: S.of(context).feedBlockUserTitle,
-                onTap: onBlock,
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Divider(
+                height: 0.5,
+                thickness: 0.5,
+                color: context.colors.divider,
               ),
-            if (!isOwn)
-              _SheetTile(
-                icon: Icons.flag_rounded,
-                iconColor: _FeedTokens.likeRed,
-                iconBg: _FeedTokens.likeRed.withValues(alpha: 0.16),
-                label: S.of(context).feedReport,
-                destructive: true,
-                onTap: onReport,
-              ),
+            ),
             if (isOwn)
               _SheetTile(
-                icon: Icons.delete_outline_rounded,
-                iconColor: _FeedTokens.likeRed,
-                iconBg: _FeedTokens.likeRed.withValues(alpha: 0.16),
-                label: S.of(context).feedDeletePost,
-                destructive: true,
+                icon: LucideIcons.trash2,
+                label: s.feedDeletePost,
+                color: danger,
                 onTap: onDelete,
+              )
+            else ...[
+              _SheetTile(
+                icon: LucideIcons.ban,
+                label: s.feedBlockUserTitle,
+                color: danger,
+                onTap: onBlock,
               ),
+              _SheetTile(
+                icon: LucideIcons.flag,
+                label: s.feedReport,
+                color: danger,
+                onTap: onReport,
+              ),
+            ],
             const SizedBox(height: 8),
           ],
         ),
@@ -1872,75 +1814,59 @@ class _SheetHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 44,
-      height: 5,
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      width: 36,
+      height: 4,
+      margin: const EdgeInsets.only(top: 10, bottom: 12),
       decoration: BoxDecoration(
         color: context.colors.border,
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(2),
       ),
     );
   }
 }
 
+/// Linha de sheet: ícone + rótulo. Fecha o sheet (com o próprio context)
+/// e então executa [onTap].
 class _SheetTile extends StatelessWidget {
   const _SheetTile({
     required this.icon,
-    required this.iconColor,
-    required this.iconBg,
     required this.label,
     required this.onTap,
-    this.destructive = false,
+    this.color,
   });
   final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
   final String label;
   final VoidCallback onTap;
-  final bool destructive;
+
+  /// Cor do ícone e do texto. `null` → `textPrimary`.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 21),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: destructive
-                        ? _FeedTokens.likeRed
-                        : context.colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+    final c = color ?? context.colors.textPrimary;
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        Navigator.of(context).pop();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, color: c, size: 22),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: c,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: context.colors.border,
-                size: 22,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1952,7 +1878,7 @@ class _ReportReasonHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 4, 20, 14),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Column(
@@ -1966,7 +1892,7 @@ class _ReportReasonHeader extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               S.of(context).feedReportPrompt,
               style: TextStyle(
@@ -1983,22 +1909,40 @@ class _ReportReasonHeader extends StatelessWidget {
 
 class _ReportReasonTile extends StatelessWidget {
   const _ReportReasonTile({required this.reason, required this.label});
+
+  /// Valor enviado à API (spam|harassment|inappropriate|impersonation|other).
   final String reason;
   final String label;
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label, style: TextStyle(color: context.colors.textPrimary)),
-      trailing: Icon(
-        Icons.chevron_right_rounded,
-        color: context.colors.textTertiary,
-      ),
+    return InkWell(
       onTap: () => Navigator.pop(context, reason),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              color: context.colors.textTertiary,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-/// �� Lightbox fullscreen para imagens de posts (estilo Instagram).
+/// ─── Lightbox fullscreen para imagens de posts (estilo Instagram).
 class _ImageLightbox extends ConsumerStatefulWidget {
   const _ImageLightbox({
     required this.imageUrl,
@@ -2010,9 +1954,19 @@ class _ImageLightbox extends ConsumerStatefulWidget {
     this.authorAvatarUrl,
     this.sound,
     this.soundVolume = 1.0,
+    required this.initialLiked,
+    required this.initialLikesCount,
+    required this.commentsCount,
+    required this.onLikeChanged,
   });
 
   final String imageUrl;
+  final bool initialLiked;
+  final int initialLikesCount;
+  final int commentsCount;
+
+  /// Avisa o cartão de origem para manter curtida/contador em sincronia.
+  final void Function(bool liked, int count) onLikeChanged;
   final String heroTag;
   final String postId;
   final String caption;
@@ -2033,6 +1987,9 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   double _dragOffset = 0;
   bool _chromeVisible = true;
+  late bool _liked = widget.initialLiked;
+  late int _likesCount = widget.initialLikesCount;
+  bool _busyLike = false;
   late final AnimationController _heartCtrl;
   late final Animation<double> _heartScale;
   bool _showHeart = false;
@@ -2152,17 +2109,36 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
     super.dispose();
   }
 
+  /// Curtir/descurtir direto na API (funciona aberto de qualquer lugar, não
+  /// só do "Para você"), otimista e com reversão em erro.
+  Future<void> _toggleLike() async {
+    if (_busyLike) return;
+    _busyLike = true;
+    final was = _liked;
+    final count = (_likesCount + (was ? -1 : 1)).clamp(0, 1 << 30);
+    setState(() {
+      _liked = !was;
+      _likesCount = count;
+    });
+    widget.onLikeChanged(!was, count);
+    try {
+      await ref.read(postRepositoryProvider).toggleLike(widget.postId, was);
+    } catch (_) {
+      if (!mounted) return;
+      final back = (_likesCount + (was ? 1 : -1)).clamp(0, 1 << 30);
+      setState(() {
+        _liked = was;
+        _likesCount = back;
+      });
+      widget.onLikeChanged(was, back);
+    } finally {
+      _busyLike = false;
+    }
+  }
+
   void _doubleTapLike() {
     HapticFeedback.mediumImpact();
-    final vm = ref.read(feedViewModelProvider.notifier);
-    final state = ref.read(feedViewModelProvider).value;
-    final post = state?.firstWhere(
-      (p) => p.id == widget.postId,
-      orElse: () => state.first,
-    );
-    if (post != null && !post.userLiked) {
-      vm.toggleLike(widget.postId);
-    }
+    if (!_liked) _toggleLike();
     setState(() => _showHeart = true);
     _heartCtrl.forward(from: 0);
   }
@@ -2171,11 +2147,9 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
 
   @override
   Widget build(BuildContext context) {
-    final feedState = ref.watch(feedViewModelProvider).value;
-    final post = feedState?.where((p) => p.id == widget.postId).firstOrNull;
-    final userLiked = post?.userLiked ?? false;
-    final likesCount = post?.likesCount ?? 0;
-    final commentsCount = post?.commentsCount ?? 0;
+    final userLiked = _liked;
+    final likesCount = _likesCount;
+    final commentsCount = widget.commentsCount;
 
     final opacity = (1.0 - (_dragOffset.abs() / 300)).clamp(0.0, 1.0);
 
@@ -2214,7 +2188,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                       child: CachedNetworkImage(
                         imageUrl: widget.imageUrl,
                         fadeInDuration: const Duration(milliseconds: 150),
-                        placeholder: (_, __) => Container(
+                        placeholder: (_, _) => Container(
                           width: 200,
                           height: 200,
                           color: Colors.transparent,
@@ -2228,9 +2202,9 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                             ),
                           ),
                         ),
-                        errorWidget: (_, __, ___) => Icon(
+                        errorWidget: (_, _, _) => Icon(
                           Icons.broken_image_rounded,
-                          color: context.colors.textTertiary,
+                          color: Colors.white38,
                           size: 80,
                         ),
                       ),
@@ -2259,7 +2233,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                     ),
                     child: Icon(
                       Icons.favorite_rounded,
-                      color: context.colors.textPrimary,
+                      color: Colors.white,
                       size: 160,
                     ),
                   ),
@@ -2291,10 +2265,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(
-                        Icons.close_rounded,
-                        color: context.colors.textPrimary,
-                      ),
+                      icon: Icon(Icons.close_rounded, color: Colors.white),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     BraweAvatar(
@@ -2311,7 +2282,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                           Text(
                             widget.authorName,
                             style: TextStyle(
-                              color: context.colors.textPrimary,
+                              color: Colors.white,
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
                             ),
@@ -2320,7 +2291,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                           Text(
                             '@${widget.authorUsername}',
                             style: TextStyle(
-                              color: context.colors.textSecondary,
+                              color: Colors.white70,
                               fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -2365,7 +2336,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           fontSize: 14,
                           height: 1.4,
                         ),
@@ -2381,15 +2352,13 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                           label: _formatLightboxCount(likesCount),
                           onTap: () {
                             HapticFeedback.lightImpact();
-                            ref
-                                .read(feedViewModelProvider.notifier)
-                                .toggleLike(widget.postId);
+                            _toggleLike();
                           },
                         ),
                         const SizedBox(width: 22),
                         _LightboxAction(
                           icon: Icons.mode_comment_outlined,
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           label: _formatLightboxCount(commentsCount),
                           onTap: () {
                             Navigator.of(context).pop();
@@ -2398,7 +2367,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                         const SizedBox(width: 22),
                         _LightboxAction(
                           icon: Icons.send_rounded,
-                          color: context.colors.textPrimary,
+                          color: Colors.white,
                           label: S.of(context).feedSend,
                           onTap: () {
                             ShareToChatSheet.show(
@@ -2547,10 +2516,10 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
         aspectRatio: 4 / 5,
         child: Container(
           color: context.colors.surfaceElevated,
-          child: const Center(
+          child: Center(
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Color(0xFFA855F7),
+              color: context.colors.accentPrimary,
             ),
           ),
         ),

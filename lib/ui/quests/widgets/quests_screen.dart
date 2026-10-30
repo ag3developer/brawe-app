@@ -316,14 +316,14 @@ class _HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF6E4DFF), Color(0xFF8A5BFF), Color(0xFF3BB8FF)],
+          colors: [AppColors.braweBlue, AppColors.braweBlueLight, AppColors.braweSky],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.electricPurple.withValues(alpha: 0.4),
+            color: AppColors.braweBlue.withValues(alpha: 0.4),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -515,7 +515,7 @@ class _LevelBadge extends StatelessWidget {
 
   Widget _avatarFallback() {
     return Container(
-      color: const Color(0xFF2A1854),
+      color: AppColors.braweDeep,
       alignment: Alignment.center,
       child: const Icon(Icons.person, color: Colors.white70, size: 28),
     );
@@ -579,14 +579,14 @@ class _LevelTier {
     name: 'epic',
     frameAsset: 'frame_epic.png',
     ringColors: [Color(0xFFB14DFF), Color(0xFFFF4D8D)],
-    badgeColors: [Color(0xFF8A5BFF), Color(0xFFFF4D8D)],
+    badgeColors: [AppColors.braweBlueLight, Color(0xFFFF4D8D)],
     glow: Color(0xFFB14DFF),
   );
   // Legendary — level 50+ (chamas/dourado lendário)
   static const _legendary = _LevelTier(
     name: 'legendary',
     frameAsset: 'frame_legendary.png',
-    ringColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D), Color(0xFF3BB8FF)],
+    ringColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D), AppColors.braweSky],
     badgeColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D)],
     glow: Color(0xFFFFD93D),
   );
@@ -1031,13 +1031,13 @@ class _QuestPalette {
 _QuestPalette _paletteFor(DailyQuest q) {
   switch (q.category) {
     case 'engagement':
-      return const _QuestPalette(Color(0xFF6E4DFF), Color(0xFF3BB8FF));
+      return const _QuestPalette(AppColors.braweBlue, AppColors.braweSky);
     case 'social':
       return const _QuestPalette(Color(0xFFFF4D8D), Color(0xFFFFD93D));
     case 'creator':
-      return const _QuestPalette(Color(0xFF2BD995), Color(0xFF3BB8FF));
+      return const _QuestPalette(Color(0xFF2BD995), AppColors.braweSky);
     default:
-      return const _QuestPalette(Color(0xFF6E4DFF), Color(0xFFFF4D8D));
+      return const _QuestPalette(AppColors.braweBlue, Color(0xFFFF4D8D));
   }
 }
 
@@ -1508,8 +1508,8 @@ class _MascotBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.colors.textPrimary,
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
                 height: 1.3,

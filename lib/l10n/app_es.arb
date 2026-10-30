@@ -2235,5 +2235,9 @@
   "composerCameraPermissionTitle": "Permite el acceso a la cámara",
   "composerCameraPermissionBody": "Para crear historias con foto y video, Brawe necesita la cámara y el micrófono.",
   "composerOpenSettings": "Abrir ajustes",
-  "composerNoCamera": "Cámara no disponible"
+  "composerNoCamera": "Cámara no disponible",
+  "feedViewsCount": "{count, plural, =1{1 visualización} other{{formatted} visualizaciones}}",
+  "feedRepostUndone": "Repost eliminado",
+  "profileTabReposts": "Reposts",
+  "profileNoReposts": "Aún no hay reposts"
 }

@@ -365,7 +365,7 @@ class _SheetContent extends StatelessWidget {
                                   const SizedBox(width: 4),
                                   const Icon(
                                     Icons.verified,
-                                    color: AppColors.coolCyan,
+                                    color: AppColors.braweSky,
                                     size: 16,
                                   ),
                                 ],
@@ -458,7 +458,7 @@ class _SheetContent extends StatelessWidget {
                     _ActionButton(
                       icon: Icons.repeat_rounded,
                       iconColor: isReposted
-                          ? AppColors.coolCyan
+                          ? context.colors.accentPrimary
                           : context.colors.textPrimary,
                       label: _compact(reposts),
                       onTap: onRepostTap,

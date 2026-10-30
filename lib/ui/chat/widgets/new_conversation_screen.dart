@@ -124,12 +124,12 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                 borderRadius: BorderRadius.circular(16),
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.electricPurple.withValues(alpha: 0.10),
-                    AppColors.coolCyan.withValues(alpha: 0.05),
+                    AppColors.braweBlue.withValues(alpha: 0.10),
+                    AppColors.braweSky.withValues(alpha: 0.05),
                   ],
                 ),
                 border: Border.all(
-                  color: context.colors.surfaceHighest.withValues(alpha: 0.08),
+                  color: context.colors.border,
                 ),
               ),
               child: TextField(
@@ -181,7 +181,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
               children: [
                 ShaderMask(
                   shaderCallback: (b) => const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                   ).createShader(b),
                   child: Text(
                     S.of(context).chatFollowingLabel,
@@ -202,7 +202,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
             child: usersAsync.when(
               loading: () => const Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.electricPurple,
+                  color: AppColors.braweBlue,
                 ),
               ),
               error: (e, _) => Center(
@@ -271,7 +271,7 @@ class _UserTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: context.colors.surfaceHighest.withValues(alpha: 0.025),
+            color: context.colors.surface,
           ),
           child: Row(
             children: [
@@ -325,7 +325,7 @@ class _UserTile extends StatelessWidget {
                         child: Text(
                           S.of(context).chatLiveBadge,
                           style: TextStyle(
-                            color: context.colors.textPrimary,
+                            color: Colors.white,
                             fontSize: 7,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
@@ -359,7 +359,7 @@ class _UserTile extends StatelessWidget {
                           const SizedBox(width: 4),
                           const Icon(
                             Icons.verified,
-                            color: AppColors.coolCyan,
+                            color: AppColors.braweSky,
                             size: 14,
                           ),
                         ],
@@ -389,7 +389,7 @@ class _UserTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                   ),
                 ),
                 child: Icon(Icons.send, color: Colors.white, size: 16),
@@ -418,8 +418,8 @@ class _EmptySearchState extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.electricPurple.withValues(alpha: 0.25),
-                  AppColors.electricPurple.withValues(alpha: 0.0),
+                  AppColors.braweBlue.withValues(alpha: 0.25),
+                  AppColors.braweBlue.withValues(alpha: 0.0),
                 ],
               ),
             ),

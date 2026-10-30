@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/services/socket_service.dart';
+import '../../../../core/themes/app_colors.dart';
 
 /// 🛒 Produto pinado (event-driven via Socket).
 ///
@@ -122,7 +123,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
               Text(
                 p.priceLabel,
                 style: const TextStyle(
-                  color: Color(0xFFB44CF0),
+                  color: AppColors.braweOrange,
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                 ),
@@ -264,15 +265,14 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                   borderRadius: BorderRadius.circular(20),
                                   gradient: const LinearGradient(
                                     colors: [
-                                      Color(0xFFFF4F8B),
-                                      Color(0xFFB44CF0),
+                                      AppColors.braweSpark,
+                                      AppColors.braweEmber,
                                     ],
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(
-                                        0xFFB44CF0,
-                                      ).withValues(alpha: 0.45),
+                                      color: AppColors.braweEmber
+                                          .withValues(alpha: 0.45),
                                       blurRadius: 14,
                                       offset: const Offset(0, 4),
                                     ),
@@ -300,19 +300,17 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                             height: 22,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: const Color(
-                                0xFFB44CF0,
-                              ).withValues(alpha: 0.22),
+                              color: AppColors.braweOrange
+                                  .withValues(alpha: 0.22),
                               border: Border.all(
-                                color: const Color(
-                                  0xFFB44CF0,
-                                ).withValues(alpha: 0.55),
+                                color: AppColors.braweOrange
+                                    .withValues(alpha: 0.55),
                                 width: 0.8,
                               ),
                             ),
                             child: const Icon(
                               Icons.push_pin_rounded,
-                              color: Color(0xFFD9B4FF),
+                              color: AppColors.braweSpark,
                               size: 12,
                             ),
                           ),

@@ -5260,4 +5260,24 @@ class SEs extends S {
 
   @override
   String get composerNoCamera => 'Cámara no disponible';
+
+  @override
+  String feedViewsCount(int count, String formatted) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$formatted visualizaciones',
+      one: '1 visualización',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedRepostUndone => 'Repost eliminado';
+
+  @override
+  String get profileTabReposts => 'Reposts';
+
+  @override
+  String get profileNoReposts => 'Aún no hay reposts';
 }

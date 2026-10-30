@@ -19,6 +19,7 @@ import '../../../data/services/iap_service.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/view_models/credits_view_model.dart';
 import '../../core/widgets/brawe_coin.dart';
 
@@ -128,7 +129,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
             content: Text(
               S.of(context).walletIapSuccess(_fmtInt(pkg.coins)),
             ),
-            backgroundColor: AppColors.electricPurple,
+            backgroundColor: AppColors.braweBlue,
           ),
         );
         Navigator.of(context).pop();
@@ -163,18 +164,9 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
         ref.watch(creditsViewModelProvider).value?.toInt() ?? 0;
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF2A1247),
-            Color(0xFF160922),
-            Color(0xFF0A0612),
-          ],
-          stops: [0.0, 0.5, 1.0],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceElevated,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
@@ -194,7 +186,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: context.colors.textTertiary.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -207,8 +199,8 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                       children: [
                         Text(
                           _titleForReason(context),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 16,
                           ),
@@ -217,7 +209,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                         Text(
                           s.topUpSubtitle,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.65),
+                            color: context.colors.textSecondary,
                             fontSize: 11.5,
                           ),
                         ),
@@ -228,7 +220,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: context.colors.surfaceHighest,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -238,8 +230,8 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                         const SizedBox(width: 5),
                         Text(
                           _fmtInt(balance),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w800,
                             fontSize: 13,
                           ),
@@ -315,13 +307,13 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                   Icon(
                     Icons.lock_outline,
                     size: 12,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: context.colors.textTertiary,
                   ),
                   const SizedBox(width: 5),
                   Text(
                     s.topUpStoreDisclaimer,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: context.colors.textTertiary,
                       fontSize: 10.5,
                     ),
                   ),
@@ -356,7 +348,7 @@ class _TopUpPackageCard extends StatelessWidget {
     return Opacity(
       opacity: enabled || loading ? 1.0 : 0.5,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: context.colors.surfaceHighest,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: enabled ? onTap : null,
@@ -368,8 +360,8 @@ class _TopUpPackageCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: highlight
-                    ? const Color(0xFFFF4F8B)
-                    : Colors.white.withValues(alpha: 0.1),
+                    ? AppColors.braweOrange
+                    : context.colors.border,
                 width: highlight ? 1.4 : 1,
               ),
             ),
@@ -384,7 +376,7 @@ class _TopUpPackageCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 1),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFF4F8B),
+                            color: AppColors.braweOrange,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -407,8 +399,8 @@ class _TopUpPackageCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       _fmtInt(package.coins),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                         height: 1,
@@ -421,7 +413,7 @@ class _TopUpPackageCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF4F8B),
+                    color: context.colors.accentPrimary,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: loading

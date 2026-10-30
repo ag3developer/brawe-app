@@ -154,7 +154,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
           gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF2A1247), Color(0xFF160922), Color(0xFF0A0612)],
+            colors: [Color(0xFF0B1A3D), Color(0xFF081127), Color(0xFF05070F)],
             stops: [0.0, 0.45, 1.0],
           ),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
@@ -166,7 +166,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFB44CF0).withValues(alpha: 0.25),
+              color: AppColors.braweBlue.withValues(alpha: 0.25),
               blurRadius: 30,
               spreadRadius: -8,
               offset: const Offset(0, -4),
@@ -188,8 +188,8 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                       center: Alignment.topCenter,
                       radius: 0.9,
                       colors: [
-                        const Color(0xFFFF4F8B).withValues(alpha: 0.18),
-                        const Color(0xFFB44CF0).withValues(alpha: 0.10),
+                        AppColors.braweOrange.withValues(alpha: 0.14),
+                        AppColors.braweBlue.withValues(alpha: 0.12),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.5, 1.0],
@@ -226,7 +226,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                       child: catalog.when(
                         loading: () => const Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.electricPurple,
+                            color: AppColors.braweBlue,
                           ),
                         ),
                         error: (e, _) => Center(
@@ -262,7 +262,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
                                 controller: _tabs,
                                 isScrollable: true,
                                 tabAlignment: TabAlignment.start,
-                                indicatorColor: AppColors.electricPurple,
+                                indicatorColor: AppColors.braweBlue,
                                 indicatorWeight: 2.5,
                                 labelColor: Colors.white,
                                 unselectedLabelColor: Colors.white54,
@@ -343,11 +343,11 @@ class _Header extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFFFF4F8B), Color(0xFFB44CF0)],
+                colors: [AppColors.braweBlue, AppColors.braweSky],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFB44CF0).withValues(alpha: 0.35),
+                  color: AppColors.braweBlue.withValues(alpha: 0.35),
                   blurRadius: 10,
                   spreadRadius: -1,
                 ),
@@ -398,7 +398,7 @@ class _Header extends StatelessWidget {
 
   Widget _avatarFallback() {
     return Container(
-      color: const Color(0xFF1F1232),
+      color: const Color(0xFF0F1A33),
       alignment: Alignment.center,
       child: Text(
         creatorName.isNotEmpty
@@ -477,17 +477,17 @@ class _GiftCard extends StatelessWidget {
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
         color: selected
-            ? AppColors.electricPurple.withValues(alpha: 0.18)
+            ? AppColors.braweBlue.withValues(alpha: 0.18)
             : Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected ? AppColors.electricPurple : Colors.white12,
+          color: selected ? AppColors.braweBlue : Colors.white12,
           width: selected ? 1.6 : 1,
         ),
         boxShadow: selected
             ? [
                 BoxShadow(
-                  color: AppColors.electricPurple.withValues(alpha: 0.35),
+                  color: AppColors.braweBlue.withValues(alpha: 0.35),
                   blurRadius: 12,
                   spreadRadius: 0.5,
                 ),
@@ -525,13 +525,13 @@ class _GiftCard extends StatelessWidget {
                     const Icon(
                       Icons.diamond_outlined,
                       size: 11,
-                      color: AppColors.coolCyan,
+                      color: AppColors.braweSky,
                     ),
                     const SizedBox(width: 3),
                     Text(
                       gift.priceCredits.toStringAsFixed(0),
                       style: const TextStyle(
-                        color: AppColors.coolCyan,
+                        color: AppColors.braweSky,
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
@@ -652,7 +652,7 @@ class _Footer extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [AppColors.electricPurple, AppColors.coolCyan],
+                    colors: [AppColors.braweBlue, AppColors.braweSky],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
@@ -660,7 +660,7 @@ class _Footer extends StatelessWidget {
                   boxShadow: canSend
                       ? [
                           BoxShadow(
-                            color: AppColors.electricPurple.withValues(
+                            color: AppColors.braweBlue.withValues(
                               alpha: 0.45,
                             ),
                             blurRadius: 14,
@@ -738,11 +738,11 @@ class _QtyChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.electricPurple.withValues(alpha: 0.25)
+              ? AppColors.braweBlue.withValues(alpha: 0.25)
               : Colors.white.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.electricPurple : Colors.white24,
+            color: selected ? AppColors.braweBlue : Colors.white24,
           ),
         ),
         child: Text(

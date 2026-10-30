@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/sound_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -255,7 +256,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.music, size: 18, color: Color(0xFFEC4899)),
+            const Icon(LucideIcons.music, size: 18, color: AppColors.braweBlue),
             const SizedBox(width: 8),
             Text(
               'Brawe Sounds',
@@ -274,7 +275,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
             child: FilledButton(
               onPressed: _saving ? null : _onSave,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEC4899),
+                backgroundColor: AppColors.braweBlue,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -306,7 +307,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       ),
       body: !_loaded
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFEC4899)),
+              child: CircularProgressIndicator(color: AppColors.braweBlue),
             )
           : Form(
               key: _formKey,
@@ -322,7 +323,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                     context: context,
                     isDark: isDark,
                     icon: LucideIcons.user,
-                    color: const Color(0xFFEC4899),
+                    color: AppColors.braweBlue,
                     title: 'Identidade artística',
                     children: [
                       _field(
@@ -358,7 +359,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                     context: context,
                     isDark: isDark,
                     icon: LucideIcons.mapPin,
-                    color: const Color(0xFFEC4899),
+                    color: AppColors.braweBlue,
                     title: 'Localização',
                     children: [
                       _field(
@@ -432,7 +433,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                     context: context,
                     isDark: isDark,
                     icon: LucideIcons.music2,
-                    color: const Color(0xFFEC4899),
+                    color: AppColors.braweBlue,
                     title: 'Gêneros musicais',
                     subtitle: 'Selecione até 5 gêneros',
                     content: Padding(
@@ -460,14 +461,12 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: selected
-                                    ? const Color(
-                                        0xFFEC4899,
-                                      ).withValues(alpha: 0.15)
+                                    ? AppColors.braweBlue.withValues(alpha: 0.15)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: selected
-                                      ? const Color(0xFFEC4899)
+                                      ? AppColors.braweBlue
                                       : context.colors.divider,
                                   width: selected ? 1.5 : 1,
                                 ),
@@ -480,7 +479,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                                       ? FontWeight.w700
                                       : FontWeight.w400,
                                   color: selected
-                                      ? const Color(0xFFEC4899)
+                                      ? AppColors.braweBlue
                                       : context.colors.textSecondary,
                                 ),
                               ),
@@ -497,7 +496,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                     context: context,
                     isDark: isDark,
                     icon: LucideIcons.headphones,
-                    color: const Color(0xFFEC4899),
+                    color: AppColors.braweBlue,
                     title: 'Plataformas de streaming',
                     children: [
                       _platformRow(
@@ -794,7 +793,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+      dropdownColor: context.colors.surfaceElevated,
       style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
