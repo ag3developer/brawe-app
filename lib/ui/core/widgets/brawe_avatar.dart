@@ -77,6 +77,8 @@ class BraweAvatar extends StatelessWidget {
                 fit: BoxFit.cover,
                 width: size,
                 height: size,
+                // Decodifica no tamanho exibido (não no tamanho do arquivo).
+                memCacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
                 fadeInDuration: const Duration(milliseconds: 180),
                 fadeOutDuration: const Duration(milliseconds: 80),
                 placeholder: (_, _) =>

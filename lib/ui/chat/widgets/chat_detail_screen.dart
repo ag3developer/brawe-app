@@ -56,19 +56,55 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   bool _viewOnce = false;
   ChatMessage? _replyingTo;
 
+  // Aberto por notificação (ou link) a rota só traz o id da conversa: nome,
+  // foto e id da outra pessoa são buscados na lista de conversas.
+  String? _resolvedName;
+  String? _resolvedAvatarUrl;
+  String? _resolvedParticipantId;
+
+  String get _participantName => _resolvedName ?? widget.participantName;
+  String? get _participantAvatarUrl => _resolvedAvatarUrl ?? widget.participantAvatarUrl;
+  String? get _participantId => _resolvedParticipantId ?? widget.participantId;
+
+  Future<void> _resolveParticipant() async {
+    final repo = ref.read(chatRepositoryProvider);
+    for (final archived in [false, true]) {
+      try {
+        final list = await repo.listConversations(limit: 100, archived: archived);
+        final match = list.where((c) => c.id == widget.conversationId).firstOrNull;
+        if (match == null) continue;
+        if (!mounted) return;
+        setState(() {
+          _resolvedName = match.participantName;
+          _resolvedAvatarUrl = match.participantAvatarUrl;
+          _resolvedParticipantId = match.participantId;
+        });
+        ref.read(presenceCacheProvider.notifier).watch(match.participantId);
+        return;
+      } catch (_) {
+        // Sem rede: mantém o cabeçalho genérico; as mensagens carregam igual.
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    if (widget.participantId == null || widget.participantId!.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _resolveParticipant();
+      });
+    }
     _messageCtrl.addListener(() {
       final has = _messageCtrl.text.trim().isNotEmpty;
       if (has != _hasText) setState(() => _hasText = has);
     });
     _scrollCtrl.addListener(_onScroll);
     // Inscreve presença do participante (se conhecido).
-    if (widget.participantId != null && widget.participantId!.isNotEmpty) {
+    if (_participantId != null && _participantId!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref.read(presenceCacheProvider.notifier).watch(widget.participantId!);
+        ref.read(presenceCacheProvider.notifier).watch(_participantId!);
       });
     }
   }
@@ -174,14 +210,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   Future<void> _blockUser() async {
-    final participantId = widget.participantId;
+    final participantId = _participantId;
     if (participantId == null || participantId.isEmpty) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.colors.surfaceElevated,
         title: Text(
-          S.of(context).chatDetailBlockTitle(widget.participantName),
+          S.of(context).chatDetailBlockTitle(_participantName),
           style: TextStyle(color: context.colors.textPrimary),
         ),
         content: Text(
@@ -213,7 +249,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            S.of(context).chatDetailBlocked(widget.participantName),
+            S.of(context).chatDetailBlocked(_participantName),
           ),
           backgroundColor: context.colors.surfaceElevated,
         ),
@@ -254,7 +290,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 icon: Icons.person_outline,
                 label: S.of(context).chatDetailViewProfile,
                 onTap: () {
-                  final pid = widget.participantId;
+                  final pid = _participantId;
                   if (pid == null || pid.isEmpty) {
                     Navigator.pop(sheetCtx);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -309,7 +345,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 icon: Icons.block,
                 label: S
                     .of(context)
-                    .chatDetailBlockMenu(widget.participantName),
+                    .chatDetailBlockMenu(_participantName),
                 color: AppColors.mutedRed,
                 onTap: () {
                   Navigator.pop(sheetCtx);
@@ -351,9 +387,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: _AppBar(
-        name: widget.participantName,
-        avatarUrl: widget.participantAvatarUrl,
-        participantId: widget.participantId,
+        name: _participantName,
+        avatarUrl: _participantAvatarUrl,
+        participantId: _participantId,
         isTyping: state.isTyping,
         onBack: () => context.go('/chat'),
         onMoreTap: () => _showMoreMenu(context),
@@ -385,7 +421,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       conversationId: widget.conversationId,
                       messages: state.messages,
                       scrollController: _scrollCtrl,
-                      avatarUrl: widget.participantAvatarUrl,
+                      avatarUrl: _participantAvatarUrl,
                       isLoadingMore: state.isLoadingMore,
                       isTyping: state.isTyping,
                       onReply: _setReply,

@@ -25,6 +25,7 @@ import '../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
 import 'gift_flight_overlay.dart';
+import '../../../core/network/media_headers.dart';
 
 /// Visualizador de stories full-screen.
 ///
@@ -208,7 +209,10 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     final owner = 'story:${story.id}';
 
     if (story.isVideo && story.mediaUrl.isNotEmpty) {
-      final ctrl = VideoPlayerController.networkUrl(Uri.parse(story.mediaUrl));
+      final ctrl = VideoPlayerController.networkUrl(
+        Uri.parse(story.mediaUrl),
+        httpHeaders: mediaHeadersFor(story.mediaUrl),
+      );
       _videoController = ctrl;
       try {
         await ctrl.initialize();

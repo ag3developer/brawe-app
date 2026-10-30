@@ -20,6 +20,7 @@ import '../view_models/feed_view_model.dart';
 import 'comments_sheet.dart';
 import 'reactions_bar.dart';
 import 'share_to_chat_sheet.dart';
+import '../../../core/network/media_headers.dart';
 
 /// Player de vídeo em **tela cheia** com action rail vertical (TikTok style).
 ///
@@ -136,7 +137,10 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
         });
         return;
       }
-      final c = VideoPlayerController.networkUrl(Uri.parse(url));
+      final c = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        httpHeaders: mediaHeadersFor(url),
+      );
       await c.initialize();
       if (!mounted || session != _session) {
         await c.dispose();

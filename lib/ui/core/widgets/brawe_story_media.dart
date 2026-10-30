@@ -28,6 +28,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
 import 'brawe_avatar.dart';
+import '../../../core/network/media_headers.dart';
 
 /// Renderização full-screen de mídia de story.
 ///
@@ -484,7 +485,10 @@ class StoryMediaPrecache {
   static Future<void> warmUpVideo(String url) async {
     if (url.isEmpty) return;
     try {
-      final ctrl = VideoPlayerController.networkUrl(Uri.parse(url));
+      final ctrl = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        httpHeaders: mediaHeadersFor(url),
+      );
       await ctrl.initialize();
       await ctrl.dispose();
     } catch (_) {

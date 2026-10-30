@@ -37,6 +37,7 @@ import 'share_to_chat_sheet.dart';
 import 'stories_rail.dart';
 import 'story_ring_avatar.dart';
 import 'suggested_users_rail.dart';
+import '../../../core/network/media_headers.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -1089,11 +1090,19 @@ class _PostCardState extends ConsumerState<PostCard>
                         maxHeight: MediaQuery.of(context).size.width * 1.25,
                       ),
                       child: isVideo
-                          ? _FeedVideoTile(url: post.imageUrl!)
+                          ? _FeedVideoTile(
+                              // Versão leve (HLS do Bunny) quando existe; senão o original.
+                              url: (post.hlsUrl?.isNotEmpty ?? false) ? post.hlsUrl! : post.imageUrl!,
+                              posterUrl: post.hlsThumbnailUrl,
+                            )
                           : CachedNetworkImage(
                               imageUrl: post.imageUrl!,
                               width: double.infinity,
                               fit: BoxFit.cover,
+                              // Decodifica na largura da tela, não na do arquivo.
+                              memCacheWidth: (MediaQuery.sizeOf(context).width *
+                                      MediaQuery.devicePixelRatioOf(context))
+                                  .round(),
                               fadeInDuration: const Duration(milliseconds: 180),
                               placeholder: (ctx, _) => AspectRatio(
                                 aspectRatio: 4 / 5,
@@ -2444,48 +2453,129 @@ bool _isVideoUrl(String url) {
 }
 
 class _FeedVideoTile extends StatefulWidget {
-  const _FeedVideoTile({required this.url});
+  const _FeedVideoTile({required this.url, this.posterUrl});
   final String url;
+
+  /// Miniatura do vídeo (gerada pelo Bunny). Aparece até o vídeo tocar.
+  final String? posterUrl;
 
   @override
   State<_FeedVideoTile> createState() => _FeedVideoTileState();
 }
 
+/// Vídeo do feed no padrão Instagram/TikTok:
+/// - só baixa quando o vídeo está chegando na tela (economiza 4G);
+/// - só toca o que está ≥ 60% visível, e um por vez;
+/// - ao sair da tela, pausa e libera o player (memória e banda).
 class _FeedVideoTileState extends State<_FeedVideoTile> {
+  /// O único vídeo tocando no feed.
+  static _FeedVideoTileState? _playing;
+
+  static const double _loadAt = 0.15; // começa a baixar
+  static const double _playAt = 0.6; // começa a tocar
+
   VideoPlayerController? _ctrl;
   bool _ready = false;
   bool _error = false;
   bool _muted = true;
+  bool _initializing = false;
+  double _visible = 0;
+  ScrollPosition? _scroll;
 
   @override
-  void initState() {
-    super.initState();
-    _init();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final pos = Scrollable.maybeOf(context)?.position;
+    if (pos != _scroll) {
+      _scroll?.removeListener(_onScroll);
+      _scroll = pos;
+      _scroll?.addListener(_onScroll);
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onScroll());
+  }
+
+  /// Fração do vídeo visível na tela (0–1), pela posição real do widget.
+  double _visibleFraction() {
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize || !box.attached) return 0;
+    final top = box.localToGlobal(Offset.zero).dy;
+    final height = box.size.height;
+    if (height <= 0) return 0;
+    final screen = MediaQuery.sizeOf(context).height;
+    final visible = (top + height).clamp(0.0, screen) - top.clamp(0.0, screen);
+    return (visible / height).clamp(0.0, 1.0);
+  }
+
+  void _onScroll() {
+    if (!mounted) return;
+    final v = _visibleFraction();
+    _visible = v;
+    if (v >= _loadAt) {
+      if (_ctrl == null && !_initializing && !_error) _init();
+    } else if (v == 0) {
+      _release();
+      return;
+    }
+    final c = _ctrl;
+    if (c == null || !_ready) return;
+    if (v >= _playAt) {
+      if (_playing != this) {
+        _playing?._pause();
+        _playing = this;
+      }
+      if (!c.value.isPlaying) c.play();
+    } else {
+      _pause();
+    }
+  }
+
+  void _pause() {
+    final c = _ctrl;
+    if (c != null && c.value.isPlaying) c.pause();
+    if (_playing == this) _playing = null;
+  }
+
+  /// Fora da tela: libera o player. Volta a carregar se a pessoa rolar de volta.
+  void _release() {
+    if (_playing == this) _playing = null;
+    final c = _ctrl;
+    if (c == null) return;
+    _ctrl = null;
+    if (mounted) setState(() => _ready = false);
+    c.dispose();
   }
 
   Future<void> _init() async {
+    _initializing = true;
+    final c = VideoPlayerController.networkUrl(
+      Uri.parse(widget.url),
+      httpHeaders: mediaHeadersFor(widget.url),
+    );
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
       await c.initialize();
-      if (!mounted) {
+      if (!mounted || _visible == 0) {
         await c.dispose();
         return;
       }
-      c
-        ..setLooping(true)
-        ..setVolume(0)
-        ..play();
+      await c.setLooping(true);
+      await c.setVolume(_muted ? 0 : 1);
       setState(() {
         _ctrl = c;
         _ready = true;
       });
+      _onScroll(); // decide tocar ou não com a posição atual
     } catch (_) {
+      await c.dispose();
       if (mounted) setState(() => _error = true);
+    } finally {
+      _initializing = false;
     }
   }
 
   @override
   void dispose() {
+    _scroll?.removeListener(_onScroll);
+    if (_playing == this) _playing = null;
     _ctrl?.dispose();
     super.dispose();
   }
@@ -2495,6 +2585,44 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     if (c == null) return;
     setState(() => _muted = !_muted);
     c.setVolume(_muted ? 0 : 1);
+  }
+
+  /// Miniatura (ou fundo neutro) enquanto o vídeo não toca.
+  Widget _poster(BuildContext context, {bool loading = false}) {
+    final poster = widget.posterUrl;
+    return AspectRatio(
+      aspectRatio: 4 / 5,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (poster != null && poster.isNotEmpty)
+            CachedNetworkImage(
+              imageUrl: poster,
+              httpHeaders: mediaHeadersFor(poster),
+              fit: BoxFit.cover,
+              fadeInDuration: const Duration(milliseconds: 150),
+              placeholder: (_, _) => ColoredBox(color: context.colors.surfaceElevated),
+              errorWidget: (_, _, _) => ColoredBox(color: context.colors.surfaceElevated),
+            )
+          else
+            ColoredBox(color: context.colors.surfaceElevated),
+          Center(
+            child: loading
+                ? const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Icon(
+                    Icons.play_arrow_rounded,
+                    size: 44,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -2512,18 +2640,7 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
       );
     }
     if (!_ready || _ctrl == null) {
-      return AspectRatio(
-        aspectRatio: 4 / 5,
-        child: Container(
-          color: context.colors.surfaceElevated,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: context.colors.accentPrimary,
-            ),
-          ),
-        ),
-      );
+      return _poster(context, loading: _initializing);
     }
     final c = _ctrl!;
     final aspect = c.value.aspectRatio == 0 ? 9 / 16 : c.value.aspectRatio;

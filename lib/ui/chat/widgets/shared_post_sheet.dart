@@ -31,6 +31,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/comments_sheet.dart';
 import '../../feed/widgets/share_to_chat_sheet.dart';
+import '../../../core/network/media_headers.dart';
 
 bool _isVideoUrl(String url) {
   final u = url.toLowerCase().split('?').first;
@@ -397,7 +398,7 @@ class _SheetContent extends StatelessWidget {
 
               // ── Mídia (imagem ou vídeo) ───────────────────────────
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-                _MediaBlock(url: post.imageUrl!),
+                _MediaBlock(url: post.imageUrl!, hlsUrl: post.hlsUrl),
 
               // ── Caption ───────────────────────────────────────────
               if (post.content.trim().isNotEmpty)
@@ -488,13 +489,17 @@ class _SheetContent extends StatelessWidget {
 //   MEDIA: imagem ou vídeo
 // ───────────────────────────────────────────────────────────────────────────
 class _MediaBlock extends StatelessWidget {
-  const _MediaBlock({required this.url});
+  const _MediaBlock({required this.url, this.hlsUrl});
   final String url;
+
+  /// Versão leve (HLS do Bunny), quando o vídeo já foi convertido.
+  final String? hlsUrl;
 
   @override
   Widget build(BuildContext context) {
     if (_isVideoUrl(url)) {
-      return AspectRatio(aspectRatio: 1, child: _AutoplayVideo(url: url));
+      final playUrl = (hlsUrl?.isNotEmpty ?? false) ? hlsUrl! : url;
+      return AspectRatio(aspectRatio: 1, child: _AutoplayVideo(url: playUrl));
     }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 480),
@@ -534,7 +539,10 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
 
   Future<void> _init() async {
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+      final c = VideoPlayerController.networkUrl(
+        Uri.parse(widget.url),
+        httpHeaders: mediaHeadersFor(widget.url),
+      );
       await c.initialize();
       await c.setLooping(true);
       await c.setVolume(0);

@@ -18,6 +18,7 @@ import '../../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../../view_models/feed_video_mute_provider.dart';
 import 'shared/_caption_block.dart';
 import 'shared/_feed_actions_rail.dart';
+import '../../../../core/network/media_headers.dart';
 
 /// 🎥 View para VideoFeedItem — player real estilo Reels/TikTok/Shorts.
 ///
@@ -85,6 +86,7 @@ class _VideoViewState extends ConsumerState<VideoView> {
     }
     final ctrl = VideoPlayerController.networkUrl(
       Uri.parse(url),
+      httpHeaders: mediaHeadersFor(url),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _ctrl = ctrl;
@@ -285,6 +287,7 @@ class _VideoViewState extends ConsumerState<VideoView> {
           // ── Camada 1: thumbnail (fallback até inicializar) ─────
           Image.network(
             widget.item.thumbnailUrl,
+            headers: mediaHeadersFor(widget.item.thumbnailUrl),
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => Container(color: AppColors.slate),
           ),

@@ -16,6 +16,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../feed/widgets/story_composer_screen.dart';
+import '../../../core/network/media_headers.dart';
 
 /// Grid de vídeos do perfil — mostra os vídeos publicados pelo usuário
 /// na aba "Para Você" (posts com `imageUrl` em `.mp4/.mov/.webm`).
@@ -131,6 +132,7 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
     }
     final c = VideoPlayerController.networkUrl(
       Uri.parse(url),
+      httpHeaders: mediaHeadersFor(url),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _ctrl = c;
@@ -186,6 +188,7 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
             if (_posterUrl != null)
               Image.network(
                 _posterUrl!,
+                headers: mediaHeadersFor(_posterUrl),
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
@@ -601,6 +604,7 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
     }
     final c = VideoPlayerController.networkUrl(
       Uri.parse(url),
+      httpHeaders: mediaHeadersFor(url),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
     _ctrl = c;

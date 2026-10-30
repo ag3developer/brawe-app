@@ -68,7 +68,20 @@ class NotificationNavigationService {
 
   void _navigate(String route) {
     try {
-      _ref.read(routerProvider).push(route);
+      final router = _ref.read(routerProvider);
+      final current = router.routerDelegate.currentConfiguration.uri.path;
+      final target = Uri.parse(route).path;
+      // Conversa: não abre a mesma tela duas vezes e não empilha uma conversa
+      // em cima de outra (antes, responder pela notificação abria uma cópia
+      // "sem dados" da conversa já aberta).
+      if (target.startsWith('/chat/') && target != '/chat/new') {
+        if (current == target) return;
+        if (current.startsWith('/chat/') && current != '/chat/new') {
+          router.pushReplacement(route);
+          return;
+        }
+      }
+      router.push(route);
     } catch (e) {
       debugPrint('NotificationNavigationService.push falhou ($route): $e');
     }
