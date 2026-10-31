@@ -9614,6 +9614,228 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Nenhum repost ainda'**
   String get profileNoReposts;
+
+  /// No description provided for @liveEndedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live encerrada'**
+  String get liveEndedTitle;
+
+  /// No description provided for @liveEndedByStreamer.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} encerrou a live.'**
+  String liveEndedByStreamer(String name);
+
+  /// No description provided for @liveEndedAlready.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta live já foi encerrada por {name}.'**
+  String liveEndedAlready(String name);
+
+  /// No description provided for @liveEndedLasted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Durou {duration}'**
+  String liveEndedLasted(String duration);
+
+  /// No description provided for @liveEndedFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get liveEndedFollow;
+
+  /// No description provided for @liveEndedFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get liveEndedFollowing;
+
+  /// No description provided for @liveEndedFollowHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga para saber quando {name} entrar ao vivo de novo.'**
+  String liveEndedFollowHint(String name);
+
+  /// No description provided for @liveEndedNextLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próxima live'**
+  String get liveEndedNextLive;
+
+  /// No description provided for @liveEndedWatchNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir'**
+  String get liveEndedWatchNow;
+
+  /// No description provided for @liveEndedGoingIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Indo para a próxima live em {seconds}s'**
+  String liveEndedGoingIn(int seconds);
+
+  /// No description provided for @liveEndedStay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ficar aqui'**
+  String get liveEndedStay;
+
+  /// No description provided for @liveEndedNoOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma outra live no ar agora.'**
+  String get liveEndedNoOther;
+
+  /// No description provided for @liveEndedBackHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar ao início'**
+  String get liveEndedBackHome;
+
+  /// No description provided for @liveEndedWatching.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} assistindo'**
+  String liveEndedWatching(String count);
+
+  /// No description provided for @livePausedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volto já'**
+  String get livePausedTitle;
+
+  /// No description provided for @livePausedBy.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} pausou a live'**
+  String livePausedBy(String name);
+
+  /// No description provided for @livePausedBackIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Volta em até {time}'**
+  String livePausedBackIn(String time);
+
+  /// No description provided for @livePausedResuming.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltando…'**
+  String get livePausedResuming;
+
+  /// No description provided for @livePausedResumingHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'A transmissão volta em instantes'**
+  String get livePausedResumingHint;
+
+  /// No description provided for @broadcasterPausedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live pausada'**
+  String get broadcasterPausedTitle;
+
+  /// No description provided for @broadcasterPausedHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera e microfone desligados. Seus espectadores veem o aviso de pausa.'**
+  String get broadcasterPausedHint;
+
+  /// No description provided for @broadcasterResumeIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retome em {time}'**
+  String broadcasterResumeIn(String time);
+
+  /// No description provided for @broadcasterResumeButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar live'**
+  String get broadcasterResumeButton;
+
+  /// No description provided for @broadcasterResumingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltando ao ar…'**
+  String get broadcasterResumingTitle;
+
+  /// No description provided for @broadcasterResumingHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus espectadores voltam a te ver em alguns segundos.'**
+  String get broadcasterResumingHint;
+
+  /// No description provided for @broadcasterBackLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está ao vivo'**
+  String get broadcasterBackLive;
+
+  /// No description provided for @relHidePosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocultar publicações'**
+  String get relHidePosts;
+
+  /// No description provided for @relShowPosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar publicações'**
+  String get relShowPosts;
+
+  /// No description provided for @relHiddenSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não verá mais as publicações de {name}.'**
+  String relHiddenSnack(String name);
+
+  /// No description provided for @relShownSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'As publicações de {name} voltaram a aparecer.'**
+  String relShownSnack(String name);
+
+  /// No description provided for @relActionError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir. Tente de novo.'**
+  String get relActionError;
+
+  /// No description provided for @profileBlockedState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você bloqueou este usuário'**
+  String get profileBlockedState;
+
+  /// No description provided for @profileBlockedStateHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloqueie para ver o perfil e as publicações.'**
+  String get profileBlockedStateHint;
+
+  /// No description provided for @profileUnblock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloquear'**
+  String get profileUnblock;
+
+  /// No description provided for @profileUnblocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usuário desbloqueado.'**
+  String get profileUnblocked;
+
+  /// No description provided for @profileUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil indisponível'**
+  String get profileUnavailable;
+
+  /// No description provided for @profileUnavailableHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este conteúdo não está disponível para você.'**
+  String get profileUnavailableHint;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

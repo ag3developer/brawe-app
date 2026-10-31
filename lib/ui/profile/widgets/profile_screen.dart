@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -147,6 +148,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final profileState = ref.watch(profileViewModelProvider(widget.userId));
     final currentUserId = ref.watch(authStateProvider).value?.id;
     final isMe = currentUserId == widget.userId;
+    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+
+    // Bloqueio (recíproco): nada do perfil aparece. Quem bloqueou pode desfazer.
+    if (!isMe && hidden.isBlocked(widget.userId)) {
+      return _BlockedProfileView(
+        userId: widget.userId,
+        blockedByMe: hidden.blockedByMe.contains(widget.userId),
+      );
+    }
 
     // Vitrine: busca a vitrine PÚBLICA do usuário visitado (`widget.userId`)
     // via endpoint sem autenticação — funciona tanto no próprio perfil
@@ -446,7 +456,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 ?.username,
           ) ??
           widget.userId;
-      await ref.read(socialActionsServiceProvider).blockUser(slug);
+      await ref
+          .read(hiddenUsersProvider.notifier)
+          .block(slug: slug, userId: widget.userId);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).profileBlockedSuccess)),
@@ -457,6 +469,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(S.of(context).profileBlockedError)),
       );
+    }
+  }
+
+  Future<void> _toggleMute(BuildContext context, bool muted) async {
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final name = ref.read(profileViewModelProvider(widget.userId)).profile.value?.username ?? '';
+    try {
+      final notifier = ref.read(hiddenUsersProvider.notifier);
+      if (muted) {
+        await notifier.unmute(widget.userId);
+      } else {
+        await notifier.mute(widget.userId);
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text(muted ? s.relShownSnack(name) : s.relHiddenSnack(name))),
+      );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
     }
   }
 
@@ -571,6 +602,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   onTap: () {
                     Navigator.of(context).pop();
                     _copyProfileLink(context);
+                  },
+                ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final muted = (ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState())
+                        .muted
+                        .contains(widget.userId);
+                    return ListTile(
+                      leading: Icon(
+                        muted ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        color: context.colors.textPrimary,
+                      ),
+                      title: Text(
+                        muted ? s.relShowPosts : s.relHidePosts,
+                        style: TextStyle(color: context.colors.textPrimary),
+                      ),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        _toggleMute(context, muted);
+                      },
+                    );
                   },
                 ),
                 ListTile(
@@ -2116,6 +2168,91 @@ class _OnlineIndicator extends ConsumerWidget {
               spreadRadius: 0.5,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Perfil com bloqueio: "Você bloqueou" (com Desbloquear) ou indisponível.
+class _BlockedProfileView extends ConsumerStatefulWidget {
+  const _BlockedProfileView({required this.userId, required this.blockedByMe});
+
+  final String userId;
+  final bool blockedByMe;
+
+  @override
+  ConsumerState<_BlockedProfileView> createState() => _BlockedProfileViewState();
+}
+
+class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
+  bool _busy = false;
+
+  Future<void> _unblock() async {
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(hiddenUsersProvider.notifier)
+          .unblock(slug: widget.userId, userId: widget.userId);
+      ref.invalidate(profileViewModelProvider(widget.userId));
+      messenger.showSnackBar(SnackBar(content: Text(s.profileUnblocked)));
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Scaffold(
+      backgroundColor: context.colors.background,
+      appBar: AppBar(
+        backgroundColor: context.colors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.block_rounded, size: 56, color: context.colors.textSecondary),
+              const SizedBox(height: 16),
+              Text(
+                widget.blockedByMe ? s.profileBlockedState : s.profileUnavailable,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                widget.blockedByMe ? s.profileBlockedStateHint : s.profileUnavailableHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: context.colors.textSecondary, fontSize: 14),
+              ),
+              if (widget.blockedByMe) ...[
+                const SizedBox(height: 20),
+                OutlinedButton(
+                  onPressed: _busy ? null : _unblock,
+                  child: _busy
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(s.profileUnblock),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

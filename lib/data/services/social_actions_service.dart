@@ -5,7 +5,8 @@ import '../../core/network/live_dio_provider.dart';
 
 part 'social_actions_service.g.dart';
 
-/// Block & Report actions (mounted at /messages/* in backend).
+/// Bloquear, ocultar e denunciar (bloqueio/denúncia em /messages/*, ocultar
+/// em /relations/*).
 class SocialActionsService {
   final Dio _dio;
   SocialActionsService(this._dio);
@@ -26,6 +27,30 @@ class SocialActionsService {
         .map((e) => (e['blocked_id'] ?? '').toString())
         .where((s) => s.isNotEmpty)
         .toList();
+  }
+
+  /// Ocultar publicações (silenciar): some dos meus feeds, sem a pessoa saber.
+  Future<void> muteUser(String userId) async {
+    await _dio.post('/relations/mutes/$userId');
+  }
+
+  Future<void> unmuteUser(String userId) async {
+    await _dio.delete('/relations/mutes/$userId');
+  }
+
+  /// Ids a esconder no que chega em tempo real (chat da live, presentes):
+  /// bloqueados (nos dois sentidos) e ocultados por mim.
+  Future<({Set<String> blocked, Set<String> blockedByMe, Set<String> muted})> hiddenUsers() async {
+    final r = await _dio.get('/relations/hidden');
+    final raw = r.data;
+    final data = (raw is Map ? raw['data'] : null) as Map? ?? const {};
+    Set<String> ids(Object? v) =>
+        ((v as List?) ?? const []).map((e) => e.toString()).where((e) => e.isNotEmpty).toSet();
+    return (
+      blocked: ids(data['blocked']),
+      blockedByMe: ids(data['blocked_by_me']),
+      muted: ids(data['muted']),
+    );
   }
 
   /// [targetType] in: user | message | conversation | post

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -687,12 +688,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       return;
     }
     try {
-      await ref
-          .read(socialActionsServiceProvider)
-          .blockUser(
-            _story.authorUsername.isNotEmpty
+      await ref.read(hiddenUsersProvider.notifier).block(
+            slug: _story.authorUsername.isNotEmpty
                 ? _story.authorUsername
                 : _story.authorId,
+            userId: _story.authorId,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

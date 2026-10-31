@@ -5279,4 +5279,141 @@ class SPt extends S {
 
   @override
   String get profileNoReposts => 'Nenhum repost ainda';
+
+  @override
+  String get liveEndedTitle => 'Live encerrada';
+
+  @override
+  String liveEndedByStreamer(String name) {
+    return '$name encerrou a live.';
+  }
+
+  @override
+  String liveEndedAlready(String name) {
+    return 'Esta live já foi encerrada por $name.';
+  }
+
+  @override
+  String liveEndedLasted(String duration) {
+    return 'Durou $duration';
+  }
+
+  @override
+  String get liveEndedFollow => 'Seguir';
+
+  @override
+  String get liveEndedFollowing => 'Seguindo';
+
+  @override
+  String liveEndedFollowHint(String name) {
+    return 'Siga para saber quando $name entrar ao vivo de novo.';
+  }
+
+  @override
+  String get liveEndedNextLive => 'Próxima live';
+
+  @override
+  String get liveEndedWatchNow => 'Assistir';
+
+  @override
+  String liveEndedGoingIn(int seconds) {
+    return 'Indo para a próxima live em ${seconds}s';
+  }
+
+  @override
+  String get liveEndedStay => 'Ficar aqui';
+
+  @override
+  String get liveEndedNoOther => 'Nenhuma outra live no ar agora.';
+
+  @override
+  String get liveEndedBackHome => 'Voltar ao início';
+
+  @override
+  String liveEndedWatching(String count) {
+    return '$count assistindo';
+  }
+
+  @override
+  String get livePausedTitle => 'Volto já';
+
+  @override
+  String livePausedBy(String name) {
+    return '$name pausou a live';
+  }
+
+  @override
+  String livePausedBackIn(String time) {
+    return 'Volta em até $time';
+  }
+
+  @override
+  String get livePausedResuming => 'Voltando…';
+
+  @override
+  String get livePausedResumingHint => 'A transmissão volta em instantes';
+
+  @override
+  String get broadcasterPausedTitle => 'Live pausada';
+
+  @override
+  String get broadcasterPausedHint =>
+      'Câmera e microfone desligados. Seus espectadores veem o aviso de pausa.';
+
+  @override
+  String broadcasterResumeIn(String time) {
+    return 'Retome em $time';
+  }
+
+  @override
+  String get broadcasterResumeButton => 'Retomar live';
+
+  @override
+  String get broadcasterResumingTitle => 'Voltando ao ar…';
+
+  @override
+  String get broadcasterResumingHint =>
+      'Seus espectadores voltam a te ver em alguns segundos.';
+
+  @override
+  String get broadcasterBackLive => 'Você está ao vivo';
+
+  @override
+  String get relHidePosts => 'Ocultar publicações';
+
+  @override
+  String get relShowPosts => 'Mostrar publicações';
+
+  @override
+  String relHiddenSnack(String name) {
+    return 'Você não verá mais as publicações de $name.';
+  }
+
+  @override
+  String relShownSnack(String name) {
+    return 'As publicações de $name voltaram a aparecer.';
+  }
+
+  @override
+  String get relActionError => 'Não foi possível concluir. Tente de novo.';
+
+  @override
+  String get profileBlockedState => 'Você bloqueou este usuário';
+
+  @override
+  String get profileBlockedStateHint =>
+      'Desbloqueie para ver o perfil e as publicações.';
+
+  @override
+  String get profileUnblock => 'Desbloquear';
+
+  @override
+  String get profileUnblocked => 'Usuário desbloqueado.';
+
+  @override
+  String get profileUnavailable => 'Perfil indisponível';
+
+  @override
+  String get profileUnavailableHint =>
+      'Este conteúdo não está disponível para você.';
 }

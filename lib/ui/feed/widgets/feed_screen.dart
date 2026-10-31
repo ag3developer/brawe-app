@@ -1,4 +1,5 @@
 // ignore_for_file: unused_element_parameter
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -1276,6 +1277,7 @@ class _PostCardState extends ConsumerState<PostCard>
         },
         onUnfollow: _unfollowAuthor,
         onBlock: _blockAuthor,
+        onMute: _muteAuthor,
         onReport: _reportPost,
         onDelete: _deletePost,
       ),
@@ -1362,6 +1364,18 @@ class _PostCardState extends ConsumerState<PostCard>
     }
   }
 
+  /// Ocultar publicações: some dos meus feeds, sem a pessoa saber.
+  Future<void> _muteAuthor() async {
+    final author = _post.author;
+    try {
+      await ref.read(hiddenUsersProvider.notifier).mute(author.id);
+      if (!mounted) return;
+      _showError(S.of(context).relHiddenSnack(author.username));
+    } catch (_) {
+      if (mounted) _showError(S.of(context).relActionError);
+    }
+  }
+
   Future<void> _blockAuthor() async {
     final author = _post.author;
     final s = S.of(context);
@@ -1372,13 +1386,13 @@ class _PostCardState extends ConsumerState<PostCard>
     );
     if (confirmed != true || !mounted) return;
     try {
-      await ref
-          .read(socialActionsServiceProvider)
-          .blockUser(author.username.isNotEmpty ? author.username : author.id);
+      // Esconde a pessoa em todo o app na hora e recarrega os feeds.
+      await ref.read(hiddenUsersProvider.notifier).block(
+            slug: author.username.isNotEmpty ? author.username : author.id,
+            userId: author.id,
+          );
       if (!mounted) return;
       _showError(S.of(context).feedBlocked(author.username));
-      ref.read(feedViewModelProvider.notifier).refresh();
-      ref.read(followingFeedViewModelProvider.notifier).refresh();
     } catch (_) {
       if (mounted) _showError(S.of(context).feedBlockError);
     }
@@ -1738,6 +1752,7 @@ class _PostOptionsSheet extends StatelessWidget {
     required this.onShareStory,
     required this.onUnfollow,
     required this.onBlock,
+    required this.onMute,
     required this.onReport,
     required this.onDelete,
   });
@@ -1747,6 +1762,7 @@ class _PostOptionsSheet extends StatelessWidget {
   final VoidCallback onShareStory;
   final VoidCallback onUnfollow;
   final VoidCallback onBlock;
+  final VoidCallback onMute;
   final VoidCallback onReport;
   final VoidCallback onDelete;
 
@@ -1797,6 +1813,11 @@ class _PostOptionsSheet extends StatelessWidget {
                 onTap: onDelete,
               )
             else ...[
+              _SheetTile(
+                icon: LucideIcons.eyeOff,
+                label: s.relHidePosts,
+                onTap: onMute,
+              ),
               _SheetTile(
                 icon: LucideIcons.ban,
                 label: s.feedBlockUserTitle,

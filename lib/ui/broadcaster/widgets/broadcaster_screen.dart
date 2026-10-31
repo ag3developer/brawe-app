@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:io' show Platform;
 import 'dart:convert';
 
@@ -99,6 +100,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   // Pausa ("Já voltamos"): prazo para retomar antes do encerramento.
   DateTime? _pausedUntil;
   Timer? _pauseTicker;
+
+  /// Depois de retomar: "Voltando ao ar…" enquanto o vídeo chega aos
+  /// espectadores (~12-20s de latência do Mux) e, em seguida, "Você está ao
+  /// vivo" por alguns segundos — antes o criador não sabia se tinha voltado.
+  _ResumeFeedback _resumeFeedback = _ResumeFeedback.none;
+  Timer? _resumeFeedbackTimer;
 
   /// Encerramento em andamento (trava botões e re-entrada).
   bool _isClosing = false;
@@ -667,10 +674,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           });
           _startHeartbeat();
           _startLiveElapsedTicker();
-          AppSnackBar.showSuccess(
-            context,
-            S.of(context).broadcasterLiveResumed,
-          );
+          _showResumeFeedback();
         }
       } else {
         if (!_isStreaming) return;
@@ -686,10 +690,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           debugPrint('Pause: stopVideoStreaming falhou: $e');
         }
         if (mounted) {
+          _resumeFeedbackTimer?.cancel();
           setState(() {
             _isPaused = true;
             _isStreaming = false;
             _pausedUntil = DateTime.now().add(_maxPause);
+            _resumeFeedback = _ResumeFeedback.none;
           });
           _stopLiveElapsedTicker();
           _startPauseTicker();
@@ -706,6 +712,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } finally {
       if (mounted) setState(() => _isTogglingPause = false);
     }
+  }
+
+  void _showResumeFeedback() {
+    _resumeFeedbackTimer?.cancel();
+    setState(() => _resumeFeedback = _ResumeFeedback.resuming);
+    _resumeFeedbackTimer = Timer(const Duration(seconds: 15), () {
+      if (!mounted) return;
+      setState(() => _resumeFeedback = _ResumeFeedback.live);
+      _resumeFeedbackTimer = Timer(const Duration(seconds: 4), () {
+        if (mounted) setState(() => _resumeFeedback = _ResumeFeedback.none);
+      });
+    });
   }
 
   /// Próxima câmera ao alternar: frontal ⇄ traseira PRINCIPAL.
@@ -1441,6 +1459,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   @override
   void dispose() {
     _unsubscribeFromBattleEvents();
+    _resumeFeedbackTimer?.cancel();
     _pauseTicker?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
@@ -1639,6 +1658,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     // Mantém a fila de animações viva (o overlay lê o mesmo provider).
     ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
+    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
 
     ref.listen<LiveRoomCommentsState>(
       liveRoomCommentsViewModelProvider(widget.room.id),
@@ -1807,13 +1827,28 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
               ),
 
               // ===== Painel de pausa (só o criador vê) =====
+              // No terço de cima: o chat ocupa a metade de baixo da tela.
               if (_isPaused && _pausedUntil != null)
-                Center(
-                  child: _PausedPanel(
-                    remaining: _pausedUntil!.difference(DateTime.now()),
-                    isBusy: _isTogglingPause,
-                    onResume: _togglePause,
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: MediaQuery.paddingOf(context).top + 96,
+                  child: Center(
+                    child: _PausedPanel(
+                      remaining: _pausedUntil!.difference(DateTime.now()),
+                      isBusy: _isTogglingPause,
+                      onResume: _togglePause,
+                    ),
                   ),
+                ),
+
+              // ===== Retomou: "Voltando ao ar…" → "Você está ao vivo" =====
+              if (!_isPaused && _resumeFeedback != _ResumeFeedback.none)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: MediaQuery.paddingOf(context).top + 96,
+                  child: Center(child: _ResumeFeedbackPill(state: _resumeFeedback)),
                 ),
 
               // ===== Dock inferior: convite pendente + chat + input + ações =====
@@ -1845,8 +1880,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
                       ),
                       child: ChatTicker(
-                        comments: commentsState.comments,
-                        gifts: commentsState.chatGifts,
+                        // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                        comments: commentsState.comments
+                            .where((c) => !hidden.isBlocked(c.userId))
+                            .toList(),
+                        gifts: commentsState.chatGifts
+                            .where((g) => !hidden.isBlocked(g.senderId))
+                            .toList(),
                         hostUserId: _room.streamerId,
                         myUserId: _room.streamerId,
                         myUsername: commentsState.myUsername,
@@ -2254,6 +2294,9 @@ class _CreatorChatInput extends StatelessWidget {
 }
 
 /// Painel central exibido ao criador enquanto a live está pausada.
+enum _ResumeFeedback { none, resuming, live }
+
+/// Painel de pausa do criador — compacto, no alto da tela.
 class _PausedPanel extends StatelessWidget {
   const _PausedPanel({
     required this.remaining,
@@ -2267,82 +2310,120 @@ class _PausedPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final secs = remaining.inSeconds.clamp(0, 3600);
-    final mm = (secs ~/ 60).toString();
-    final ss = (secs % 60).toString().padLeft(2, '0');
+    final time = '${secs ~/ 60}:${(secs % 60).toString().padLeft(2, '0')}';
     final urgent = secs <= 60;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 32),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      width: 300,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(22),
+        color: const Color(0xE6070B1A),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.pause_circle_filled_rounded,
-            color: Colors.orange,
-            size: 44,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Live pausada',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.pause_circle_filled_rounded, color: AppColors.braweOrange, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                s.broadcasterPausedTitle,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
-            'Câmera e microfone desligados. Seus espectadores estão vendo '
-            'a tela "Já voltamos!".',
+            s.broadcasterPausedHint,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 13,
-            ),
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 12),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
-            'Retome em $mm:$ss',
+            s.broadcasterResumeIn(time),
             style: TextStyle(
               color: urgent ? const Color(0xFFFF6B6B) : Colors.white,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 44,
             child: ElevatedButton.icon(
               onPressed: isBusy ? null : onResume,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF22C55E),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
               icon: isBusy
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.play_arrow_rounded),
-              label: const Text(
-                'Retomar live',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
+              label: Text(s.broadcasterResumeButton, style: const TextStyle(fontWeight: FontWeight.w800)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Retorno da pausa: "Voltando ao ar…" e depois "Você está ao vivo".
+class _ResumeFeedbackPill extends StatelessWidget {
+  const _ResumeFeedbackPill({required this.state});
+
+  final _ResumeFeedback state;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final live = state == _ResumeFeedback.live;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      constraints: const BoxConstraints(maxWidth: 300),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: live ? const Color(0xF022C55E) : const Color(0xE6070B1A),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: live ? 0.3 : 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          live
+              ? const Icon(Icons.sensors_rounded, color: Colors.white, size: 22)
+              : const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  live ? s.broadcasterBackLive : s.broadcasterResumingTitle,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                ),
+                if (!live)
+                  Text(
+                    s.broadcasterResumingHint,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                  ),
+              ],
             ),
           ),
         ],

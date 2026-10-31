@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -244,7 +245,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
     if (confirmed != true || !mounted) return;
     try {
-      await ref.read(chatRepositoryProvider).blockUser(participantId);
+      await ref
+          .read(hiddenUsersProvider.notifier)
+          .block(slug: participantId, userId: participantId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

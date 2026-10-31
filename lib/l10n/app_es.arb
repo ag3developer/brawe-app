@@ -642,7 +642,11 @@
   "shareToFollowers": "Enviar a seguidores",
   "feedRepostBanner": "{name} reposteó",
   "@feedRepostBanner": {
-    "placeholders": { "name": { "type": "String" } }
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
   },
   "feedQuotePost": "Citar publicación",
   "feedCopyLink": "Copiar enlace",
@@ -815,7 +819,13 @@
   "profileSellerVerified": "Socio verificado",
   "profileSellerSubtitle": "Selección de productos con curaduría",
   "shopVitrinePartnerItemsCount": "{count, plural, =1{1 artículo} other{{count} artículos}}",
-  "@shopVitrinePartnerItemsCount": { "placeholders": { "count": { "type": "int" } } },
+  "@shopVitrinePartnerItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profileNoTextPosts": "Aún no hay publicaciones de texto",
   "profilePostsLoadError": "Error al cargar publicaciones",
   "profileNoLives": "Aún no hay directos",
@@ -1086,13 +1096,17 @@
   "giftersInLives": "{n, plural, =1{1 directo} other{{n} directos}}",
   "@giftersInLives": {
     "placeholders": {
-      "n": { "type": "int" }
+      "n": {
+        "type": "int"
+      }
     }
   },
   "giftersGiftsCount": "{n, plural, =1{1 regalo} other{{n} regalos}}",
   "@giftersGiftsCount": {
     "placeholders": {
-      "n": { "type": "int" }
+      "n": {
+        "type": "int"
+      }
     }
   },
   "giftersActionThank": "Agradecer",
@@ -1142,7 +1156,13 @@
   "walletTxFrom": "De",
   "walletIapInfo": "Compra procesada por la tienda oficial (Google Play / App Store). Las monedas se acreditan automáticamente tras el pago. Las monedas son artículos virtuales no canjeables usados solo para enviar regalos en directos.",
   "walletIapBuyFor": "Comprar por {price}",
-  "@walletIapBuyFor": { "placeholders": { "price": { "type": "String" } } },
+  "@walletIapBuyFor": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "walletIapProcessing": "Procesando…",
   "walletIapUnavailable": "No disponible",
   "walletIapPackageUnavailable": "Paquete no disponible en la tienda. Inténtalo pronto.",
@@ -1151,7 +1171,13 @@
   "walletIapPaymentPending": "Pago en proceso. Recibirás las monedas cuando la tienda lo confirme.",
   "walletIapPaymentError": "No se pudo procesar la compra. Inténtalo de nuevo.",
   "walletIapSuccess": "¡Monedas acreditadas con éxito! (+{coins})",
-  "@walletIapSuccess": { "placeholders": { "coins": { "type": "String" } } },
+  "@walletIapSuccess": {
+    "placeholders": {
+      "coins": {
+        "type": "String"
+      }
+    }
+  },
   "earningsTitle": "Recompensas de Creador",
   "earningsCurrency": "Moneda de visualización",
   "earningsCoinsBalance": "Monedas disponibles",
@@ -1181,7 +1207,13 @@
   "postLikersEmpty": "Aún nadie le ha dado me gusta.",
   "postLikersLoadError": "No se pudieron cargar los me gusta.",
   "postLikersTotal": "{count, plural, =0{Sin me gusta} =1{1 me gusta} other{{count} me gusta}}",
-  "@postLikersTotal": { "placeholders": { "count": { "type": "int" } } },
+  "@postLikersTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "reactionLike": "Me gusta",
   "reactionLove": "Me encanta",
   "reactionFire": "Fuego",
@@ -1613,15 +1645,27 @@
   "sharedPostReactionApplied": "Reacción enviada ✨",
   "sharedPostMinutesAgo": "hace {count} min",
   "@sharedPostMinutesAgo": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "sharedPostHoursAgo": "hace {count} h",
   "@sharedPostHoursAgo": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "sharedPostDaysAgo": "hace {count} d",
   "@sharedPostDaysAgo": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "topUpTitle": "Recargar coins",
   "topUpSubtitle": "Compra directo por la tienda de tu celular",
@@ -1630,7 +1674,6 @@
   "topUpStoreDisclaimer": "Pago seguro vía Play Store / App Store",
   "earningsNoPurchasesHint": "Cuando compres coins por App Store o Google Play, aparecerán aquí.",
   "earningsNoGiftsHint": "Los diamantes del Creator Program vienen de los regalos que recibes en lives.",
-
   "creatorProgramTitle": "Brawe Creator Network",
   "creatorProgramSubtitle": "Crece tu audiencia. Construye tu comunidad. Forma parte de Brawe.",
   "creatorProgramDescription": "La Red de Creadores Brawe es el programa oficial para creadores que quieren crecer, ganar visibilidad y construir una comunidad dentro de Brawe.",
@@ -1644,8 +1687,13 @@
   "creatorBenefit4": "Crece con lives y contenido",
   "creatorBenefit5": "Únete a una comunidad premium",
   "creatorTotalCreators": "{n, plural, =1{1 creador en la red} other{{n} creadores en la red}}",
-  "@creatorTotalCreators": {"placeholders": {"n": {"type": "int"}}},
-
+  "@creatorTotalCreators": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorLevelsTitle": "Niveles de Creador",
   "creatorLevelsSubtitle": "Cada nivel representa un momento de tu trayectoria.",
   "creatorTierRisingTitle": "Rising Creator",
@@ -1659,7 +1707,6 @@
   "creatorTierFoundingTitle": "Founding Creator",
   "creatorTierFoundingBody": "Para creadores seleccionados que ayudan a moldear el futuro de Brawe.",
   "creatorTierApplyCta": "Inscribirme como creador",
-
   "creatorFormTitle": "Inscríbete en la Red",
   "creatorFormSubtitle": "Cuéntanos más sobre tu trayectoria.",
   "creatorFormDescription": "Revisamos cada inscripción con cuidado para entender tu contenido, objetivos y potencial dentro de Brawe.",
@@ -1699,7 +1746,11 @@
   "creatorFormTermsClose": "Cerrar",
   "creatorFormTermsVersion": "Versión {version}",
   "@creatorFormTermsVersion": {
-    "placeholders": { "version": { "type": "String" } }
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
   },
   "creatorFormValidationRequired": "Campo obligatorio",
   "creatorFormValidationEmail": "Correo inválido",
@@ -1708,7 +1759,6 @@
   "creatorFormSuccess": "Inscripción enviada con éxito.",
   "creatorFormError": "No pudimos enviar tu inscripción. Inténtalo de nuevo.",
   "creatorFormAlreadyExists": "Ya tienes una inscripción activa.",
-
   "creatorSubmittedTitle": "Inscripción enviada",
   "creatorSubmittedBody": "Gracias por inscribirte en Brawe Creator Network. Nuestro equipo revisará tu perfil y te avisaremos cuando haya novedades.",
   "creatorSubmittedStep1": "Tu inscripción está pendiente de revisión.",
@@ -1716,7 +1766,6 @@
   "creatorSubmittedStep3": "Puedes consultar el estado cuando quieras.",
   "creatorSubmittedTrack": "Ver estado",
   "creatorSubmittedHome": "Volver al Inicio",
-
   "creatorStatusPendingTitle": "Inscripción recibida",
   "creatorStatusPendingBody": "Tu inscripción ha sido recibida y está esperando revisión.",
   "creatorStatusAnalysisTitle": "En análisis",
@@ -1736,14 +1785,21 @@
   "creatorStatusUpdateApplication": "Actualizar inscripción",
   "creatorStatusContinue": "Continuar",
   "creatorStatusStartOnboarding": "Empezar onboarding",
-
   "creatorOnboardingTitle": "Bienvenido a Brawe Creator Network",
   "creatorOnboardingSubtitle": "Vamos a configurar tu presencia y ayudar a que descubran tu contenido.",
   "creatorOnboardingStart": "Comenzar setup",
   "creatorOnboardingSkip": "Saltar por ahora",
   "creatorOnboardingProgress": "{done} de {total} completados",
-  "@creatorOnboardingProgress": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
-
+  "@creatorOnboardingProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "creatorProfileTitle": "Perfil de Creador",
   "creatorProfileSubtitle": "Personaliza cómo te ven como creador.",
   "creatorProfileFieldDisplayName": "Nombre público",
@@ -1755,14 +1811,12 @@
   "creatorProfilePreview": "Previsualizar perfil",
   "creatorProfileSaved": "Perfil de creador actualizado.",
   "creatorProfileSaveError": "No pudimos actualizar el perfil de creador.",
-
   "creatorBadgeScreenTitle": "Tu Badge de Creador",
   "creatorBadgeScreenSubtitle": "Tu badge ayuda a las personas a reconocer tu rol en Brawe Creator Network.",
   "creatorBadgeLocked": "Bloqueado",
   "creatorBadgeUnlocked": "Desbloqueado",
   "creatorBadgeViewBenefits": "Ver beneficios",
   "creatorBadgeBack": "Volver",
-
   "creatorDashboardTitle": "Panel del Creador",
   "creatorDashboardSubtitle": "Sigue tu crecimiento y gestiona tu presencia.",
   "creatorDashboardCardViews": "Vistas de perfil",
@@ -1775,7 +1829,6 @@
   "creatorDashboardQuickEditProfile": "Editar perfil",
   "creatorDashboardQuickViewBadge": "Ver badge",
   "creatorDashboardQuickInsights": "Ver insights",
-
   "adminCreatorAppsTitle": "Inscripciones de Creadores",
   "adminCreatorAppsFilterAll": "Todos",
   "adminCreatorAppsFilterPending": "Pendientes",
@@ -1790,7 +1843,6 @@
   "adminCreatorAppsSearchHint": "Buscar nombre, username o correo",
   "adminCreatorAppsEmpty": "No se encontraron inscripciones.",
   "adminCreatorAppsLoadError": "Error al cargar inscripciones.",
-
   "adminCreatorAppDetailTitle": "Análisis de Inscripción",
   "adminCreatorSectionInfo": "Información del creador",
   "adminCreatorSectionSocial": "Redes sociales",
@@ -1811,7 +1863,6 @@
   "adminCreatorConfirmRequestInfo": "Dile al creador qué información falta.",
   "adminCreatorReviewSuccess": "Decisión registrada.",
   "adminCreatorReviewError": "No se pudo registrar la decisión.",
-
   "adminCreatorsTitle": "Gestión de Creadores",
   "adminCreatorsFilterAll": "Todos los creadores",
   "adminCreatorsFilterRising": "Rising",
@@ -1841,12 +1892,10 @@
   "commonYes": "Sí",
   "commonNo": "No",
   "commonRetry": "Reintentar",
-
   "editProfileAccountTypeSection": "TIPO DE CUENTA",
   "editProfileAccountTypeCreator": "Creador",
   "editProfileAccountTypeMusician": "Músico",
   "editProfileAccountTypeBusiness": "Empresa",
-
   "editProfileMusicianBannerHint": "Crea tu perfil de artista en Brawe Sounds y aparece en el catálogo.",
   "editProfileMusicianArtistName": "Nombre artístico",
   "editProfileMusicianArtistNameHint": "Cómo apareces en Brawe Sounds",
@@ -1855,7 +1904,6 @@
   "editProfileMusicianSpotify": "Spotify",
   "editProfileMusicianAppleMusic": "Apple Music",
   "editProfileMusicianGenres": "GÉNEROS",
-
   "soundsGenreFunk": "Funk",
   "soundsGenreSertanejo": "Sertanejo",
   "soundsGenrePagode": "Pagode",
@@ -1866,13 +1914,15 @@
   "soundsGenreGospel": "Gospel",
   "soundsGenreRock": "Rock",
   "soundsGenreMpb": "MPB",
-
   "soundsArtistTracks": "{count,plural, =1{1 pista} other{{count} pistas}}",
   "@soundsArtistTracks": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "soundsArtistPlays": "{count} reproducciones",
-
   "soundsTitle": "Brawe Sounds",
   "soundsSubtitle": "Descubre pistas increíbles",
   "soundsTabTrending": "Tendencias",
@@ -1883,12 +1933,20 @@
   "soundsEmptyCatalog": "No se encontraron canciones",
   "soundsEmptySearch": "Sin resultados para \"{query}\"",
   "@soundsEmptySearch": {
-    "placeholders": { "query": { "type": "String" } }
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
   },
   "soundsLoadMore": "Cargar más",
   "soundsUsedTimes": "{count,plural, =1{usado 1 vez} other{usado {count} veces}}",
   "@soundsUsedTimes": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "soundsSaved": "Guardado",
   "soundsSave": "Guardar",
@@ -1900,10 +1958,13 @@
   "createSoundsSubtitle": "Agrega una canción original a tu publicación",
   "postSoundLabel": "Sonido: {title}",
   "@postSoundLabel": {
-    "placeholders": { "title": { "type": "String" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
   },
   "postSoundRemove": "Quitar sonido",
-
   "contentSoundOriginalAudio": "Audio original",
   "contentSoundUseThis": "Usar este sonido",
   "contentSoundUnavailable": "Sonido no disponible",
@@ -1912,27 +1973,37 @@
   "contentSoundByArtist": "{title} · {artist}",
   "@contentSoundByArtist": {
     "placeholders": {
-      "title": { "type": "String" },
-      "artist": { "type": "String" }
+      "title": {
+        "type": "String"
+      },
+      "artist": {
+        "type": "String"
+      }
     }
   },
-
   "soundTrimTitle": "Cortar música",
   "soundTrimSave": "Listo",
   "soundTrimCancel": "Cancelar",
   "soundTrimHint": "Arrastra las asas para elegir el fragmento de la música",
   "soundTrimMaxDuration": "Máximo {seconds}s para este contenido",
   "@soundTrimMaxDuration": {
-    "placeholders": { "seconds": { "type": "int" } }
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
   },
   "soundTrimSelectedDuration": "{seconds}s seleccionados",
   "@soundTrimSelectedDuration": {
-    "placeholders": { "seconds": { "type": "int" } }
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
   },
   "soundTrimError": "No se pudo procesar el fragmento seleccionado.",
   "soundVolumeLabel": "Volumen de la música",
   "originalAudioVolumeLabel": "Volumen del audio original",
-
   "analyticsViewersTitle": "Audiencia",
   "analyticsViewersTotalViewers": "Total de viewers",
   "analyticsViewersAvgPerLive": "Promedio/live",
@@ -1942,7 +2013,6 @@
   "analyticsViewersBestDays": "Mejores días",
   "analyticsViewersNoData": "Sin datos",
   "analyticsViewersUnit": " viewers",
-
   "analyticsFollowersTitle": "Seguidores",
   "analyticsFollowersCount": "Seguidores",
   "analyticsFollowersFollowing": "Siguiendo",
@@ -1961,7 +2031,6 @@
   "analyticsFollowersTip2Subtitle": "Responder comentarios aumenta la retención",
   "analyticsFollowersTip3Title": "Comparte tu contenido",
   "analyticsFollowersTip3Subtitle": "Stories y posts aumentan el alcance",
-
   "analyticsLivesTitle": "Historial de Lives",
   "analyticsLivesErrorLoad": "Error al cargar lives",
   "analyticsLivesRetry": "Intentar de nuevo",
@@ -1969,7 +2038,13 @@
   "analyticsLivesKpiAvgViewers": "Viewers prom.",
   "analyticsLivesKpiGifts": "Gifts (USDT)",
   "analyticsLivesDuration": "{min} min",
-  "@analyticsLivesDuration": { "placeholders": { "min": { "type": "String" } } },
+  "@analyticsLivesDuration": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsLivesNoTitle": "Live sin título",
   "analyticsLivesMetricViewers": "viewers",
   "analyticsLivesMetricPeak": "pico",
@@ -1980,7 +2055,6 @@
   "analyticsLivesEmptyTitle": "Aún no hay lives",
   "analyticsLivesEmptySubtitle": "Haz tu primer live y ve tus métricas aquí",
   "analyticsLivesMonthsShort": "Ene,Feb,Mar,Abr,May,Jun,Jul,Ago,Sep,Oct,Nov,Dic",
-
   "analyticsReachTitle": "Alcance y Monetización",
   "analyticsReachKpiGifts": "Gifts recibidos",
   "analyticsReachKpiEarnings": "Ganancias (USDT)",
@@ -1993,15 +2067,25 @@
   "analyticsReachTotalEarned": "Total ganado",
   "analyticsReachTotalGifts": "Gifts totales",
   "analyticsReachEarningsPerLive": "Ganancia/live",
-
   "analyticsDashboardAvgViewers": "prom./live",
   "analyticsDashboardSeeGrowth": "Ver crecimiento",
   "analyticsDashboardGifts": "gifts",
   "analyticsDashboardMinAvg": "{min} min prom.",
-  "@analyticsDashboardMinAvg": { "placeholders": { "min": { "type": "String" } } },
-
+  "@analyticsDashboardMinAvg": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      }
+    }
+  },
   "shopVitrineTitle": "Vitrina de {name}",
-  "@shopVitrineTitle": { "placeholders": { "name": { "type": "String" } } },
+  "@shopVitrineTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "shopVitrineSearchTooltip": "Buscar en la vitrina",
   "shopVitrineFilterTooltip": "Ordenar productos",
   "shopVitrineViewModeTooltip": "Cambiar vista",
@@ -2012,9 +2096,14 @@
   "shopVitrineSortPriceAsc": "Precio: menor a mayor",
   "shopVitrineSortPriceDesc": "Precio: mayor a menor",
   "shopVitrineSoldOnline": "{count} vendidos en línea",
-  "@shopVitrineSoldOnline": { "placeholders": { "count": { "type": "String" } } },
+  "@shopVitrineSoldOnline": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "shopVitrineFreeShipping": "Envío gratis",
-
   "shopProductPageTitle": "Producto",
   "shopProductPrice": "Precio",
   "shopProductOriginalPrice": "Precio original",
@@ -2054,7 +2143,6 @@
   "shopProductTabRecommendations": "Recomendaciones",
   "shopProductReviewsComingSoon": "Reseñas de productos próximamente.",
   "shopProductRecommendationsComingSoon": "Recomendaciones de productos relacionados próximamente.",
-
   "shopCartTitle": "Carrito",
   "shopCartClear": "Vaciar carrito",
   "shopCartClearConfirmTitle": "¿Vaciar carrito?",
@@ -2073,7 +2161,6 @@
   "shopCartUpdateError": "No se pudo actualizar el artículo.",
   "shopCartRemoveError": "No se pudo eliminar el artículo.",
   "shopCartClearError": "No se pudo vaciar el carrito.",
-
   "shopCheckoutTitle": "Finalizar compra",
   "shopCheckoutAddressSection": "Dirección de envío",
   "shopCheckoutAddressEmpty": "Aún no tienes direcciones guardadas.",
@@ -2120,16 +2207,27 @@
   "shopCheckoutFreeShipping": "Gratis",
   "shopCheckoutAddNote": "Agregar nota",
   "shopCheckoutTotalItems": "Total ({count} {count, plural, =1{artículo} other{artículos}})",
-  "@shopCheckoutTotalItems": { "placeholders": { "count": { "type": "int" } } },
+  "@shopCheckoutTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "shopCheckoutTermsPrefix": "Al realizar el pedido, aceptas los ",
   "shopCheckoutTermsLink": "Términos de Uso",
   "shopCheckoutTermsAnd": " y la ",
   "shopCheckoutPrivacyLink": "Política de Privacidad",
   "shopCheckoutTermsSuffix": " de Brawe.",
-
   "shopPaymentTitle": "Pago",
   "shopPaymentOrderNumber": "Pedido #{number}",
-  "@shopPaymentOrderNumber": { "placeholders": { "number": { "type": "String" } } },
+  "@shopPaymentOrderNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
   "shopPaymentTotal": "Total",
   "shopPaymentPixTitle": "Pagar con PIX",
   "shopPaymentPixInstructions": "Escanea el código QR en la app de tu banco para completar el pago.",
@@ -2143,7 +2241,6 @@
   "shopPaymentStatusPaid": "Pago confirmado ✓",
   "shopPaymentStatusFailed": "El pago falló",
   "shopPaymentError": "No se pudo verificar el estado del pago.",
-
   "shopStoreProductsSection": "Productos",
   "shopStoreEmptyProducts": "Esta tienda todavía no tiene productos.",
   "shopStoreProductsError": "No se pudieron cargar los productos.",
@@ -2152,14 +2249,25 @@
   "shopStorePremiumBadge": "Premium",
   "shopStoreBravePassBadge": "Brawe Pass",
   "shopStoreRatingCount": "{count} reseñas",
-  "@shopStoreRatingCount": { "placeholders": { "count": { "type": "String" } } },
+  "@shopStoreRatingCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "shopStoreReadMore": "Ver más",
   "shopStoreReadLess": "Ver menos",
   "shopStoreChatCta": "Hablar con la tienda",
   "shopStoreChatUnavailable": "Esta tienda todavía no puede recibir mensajes.",
   "shopStoreChatError": "No se pudo abrir el chat: {error}",
-  "@shopStoreChatError": { "placeholders": { "error": { "type": "String" } } },
-
+  "@shopStoreChatError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "profileTooltipFindFriends": "Encontrar amigos",
   "findFriendsTitle": "Encontrar amigos",
   "findFriendsMyQrCode": "Mi código QR",
@@ -2177,7 +2285,13 @@
   "qrScannerLoginConfirmTitle": "Confirmar inicio de sesión",
   "qrScannerLoginConfirmBody": "¿Aprobar inicio de sesión en otro dispositivo con esta cuenta?",
   "qrScannerLoginError": "No se pudo aprobar el inicio de sesión: {error}",
-  "@qrScannerLoginError": { "placeholders": { "error": { "type": "String" } } },
+  "@qrScannerLoginError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "actionApprove": "Aprobar",
   "questsRewardCollected": "¡Recompensa recolectada!",
   "questsXpReceived": "{xp} XP recibidos",
@@ -2239,5 +2353,42 @@
   "feedViewsCount": "{count, plural, =1{1 visualización} other{{formatted} visualizaciones}}",
   "feedRepostUndone": "Repost eliminado",
   "profileTabReposts": "Reposts",
-  "profileNoReposts": "Aún no hay reposts"
+  "profileNoReposts": "Aún no hay reposts",
+  "liveEndedTitle": "Live finalizado",
+  "liveEndedByStreamer": "{name} finalizó el live.",
+  "liveEndedAlready": "Este live ya fue finalizado por {name}.",
+  "liveEndedLasted": "Duró {duration}",
+  "liveEndedFollow": "Seguir",
+  "liveEndedFollowing": "Siguiendo",
+  "liveEndedFollowHint": "Sigue para saber cuándo {name} vuelva a estar en vivo.",
+  "liveEndedNextLive": "Próximo live",
+  "liveEndedWatchNow": "Ver",
+  "liveEndedGoingIn": "Yendo al próximo live en {seconds}s",
+  "liveEndedStay": "Quedarme aquí",
+  "liveEndedNoOther": "No hay otro live ahora.",
+  "liveEndedBackHome": "Volver al inicio",
+  "liveEndedWatching": "{count} viendo",
+  "livePausedTitle": "Ya vuelvo",
+  "livePausedBy": "{name} pausó el live",
+  "livePausedBackIn": "Vuelve en máximo {time}",
+  "livePausedResuming": "Volviendo…",
+  "livePausedResumingHint": "La transmisión vuelve en un momento",
+  "broadcasterPausedTitle": "Live en pausa",
+  "broadcasterPausedHint": "Cámara y micrófono apagados. Tus espectadores ven el aviso de pausa.",
+  "broadcasterResumeIn": "Retoma en {time}",
+  "broadcasterResumeButton": "Retomar live",
+  "broadcasterResumingTitle": "Volviendo al aire…",
+  "broadcasterResumingHint": "Tus espectadores te verán de nuevo en unos segundos.",
+  "broadcasterBackLive": "Estás en vivo",
+  "relHidePosts": "Ocultar publicaciones",
+  "relShowPosts": "Mostrar publicaciones",
+  "relHiddenSnack": "Ya no verás las publicaciones de {name}.",
+  "relShownSnack": "Las publicaciones de {name} vuelven a aparecer.",
+  "relActionError": "No se pudo completar. Inténtalo de nuevo.",
+  "profileBlockedState": "Bloqueaste a este usuario",
+  "profileBlockedStateHint": "Desbloquéalo para ver su perfil y publicaciones.",
+  "profileUnblock": "Desbloquear",
+  "profileUnblocked": "Usuario desbloqueado.",
+  "profileUnavailable": "Perfil no disponible",
+  "profileUnavailableHint": "Este contenido no está disponible para ti."
 }

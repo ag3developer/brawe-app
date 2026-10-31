@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:convert';
 import 'dart:math' show max;
 import 'package:flutter/material.dart';
@@ -30,6 +31,7 @@ import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
 import 'viewer_battle_hud.dart';
+import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -107,6 +109,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   /// Pausa do criador (overlay "Já voltamos" / "Voltando…").
   _StreamerPauseState _pauseState = _StreamerPauseState.none;
+
+  /// Limite da pausa (paused_at + max_pause) para o "Volta em até m:ss".
+  DateTime? _pauseDeadline;
+  static const Duration _defaultMaxPause = Duration(minutes: 5);
+
+  /// Live encerrada (aviso `live_ended` ou sala já encerrada ao abrir).
+  bool _ended = false;
+  bool _endedLate = false;
+  int? _endedDurationSeconds;
   Timer? _resumeOverlayTimer;
 
   /// Último modo aplicado ao player solo (null = ainda não aplicado).
@@ -142,13 +153,27 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         widget.room.battleId!.isNotEmpty) {
       _activeBattleId = widget.room.battleId;
     }
-    _initializePlayer();
+    // Notificação antiga / link de uma live que já acabou: mostra direto
+    // "Live encerrada" em vez de um player vazio.
+    if (widget.room.isPaused && widget.room.status != 'ended') {
+      _pauseState = _StreamerPauseState.paused;
+      final at = widget.room.pausedAt;
+      _pauseDeadline = at != null ? at.add(_defaultMaxPause) : null;
+    }
+    if (widget.room.status == 'ended') {
+      _ended = true;
+      _endedLate = true;
+    } else {
+      _initializePlayer();
+    }
     // Refresh follow state on entry (avoids stale cache from previous session)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.invalidate(followViewModelProvider(widget.room.streamerId));
+      if (_ended) return;
       _subscribeToBattleEvents();
       _subscribeToReactions();
+      _confirmStillLive();
     });
   }
 
@@ -201,6 +226,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
+    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
     // 🔁 Re-anexar handler em reconexões (idêntico ao broadcaster).
     socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
@@ -214,10 +240,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
     socket.off(AppConstants.eventLivePaused, _onLivePaused);
     socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
+    socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
+    socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    // A live pode ter acabado durante a queda de conexão.
+    _confirmStillLive();
     // Após reconectar, valida via REST se uma batalha começou durante
     // a queda de conexão — com debounce de 5s para evitar spam em
     // reconexões rápidas (ex: restart do servidor durante deploy).
@@ -231,6 +261,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
       socket.off(AppConstants.eventLivePaused, _onLivePaused);
       socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
+      socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
       socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
   }
@@ -327,7 +358,42 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (data == null || data['room_id'] != widget.room.id) return;
     _resumeOverlayTimer?.cancel();
     _dismissKeyboard();
-    setState(() => _pauseState = _StreamerPauseState.paused);
+    final pausedAt = DateTime.tryParse(data['paused_at']?.toString() ?? '')?.toLocal();
+    final maxSecs = (data['max_pause_seconds'] as num?)?.toInt();
+    setState(() {
+      _pauseState = _StreamerPauseState.paused;
+      _pauseDeadline = (pausedAt ?? DateTime.now())
+          .add(maxSecs != null ? Duration(seconds: maxSecs) : _defaultMaxPause);
+    });
+  }
+
+  void _onLiveEnded(dynamic raw) {
+    if (!mounted || _ended) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['room_id'] != widget.room.id) return;
+    _showEnded(durationSeconds: (data['duration_seconds'] as num?)?.toInt());
+  }
+
+  /// Confere no servidor se a sala ainda está no ar (entrada pelo feed com
+  /// dado antigo, ou reconexão depois de a live acabar).
+  Future<void> _confirmStillLive() async {
+    try {
+      final fresh = await _liveRepo.getRoom(widget.room.id);
+      if (!mounted || _ended) return;
+      if (fresh != null && fresh.status == 'ended') _showEnded(late: true);
+    } catch (_) {}
+  }
+
+  void _showEnded({bool late = false, int? durationSeconds}) {
+    _dismissKeyboard();
+    _resumeOverlayTimer?.cancel();
+    _controller?.pause();
+    setState(() {
+      _ended = true;
+      _endedLate = late;
+      _endedDurationSeconds = durationSeconds;
+      _pauseState = _StreamerPauseState.none;
+    });
   }
 
   void _onLiveResumed(dynamic raw) {
@@ -703,6 +769,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       },
     );
 
+    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1A),
       // ⌨️ O vídeo NUNCA redimensiona com o teclado (antes o body inteiro
@@ -721,6 +789,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               child: _StreamerPausedOverlay(
                 streamerName: widget.room.streamerName,
                 resuming: _pauseState == _StreamerPauseState.resuming,
+                deadline: _pauseDeadline,
               ),
             ),
 
@@ -776,8 +845,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             child: _ViewerChatDock(
               pinnedProduct: PinnedProductBar(roomId: widget.room.id),
               tickerBuilder: (maxHeight) => ChatTicker(
-                comments: commentsState.comments,
-                gifts: commentsState.chatGifts,
+                // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                comments: commentsState.comments
+                    .where((c) => !hidden.isBlocked(c.userId))
+                    .toList(),
+                gifts: commentsState.chatGifts
+                    .where((g) => !hidden.isBlocked(g.senderId))
+                    .toList(),
                 hostUserId: widget.room.streamerId,
                 myUserId: ref.watch(authStateProvider).value?.id,
                 myUsername: commentsState.myUsername,
@@ -819,6 +893,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                 onClose: () {
                   if (mounted) setState(() => _activeBattleId = null);
                 },
+              ),
+            ),
+
+          // ── 9. Live encerrada — cobre tudo (criador, seguir, próxima live) ──
+          if (_ended)
+            Positioned.fill(
+              child: LiveEndedView(
+                room: widget.room,
+                late: _endedLate,
+                durationSeconds: _endedDurationSeconds,
               ),
             ),
         ],
@@ -950,62 +1034,112 @@ enum _StreamerPauseState { none, paused, resuming }
 
 /// Aviso ao espectador quando o criador pausa a live — aparece na hora
 /// (via socket), antes mesmo do slate "Já voltamos" chegar pelo vídeo.
-class _StreamerPausedOverlay extends StatelessWidget {
+/// Aviso de pausa para quem assiste — minimalista e no terço de cima, para
+/// não brigar com o chat (que ocupa a metade de baixo). Mostra quanto falta
+/// para o limite da pausa; ao retomar, "Voltando…" até o vídeo chegar.
+class _StreamerPausedOverlay extends StatefulWidget {
   const _StreamerPausedOverlay({
     required this.streamerName,
     required this.resuming,
+    this.deadline,
   });
 
   final String streamerName;
   final bool resuming;
 
+  /// Fim do limite da pausa (paused_at + max_pause). Nulo = desconhecido.
+  final DateTime? deadline;
+
+  @override
+  State<_StreamerPausedOverlay> createState() => _StreamerPausedOverlayState();
+}
+
+class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && widget.deadline != null && !widget.resuming) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final name = streamerName.trim().isEmpty ? 'O criador' : streamerName;
-    return ColoredBox(
-      color: const Color(0xE60B0F1A),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              resuming
-                  ? const SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 3,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.coffee_rounded,
-                      color: Colors.white,
-                      size: 46,
-                    ),
-              const SizedBox(height: 16),
-              Text(
-                resuming ? 'Voltando…' : 'Já voltamos!',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
+    final s = S.of(context);
+    final name = widget.streamerName.trim().isEmpty ? 'Streamer' : widget.streamerName.trim();
+    String? left;
+    final deadline = widget.deadline;
+    if (deadline != null && !widget.resuming) {
+      final secs = deadline.difference(DateTime.now()).inSeconds.clamp(0, 3600);
+      left = '${secs ~/ 60}:${(secs % 60).toString().padLeft(2, '0')}';
+    }
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF0A1028), Color(0xFF070B1A), Color(0xFF05070F)],
+        ),
+      ),
+      child: Align(
+        alignment: const Alignment(0, -0.42),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.08),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
               ),
-              const SizedBox(height: 8),
-              Text(
-                resuming
-                    ? '$name retomou a live. O vídeo aparece em instantes.'
-                    : '$name pausou a live por alguns minutos. Fique por aqui!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.75),
-                  fontSize: 14,
+              child: widget.resuming
+                  ? const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                    )
+                  : const Icon(Icons.pause_rounded, color: Colors.white, size: 34),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.resuming ? s.livePausedResuming : s.livePausedTitle,
+              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.resuming ? s.livePausedResumingHint : s.livePausedBy(name),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFB5BFD6), fontSize: 14),
+            ),
+            if (left != null) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  s.livePausedBackIn(left),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ],
-          ),
+          ],
         ),
       ),
     );
