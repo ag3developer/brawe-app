@@ -229,9 +229,11 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     }
     final file = GiftEffectCache.instance.cachedFile(url);
     if (file == null) {
+      debugPrint('[GIFT-FX] VAP ainda não baixado — efeito padrão; baixando $url');
       GiftEffectCache.instance.fetch(url);
       return false;
     }
+    debugPrint('[GIFT-FX] tocando VAP ${file.path}');
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
@@ -308,6 +310,7 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
         final dedupKey = g.id;
         if (_shownVisual.contains(dedupKey)) continue;
         _rememberShown(dedupKey);
+        debugPrint('[GIFT-FX] overlay dispara ${g.giftName} (${displayType.name})');
 
         switch (displayType) {
           case GiftDisplayType.centerSmall:

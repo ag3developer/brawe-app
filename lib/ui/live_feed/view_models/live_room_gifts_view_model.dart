@@ -130,6 +130,11 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
   String _comboKey(LiveGift gift) => '${gift.senderId}::${gift.giftId}';
 
   void _handleIncoming(LiveGift gift) {
+    debugPrint(
+      '[GIFT-FX] fila recebeu ${gift.giftName} id=${gift.id} '
+      'display=${gift.resolvedDisplayType.name} anim=${gift.animationType} '
+      'url=${gift.animationUrl != null}',
+    );
     if (gift.id.isNotEmpty && !_seenIds.add(gift.id)) return; // duplicado
     if (_seenIds.length > _maxSeenIds) _seenIds.remove(_seenIds.first);
     final key = _comboKey(gift);
@@ -338,6 +343,7 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
   }
 
   void _startAnimating(String key) {
+    debugPrint('[GIFT-FX] fila: vez de animar $key');
     _currentlyAnimatingKey = key;
     state = state
         .map((g) => _comboKey(g) == key ? g.copyWith(isAnimating: true) : g)
