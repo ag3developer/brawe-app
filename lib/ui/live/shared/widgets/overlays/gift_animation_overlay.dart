@@ -14,6 +14,7 @@ import '../../../../../domain/models/live_gift.dart';
 import '../../../../../domain/models/gift_display_type.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import '../../layout/live_dock_metrics.dart';
 import '../level_chip.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -207,13 +208,16 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   Future<void> _prefetchEffects() async {
     try {
       final tiers = await ref.read(giftRepositoryProvider).getGiftCatalog();
+      // Os vídeos dos presentes mais caros primeiro (são os maiores e os que
+      // mais impressionam); depois Lottie e sons. Antes era a ordem do
+      // catálogo — o Lendário chegava antes do próprio vídeo e caía no ícone.
+      final gifts = [for (final t in tiers.reversed) ...t.gifts];
       final urls = <String?>[
-        for (final t in tiers)
-          for (final g in t.gifts) ...[
-            if (g.animationType == 'vap' || g.animationType == 'lottie')
-              g.animationUrl,
-            g.soundUrl,
-          ],
+        for (final g in gifts)
+          if (g.animationType == 'vap') g.animationUrl,
+        for (final g in gifts)
+          if (g.animationType == 'lottie') g.animationUrl,
+        for (final g in gifts) g.soundUrl,
       ];
       await GiftEffectCache.instance.prefetch(urls);
     } catch (e) {
@@ -224,23 +228,33 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   /// Vídeo VAP (transparente, com som) por cima da live. Só toca se o
   /// arquivo já estiver no aparelho; senão baixa pra próxima vez e o
   /// presente usa o efeito padrão.
-  bool _tryShowVap(LiveGift gift) {
+  Future<bool> _tryShowVap(LiveGift gift) async {
     final url = gift.animationUrl;
     if (gift.animationType?.toLowerCase() != 'vap' || url == null) {
       return false;
     }
-    final file = GiftEffectCache.instance.cachedFile(url);
+    var file = GiftEffectCache.instance.cachedFile(url);
     if (file == null) {
-      debugPrint('[GIFT-FX] VAP ainda não baixado — efeito padrão; baixando $url');
-      GiftEffectCache.instance.fetch(url);
-      return false;
+      // Ainda baixando: espera um pouco — o vídeo uns segundos depois vale
+      // mais que o ícone na hora. Se não chegar, efeito padrão (e o download
+      // segue para o próximo presente).
+      debugPrint('[GIFT-FX] VAP ainda não baixado — aguardando $url');
+      file = await GiftEffectCache.instance
+          .fetch(url)
+          .timeout(const Duration(seconds: 5), onTimeout: () => null);
+      if (!mounted) return true;
+      if (file == null) {
+        debugPrint('[GIFT-FX] VAP não chegou a tempo — efeito padrão');
+        return false;
+      }
     }
-    debugPrint('[GIFT-FX] tocando VAP ${file.path}');
+    final vapFile = file;
+    debugPrint('[GIFT-FX] tocando VAP ${vapFile.path}');
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _VapGiftEffect(
-        file: file,
+        file: vapFile,
         gift: gift,
         onDone: () {
           try {
@@ -353,8 +367,8 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     overlay.insert(entry);
   }
 
-  void _showCenterLarge(LiveGift gift) {
-    if (_tryShowVap(gift)) return;
+  Future<void> _showCenterLarge(LiveGift gift) async {
+    if (await _tryShowVap(gift) || !mounted) return;
     _playSound(gift);
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
@@ -371,8 +385,8 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     overlay.insert(entry);
   }
 
-  void _showFullscreen(LiveGift gift) {
-    if (_tryShowVap(gift)) return;
+  Future<void> _showFullscreen(LiveGift gift) async {
+    if (await _tryShowVap(gift) || !mounted) return;
     _playSound(gift);
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
@@ -473,8 +487,13 @@ class _GiftToastState extends ConsumerState<_GiftToast>
     ]).animate(_pulseCtrl);
     _anim = Listenable.merge([_ctrl, _exitCtrl, _pulseCtrl]);
     _ctrl.forward();
+    LiveDockMetrics.top.addListener(_onDockMoved);
     // Garantia: nunca fica preso na tela se o estado se perder.
     _safetyTimer = Timer(const Duration(seconds: 30), _exit);
+  }
+
+  void _onDockMoved() {
+    if (mounted) setState(() {});
   }
 
   void _exit() {
@@ -486,6 +505,7 @@ class _GiftToastState extends ConsumerState<_GiftToast>
 
   @override
   void dispose() {
+    LiveDockMetrics.top.removeListener(_onDockMoved);
     _safetyTimer?.cancel();
     _ctrl.dispose();
     _exitCtrl.dispose();
@@ -558,12 +578,21 @@ class _GiftToastState extends ConsumerState<_GiftToast>
     // de 40px — evita colar (telas pequenas) ou flutuar longe demais
     // (tablets/telas grandes).
     final breathingRoom = (screenHeight * 0.03).clamp(16.0, 40.0);
+    // Sem dock medida (tela do criador): reserva o painel de avisos.
+    const noticeLaneReserve = 56.0;
     final responsiveBottom =
         chatTickerBottomAnchor +
         chatTickerHeight +
+        noticeLaneReserve +
         breathingRoom +
         safeAreaBottom +
         widget.lane * _GiftToast.laneSpacing;
+    // Tela com a coluna de baixo medida (espectador): encaixa logo acima
+    // dela — painel de avisos e chat nunca ficam por baixo do combo.
+    final dockTop = LiveDockMetrics.top.value;
+    final bottom = dockTop == null
+        ? responsiveBottom
+        : screenHeight - dockTop + 6 + widget.lane * _GiftToast.laneSpacing;
 
     // ⚠️ OverlayEntry NÃO tem ancestor Material/Directionality por padrão.
     // Qualquer Text descendente ganha a "linha amarela double underline" do
@@ -571,7 +600,7 @@ class _GiftToastState extends ConsumerState<_GiftToast>
     // em Directionality + Material(transparency) + DefaultTextStyle DENTRO
     // do Positioned (o Positioned precisa ser filho direto do Overlay Stack).
     return Positioned(
-      bottom: responsiveBottom,
+      bottom: bottom,
       // 🎯 TikTok-style PK: o toast ancora no lado do streamer que recebeu
       // o gift. Sem isso (live solo) cai no canto esquerdo histórico.
       // Em batalha lado B mirror pra direita; lado A mantém esquerda.

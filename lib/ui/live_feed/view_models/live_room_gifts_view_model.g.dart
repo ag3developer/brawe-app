@@ -168,7 +168,7 @@ final class LiveRoomGiftsViewModelProvider
 }
 
 String _$liveRoomGiftsViewModelHash() =>
-    r'ecb789b1925ea02ae34065d10705d56eff5f63c9';
+    r'c8f1b977afd22f1d99659bc15c623f316b82d75d';
 
 /// 🎁 ViewModel das animações de presente em tempo real.
 ///

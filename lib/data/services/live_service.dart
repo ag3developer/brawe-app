@@ -209,12 +209,21 @@ class LiveService {
     return {'status': 'ok'};
   }
 
-  Future<void> likeLive(String roomId) async {
-    await _dio.post('/media/$roomId/like', data: {'reaction_type': 'like'});
+  /// `PUT /live/rooms/{id}/goal` — define (ou limpa, com `null`) a meta da live.
+  Future<void> setGoal(
+    String roomId, {
+    int? goalPoints,
+    String? goalTitle,
+  }) async {
+    await _dio.put(
+      '/live/rooms/$roomId/goal',
+      data: {'goal_points': goalPoints, 'goal_title': goalTitle},
+    );
   }
 
-  Future<void> unlikeLive(String roomId) async {
-    await _dio.delete('/media/$roomId/like');
+  Future<Map<String, dynamic>> setGoals(String roomId, List<Map<String, dynamic>> goals) async {
+    final response = await _dio.put('/live/rooms/$roomId/goals', data: {'goals': goals});
+    return _toMap(response.data);
   }
 
   Future<Map<String, dynamic>> sendGift({
@@ -259,6 +268,39 @@ class LiveService {
           .toList();
     }
     return [];
+  }
+
+  /// 🏆 Top gifters completo: `{data: [...], total_points, me}`.
+  Future<Map<String, dynamic>> getTopGiftersFull(
+    String roomId, {
+    int limit = 10,
+  }) async {
+    final response = await _dio.get(
+      '/live/gifts/top-gifters/$roomId',
+      queryParameters: {'limit': limit},
+    );
+    return _toMap(response.data);
+  }
+
+  /// 🏆 Ranking de fãs do criador (todas as lives). [period] = week | all.
+  Future<Map<String, dynamic>> getCreatorRanking(
+    String streamerId, {
+    String period = 'week',
+    int limit = 20,
+  }) async {
+    final response = await _dio.get(
+      '/live/gifts/creator-ranking/$streamerId',
+      queryParameters: {'period': period, 'limit': limit},
+    );
+    return _toMap(response.data);
+  }
+
+  Future<Map<String, dynamic>> getTopLikers(String roomId, {int limit = 10}) async {
+    final response = await _dio.get(
+      '/live/gifts/top-likers/$roomId',
+      queryParameters: {'limit': limit},
+    );
+    return _toMap(response.data);
   }
 
   Map<String, dynamic> _toMap(dynamic data) {

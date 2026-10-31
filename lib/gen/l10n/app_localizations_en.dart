@@ -5391,4 +5391,302 @@ class SEn extends S {
 
   @override
   String get profileUnavailableHint => 'This content isn\'t available to you.';
+
+  @override
+  String get liveOwnTitle => 'You\'re live';
+
+  @override
+  String get liveOwnBody =>
+      'This is your own live, streaming from another device. To watch as a viewer, sign in with another account.';
+
+  @override
+  String get liveOwnBack => 'Go back';
+
+  @override
+  String get liveConnecting => 'Connecting to the live…';
+
+  @override
+  String get rankingTitle => 'Top Gifters';
+
+  @override
+  String get rankingTabLive => 'This live';
+
+  @override
+  String get rankingTabWeek => 'Creator\'s week';
+
+  @override
+  String rankingRoomTotal(String points) {
+    return 'Live total: $points coins';
+  }
+
+  @override
+  String get rankingEmpty => 'No gifts yet';
+
+  @override
+  String get rankingEmptyHint => 'Be the first to send a gift!';
+
+  @override
+  String rankingGiftCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count gifts',
+      one: '1 gift',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get rankingYouBadge => 'You';
+
+  @override
+  String rankingFooterGap(int rank, String gap, String name) {
+    return 'You are #$rank · $gap more to pass $name';
+  }
+
+  @override
+  String get rankingFooterLeader => 'You are #1 · leading the ranking';
+
+  @override
+  String rankingFooterOnly(int rank) {
+    return 'You are #$rank';
+  }
+
+  @override
+  String get rankingFooterJoin => 'Send a gift to join the ranking';
+
+  @override
+  String overtakenMessage(String name, String gap, int rank) {
+    return '$name passed you! $gap coins to get #$rank back';
+  }
+
+  @override
+  String get overtakenRetake => 'Retake';
+
+  @override
+  String newTopGifterBanner(String name) {
+    return 'New #1 of the live: $name';
+  }
+
+  @override
+  String giftsNeedHint(String gap) {
+    return '$gap coins to retake your position';
+  }
+
+  @override
+  String giftsNeedHintNone(String gap) {
+    return 'Pick a gift worth at least $gap coins to retake your position';
+  }
+
+  @override
+  String liveEntranceJoined(String name) {
+    return '$name joined the live';
+  }
+
+  @override
+  String get liveEntranceTopOne => 'The live\'s #1 just arrived';
+
+  @override
+  String get liveLevelUpTitle => 'Level up!';
+
+  @override
+  String liveLevelUpLevel(int level) {
+    return 'Level $level';
+  }
+
+  @override
+  String liveLevelUpPublic(String name, int level) {
+    return '$name reached level $level';
+  }
+
+  @override
+  String get liveGoalDefaultTitle => 'Live goal';
+
+  @override
+  String get liveGoalReached => 'Goal reached!';
+
+  @override
+  String get liveGoalOption => 'Live goal';
+
+  @override
+  String get liveGoalOptionSubtitle => 'Set a coin goal for this live';
+
+  @override
+  String get liveGoalSheetTitle => 'Live goal';
+
+  @override
+  String get liveGoalPointsLabel => 'Goal (coins)';
+
+  @override
+  String get liveGoalTitleLabel => 'Short title (e.g. Prize giveaway)';
+
+  @override
+  String get liveGoalSave => 'Set goal';
+
+  @override
+  String get liveGoalClear => 'Remove goal';
+
+  @override
+  String get liveGoalSaved => 'Goal updated';
+
+  @override
+  String get liveGoalError => 'Could not update the goal';
+
+  @override
+  String get liveGoalInvalid => 'Enter a goal greater than zero';
+
+  @override
+  String get questLiveTag => 'LIVE';
+
+  @override
+  String get questWatchLive => 'Watch lives';
+
+  @override
+  String get questSendLiveGift => 'Send gifts in a live';
+
+  @override
+  String get questLiveChat => 'Chat in a live';
+
+  @override
+  String get rankingSheetTitle => 'Live ranking';
+
+  @override
+  String get rankingTabGifts => 'Gifts';
+
+  @override
+  String get rankingTabLikes => 'Likes';
+
+  @override
+  String likesRoomTotal(String likes, int people) {
+    String _temp0 = intl.Intl.pluralLogic(
+      people,
+      locale: localeName,
+      other: '$people people',
+      one: '1 person',
+    );
+    return '$likes likes · $_temp0';
+  }
+
+  @override
+  String likesFooterGap(int rank, String gap, String name) {
+    return 'You\'re #$rank · $gap likes to pass $name';
+  }
+
+  @override
+  String get likesFooterLeader => 'You\'re #1 · top liker of this live';
+
+  @override
+  String likesFooterOnly(int rank) {
+    return 'You\'re #$rank';
+  }
+
+  @override
+  String get likesFooterJoin => 'Like the live to join the ranking';
+
+  @override
+  String get likesEmpty => 'No likes yet';
+
+  @override
+  String get likesEmptyHint => 'Be the first to like!';
+
+  @override
+  String get likesNote => 'Likes don\'t count toward the gift ranking';
+
+  @override
+  String get rankingSendGift => 'Send gift';
+
+  @override
+  String get rankingLikeNow => 'Like';
+
+  @override
+  String likeMilestoneBanner(String count) {
+    return 'The live reached $count likes!';
+  }
+
+  @override
+  String get questLiveLike => 'Like lives';
+
+  @override
+  String noticeOvertakenTitle(String name) {
+    return '$name passed you!';
+  }
+
+  @override
+  String noticeOvertakenBody(String gap, int rank) {
+    return '$gap coins to take back #$rank';
+  }
+
+  @override
+  String noticeLevelUpBody(int level) {
+    return 'You reached level $level';
+  }
+
+  @override
+  String get noticeNewTopTitle => 'New #1 of the live';
+
+  @override
+  String get goalsTitle => 'Live goals';
+
+  @override
+  String get goalsButton => 'Goals';
+
+  @override
+  String get goalTypeGift => 'Gift';
+
+  @override
+  String get goalTypeLikes => 'Likes';
+
+  @override
+  String goalLikesLabel(String count) {
+    return '$count likes';
+  }
+
+  @override
+  String goalProgress(String progress, String target) {
+    return '$progress of $target';
+  }
+
+  @override
+  String get goalReached => 'Goal reached';
+
+  @override
+  String goalReachedChat(String goal) {
+    return 'Goal reached: $goal';
+  }
+
+  @override
+  String get goalSendGift => 'Send';
+
+  @override
+  String get goalLike => 'Like';
+
+  @override
+  String get goalsViewerHint =>
+      'Tap Send to open the gift bag on the goal\'s gift.';
+
+  @override
+  String get goalsEmptyCreator =>
+      'Pick a gift and an amount, or a likes goal. Up to 3 goals.';
+
+  @override
+  String get goalPickGift => 'Pick a gift';
+
+  @override
+  String goalAddGift(String count, String gift) {
+    return 'Add $count $gift';
+  }
+
+  @override
+  String goalAddLikes(String count) {
+    return 'Add $count likes';
+  }
+
+  @override
+  String get goalsSave => 'Save goals';
+
+  @override
+  String get goalsRemoveAll => 'Remove goals';
+
+  @override
+  String get goalsSaveError => 'Couldn\'t save the goals';
 }

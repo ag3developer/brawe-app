@@ -872,7 +872,7 @@ class _QuestCard extends StatelessWidget {
     final claimed = quest.isClaimed;
     final claimable = quest.isClaimable;
     final palette = _paletteFor(quest);
-    final icon = _iconFor(quest.icon);
+    final icon = _iconFor(quest.icon, quest.actionType);
     final colors = context.colors;
 
     return AnimatedContainer(
@@ -944,8 +944,16 @@ class _QuestCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_isLiveQuest(quest.actionType) ||
+                        quest.category == 'live') ...[
+                      _LiveQuestTag(color: palette.end),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
-                      quest.title,
+                      quest.title.isNotEmpty
+                          ? quest.title
+                          : _liveQuestFallbackTitle(
+                              S.of(context), quest.actionType),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1024,14 +1032,66 @@ class _QuestCard extends StatelessWidget {
   }
 }
 
+String _liveQuestFallbackTitle(S l10n, String actionType) {
+  switch (actionType) {
+    case 'watch_live':
+      return l10n.questWatchLive;
+    case 'send_live_gift':
+      return l10n.questSendLiveGift;
+    case 'live_chat':
+      return l10n.questLiveChat;
+    case 'live_like':
+      return l10n.questLiveLike;
+    default:
+      return '';
+  }
+}
+
+class _LiveQuestTag extends StatelessWidget {
+  const _LiveQuestTag({required this.color});
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        S.of(context).questLiveTag,
+        style: TextStyle(
+          color: color,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+}
+
 class _QuestPalette {
   final Color start;
   final Color end;
   const _QuestPalette(this.start, this.end);
 }
 
+/// Quests de live (assistir, presentear, conversar na live).
+bool _isLiveQuest(String actionType) =>
+    actionType == 'watch_live' ||
+    actionType == 'send_live_gift' ||
+    actionType == 'live_chat' ||
+    actionType == 'live_like';
+
 _QuestPalette _paletteFor(DailyQuest q) {
+  if (_isLiveQuest(q.actionType)) {
+    return const _QuestPalette(Color(0xFFFF3D6E), Color(0xFFFF8A4D));
+  }
   switch (q.category) {
+    case 'live':
+      return const _QuestPalette(Color(0xFFFF3D6E), Color(0xFFFF8A4D));
     case 'engagement':
       return const _QuestPalette(AppColors.braweBlue, AppColors.braweSky);
     case 'social':
@@ -1043,8 +1103,24 @@ _QuestPalette _paletteFor(DailyQuest q) {
   }
 }
 
-IconData _iconFor(String key) {
+IconData _iconFor(String key, [String actionType = '']) {
+  switch (actionType) {
+    case 'watch_live':
+      return Icons.live_tv_rounded;
+    case 'send_live_gift':
+      return Icons.card_giftcard_rounded;
+    case 'live_chat':
+      return Icons.forum_rounded;
+    case 'live_like':
+      return Icons.favorite_rounded;
+  }
   switch (key) {
+    case 'Radio':
+      return Icons.live_tv_rounded;
+    case 'Gift':
+      return Icons.card_giftcard_rounded;
+    case 'MessageSquare':
+      return Icons.forum_rounded;
     case 'Play':
       return Icons.play_circle;
     case 'Heart':
@@ -1066,7 +1142,10 @@ IconData _iconFor(String key) {
 /// Se o asset não existir em `assets/images/quests/`, o widget [_QuestImage]
 /// faz fallback automaticamente para o [IconData] correspondente.
 String _assetNameFor(DailyQuest q) {
+  // Tipos de live não têm PNG dedicado: cai no ícone (`_iconFor`).
+  if (_isLiveQuest(q.actionType)) return 'icon_live.png';
   // Primeiro tenta por ícone (mais específico vindo do backend).
+  if (q.category == 'live') return 'icon_live.png';
   switch (q.icon) {
     case 'Heart':
       return 'icon_like.png';

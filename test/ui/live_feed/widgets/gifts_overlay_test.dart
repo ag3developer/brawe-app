@@ -58,10 +58,11 @@ void main() {
     // NÃO deve aparecer ErrorWidget vermelho (regressão do isLoading crash).
     expect(tester.takeException(), isNull);
 
-    // Os nomes dos tiers viram tabs (uppercase). "Free" foi adicionado pelo
-    // fake como tier 0.
-    expect(find.text('FREE'), findsOneWidget);
-    expect(find.text('BASIC'), findsOneWidget);
+    // Os nomes dos tiers viram tabs (uppercase, localizados). "Free" é o
+    // tier 0 do fake e, em pt, é exibido como "COFRE"; "Basic" vira "BÁSICO"
+    // (GiftTierNames).
+    expect(find.text('COFRE'), findsOneWidget);
+    expect(find.text('BÁSICO'), findsOneWidget);
     expect(find.text('PREMIUM'), findsOneWidget);
   });
 

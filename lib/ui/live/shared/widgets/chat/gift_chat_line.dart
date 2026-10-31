@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../live_feed/view_models/live_room_comments_view_model.dart'
+    show GiftChatPart;
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Linha do chat representando um presente enviado — estilo TikTok MINIMALISTA.
@@ -11,8 +13,11 @@ import 'package:brawe_app/ui/core/ui/image_decode.dart';
 /// sem fundo colorido. Apenas sombra para legibilidade (igual ChatLine).
 /// Aparece na mesma timeline do chat, não numa coluna separada.
 class GiftChatLine extends StatelessWidget {
-  const GiftChatLine({super.key, required this.gift});
+  const GiftChatLine({super.key, required this.gift, this.parts});
   final LiveGift gift;
+
+  /// Presentes diferentes da mesma pessoa numa linha só (rajada).
+  final List<GiftChatPart>? parts;
 
   /// 🎁 Emoji de fallback por nome do presente — usado quando não há
   /// `giftIconUrl` (ou falha o load), pra não cair no ícone genérico
@@ -33,6 +38,53 @@ class GiftChatLine extends StatelessWidget {
     if (n.contains('bomb') || n.contains('bomba')) return '💣';
     if (n.contains('butterfly') || n.contains('borboleta')) return '🦋';
     return '🎁';
+  }
+
+  /// " 50× [ícone] Rosa + 1× [ícone] Dragão"
+  List<InlineSpan> _partSpans(BuildContext context, List<GiftChatPart> parts) {
+    const gold = TextStyle(
+      color: Color(0xFFFFD700),
+      fontWeight: FontWeight.w700,
+    );
+    final spans = <InlineSpan>[];
+    for (var i = 0; i < parts.length; i++) {
+      final p = parts[i];
+      spans.add(
+        TextSpan(
+          text: i == 0 ? ' ${p.quantity}× ' : ' + ${p.quantity}× ',
+          style: gold,
+        ),
+      );
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: p.iconUrl != null && p.iconUrl!.isNotEmpty
+                ? Image.network(
+                    p.iconUrl!,
+                    cacheWidth: context.decodePx(16),
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Center(
+                      child: Text(
+                        _giftEmoji(p.giftName),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Text(
+                      _giftEmoji(p.giftName),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+          ),
+        ),
+      );
+      spans.add(TextSpan(text: ' ${p.giftName}', style: gold));
+    }
+    return spans;
   }
 
   @override
@@ -61,7 +113,10 @@ class GiftChatLine extends StatelessWidget {
               color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
-                      image: ResizeImage(NetworkImage(gift.senderAvatarUrl!), width: context.decodePx(20)),
+                      image: ResizeImage(
+                        NetworkImage(gift.senderAvatarUrl!),
+                        width: context.decodePx(20),
+                      ),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -118,60 +173,68 @@ class GiftChatLine extends StatelessWidget {
                               fontWeight: FontWeight.w400,
                             ),
                           ),
-                          TextSpan(
-                            text: ' ${gift.giftName}',
-                            style: const TextStyle(
-                              color: Color(
-                                0xFFFFD700,
-                              ), // ✨ Ouro destaca (premium!)
-                              fontWeight: FontWeight.w700,
+                          if (parts != null && parts!.length > 1)
+                            ..._partSpans(context, parts!)
+                          else
+                            TextSpan(
+                              text: ' ${gift.giftName}',
+                              style: const TextStyle(
+                                color: Color(
+                                  0xFFFFD700,
+                                ), // ✨ Ouro destaca (premium!)
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  // Ícone do gift (pequeno) — emoji correspondente ao
-                  // presente como fallback (nunca a caixinha genérica).
-                  SizedBox(
-                    width: 18,
-                    height: 18,
-                    child:
-                        gift.giftIconUrl != null && gift.giftIconUrl!.isNotEmpty
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(3),
-                            child: Image.network(
-                              cacheWidth: context.decodePx(18),
-                              gift.giftIconUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: Text(
-                                  _giftEmoji(gift.giftName),
-                                  style: const TextStyle(fontSize: 14),
+                  if (parts == null || parts!.length <= 1) ...[
+                    const SizedBox(width: 6),
+                    // Ícone do gift (pequeno) — emoji correspondente ao
+                    // presente como fallback (nunca a caixinha genérica).
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child:
+                          gift.giftIconUrl != null &&
+                              gift.giftIconUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(3),
+                              child: Image.network(
+                                cacheWidth: context.decodePx(18),
+                                gift.giftIconUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Center(
+                                  child: Text(
+                                    _giftEmoji(gift.giftName),
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                 ),
                               ),
+                            )
+                          : Center(
+                              child: Text(
+                                _giftEmoji(gift.giftName),
+                                style: const TextStyle(fontSize: 14),
+                              ),
                             ),
-                          )
-                        : Center(
-                            child: Text(
-                              _giftEmoji(gift.giftName),
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ),
-                  ),
-                  // Quantidade se > 1
-                  if (gift.quantity > 1) ...[
-                    const SizedBox(width: 3),
-                    Text(
-                      'x${gift.quantity}',
-                      style: const TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        shadows: [Shadow(color: Colors.black54, blurRadius: 2)],
-                      ),
                     ),
+                    // Quantidade se > 1
+                    if (gift.quantity > 1) ...[
+                      const SizedBox(width: 3),
+                      Text(
+                        'x${gift.quantity}',
+                        style: const TextStyle(
+                          color: Color(0xFFFFD700),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 2),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ],
               ),

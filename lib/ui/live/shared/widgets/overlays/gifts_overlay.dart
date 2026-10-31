@@ -22,11 +22,21 @@ class GiftsOverlay extends ConsumerStatefulWidget {
   final String streamerId;
   final String? battleId;
 
+  /// Pontos (moedas) que faltam para retomar uma posição no ranking. Quando
+  /// informado, pré-seleciona o presente mais barato que cobre a diferença
+  /// (e que o usuário pode pagar) e mostra uma dica no topo.
+  final int? needPoints;
+
+  /// Abre já com este presente selecionado (atalho da meta da live).
+  final String? preselectGiftSlug;
+
   const GiftsOverlay({
     super.key,
     required this.roomId,
     required this.streamerId,
     this.battleId,
+    this.needPoints,
+    this.preselectGiftSlug,
   });
 
   static void show(
@@ -34,6 +44,8 @@ class GiftsOverlay extends ConsumerStatefulWidget {
     String roomId,
     String streamerId, {
     String? battleId,
+    int? needPoints,
+    String? preselectGiftSlug,
   }) {
     showModalBottomSheet(
       context: context,
@@ -45,6 +57,8 @@ class GiftsOverlay extends ConsumerStatefulWidget {
           roomId: roomId,
           streamerId: streamerId,
           battleId: battleId,
+          needPoints: needPoints,
+          preselectGiftSlug: preselectGiftSlug,
         ),
       ),
     );
@@ -58,6 +72,8 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     with TickerProviderStateMixin {
   late TabController _tabController;
   Gift? _selectedGift;
+  bool _preselectDone = false;
+  bool _needHintNoGift = false;
   bool _isSending = false; // debounce — evita múltiplos POSTs simultâneos
 
   @override
@@ -73,6 +89,25 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     final idx = tiers.indexWhere((t) => t.name.trim().toLowerCase() == 'basic');
     return idx >= 0 ? idx : 0;
   }
+
+  /// Presente mais barato que cobre [need] pontos e cabe no saldo.
+  /// Pago: pontos = créditos. FREE: pontos = coins (saldo de coins não é
+  /// conhecido no cliente — o servidor valida o envio).
+  Gift? _cheapestCovering(List<GiftTier> tiers, int need, int balance) {
+    Gift? best;
+    for (final t in tiers) {
+      for (final g in t.gifts) {
+        final points = g.isMonetary ? g.priceCredits.ceil() : g.priceCoins;
+        if (points < need) continue;
+        if (g.isMonetary && balance < points) continue;
+        if (best == null || points < _giftPoints(best)) best = g;
+      }
+    }
+    return best;
+  }
+
+  int _giftPoints(Gift g) =>
+      g.isMonetary ? g.priceCredits.ceil() : g.priceCoins;
 
   @override
   void dispose() {
@@ -227,6 +262,48 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
   ) {
     return catalogState.when(
       data: (tiers) {
+        final need = widget.needPoints;
+        final credits = ref.watch(creditsViewModelProvider);
+        var initialIndex = _preferredTierIndex(tiers);
+        final goalSlug = widget.preselectGiftSlug;
+        if (goalSlug != null && !_preselectDone) {
+          _preselectDone = true;
+          for (var i = 0; i < tiers.length; i++) {
+            final hit = tiers[i].gifts.where((g) => g.slug == goalSlug);
+            if (hit.isEmpty) continue;
+            _selectedGift = hit.first;
+            initialIndex = i;
+            if (_tabController.length == tiers.length) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _tabController.animateTo(i);
+              });
+            }
+            break;
+          }
+        }
+        if (need != null && !_preselectDone && credits.hasValue) {
+          _preselectDone = true;
+          final pick = _cheapestCovering(
+            tiers,
+            need,
+            credits.value?.toInt() ?? 0,
+          );
+          if (pick != null) {
+            _selectedGift = pick;
+            final i = tiers.indexWhere((t) => t.gifts.any((g) => g.id == pick.id));
+            if (i >= 0) {
+              initialIndex = i;
+              // Controller já criado (saldo chegou depois): move a aba.
+              if (_tabController.length == tiers.length) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) _tabController.animateTo(i);
+                });
+              }
+            }
+          } else {
+            _needHintNoGift = true;
+          }
+        }
         if (_tabController.length != tiers.length) {
           // Abre por padrão na aba "basic" (não no "free"/Cofre) —
           // presentes básicos são a experiência principal de envio; o
@@ -234,7 +311,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
           _tabController = TabController(
             length: tiers.length,
             vsync: this,
-            initialIndex: _preferredTierIndex(tiers),
+            initialIndex: initialIndex,
           );
         }
         return Column(
@@ -248,6 +325,21 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
+            if (need != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  _needHintNoGift
+                      ? s.giftsNeedHintNone('$need')
+                      : s.giftsNeedHint('$need'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFFFD166),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             const _GamerLevelHeader(),
             if (tiers.isNotEmpty)
               TabBar(

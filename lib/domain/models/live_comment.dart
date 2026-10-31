@@ -13,6 +13,7 @@ class LiveComment {
     this.gifterLabel,
     this.gifterColor,
     this.gifterImageUrl,
+    this.isSystem = false,
   });
 
   final String id;
@@ -32,6 +33,9 @@ class LiveComment {
   final String? gifterLabel;     // "Fã", "Lenda", "Brawe Legend"
   final String? gifterColor;     // hex "#FFD700"
   final String? gifterImageUrl;  // PNG remoto do pin (CDN ou /static)
+
+  /// Linha de sistema (ex.: "fulano subiu para o nível 10") — sem autor.
+  final bool isSystem;
 
   LiveComment copyWith({
     String? id,
@@ -62,6 +66,7 @@ class LiveComment {
       gifterLabel: gifterLabel ?? this.gifterLabel,
       gifterColor: gifterColor ?? this.gifterColor,
       gifterImageUrl: gifterImageUrl ?? this.gifterImageUrl,
+      isSystem: isSystem,
     );
   }
 }

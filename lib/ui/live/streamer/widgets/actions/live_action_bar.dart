@@ -1,6 +1,9 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../../../../gen/l10n/app_localizations.dart';
 
 import '../../../../core/themes/app_colors.dart';
 import 'action_btn.dart';
@@ -19,6 +22,7 @@ class LiveActionBar extends StatelessWidget {
     required this.onPauseResume,
     required this.onEnd,
     required this.onMoreOptions,
+    this.onGoals,
     this.showChat = false,
     this.onChatToggle,
   });
@@ -34,6 +38,9 @@ class LiveActionBar extends StatelessWidget {
   final VoidCallback onPauseResume;
   final VoidCallback onEnd;
   final VoidCallback onMoreOptions;
+
+  /// Metas da live (presente × quantidade ou curtidas).
+  final VoidCallback? onGoals;
   final bool showChat;
   final VoidCallback? onChatToggle;
 
@@ -50,9 +57,11 @@ class LiveActionBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
+          // Cada botão ganha uma fatia igual e encolhe só se faltar espaço
+          // (6 botões no iPhone SE).
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              for (final btn in <Widget>[
               // Pause / Resume
               ActionBtn(
                 icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
@@ -77,6 +86,13 @@ class LiveActionBar extends StatelessWidget {
                   label: 'Co-host',
                   color: const Color(0xFF0EA5E9),
                   onTap: onCoHost,
+                ),
+              if (onGoals != null)
+                ActionBtn(
+                  icon: LucideIcons.target,
+                  label: S.of(context).goalsButton,
+                  color: const Color(0xFFFFC53D),
+                  onTap: onGoals,
                 ),
               // 💬 Chat
               ActionBtn(
@@ -103,6 +119,8 @@ class LiveActionBar extends StatelessWidget {
                 loading: isTogglingStream,
                 onTap: onEnd,
               ),
+              ])
+                Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: btn)),
             ],
           ),
         ),

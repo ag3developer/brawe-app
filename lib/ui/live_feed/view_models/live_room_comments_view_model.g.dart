@@ -61,7 +61,7 @@ final class LiveRoomCommentsViewModelProvider
 }
 
 String _$liveRoomCommentsViewModelHash() =>
-    r'aa8a54bf69ba5d4cd8ab8eeb11844cc26245c315';
+    r'5eb7fca1443869f43d7735541df3c9dde062c808';
 
 final class LiveRoomCommentsViewModelFamily extends $Family
     with

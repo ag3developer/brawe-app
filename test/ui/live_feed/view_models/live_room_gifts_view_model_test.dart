@@ -154,7 +154,7 @@ void main() {
     });
   });
 
-  test('keeps at most five visible gifts in the queue', () async {
+  test('keeps at most eight visible gifts in the list', () async {
     final repository = _FakeGiftsRepository();
     final container = ProviderContainer(
       overrides: [liveRepositoryProvider.overrideWithValue(repository)],
@@ -170,7 +170,7 @@ void main() {
 
     await Future<void>.delayed(Duration.zero);
 
-    for (var i = 1; i <= 6; i++) {
+    for (var i = 1; i <= 10; i++) {
       repository.pushGift(
         LiveGift(
           id: 'gift-$i',
@@ -187,9 +187,11 @@ void main() {
     await Future<void>.delayed(Duration.zero);
 
     final state = container.read(liveRoomGiftsViewModelProvider('room-1'));
-    expect(state, hasLength(5));
-    expect(state.first.id, 'gift-2');
-    expect(state.last.id, 'gift-6');
+    expect(state, hasLength(8));
+    // Presentes já na tela/fila visual são protegidos; o excedente que
+    // chega com o cap cheio (e ainda sem animação) é o que é descartado.
+    expect(state.first.id, 'gift-1');
+    expect(state.last.id, 'gift-8');
   });
 }
 

@@ -25,6 +25,7 @@ import '../../live/shared/widgets/actions/actions.dart';
 import '../../live/shared/widgets/chat/chat.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
+import '../../live/shared/widgets/goal/live_goals.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -55,6 +56,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   BroadcastAudioMode _audioMode = BroadcastAudioMode.quality;
 
   late LiveRoom _room;
+  final GlobalKey<LiveGoalsPillState> _goalsKey = GlobalKey<LiveGoalsPillState>();
+
+  /// Editor de metas (botão Metas da barra de ações ou "Mais opções").
+  Future<void> _openGoals() async {
+    final saved = await LiveGoalsEditorSheet.show(context, roomId: widget.room.id, current: _room.goals);
+    if (saved == null || !mounted) return;
+    setState(() => _room = _room.copyWith(goals: saved));
+    _goalsKey.currentState?.apply(saved);
+  }
   bool _isStreaming = false;
   bool _isPaused = false;
   bool _isInitialized = false;
@@ -1616,6 +1626,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ],
                 MoreOptionTile(
+                  icon: Icons.flag_rounded,
+                  iconColor: const Color(0xFFFFD166),
+                  title: s.liveGoalOption,
+                  subtitle: s.liveGoalOptionSubtitle,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _openGoals();
+                  },
+                ),
+                MoreOptionTile(
                   icon: Icons.share_outlined,
                   iconColor: Colors.white,
                   title: s.broadcasterMoreShareLive,
@@ -1815,6 +1835,18 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                               : null,
                         ),
                         const SizedBox(height: 6),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: LiveGoalsPill(
+                            key: _goalsKey,
+                            roomId: widget.room.id,
+                            streamerId: _room.streamerId,
+                            initialGoals: _room.goals,
+                            isCreator: true,
+                            onEdit: _openGoals,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
                         if (viewerEvent != null)
                           ViewerJoinedToast(
                             event: viewerEvent,
@@ -1880,6 +1912,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
                       ),
                       child: ChatTicker(
+                giftParts: commentsState.chatGiftParts,
                         // Bloqueados (nos dois sentidos) não aparecem no chat da live.
                         comments: commentsState.comments
                             .where((c) => !hidden.isBlocked(c.userId))
@@ -1917,6 +1950,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           onPauseResume: _togglePause,
                           onEnd: _closeBroadcaster,
                           onMoreOptions: () => _showMoreOptions(context),
+                          onGoals: _openGoals,
                           showChat: _showChatInput,
                           onChatToggle: _toggleChatInput,
                         )

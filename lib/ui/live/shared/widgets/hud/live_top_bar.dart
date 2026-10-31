@@ -123,7 +123,13 @@ class LiveTopBar extends StatelessWidget {
         ViewersStack(
           viewerCount: viewerCount,
           avatarUrls: recentViewerAvatars,
-          onTap: () => GifterRankingSheet.show(context, ranking: gifterRanking),
+          topGifters: gifterRanking.take(3).toList(),
+          onTap: () => GifterRankingSheet.show(
+            context,
+            roomId: roomId,
+            streamerId: room.streamerId,
+            ranking: gifterRanking,
+          ),
         ),
         const SizedBox(width: 8),
 

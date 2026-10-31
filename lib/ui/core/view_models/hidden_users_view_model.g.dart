@@ -39,7 +39,7 @@ final class HiddenUsersProvider
   HiddenUsers create() => HiddenUsers();
 }
 
-String _$hiddenUsersHash() => r'3b9adfc41f25bb6335bde125579af7c70c56b842';
+String _$hiddenUsersHash() => r'5dd12968fb64e4f4a484b7e67f51afb36411c7af';
 
 /// Listas de bloqueados/ocultados. O servidor já filtra os feeds; isto serve
 /// para o que chega por socket e para esconder na hora, sem esperar recarga.

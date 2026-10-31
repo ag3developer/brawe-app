@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../../domain/models/live_gift.dart';
 import 'chat_line.dart';
 import 'gift_chat_line.dart';
+import '../../../../live_feed/view_models/live_room_comments_view_model.dart' show GiftChatPart;
 import 'ticker_item.dart';
 
 /// Ticker do chat da live: mescla comentários + presentes em uma única
@@ -21,6 +24,7 @@ class ChatTicker extends StatefulWidget {
     super.key,
     required this.comments,
     required this.gifts,
+    this.giftParts = const {},
     this.maxHeight = 240,
     this.hostUserId,
     this.myUserId,
@@ -30,6 +34,9 @@ class ChatTicker extends StatefulWidget {
 
   final List<LiveComment> comments;
   final List<LiveGift> gifts;
+
+  /// Linhas de presente agrupadas ("50× Rosa + 1× Dragão"), por id.
+  final Map<String, List<GiftChatPart>> giftParts;
 
   /// Altura máxima da faixa do chat. Quem chama reduz esse valor quando o
   /// teclado está aberto (sobra menos tela).
@@ -65,6 +72,91 @@ class _ChatTickerState extends State<ChatTicker> {
   final ScrollController _scrollController = ScrollController();
   int _unread = 0;
 
+  // ── Ritmo do chat (live cheia) ─────────────────────────────────────────
+  // Mensagens de outras pessoas entram numa fila e aparecem num ritmo que
+  // dá para ler (mais rápido quando a fila cresce). As MINHAS, as do
+  // criador, as que me mencionam e as linhas de presente entram na hora —
+  // e depois da minha o chat segura os outros por um instante para ela não
+  // ser atropelada. Fila grande demais: descarta as mais antigas comuns.
+  static const _maxPending = 24;
+  static const _myMessageHold = Duration(milliseconds: 1400);
+  final Set<String> _revealed = {};
+  final List<String> _pending = [];
+  Timer? _paceTimer;
+  DateTime _holdUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _primed = false;
+
+  String _keyOf(TickerItem it) => it.comment != null ? 'c:${it.comment!.id}' : 'g:${it.gift!.id}';
+
+  bool _isPriority(TickerItem it) {
+    final c = it.comment;
+    if (c == null) return true; // linha de presente (já agrupada)
+    return c.isSystem ||
+        c.isPending ||
+        c.userId == widget.myUserId ||
+        (widget.hostUserId != null && c.userId == widget.hostUserId) ||
+        widget._mentionsMe(c);
+  }
+
+  bool _isMine(TickerItem it) {
+    final c = it.comment;
+    return c != null && (c.isPending || c.userId == widget.myUserId);
+  }
+
+  List<TickerItem> _allItems() => <TickerItem>[
+    for (final c in widget.comments) TickerItem(timestamp: c.timestamp, comment: c),
+    for (final g in widget.gifts.where((g) => g.showInChat)) TickerItem(timestamp: g.timestamp, gift: g),
+  ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+  /// Separa o que é novo: prioridade aparece já; o resto vai para a fila.
+  void _ingest() {
+    final items = _allItems();
+    if (!_primed) {
+      // Histórico ao entrar na live: tudo de uma vez.
+      _primed = true;
+      _revealed.addAll(items.map(_keyOf));
+      return;
+    }
+    var revealedNow = 0;
+    for (final it in items) {
+      final k = _keyOf(it);
+      if (_revealed.contains(k) || _pending.contains(k)) continue;
+      if (_isPriority(it)) {
+        _revealed.add(k);
+        revealedNow++;
+        if (_isMine(it)) _holdUntil = DateTime.now().add(_myMessageHold);
+      } else {
+        _pending.add(k);
+      }
+    }
+    while (_pending.length > _maxPending) {
+      _pending.removeAt(0);
+    }
+    // O view model só guarda as últimas mensagens: esquece chaves antigas.
+    final alive = items.map(_keyOf).toSet();
+    _revealed.retainAll(alive);
+    _pending.retainWhere(alive.contains);
+    if (revealedNow > 0 && _isReadingHistory) _unread += revealedNow;
+    _schedulePace();
+  }
+
+  void _schedulePace() {
+    if (_paceTimer != null || _pending.isEmpty) return;
+    final backlog = _pending.length;
+    var wait = Duration(milliseconds: backlog <= 3 ? 320 : (backlog <= 8 ? 190 : 120));
+    final hold = _holdUntil.difference(DateTime.now());
+    if (hold > wait) wait = hold;
+    _paceTimer = Timer(wait, () {
+      _paceTimer = null;
+      if (!mounted || _pending.isEmpty) return;
+      setState(() {
+        _revealed.add(_pending.removeAt(0));
+        if (_isReadingHistory) _unread++;
+      });
+      _schedulePace();
+    });
+  }
+
   bool get _isReadingHistory =>
       _scrollController.hasClients &&
       _scrollController.offset > _readingThreshold;
@@ -73,17 +165,13 @@ class _ChatTickerState extends State<ChatTicker> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _ingest();
   }
 
   @override
   void didUpdateWidget(ChatTicker oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final added =
-        (widget.comments.length - oldWidget.comments.length) +
-        (widget.gifts.length - oldWidget.gifts.length);
-    if (added > 0 && _isReadingHistory) {
-      _unread += added;
-    }
+    _ingest();
   }
 
   void _onScroll() {
@@ -105,6 +193,7 @@ class _ChatTickerState extends State<ChatTicker> {
 
   @override
   void dispose() {
+    _paceTimer?.cancel();
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -113,14 +202,26 @@ class _ChatTickerState extends State<ChatTicker> {
 
   @override
   Widget build(BuildContext context) {
-    final items = <TickerItem>[
-      for (final c in widget.comments)
-        TickerItem(timestamp: c.timestamp, comment: c),
-      // 🎁 CHAT IMEDIATO (Fase 11): TODO presente aparece no chat assim
-      // que chega, em paralelo com a animação (se houver).
-      for (final g in widget.gifts.where((g) => g.showInChat))
-        TickerItem(timestamp: g.timestamp, gift: g),
-    ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    // Só o que já foi liberado pelo ritmo do chat; repetições da mesma
+    // pessoa com o mesmo texto (spam, "kkkk" em sequência) viram ×N.
+    final items = <TickerItem>[];
+    final repeats = <String, int>{};
+    final lastIndexBySpam = <String, int>{};
+    for (final it in _allItems()) {
+      if (!_revealed.contains(_keyOf(it))) continue;
+      final c = it.comment;
+      if (c != null && !c.isSystem) {
+        final spamKey = '${c.userId}|${c.message.trim().toLowerCase()}';
+        final prev = lastIndexBySpam[spamKey];
+        if (prev != null &&
+            it.timestamp.difference(items[prev].timestamp).inSeconds.abs() <= 20) {
+          repeats[_keyOf(items[prev])] = (repeats[_keyOf(items[prev])] ?? 1) + 1;
+          continue;
+        }
+        lastIndexBySpam[spamKey] = items.length;
+      }
+      items.add(it);
+    }
 
     if (items.isEmpty) return const SizedBox.shrink();
     final visible = items.length > _maxItems
@@ -154,8 +255,9 @@ class _ChatTickerState extends State<ChatTicker> {
                 final it = visible[visible.length - 1 - i];
                 final c = it.comment;
                 if (c != null) {
-                  final isMine = c.userId == widget.myUserId || c.isPending;
-                  return ChatLine(
+                  final isMine = c.isSystem || c.userId == widget.myUserId || c.isPending;
+                  final times = repeats[_keyOf(it)] ?? 1;
+                  final line = ChatLine(
                     comment: c,
                     isHost:
                         widget.hostUserId != null &&
@@ -165,8 +267,31 @@ class _ChatTickerState extends State<ChatTicker> {
                         ? null
                         : () => widget.onCommentTap!(c),
                   );
+                  if (times <= 1) return line;
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Flexible(child: line),
+                      Container(
+                        margin: const EdgeInsets.only(left: 4, top: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '×$times',
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  );
                 }
-                return GiftChatLine(gift: it.gift!);
+                return GiftChatLine(
+                  gift: it.gift!,
+                  parts: widget.giftParts[it.gift!.id],
+                );
               },
             ),
           ),

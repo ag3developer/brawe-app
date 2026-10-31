@@ -76,7 +76,7 @@ final class BattleViewModelProvider
   }
 }
 
-String _$battleViewModelHash() => r'29bff602e13daef7fd4c280e704e46da5bdd2dd7';
+String _$battleViewModelHash() => r'abe3db9a9a5ae7ef748d8e4954434f2c3398b74e';
 
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///

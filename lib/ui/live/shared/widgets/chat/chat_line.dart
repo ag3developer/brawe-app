@@ -79,7 +79,43 @@ class ChatLine extends StatelessWidget {
     );
   }
 
+  Widget _buildSystemLine() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFD166).withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.trending_up_rounded,
+              size: 14,
+              color: Color(0xFFFFD166),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                comment.message,
+                style: const TextStyle(
+                  color: Color(0xFFFFD166),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildLine(BuildContext context) {
+    if (comment.isSystem) return _buildSystemLine();
     final hasAvatar =
         comment.avatarUrl != null && comment.avatarUrl!.isNotEmpty;
     final initial = comment.userName.isNotEmpty

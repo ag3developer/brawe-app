@@ -6,6 +6,9 @@ import '../../domain/models/live_comment.dart';
 import '../../domain/models/live_room.dart';
 import '../../domain/models/live_gift.dart';
 import '../../domain/models/live_viewer_event.dart';
+import '../../domain/models/live_competition_event.dart';
+import '../../domain/models/live_goal.dart';
+import '../../domain/models/live_room_event.dart';
 import '../../domain/models/live_reaction_event.dart';
 import '../services/live_service.dart';
 import '../model/create_live_room_request_dto.dart';
@@ -40,6 +43,17 @@ class LiveRepository {
   final Map<String, StreamController<LiveReactionEvent>> _reactionControllers =
       {};
   final Map<String, StreamController<double>> _giftTotalControllers = {};
+  // 🏆 Competição de presentes (gifter_ranking / top_gifter_changed /
+  // gifter_overtaken) + aviso de reconexão do socket.
+  final Map<String, StreamController<LiveCompetitionEvent>>
+  _competitionControllers = {};
+  final StreamController<void> _reconnectController =
+      StreamController<void>.broadcast();
+  final Map<String, void Function(dynamic)> _competitionHandlers = {};
+  VoidCallback? _competitionReconnectCb;
+  final Map<String, StreamController<LiveRoomEvent>> _roomEventControllers =
+      {};
+  final Map<String, void Function(dynamic)> _roomEventHandlers = {};
   final Set<String> _connectedRooms = {};
   final Map<String, int> _roomConnectionLeases = {};
   bool _socketHandlersRegistered = false;
@@ -348,6 +362,18 @@ class LiveRepository {
     _socketService?.off(AppConstants.eventLiveReaction, _onLiveReaction);
     _socketService?.off(AppConstants.eventLikeCountUpdate, _onLikeCount);
     _socketService?.off(AppConstants.eventCommentCountUpdate, _onCommentCount);
+    _unregisterCompetitionHandlers();
+    for (final controller in _competitionControllers.values) {
+      controller.close();
+    }
+    _competitionControllers.clear();
+    _reconnectController.close();
+    _roomEventHandlers.forEach((e, h) => _socketService?.off(e, h));
+    _roomEventHandlers.clear();
+    for (final c in _roomEventControllers.values) {
+      c.close();
+    }
+    _roomEventControllers.clear();
 
     for (final controller in _commentControllers.values) {
       controller.close();
@@ -420,6 +446,10 @@ class LiveRepository {
 
     final giftTotalController = _giftTotalControllers.remove(roomId);
     giftTotalController?.close();
+
+    _competitionControllers.remove(roomId)?.close();
+
+    _roomEventControllers.remove(roomId)?.close();
   }
 
   Stream<LiveComment> watchComments(String roomId) {
@@ -454,13 +484,31 @@ class LiveRepository {
     return controller.stream;
   }
 
-  Future<void> toggleLike(String roomId, bool isLiked) async {
+  /// 🎯 Salva as metas da live (até 3; lista vazia remove). Só o criador.
+  Future<List<LiveGoal>> setLiveGoals(String roomId, List<LiveGoalDraft> goals) async {
     try {
-      if (isLiked) {
-        await _liveService.unlikeLive(roomId);
-      } else {
-        await _liveService.likeLive(roomId);
-      }
+      final res = await _liveService.setGoals(roomId, goals.map((g) => g.toJson()).toList());
+      final data = res['data'];
+      return LiveGoal.listFrom(data is Map ? data['goals'] : null);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// 🎯 Define (ou limpa, com `goalPoints == null`) a meta da live. Host only.
+  Future<void> setLiveGoal(
+    String roomId, {
+    int? goalPoints,
+    String? goalTitle,
+  }) async {
+    try {
+      await _liveService.setGoal(
+        roomId,
+        goalPoints: goalPoints,
+        goalTitle: goalTitle,
+      );
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {
@@ -526,12 +574,120 @@ class LiveRepository {
     }
   }
 
+  /// 🎮 Eventos de gamificação (level-up, meta da live).
+  Stream<LiveRoomEvent> watchRoomEvents(String roomId) {
+    final controller = _roomEventControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveRoomEvent>.broadcast(),
+    );
+    return controller.stream;
+  }
+
   Stream<LiveViewerEvent> watchViewerEvents(String roomId) {
     final controller = _viewerEventControllers.putIfAbsent(
       roomId,
       () => StreamController<LiveViewerEvent>.broadcast(),
     );
     return controller.stream;
+  }
+
+  /// 🏆 Eventos da competição de presentes da sala (ranking do servidor,
+  /// novo #1, ultrapassagem). Servidor antigo simplesmente nunca emite.
+  Stream<LiveCompetitionEvent> watchCompetition(String roomId) {
+    final controller = _competitionControllers.putIfAbsent(
+      roomId,
+      () => StreamController<LiveCompetitionEvent>.broadcast(),
+    );
+    return controller.stream;
+  }
+
+  /// 🔁 Emite a cada reconexão do socket (para refazer fetches de estado).
+  Stream<void> watchReconnects() => _reconnectController.stream;
+
+  void _registerCompetitionHandlers() {
+    final socket = _socketService;
+    if (socket == null) return;
+    const events = {
+      'gifter_ranking': LiveCompetitionEventType.ranking,
+      'top_gifter_changed': LiveCompetitionEventType.topGifterChanged,
+      'gifter_overtaken': LiveCompetitionEventType.overtaken,
+      'liker_ranking': LiveCompetitionEventType.likerRanking,
+      'like_milestone': LiveCompetitionEventType.likeMilestone,
+    };
+    _unregisterCompetitionHandlers(keepReconnect: true);
+    events.forEach((name, type) {
+      void handler(dynamic data) {
+        final payload = _asMap(data);
+        if (payload == null) return;
+        _dispatchToControllers(
+          _competitionControllers,
+          LiveCompetitionEvent(type, Map<String, dynamic>.from(payload)),
+          roomId: payload['room_id']?.toString(),
+        );
+      }
+
+      _competitionHandlers[name] = handler;
+      socket.on(name, handler);
+    });
+    if (_competitionReconnectCb == null) {
+      _competitionReconnectCb = () {
+        // O socket interno é recriado: reanexa os handlers e avisa as telas.
+        _registerCompetitionHandlers();
+        if (!_reconnectController.isClosed) _reconnectController.add(null);
+      };
+      socket.addReconnectCallback(_competitionReconnectCb!);
+    }
+  }
+
+  void _unregisterCompetitionHandlers({bool keepReconnect = false}) {
+    _competitionHandlers.forEach((name, h) => _socketService?.off(name, h));
+    _competitionHandlers.clear();
+    if (!keepReconnect && _competitionReconnectCb != null) {
+      _socketService?.removeReconnectCallback(_competitionReconnectCb!);
+      _competitionReconnectCb = null;
+    }
+  }
+
+  /// 🏆 Top gifters completo (`data`, `total_points`, `me`). Vazio em falha.
+  Future<Map<String, dynamic>> getTopGiftersFull(
+    String roomId, {
+    int limit = 10,
+  }) async {
+    try {
+      return await _liveService.getTopGiftersFull(roomId, limit: limit);
+    } catch (e) {
+      debugPrint('LiveRepository: getTopGiftersFull Error: $e');
+      return const {};
+    }
+  }
+
+  /// ❤️ Top curtidores da live (`data`, `total_likes`, `unique_likers`,
+  /// `me`). Vazio em falha / servidor antigo.
+  Future<Map<String, dynamic>> getTopLikers(String roomId, {int limit = 10}) async {
+    try {
+      return await _liveService.getTopLikers(roomId, limit: limit);
+    } catch (e) {
+      debugPrint('LiveRepository: getTopLikers Error: $e');
+      return const {};
+    }
+  }
+
+  /// 🏆 Ranking de fãs do criador (`week` | `all`). Vazio em falha.
+  Future<Map<String, dynamic>> getCreatorRanking(
+    String streamerId, {
+    String period = 'week',
+    int limit = 20,
+  }) async {
+    try {
+      return await _liveService.getCreatorRanking(
+        streamerId,
+        period: period,
+        limit: limit,
+      );
+    } catch (e) {
+      debugPrint('LiveRepository: getCreatorRanking Error: $e');
+      return const {};
+    }
   }
 
   /// 🏆 Busca o ranking de top gifters da sala no backend.
@@ -816,6 +972,28 @@ class LiveRepository {
       _dispatchToControllers(_reactionControllers, event, roomId: msgRoomId);
     };
     _socketService.on(AppConstants.eventLiveReaction, _onLiveReaction!);
+    _registerCompetitionHandlers();
+
+    // 🎮 Gamificação: level-up do próprio usuário, level-up público e meta.
+    for (final type in const [
+      LiveRoomEvent.levelUp,
+      LiveRoomEvent.levelUpPublic,
+      LiveRoomEvent.goalUpdate,
+      LiveRoomEvent.goalsUpdate,
+    ]) {
+      void handler(dynamic data) {
+        final payload = _asMap(data);
+        if (payload == null) return;
+        _dispatchToControllers(
+          _roomEventControllers,
+          LiveRoomEvent(type: type, data: Map<String, dynamic>.from(payload)),
+          roomId: payload['room_id']?.toString(),
+        );
+      }
+
+      _roomEventHandlers[type] = handler;
+      _socketService.on(type, handler);
+    }
   }
 
   void _dispatchToCommentControllers(LiveComment comment, {String? roomId}) {
@@ -973,9 +1151,9 @@ class LiveRepository {
       isFullscreen: payload['is_fullscreen'] == true,
       emoji: payload['gift_emoji']?.toString(),
       quantity: int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1,
-      // Backend envia float ("1.0") — int.tryParse dava sempre 0.
-      value: (num.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0)
-          .round(),
+      // Pontos do ranking por unidade: `gift_points` (moedas gastas, total
+      // do combo). `gift_value` é em USDT (0,1 numa rosa → arredondava 0).
+      value: _unitGiftPoints(payload),
       timestamp: timestamp,
       // ─── Gifter level (TikTok-style chip) ───
       gifterLevel:
@@ -1190,5 +1368,14 @@ class LiveRepository {
     addConfig(quaternary);
 
     return merged.isEmpty ? null : merged;
+  }
+
+  static int _unitGiftPoints(Map<String, dynamic> payload) {
+    final qty = int.tryParse(payload['quantity']?.toString() ?? '1') ?? 1;
+    final points = num.tryParse(payload['gift_points']?.toString() ?? '');
+    if (points != null) return (points / (qty < 1 ? 1 : qty)).round();
+    // Servidor antigo: só USDT — converte (100 moedas = 1 USDT).
+    final usdt = num.tryParse(payload['gift_value']?.toString() ?? '0') ?? 0;
+    return (usdt * 100 / (qty < 1 ? 1 : qty)).round();
   }
 }

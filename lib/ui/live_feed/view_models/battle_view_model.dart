@@ -127,6 +127,8 @@ class BattleViewModel extends _$BattleViewModel {
         multiplier: (data['power_multiplier'] as num?)?.toDouble() ?? 1.0,
         topGifterA: _parseGifter(data['top_gifter_a']),
         topGifterB: _parseGifter(data['top_gifter_b']),
+        topGiftersA: BattleGifter.listFrom(data['top_gifters_a']),
+        topGiftersB: BattleGifter.listFrom(data['top_gifters_b']),
       );
 
       state = AsyncValue.data(initial);
@@ -262,6 +264,12 @@ class BattleViewModel extends _$BattleViewModel {
         powerMoment: json['power_moment'] as bool? ?? false,
         topGifterA: _parseGifter(json['top_gifter_a']),
         topGifterB: _parseGifter(json['top_gifter_b']),
+        topGiftersA: json.containsKey('top_gifters_a')
+            ? BattleGifter.listFrom(json['top_gifters_a'])
+            : null,
+        topGiftersB: json.containsKey('top_gifters_b')
+            ? BattleGifter.listFrom(json['top_gifters_b'])
+            : null,
       ),
     );
   }
@@ -284,6 +292,18 @@ class BattleViewModel extends _$BattleViewModel {
         scoreB: (json['score_b'] as num?)?.toDouble() ?? s.scoreB,
         winnerId: json['winner_id'] as String?,
         winnerName: json['winner_name'] as String?,
+        topGifterA: json.containsKey('top_gifter_a')
+            ? _parseGifter(json['top_gifter_a'])
+            : s.topGifterA,
+        topGifterB: json.containsKey('top_gifter_b')
+            ? _parseGifter(json['top_gifter_b'])
+            : s.topGifterB,
+        topGiftersA: json.containsKey('top_gifters_a')
+            ? BattleGifter.listFrom(json['top_gifters_a'])
+            : null,
+        topGiftersB: json.containsKey('top_gifters_b')
+            ? BattleGifter.listFrom(json['top_gifters_b'])
+            : null,
         timeRemaining: Duration.zero,
       ),
     );

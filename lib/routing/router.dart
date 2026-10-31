@@ -23,7 +23,7 @@ import '../ui/feed/widgets/post_likers_screen.dart';
 import '../ui/feed/widgets/video_fullscreen_screen.dart';
 import '../ui/home/widgets/for_you_screen.dart';
 import '../ui/live_feed/widgets/for_you_live_list_screen.dart';
-import '../ui/live_feed/widgets/live_player_screen.dart';
+import '../ui/live_feed/widgets/own_live_gate.dart';
 import '../ui/chat/widgets/chat_list_screen.dart';
 import '../ui/chat/widgets/chat_detail_screen.dart';
 import '../ui/chat/widgets/new_conversation_screen.dart';
@@ -601,12 +601,12 @@ GoRouter router(Ref ref) {
             return const ForceDarkTheme(child: StartLiveScreen());
           }
           if (extraRoom != null) {
-            return ForceDarkTheme(child: LivePlayerScreen(room: extraRoom));
+            return ForceDarkTheme(child: LiveViewerGate(room: extraRoom));
           }
           return ForceDarkTheme(
             child: _LiveRoomResolver(
               roomId: roomId,
-              builder: (room) => LivePlayerScreen(room: room),
+              builder: (room) => LiveViewerGate(room: room),
             ),
           );
         },

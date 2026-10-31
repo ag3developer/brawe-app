@@ -2,6 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_room.dart';
 
+import '../../domain/models/live_goal.dart';
+
 part 'live_room_dto.freezed.dart';
 part 'live_room_dto.g.dart';
 
@@ -41,6 +43,11 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'opponent_room_id') String? opponentRoomId,
     @JsonKey(name: 'opponent_thumbnail_url') String? opponentThumbnailUrl,
     @JsonKey(name: 'battle_duration_seconds') int? battleDurationSeconds,
+    @JsonKey(name: 'goal_points') int? goalPoints,
+    @JsonKey(name: 'goal_title') String? goalTitle,
+    @JsonKey(name: 'goal_progress_points') @Default(0) int goalProgressPoints,
+    // Metas da live: lista crua, convertida em `LiveGoal` no toDomain.
+    List<dynamic>? goals,
   }) = _LiveRoomDto;
 
   factory LiveRoomDto.fromJson(Map<String, dynamic> json) =>
@@ -113,6 +120,10 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       opponentRoomId: opponentRoomId,
       opponentThumbnailUrl: opponentThumbnailUrl,
       battleDurationSeconds: battleDurationSeconds ?? 300,
+      goalPoints: goalPoints,
+      goalTitle: goalTitle,
+      goalProgressPoints: goalProgressPoints,
+      goals: LiveGoal.listFrom(goals),
     );
   }
 }

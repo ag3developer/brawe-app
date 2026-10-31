@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../data/repositories/auth_state_provider.dart';
 import '../../../../../data/repositories/live_repository.dart';
 
 /// ❤️ Overlay de corações flutuantes em tempo real.
@@ -43,6 +45,13 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
   final List<_HeartSpec> _hearts = [];
   final _rand = math.Random();
   int _seq = 0;
+  StreamSubscription? _sub;
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -53,7 +62,10 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
 
   void _subscribe() {
     final repo = ref.read(liveRepositoryProvider);
-    repo.watchReactions(widget.roomId).listen((event) {
+    final myId = ref.read(authStateProvider).value?.id;
+    _sub = repo.watchReactions(widget.roomId).listen((event) {
+      // Eco do próprio usuário: o coração já foi desenhado localmente.
+      if (myId != null && event.userId == myId) return;
       _spawn(
         event.count,
         color: _colorFromName(event.color),

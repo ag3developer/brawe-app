@@ -6,10 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 ///
 /// Cobre os requisitos da última mudança:
 /// 1. Botão "Rosa" 🌹 substituiu o "Seguir" — tap dispara `onSendRose`.
-/// 2. Input de chat é transparente — não tem `BackdropFilter` nem
-///    `Container` com cor de fundo opaca/glass.
-/// 3. Botões "Curtir", "Presentes" e "Compartilhar" continuam disparando
-///    seus callbacks (regression).
+/// 2. Input de chat é discreto — véu preto de 18% de opacidade, sem
+///    `BackdropFilter` nem fundo opaco/glass.
+/// 3. Botões "Curtir" e "Presente" continuam disparando seus callbacks;
+///    "Compartilhar" saiu da barra (acessível pelo sheet do streamer).
 void main() {
   // Helper: monta o widget envolto em MaterialApp/Scaffold com os
   // callbacks que queremos espionar.
@@ -72,7 +72,7 @@ void main() {
 
     testWidgets('botão Presentes dispara onGifts', (tester) async {
       final spies = await pumpBar(tester);
-      await tester.tap(find.text('Presentes'));
+      await tester.tap(find.text('Presente'));
       await tester.pump();
       expect(spies.gifts, 1);
     });
@@ -84,11 +84,11 @@ void main() {
       expect(spies.like, 1);
     });
 
-    testWidgets('botão Compartilhar dispara onShare', (tester) async {
+    testWidgets('não exibe mais o botão Compartilhar (vive no sheet do streamer)',
+        (tester) async {
       final spies = await pumpBar(tester);
-      await tester.tap(find.text('Compartilhar'));
-      await tester.pump();
-      expect(spies.share, 1);
+      expect(find.text('Compartilhar'), findsNothing);
+      expect(spies.share, 0);
     });
 
     testWidgets('Loja só aparece quando hasStorefront=true', (tester) async {
@@ -105,7 +105,7 @@ void main() {
       expect(spies.shop, 0);
     });
 
-    testWidgets('input de chat é transparente (sem BackdropFilter/glass)',
+    testWidgets('input de chat é discreto (véu sutil, sem BackdropFilter/glass)',
         (tester) async {
       await pumpBar(tester);
 
@@ -113,9 +113,9 @@ void main() {
       expect(find.byType(BackdropFilter), findsNothing);
 
       // Hint do input precisa estar lá.
-      expect(find.text('Diga algo...'), findsOneWidget);
+      expect(find.text('Comentar...'), findsOneWidget);
 
-      // O DecoratedBox que envolve o input deve ter color: Colors.transparent
+      // O DecoratedBox que envolve o input tem só um véu preto translúcido
       // (validamos pelo decoration). Pegamos o primeiro DecoratedBox que
       // contenha um TextField como descendente.
       final boxFinder = find.ancestor(
@@ -127,8 +127,8 @@ void main() {
       final deco = box.decoration as BoxDecoration;
       expect(
         deco.color,
-        Colors.transparent,
-        reason: 'O input deve ter fundo transparente (estilo ChatTicker)',
+        Colors.black.withValues(alpha: 0.18),
+        reason: 'O input usa só um véu preto sutil (18%), sem glass/blur',
       );
     });
 
@@ -137,8 +137,6 @@ void main() {
       await pumpBar(tester);
       // Texto vazio → ícone de chat (abre o teclado), não send.
       expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
-      // O Icons.send_rounded existe SÓ no botão "Compartilhar" da linha
-      // de ações (ainda assim aparece — mas não no input).
       // Validamos pelo Row do TextField que NÃO contém send_rounded.
       final inputRow = find
           .ancestor(of: find.byType(TextField), matching: find.byType(Row))

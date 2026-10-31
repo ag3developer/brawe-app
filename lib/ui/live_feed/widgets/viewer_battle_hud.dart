@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/themes/app_colors.dart';
+import '../../core/ui/image_decode.dart';
 import '../../../domain/models/battle_state.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/battle_view_model.dart';
@@ -225,6 +226,36 @@ class _ViewerBattleHudState extends ConsumerState<ViewerBattleHud> {
                       scoreA: battle.scoreA,
                       scoreB: battle.scoreB,
                       compact: true,
+                    ),
+                  ),
+                ),
+              ),
+
+            // ── Top 3 apoiadores de cada lado (sob a barra de placar) ──
+            if (!battle.isOver &&
+                (battle.topGiftersA.isNotEmpty ||
+                    battle.topGiftersB.isNotEmpty))
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        8, _kPanelTopOffset + 16, 8, 0),
+                    child: IgnorePointer(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _SupportersRow(
+                              gifters: battle.topGiftersA,
+                              color: AppColors.braweBlue),
+                          _SupportersRow(
+                              gifters: battle.topGiftersB,
+                              color: AppColors.hotPink),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -484,6 +515,75 @@ class _CountdownState extends State<_Countdown>
   }
 }
 
+// ─── Supporters (top 3 por lado) ────────────────────────────────────────────
+
+class _SupportersRow extends StatelessWidget {
+  const _SupportersRow({required this.gifters, required this.color});
+
+  final List<BattleGifter> gifters;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = gifters.take(3).toList();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final g in top)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 1.5),
+            child: _GifterAvatar(gifter: g, color: color, size: 22),
+          ),
+      ],
+    );
+  }
+}
+
+class _GifterAvatar extends StatelessWidget {
+  const _GifterAvatar({
+    required this.gifter,
+    required this.color,
+    required this.size,
+  });
+
+  final BattleGifter gifter;
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = gifter.avatarUrl;
+    final name = gifter.name ?? '';
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: 1.5),
+        color: Colors.black45,
+        image: url != null
+            ? DecorationImage(
+                image: ResizeImage(NetworkImage(url),
+                    width: context.decodePx(size)),
+                fit: BoxFit.cover,
+              )
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: url == null
+          ? Text(
+              name.isEmpty ? '?' : name[0].toUpperCase(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: size * 0.45,
+                fontWeight: FontWeight.w700,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
 // ─── Result banner ──────────────────────────────────────────────────────────
 
 /// Banner compacto de resultado (NÃO é fullscreen — a live continua atrás).
@@ -505,6 +605,11 @@ class _ResultBanner extends StatelessWidget {
         (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
     final winnerColor =
         battle.isLeadingA ? AppColors.braweBlue : AppColors.hotPink;
+    final mvpList = battle.isLeadingA ? battle.topGiftersA : battle.topGiftersB;
+    final mvp = isDraw
+        ? null
+        : (battle.isLeadingA ? battle.topGifterA : battle.topGifterB) ??
+            (mvpList.isNotEmpty ? mvpList.first : null);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
@@ -553,6 +658,28 @@ class _ResultBanner extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    if (mvp != null && mvp.total > 0) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          _GifterAvatar(
+                              gifter: mvp, color: winnerColor, size: 24),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${l10n.battleMvp}: ${mvp.name ?? ''} · ${mvp.total.round()}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

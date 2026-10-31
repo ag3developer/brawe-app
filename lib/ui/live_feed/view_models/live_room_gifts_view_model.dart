@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/gift_display_type.dart';
 import '../../../domain/models/live_gift.dart';
@@ -228,13 +229,40 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
         .toList();
   }
 
+  // ── Vez para todos nas faixas ──
+  // Meu presente fura a fila (quem envia precisa se ver na tela) e nunca é
+  // descartado; ninguém ocupa as duas faixas ao mesmo tempo; com fila
+  // grande cada aviso fica menos tempo para todo mundo ter a sua vez.
+  bool _isMine(String key) {
+    final me = ref.read(authStateProvider).value?.id;
+    return me != null && me.isNotEmpty && key.startsWith('$me::');
+  }
+
+  String _senderOf(String key) => key.split('::').first;
+
   void _enqueueSmall(String key) {
     if (_smallQueue.contains(key)) return;
-    _smallQueue.add(key);
-    if (_smallQueue.length > _maxVisualQueue) {
-      final discarded = _smallQueue.removeAt(0);
+    if (_isMine(key)) {
+      _smallQueue.insert(0, key);
+    } else {
+      _smallQueue.add(key);
+    }
+    while (_smallQueue.length > _maxVisualQueue) {
+      final idx = _smallQueue.indexWhere((k) => !_isMine(k));
+      if (idx < 0) break;
+      final discarded = _smallQueue.removeAt(idx);
       debugPrint('🎁 [GIFT-LANES] Fila cheia — descartando aviso $discarded');
     }
+  }
+
+  /// Próximo da fila: o meu primeiro; senão o primeiro de alguém que ainda
+  /// não está numa faixa.
+  int _nextSmallIndex() {
+    final mine = _smallQueue.indexWhere(_isMine);
+    if (mine >= 0) return mine;
+    final busy = _laneKeys.whereType<String>().map(_senderOf).toSet();
+    final fair = _smallQueue.indexWhere((k) => !busy.contains(_senderOf(k)));
+    return fair >= 0 ? fair : 0;
   }
 
   /// Ocupa as faixas livres com os próximos presentes pequenos da fila.
@@ -242,7 +270,7 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
     while (_smallQueue.isNotEmpty) {
       final lane = _laneKeys.indexOf(null);
       if (lane < 0) return; // as 2 faixas ocupadas
-      final key = _smallQueue.removeAt(0);
+      final key = _smallQueue.removeAt(_nextSmallIndex());
       final gift = _entryFor(key);
       if (gift == null) continue; // já expirou do state
       _laneKeys[lane] = key;
@@ -254,8 +282,16 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
 
   void _startLaneTimer(int lane, String key, LiveGift gift) {
     _laneTimers[lane]?.cancel();
+    // Fila grande → passagem mais curta (o meu fica o tempo inteiro).
+    final waiting = _smallQueue.length;
+    var ms = gift.resolvedDurationMs;
+    if (!_isMine(key) && waiting >= 6) {
+      ms = ms.clamp(0, 1600);
+    } else if (!_isMine(key) && waiting >= 3) {
+      ms = ms.clamp(0, 2200);
+    }
     _laneTimers[lane] = Timer(
-      Duration(milliseconds: gift.resolvedDurationMs),
+      Duration(milliseconds: ms),
       () {
         if (!ref.mounted || _laneKeys[lane] != key) return;
         _releaseLane(lane);

@@ -2390,5 +2390,176 @@
   "profileUnblock": "Unblock",
   "profileUnblocked": "User unblocked.",
   "profileUnavailable": "Profile unavailable",
-  "profileUnavailableHint": "This content isn't available to you."
+  "profileUnavailableHint": "This content isn't available to you.",
+  "liveOwnTitle": "You're live",
+  "liveOwnBody": "This is your own live, streaming from another device. To watch as a viewer, sign in with another account.",
+  "liveOwnBack": "Go back",
+  "liveConnecting": "Connecting to the live…",
+  "rankingTitle": "Top Gifters",
+  "rankingTabLive": "This live",
+  "rankingTabWeek": "Creator's week",
+  "rankingRoomTotal": "Live total: {points} coins",
+  "rankingEmpty": "No gifts yet",
+  "rankingEmptyHint": "Be the first to send a gift!",
+  "rankingGiftCount": "{count, plural, =1{1 gift} other{{count} gifts}}",
+  "rankingYouBadge": "You",
+  "rankingFooterGap": "You are #{rank} · {gap} more to pass {name}",
+  "rankingFooterLeader": "You are #1 · leading the ranking",
+  "rankingFooterOnly": "You are #{rank}",
+  "rankingFooterJoin": "Send a gift to join the ranking",
+  "overtakenMessage": "{name} passed you! {gap} coins to get #{rank} back",
+  "overtakenRetake": "Retake",
+  "newTopGifterBanner": "New #1 of the live: {name}",
+  "giftsNeedHint": "{gap} coins to retake your position",
+  "giftsNeedHintNone": "Pick a gift worth at least {gap} coins to retake your position",
+  "@rankingRoomTotal": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "@rankingGiftCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rankingFooterGap": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@rankingFooterOnly": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@overtakenMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@newTopGifterBanner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@giftsNeedHint": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "@giftsNeedHintNone": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceJoined": "{name} joined the live",
+  "@liveEntranceJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceTopOne": "The live's #1 just arrived",
+  "liveLevelUpTitle": "Level up!",
+  "liveLevelUpLevel": "Level {level}",
+  "@liveLevelUpLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveLevelUpPublic": "{name} reached level {level}",
+  "@liveLevelUpPublic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveGoalDefaultTitle": "Live goal",
+  "liveGoalReached": "Goal reached!",
+  "liveGoalOption": "Live goal",
+  "liveGoalOptionSubtitle": "Set a coin goal for this live",
+  "liveGoalSheetTitle": "Live goal",
+  "liveGoalPointsLabel": "Goal (coins)",
+  "liveGoalTitleLabel": "Short title (e.g. Prize giveaway)",
+  "liveGoalSave": "Set goal",
+  "liveGoalClear": "Remove goal",
+  "liveGoalSaved": "Goal updated",
+  "liveGoalError": "Could not update the goal",
+  "liveGoalInvalid": "Enter a goal greater than zero",
+  "questLiveTag": "LIVE",
+  "questWatchLive": "Watch lives",
+  "questSendLiveGift": "Send gifts in a live",
+  "questLiveChat": "Chat in a live",
+  "rankingSheetTitle": "Live ranking",
+  "rankingTabGifts": "Gifts",
+  "rankingTabLikes": "Likes",
+  "likesRoomTotal": "{likes} likes · {people, plural, =1{1 person} other{{people} people}}",
+  "likesFooterGap": "You're #{rank} · {gap} likes to pass {name}",
+  "likesFooterLeader": "You're #1 · top liker of this live",
+  "likesFooterOnly": "You're #{rank}",
+  "likesFooterJoin": "Like the live to join the ranking",
+  "likesEmpty": "No likes yet",
+  "likesEmptyHint": "Be the first to like!",
+  "likesNote": "Likes don't count toward the gift ranking",
+  "rankingSendGift": "Send gift",
+  "rankingLikeNow": "Like",
+  "likeMilestoneBanner": "The live reached {count} likes!",
+  "questLiveLike": "Like lives",
+  "noticeOvertakenTitle": "{name} passed you!",
+  "noticeOvertakenBody": "{gap} coins to take back #{rank}",
+  "noticeLevelUpBody": "You reached level {level}",
+  "noticeNewTopTitle": "New #1 of the live",
+  "goalsTitle": "Live goals",
+  "goalsButton": "Goals",
+  "goalTypeGift": "Gift",
+  "goalTypeLikes": "Likes",
+  "goalLikesLabel": "{count} likes",
+  "goalProgress": "{progress} of {target}",
+  "goalReached": "Goal reached",
+  "goalReachedChat": "Goal reached: {goal}",
+  "goalSendGift": "Send",
+  "goalLike": "Like",
+  "goalsViewerHint": "Tap Send to open the gift bag on the goal's gift.",
+  "goalsEmptyCreator": "Pick a gift and an amount, or a likes goal. Up to 3 goals.",
+  "goalPickGift": "Pick a gift",
+  "goalAddGift": "Add {count} {gift}",
+  "goalAddLikes": "Add {count} likes",
+  "goalsSave": "Save goals",
+  "goalsRemoveAll": "Remove goals",
+  "goalsSaveError": "Couldn't save the goals"
 }

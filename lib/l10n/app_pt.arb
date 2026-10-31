@@ -2740,5 +2740,278 @@
   "profileUnblock": "Desbloquear",
   "profileUnblocked": "Usuário desbloqueado.",
   "profileUnavailable": "Perfil indisponível",
-  "profileUnavailableHint": "Este conteúdo não está disponível para você."
+  "profileUnavailableHint": "Este conteúdo não está disponível para você.",
+  "liveOwnTitle": "Você está ao vivo",
+  "liveOwnBody": "Esta é a sua live, transmitida em outro aparelho. Para assistir como espectador, entre com outra conta.",
+  "liveOwnBack": "Voltar",
+  "liveConnecting": "Conectando à live…",
+  "rankingTitle": "Top Presenteadores",
+  "rankingTabLive": "Esta live",
+  "rankingTabWeek": "Semana do criador",
+  "rankingRoomTotal": "Total da live: {points} moedas",
+  "@rankingRoomTotal": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingEmpty": "Nenhum presente ainda",
+  "rankingEmptyHint": "Seja o primeiro a presentear!",
+  "rankingGiftCount": "{count, plural, =1{1 presente} other{{count} presentes}}",
+  "@rankingGiftCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rankingYouBadge": "Você",
+  "rankingFooterGap": "Você está em #{rank} · faltam {gap} para passar {name}",
+  "@rankingFooterGap": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingFooterLeader": "Você está em #1 · lidera o ranking",
+  "rankingFooterOnly": "Você está em #{rank}",
+  "@rankingFooterOnly": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "rankingFooterJoin": "Envie um presente para entrar no ranking",
+  "overtakenMessage": "{name} passou você! Faltam {gap} moedas para retomar o #{rank}",
+  "@overtakenMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "overtakenRetake": "Retomar",
+  "newTopGifterBanner": "Novo #1 da live: {name}",
+  "@newTopGifterBanner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "giftsNeedHint": "Faltam {gap} moedas para retomar sua posição",
+  "@giftsNeedHint": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "giftsNeedHintNone": "Escolha um presente de pelo menos {gap} moedas para retomar sua posição",
+  "@giftsNeedHintNone": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceJoined": "{name} entrou na live",
+  "@liveEntranceJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceTopOne": "O #1 da live chegou",
+  "liveLevelUpTitle": "Subiu de nível!",
+  "liveLevelUpLevel": "Nível {level}",
+  "@liveLevelUpLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveLevelUpPublic": "{name} subiu para o nível {level}",
+  "@liveLevelUpPublic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveGoalDefaultTitle": "Meta da live",
+  "liveGoalReached": "Meta batida!",
+  "liveGoalOption": "Meta da live",
+  "liveGoalOptionSubtitle": "Defina uma meta de moedas para a live",
+  "liveGoalSheetTitle": "Meta da live",
+  "liveGoalPointsLabel": "Meta (moedas)",
+  "liveGoalTitleLabel": "Título curto (ex.: Sorteio de um prêmio)",
+  "liveGoalSave": "Definir meta",
+  "liveGoalClear": "Remover meta",
+  "liveGoalSaved": "Meta atualizada",
+  "liveGoalError": "Não foi possível atualizar a meta",
+  "liveGoalInvalid": "Informe uma meta maior que zero",
+  "questLiveTag": "NA LIVE",
+  "questWatchLive": "Assista lives",
+  "questSendLiveGift": "Envie presentes na live",
+  "questLiveChat": "Converse na live",
+  "rankingSheetTitle": "Ranking da live",
+  "rankingTabGifts": "Presentes",
+  "rankingTabLikes": "Curtidas",
+  "likesRoomTotal": "{likes} curtidas · {people, plural, =1{1 pessoa} other{{people} pessoas}}",
+  "likesFooterGap": "Você está em #{rank} · faltam {gap} curtidas para passar {name}",
+  "likesFooterLeader": "Você está em #1 · quem mais curtiu a live",
+  "likesFooterOnly": "Você está em #{rank}",
+  "likesFooterJoin": "Curta a live para entrar no ranking",
+  "likesEmpty": "Ninguém curtiu ainda",
+  "likesEmptyHint": "Seja o primeiro a curtir!",
+  "likesNote": "Curtidas não somam no ranking de presentes",
+  "rankingSendGift": "Presentear",
+  "rankingLikeNow": "Curtir",
+  "likeMilestoneBanner": "A live chegou a {count} curtidas!",
+  "@likesRoomTotal": {
+    "placeholders": {
+      "likes": {
+        "type": "String"
+      },
+      "people": {
+        "type": "int"
+      }
+    }
+  },
+  "@likesFooterGap": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@likesFooterOnly": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@likeMilestoneBanner": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "questLiveLike": "Curtir lives",
+  "noticeOvertakenTitle": "{name} passou você!",
+  "noticeOvertakenBody": "Faltam {gap} moedas para retomar o #{rank}",
+  "noticeLevelUpBody": "Você chegou ao nível {level}",
+  "noticeNewTopTitle": "Novo #1 da live",
+  "@noticeOvertakenTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@noticeOvertakenBody": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      },
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@noticeLevelUpBody": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "goalsTitle": "Metas da live",
+  "goalsButton": "Metas",
+  "goalTypeGift": "Presente",
+  "goalTypeLikes": "Curtidas",
+  "goalLikesLabel": "{count} curtidas",
+  "goalProgress": "{progress} de {target}",
+  "goalReached": "Meta batida",
+  "goalReachedChat": "Meta batida: {goal}",
+  "goalSendGift": "Enviar",
+  "goalLike": "Curtir",
+  "goalsViewerHint": "Toque em Enviar para abrir a sacola já no presente da meta.",
+  "goalsEmptyCreator": "Escolha um presente e a quantidade, ou uma meta de curtidas. Até 3 metas.",
+  "goalPickGift": "Escolha um presente",
+  "goalAddGift": "Adicionar {count} {gift}",
+  "goalAddLikes": "Adicionar {count} curtidas",
+  "goalsSave": "Salvar metas",
+  "goalsRemoveAll": "Remover metas",
+  "goalsSaveError": "Não foi possível salvar as metas",
+  "@goalLikesLabel": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "@goalProgress": {
+    "placeholders": {
+      "progress": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "@goalReachedChat": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "@goalAddGift": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "gift": {
+        "type": "String"
+      }
+    }
+  },
+  "@goalAddLikes": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  }
 }

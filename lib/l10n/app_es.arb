@@ -2390,5 +2390,176 @@
   "profileUnblock": "Desbloquear",
   "profileUnblocked": "Usuario desbloqueado.",
   "profileUnavailable": "Perfil no disponible",
-  "profileUnavailableHint": "Este contenido no está disponible para ti."
+  "profileUnavailableHint": "Este contenido no está disponible para ti.",
+  "liveOwnTitle": "Estás en vivo",
+  "liveOwnBody": "Este es tu propio live, transmitido desde otro dispositivo. Para verlo como espectador, entra con otra cuenta.",
+  "liveOwnBack": "Volver",
+  "liveConnecting": "Conectando al live…",
+  "rankingTitle": "Top Regaladores",
+  "rankingTabLive": "Esta live",
+  "rankingTabWeek": "Semana del creador",
+  "rankingRoomTotal": "Total del live: {points} monedas",
+  "rankingEmpty": "Aún no hay regalos",
+  "rankingEmptyHint": "¡Sé el primero en regalar!",
+  "rankingGiftCount": "{count, plural, =1{1 regalo} other{{count} regalos}}",
+  "rankingYouBadge": "Tú",
+  "rankingFooterGap": "Estás en #{rank} · faltan {gap} para pasar a {name}",
+  "rankingFooterLeader": "Estás en #1 · lideras el ranking",
+  "rankingFooterOnly": "Estás en #{rank}",
+  "rankingFooterJoin": "Envía un regalo para entrar al ranking",
+  "overtakenMessage": "¡{name} te pasó! Faltan {gap} monedas para recuperar el #{rank}",
+  "overtakenRetake": "Recuperar",
+  "newTopGifterBanner": "Nuevo #1 del live: {name}",
+  "giftsNeedHint": "Faltan {gap} monedas para recuperar tu posición",
+  "giftsNeedHintNone": "Elige un regalo de al menos {gap} monedas para recuperar tu posición",
+  "@rankingRoomTotal": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "@rankingGiftCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@rankingFooterGap": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@rankingFooterOnly": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@overtakenMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "gap": {
+        "type": "String"
+      },
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "@newTopGifterBanner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@giftsNeedHint": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "@giftsNeedHintNone": {
+    "placeholders": {
+      "gap": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceJoined": "{name} entró al directo",
+  "@liveEntranceJoined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "liveEntranceTopOne": "Llegó el #1 del directo",
+  "liveLevelUpTitle": "¡Subiste de nivel!",
+  "liveLevelUpLevel": "Nivel {level}",
+  "@liveLevelUpLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveLevelUpPublic": "{name} subió al nivel {level}",
+  "@liveLevelUpPublic": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "liveGoalDefaultTitle": "Meta del directo",
+  "liveGoalReached": "¡Meta alcanzada!",
+  "liveGoalOption": "Meta del directo",
+  "liveGoalOptionSubtitle": "Define una meta de monedas para el directo",
+  "liveGoalSheetTitle": "Meta del directo",
+  "liveGoalPointsLabel": "Meta (monedas)",
+  "liveGoalTitleLabel": "Título corto (ej.: Sorteo de un premio)",
+  "liveGoalSave": "Definir meta",
+  "liveGoalClear": "Quitar meta",
+  "liveGoalSaved": "Meta actualizada",
+  "liveGoalError": "No se pudo actualizar la meta",
+  "liveGoalInvalid": "Indica una meta mayor que cero",
+  "questLiveTag": "EN DIRECTO",
+  "questWatchLive": "Mira directos",
+  "questSendLiveGift": "Envía regalos en un directo",
+  "questLiveChat": "Chatea en un directo",
+  "rankingSheetTitle": "Ranking del live",
+  "rankingTabGifts": "Regalos",
+  "rankingTabLikes": "Me gusta",
+  "likesRoomTotal": "{likes} me gusta · {people, plural, =1{1 persona} other{{people} personas}}",
+  "likesFooterGap": "Estás en #{rank} · faltan {gap} me gusta para pasar a {name}",
+  "likesFooterLeader": "Estás en #1 · quien más le dio me gusta",
+  "likesFooterOnly": "Estás en #{rank}",
+  "likesFooterJoin": "Dale me gusta al live para entrar al ranking",
+  "likesEmpty": "Nadie dio me gusta aún",
+  "likesEmptyHint": "¡Sé el primero!",
+  "likesNote": "Los me gusta no suman al ranking de regalos",
+  "rankingSendGift": "Regalar",
+  "rankingLikeNow": "Me gusta",
+  "likeMilestoneBanner": "¡El live llegó a {count} me gusta!",
+  "questLiveLike": "Dar me gusta en lives",
+  "noticeOvertakenTitle": "¡{name} te pasó!",
+  "noticeOvertakenBody": "Faltan {gap} monedas para recuperar el #{rank}",
+  "noticeLevelUpBody": "Llegaste al nivel {level}",
+  "noticeNewTopTitle": "Nuevo #1 del live",
+  "goalsTitle": "Metas del live",
+  "goalsButton": "Metas",
+  "goalTypeGift": "Regalo",
+  "goalTypeLikes": "Me gusta",
+  "goalLikesLabel": "{count} me gusta",
+  "goalProgress": "{progress} de {target}",
+  "goalReached": "Meta cumplida",
+  "goalReachedChat": "Meta cumplida: {goal}",
+  "goalSendGift": "Enviar",
+  "goalLike": "Me gusta",
+  "goalsViewerHint": "Toca Enviar para abrir la bolsa en el regalo de la meta.",
+  "goalsEmptyCreator": "Elige un regalo y la cantidad, o una meta de me gusta. Hasta 3 metas.",
+  "goalPickGift": "Elige un regalo",
+  "goalAddGift": "Agregar {count} {gift}",
+  "goalAddLikes": "Agregar {count} me gusta",
+  "goalsSave": "Guardar metas",
+  "goalsRemoveAll": "Quitar metas",
+  "goalsSaveError": "No se pudieron guardar las metas"
 }

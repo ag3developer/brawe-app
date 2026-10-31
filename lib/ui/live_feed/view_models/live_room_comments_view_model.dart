@@ -7,6 +7,7 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_comment.dart';
 import '../../../domain/models/live_gift.dart';
+import '../../../domain/models/live_competition_event.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../domain/models/user.dart';
 
@@ -23,8 +24,20 @@ class LiveRoomCommentsState {
     this.errorMessage,
     this.recentViewerAvatars = const <String>[],
     this.gifterRanking = const <GifterEntry>[],
+    this.rankingTotalPoints = 0,
+    this.myRank,
+    this.myPoints,
+    this.rankingFromServer = false,
+    this.overtaken,
+    this.newTopGifter,
+    this.likerRanking = const <GifterEntry>[],
+    this.uniqueLikers = 0,
+    this.myLikeRank,
+    this.myLikes,
+    this.likeMilestone,
     this.myUsername,
     this.chatGifts = const <LiveGift>[],
+    this.chatGiftParts = const <String, List<GiftChatPart>>{},
   });
 
   final List<LiveComment> comments;
@@ -45,6 +58,33 @@ class LiveRoomCommentsState {
   /// Ordenado por `totalValue` desc. Máx. 10 entradas (só Top 3 é exibido).
   final List<GifterEntry> gifterRanking;
 
+  /// Total de pontos (moedas gastas) da live, do servidor. 0 = desconhecido.
+  final int rankingTotalPoints;
+
+  /// Minha posição/pontos no ranking (REST `me`), mesmo fora do top 10.
+  final int? myRank;
+  final int? myPoints;
+
+  /// True depois de receber snapshot do servidor (`gifter_ranking` ou REST
+  /// com `total_points`); a partir daí o acúmulo local otimista é ignorado.
+  final bool rankingFromServer;
+
+  /// Último evento `gifter_overtaken` (já com throttle aplicado).
+  final GifterOvertakenEvent? overtaken;
+
+  /// Último evento `top_gifter_changed`.
+  final TopGifterChangedEvent? newTopGifter;
+
+  /// Ranking de curtidores (curtidas válidas contadas no servidor). Reusa
+  /// `GifterEntry`: `totalValue` = curtidas.
+  final List<GifterEntry> likerRanking;
+  final int uniqueLikers;
+  final int? myLikeRank;
+  final int? myLikes;
+
+  /// Último marco de curtidas da live (1 mil, 5 mil, 10 mil…).
+  final LikeMilestoneEvent? likeMilestone;
+
   /// Meu @username (aprendido do eco das minhas mensagens) — usado para
   /// destacar mensagens que me mencionam.
   final String? myUsername;
@@ -53,6 +93,10 @@ class LiveRoomCommentsState {
   /// animações (`LiveRoomGiftsViewModel`, que expira em 8s) — no chat o
   /// presente fica no histórico como as mensagens.
   final List<LiveGift> chatGifts;
+
+  /// Linhas de presente que juntaram presentes diferentes da mesma pessoa
+  /// ("50× Rosa + 1× Dragão"), por id da linha em [chatGifts].
+  final Map<String, List<GiftChatPart>> chatGiftParts;
 
   LiveRoomCommentsState copyWith({
     List<LiveComment>? comments,
@@ -65,8 +109,21 @@ class LiveRoomCommentsState {
     bool clearErrorMessage = false,
     List<String>? recentViewerAvatars,
     List<GifterEntry>? gifterRanking,
+    int? rankingTotalPoints,
+    int? myRank,
+    int? myPoints,
+    bool clearMe = false,
+    bool? rankingFromServer,
+    GifterOvertakenEvent? overtaken,
+    TopGifterChangedEvent? newTopGifter,
+    List<GifterEntry>? likerRanking,
+    int? uniqueLikers,
+    int? myLikeRank,
+    int? myLikes,
+    LikeMilestoneEvent? likeMilestone,
     String? myUsername,
     List<LiveGift>? chatGifts,
+    Map<String, List<GiftChatPart>>? chatGiftParts,
   }) {
     return LiveRoomCommentsState(
       comments: comments ?? this.comments,
@@ -80,10 +137,56 @@ class LiveRoomCommentsState {
           : errorMessage ?? this.errorMessage,
       recentViewerAvatars: recentViewerAvatars ?? this.recentViewerAvatars,
       gifterRanking: gifterRanking ?? this.gifterRanking,
+      rankingTotalPoints: rankingTotalPoints ?? this.rankingTotalPoints,
+      myRank: clearMe ? null : myRank ?? this.myRank,
+      myPoints: clearMe ? null : myPoints ?? this.myPoints,
+      rankingFromServer: rankingFromServer ?? this.rankingFromServer,
+      overtaken: overtaken ?? this.overtaken,
+      newTopGifter: newTopGifter ?? this.newTopGifter,
+      likerRanking: likerRanking ?? this.likerRanking,
+      uniqueLikers: uniqueLikers ?? this.uniqueLikers,
+      myLikeRank: myLikeRank ?? this.myLikeRank,
+      myLikes: myLikes ?? this.myLikes,
+      likeMilestone: likeMilestone ?? this.likeMilestone,
       myUsername: myUsername ?? this.myUsername,
       chatGifts: chatGifts ?? this.chatGifts,
+      chatGiftParts: chatGiftParts ?? this.chatGiftParts,
     );
   }
+}
+
+/// Um presente dentro de uma linha de chat agrupada.
+class GiftChatPart {
+  const GiftChatPart({
+    required this.key,
+    required this.giftName,
+    this.iconUrl,
+    required this.quantity,
+  });
+
+  final String key;
+  final String giftName;
+  final String? iconUrl;
+  final int quantity;
+
+  GiftChatPart add(int n) =>
+      GiftChatPart(key: key, giftName: giftName, iconUrl: iconUrl, quantity: quantity + n);
+}
+
+class _ChatBurst {
+  _ChatBurst(this.first);
+
+  final LiveGift first;
+  final List<GiftChatPart> parts = [];
+  Timer? timer;
+}
+
+/// Marco de curtidas da live (evento `like_milestone`).
+class LikeMilestoneEvent {
+  const LikeMilestoneEvent({required this.id, required this.milestone});
+
+  final int id;
+  final int milestone;
 }
 
 /// Entrada no ranking de presenteadores (acumulado em tempo real).
@@ -94,8 +197,39 @@ class GifterEntry {
     this.avatarUrl,
     required this.totalValue,
     required this.giftCount,
+    this.level,
   });
 
+  /// Parse tolerante de um item do ranking (socket ou REST).
+  static GifterEntry? fromMap(Map raw) {
+    final id = raw['user_id']?.toString() ?? '';
+    if (id.isEmpty) return null;
+    return GifterEntry(
+      userId: id,
+      name:
+          raw['display_name']?.toString() ??
+          raw['user_name']?.toString() ??
+          raw['name']?.toString() ??
+          'Alguém',
+      avatarUrl: _nonEmpty(raw['avatar_url']),
+      // Pontos = moedas gastas. Servidor antigo só mandava USDT.
+      totalValue:
+          (raw['points'] as num?)?.toInt() ??
+          (((raw['total_usdt'] as num?) ?? 0).toDouble() * 100).toInt(),
+      giftCount:
+          (raw['gift_count'] as num?)?.toInt() ??
+          (raw['total_gifts'] as num?)?.toInt() ??
+          0,
+      level: (raw['level'] as num?)?.toInt(),
+    );
+  }
+
+  static String? _nonEmpty(dynamic v) {
+    final s = v?.toString();
+    return (s == null || s.isEmpty) ? null : s;
+  }
+
+  final int? level;
   final String userId;
   final String name;
   final String? avatarUrl;
@@ -106,13 +240,51 @@ class GifterEntry {
   /// Quantidade de gifts enviados.
   final int giftCount;
 
-  GifterEntry addGift(int value) => GifterEntry(
+  GifterEntry addGift(int value, {int count = 1}) => GifterEntry(
     userId: userId,
     name: name,
     avatarUrl: avatarUrl,
     totalValue: totalValue + value,
-    giftCount: giftCount + 1,
+    giftCount: giftCount + count,
+    level: level,
   );
+}
+
+/// Alguém passou o usuário no ranking (`gifter_overtaken`).
+class GifterOvertakenEvent {
+  const GifterOvertakenEvent({
+    required this.id,
+    required this.byName,
+    this.byAvatarUrl,
+    required this.gapPoints,
+    required this.previousRank,
+    this.yourRank,
+  });
+
+  /// Identificador crescente — permite à UI detectar evento novo.
+  final int id;
+  final String byName;
+  final String? byAvatarUrl;
+  final int gapPoints;
+  final int previousRank;
+  final int? yourRank;
+}
+
+/// Novo #1 da live (`top_gifter_changed`).
+class TopGifterChangedEvent {
+  const TopGifterChangedEvent({
+    required this.id,
+    required this.userId,
+    required this.name,
+    this.avatarUrl,
+    required this.points,
+  });
+
+  final int id;
+  final String userId;
+  final String name;
+  final String? avatarUrl;
+  final int points;
 }
 
 @riverpod
@@ -125,6 +297,10 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<double>? _giftTotalSubscription;
   StreamSubscription<LiveViewerEvent>? _viewerEventSubscription;
   StreamSubscription<LiveGift>? _giftsRankingSubscription;
+  StreamSubscription<LiveCompetitionEvent>? _competitionSubscription;
+  StreamSubscription<void>? _reconnectSubscription;
+  int _eventSeq = 0;
+  DateTime? _lastOvertakenAt;
   final Set<String> _seenGiftIds = {};
 
   @override
@@ -133,6 +309,10 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     final repository = ref.read(liveRepositoryProvider);
 
     ref.onDispose(() {
+      for (final b in _chatBursts.values) {
+        b.timer?.cancel();
+      }
+      _chatBursts.clear();
       _commentsSubscription?.cancel();
       _viewerCountSubscription?.cancel();
       _likeCountSubscription?.cancel();
@@ -140,6 +320,8 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       _giftTotalSubscription?.cancel();
       _viewerEventSubscription?.cancel();
       _giftsRankingSubscription?.cancel();
+      _competitionSubscription?.cancel();
+      _reconnectSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
 
@@ -196,17 +378,18 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     _giftsRankingSubscription = repository.watchGifts(roomId).listen((gift) {
       // Mesmo presente pode chegar 2× (reconexão) — conta uma vez só.
       if (gift.id.isNotEmpty && !_seenGiftIds.add(gift.id)) return;
-      if (gift.showInChat) {
-        final chat = [...state.chatGifts, gift];
-        state = state.copyWith(
-          chatGifts: chat.length > 30 ? chat.sublist(chat.length - 30) : chat,
-        );
-      }
+      if (gift.showInChat) _addToChatBurst(gift);
+      // Com snapshot do servidor (`gifter_ranking`) o ranking é dele; o
+      // acúmulo local abaixo é só fallback para servidor antigo.
+      if (state.rankingFromServer) return;
       if (gift.senderId.isEmpty) return;
       final ranking = List<GifterEntry>.from(state.gifterRanking);
       final idx = ranking.indexWhere((e) => e.userId == gift.senderId);
       if (idx >= 0) {
-        ranking[idx] = ranking[idx].addGift(gift.value * gift.quantity);
+        ranking[idx] = ranking[idx].addGift(
+          gift.value * gift.quantity,
+          count: gift.quantity,
+        );
       } else {
         ranking.add(
           GifterEntry(
@@ -221,6 +404,14 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       ranking.sort((a, b) => b.totalValue.compareTo(a.totalValue));
       if (ranking.length > 10) ranking.length = 10;
       state = state.copyWith(gifterRanking: ranking);
+    });
+
+    _competitionSubscription = repository
+        .watchCompetition(roomId)
+        .listen(_handleCompetitionEvent);
+    // Socket reconectou: pode ter perdido eventos — refaz o snapshot.
+    _reconnectSubscription = repository.watchReconnects().listen((_) {
+      _refreshRanking();
     });
 
     try {
@@ -245,43 +436,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       }
 
       // 🏆 Busca ranking inicial de gifters da API (dados persistidos).
-      // Carrega antes das atualizações em tempo real chegarem pelo socket,
-      // para quem entrou no meio da live já ver o ranking histórico correto.
-      final topGifters = await repository.getTopGifters(roomId, limit: 10);
-      if (!ref.mounted) return;
-      if (topGifters.isNotEmpty) {
-        final initialRanking = topGifters
-            .map((raw) {
-              return GifterEntry(
-                userId: raw['user_id']?.toString() ?? '',
-                name:
-                    raw['display_name']?.toString() ??
-                    raw['name']?.toString() ??
-                    'Alguém',
-                avatarUrl: raw['avatar_url']?.toString(),
-                totalValue:
-                    (raw['total_coins'] as num?)?.toInt() ??
-                    (raw['total_value'] as num?)?.toInt() ??
-                    0,
-                giftCount: (raw['gift_count'] as num?)?.toInt() ?? 0,
-              );
-            })
-            .where((e) => e.userId.isNotEmpty)
-            .toList();
-        // O socket pode já ter adicionado entradas — merge: API tem precedência
-        // para entradas existentes (histórico > streaming parcial).
-        final merged = List<GifterEntry>.from(state.gifterRanking);
-        for (final entry in initialRanking) {
-          final idx = merged.indexWhere((e) => e.userId == entry.userId);
-          if (idx < 0) {
-            merged.add(entry); // novo viewer na lista da API
-          }
-          // Se já existe via socket, mantém o valor do socket (mais atual).
-        }
-        merged.sort((a, b) => b.totalValue.compareTo(a.totalValue));
-        if (merged.length > 10) merged.length = 10;
-        state = state.copyWith(gifterRanking: merged);
-      }
+      await _refreshRanking();
     } on Failure catch (failure) {
       if (!ref.mounted) {
         return;
@@ -297,6 +452,237 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         errorMessage: const Failure.unknown().toDisplayMessage(),
       );
     }
+  }
+
+  /// Aplica um snapshot do servidor (socket ou REST) como fonte de verdade.
+  void _applyServerRanking(
+    List<GifterEntry> entries, {
+    int? totalPoints,
+    Map? me,
+  }) {
+    final sorted = List<GifterEntry>.from(entries)
+      ..sort((a, b) => b.totalValue.compareTo(a.totalValue));
+    if (sorted.length > 10) sorted.length = 10;
+    final myRank = (me?['rank'] as num?)?.toInt();
+    final myPoints = (me?['points'] as num?)?.toInt();
+    state = state.copyWith(
+      gifterRanking: sorted,
+      rankingTotalPoints: totalPoints,
+      rankingFromServer: true,
+      clearMe: me == null,
+      myRank: myRank,
+      myPoints: myPoints,
+    );
+  }
+
+  /// Busca o top-gifters via REST (inicial, reconexão). Com servidor novo
+  /// (`total_points` presente) substitui a lista; senão faz merge com o que
+  /// o socket já acumulou (servidor antigo).
+  Future<void> _refreshRanking() async {
+    final repository = ref.read(liveRepositoryProvider);
+    unawaited(_refreshLikers());
+    final full = await repository.getTopGiftersFull(_roomId, limit: 10);
+    if (!ref.mounted) return;
+    final raw = full['data'] ?? full['top_gifters'];
+    if (raw is! List) return;
+    final initialRanking = raw
+        .whereType<Map>()
+        .map(GifterEntry.fromMap)
+        .whereType<GifterEntry>()
+        .toList();
+    final total = (full['total_points'] as num?)?.toInt();
+    if (total != null) {
+      _applyServerRanking(
+        initialRanking,
+        totalPoints: total,
+        me: full['me'] is Map ? full['me'] as Map : null,
+      );
+      return;
+    }
+    if (initialRanking.isEmpty) return;
+    // O socket pode já ter adicionado entradas — merge: fica o maior total
+    // (o parcial do socket não apaga o histórico da API).
+    final merged = List<GifterEntry>.from(state.gifterRanking);
+    for (final entry in initialRanking) {
+      final idx = merged.indexWhere((e) => e.userId == entry.userId);
+      if (idx < 0) {
+        merged.add(entry);
+      } else if (entry.totalValue > merged[idx].totalValue) {
+        merged[idx] = GifterEntry(
+          userId: entry.userId,
+          name: entry.name,
+          avatarUrl: entry.avatarUrl ?? merged[idx].avatarUrl,
+          totalValue: entry.totalValue,
+          giftCount: entry.giftCount,
+          level: entry.level,
+        );
+      }
+    }
+    merged.sort((a, b) => b.totalValue.compareTo(a.totalValue));
+    if (merged.length > 10) merged.length = 10;
+    state = state.copyWith(gifterRanking: merged);
+  }
+
+  // ── Presentes no chat: uma linha por "rajada" ──────────────────────────
+  //
+  // Quem manda sem parar (rosa atrás de rosa, combos) não vira 50 linhas no
+  // chat: a soma aparece ao vivo no combo, e quando a pessoa PARA (sem
+  // presente novo por [_chatBurstIdle]) entra UMA linha: "João enviou
+  // 50× Rosa + 1× Dragão".
+  static const _chatBurstIdle = Duration(milliseconds: 4500);
+  final Map<String, _ChatBurst> _chatBursts = {};
+
+  void _addToChatBurst(LiveGift gift) {
+    final key = gift.senderId.isNotEmpty ? gift.senderId : gift.senderName;
+    final burst = _chatBursts.putIfAbsent(key, () => _ChatBurst(gift));
+    final giftKey = (gift.giftSlug?.isNotEmpty ?? false) ? gift.giftSlug! : gift.giftName;
+    final idx = burst.parts.indexWhere((p) => p.key == giftKey);
+    if (idx >= 0) {
+      burst.parts[idx] = burst.parts[idx].add(gift.quantity);
+    } else {
+      burst.parts.add(
+        GiftChatPart(
+          key: giftKey,
+          giftName: gift.giftName,
+          iconUrl: gift.giftIconUrl,
+          quantity: gift.quantity,
+        ),
+      );
+    }
+    burst.timer?.cancel();
+    burst.timer = Timer(_chatBurstIdle, () => _flushChatBurst(key));
+  }
+
+  void _flushChatBurst(String key) {
+    final burst = _chatBursts.remove(key);
+    if (burst == null || !ref.mounted || burst.parts.isEmpty) return;
+    final main = burst.parts.first;
+    final line = burst.first.copyWith(
+      giftName: main.giftName,
+      giftIconUrl: main.iconUrl,
+      quantity: main.quantity,
+      // Entra no fim do chat quando a pessoa para de enviar.
+      timestamp: DateTime.now(),
+    );
+    final parts = Map<String, List<GiftChatPart>>.from(state.chatGiftParts);
+    if (burst.parts.length > 1) parts[line.id] = List.unmodifiable(burst.parts);
+    final chat = [...state.chatGifts, line];
+    final trimmed = chat.length > 30 ? chat.sublist(chat.length - 30) : chat;
+    parts.removeWhere((id, _) => !trimmed.any((g) => g.id == id));
+    state = state.copyWith(chatGifts: trimmed, chatGiftParts: parts);
+  }
+
+  /// Ranking de curtidores via REST (entrada / reconexão).
+  Future<void> _refreshLikers() async {
+    final full = await ref.read(liveRepositoryProvider).getTopLikers(_roomId);
+    if (!ref.mounted || full.isEmpty) return;
+    _applyLikers(full['data'], full);
+    final me = full['me'];
+    if (me is Map) {
+      state = state.copyWith(
+        myLikeRank: (me['rank'] as num?)?.toInt(),
+        myLikes: (me['likes'] as num?)?.toInt(),
+      );
+    }
+  }
+
+  void _applyLikers(Object? raw, Map<String, dynamic> d) {
+    if (raw is! List) return;
+    final entries = raw
+        .whereType<Map>()
+        .map((m) => GifterEntry.fromMap({...m, 'points': m['likes']}))
+        .whereType<GifterEntry>()
+        .toList();
+    final myId = ref.read(authStateProvider).value?.id;
+    final idx = myId == null ? -1 : entries.indexWhere((e) => e.userId == myId);
+    final total = (d['total_likes'] as num?)?.toInt();
+    state = state.copyWith(
+      likerRanking: entries,
+      uniqueLikers: (d['unique_likers'] as num?)?.toInt(),
+      likeCount: total != null && total > state.likeCount ? total : null,
+      myLikeRank: idx >= 0 ? idx + 1 : null,
+      myLikes: idx >= 0 ? entries[idx].totalValue : null,
+    );
+  }
+
+  void _handleCompetitionEvent(LiveCompetitionEvent event) {
+    final d = event.data;
+    switch (event.type) {
+      case LiveCompetitionEventType.likerRanking:
+        _applyLikers(d['ranking'], d);
+      case LiveCompetitionEventType.likeMilestone:
+        final m = (d['milestone'] as num?)?.toInt() ?? 0;
+        if (m <= 0) return;
+        state = state.copyWith(
+          likeMilestone: LikeMilestoneEvent(id: ++_eventSeq, milestone: m),
+        );
+      case LiveCompetitionEventType.ranking:
+        final list = d['ranking'];
+        if (list is! List) return;
+        final entries = list
+            .whereType<Map>()
+            .map(GifterEntry.fromMap)
+            .whereType<GifterEntry>()
+            .toList();
+        // `me` vem só do REST; recalcula a minha posição se estou no top 10.
+        _applyServerRanking(
+          entries,
+          totalPoints: (d['total_points'] as num?)?.toInt(),
+          me: _meFromSnapshot(entries),
+        );
+      case LiveCompetitionEventType.topGifterChanged:
+        final userId = d['user_id']?.toString() ?? '';
+        if (userId.isEmpty) return;
+        state = state.copyWith(
+          newTopGifter: TopGifterChangedEvent(
+            id: ++_eventSeq,
+            userId: userId,
+            name: d['name']?.toString() ?? 'Alguém',
+            avatarUrl: GifterEntry.fromMap({
+              'user_id': userId,
+              'avatar_url': d['avatar_url'],
+            })?.avatarUrl,
+            points: (d['points'] as num?)?.toInt() ?? 0,
+          ),
+        );
+      case LiveCompetitionEventType.overtaken:
+        // Throttle: no máximo um aviso a cada 20s (ultrapassagens em rajada).
+        final now = DateTime.now();
+        final last = _lastOvertakenAt;
+        if (last != null && now.difference(last) < const Duration(seconds: 20)) {
+          return;
+        }
+        final gap = (d['gap_points'] as num?)?.toInt() ?? 0;
+        if (gap <= 0) return;
+        _lastOvertakenAt = now;
+        final av = d['by_avatar_url']?.toString();
+        state = state.copyWith(
+          overtaken: GifterOvertakenEvent(
+            id: ++_eventSeq,
+            byName: d['by_name']?.toString() ?? 'Alguém',
+            byAvatarUrl: (av == null || av.isEmpty) ? null : av,
+            gapPoints: gap,
+            previousRank: (d['previous_rank'] as num?)?.toInt() ?? 1,
+            yourRank: (d['your_rank'] as num?)?.toInt(),
+          ),
+        );
+    }
+  }
+
+  /// Minha posição a partir de um snapshot do socket (quando estou no top 10);
+  /// senão mantém o `me` anterior do REST.
+  Map<String, dynamic>? _meFromSnapshot(List<GifterEntry> entries) {
+    final me = ref.read(authStateProvider).value;
+    final myId = me?.id;
+    if (myId == null) return null;
+    final idx = entries.indexWhere((e) => e.userId == myId);
+    if (idx >= 0) return {'rank': idx + 1, 'points': entries[idx].totalValue};
+    // Fora do top 10: mantém a posição do REST (só se já era > 10).
+    final prev = state.myRank;
+    if (prev != null && prev > 10) {
+      return {'rank': prev, 'points': state.myPoints};
+    }
+    return null;
   }
 
   Future<dynamic> _fetchRoomWithRetry(dynamic repository, String roomId) async {
@@ -385,6 +771,20 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
           ? comment.username
           : null,
     );
+  }
+
+  /// Linha de sistema no chat (ex.: "fulano subiu para o nível 10").
+  void addSystemMessage(String message) {
+    final now = DateTime.now();
+    final line = LiveComment(
+      id: 'sys-${now.microsecondsSinceEpoch}',
+      userId: '',
+      userName: '',
+      message: message,
+      timestamp: now,
+      isSystem: true,
+    );
+    state = state.copyWith(comments: _trimComments([...state.comments, line]));
   }
 
   bool _isMine(LiveComment comment) {

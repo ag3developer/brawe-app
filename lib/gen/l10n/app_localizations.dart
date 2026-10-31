@@ -9836,6 +9836,480 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Este conteúdo não está disponível para você.'**
   String get profileUnavailableHint;
+
+  /// No description provided for @liveOwnTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está ao vivo'**
+  String get liveOwnTitle;
+
+  /// No description provided for @liveOwnBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta é a sua live, transmitida em outro aparelho. Para assistir como espectador, entre com outra conta.'**
+  String get liveOwnBody;
+
+  /// No description provided for @liveOwnBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get liveOwnBack;
+
+  /// No description provided for @liveConnecting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectando à live…'**
+  String get liveConnecting;
+
+  /// No description provided for @rankingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Top Presenteadores'**
+  String get rankingTitle;
+
+  /// No description provided for @rankingTabLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta live'**
+  String get rankingTabLive;
+
+  /// No description provided for @rankingTabWeek.
+  ///
+  /// In pt, this message translates to:
+  /// **'Semana do criador'**
+  String get rankingTabWeek;
+
+  /// No description provided for @rankingRoomTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total da live: {points} moedas'**
+  String rankingRoomTotal(String points);
+
+  /// No description provided for @rankingEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum presente ainda'**
+  String get rankingEmpty;
+
+  /// No description provided for @rankingEmptyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seja o primeiro a presentear!'**
+  String get rankingEmptyHint;
+
+  /// No description provided for @rankingGiftCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 presente} other{{count} presentes}}'**
+  String rankingGiftCount(int count);
+
+  /// No description provided for @rankingYouBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você'**
+  String get rankingYouBadge;
+
+  /// No description provided for @rankingFooterGap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #{rank} · faltam {gap} para passar {name}'**
+  String rankingFooterGap(int rank, String gap, String name);
+
+  /// No description provided for @rankingFooterLeader.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #1 · lidera o ranking'**
+  String get rankingFooterLeader;
+
+  /// No description provided for @rankingFooterOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #{rank}'**
+  String rankingFooterOnly(int rank);
+
+  /// No description provided for @rankingFooterJoin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie um presente para entrar no ranking'**
+  String get rankingFooterJoin;
+
+  /// No description provided for @overtakenMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} passou você! Faltam {gap} moedas para retomar o #{rank}'**
+  String overtakenMessage(String name, String gap, int rank);
+
+  /// No description provided for @overtakenRetake.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar'**
+  String get overtakenRetake;
+
+  /// No description provided for @newTopGifterBanner.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo #1 da live: {name}'**
+  String newTopGifterBanner(String name);
+
+  /// No description provided for @giftsNeedHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {gap} moedas para retomar sua posição'**
+  String giftsNeedHint(String gap);
+
+  /// No description provided for @giftsNeedHintNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha um presente de pelo menos {gap} moedas para retomar sua posição'**
+  String giftsNeedHintNone(String gap);
+
+  /// No description provided for @liveEntranceJoined.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} entrou na live'**
+  String liveEntranceJoined(String name);
+
+  /// No description provided for @liveEntranceTopOne.
+  ///
+  /// In pt, this message translates to:
+  /// **'O #1 da live chegou'**
+  String get liveEntranceTopOne;
+
+  /// No description provided for @liveLevelUpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Subiu de nível!'**
+  String get liveLevelUpTitle;
+
+  /// No description provided for @liveLevelUpLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {level}'**
+  String liveLevelUpLevel(int level);
+
+  /// No description provided for @liveLevelUpPublic.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} subiu para o nível {level}'**
+  String liveLevelUpPublic(String name, int level);
+
+  /// No description provided for @liveGoalDefaultTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta da live'**
+  String get liveGoalDefaultTitle;
+
+  /// No description provided for @liveGoalReached.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta batida!'**
+  String get liveGoalReached;
+
+  /// No description provided for @liveGoalOption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta da live'**
+  String get liveGoalOption;
+
+  /// No description provided for @liveGoalOptionSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Defina uma meta de moedas para a live'**
+  String get liveGoalOptionSubtitle;
+
+  /// No description provided for @liveGoalSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta da live'**
+  String get liveGoalSheetTitle;
+
+  /// No description provided for @liveGoalPointsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta (moedas)'**
+  String get liveGoalPointsLabel;
+
+  /// No description provided for @liveGoalTitleLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Título curto (ex.: Sorteio de um prêmio)'**
+  String get liveGoalTitleLabel;
+
+  /// No description provided for @liveGoalSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Definir meta'**
+  String get liveGoalSave;
+
+  /// No description provided for @liveGoalClear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover meta'**
+  String get liveGoalClear;
+
+  /// No description provided for @liveGoalSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta atualizada'**
+  String get liveGoalSaved;
+
+  /// No description provided for @liveGoalError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível atualizar a meta'**
+  String get liveGoalError;
+
+  /// No description provided for @liveGoalInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe uma meta maior que zero'**
+  String get liveGoalInvalid;
+
+  /// No description provided for @questLiveTag.
+  ///
+  /// In pt, this message translates to:
+  /// **'NA LIVE'**
+  String get questLiveTag;
+
+  /// No description provided for @questWatchLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assista lives'**
+  String get questWatchLive;
+
+  /// No description provided for @questSendLiveGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie presentes na live'**
+  String get questSendLiveGift;
+
+  /// No description provided for @questLiveChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Converse na live'**
+  String get questLiveChat;
+
+  /// No description provided for @rankingSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ranking da live'**
+  String get rankingSheetTitle;
+
+  /// No description provided for @rankingTabGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get rankingTabGifts;
+
+  /// No description provided for @rankingTabLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtidas'**
+  String get rankingTabLikes;
+
+  /// No description provided for @likesRoomTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'{likes} curtidas · {people, plural, =1{1 pessoa} other{{people} pessoas}}'**
+  String likesRoomTotal(String likes, int people);
+
+  /// No description provided for @likesFooterGap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #{rank} · faltam {gap} curtidas para passar {name}'**
+  String likesFooterGap(int rank, String gap, String name);
+
+  /// No description provided for @likesFooterLeader.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #1 · quem mais curtiu a live'**
+  String get likesFooterLeader;
+
+  /// No description provided for @likesFooterOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está em #{rank}'**
+  String likesFooterOnly(int rank);
+
+  /// No description provided for @likesFooterJoin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curta a live para entrar no ranking'**
+  String get likesFooterJoin;
+
+  /// No description provided for @likesEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém curtiu ainda'**
+  String get likesEmpty;
+
+  /// No description provided for @likesEmptyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seja o primeiro a curtir!'**
+  String get likesEmptyHint;
+
+  /// No description provided for @likesNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtidas não somam no ranking de presentes'**
+  String get likesNote;
+
+  /// No description provided for @rankingSendGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentear'**
+  String get rankingSendGift;
+
+  /// No description provided for @rankingLikeNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir'**
+  String get rankingLikeNow;
+
+  /// No description provided for @likeMilestoneBanner.
+  ///
+  /// In pt, this message translates to:
+  /// **'A live chegou a {count} curtidas!'**
+  String likeMilestoneBanner(String count);
+
+  /// No description provided for @questLiveLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir lives'**
+  String get questLiveLike;
+
+  /// No description provided for @noticeOvertakenTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} passou você!'**
+  String noticeOvertakenTitle(String name);
+
+  /// No description provided for @noticeOvertakenBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {gap} moedas para retomar o #{rank}'**
+  String noticeOvertakenBody(String gap, int rank);
+
+  /// No description provided for @noticeLevelUpBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você chegou ao nível {level}'**
+  String noticeLevelUpBody(int level);
+
+  /// No description provided for @noticeNewTopTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo #1 da live'**
+  String get noticeNewTopTitle;
+
+  /// No description provided for @goalsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Metas da live'**
+  String get goalsTitle;
+
+  /// No description provided for @goalsButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Metas'**
+  String get goalsButton;
+
+  /// No description provided for @goalTypeGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente'**
+  String get goalTypeGift;
+
+  /// No description provided for @goalTypeLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtidas'**
+  String get goalTypeLikes;
+
+  /// No description provided for @goalLikesLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} curtidas'**
+  String goalLikesLabel(String count);
+
+  /// No description provided for @goalProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{progress} de {target}'**
+  String goalProgress(String progress, String target);
+
+  /// No description provided for @goalReached.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta batida'**
+  String get goalReached;
+
+  /// No description provided for @goalReachedChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta batida: {goal}'**
+  String goalReachedChat(String goal);
+
+  /// No description provided for @goalSendGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get goalSendGift;
+
+  /// No description provided for @goalLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtir'**
+  String get goalLike;
+
+  /// No description provided for @goalsViewerHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque em Enviar para abrir a sacola já no presente da meta.'**
+  String get goalsViewerHint;
+
+  /// No description provided for @goalsEmptyCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha um presente e a quantidade, ou uma meta de curtidas. Até 3 metas.'**
+  String get goalsEmptyCreator;
+
+  /// No description provided for @goalPickGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha um presente'**
+  String get goalPickGift;
+
+  /// No description provided for @goalAddGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar {count} {gift}'**
+  String goalAddGift(String count, String gift);
+
+  /// No description provided for @goalAddLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar {count} curtidas'**
+  String goalAddLikes(String count);
+
+  /// No description provided for @goalsSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar metas'**
+  String get goalsSave;
+
+  /// No description provided for @goalsRemoveAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover metas'**
+  String get goalsRemoveAll;
+
+  /// No description provided for @goalsSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar as metas'**
+  String get goalsSaveError;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

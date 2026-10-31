@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'live_goal.dart';
+
 part 'live_room.freezed.dart';
 
 @freezed
@@ -36,5 +38,11 @@ sealed class LiveRoom with _$LiveRoom {
     String? opponentRoomId,
     String? opponentThumbnailUrl,
     @Default(300) int battleDurationSeconds,
+    // 🎯 Meta da live (opcional)
+    int? goalPoints,
+    String? goalTitle,
+    @Default(0) int goalProgressPoints,
+    // Metas da live (presente × quantidade ou curtidas).
+    @Default(<LiveGoal>[]) List<LiveGoal> goals,
   }) = _LiveRoom;
 }

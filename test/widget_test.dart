@@ -21,10 +21,15 @@ void main() {
         child: const BraweApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    // A welcome screen tem animações em loop (repeat) → pumpAndSettle nunca
+    // estabiliza. Avança tempo suficiente para auth/redirect resolverem.
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('A sua nova rede social'), findsOneWidget);
-    expect(find.text('Entrar'), findsOneWidget);
+    // A tagline é digitada letra a letra (RichText), então validamos os CTAs
+    // atuais da welcome: criar conta e "já tenho uma conta".
+    expect(find.text('Criar conta'), findsOneWidget);
+    expect(find.text('Já tenho uma conta'), findsOneWidget);
   });
 }
 

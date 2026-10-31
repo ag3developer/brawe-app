@@ -43,6 +43,10 @@ _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   opponentRoomId: json['opponent_room_id'] as String?,
   opponentThumbnailUrl: json['opponent_thumbnail_url'] as String?,
   battleDurationSeconds: (json['battle_duration_seconds'] as num?)?.toInt(),
+  goalPoints: (json['goal_points'] as num?)?.toInt(),
+  goalTitle: json['goal_title'] as String?,
+  goalProgressPoints: (json['goal_progress_points'] as num?)?.toInt() ?? 0,
+  goals: json['goals'] as List<dynamic>?,
 );
 
 Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
@@ -79,6 +83,10 @@ Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
       'opponent_room_id': instance.opponentRoomId,
       'opponent_thumbnail_url': instance.opponentThumbnailUrl,
       'battle_duration_seconds': instance.battleDurationSeconds,
+      'goal_points': instance.goalPoints,
+      'goal_title': instance.goalTitle,
+      'goal_progress_points': instance.goalProgressPoints,
+      'goals': instance.goals,
     };
 
 _StreamConfigDto _$StreamConfigDtoFromJson(Map<String, dynamic> json) =>

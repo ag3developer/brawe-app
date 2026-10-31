@@ -1,7 +1,8 @@
 import 'dart:async';
 import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:convert';
-import 'dart:math' show max;
+import 'dart:ui' show ImageFilter;
+import 'dart:math' show max, min;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,10 @@ import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
 import 'viewer_battle_hud.dart';
+import '../../live/shared/layout/live_dock_metrics.dart';
+import 'live_notice_lane.dart';
+import 'viewer_gamification_layer.dart';
+import '../../live/shared/widgets/goal/live_goals.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
@@ -121,6 +126,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   int? _endedDurationSeconds;
   Timer? _resumeOverlayTimer;
 
+  // Reconexão do vídeo: no começo da live o HLS ainda não existe, e a rede
+  // oscila — sem nova tentativa a tela ficava presa na capa para sempre.
+  Timer? _playerRetryTimer;
+  int _playerAttempts = 0;
+  String? _freshPlaybackId;
+  String? _freshStreamUrl;
+
   /// Último modo aplicado ao player solo (null = ainda não aplicado).
   bool? _soloPlaying;
 
@@ -203,8 +215,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _reactionSub?.cancel();
     _battleCheckDebounce?.cancel();
     _resumeOverlayTimer?.cancel();
+    _playerRetryTimer?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
+    _controller?.removeListener(_watchPlayerHealth);
     _controller?.dispose();
     _unsubscribeFromBattleEvents();
     WakelockPlus.disable();
@@ -359,12 +373,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (data == null || data['room_id'] != widget.room.id) return;
     _resumeOverlayTimer?.cancel();
     _dismissKeyboard();
-    final pausedAt = DateTime.tryParse(data['paused_at']?.toString() ?? '')?.toLocal();
+    final pausedAt = DateTime.tryParse(
+      data['paused_at']?.toString() ?? '',
+    )?.toLocal();
     final maxSecs = (data['max_pause_seconds'] as num?)?.toInt();
     setState(() {
       _pauseState = _StreamerPauseState.paused;
-      _pauseDeadline = (pausedAt ?? DateTime.now())
-          .add(maxSecs != null ? Duration(seconds: maxSecs) : _defaultMaxPause);
+      _pauseDeadline = (pausedAt ?? DateTime.now()).add(
+        maxSecs != null ? Duration(seconds: maxSecs) : _defaultMaxPause,
+      );
     });
   }
 
@@ -439,7 +456,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   Future<void> _initializePlayer({StreamQuality? quality}) async {
     if (_controller != null && quality == null) return;
-    final playbackId = widget.room.playbackId;
+    _playerRetryTimer?.cancel();
+    final playbackId = _freshPlaybackId ?? widget.room.playbackId;
     final q = quality ?? _quality;
 
     // Determinar URL com base na qualidade selecionada.
@@ -447,11 +465,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // Caso contrário, usamos a streamUrl que já vem do DTO.
     final String? streamUrl = playbackId != null
         ? q.buildUrl(playbackId)
-        : widget.room.streamUrl;
+        : (_freshStreamUrl ?? widget.room.streamUrl);
 
-    if (streamUrl == null || streamUrl.isEmpty) return;
+    if (streamUrl == null || streamUrl.isEmpty) {
+      // Sala vinda de uma lista sem o endereço do vídeo: busca de novo.
+      await _refreshPlaybackSource();
+      _schedulePlayerRetry();
+      return;
+    }
 
-    _controller = VideoPlayerController.networkUrl(
+    final controller = VideoPlayerController.networkUrl(
       Uri.parse(streamUrl),
       videoPlayerOptions: VideoPlayerOptions(
         // Permite que SFX/gifts toquem junto com o áudio da live.
@@ -460,29 +483,85 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       ),
       httpHeaders: const {'User-Agent': 'BraweApp/1.0 (HLS-Live)'},
     );
+    _controller = controller;
     try {
-      await _controller!.initialize();
-      if (!mounted) return;
+      // Sem limite, o player pode esperar para sempre por um HLS que
+      // ainda não existe.
+      await controller.initialize().timeout(const Duration(seconds: 12));
+      if (!mounted || _controller != controller) {
+        if (_controller != controller) controller.dispose();
+        return;
+      }
 
       // Seek para o live edge (último segmento disponível) logo após inicializar.
       // Sem isso, o player pode começar a reproduzir de um ponto anterior no
       // buffer HLS, aumentando o delay percebido pelo espectador.
-      final duration = _controller!.value.duration;
+      final duration = controller.value.duration;
       if (duration > Duration.zero) {
-        await _controller!.seekTo(duration);
+        await controller.seekTo(duration);
       }
 
+      _playerAttempts = 0;
       _soloPlaying = null;
       setState(() => _isInitialized = true);
-      _controller!
+      controller
+        ..addListener(_watchPlayerHealth)
         ..play()
         // Live HLS NÃO faz loop — é stream contínuo.
         ..setLooping(false)
         ..setVolume(1.0);
       WakelockPlus.enable();
     } catch (e) {
-      debugPrint('LivePlayer: video init error: $e');
+      debugPrint(
+        'LivePlayer: video init error (tentativa ${_playerAttempts + 1}): $e',
+      );
+      if (_controller == controller) _controller = null;
+      controller.dispose();
+      if (_playerAttempts >= 2) await _refreshPlaybackSource();
+      _schedulePlayerRetry();
     }
+  }
+
+  /// Nova tentativa com espera crescente (1s, 2s, 4s, depois a cada 6s)
+  /// enquanto a tela estiver aberta e a live não tiver acabado.
+  void _schedulePlayerRetry() {
+    if (!mounted || _ended) return;
+    final seconds = min(6, 1 << min(_playerAttempts, 3));
+    _playerAttempts++;
+    _playerRetryTimer?.cancel();
+    _playerRetryTimer = Timer(Duration(seconds: seconds), () {
+      if (mounted && !_ended && _controller == null) _initializePlayer();
+    });
+  }
+
+  /// Erro no meio da live (rede caiu, streamer reconectou): descarta o
+  /// player e reconecta em vez de congelar no último quadro.
+  void _watchPlayerHealth() {
+    final c = _controller;
+    if (c == null || !c.value.hasError || _ended) return;
+    debugPrint(
+      'LivePlayer: erro durante a reprodução: ${c.value.errorDescription}',
+    );
+    c.removeListener(_watchPlayerHealth);
+    _controller = null;
+    if (mounted) setState(() => _isInitialized = false);
+    // Fora do listener: não descartar o controller dentro do próprio aviso.
+    Future.microtask(c.dispose);
+    _schedulePlayerRetry();
+  }
+
+  /// Busca a sala de novo para pegar o endereço do vídeo atualizado.
+  Future<void> _refreshPlaybackSource() async {
+    try {
+      final fresh = await _liveRepo.getRoom(widget.room.id);
+      if (!mounted || fresh == null) return;
+      if (fresh.status == 'ended') {
+        _showEnded(late: true);
+        return;
+      }
+      _freshPlaybackId = fresh.playbackId ?? _freshPlaybackId;
+      _freshStreamUrl = fresh.streamUrl ?? _freshStreamUrl;
+    } catch (_) {}
   }
 
   // ────────────────────── Quality control ──────────────────────
@@ -497,7 +576,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     });
     final old = _controller;
     _controller = null;
+    old?.removeListener(_watchPlayerHealth);
     old?.dispose();
+    _playerAttempts = 0;
     await _initializePlayer(quality: q);
   }
 
@@ -527,13 +608,6 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         _isLiked = true;
         _likesCount += 1;
       });
-      // Toggle persistente (fire-and-forget)
-      unawaited(
-        ref
-            .read(liveRepositoryProvider)
-            .toggleLike(widget.room.id, false)
-            .catchError((_) {}),
-      );
     } else {
       setState(() => _likesCount += 1);
     }
@@ -770,7 +844,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       },
     );
 
-    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+    final hidden =
+        ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0F1A),
@@ -835,6 +910,29 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             ),
           ),
 
+          // ── 4.5 Meta da live (barra fina sob o top bar) ──
+          if (_activeBattleId == null)
+            Positioned(
+              top: MediaQuery.paddingOf(context).top + 92,
+              left: 12,
+              right: 12,
+              // Metas do criador: pílula compacta; toque abre a sacola já
+              // no presente da meta (ou a lista, se houver mais de uma).
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: LiveGoalsPill(
+                  roomId: widget.room.id,
+                  streamerId: widget.room.streamerId,
+                  initialGoals: widget.room.goals,
+                ),
+              ),
+            ),
+
+          // ── 4.6 Gamificação: "Fulano subiu de nível" vira linha no chat.
+          // Entradas VIP, meu level-up, "passou você", novo #1 e marcos de
+          // curtidas ficam no painel de avisos, acima do chat (dock abaixo).
+          ViewerGamificationLayer(roomId: widget.room.id),
+
           // ── 5. Gift combos (canto inf. esq, acima do chat) ──
           GiftAnimationOverlay(roomId: widget.room.id),
 
@@ -845,7 +943,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             bottom: 0,
             child: _ViewerChatDock(
               pinnedProduct: PinnedProductBar(roomId: widget.room.id),
+              notices: LiveNoticeLane(
+                roomId: widget.room.id,
+                streamerId: widget.room.streamerId,
+                battleIdGetter: () => _activeBattleId,
+              ),
               tickerBuilder: (maxHeight) => ChatTicker(
+                giftParts: commentsState.chatGiftParts,
                 // Bloqueados (nos dois sentidos) não aparecem no chat da live.
                 comments: commentsState.comments
                     .where((c) => !hidden.isBlocked(c.userId))
@@ -989,15 +1093,50 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         ),
       );
     }
-    if (widget.room.thumbnailUrl != null) {
-      return Image.network(
-        cacheWidth: context.decodeScreenPx,
-        widget.room.thumbnailUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _placeholder(),
-      );
-    }
-    return _placeholder();
+    // Carregando: capa desfocada + "Conectando…" — deixa claro que o vídeo
+    // está vindo (antes era só a capa parada, parecia travado).
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (widget.room.thumbnailUrl != null)
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Image.network(
+              widget.room.thumbnailUrl!,
+              cacheWidth: context.decodePx(200),
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => _placeholder(),
+            ),
+          )
+        else
+          _placeholder(),
+        Container(color: Colors.black.withValues(alpha: 0.35)),
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 34,
+                height: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                S.of(context).liveConnecting,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   /// Pausa/retoma o player solo FORA do build (efeitos colaterais no
@@ -1024,10 +1163,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     });
   }
 
-  Widget _placeholder() => Container(
-    color: const Color(0xFF1B2B6B),
-    child: const Center(
-      child: Icon(Icons.live_tv, color: Colors.white24, size: 64),
+  Widget _placeholder() => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF0A1028), Color(0xFF05070F)],
+      ),
     ),
   );
 }
@@ -1063,7 +1205,8 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
   void initState() {
     super.initState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && widget.deadline != null && !widget.resuming) setState(() {});
+      if (mounted && widget.deadline != null && !widget.resuming)
+        setState(() {});
     });
   }
 
@@ -1076,7 +1219,9 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final name = widget.streamerName.trim().isEmpty ? 'Streamer' : widget.streamerName.trim();
+    final name = widget.streamerName.trim().isEmpty
+        ? 'Streamer'
+        : widget.streamerName.trim();
     String? left;
     final deadline = widget.deadline;
     if (deadline != null && !widget.resuming) {
@@ -1107,14 +1252,25 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
               child: widget.resuming
                   ? const Padding(
                       padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
                     )
-                  : const Icon(Icons.pause_rounded, color: Colors.white, size: 34),
+                  : const Icon(
+                      Icons.pause_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
             ),
             const SizedBox(height: 16),
             Text(
               widget.resuming ? s.livePausedResuming : s.livePausedTitle,
-              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1125,7 +1281,10 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
             if (left != null) ...[
               const SizedBox(height: 14),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
@@ -1160,11 +1319,15 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
 class _ViewerChatDock extends StatelessWidget {
   const _ViewerChatDock({
     required this.pinnedProduct,
+    required this.notices,
     required this.tickerBuilder,
     required this.bottomBar,
   });
 
   final Widget pinnedProduct;
+
+  /// Painel de avisos (entre o vídeo e o chat).
+  final Widget notices;
   final Widget Function(double maxHeight) tickerBuilder;
   final Widget bottomBar;
 
@@ -1184,36 +1347,56 @@ class _ViewerChatDock extends StatelessWidget {
     final bottomInset = typing ? keyboard + 8 : padding.bottom + 12;
     final free =
         size.height - padding.top - _topReserved - _bottomBarH - bottomInset;
+    // Espaço reservado acima do chat: painel de avisos (~60) + 2 faixas de
+    // combo de presente (~124). Sem isso, chat cheio em tela pequena
+    // empurrava os combos para baixo do topo.
+    const aboveChatReserve = 184.0;
     final tickerMax = typing
         ? (free * 0.75).clamp(60.0, 220.0)
-        : free.clamp(80.0, 240.0);
+        : (free - aboveChatReserve).clamp(80.0, 240.0);
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Offstage(offstage: typing, child: pinnedProduct),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Align(
-              alignment: Alignment.bottomLeft,
-              // Chat ocupa ~78% da largura: a faixa direita fica livre
-              // para os corações e toques no vídeo.
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: size.width * 0.78),
-                child: tickerBuilder(tickerMax),
+    return LiveDockTopReporter(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Offstage(offstage: typing, child: pinnedProduct),
+            const SizedBox(height: 8),
+            // Some enquanto digita: o teclado já ocupa a metade de baixo.
+            Offstage(
+              offstage: typing,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: size.width * 0.86),
+                    child: notices,
+                  ),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: bottomBar,
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                // Chat ocupa ~78% da largura: a faixa direita fica livre
+                // para os corações e toques no vídeo.
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: size.width * 0.78),
+                  child: tickerBuilder(tickerMax),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: bottomBar,
+            ),
+          ],
+        ),
       ),
     );
   }

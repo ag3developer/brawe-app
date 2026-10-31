@@ -1,14 +1,41 @@
-/// Maior doador (MVP) de um lado da batalha.
+/// Doador de um lado da batalha (MVP / top supporters).
+///
+/// Aceita o formato novo `{user_id, name, avatar_url, points}` e o antigo
+/// `{id, total}`.
 class BattleGifter {
-  const BattleGifter({required this.id, required this.total});
+  const BattleGifter({
+    required this.id,
+    required this.total,
+    this.name,
+    this.avatarUrl,
+  });
 
   final String id;
+
+  /// Pontos (moedas gastas) do doador na batalha.
   final double total;
+  final String? name;
+  final String? avatarUrl;
 
   factory BattleGifter.fromJson(Map<String, dynamic> json) => BattleGifter(
-        id: json['id'] as String? ?? '',
-        total: (json['total'] as num?)?.toDouble() ?? 0,
+        id: (json['user_id'] ?? json['id'])?.toString() ?? '',
+        total: ((json['points'] ?? json['total']) as num?)?.toDouble() ?? 0,
+        name: (json['name'] as String?)?.trim().isEmpty ?? true
+            ? null
+            : json['name'] as String?,
+        avatarUrl: (json['avatar_url'] as String?)?.isEmpty ?? true
+            ? null
+            : json['avatar_url'] as String?,
       );
+
+  /// Converte uma lista crua (`top_gifters_a/b`) ignorando itens inválidos.
+  static List<BattleGifter> listFrom(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => BattleGifter.fromJson(Map<String, dynamic>.from(e)))
+        .toList(growable: false);
+  }
 }
 
 /// Represents the current state of a live battle between two streamers.
@@ -42,6 +69,8 @@ class BattleState {
     this.powerMoment = false,
     this.topGifterA,
     this.topGifterB,
+    this.topGiftersA = const [],
+    this.topGiftersB = const [],
   });
 
   final String battleId;
@@ -90,6 +119,10 @@ class BattleState {
   final BattleGifter? topGifterA;
   final BattleGifter? topGifterB;
 
+  /// Top 3 apoiadores de cada lado (vazio se o servidor não enviar).
+  final List<BattleGifter> topGiftersA;
+  final List<BattleGifter> topGiftersB;
+
   double get progressA {
     final total = scoreA + scoreB;
     if (total == 0) return 0.5;
@@ -118,6 +151,8 @@ class BattleState {
     bool? powerMoment,
     BattleGifter? topGifterA,
     BattleGifter? topGifterB,
+    List<BattleGifter>? topGiftersA,
+    List<BattleGifter>? topGiftersB,
     String? streamUrlA,
     String? streamUrlB,
     String? playbackIdA,
@@ -154,6 +189,8 @@ class BattleState {
       powerMoment: powerMoment ?? this.powerMoment,
       topGifterA: topGifterA ?? this.topGifterA,
       topGifterB: topGifterB ?? this.topGifterB,
+      topGiftersA: topGiftersA ?? this.topGiftersA,
+      topGiftersB: topGiftersB ?? this.topGiftersB,
     );
   }
 
