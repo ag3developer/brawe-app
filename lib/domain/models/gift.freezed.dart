@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Gift {
 
- String get id; String get slug; String get name; String? get emoji;@JsonKey(name: 'icon_url') String? get iconUrl;@JsonKey(name: 'animation_url') String? get animationUrl;@JsonKey(name: 'animation_type') String get animationType;@JsonKey(name: 'price_credits') double get priceCredits;@JsonKey(name: 'price_usdt') double get priceUsdt; String get tier;@JsonKey(name: 'is_fullscreen') bool get isFullscreen;@JsonKey(name: 'animation_duration_ms') int get animationDurationMs;@JsonKey(name: 'combo_enabled') bool get comboEnabled;// ── Economia não-monetária (FREE) ──
+ String get id; String get slug; String get name; String? get emoji;@JsonKey(name: 'icon_url') String? get iconUrl;@JsonKey(name: 'animation_url') String? get animationUrl;@JsonKey(name: 'animation_type') String get animationType;// Som do efeito (Lottie/imagem). O vídeo VAP já traz o som dentro.
+@JsonKey(name: 'sound_url') String? get soundUrl;@JsonKey(name: 'price_credits') double get priceCredits;@JsonKey(name: 'price_usdt') double get priceUsdt; String get tier;@JsonKey(name: 'is_fullscreen') bool get isFullscreen;@JsonKey(name: 'animation_duration_ms') int get animationDurationMs;@JsonKey(name: 'combo_enabled') bool get comboEnabled;// ── Economia não-monetária (FREE) ──
 @JsonKey(name: 'is_monetary') bool get isMonetary;@JsonKey(name: 'price_coins') int get priceCoins;@JsonKey(name: 'cooldown_seconds') int get cooldownSeconds;
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
@@ -29,16 +30,16 @@ $GiftCopyWith<Gift> get copyWith => _$GiftCopyWithImpl<Gift>(this as Gift, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Gift&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.priceCredits, priceCredits) || other.priceCredits == priceCredits)&&(identical(other.priceUsdt, priceUsdt) || other.priceUsdt == priceUsdt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&(identical(other.comboEnabled, comboEnabled) || other.comboEnabled == comboEnabled)&&(identical(other.isMonetary, isMonetary) || other.isMonetary == isMonetary)&&(identical(other.priceCoins, priceCoins) || other.priceCoins == priceCoins)&&(identical(other.cooldownSeconds, cooldownSeconds) || other.cooldownSeconds == cooldownSeconds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Gift&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.priceCredits, priceCredits) || other.priceCredits == priceCredits)&&(identical(other.priceUsdt, priceUsdt) || other.priceUsdt == priceUsdt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&(identical(other.comboEnabled, comboEnabled) || other.comboEnabled == comboEnabled)&&(identical(other.isMonetary, isMonetary) || other.isMonetary == isMonetary)&&(identical(other.priceCoins, priceCoins) || other.priceCoins == priceCoins)&&(identical(other.cooldownSeconds, cooldownSeconds) || other.cooldownSeconds == cooldownSeconds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,slug,name,emoji,iconUrl,animationUrl,animationType,priceCredits,priceUsdt,tier,isFullscreen,animationDurationMs,comboEnabled,isMonetary,priceCoins,cooldownSeconds);
+int get hashCode => Object.hash(runtimeType,id,slug,name,emoji,iconUrl,animationUrl,animationType,soundUrl,priceCredits,priceUsdt,tier,isFullscreen,animationDurationMs,comboEnabled,isMonetary,priceCoins,cooldownSeconds);
 
 @override
 String toString() {
-  return 'Gift(id: $id, slug: $slug, name: $name, emoji: $emoji, iconUrl: $iconUrl, animationUrl: $animationUrl, animationType: $animationType, priceCredits: $priceCredits, priceUsdt: $priceUsdt, tier: $tier, isFullscreen: $isFullscreen, animationDurationMs: $animationDurationMs, comboEnabled: $comboEnabled, isMonetary: $isMonetary, priceCoins: $priceCoins, cooldownSeconds: $cooldownSeconds)';
+  return 'Gift(id: $id, slug: $slug, name: $name, emoji: $emoji, iconUrl: $iconUrl, animationUrl: $animationUrl, animationType: $animationType, soundUrl: $soundUrl, priceCredits: $priceCredits, priceUsdt: $priceUsdt, tier: $tier, isFullscreen: $isFullscreen, animationDurationMs: $animationDurationMs, comboEnabled: $comboEnabled, isMonetary: $isMonetary, priceCoins: $priceCoins, cooldownSeconds: $cooldownSeconds)';
 }
 
 
@@ -49,7 +50,7 @@ abstract mixin class $GiftCopyWith<$Res>  {
   factory $GiftCopyWith(Gift value, $Res Function(Gift) _then) = _$GiftCopyWithImpl;
 @useResult
 $Res call({
- String id, String slug, String name, String? emoji,@JsonKey(name: 'icon_url') String? iconUrl,@JsonKey(name: 'animation_url') String? animationUrl,@JsonKey(name: 'animation_type') String animationType,@JsonKey(name: 'price_credits') double priceCredits,@JsonKey(name: 'price_usdt') double priceUsdt, String tier,@JsonKey(name: 'is_fullscreen') bool isFullscreen,@JsonKey(name: 'animation_duration_ms') int animationDurationMs,@JsonKey(name: 'combo_enabled') bool comboEnabled,@JsonKey(name: 'is_monetary') bool isMonetary,@JsonKey(name: 'price_coins') int priceCoins,@JsonKey(name: 'cooldown_seconds') int cooldownSeconds
+ String id, String slug, String name, String? emoji,@JsonKey(name: 'icon_url') String? iconUrl,@JsonKey(name: 'animation_url') String? animationUrl,@JsonKey(name: 'animation_type') String animationType,@JsonKey(name: 'sound_url') String? soundUrl,@JsonKey(name: 'price_credits') double priceCredits,@JsonKey(name: 'price_usdt') double priceUsdt, String tier,@JsonKey(name: 'is_fullscreen') bool isFullscreen,@JsonKey(name: 'animation_duration_ms') int animationDurationMs,@JsonKey(name: 'combo_enabled') bool comboEnabled,@JsonKey(name: 'is_monetary') bool isMonetary,@JsonKey(name: 'price_coins') int priceCoins,@JsonKey(name: 'cooldown_seconds') int cooldownSeconds
 });
 
 
@@ -66,7 +67,7 @@ class _$GiftCopyWithImpl<$Res>
 
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? slug = null,Object? name = null,Object? emoji = freezed,Object? iconUrl = freezed,Object? animationUrl = freezed,Object? animationType = null,Object? priceCredits = null,Object? priceUsdt = null,Object? tier = null,Object? isFullscreen = null,Object? animationDurationMs = null,Object? comboEnabled = null,Object? isMonetary = null,Object? priceCoins = null,Object? cooldownSeconds = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? slug = null,Object? name = null,Object? emoji = freezed,Object? iconUrl = freezed,Object? animationUrl = freezed,Object? animationType = null,Object? soundUrl = freezed,Object? priceCredits = null,Object? priceUsdt = null,Object? tier = null,Object? isFullscreen = null,Object? animationDurationMs = null,Object? comboEnabled = null,Object? isMonetary = null,Object? priceCoins = null,Object? cooldownSeconds = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
@@ -75,7 +76,8 @@ as String,emoji: freezed == emoji ? _self.emoji : emoji // ignore: cast_nullable
 as String?,iconUrl: freezed == iconUrl ? _self.iconUrl : iconUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationUrl: freezed == animationUrl ? _self.animationUrl : animationUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationType: null == animationType ? _self.animationType : animationType // ignore: cast_nullable_to_non_nullable
-as String,priceCredits: null == priceCredits ? _self.priceCredits : priceCredits // ignore: cast_nullable_to_non_nullable
+as String,soundUrl: freezed == soundUrl ? _self.soundUrl : soundUrl // ignore: cast_nullable_to_non_nullable
+as String?,priceCredits: null == priceCredits ? _self.priceCredits : priceCredits // ignore: cast_nullable_to_non_nullable
 as double,priceUsdt: null == priceUsdt ? _self.priceUsdt : priceUsdt // ignore: cast_nullable_to_non_nullable
 as double,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,isFullscreen: null == isFullscreen ? _self.isFullscreen : isFullscreen // ignore: cast_nullable_to_non_nullable
@@ -166,10 +168,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'sound_url')  String? soundUrl, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Gift() when $default != null:
-return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);case _:
+return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.soundUrl,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);case _:
   return orElse();
 
 }
@@ -187,10 +189,10 @@ return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'sound_url')  String? soundUrl, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)  $default,) {final _that = this;
 switch (_that) {
 case _Gift():
-return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);}
+return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.soundUrl,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -204,10 +206,10 @@ return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String slug,  String name,  String? emoji, @JsonKey(name: 'icon_url')  String? iconUrl, @JsonKey(name: 'animation_url')  String? animationUrl, @JsonKey(name: 'animation_type')  String animationType, @JsonKey(name: 'sound_url')  String? soundUrl, @JsonKey(name: 'price_credits')  double priceCredits, @JsonKey(name: 'price_usdt')  double priceUsdt,  String tier, @JsonKey(name: 'is_fullscreen')  bool isFullscreen, @JsonKey(name: 'animation_duration_ms')  int animationDurationMs, @JsonKey(name: 'combo_enabled')  bool comboEnabled, @JsonKey(name: 'is_monetary')  bool isMonetary, @JsonKey(name: 'price_coins')  int priceCoins, @JsonKey(name: 'cooldown_seconds')  int cooldownSeconds)?  $default,) {final _that = this;
 switch (_that) {
 case _Gift() when $default != null:
-return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);case _:
+return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.animationUrl,_that.animationType,_that.soundUrl,_that.priceCredits,_that.priceUsdt,_that.tier,_that.isFullscreen,_that.animationDurationMs,_that.comboEnabled,_that.isMonetary,_that.priceCoins,_that.cooldownSeconds);case _:
   return null;
 
 }
@@ -219,7 +221,7 @@ return $default(_that.id,_that.slug,_that.name,_that.emoji,_that.iconUrl,_that.a
 @JsonSerializable()
 
 class _Gift extends Gift {
-  const _Gift({required this.id, required this.slug, required this.name, this.emoji, @JsonKey(name: 'icon_url') this.iconUrl, @JsonKey(name: 'animation_url') this.animationUrl, @JsonKey(name: 'animation_type') this.animationType = 'video', @JsonKey(name: 'price_credits') this.priceCredits = 0.0, @JsonKey(name: 'price_usdt') this.priceUsdt = 0.0, this.tier = 'basic', @JsonKey(name: 'is_fullscreen') this.isFullscreen = false, @JsonKey(name: 'animation_duration_ms') this.animationDurationMs = 0, @JsonKey(name: 'combo_enabled') this.comboEnabled = false, @JsonKey(name: 'is_monetary') this.isMonetary = true, @JsonKey(name: 'price_coins') this.priceCoins = 0, @JsonKey(name: 'cooldown_seconds') this.cooldownSeconds = 0}): super._();
+  const _Gift({required this.id, required this.slug, required this.name, this.emoji, @JsonKey(name: 'icon_url') this.iconUrl, @JsonKey(name: 'animation_url') this.animationUrl, @JsonKey(name: 'animation_type') this.animationType = 'video', @JsonKey(name: 'sound_url') this.soundUrl, @JsonKey(name: 'price_credits') this.priceCredits = 0.0, @JsonKey(name: 'price_usdt') this.priceUsdt = 0.0, this.tier = 'basic', @JsonKey(name: 'is_fullscreen') this.isFullscreen = false, @JsonKey(name: 'animation_duration_ms') this.animationDurationMs = 0, @JsonKey(name: 'combo_enabled') this.comboEnabled = false, @JsonKey(name: 'is_monetary') this.isMonetary = true, @JsonKey(name: 'price_coins') this.priceCoins = 0, @JsonKey(name: 'cooldown_seconds') this.cooldownSeconds = 0}): super._();
   factory _Gift.fromJson(Map<String, dynamic> json) => _$GiftFromJson(json);
 
 @override final  String id;
@@ -229,6 +231,8 @@ class _Gift extends Gift {
 @override@JsonKey(name: 'icon_url') final  String? iconUrl;
 @override@JsonKey(name: 'animation_url') final  String? animationUrl;
 @override@JsonKey(name: 'animation_type') final  String animationType;
+// Som do efeito (Lottie/imagem). O vídeo VAP já traz o som dentro.
+@override@JsonKey(name: 'sound_url') final  String? soundUrl;
 @override@JsonKey(name: 'price_credits') final  double priceCredits;
 @override@JsonKey(name: 'price_usdt') final  double priceUsdt;
 @override@JsonKey() final  String tier;
@@ -253,16 +257,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Gift&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.priceCredits, priceCredits) || other.priceCredits == priceCredits)&&(identical(other.priceUsdt, priceUsdt) || other.priceUsdt == priceUsdt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&(identical(other.comboEnabled, comboEnabled) || other.comboEnabled == comboEnabled)&&(identical(other.isMonetary, isMonetary) || other.isMonetary == isMonetary)&&(identical(other.priceCoins, priceCoins) || other.priceCoins == priceCoins)&&(identical(other.cooldownSeconds, cooldownSeconds) || other.cooldownSeconds == cooldownSeconds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Gift&&(identical(other.id, id) || other.id == id)&&(identical(other.slug, slug) || other.slug == slug)&&(identical(other.name, name) || other.name == name)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.iconUrl, iconUrl) || other.iconUrl == iconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.priceCredits, priceCredits) || other.priceCredits == priceCredits)&&(identical(other.priceUsdt, priceUsdt) || other.priceUsdt == priceUsdt)&&(identical(other.tier, tier) || other.tier == tier)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&(identical(other.comboEnabled, comboEnabled) || other.comboEnabled == comboEnabled)&&(identical(other.isMonetary, isMonetary) || other.isMonetary == isMonetary)&&(identical(other.priceCoins, priceCoins) || other.priceCoins == priceCoins)&&(identical(other.cooldownSeconds, cooldownSeconds) || other.cooldownSeconds == cooldownSeconds));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,slug,name,emoji,iconUrl,animationUrl,animationType,priceCredits,priceUsdt,tier,isFullscreen,animationDurationMs,comboEnabled,isMonetary,priceCoins,cooldownSeconds);
+int get hashCode => Object.hash(runtimeType,id,slug,name,emoji,iconUrl,animationUrl,animationType,soundUrl,priceCredits,priceUsdt,tier,isFullscreen,animationDurationMs,comboEnabled,isMonetary,priceCoins,cooldownSeconds);
 
 @override
 String toString() {
-  return 'Gift(id: $id, slug: $slug, name: $name, emoji: $emoji, iconUrl: $iconUrl, animationUrl: $animationUrl, animationType: $animationType, priceCredits: $priceCredits, priceUsdt: $priceUsdt, tier: $tier, isFullscreen: $isFullscreen, animationDurationMs: $animationDurationMs, comboEnabled: $comboEnabled, isMonetary: $isMonetary, priceCoins: $priceCoins, cooldownSeconds: $cooldownSeconds)';
+  return 'Gift(id: $id, slug: $slug, name: $name, emoji: $emoji, iconUrl: $iconUrl, animationUrl: $animationUrl, animationType: $animationType, soundUrl: $soundUrl, priceCredits: $priceCredits, priceUsdt: $priceUsdt, tier: $tier, isFullscreen: $isFullscreen, animationDurationMs: $animationDurationMs, comboEnabled: $comboEnabled, isMonetary: $isMonetary, priceCoins: $priceCoins, cooldownSeconds: $cooldownSeconds)';
 }
 
 
@@ -273,7 +277,7 @@ abstract mixin class _$GiftCopyWith<$Res> implements $GiftCopyWith<$Res> {
   factory _$GiftCopyWith(_Gift value, $Res Function(_Gift) _then) = __$GiftCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String slug, String name, String? emoji,@JsonKey(name: 'icon_url') String? iconUrl,@JsonKey(name: 'animation_url') String? animationUrl,@JsonKey(name: 'animation_type') String animationType,@JsonKey(name: 'price_credits') double priceCredits,@JsonKey(name: 'price_usdt') double priceUsdt, String tier,@JsonKey(name: 'is_fullscreen') bool isFullscreen,@JsonKey(name: 'animation_duration_ms') int animationDurationMs,@JsonKey(name: 'combo_enabled') bool comboEnabled,@JsonKey(name: 'is_monetary') bool isMonetary,@JsonKey(name: 'price_coins') int priceCoins,@JsonKey(name: 'cooldown_seconds') int cooldownSeconds
+ String id, String slug, String name, String? emoji,@JsonKey(name: 'icon_url') String? iconUrl,@JsonKey(name: 'animation_url') String? animationUrl,@JsonKey(name: 'animation_type') String animationType,@JsonKey(name: 'sound_url') String? soundUrl,@JsonKey(name: 'price_credits') double priceCredits,@JsonKey(name: 'price_usdt') double priceUsdt, String tier,@JsonKey(name: 'is_fullscreen') bool isFullscreen,@JsonKey(name: 'animation_duration_ms') int animationDurationMs,@JsonKey(name: 'combo_enabled') bool comboEnabled,@JsonKey(name: 'is_monetary') bool isMonetary,@JsonKey(name: 'price_coins') int priceCoins,@JsonKey(name: 'cooldown_seconds') int cooldownSeconds
 });
 
 
@@ -290,7 +294,7 @@ class __$GiftCopyWithImpl<$Res>
 
 /// Create a copy of Gift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? slug = null,Object? name = null,Object? emoji = freezed,Object? iconUrl = freezed,Object? animationUrl = freezed,Object? animationType = null,Object? priceCredits = null,Object? priceUsdt = null,Object? tier = null,Object? isFullscreen = null,Object? animationDurationMs = null,Object? comboEnabled = null,Object? isMonetary = null,Object? priceCoins = null,Object? cooldownSeconds = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? slug = null,Object? name = null,Object? emoji = freezed,Object? iconUrl = freezed,Object? animationUrl = freezed,Object? animationType = null,Object? soundUrl = freezed,Object? priceCredits = null,Object? priceUsdt = null,Object? tier = null,Object? isFullscreen = null,Object? animationDurationMs = null,Object? comboEnabled = null,Object? isMonetary = null,Object? priceCoins = null,Object? cooldownSeconds = null,}) {
   return _then(_Gift(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,slug: null == slug ? _self.slug : slug // ignore: cast_nullable_to_non_nullable
@@ -299,7 +303,8 @@ as String,emoji: freezed == emoji ? _self.emoji : emoji // ignore: cast_nullable
 as String?,iconUrl: freezed == iconUrl ? _self.iconUrl : iconUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationUrl: freezed == animationUrl ? _self.animationUrl : animationUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationType: null == animationType ? _self.animationType : animationType // ignore: cast_nullable_to_non_nullable
-as String,priceCredits: null == priceCredits ? _self.priceCredits : priceCredits // ignore: cast_nullable_to_non_nullable
+as String,soundUrl: freezed == soundUrl ? _self.soundUrl : soundUrl // ignore: cast_nullable_to_non_nullable
+as String?,priceCredits: null == priceCredits ? _self.priceCredits : priceCredits // ignore: cast_nullable_to_non_nullable
 as double,priceUsdt: null == priceUsdt ? _self.priceUsdt : priceUsdt // ignore: cast_nullable_to_non_nullable
 as double,tier: null == tier ? _self.tier : tier // ignore: cast_nullable_to_non_nullable
 as String,isFullscreen: null == isFullscreen ? _self.isFullscreen : isFullscreen // ignore: cast_nullable_to_non_nullable

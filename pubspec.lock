@@ -656,6 +656,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_vap_player:
+    dependency: "direct main"
+    description:
+      name: flutter_vap_player
+      sha256: d13d88cf8a4daea32da20a613ecbd961a1c8936a25a7da0f91e1233e939ce343
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.2.0"
   flutter_volume_controller:
     dependency: "direct main"
     description:
@@ -1801,6 +1809,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.3"
+  vap_player_android:
+    dependency: transitive
+    description:
+      name: vap_player_android
+      sha256: "0b2c2248213fdac632bd847a56daa3b7861e466665b7e6bd8cde6b33353ab6a5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.1"
+  vap_player_ios:
+    dependency: transitive
+    description:
+      name: vap_player_ios
+      sha256: b3e1d2beb6de35bc31964201a6e30f90a93639ded07b1ff97dd571460f7042ec
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
+  vap_player_platform_interface:
+    dependency: transitive
+    description:
+      name: vap_player_platform_interface
+      sha256: e45b87e12cce56fcc06da446ceab43d6aa4654da532ae20dc496f651a1c89a9c
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.0"
   vector_math:
     dependency: transitive
     description:

@@ -1,8 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_vap_player/flutter_vap_player.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
+
+import '../../../../../data/repositories/gift_repository.dart';
+import '../../../../../data/services/gift_effect_cache.dart';
 
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../domain/models/gift_display_type.dart';
@@ -92,6 +98,32 @@ class _GiftVisual extends StatelessWidget {
       );
     }
 
+    // 🎬 Lottie do servidor: do arquivo já baixado (prefetch ao entrar na
+    // live) ou, se ainda não chegou, direto da rede.
+    final remoteLottie = gift.animationType?.toLowerCase() == 'lottie'
+        ? gift.animationUrl
+        : null;
+    if (remoteLottie != null && remoteLottie.isNotEmpty) {
+      final file = GiftEffectCache.instance.cachedFile(remoteLottie);
+      return file != null
+          ? Lottie.file(
+              file,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              repeat: false,
+              errorBuilder: (_, _, _) => _networkOrFallback(),
+            )
+          : Lottie.network(
+              remoteLottie,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              repeat: false,
+              errorBuilder: (_, _, _) => _networkOrFallback(),
+            );
+    }
+
     // 🚫 Formato incompatível (SVGA/VIDEO/PARTICLE) — NUNCA tenta nenhum
     // player para esses formatos. O PNG local por tier ainda é tentado
     // normalmente aqui embaixo (é um asset estático independente do
@@ -161,6 +193,85 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   // numa live longa.
   static const int _kDedupCap = 300;
   final Set<String> _shownVisual = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _prefetchEffects();
+  }
+
+  /// Baixa os vídeos VAP / Lottie / sons do catálogo ao entrar na live, pra
+  /// que o efeito toque na hora em que o presente chegar.
+  Future<void> _prefetchEffects() async {
+    try {
+      final tiers = await ref.read(giftRepositoryProvider).getGiftCatalog();
+      final urls = <String?>[
+        for (final t in tiers)
+          for (final g in t.gifts) ...[
+            if (g.animationType == 'vap' || g.animationType == 'lottie')
+              g.animationUrl,
+            g.soundUrl,
+          ],
+      ];
+      await GiftEffectCache.instance.prefetch(urls);
+    } catch (e) {
+      debugPrint('[GIFT-FX] prefetch falhou: $e');
+    }
+  }
+
+  /// Vídeo VAP (transparente, com som) por cima da live. Só toca se o
+  /// arquivo já estiver no aparelho; senão baixa pra próxima vez e o
+  /// presente usa o efeito padrão.
+  bool _tryShowVap(LiveGift gift) {
+    final url = gift.animationUrl;
+    if (gift.animationType?.toLowerCase() != 'vap' || url == null) {
+      return false;
+    }
+    final file = GiftEffectCache.instance.cachedFile(url);
+    if (file == null) {
+      GiftEffectCache.instance.fetch(url);
+      return false;
+    }
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => _VapGiftEffect(
+        file: file,
+        gift: gift,
+        onDone: () {
+          try {
+            entry.remove();
+          } catch (_) {}
+        },
+      ),
+    );
+    overlay.insert(entry);
+    return true;
+  }
+
+  /// Som do efeito padrão/Lottie (o VAP toca o próprio áudio).
+  void _playSound(LiveGift gift) {
+    final url = gift.soundUrl;
+    if (!gift.soundEnabled || url == null || url.isEmpty) return;
+    final player = AudioPlayer();
+    final file = GiftEffectCache.instance.cachedFile(url);
+    Future<void> run() async {
+      try {
+        if (file != null) {
+          await player.setFilePath(file.path);
+        } else {
+          await player.setUrl(url);
+        }
+        await player.play();
+      } catch (e) {
+        debugPrint('[GIFT-FX] som falhou: $e');
+      } finally {
+        await player.dispose();
+      }
+    }
+
+    run();
+  }
 
   void _rememberShown(String id) {
     _shownVisual.add(id);
@@ -238,6 +349,8 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   }
 
   void _showCenterLarge(LiveGift gift) {
+    if (_tryShowVap(gift)) return;
+    _playSound(gift);
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
@@ -254,6 +367,8 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   }
 
   void _showFullscreen(LiveGift gift) {
+    if (_tryShowVap(gift)) return;
+    _playSound(gift);
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
@@ -1057,3 +1172,160 @@ class _AvatarCircle extends StatelessWidget {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// VAP — vídeo com transparência e som (carro chegando, dragão, iate...).
+// Ocupa a tela toda por cima da live, com o nome de quem enviou no topo.
+// Some ao terminar o vídeo, se der erro, ou pela trava de segurança.
+// ────────────────────────────────────────────────────────────────────────
+
+class _VapGiftEffect extends StatefulWidget {
+  const _VapGiftEffect({
+    required this.file,
+    required this.gift,
+    required this.onDone,
+  });
+
+  final File file;
+  final LiveGift gift;
+  final VoidCallback onDone;
+
+  @override
+  State<_VapGiftEffect> createState() => _VapGiftEffectState();
+}
+
+class _VapGiftEffectState extends State<_VapGiftEffect> {
+  late final VapPlayerController _ctrl;
+  StreamSubscription<VapEvent>? _events;
+  Timer? _safety;
+  bool _ready = false;
+  bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = VapPlayerController.file(
+      widget.file,
+      options: VapPlayerOptions(
+        mute: !widget.gift.soundEnabled,
+        scaleType: VapScaleType.fitCenter,
+      ),
+    );
+    _events = _ctrl.events.listen((e) {
+      if (e is VapCompletedEvent || e is VapErrorEvent) _finish();
+    }, onError: (_) => _finish());
+    _safety = Timer(
+      Duration(milliseconds: widget.gift.resolvedDurationMs + 3000),
+      _finish,
+    );
+    _start();
+  }
+
+  Future<void> _start() async {
+    try {
+      await _ctrl.initialize();
+      if (!mounted || _done) return;
+      setState(() => _ready = true);
+      await _ctrl.play();
+    } catch (e) {
+      debugPrint('[GIFT-FX] VAP falhou: $e');
+      _finish();
+    }
+  }
+
+  void _finish() {
+    if (_done) return;
+    _done = true;
+    _safety?.cancel();
+    widget.onDone();
+  }
+
+  @override
+  void dispose() {
+    _events?.cancel();
+    _safety?.cancel();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final gift = widget.gift;
+    return IgnorePointer(
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Material(
+          type: MaterialType.transparency,
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: Colors.white,
+              decoration: TextDecoration.none,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_ready) VapPlayer(_ctrl),
+                Positioned(
+                  top: MediaQuery.paddingOf(context).top + 72,
+                  left: 16,
+                  right: 16,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(4, 4, 14, 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _AvatarCircle(
+                            url: gift.senderAvatarUrl,
+                            fallback: gift.senderName,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: gift.senderName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        ' ${s.livePlayerGiftSentVerb.trim()} ',
+                                  ),
+                                  TextSpan(
+                                    text: gift.giftName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  if (gift.quantity > 1)
+                                    TextSpan(text: ' x${gift.quantity}'),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

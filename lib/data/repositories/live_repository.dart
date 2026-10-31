@@ -998,6 +998,7 @@ class LiveRepository {
       showInChat: payload['show_in_chat'] != false, // default true
       showSender: payload['show_sender'] != false, // default true
       soundEnabled: payload['sound_enabled'] == true,
+      soundUrl: payload['sound_url']?.toString(),
       animationDurationMs: int.tryParse(
         payload['animation_duration_ms']?.toString() ?? '',
       ),

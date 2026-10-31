@@ -116,6 +116,15 @@
         "revision" : "f4a19a3c313dc2616c70bb49d29a799fb16be837",
         "version" : "2.4.1"
       }
+    },
+    {
+      "identity" : "vap",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/misiio/vap.git",
+      "state" : {
+        "revision" : "666245ac7675c79b55336b23a7ab4e28ab7b4467",
+        "version" : "1.0.19-spm"
+      }
     }
   ],
   "version" : 2

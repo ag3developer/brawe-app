@@ -15,6 +15,8 @@ sealed class Gift with _$Gift {
     @JsonKey(name: 'icon_url') String? iconUrl,
     @JsonKey(name: 'animation_url') String? animationUrl,
     @JsonKey(name: 'animation_type') @Default('video') String animationType,
+    // Som do efeito (Lottie/imagem). O vídeo VAP já traz o som dentro.
+    @JsonKey(name: 'sound_url') String? soundUrl,
     @JsonKey(name: 'price_credits') @Default(0.0) double priceCredits,
     @JsonKey(name: 'price_usdt') @Default(0.0) double priceUsdt,
     @Default('basic') String tier,

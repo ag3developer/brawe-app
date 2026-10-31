@@ -140,6 +140,7 @@ dependencies:
   package_info_plus: ^8.0.0
   lottie: ^3.5.1
   flutter_volume_controller: ^2.0.2
+  flutter_vap_player: ^2.2.0
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que

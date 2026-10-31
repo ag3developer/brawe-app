@@ -57,6 +57,8 @@ sealed class LiveGift with _$LiveGift {
     @Default(true) bool showInChat,
     @Default(true) bool showSender,
     @Default(false) bool soundEnabled,
+    // Som do efeito quando não é VAP (o .mp4 VAP já tem o áudio embutido).
+    String? soundUrl,
     // Duração pretendida pelo backend (já validada/clampada lá, mas o
     // Flutter reclampa de novo via `resolvedDisplayType.clampDuration()`
     // como defesa em profundidade — nunca confiar só na rede).
