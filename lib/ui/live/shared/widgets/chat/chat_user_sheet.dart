@@ -4,6 +4,7 @@ import '../../../../../domain/models/live_comment.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../level_chip.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Ação escolhida no cartão do autor de uma mensagem do chat.
 enum ChatUserAction { reply, viewProfile }
@@ -97,7 +98,7 @@ class ChatUserSheet extends StatelessWidget {
             CircleAvatar(
               radius: 32,
               backgroundColor: AppColors.braweBlue,
-              backgroundImage: hasAvatar ? NetworkImage(c.avatarUrl!) : null,
+              backgroundImage: hasAvatar ? ResizeImage(NetworkImage(c.avatarUrl!), width: context.decodePx(64)) : null,
               child: hasAvatar
                   ? null
                   : Text(

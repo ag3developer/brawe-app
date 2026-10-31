@@ -3,6 +3,7 @@ import '../../../../domain/models/product.dart';
 import '../../../../domain/models/feed_item.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Drawer (DraggableScrollableSheet) com a lista de produtos da live.
 class ProductsDrawer extends StatelessWidget {
@@ -128,6 +129,7 @@ class _ProductTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: Image.network(
+              cacheWidth: context.decodePx(72),
               product.imageUrl,
               width: 72,
               height: 72,

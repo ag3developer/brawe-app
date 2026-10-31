@@ -12,6 +12,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/view_models/follow_view_model.dart';
 import '../../core/widgets/brawe_avatar.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Tela "Live encerrada" (por cima do player): quem encerrou, quanto durou,
 /// botão Seguir (se ainda não segue) e a próxima live no ar com contagem
@@ -100,7 +101,7 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/');
+      context.go('/home');
     }
   }
 
@@ -133,6 +134,7 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
             ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Image.network(
+                cacheWidth: context.decodeScreenPx,
                 room.thumbnailUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
@@ -264,7 +266,7 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                                 ),
                                 const SizedBox(height: 10),
                                 OutlinedButton(
-                                  onPressed: () => context.go('/'),
+                                  onPressed: () => context.go('/home'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.white,
                                     side: const BorderSide(color: Colors.white24),
@@ -328,7 +330,7 @@ class _NextLiveCard extends StatelessWidget {
                   width: 54,
                   height: 72,
                   child: room.thumbnailUrl != null && room.thumbnailUrl!.isNotEmpty
-                      ? Image.network(room.thumbnailUrl!, fit: BoxFit.cover,
+                      ? Image.network(cacheWidth: context.decodePx(54), room.thumbnailUrl!, fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF141A2E)))
                       : const ColoredBox(color: Color(0xFF141A2E)),
                 ),

@@ -18,8 +18,8 @@ import '../../core/themes/app_colors.dart';
 /// - Se um dos URLs for `null`, mostra placeholder (sala provisionando).
 ///
 /// **Performance:**
-/// - `fvp` (registrado no `main.dart`) ativa decodificação por hardware
-///   no Android via FFmpeg — sem isso, 2 HLS simultâneos derrubam a CPU.
+/// - Android usa o ExoPlayer nativo (decodificação em hardware e HLS
+///   adaptativo) — os 2 HLS simultâneos baixam de resolução sozinhos.
 /// - `mixWithOthers: true` permite SFX de gifts tocarem por cima.
 /// - `setLooping(false)` — HLS de live nunca deve loopar.
 ///

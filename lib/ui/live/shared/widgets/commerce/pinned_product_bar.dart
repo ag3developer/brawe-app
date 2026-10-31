@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/services/socket_service.dart';
 import '../../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🛒 Produto pinado (event-driven via Socket).
 ///
@@ -197,6 +198,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                   height: 64,
                                   child: p.thumbnailUrl != null
                                       ? Image.network(
+                                        cacheWidth: context.decodePx(64),
                                           p.thumbnailUrl!,
                                           fit: BoxFit.cover,
                                           errorBuilder: (_, _, _) =>

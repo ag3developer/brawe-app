@@ -37,6 +37,7 @@ import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../wallet/widgets/top_up_coins_sheet.dart';
 import '../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 // ── Qualidade de stream ───────────────────────────────────────────────────────
 
@@ -990,6 +991,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     }
     if (widget.room.thumbnailUrl != null) {
       return Image.network(
+        cacheWidth: context.decodeScreenPx,
         widget.room.thumbnailUrl!,
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _placeholder(),

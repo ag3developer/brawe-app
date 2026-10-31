@@ -39,6 +39,7 @@ import 'stories_rail.dart';
 import 'story_ring_avatar.dart';
 import 'suggested_users_rail.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -2216,6 +2217,7 @@ class _ImageLightboxState extends ConsumerState<_ImageLightbox>
                       fit: BoxFit.contain,
                       alignment: Alignment.center,
                       child: CachedNetworkImage(
+                        memCacheWidth: context.decodeScreenPx,
                         imageUrl: widget.imageUrl,
                         fadeInDuration: const Duration(milliseconds: 150),
                         placeholder: (_, _) => Container(
@@ -2618,6 +2620,7 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
         children: [
           if (poster != null && poster.isNotEmpty)
             CachedNetworkImage(
+              memCacheWidth: context.decodeScreenPx,
               imageUrl: poster,
               httpHeaders: mediaHeadersFor(poster),
               fit: BoxFit.cover,

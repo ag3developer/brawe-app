@@ -28,6 +28,7 @@ import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_video_trim_screen.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Brawe "Pulse" Composer — substitui o antigo bottom sheet.
 ///
@@ -3741,6 +3742,7 @@ class _SelectedStorySoundChip extends StatelessWidget {
                   ClipOval(
                     child: sound.coverUrl != null
                         ? Image.network(
+                          cacheWidth: context.decodePx(26),
                             sound.coverUrl!,
                             width: 26,
                             height: 26,
@@ -3852,6 +3854,7 @@ class _StoryDestinationPill extends StatelessWidget {
                 color: AppColors.darkSurfaceElevated,
                 child: url != null && url.isNotEmpty
                     ? Image.network(
+                      cacheWidth: context.decodePx(34),
                         url,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const Icon(

@@ -8,6 +8,7 @@ import '../../ui/core/themes/brawe_colors.dart';
 import '../../data/services/link_preview_service.dart';
 import 'in_app_link_webview_screen.dart';
 import 'link_preview_provider.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Card de preview de link (imagem + título + domínio), no estilo
 /// Twitter/Instagram/WhatsApp, exibido abaixo do texto de um post quando
@@ -301,6 +302,7 @@ class _LinkPreviewImageLoaderState extends State<_LinkPreviewImageLoader> {
   @override
   Widget build(BuildContext context) {
     return CachedNetworkImage(
+      memCacheWidth: context.decodeScreenPx,
       imageUrl: widget.imageUrl,
       fit: BoxFit.cover,
       httpHeaders: _buildHeaders(widget.imageUrl),

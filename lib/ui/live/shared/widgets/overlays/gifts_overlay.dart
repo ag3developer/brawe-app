@@ -14,6 +14,7 @@ import '../../../../../domain/models/gifter_level.dart';
 import '../../../../../domain/models/user.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/force_dark_theme.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🎁 Catálogo de presentes — layout TikTok-style.
 class GiftsOverlay extends ConsumerStatefulWidget {
@@ -363,6 +364,7 @@ class _GamerLevelHeader extends ConsumerWidget {
                   child:
                       (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty)
                       ? Image.network(
+                        cacheWidth: context.decodePx(44),
                           user.avatarUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => _avatarFallback(user),
@@ -821,6 +823,7 @@ class _GiftIcon extends StatelessWidget {
       errorBuilder: (_, _, _) {
         if (gift.iconUrl != null && gift.iconUrl!.isNotEmpty) {
           return Image.network(
+            cacheWidth: context.decodePx(size),
             gift.iconUrl!,
             width: size,
             height: size,

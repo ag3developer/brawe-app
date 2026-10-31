@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../level_chip.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Linha de comentário do chat da live — estilo TikTok Live.
 ///
@@ -60,7 +61,7 @@ class ChatLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final line = _buildLine();
+    final line = _buildLine(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -78,7 +79,7 @@ class ChatLine extends StatelessWidget {
     );
   }
 
-  Widget _buildLine() {
+  Widget _buildLine(BuildContext context) {
     final hasAvatar =
         comment.avatarUrl != null && comment.avatarUrl!.isNotEmpty;
     final initial = comment.userName.isNotEmpty
@@ -101,7 +102,7 @@ class ChatLine extends StatelessWidget {
               color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
-                      image: NetworkImage(comment.avatarUrl!),
+                      image: ResizeImage(NetworkImage(comment.avatarUrl!), width: context.decodePx(20)),
                       fit: BoxFit.cover,
                     )
                   : null,

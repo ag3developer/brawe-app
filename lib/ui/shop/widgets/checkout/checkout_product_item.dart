@@ -6,6 +6,7 @@ import '../../../core/themes/brawe_colors.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../utils/currency_formatter.dart';
 import 'quantity_selector.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Compact product row for the checkout screen: 72–88px image, name
 /// (max 2 lines), variant, price and a compact quantity stepper.
@@ -36,6 +37,7 @@ class CheckoutProductItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             child: item.productImage != null
                 ? CachedNetworkImage(
+                  memCacheWidth: context.decodePx(76),
                     imageUrl: item.productImage!,
                     width: 76,
                     height: 76,

@@ -32,6 +32,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/comments_sheet.dart';
 import '../../feed/widgets/share_to_chat_sheet.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 bool _isVideoUrl(String url) {
   final u = url.toLowerCase().split('?').first;
@@ -328,7 +329,7 @@ class _SheetContent extends StatelessWidget {
                         backgroundImage:
                             (post.author.avatarUrl != null &&
                                 post.author.avatarUrl!.isNotEmpty)
-                            ? NetworkImage(post.author.avatarUrl!)
+                            ? ResizeImage(NetworkImage(post.author.avatarUrl!), width: context.decodePx(44))
                             : null,
                         child:
                             (post.author.avatarUrl == null ||
@@ -504,6 +505,7 @@ class _MediaBlock extends StatelessWidget {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 480),
       child: CachedNetworkImage(
+        memCacheWidth: context.decodeScreenPx,
         imageUrl: url,
         fit: BoxFit.contain,
         placeholder: (_, _) =>

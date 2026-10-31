@@ -13,6 +13,7 @@ import '../../feed/widgets/create_video_sheet.dart';
 import '../../feed/widgets/story_composer_screen.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class HomeBottomNav extends ConsumerStatefulWidget {
   const HomeBottomNav({super.key});
@@ -491,6 +492,7 @@ class _AvatarIcon extends StatelessWidget {
       child: ClipOval(
         child: avatarUrl != null && avatarUrl!.isNotEmpty
             ? CachedNetworkImage(
+              memCacheWidth: context.decodePx(48),
                 imageUrl: avatarUrl!,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => _fallback(context),

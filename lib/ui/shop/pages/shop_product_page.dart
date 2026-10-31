@@ -14,6 +14,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/product_image_carousel.dart';
 import '../widgets/product_price_section.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Product detail page accessed via `/shop/product/:id` route.
 ///
@@ -908,6 +909,7 @@ class _RecommendedProductCard extends StatelessWidget {
             Expanded(
               child: product.primaryImageUrl != null
                   ? Image.network(
+                    cacheWidth: context.decodeScreenFracPx(0.5),
                       product.primaryImageUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,

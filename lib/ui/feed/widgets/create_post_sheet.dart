@@ -13,6 +13,7 @@ import '../../home/view_models/for_you_feed_view_model.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class CreatePostSheet extends ConsumerStatefulWidget {
   const CreatePostSheet({super.key});
@@ -546,6 +547,7 @@ class _SelectedSoundChip extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: Image.network(
+                cacheWidth: context.decodePx(32),
                 sound.coverUrl!,
                 width: 32,
                 height: 32,

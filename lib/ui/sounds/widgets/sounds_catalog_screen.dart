@@ -12,6 +12,7 @@ import '../view_models/sound_player_view_model.dart';
 import '../view_models/sounds_view_model.dart';
 import 'sound_player_bottom_sheet.dart';
 import 'sounds_header_premium.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class SoundsCatalogScreen extends ConsumerStatefulWidget {
   const SoundsCatalogScreen({super.key});
@@ -308,6 +309,7 @@ class _SoundTile extends ConsumerWidget {
               height: 50,
               child: sound.coverUrl != null
                   ? CachedNetworkImage(
+                    memCacheWidth: context.decodePx(50),
                       imageUrl: sound.coverUrl!,
                       fit: BoxFit.cover,
                     )
@@ -491,6 +493,7 @@ class _MiniPlayer extends ConsumerWidget {
                 height: 40,
                 child: sound.coverUrl != null
                     ? CachedNetworkImage(
+                      memCacheWidth: context.decodePx(40),
                         imageUrl: sound.coverUrl!,
                         fit: BoxFit.cover,
                       )

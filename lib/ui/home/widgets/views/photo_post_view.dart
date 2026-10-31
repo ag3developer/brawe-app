@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../domain/models/feed_item.dart';
 import 'shared/_caption_block.dart';
 import 'shared/_feed_actions_rail.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 📸 View para PhotoPostFeedItem.
 /// ⚠️ DEPRECATED — não é mais usado no For You.
@@ -20,6 +21,7 @@ class PhotoPostView extends StatelessWidget {
       children: [
         if (item.imageUrl != null)
           Image.network(
+            cacheWidth: context.decodeScreenPx,
             item.imageUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => _TextBackground(caption: item.caption),

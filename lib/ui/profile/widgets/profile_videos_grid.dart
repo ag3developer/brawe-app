@@ -105,58 +105,12 @@ class _VideoTile extends ConsumerStatefulWidget {
 }
 
 class _VideoTileState extends ConsumerState<_VideoTile> {
-  VideoPlayerController? _ctrl;
-  bool _ready = false;
-  bool _failed = false;
-
-  /// Capa gerada pelo Bunny: quando existe, a miniatura é só uma imagem —
-  /// sem abrir um player de vídeo por célula da grade.
+  /// Capa gerada pelo Bunny. A grade NUNCA abre player de vídeo: antes, vídeo
+  /// sem capa abria um player por célula só para mostrar o 1º quadro — com
+  /// várias células visíveis o Android ficava sem memória e matava o app.
   String? get _posterUrl {
     final u = widget.post.hlsThumbnailUrl;
     return (u != null && u.isNotEmpty) ? u : null;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (_posterUrl == null) _initThumb();
-  }
-
-  /// Carrega o vídeo, posiciona no primeiro frame e mantém pausado
-  /// (silencioso) — vira "thumbnail real" sem precisar de package nativo.
-  Future<void> _initThumb() async {
-    final url = widget.post.imageUrl ?? '';
-    if (url.isEmpty) {
-      if (mounted) setState(() => _failed = true);
-      return;
-    }
-    final c = VideoPlayerController.networkUrl(
-      Uri.parse(url),
-      httpHeaders: mediaHeadersFor(url),
-      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
-    );
-    _ctrl = c;
-    try {
-      await c.initialize();
-      await c.setVolume(0);
-      await c.setLooping(false);
-      await c.seekTo(Duration.zero);
-      await c.pause();
-      if (!mounted) {
-        await c.dispose();
-        return;
-      }
-      setState(() => _ready = true);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _failed = true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl?.dispose();
-    super.dispose();
   }
 
   @override
@@ -190,42 +144,20 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
                 _posterUrl!,
                 headers: mediaHeadersFor(_posterUrl),
                 fit: BoxFit.cover,
+                // Célula da grade (3 colunas): decodifica nesse tamanho.
+                cacheWidth: (MediaQuery.sizeOf(context).width / 3 *
+                        MediaQuery.devicePixelRatioOf(context))
+                    .round(),
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
 
-            // Frame real do vídeo (preview)
-            if (_ready && _ctrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.zero,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: _ctrl!.value.size.width,
-                    height: _ctrl!.value.size.height,
-                    child: VideoPlayer(_ctrl!),
-                  ),
-                ),
-              ),
-
-            // Loading shimmer-ish enquanto carrega
-            if (_posterUrl == null && !_ready && !_failed)
-              const Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    color: Colors.white38,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-
-            if (_failed)
+            // Sem capa: fundo escuro + play (sem abrir player na grade).
+            if (_posterUrl == null)
               const Center(
                 child: Icon(
-                  Icons.broken_image,
-                  color: Colors.white24,
-                  size: 24,
+                  Icons.play_circle_outline_rounded,
+                  color: Colors.white38,
+                  size: 32,
                 ),
               ),
 

@@ -17,6 +17,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import 'story_composer_screen.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Folha "Compartilhar" de um post — minimalista, no padrão dos apps de
 /// vídeo curto atuais (TikTok/Instagram):
@@ -548,7 +549,7 @@ class _PersonTile extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 28,
                     backgroundColor: colors.surfaceHighest,
-                    backgroundImage: hasAvatar ? NetworkImage(avatar) : null,
+                    backgroundImage: hasAvatar ? ResizeImage(NetworkImage(avatar), width: context.decodePx(56)) : null,
                     child: hasAvatar
                         ? null
                         : Text(

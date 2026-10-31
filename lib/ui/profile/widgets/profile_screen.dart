@@ -37,6 +37,7 @@ import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
 import '../../chat/view_models/presence_provider.dart';
 import '../view_models/profile_reposts_provider.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
 /// Filtra valores vazios, IDs internos (ex.: BF-10006, AF-2023) e UUIDs.
@@ -1215,6 +1216,7 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
           color: context.colors.background,
           child: hasBanner
               ? CachedNetworkImage(
+                memCacheWidth: context.decodeScreenPx,
                   imageUrl: bannerUrl,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const SizedBox.shrink(),
@@ -1837,6 +1839,7 @@ class _Avatar extends StatelessWidget {
       return _AvatarFallback(initials: initials);
     }
     return CachedNetworkImage(
+      memCacheWidth: context.decodePx(160),
       imageUrl: url!,
       fit: BoxFit.cover,
       fadeInDuration: const Duration(milliseconds: 250),

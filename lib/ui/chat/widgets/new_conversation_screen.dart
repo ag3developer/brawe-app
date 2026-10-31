@@ -10,6 +10,7 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 part 'new_conversation_screen.g.dart';
 
@@ -292,7 +293,7 @@ class _UserTile extends StatelessWidget {
                       radius: 24,
                       backgroundColor: context.colors.surfaceElevated,
                       backgroundImage: avatarUrl != null
-                          ? CachedNetworkImageProvider(avatarUrl)
+                          ? CachedNetworkImageProvider(avatarUrl, maxWidth: context.decodePx(48))
                           : null,
                       child: avatarUrl == null
                           ? Text(

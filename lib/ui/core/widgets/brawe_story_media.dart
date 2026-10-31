@@ -29,6 +29,7 @@ import 'package:video_player/video_player.dart';
 
 import 'brawe_avatar.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Renderização full-screen de mídia de story.
 ///
@@ -157,6 +158,7 @@ class _ImageSurface extends StatelessWidget {
         children: [
           // Fundo: imagem desfocada para preencher as bordas pretas
           CachedNetworkImage(
+            memCacheWidth: context.decodeScreenPx,
             imageUrl: url,
             fit: BoxFit.cover,
             fadeInDuration: Duration.zero,
@@ -181,6 +183,7 @@ class _ImageSurface extends StatelessWidget {
           ),
           // Frente: imagem real com contain (sem corte)
           CachedNetworkImage(
+            memCacheWidth: context.decodeScreenPx,
             imageUrl: url,
             fit: BoxFit.contain,
             fadeInDuration: const Duration(milliseconds: 150),
@@ -230,6 +233,7 @@ class _ImageSurface extends StatelessWidget {
 
     // Imagem portrait nativa — comportamento padrão com cover
     return CachedNetworkImage(
+      memCacheWidth: context.decodeScreenPx,
       imageUrl: url,
       fit: fit,
       fadeInDuration: const Duration(milliseconds: 150),
@@ -326,6 +330,7 @@ class _LoadingBackdrop extends StatelessWidget {
         if (hasAvatar)
           ClipRect(
             child: CachedNetworkImage(
+              memCacheWidth: context.decodeScreenPx,
               imageUrl: authorAvatarUrl!,
               fit: BoxFit.cover,
               width: double.infinity,
@@ -472,7 +477,7 @@ class StoryMediaPrecache {
   ) async {
     if (url.isEmpty) return;
     try {
-      final provider = CachedNetworkImageProvider(url);
+      final provider = CachedNetworkImageProvider(url, maxWidth: context.decodeScreenPx);
       await precacheImage(provider, context);
     } catch (_) {
       // Pré-cache é best-effort; nunca quebra o fluxo principal.

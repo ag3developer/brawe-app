@@ -12,6 +12,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/gallery_view_model.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Mini-galeria do perfil (até 6 fotos + 3 vídeos curtos).
 /// Paridade com `components/connect/ProfileGallery.tsx` do web.
@@ -291,6 +292,7 @@ class _MediaTile extends ConsumerWidget {
         fit: StackFit.expand,
         children: [
           CachedNetworkImage(
+            memCacheWidth: context.decodeScreenFracPx(1 / 3),
             imageUrl: thumb,
             fit: BoxFit.cover,
             placeholder: (_, _) =>
@@ -458,6 +460,7 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
                     ))
             : InteractiveViewer(
                 child: CachedNetworkImage(
+                  memCacheWidth: context.decodeScreenPx,
                   imageUrl: m.url,
                   fit: BoxFit.contain,
                   placeholder: (_, _) => const CircularProgressIndicator(

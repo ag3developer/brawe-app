@@ -27,6 +27,7 @@ import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
 import 'gift_flight_overlay.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Visualizador de stories full-screen.
 ///
@@ -917,6 +918,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                         width: 1080,
                                         height: 1920,
                                         child: Image.network(
+                                          cacheWidth: context.decodeScreenPx,
                                           story.overlayUrl!,
                                           fit: BoxFit.fill,
                                           gaplessPlayback: true,

@@ -18,6 +18,7 @@ import '../utils/currency_formatter.dart';
 import '../widgets/shop_pill_button.dart';
 import '../widgets/shop_promotion_badge.dart';
 import '../widgets/vitrine_sort_sheet.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Grid vs. list display for the vitrine's product catalog — same toggle
 /// pattern as TikTok Shop's minimalist grid/list icon.
@@ -257,7 +258,7 @@ class _VitrineHeader extends StatelessWidget {
                 radius: 28,
                 backgroundColor: context.colors.surfaceElevated,
                 backgroundImage: profile.avatarUrl != null
-                    ? CachedNetworkImageProvider(profile.avatarUrl!)
+                    ? CachedNetworkImageProvider(profile.avatarUrl!, maxWidth: context.decodePx(56))
                     : null,
                 child: profile.avatarUrl == null
                     ? Icon(Icons.person, color: context.colors.textSecondary)
@@ -688,6 +689,7 @@ class _VitrineProductCard extends ConsumerWidget {
                 children: [
                   product.primaryImageUrl != null
                       ? CachedNetworkImage(
+                        memCacheWidth: context.decodeScreenFracPx(0.5),
                           imageUrl: product.primaryImageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (_, __) =>
@@ -856,6 +858,7 @@ class _VitrineProductListCard extends ConsumerWidget {
                   children: [
                     product.primaryImageUrl != null
                         ? CachedNetworkImage(
+                          memCacheWidth: context.decodePx(92),
                             imageUrl: product.primaryImageUrl!,
                             fit: BoxFit.cover,
                             placeholder: (_, _) =>

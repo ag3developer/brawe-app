@@ -10,6 +10,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/quests_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Tela de missões diárias (gamificação).
 ///
@@ -456,6 +457,7 @@ class _LevelBadge extends StatelessWidget {
             child: ClipOval(
               child: avatarUrl != null && avatarUrl!.isNotEmpty
                   ? Image.network(
+                    cacheWidth: context.decodePx(avatarSize),
                       avatarUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, e, st) => _avatarFallback(),

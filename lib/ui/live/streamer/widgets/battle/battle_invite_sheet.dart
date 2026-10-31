@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../data/services/battle_service.dart';
 import '../../../../../domain/models/battle_candidate.dart';
 import '../../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Bottom sheet to pick a live creator and invite them for a battle.
 ///
@@ -572,7 +573,7 @@ class _CandidateTile extends StatelessWidget {
                   backgroundColor: AppColors.braweBlue.withValues(
                     alpha: 0.3,
                   ),
-                  backgroundImage: avatar != null ? NetworkImage(avatar) : null,
+                  backgroundImage: avatar != null ? ResizeImage(NetworkImage(avatar), width: context.decodePx(48)) : null,
                   child: avatar == null
                       ? Text(
                           c.displayName.replaceFirst('@', '').isNotEmpty

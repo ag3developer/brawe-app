@@ -14,6 +14,7 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../view_models/feed_video_mute_provider.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 👤 Provider que busca o perfil completo de um streamer pelo id,
 /// usado para garantir que avatar + nome real sempre apareçam no card de
@@ -248,6 +249,7 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
           )
         else if (_posterUrl != null)
           Image.network(
+            cacheWidth: context.decodeScreenPx,
             _posterUrl!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => Container(color: AppColors.slate),
@@ -702,7 +704,7 @@ class StreamerIdentity extends ConsumerWidget {
               radius: 18,
               backgroundColor: AppColors.slate,
               backgroundImage: effectiveAvatar.isNotEmpty
-                  ? NetworkImage(effectiveAvatar)
+                  ? ResizeImage(NetworkImage(effectiveAvatar), width: context.decodePx(36))
                   : null,
               child: effectiveAvatar.isEmpty
                   ? const Icon(Icons.person, color: Colors.white, size: 18)

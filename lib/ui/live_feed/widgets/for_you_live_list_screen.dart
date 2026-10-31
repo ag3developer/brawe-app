@@ -6,6 +6,7 @@ import '../../../domain/models/live_room.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class ForYouLiveListScreen extends ConsumerStatefulWidget {
   const ForYouLiveListScreen({super.key});
@@ -167,6 +168,7 @@ class _LiveThumbnailCard extends StatelessWidget {
             // Thumbnail
             if (room.thumbnailUrl != null)
               Image.network(
+                cacheWidth: context.decodeScreenFracPx(0.5),
                 room.thumbnailUrl!,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
@@ -257,7 +259,7 @@ class _LiveThumbnailCard extends StatelessWidget {
                         radius: 14,
                         backgroundColor: Colors.white24,
                         backgroundImage: room.streamerAvatarUrl != null
-                            ? NetworkImage(room.streamerAvatarUrl!)
+                            ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(28))
                             : null,
                         child: room.streamerAvatarUrl == null
                             ? const Icon(Icons.person, size: 14, color: Colors.white)

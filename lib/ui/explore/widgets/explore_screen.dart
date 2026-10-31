@@ -8,6 +8,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/explore_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -371,6 +372,7 @@ class _LiveCard extends StatelessWidget {
                 children: [
                   if (live.thumbnailUrl != null)
                     CachedNetworkImage(
+                      memCacheWidth: context.decodeScreenPx,
                       imageUrl: live.thumbnailUrl!,
                       fit: BoxFit.cover,
                       errorWidget: (_, _, _) =>
@@ -490,7 +492,7 @@ class _StreamerTile extends StatelessWidget {
             radius: 22,
             backgroundColor: context.colors.surfaceElevated,
             backgroundImage: streamer.avatarUrl != null
-                ? CachedNetworkImageProvider(streamer.avatarUrl!)
+                ? CachedNetworkImageProvider(streamer.avatarUrl!, maxWidth: context.decodePx(44))
                 : null,
             child: streamer.avatarUrl == null
                 ? Text(
@@ -619,6 +621,7 @@ class _SearchTile extends StatelessWidget {
           height: 48,
           child: result.thumbnail != null
               ? CachedNetworkImage(
+                memCacheWidth: context.decodePx(48),
                   imageUrl: result.thumbnail!,
                   fit: BoxFit.cover,
                   errorWidget: (_, _, _) =>

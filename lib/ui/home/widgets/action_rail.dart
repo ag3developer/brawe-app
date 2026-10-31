@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/feed_item.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Right-side rail with social actions, shared by every For You view.
 class ActionRail extends StatelessWidget {
@@ -121,7 +122,7 @@ class _AvatarFollow extends StatelessWidget {
               ),
               child: ClipOval(
                 child: author.avatarUrl != null
-                    ? Image.network(author.avatarUrl!, fit: BoxFit.cover)
+                    ? Image.network(cacheWidth: context.decodePx(50), author.avatarUrl!, fit: BoxFit.cover)
                     : Container(
                         color: context.colors.surfaceElevated,
                         child: Center(
@@ -377,7 +378,7 @@ class _SpinningDiscState extends State<_SpinningDisc>
         ),
         child: ClipOval(
           child: widget.avatarUrl != null
-              ? Image.network(widget.avatarUrl!, fit: BoxFit.cover)
+              ? Image.network(cacheWidth: context.decodePx(36), widget.avatarUrl!, fit: BoxFit.cover)
               : Container(color: context.colors.surfaceElevated),
         ),
       ),

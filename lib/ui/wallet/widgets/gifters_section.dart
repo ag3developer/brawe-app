@@ -33,6 +33,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/widgets/brawe_coin.dart';
 import '../../core/widgets/gift_icon.dart';
 import '../view_models/wallet_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 // ============================================================================
 // Public widget
@@ -396,7 +397,7 @@ class _Avatar extends StatelessWidget {
         color: AppColors.braweBlue.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         image: hasUrl
-            ? DecorationImage(image: NetworkImage(url!), fit: BoxFit.cover)
+            ? DecorationImage(image: ResizeImage(NetworkImage(url!), width: context.decodePx(size)), fit: BoxFit.cover)
             : null,
       ),
       child: hasUrl

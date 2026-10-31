@@ -8,6 +8,7 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../core/ui/follow_button.dart';
 import '../../../../core/view_models/follow_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Pílula glass com avatar + nome do streamer.
 ///
@@ -87,7 +88,7 @@ class StreamerIdentityBar extends ConsumerWidget {
                   radius: 14,
                   backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
-                      ? NetworkImage(room.streamerAvatarUrl!)
+                      ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(28))
                       : null,
                   child: room.streamerAvatarUrl == null
                       ? const Icon(Icons.person, size: 14, color: Colors.white)
@@ -177,7 +178,7 @@ class StreamerQuickSheet extends StatelessWidget {
                   radius: 36,
                   backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
-                      ? NetworkImage(room.streamerAvatarUrl!)
+                      ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(72))
                       : null,
                   child: room.streamerAvatarUrl == null
                       ? const Icon(Icons.person, size: 36, color: Colors.white)

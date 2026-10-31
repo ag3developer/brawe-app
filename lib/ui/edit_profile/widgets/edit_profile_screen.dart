@@ -16,6 +16,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 extension _ErrorCodeLabel on EditProfileErrorCode {
   String label(S s) {
@@ -490,6 +491,7 @@ class _HeroMediaEditor extends ConsumerWidget {
               color: context.colors.divider,
               child: bannerUrl != null && bannerUrl.isNotEmpty
                   ? CachedNetworkImage(
+                    memCacheWidth: context.decodeScreenPx,
                       imageUrl: bannerUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
@@ -594,6 +596,7 @@ class _HeroMediaEditor extends ConsumerWidget {
                         )
                       : (avatarUrl != null && avatarUrl.isNotEmpty
                             ? CachedNetworkImage(
+                              memCacheWidth: context.decodePx(88),
                                 imageUrl: avatarUrl,
                                 fit: BoxFit.cover,
                                 width: 88,

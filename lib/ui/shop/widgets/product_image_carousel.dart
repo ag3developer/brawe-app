@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/brawe_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// A carousel/PageView for displaying product images.
 ///
@@ -88,6 +89,7 @@ class _ProductImageCarouselState extends State<ProductImageCarousel> {
       color: context.colors.surface,
       padding: const EdgeInsets.all(20),
       child: CachedNetworkImage(
+        memCacheWidth: context.decodeScreenPx,
         imageUrl: imageUrl,
         fit: BoxFit.contain,
         placeholder: (context, url) => _buildLoadingPlaceholder(),

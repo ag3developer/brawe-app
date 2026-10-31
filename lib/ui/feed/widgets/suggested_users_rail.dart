@@ -8,6 +8,7 @@ import '../../../data/services/social_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 part 'suggested_users_rail.g.dart';
 
@@ -369,7 +370,7 @@ class _AvatarStack extends StatelessWidget {
     Widget avatar = CircleAvatar(
       radius: size / 2,
       backgroundColor: colors.surfaceHighest,
-      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+      backgroundImage: avatarUrl != null ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(size)) : null,
       child: avatarUrl == null
           ? Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',

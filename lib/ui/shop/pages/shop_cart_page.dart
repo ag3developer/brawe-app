@@ -10,6 +10,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/shop_pill_button.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Cart page accessed via `/shop/cart` route.
 ///
@@ -351,6 +352,7 @@ class _CartItemTile extends ConsumerWidget {
             borderRadius: BorderRadius.circular(12),
             child: item.productImage != null
                 ? CachedNetworkImage(
+                  memCacheWidth: context.decodePx(76),
                     imageUrl: item.productImage!,
                     width: 76,
                     height: 76,

@@ -10,6 +10,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
 import 'story_viewer.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Avatar reutilizável com anel de stories.
 ///
@@ -96,7 +97,7 @@ class StoryRingAvatar extends ConsumerWidget {
         radius: radius,
         backgroundColor: backgroundColor ?? AppColors.slate,
         backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
-            ? NetworkImage(avatarUrl!)
+            ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(radius * 2))
             : null,
         child: (avatarUrl == null || avatarUrl!.isEmpty)
             ? Text(

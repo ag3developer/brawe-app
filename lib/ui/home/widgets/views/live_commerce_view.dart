@@ -6,6 +6,7 @@ import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import 'shared/_live_peek.dart';
 import 'products_drawer.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🛍️ View para LiveCommerceItem — thumbnail + produto em destaque + botão de carrinho.
 class LiveCommerceView extends StatelessWidget {
@@ -183,6 +184,7 @@ class _FeaturedProductCard extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
+                cacheWidth: context.decodePx(56),
                 product.imageUrl,
                 width: 56,
                 height: 56,

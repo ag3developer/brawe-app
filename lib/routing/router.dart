@@ -79,6 +79,20 @@ part 'router.g.dart';
 /// deep links recebidos, não define o idioma do app em si.
 const _kWebLocales = {'pt', 'es', 'en'};
 
+/// Páginas do site (já sem o prefixo de idioma) → rota equivalente no app.
+const _kWebPathAliases = {
+  '/': '/home',
+  '/connect': '/home',
+  '/connect/foryou': '/home',
+  '/connect/lives': '/live',
+  '/connect/explore': '/explore',
+  '/connect/messages': '/chat',
+  '/connect/notifications': '/notifications',
+  '/connect/quests': '/quests',
+  '/connect/settings': '/settings',
+  '/connect/profile': '/edit-profile',
+};
+
 /// Normaliza um deep link (Universal Link/App Link) recebido de fora do
 /// app para uma rota conhecida pelo `GoRouter`, ou retorna `null` se a
 /// localização já é válida/não precisa de tradução.
@@ -107,12 +121,47 @@ String? _normalizeDeepLink(Uri uri) {
     path = '/connect/u/$id';
   }
 
+  // 3) Live compartilhada pelo site: "/connect/live/:slug" → "/live/:slug"
+  //    (o `_LiveRoomResolver` aceita id ou slug). Os presentes misteriosos
+  //    acontecem dentro da live, então "/connect/mystery-gifts/:slug" também.
+  for (final liveAlias in const ['/connect/live/', '/connect/mystery-gifts/']) {
+    if (path.startsWith(liveAlias) && path.length > liveAlias.length) {
+      path = '/live/${path.substring(liveAlias.length)}';
+    }
+  }
+
+  // 4) Formas `brawe://` do backend (`link_url` das notificações) que não
+  //    são rotas: "brawe://user/:id" → perfil; "brawe://gifts[/:id]" → carteira.
+  if (path.startsWith('/user/')) {
+    path = '/profile/${path.substring('/user/'.length)}';
+  } else if (path == '/gifts' || path.startsWith('/gifts/')) {
+    path = '/wallet';
+  }
+
+  // 5) Demais páginas do site que têm equivalente no app; o resto cai no
+  //    `onException` do GoRouter, que manda para /home.
+  path = _kWebPathAliases[path] ?? path;
+
   if (path == uri.path) {
     return null; // nada mudou — deixa o redirect normal seguir
   }
   final query = uri.query.isNotEmpty ? '?${uri.query}' : '';
   return '$path$query';
 }
+
+/// Destino aberto antes do login (deep link), consumido logo após entrar.
+String? _pendingAuthLocation;
+
+bool _isSharedContentPath(String path) =>
+    (path.startsWith('/live/') &&
+        !const {'/live/start', '/live/summary', '/live/broadcast'}
+            .contains(path)) ||
+    path.startsWith('/post/') ||
+    path.startsWith('/profile/') ||
+    path.startsWith('/connect/') ||
+    path.startsWith('/explore/hashtag/') ||
+    path.startsWith('/shop/product/') ||
+    path.startsWith('/shop/store/');
 
 @riverpod
 GoRouter router(Ref ref) {
@@ -121,6 +170,12 @@ GoRouter router(Ref ref) {
   return GoRouter(
     initialLocation: '/home',
     refreshListenable: RouterRefreshListenable(ref),
+    // Link do site sem tela equivalente no app (loja, marketplace…): abre o
+    // início em vez da tela "Page Not Found".
+    onException: (_, state, router) {
+      debugPrint('Router: rota desconhecida ${state.uri} → /home');
+      router.go('/home');
+    },
     redirect: (context, state) {
       // ── Normalização de Universal Links (iOS) / App Links (Android) ────
       // O AASA/assetlinks está configurado com "paths": ["*"] — o app
@@ -147,11 +202,20 @@ GoRouter router(Ref ref) {
       if (isLoading) return null;
 
       if (!isAuth) {
+        // Guarda o link aberto (ex.: live recebida no WhatsApp) para abrir
+        // depois do login, em vez de perder o destino e cair no início.
+        // Só links de conteúdo: no logout, a tela atual (ex.: /settings) não
+        // deve virar destino do próximo login.
+        if (!isLoggingIn && _isSharedContentPath(state.uri.path)) {
+          _pendingAuthLocation = state.uri.toString();
+        }
         return isLoggingIn ? null : '/welcome';
       }
 
       if (isLoggingIn) {
-        return '/home';
+        final pending = _pendingAuthLocation;
+        _pendingAuthLocation = null;
+        return pending ?? '/home';
       }
 
       // ── Onboarding obrigatório de avatar ──────────────────────────────
@@ -354,12 +418,12 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/wallet',
-            redirect: (_, _) => kEnableMonetization ? null : '/',
+            redirect: (_, _) => kEnableMonetization ? null : '/home',
             builder: (context, state) => const WalletScreen(),
           ),
           GoRoute(
             path: '/earnings',
-            redirect: (_, _) => kEnableMonetization ? null : '/',
+            redirect: (_, _) => kEnableMonetization ? null : '/home',
             builder: (context, state) => const EarningsScreen(),
           ),
           GoRoute(

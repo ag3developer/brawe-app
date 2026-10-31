@@ -10,6 +10,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../shared/widgets/brawe_illustration.dart';
 import '../view_models/notifications_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -140,6 +141,7 @@ class _NotificationTile extends StatelessWidget {
                       child: (notification.actorAvatar != null &&
                               notification.actorAvatar!.isNotEmpty)
                           ? CachedNetworkImage(
+                            memCacheWidth: context.decodePx(44),
                               imageUrl: notification.actorAvatar!,
                               fit: BoxFit.cover,
                               fadeInDuration:

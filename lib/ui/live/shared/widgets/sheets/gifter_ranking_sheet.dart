@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🏆 Bottom sheet com ranking de presenteadores da live atual.
 ///
@@ -178,6 +179,7 @@ class _RankRow extends StatelessWidget {
             child: ClipOval(
               child: entry.avatarUrl != null
                   ? Image.network(
+                    cacheWidth: context.decodePx(44),
                       entry.avatarUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => _AvatarFallback(

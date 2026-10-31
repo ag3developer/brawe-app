@@ -13,6 +13,7 @@ import '../../../data/services/social_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/suggested_users_rail.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Página "Encontrar amigos" — estilo TikTok: mostra o QR code do próprio
 /// perfil (para outras pessoas escanearem e seguir/ver o perfil), um botão
@@ -156,6 +157,7 @@ class _MyQrCard extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: avatarUrl != null && avatarUrl!.isNotEmpty
                       ? CachedNetworkImage(
+                        memCacheWidth: context.decodePx(44),
                           imageUrl: avatarUrl!,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) =>
@@ -352,7 +354,7 @@ class _SuggestionTileState extends ConsumerState<_SuggestionTile> {
               radius: 24,
               backgroundColor: colors.surfaceHighest,
               backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? CachedNetworkImageProvider(avatarUrl)
+                  ? CachedNetworkImageProvider(avatarUrl, maxWidth: context.decodePx(48))
                   : null,
               child: avatarUrl == null || avatarUrl.isEmpty
                   ? Icon(Icons.person, color: colors.textSecondary)

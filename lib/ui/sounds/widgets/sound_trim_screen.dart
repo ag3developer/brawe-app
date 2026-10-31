@@ -10,6 +10,7 @@ import '../../../domain/models/sound.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import 'waveform_view.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Resultado devolvido por [SoundTrimScreen.push]: o trecho ESPECÍFICO
 /// (em milissegundos, relativo ao início da faixa) escolhido pelo usuário
@@ -321,7 +322,7 @@ class _SoundHeader extends StatelessWidget {
             width: 84,
             height: 84,
             child: sound.coverUrl != null
-                ? Image.network(sound.coverUrl!, fit: BoxFit.cover)
+                ? Image.network(cacheWidth: context.decodePx(84), sound.coverUrl!, fit: BoxFit.cover)
                 : Container(
                     color: Colors.white12,
                     child: const Icon(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🎖️ Chip de nível estilo TikTok — exibido ao lado do nome do usuário
 /// no chat da live e nos toasts de gift.
@@ -120,6 +121,7 @@ class _BadgeIcon extends StatelessWidget {
       child: imageUrl == null || imageUrl!.trim().isEmpty
           ? _emojiFallback()
           : Image.network(
+            cacheWidth: context.decodePx(size),
               imageUrl!,
               width: size,
               height: size,

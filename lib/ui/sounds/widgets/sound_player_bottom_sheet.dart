@@ -11,6 +11,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/sound_player_view_model.dart';
 import '../view_models/sounds_view_model.dart';
 import 'waveform_view.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Bottom sheet do player de Brawe Sounds.
 /// Chamado com:
@@ -291,7 +292,7 @@ class _Cover extends StatelessWidget {
         width: size,
         height: size,
         child: url != null
-            ? CachedNetworkImage(imageUrl: url!, fit: BoxFit.cover)
+            ? CachedNetworkImage(memCacheWidth: context.decodePx(size), imageUrl: url!, fit: BoxFit.cover)
             : Container(
                 color: context.colors.surfaceHighest,
                 child: Icon(LucideIcons.music,

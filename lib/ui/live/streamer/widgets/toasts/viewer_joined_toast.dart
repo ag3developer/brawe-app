@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/live_viewer_event.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Animated toast shown to the streamer when a viewer joins the room.
 class ViewerJoinedToast extends StatelessWidget {
@@ -54,7 +55,7 @@ class ViewerJoinedToast extends StatelessWidget {
                   radius: 11,
                   backgroundColor: Colors.white24,
                   backgroundImage: (event.viewerAvatar != null && event.viewerAvatar!.isNotEmpty)
-                      ? NetworkImage(event.viewerAvatar!)
+                      ? ResizeImage(NetworkImage(event.viewerAvatar!), width: context.decodePx(22))
                       : null,
                   child: (event.viewerAvatar == null || event.viewerAvatar!.isEmpty)
                       ? Text(

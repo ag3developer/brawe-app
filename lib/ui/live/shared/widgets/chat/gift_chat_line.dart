@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Linha do chat representando um presente enviado — estilo TikTok MINIMALISTA.
 ///
@@ -60,7 +61,7 @@ class GiftChatLine extends StatelessWidget {
               color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
-                      image: NetworkImage(gift.senderAvatarUrl!),
+                      image: ResizeImage(NetworkImage(gift.senderAvatarUrl!), width: context.decodePx(20)),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -141,6 +142,7 @@ class GiftChatLine extends StatelessWidget {
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(3),
                             child: Image.network(
+                              cacheWidth: context.decodePx(18),
                               gift.giftIconUrl!,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Center(

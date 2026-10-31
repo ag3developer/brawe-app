@@ -5,6 +5,7 @@ import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
 import 'shared/_live_overlay.dart';
 import 'shared/_live_peek.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// ⚔️ Preview de LiveBattle — split HORIZONTAL, tap para entrar na live.
 /// Só exibe: thumbnails lado a lado, placar VS, timer, tags dos streamers
@@ -180,6 +181,7 @@ class _HalfPreview extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Image.network(
+          cacheWidth: context.decodeScreenPx,
           imageUrl,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => Container(
@@ -385,7 +387,7 @@ class _StreamerTag extends StatelessWidget {
             radius: 13,
             backgroundColor: color.withValues(alpha: 0.3),
             backgroundImage: author.avatarUrl != null
-                ? NetworkImage(author.avatarUrl!)
+                ? ResizeImage(NetworkImage(author.avatarUrl!), width: context.decodePx(26))
                 : null,
             child: author.avatarUrl == null
                 ? Text(

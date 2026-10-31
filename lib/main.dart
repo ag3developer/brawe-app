@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -9,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fvp/fvp.dart' as fvp;
 import 'package:go_router/go_router.dart';
 
 import 'config/locale_provider.dart';
@@ -40,23 +38,13 @@ Future<void> main() async {
       }
 
       // ── Video backend ──────────────────────────────────────────────────
-      // Android: usar `fvp` (MDK/FFmpeg) como backend do `video_player`.
-      // O backend padrão do Android usa SurfaceTexture + MediaCodec, que
-      // apresenta artefatos gráficos (faixas verdes em diagonal, lixo
-      // visual) quando combinado com o renderizador Impeller do Flutter
-      // em vários dispositivos (Motorola, Samsung mid-range, Xiaomi etc).
-      // No iOS o AVFoundation nativo continua sendo usado (funciona 100%).
-      if (!kIsWeb && Platform.isAndroid) {
-        fvp.registerWith(
-          options: {
-            // Apenas Android — não substitui o player no iOS.
-            'platforms': ['android'],
-            // Decoders por ordem de preferência: hardware → software.
-            // FFmpeg garante fallback se o codec hw do device estiver bugado.
-            'video.decoders': ['AMediaCodec', 'FFmpeg'],
-          },
-        );
-      }
+      // Android usa o player nativo do video_player (ExoPlayer/media3), igual
+      // ao iOS com AVFoundation: qualidade adaptativa no HLS (cai de
+      // resolução com rede/aparelho fraco), decodificação em hardware e pouca
+      // memória. O `fvp` (MDK/FFmpeg) que estava aqui contornava faixas
+      // verdes do Impeller — que está desligado no AndroidManifest — e
+      // tocava sempre a resolução mais alta: travava e enchia a memória.
+      // Ainda pesa: ver também _ImageMemoryGuard (cache de imagens).
 
       // Firebase init is best-effort; app must boot even without config files.
       var firebaseReady = false;
@@ -108,6 +96,7 @@ Future<void> main() async {
         return _GlobalErrorFallback(details: details);
       };
 
+      _ImageMemoryGuard.install();
       runApp(const ProviderScope(child: BraweApp()));
     },
     (error, stack) {
@@ -318,5 +307,37 @@ class _AppLifecycleObserver with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       onResume();
     }
+  }
+}
+
+
+/// Teto do cache de imagens decodificadas + limpeza quando o sistema pede.
+///
+/// O padrão do Flutter guarda até 1000 imagens / 100 MB, e cada foto aberta
+/// no tamanho original pesa dezenas de MB — no Android o sistema matava o
+/// app ("fecha sozinho"). Aqui: teto menor, e o cache é esvaziado quando o
+/// Android/iOS avisa memória baixa e quando o app vai para segundo plano.
+class _ImageMemoryGuard with WidgetsBindingObserver {
+  _ImageMemoryGuard._();
+
+  static void install() {
+    final cache = PaintingBinding.instance.imageCache;
+    cache.maximumSize = 150; // imagens
+    cache.maximumSizeBytes = 80 << 20; // 80 MB
+    WidgetsBinding.instance.addObserver(_ImageMemoryGuard._());
+  }
+
+  void _trim() {
+    final cache = PaintingBinding.instance.imageCache;
+    cache.clear();
+    cache.clearLiveImages();
+  }
+
+  @override
+  void didHaveMemoryPressure() => _trim();
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _trim();
   }
 }

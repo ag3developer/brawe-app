@@ -8,6 +8,7 @@ import '../../../domain/models/post_liker.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/follow_button.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Provider AutoDispose+Family que busca os "likers" de um post.
 final postLikersProvider = FutureProvider.autoDispose
@@ -237,7 +238,7 @@ class _LikerTile extends ConsumerWidget {
                   backgroundColor: colors.surface,
                   backgroundImage:
                       (liker.avatarUrl != null && liker.avatarUrl!.isNotEmpty)
-                      ? CachedNetworkImageProvider(liker.avatarUrl!)
+                      ? CachedNetworkImageProvider(liker.avatarUrl!, maxWidth: context.decodePx(44))
                       : null,
                   child: (liker.avatarUrl == null || liker.avatarUrl!.isEmpty)
                       ? Text(

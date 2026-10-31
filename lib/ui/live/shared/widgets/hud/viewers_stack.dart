@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Stack horizontal de até 3 avatares de viewers + bucket de contador.
 ///
@@ -118,6 +119,7 @@ class _AvatarCircle extends StatelessWidget {
       child: url != null
           ? ClipOval(
               child: Image.network(
+                cacheWidth: context.decodePx(22),
                 url!,
                 width: 22,
                 height: 22,

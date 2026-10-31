@@ -16,6 +16,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../../core/utils/gift_tier_names.dart';
 import '../../live_feed/view_models/gift_catalog_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class StoryGiftResult {
   const StoryGiftResult({
@@ -363,6 +364,7 @@ class _Header extends StatelessWidget {
             child: ClipOval(
               child: (url != null && url.isNotEmpty)
                   ? Image.network(
+                    cacheWidth: context.decodePx(44),
                       url,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _avatarFallback(),
@@ -579,6 +581,7 @@ class _GiftIcon extends StatelessWidget {
           final iconUrl = gift.iconUrl;
           if (iconUrl != null && iconUrl.isNotEmpty) {
             return Image.network(
+              cacheWidth: context.decodePx(_size),
               iconUrl,
               width: _size,
               height: _size,

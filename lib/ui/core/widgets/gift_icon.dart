@@ -61,7 +61,7 @@ class GiftIcon extends StatelessWidget {
   }
 
   Widget _buildAssetChain(List<String> paths, int index, int cachePx) {
-    if (index >= paths.length) return _buildNetworkOrFallback();
+    if (index >= paths.length) return _buildNetworkOrFallback(cachePx);
     return Image.asset(
       paths[index],
       width: size,
@@ -72,11 +72,12 @@ class GiftIcon extends StatelessWidget {
     );
   }
 
-  Widget _buildNetworkOrFallback() {
+  Widget _buildNetworkOrFallback(int cachePx) {
     final url = _resolvedIconUrl;
     if (url == null) return _fallback();
     return Image.network(
       url,
+      cacheWidth: cachePx,
       width: size,
       height: size,
       fit: BoxFit.contain,

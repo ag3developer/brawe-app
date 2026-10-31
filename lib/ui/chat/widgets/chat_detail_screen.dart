@@ -29,6 +29,7 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/post.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import 'shared_post_sheet.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -992,7 +993,7 @@ class _MessageBubble extends ConsumerWidget {
                         radius: 14,
                         backgroundColor: context.colors.surfaceElevated,
                         backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl!)
+                            ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(28))
                             : null,
                         child: avatarUrl == null
                             ? Icon(
@@ -1109,7 +1110,7 @@ class _MessageBubble extends ConsumerWidget {
                         radius: 14,
                         backgroundColor: context.colors.surfaceElevated,
                         backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl!)
+                            ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(28))
                             : null,
                         child: avatarUrl == null
                             ? Icon(
@@ -1453,6 +1454,7 @@ class _GifBubbleContent extends StatelessWidget {
       child: Stack(
         children: [
           Image.network(
+            cacheWidth: context.decodePx(200),
             gifUrl,
             width: 200,
             height: 150,
@@ -1539,6 +1541,7 @@ class _ImageBubbleContent extends StatelessWidget {
               child: _isLocal
                   ? Image.file(File(message.content), fit: BoxFit.cover)
                   : CachedNetworkImage(
+                    memCacheWidth: context.decodeScreenPx,
                       imageUrl: message.content,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => const Center(
@@ -1675,6 +1678,7 @@ class _ImageViewerPage extends StatelessWidget {
           child: isLocal
               ? Image.file(File(message.content))
               : CachedNetworkImage(
+                memCacheWidth: context.decodeScreenPx,
                   imageUrl: message.content,
                   fit: BoxFit.contain,
                   placeholder: (_, _) => const CircularProgressIndicator(
@@ -2546,6 +2550,7 @@ class _SharedPostPreview extends ConsumerWidget {
                     ),
                   )
                 : CachedNetworkImage(
+                  memCacheWidth: context.decodePx(280),
                     imageUrl: post.imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: (_, _) =>
@@ -2573,7 +2578,7 @@ class _SharedPostPreview extends ConsumerWidget {
                     backgroundImage:
                         (post.author.avatarUrl != null &&
                             post.author.avatarUrl!.isNotEmpty)
-                        ? NetworkImage(post.author.avatarUrl!)
+                        ? ResizeImage(NetworkImage(post.author.avatarUrl!), width: context.decodePx(22))
                         : null,
                     child:
                         (post.author.avatarUrl == null ||
@@ -4034,6 +4039,7 @@ class _GifGrid extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 Image.network(
+                  cacheWidth: context.decodeScreenFracPx(1 / 3),
                   gif.url,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => Container(
@@ -4160,6 +4166,7 @@ class _LiveInviteCard extends StatelessWidget {
                   children: [
                     if (thumb != null && thumb.isNotEmpty)
                       Image.network(
+                        cacheWidth: context.decodeScreenPx,
                         thumb,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) =>
@@ -4267,7 +4274,7 @@ class _LiveInviteCard extends StatelessWidget {
                           backgroundImage:
                               (streamerAvatar != null &&
                                   streamerAvatar.isNotEmpty)
-                              ? NetworkImage(streamerAvatar)
+                              ? ResizeImage(NetworkImage(streamerAvatar), width: context.decodePx(28))
                               : null,
                           child:
                               (streamerAvatar == null || streamerAvatar.isEmpty)

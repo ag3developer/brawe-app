@@ -19,6 +19,7 @@ import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/feed_view_model.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Bottom sheet de criação de post de **vídeo** (Reels / Shorts).
 class CreateVideoSheet extends ConsumerStatefulWidget {
@@ -704,6 +705,7 @@ class _VideoSoundChip extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: Image.network(
+                    cacheWidth: context.decodePx(28),
                     sound.coverUrl!,
                     width: 28,
                     height: 28,

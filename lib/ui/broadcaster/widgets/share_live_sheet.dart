@@ -10,6 +10,7 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../domain/models/follow_user.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Bottom sheet "Compartilhar live" — envia preview clicável da live aos
 /// seguidores selecionados via DM. Cada destinatário recebe uma mensagem
@@ -308,6 +309,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                       widget.thumbnailUrl != null &&
                           widget.thumbnailUrl!.isNotEmpty
                       ? Image.network(
+                        cacheWidth: context.decodePx(56),
                           widget.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => _previewFallback(),
@@ -549,7 +551,7 @@ class _RecipientTile extends StatelessWidget {
               radius: 22,
               backgroundColor: AppColors.slate,
               backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
-                  ? NetworkImage(avatarUrl!)
+                  ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(44))
                   : null,
               child: (avatarUrl == null || avatarUrl!.isEmpty)
                   ? const Icon(Icons.person, color: Colors.white54, size: 22)

@@ -16,6 +16,7 @@ import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../level_chip.dart';
 import '../../../../core/themes/app_colors.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🧪 TESTE (Fase de validação Lottie): slugs que têm asset Lottie local
 /// disponível em `assets/lottie_test/<slug>.json`. Fora desta lista, o
@@ -94,7 +95,7 @@ class _GiftVisual extends StatelessWidget {
         height: size,
         fit: BoxFit.contain,
         repeat: false,
-        errorBuilder: (_, __, ___) => _networkOrFallback(),
+        errorBuilder: (_, __, ___) => _networkOrFallback(context),
       );
     }
 
@@ -112,7 +113,7 @@ class _GiftVisual extends StatelessWidget {
               height: size,
               fit: BoxFit.contain,
               repeat: false,
-              errorBuilder: (_, _, _) => _networkOrFallback(),
+              errorBuilder: (_, _, _) => _networkOrFallback(context),
             )
           : Lottie.network(
               remoteLottie,
@@ -120,7 +121,7 @@ class _GiftVisual extends StatelessWidget {
               height: size,
               fit: BoxFit.contain,
               repeat: false,
-              errorBuilder: (_, _, _) => _networkOrFallback(),
+              errorBuilder: (_, _, _) => _networkOrFallback(context),
             );
     }
 
@@ -146,16 +147,17 @@ class _GiftVisual extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _networkOrFallback(),
+        errorBuilder: (_, __, ___) => _networkOrFallback(context),
       );
     }
 
-    return _networkOrFallback();
+    return _networkOrFallback(context);
   }
 
-  Widget _networkOrFallback() {
+  Widget _networkOrFallback(BuildContext context) {
     if (gift.giftIconUrl != null) {
       return Image.network(
+        cacheWidth: context.decodePx(size),
         gift.giftIconUrl!,
         width: size,
         height: size,
@@ -1164,6 +1166,7 @@ class _AvatarCircle extends StatelessWidget {
     if (url == null || url!.trim().isEmpty) return placeholder;
     return ClipOval(
       child: Image.network(
+        cacheWidth: context.decodePx(size),
         url!,
         width: size,
         height: size,

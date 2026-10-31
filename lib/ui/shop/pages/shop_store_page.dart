@@ -10,6 +10,7 @@ import '../../../domain/models/marketplace_models.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../utils/currency_formatter.dart';
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Public storefront page accessed via `/shop/store/:slug` route.
 ///
@@ -321,6 +322,7 @@ class _StoreBannerHeaderState extends State<_StoreBannerHeader> {
             itemBuilder: (context, index) {
               final banner = banners[index];
               return CachedNetworkImage(
+                memCacheWidth: context.decodeScreenPx,
                 imageUrl: banner.imageUrl,
                 fit: BoxFit.cover,
                 placeholder: (context, url) =>
@@ -359,6 +361,7 @@ class _StoreBannerHeaderState extends State<_StoreBannerHeader> {
 
     if (widget.store.bannerUrl != null) {
       return CachedNetworkImage(
+        memCacheWidth: context.decodeScreenPx,
         imageUrl: widget.store.bannerUrl!,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(color: context.colors.surface),
@@ -410,6 +413,7 @@ class _StoreLogo extends StatelessWidget {
       child: ClipOval(
         child: store.logoUrl != null
             ? CachedNetworkImage(
+              memCacheWidth: context.decodePx(size),
                 imageUrl: store.logoUrl!,
                 fit: BoxFit.cover,
                 errorWidget: (context, url, error) => _placeholder(context),
@@ -883,6 +887,7 @@ class _StoreProductCard extends StatelessWidget {
               aspectRatio: 1,
               child: product.primaryImageUrl != null
                   ? CachedNetworkImage(
+                    memCacheWidth: context.decodeScreenFracPx(0.5),
                       imageUrl: product.primaryImageUrl!,
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
