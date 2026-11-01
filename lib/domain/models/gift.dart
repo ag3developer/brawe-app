@@ -23,6 +23,9 @@ sealed class Gift with _$Gift {
     @JsonKey(name: 'is_fullscreen') @Default(false) bool isFullscreen,
     @JsonKey(name: 'animation_duration_ms') @Default(0) int animationDurationMs,
     @JsonKey(name: 'combo_enabled') @Default(false) bool comboEnabled,
+    // Degraus do combo (Fase 3) — cru; ausente em servidor antigo. O app
+    // usa só para aquecer os sons ao entrar na live.
+    @JsonKey(name: 'combo_tiers') List<Map<String, dynamic>>? comboTiers,
     // ── Economia não-monetária (FREE) ──
     @JsonKey(name: 'is_monetary') @Default(true) bool isMonetary,
     @JsonKey(name: 'price_coins') @Default(0) int priceCoins,

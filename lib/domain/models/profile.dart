@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'user_award.dart';
+
 part 'profile.freezed.dart';
 part 'profile.g.dart';
 
@@ -40,6 +42,10 @@ sealed class Profile with _$Profile {
     @JsonKey(name: 'artist_total_plays') @Default(0) int artistTotalPlays,
     // Data de criação do perfil
     @JsonKey(name: 'created_at') String? createdAt,
+    // Prêmios ativos (top 3 por recência); vazio em servidor antigo.
+    @JsonKey(name: 'active_awards', fromJson: userAwardsFromJson, includeToJson: false)
+    @Default(<UserAward>[])
+    List<UserAward> activeAwards,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>

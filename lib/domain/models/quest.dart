@@ -18,6 +18,17 @@ class DailyQuest {
   final int xpReward;
   final int coinsReward;
 
+  /// `daily` | `weekly` | `event` (servidor antigo = `daily`).
+  final String frequency;
+  final String? eventId;
+
+  /// Segundos até esta missão reiniciar (diária: meia-noite UTC; semanal:
+  /// segunda 03:00 UTC; evento: fim do evento). `null` em servidor antigo.
+  final int? resetsInSeconds;
+
+  bool get isWeekly => frequency == 'weekly';
+  bool get isEvent => frequency == 'event';
+
   const DailyQuest({
     required this.id,
     required this.questKey,
@@ -34,6 +45,9 @@ class DailyQuest {
     required this.isClaimed,
     required this.xpReward,
     required this.coinsReward,
+    this.frequency = 'daily',
+    this.eventId,
+    this.resetsInSeconds,
   });
 
   bool get isClaimable => isCompleted && !isClaimed;
@@ -55,7 +69,20 @@ class DailyQuest {
       isClaimed: json['is_claimed'] as bool? ?? false,
       xpReward: (json['xp_reward'] as num?)?.toInt() ?? 0,
       coinsReward: (json['coins_reward'] as num?)?.toInt() ?? 0,
+      frequency: _frequency(json['frequency']),
+      eventId: _nonEmpty(json['event_id']),
+      resetsInSeconds: (json['resets_in_seconds'] as num?)?.toInt(),
     );
+  }
+
+  static String _frequency(dynamic v) {
+    final s = v?.toString().toLowerCase().trim();
+    return (s == 'weekly' || s == 'event') ? s! : 'daily';
+  }
+
+  static String? _nonEmpty(dynamic v) {
+    final s = v?.toString().trim();
+    return (s == null || s.isEmpty || s == 'null') ? null : s;
   }
 
   DailyQuest copyWith({
@@ -80,6 +107,9 @@ class DailyQuest {
       isClaimed: isClaimed ?? this.isClaimed,
       xpReward: xpReward,
       coinsReward: coinsReward,
+      frequency: frequency,
+      eventId: eventId,
+      resetsInSeconds: resetsInSeconds,
     );
   }
 }

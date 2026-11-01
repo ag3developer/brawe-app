@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../config/locale_provider.dart';
 import '../../../data/repositories/quests_repository.dart';
 import '../../../domain/models/quest.dart';
 
@@ -7,15 +8,20 @@ part 'quests_view_model.g.dart';
 
 @riverpod
 class QuestsViewModel extends _$QuestsViewModel {
+  /// Idioma do app (o servidor localiza título/descrição por `?lang=`).
+  String get _lang => ref.read(localeControllerProvider).languageCode;
+
   @override
   Future<QuestsData> build() async {
-    return ref.read(questsRepositoryProvider).getDailyQuests();
+    // Trocar o idioma do app rebusca as missões já traduzidas.
+    ref.watch(localeControllerProvider);
+    return ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => ref.read(questsRepositoryProvider).getDailyQuests(),
+      () => ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang),
     );
   }
 
@@ -38,7 +44,7 @@ class QuestsViewModel extends _$QuestsViewModel {
       await ref.read(questsRepositoryProvider).claim(questKey);
       // Silently refetch to sync XP/coins/level
       final fresh =
-          await ref.read(questsRepositoryProvider).getDailyQuests();
+          await ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang);
       state = AsyncValue.data(fresh);
     } catch (e) {
       state = AsyncValue.data(current);
@@ -61,7 +67,7 @@ class QuestsViewModel extends _$QuestsViewModel {
     }
     if (ok > 0) {
       final fresh =
-          await ref.read(questsRepositoryProvider).getDailyQuests();
+          await ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang);
       state = AsyncValue.data(fresh);
     }
     return ok;

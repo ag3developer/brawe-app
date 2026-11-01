@@ -47,6 +47,7 @@ _LiveRoomDto _$LiveRoomDtoFromJson(Map<String, dynamic> json) => _LiveRoomDto(
   goalTitle: json['goal_title'] as String?,
   goalProgressPoints: (json['goal_progress_points'] as num?)?.toInt() ?? 0,
   goals: json['goals'] as List<dynamic>?,
+  event: json['event'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
@@ -87,6 +88,7 @@ Map<String, dynamic> _$LiveRoomDtoToJson(_LiveRoomDto instance) =>
       'goal_title': instance.goalTitle,
       'goal_progress_points': instance.goalProgressPoints,
       'goals': instance.goals,
+      'event': instance.event,
     };
 
 _StreamConfigDto _$StreamConfigDtoFromJson(Map<String, dynamic> json) =>

@@ -159,7 +159,15 @@ class GiftStage extends StatefulWidget {
     required this.builder,
     required this.onDone,
     this.holdMs,
+    this.countsAsGift = true,
   });
+
+  /// Quantos efeitos de presente estão em cena (usado para não sobrepor
+  /// efeitos de entrada a um presente). Estágios com `countsAsGift: false`
+  /// (entradas de viewer) não entram na conta.
+  static final ValueNotifier<int> activeGifts = ValueNotifier<int>(0);
+
+  final bool countsAsGift;
 
   final GiftPresentation presentation;
   final GiftStageContentBuilder builder;
@@ -185,6 +193,7 @@ class GiftStageState extends State<GiftStage>
   bool _exitRequested = false;
   bool _done = false;
   bool _focused = false;
+  bool _counted = false;
 
   GiftPresentation get _pr => widget.presentation;
 
@@ -196,6 +205,10 @@ class GiftStageState extends State<GiftStage>
       lowerBound: 0,
       upperBound: 2,
     );
+    if (widget.countsAsGift) {
+      _counted = true;
+      GiftStage.activeGifts.value += 1;
+    }
     if (_pr.layer == GiftLayer.overChat) {
       LiveStageFocus.enter();
       _focused = true;
@@ -273,6 +286,9 @@ class GiftStageState extends State<GiftStage>
     _holdTimer?.cancel();
     _safety?.cancel();
     if (_focused) LiveStageFocus.leave();
+    if (_counted && GiftStage.activeGifts.value > 0) {
+      GiftStage.activeGifts.value -= 1;
+    }
     _ctrl.dispose();
     super.dispose();
   }

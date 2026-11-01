@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../live_feed/view_models/live_moderation_view_model.dart';
 import '../../../../core/themes/app_colors.dart';
 
 /// Bottom bar da live no estilo TikTok Live (TELA DO ESPECTADOR):
@@ -31,6 +34,7 @@ class LiveBottomBar extends StatelessWidget {
     required this.onSeguir,
     required this.onShop,
     required this.hasStorefront,
+    this.roomId,
   });
 
   final TextEditingController controller;
@@ -50,6 +54,10 @@ class LiveBottomBar extends StatelessWidget {
   final VoidCallback onSeguir;
   final VoidCallback onShop;
   final bool hasStorefront;
+
+  /// Sala do chat: com ela, o placeholder do input mostra o modo lento
+  /// ("Modo lento: 3 s") sem reconstruir a barra inteira.
+  final String? roomId;
 
   /// Limite de caracteres por mensagem do chat da live (padrão TikTok).
   static const maxMessageLength = 150;
@@ -88,37 +96,54 @@ class LiveBottomBar extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    textInputAction: TextInputAction.send,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLength: maxMessageLength,
-                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                    // Mantém o teclado aberto no "enviar" do teclado — quem
-                    // decide fechar é o `onSend` (fecha após enviar).
-                    onSubmitted: (_) => onSend(),
-                    onEditingComplete: () {},
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      hintText: 'Comentar...',
-                      hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      filled: false,
-                      isDense: true,
-                      // Contador só aparece perto do limite.
-                      counterText: '',
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 11,
-                      ),
-                    ),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final slow = roomId == null
+                          ? 0
+                          : ref.watch(
+                              liveModerationProvider(
+                                roomId!,
+                              ).select((s) => s.slowModeS),
+                            );
+                      final hint = slow > 0
+                          ? S.of(context).chatSlowModeHint(slow)
+                          : 'Comentar...';
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        textInputAction: TextInputAction.send,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLength: maxMessageLength,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        // Mantém o teclado aberto no "enviar" do teclado — quem
+                        // decide fechar é o `onSend` (fecha após enviar).
+                        onSubmitted: (_) => onSend(),
+                        onEditingComplete: () {},
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        cursorColor: Colors.white,
+                        decoration: InputDecoration(
+                          hintText: hint,
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14,
+                          ),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          filled: false,
+                          isDense: true,
+                          // Contador só aparece perto do limite.
+                          counterText: '',
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 11,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 // Emoji / send (alterna) — ValueListenableBuilder escuta SÓ o

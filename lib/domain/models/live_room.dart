@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'live_event.dart';
 import 'live_goal.dart';
 
 part 'live_room.freezed.dart';
@@ -44,5 +45,7 @@ sealed class LiveRoom with _$LiveRoom {
     @Default(0) int goalProgressPoints,
     // Metas da live (presente × quantidade ou curtidas).
     @Default(<LiveGoal>[]) List<LiveGoal> goals,
+    // Evento com prazo (multiplicador de pontos); null = sem evento.
+    LiveEvent? event,
   }) = _LiveRoom;
 }

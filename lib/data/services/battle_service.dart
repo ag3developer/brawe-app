@@ -22,6 +22,13 @@ class BattleService {
     return _toMap(response.data);
   }
 
+  /// Regras públicas da batalha (durações permitidas e padrão).
+  /// API: GET /live/battle/config → `{success, data:{durations_s, default_duration_s, ...}}`
+  Future<Map<String, dynamic>> getBattleConfig() async {
+    final response = await _dio.get('/live/battle/config');
+    return _toMap(response.data);
+  }
+
   /// Invite another streamer to a battle.
   /// API: POST /live/battle/invite { opponent_room_id, duration_seconds }
   Future<Map<String, dynamic>> inviteBattle({

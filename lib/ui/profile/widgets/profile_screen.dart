@@ -37,6 +37,8 @@ import '../../../domain/models/story.dart';
 import '../../feed/widgets/story_viewer.dart';
 import '../../chat/view_models/presence_provider.dart';
 import '../view_models/profile_reposts_provider.dart';
+import '../../../domain/models/user_award.dart';
+import '../../live/shared/widgets/award_badge.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
@@ -107,7 +109,10 @@ Future<void> _openStoryViewer(
 class ProfileScreen extends ConsumerStatefulWidget {
   final String userId;
 
-  const ProfileScreen({super.key, required this.userId});
+  /// Seção a destacar ao abrir (ex.: `awards`, vindo da notificação de prêmio).
+  final String? section;
+
+  const ProfileScreen({super.key, required this.userId, this.section});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -339,6 +344,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   userId: widget.userId,
                   isMe: isMe,
                   profileState: profileState,
+                  section: widget.section,
                 ),
               ],
             ),
@@ -828,7 +834,10 @@ class _ProfileHeader extends ConsumerWidget {
     required this.userId,
     required this.isMe,
     required this.profileState,
+    this.section,
   });
+
+  final String? section;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -882,6 +891,9 @@ class _ProfileHeader extends ConsumerWidget {
               onSettings: () => context.push('/settings'),
               hasStories: hasStories,
               hasUnviewedStories: hasUnviewed,
+              frameUrl: UserAward.mostPrestigious(
+                profile.activeAwards.where((a) => a.frameUrl != null).toList(),
+              )?.frameUrl,
               onAvatarTap: hasStories
                   ? () => _openStoryViewer(context, ref, stories)
                   : null,
@@ -981,6 +993,15 @@ class _ProfileHeader extends ConsumerWidget {
                     fontSize: 14,
                     height: 1.4,
                   ),
+                ),
+              ],
+
+              // ── Prêmios ativos ───────────────────────────────────────
+              if (profile.activeAwards.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _AwardsSection(
+                  awards: profile.activeAwards,
+                  highlight: section == 'awards',
                 ),
               ],
 
@@ -1146,7 +1167,9 @@ class _BannerSection extends ConsumerStatefulWidget {
     this.hasStories = false,
     this.hasUnviewedStories = false,
     this.onAvatarTap,
+    this.frameUrl,
   });
+  final String? frameUrl;
   final String userId;
   final String? bannerUrl;
   final String? avatarUrl;
@@ -1249,7 +1272,11 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
             children: [
               GestureDetector(
                 onTap: onAvatarTap,
-                child: Container(
+                child: AvatarFrame(
+                  size: 98,
+                  overflow: 0.14,
+                  frameUrl: widget.frameUrl,
+                  child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -1279,6 +1306,7 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
                         child: _Avatar(url: avatarUrl, initials: initials),
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),
@@ -2258,6 +2286,128 @@ class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Prêmios ativos (chips com selo, nome e validade) ────────────────────────
+class _AwardsSection extends StatefulWidget {
+  const _AwardsSection({required this.awards, this.highlight = false});
+
+  final List<UserAward> awards;
+  final bool highlight;
+
+  @override
+  State<_AwardsSection> createState() => _AwardsSectionState();
+}
+
+class _AwardsSectionState extends State<_AwardsSection> {
+  final GlobalKey _key = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.highlight) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _key.currentContext;
+        if (ctx != null && mounted) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 300),
+            alignment: 0.2,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final s = S.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final now = DateTime.now();
+    final awards = widget.awards.where((a) => !a.isExpired(now)).toList();
+    if (awards.isEmpty) return const SizedBox.shrink();
+    return Column(
+      key: _key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(LucideIcons.award, size: 15, color: colors.textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              s.profileAwardsTitle,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final a in awards)
+              Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.sizeOf(context).width - 32,
+                ),
+                padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
+                decoration: BoxDecoration(
+                  color: awardColor(a.badgeColor).withValues(
+                    alpha: widget.highlight ? 0.22 : 0.12,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: awardColor(a.badgeColor).withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AwardBadge(award: a, height: 22),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            a.localizedLabel(lang),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (a.expiresAt != null)
+                            Text(
+                              s.profileAwardUntil(
+                                MaterialLocalizations.of(
+                                  context,
+                                ).formatShortDate(a.expiresAt!),
+                              ),
+                              style: TextStyle(
+                                color: colors.textTertiary,
+                                fontSize: 11,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

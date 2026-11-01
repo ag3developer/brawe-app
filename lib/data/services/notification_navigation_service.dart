@@ -95,6 +95,32 @@ class NotificationNavigationService {
   static String? routeFromData(Map<String, dynamic> data) {
     if (data.isEmpty) return null;
 
+    return _awardsSection(data, _baseRoute(data));
+  }
+
+  /// `AWARD_RECEIVED` abre o perfil já na seção de prêmios.
+  static String? _awardsSection(Map<String, dynamic> data, String? route) {
+    final type = (data['type'] ?? data['notification_type'])
+        ?.toString()
+        .toLowerCase();
+    if (type != 'award_received') return route;
+    var target = route;
+    if (target == null) {
+      final uid = data['user_id']?.toString();
+      if (uid == null || uid.isEmpty) return null;
+      target = '/profile/$uid';
+    }
+    final isProfile =
+        target.startsWith('/profile/') ||
+        target.startsWith('/connect/u/') ||
+        target.startsWith('/user/');
+    if (!isProfile || target.contains('section=')) return target;
+    return target.contains('?')
+        ? '$target&section=awards'
+        : '$target?section=awards';
+  }
+
+  static String? _baseRoute(Map<String, dynamic> data) {
     final direct = data['route'];
     if (direct is String && direct.startsWith('/')) return direct;
 

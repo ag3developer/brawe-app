@@ -134,4 +134,47 @@ void main() {
       expect(NotificationNavigationService.routeFromDeepLink('brawe://'), isNull);
     });
   });
+
+  group('AWARD_RECEIVED', () {
+    test('abre o perfil na seção de prêmios', () {
+      expect(
+        NotificationNavigationService.routeFromData({
+          'type': 'AWARD_RECEIVED',
+          'route': '/profile/u1',
+        }),
+        '/profile/u1?section=awards',
+      );
+      expect(
+        NotificationNavigationService.routeFromData({
+          'type': 'award_received',
+          'link_url': 'brawe://user/u1',
+        }),
+        '/user/u1?section=awards',
+      );
+      expect(
+        NotificationNavigationService.routeFromData({
+          'type': 'AWARD_RECEIVED',
+          'user_id': 'u9',
+        }),
+        '/profile/u9?section=awards',
+      );
+    });
+
+    test('não mexe em outras rotas nem duplica section', () {
+      expect(
+        NotificationNavigationService.routeFromData({
+          'type': 'AWARD_RECEIVED',
+          'route': '/profile/u1?section=awards',
+        }),
+        '/profile/u1?section=awards',
+      );
+      expect(
+        NotificationNavigationService.routeFromData({
+          'type': 'gift_received',
+          'route': '/profile/u1',
+        }),
+        '/profile/u1',
+      );
+    });
+  });
 }

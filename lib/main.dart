@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'config/locale_provider.dart';
+import 'core/remote_config/remote_config_service.dart';
 import 'data/providers/cart_notifier_provider.dart';
 import 'data/repositories/auth_state_provider.dart';
 import 'data/services/cart_session_manager.dart';
@@ -72,6 +73,9 @@ Future<void> main() async {
         await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
           !kDebugMode,
         );
+
+        // Remote Config: dispara e segue (nunca bloqueia a abertura).
+        unawaited(RemoteConfigService.init());
 
         try {
           FirebaseMessaging.onBackgroundMessage(

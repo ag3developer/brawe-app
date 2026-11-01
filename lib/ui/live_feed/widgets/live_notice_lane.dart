@@ -9,11 +9,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
+import '../../../domain/models/live_event.dart';
 import '../../../domain/models/live_room_event.dart';
+import '../../../domain/models/user_award.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../live/shared/layout/live_dock_metrics.dart';
 import '../../live/shared/widgets/competition/medal_colors.dart' show fmtGap;
+import '../../live/shared/widgets/award_badge.dart';
 import '../../live/shared/widgets/level_chip.dart';
 import '../../live/shared/widgets/overlays/gifts_overlay.dart';
 import '../view_models/live_room_comments_view_model.dart';
@@ -47,7 +50,7 @@ class LiveNoticeLane extends ConsumerStatefulWidget {
   ConsumerState<LiveNoticeLane> createState() => _LiveNoticeLaneState();
 }
 
-enum _Kind { overtaken, levelUp, newTop, milestone }
+enum _Kind { overtaken, levelUp, award, newTop, milestone }
 
 class _Notice {
   _Notice(this.kind, this.payload);
@@ -62,6 +65,7 @@ class _Notice {
   Duration get duration => switch (kind) {
     _Kind.overtaken => const Duration(seconds: 7),
     _Kind.levelUp => const Duration(milliseconds: 3500),
+    _Kind.award => const Duration(seconds: 5),
     _Kind.newTop => const Duration(milliseconds: 3500),
     _Kind.milestone => const Duration(seconds: 3),
   };
@@ -152,8 +156,11 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     if (_current != null || _queue.isEmpty || !mounted) return;
     final next = _queue.removeAt(0);
     setState(() => _current = next);
-    if (next.kind == _Kind.overtaken || next.kind == _Kind.levelUp)
+    if (next.kind == _Kind.overtaken ||
+        next.kind == _Kind.levelUp ||
+        next.kind == _Kind.award) {
       HapticFeedback.mediumImpact();
+    }
     _noticeTimer?.cancel();
     _noticeTimer = Timer(next.duration, _dismiss);
   }
@@ -182,7 +189,27 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     _push(_Notice(_Kind.levelUp, l));
   }
 
+  /// Evita repetir o cartão quando o mesmo `award_granted` chega por mais de
+  /// uma sala/conexão.
+  static String? _lastAwardKey;
+
+  void _onAwardGranted(LiveRoomEvent e) {
+    final me = _myId;
+    final uid = e.data['user_id']?.toString();
+    if (me != null && uid != null && uid.isNotEmpty && uid != me) return;
+    final award = UserAward.tryParse(e.data['award'] ?? e.data);
+    if (award == null) return;
+    final key = '${award.id ?? ''}|${award.label.resolve('pt')}|${award.expiresAt}';
+    if (key == _lastAwardKey) return;
+    _lastAwardKey = key;
+    _push(_Notice(_Kind.award, award));
+  }
+
   void _onRoomEvent(LiveRoomEvent e) {
+    if (e.type == LiveRoomEvent.awardGranted) {
+      _onAwardGranted(e);
+      return;
+    }
     if (e.type != LiveRoomEvent.levelUp) return;
     final me = _myId;
     final uid = e.data['user_id']?.toString();
@@ -341,7 +368,10 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
             ring: const Color(0xFFFFB800),
           ),
           title: s.noticeOvertakenTitle(e.byName),
-          subtitle: s.noticeOvertakenBody(fmtGap(e.gapPoints), e.previousRank),
+          subtitle: _withMultiplier(
+            s.noticeOvertakenBody(fmtGap(e.gapPoints), e.previousRank),
+            e.multiplier,
+          ),
           action: s.overtakenRetake,
           onAction: () => _retake(e),
           onClose: _dismiss,
@@ -360,6 +390,16 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
           ),
           title: s.liveLevelUpTitle,
           subtitle: s.noticeLevelUpBody(l.level),
+          personal: true,
+        );
+      case _Kind.award:
+        final a = n.payload as UserAward;
+        return _NoticeCard(
+          accent: awardColor(a.badgeColor, const Color(0xFFFFD166)),
+          leading: AwardBadge(award: a, height: 30),
+          title: s.awardGrantedTitle,
+          subtitle: a.localizedLabel(Localizations.localeOf(context).languageCode),
+          onClose: _dismiss,
           personal: true,
         );
       case _Kind.newTop:
@@ -399,6 +439,10 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     }
   }
 }
+
+/// "texto · 2×" quando um evento multiplica os pontos.
+String _withMultiplier(String text, double? multiplier) =>
+    multiplier == null ? text : '$text · ${formatMultiplier(multiplier)}';
 
 /// Cartão do aviso: vidro escuro com filete na cor do evento. Pessoal ganha
 /// borda acesa (é com você) e, quando há, um botão de ação.

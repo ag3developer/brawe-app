@@ -2571,5 +2571,122 @@
   "liveOwnEndError": "No se pudo finalizar el live",
   "liveWaitingSignal": "Sin señal del creador por ahora.\nIntentando de nuevo…",
   "commentsHintAddMention": "Agregar comentario... usa @ para etiquetar",
-  "commentsMentionFollowing": "Siguiendo"
+  "commentsMentionFollowing": "Siguiendo",
+  "eventChipEndsIn": "termina en {time}",
+  "@eventChipEndsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingTabEvent": "Evento",
+  "rankingPrizeFirst": "Premio del 1.er lugar: {prize}",
+  "@rankingPrizeFirst": {
+    "placeholders": {
+      "prize": {
+        "type": "String"
+      }
+    }
+  },
+  "awardGrantedTitle": "¡Ganaste un premio!",
+  "profileAwardsTitle": "Premios",
+  "profileAwardUntil": "hasta {date}",
+  "@profileAwardUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "chatErrorNotSent": "Mensaje no enviado",
+  "chatErrorLink": "No se permiten enlaces en el chat",
+  "chatErrorPhone": "No se permiten teléfonos en el chat",
+  "chatErrorMutedUntil": "Fuiste silenciado hasta las {time}",
+  "@chatErrorMutedUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "chatErrorMutedLiveEnd": "Fuiste silenciado hasta el final del directo",
+  "chatErrorSlowWait": "Modo lento: espera {seconds} s",
+  "@chatErrorSlowWait": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "chatErrorSlowGeneric": "Modo lento: espera un momento",
+  "chatSlowModeHint": "Modo lento: {seconds} s",
+  "@chatSlowModeHint": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "chatPinnedUnpin": "Desfijar",
+  "chatModeratorBadge": "Moderador",
+  "modMute5": "Silenciar 5 min",
+  "modMute60": "Silenciar 1 h",
+  "modMuteRest": "Silenciar hasta el final del directo",
+  "modPinMessage": "Fijar mensaje",
+  "modMakeModerator": "Hacer moderador",
+  "modRemoveModerator": "Quitar moderador",
+  "modMutedToast": "{name} fue silenciado",
+  "@modMutedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modPinnedToast": "Mensaje fijado",
+  "modUnpinnedToast": "Mensaje desfijado",
+  "modMadeModeratorToast": "{name} ahora es moderador",
+  "@modMadeModeratorToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modRemovedModeratorToast": "{name} ya no es moderador",
+  "@modRemovedModeratorToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modActionFailed": "No se pudo completar la acción",
+  "modNotAllowed": "No tienes permiso para eso",
+  "modModeratorsTitle": "Moderadores",
+  "modModeratorsSubtitle": "Quienes te ayudan a cuidar el chat de tu directo",
+  "modModeratorsEmpty": "Aún no tienes moderadores. Toca el nombre de alguien en el chat para ascenderlo.",
+  "modModeratorsLoadFailed": "No se pudieron cargar los moderadores",
+  "modRemoveConfirm": "Quitar",
+  "battleDurationLabel": "Duración",
+  "battleDurationMinutes": "{minutes} min",
+  "@battleDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "battleDurationSeconds": "{seconds} s",
+  "@battleDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "questFrequencyWeekly": "Semanal",
+  "questFrequencyEvent": "Evento",
+  "questFrequencyDaily": "Diaria"
 }

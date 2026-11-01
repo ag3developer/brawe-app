@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/live_comment.dart';
+import '../../../../../core/remote_config/remote_flags.dart';
 import '../../../../../domain/models/live_gift.dart';
 import 'chat_line.dart';
 import 'gift_chat_line.dart';
@@ -80,8 +81,7 @@ class _ChatTickerState extends State<ChatTicker> {
   // criador, as que me mencionam e as linhas de presente entram na hora —
   // e depois da minha o chat segura os outros por um instante para ela não
   // ser atropelada. Fila grande demais: descarta as mais antigas comuns.
-  static const _maxPending = 24;
-  static const _myMessageHold = Duration(milliseconds: 1400);
+  // Ritmo, fila e pausa vêm do Remote Config (padrões no código).
   final Set<String> _revealed = {};
   final List<String> _pending = [];
   Timer? _paceTimer;
@@ -129,12 +129,16 @@ class _ChatTickerState extends State<ChatTicker> {
       if (_isPriority(it)) {
         _revealed.add(k);
         revealedNow++;
-        if (_isMine(it)) _holdUntil = DateTime.now().add(_myMessageHold);
+        if (_isMine(it)) {
+          _holdUntil = DateTime.now().add(
+            Duration(milliseconds: RemoteFlags.current.chatMyHoldMs),
+          );
+        }
       } else {
         _pending.add(k);
       }
     }
-    while (_pending.length > _maxPending) {
+    while (_pending.length > RemoteFlags.current.chatMaxPending) {
       _pending.removeAt(0);
     }
     // O view model só guarda as últimas mensagens: esquece chaves antigas.
@@ -148,8 +152,11 @@ class _ChatTickerState extends State<ChatTicker> {
   void _schedulePace() {
     if (_paceTimer != null || _pending.isEmpty) return;
     final backlog = _pending.length;
+    final flags = RemoteFlags.current;
     var wait = Duration(
-      milliseconds: backlog <= 3 ? 320 : (backlog <= 8 ? 190 : 120),
+      milliseconds: backlog <= 3
+          ? flags.chatPaceSlowMs
+          : (backlog <= 8 ? flags.chatPaceMidMs : flags.chatPaceFastMs),
     );
     final hold = _holdUntil.difference(DateTime.now());
     if (hold > wait) wait = hold;

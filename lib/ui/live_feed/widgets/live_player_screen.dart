@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'dart:ui' show ImageFilter;
 import 'dart:math' show max, min;
 import 'package:flutter/material.dart';
+import '../../../core/remote_config/remote_flags.dart';
+import '../../live/shared/widgets/overlays/combo_tier_layer.dart';
+import '../../live/shared/widgets/overlays/entrance_effect_layer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +40,8 @@ import 'live_notice_lane.dart';
 import 'viewer_gamification_layer.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
 import '../../live/shared/widgets/hud/live_gift_ticker.dart';
+import '../../live/shared/widgets/hud/live_event_chip.dart';
+import '../../live/shared/widgets/sheets/gifter_ranking_sheet.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
@@ -524,10 +529,14 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   }
 
   /// Nova tentativa com espera crescente (1s, 2s, 4s, depois a cada 6s)
-  /// enquanto a tela estiver aberta e a live não tiver acabado.
+  /// (teto vem do Remote Config `video_retry_max_s`, padrão 6s) enquanto a
+  /// tela estiver aberta e a live não tiver acabado.
   void _schedulePlayerRetry() {
     if (!mounted || _ended) return;
-    final seconds = min(6, 1 << min(_playerAttempts, 3));
+    final seconds = min(
+      RemoteFlags.current.videoRetryMaxS,
+      1 << min(_playerAttempts, 3),
+    );
     // setState: a mensagem de "sem sinal" depende do número de tentativas.
     setState(() => _playerAttempts++);
     _playerRetryTimer?.cancel();
@@ -801,8 +810,29 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// Toque numa mensagem do chat → cartão do autor. "Responder" insere a
   /// @menção no input e abre o teclado (TikTok).
   Future<void> _onCommentTap(LiveComment comment) async {
-    final action = await ChatUserSheet.show(context, comment);
+    final myId = ref.read(authStateProvider).value?.id;
+    final access = chatModerationAccess(
+      ref,
+      roomId: widget.room.id,
+      isHost: myId != null && myId == widget.room.streamerId,
+    );
+    final action = await ChatUserSheet.show(
+      context,
+      comment,
+      // Não há ferramentas de moderação sobre o próprio criador.
+      moderation: comment.userId == widget.room.streamerId ? null : access,
+    );
     if (!mounted || action == null) return;
+    if (action.isModeration) {
+      await performChatModeration(
+        context,
+        ref,
+        roomId: widget.room.id,
+        comment: comment,
+        action: action,
+      );
+      return;
+    }
     switch (action) {
       case ChatUserAction.reply:
         ChatUserSheet.insertMention(_chatCtrl, comment);
@@ -813,6 +843,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         if (comment.userId.isNotEmpty) {
           context.push('/people/${comment.userId}');
         }
+      default:
+        break;
     }
   }
 
@@ -923,13 +955,30 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               // Linha: metas à esquerda + faixa de notícia correndo ao lado.
               child: Row(
                 children: [
+                  LiveEventChip(
+                    roomId: widget.room.id,
+                    initialEvent: widget.room.event,
+                    onTap: (_) => GifterRankingSheet.show(
+                      context,
+                      roomId: widget.room.id,
+                      streamerId: widget.room.streamerId,
+                      ranking: ref
+                          .read(
+                            liveRoomCommentsViewModelProvider(widget.room.id),
+                          )
+                          .gifterRanking,
+                      openEventTab: true,
+                    ),
+                  ),
                   LiveGoalsPill(
                     roomId: widget.room.id,
                     streamerId: widget.room.streamerId,
                     initialGoals: widget.room.goals,
                   ),
                   const SizedBox(width: 8),
-                  Expanded(child: LiveGiftTicker(currentRoomId: widget.room.id)),
+                  Expanded(
+                    child: LiveGiftTicker(currentRoomId: widget.room.id),
+                  ),
                 ],
               ),
             ),
@@ -941,6 +990,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
           // ── 5. Gift combos (canto inf. esq, acima do chat) ──
           GiftAnimationOverlay(roomId: widget.room.id),
+          // ── 5.1 Efeito de entrada de viewer VIP (VAP/Lottie, fila própria)
+          EntranceEffectLayer(roomId: widget.room.id),
+          // ── 5.2 Degraus do combo (partículas/Lottie/VAP, prioridade < presente)
+          ComboTierLayer(roomId: widget.room.id),
 
           // ── 6. Dock inferior: produto fixado + chat + input/ações ──
           Positioned(
@@ -954,40 +1007,50 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                 streamerId: widget.room.streamerId,
                 battleIdGetter: () => _activeBattleId,
               ),
-              tickerBuilder: (maxHeight) => ChatTicker(
-                giftParts: commentsState.chatGiftParts,
-                // Bloqueados (nos dois sentidos) não aparecem no chat da live.
-                comments: commentsState.comments
-                    .where((c) => !hidden.isBlocked(c.userId))
-                    .toList(),
-                gifts: commentsState.chatGifts
-                    .where((g) => !hidden.isBlocked(g.senderId))
-                    .toList(),
-                hostUserId: widget.room.streamerId,
-                myUserId: ref.watch(authStateProvider).value?.id,
-                myUsername: commentsState.myUsername,
-                onCommentTap: _onCommentTap,
-                maxHeight: maxHeight,
+              tickerBuilder: (maxHeight) => PinnedAboveChat(
+                roomId: widget.room.id,
+                isHost:
+                    ref.read(authStateProvider).value?.id ==
+                    widget.room.streamerId,
+                child: ChatTicker(
+                  giftParts: commentsState.chatGiftParts,
+                  // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                  comments: commentsState.comments
+                      .where((c) => !hidden.isBlocked(c.userId))
+                      .toList(),
+                  gifts: commentsState.chatGifts
+                      .where((g) => !hidden.isBlocked(g.senderId))
+                      .toList(),
+                  hostUserId: widget.room.streamerId,
+                  myUserId: ref.watch(authStateProvider).value?.id,
+                  myUsername: commentsState.myUsername,
+                  onCommentTap: _onCommentTap,
+                  maxHeight: maxHeight,
+                ),
               ),
-              bottomBar: LiveBottomBar(
-                controller: _chatCtrl,
-                focusNode: _chatFocus,
-                isSending: commentsState.isSending,
-                isLiked: _isLiked,
-                likesCount: max(_likesCount, commentsState.likeCount),
-                onSend: _sendComment,
-                onSendRose: _sendRose,
-                onGifts: _openGifts,
-                onLike: _onTapLike,
-                onShare: _onTapShare,
-                onSeguir: _openStreamerSheet,
-                onShop: () {
-                  // TODO: navegar para vitrine do criador.
-                },
-                // ⚠️ MVP: enquanto o backend não expõe `hasStorefront`,
-                // mantemos escondido — só quem tiver vitrine real verá o
-                // botão "Loja" (espectador não vê vazio).
-                hasStorefront: false,
+              bottomBar: ChatErrorAbove(
+                roomId: widget.room.id,
+                child: LiveBottomBar(
+                  roomId: widget.room.id,
+                  controller: _chatCtrl,
+                  focusNode: _chatFocus,
+                  isSending: commentsState.isSending,
+                  isLiked: _isLiked,
+                  likesCount: max(_likesCount, commentsState.likeCount),
+                  onSend: _sendComment,
+                  onSendRose: _sendRose,
+                  onGifts: _openGifts,
+                  onLike: _onTapLike,
+                  onShare: _onTapShare,
+                  onSeguir: _openStreamerSheet,
+                  onShop: () {
+                    // TODO: navegar para vitrine do criador.
+                  },
+                  // ⚠️ MVP: enquanto o backend não expõe `hasStorefront`,
+                  // mantemos escondido — só quem tiver vitrine real verá o
+                  // botão "Loja" (espectador não vê vazio).
+                  hasStorefront: false,
+                ),
               ),
             ),
           ),

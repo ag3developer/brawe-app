@@ -8,7 +8,11 @@ import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_comment.dart';
 import '../../../domain/models/live_gift.dart';
 import '../../../domain/models/live_competition_event.dart';
+import '../../../domain/models/live_event.dart';
+import '../../../domain/models/user_award.dart';
 import '../../../domain/models/live_viewer_event.dart';
+import '../../../domain/models/live_room.dart';
+import '../../../domain/models/live_room_event.dart';
 import '../../../domain/models/user.dart';
 
 part 'live_room_comments_view_model.g.dart';
@@ -38,6 +42,8 @@ class LiveRoomCommentsState {
     this.myUsername,
     this.chatGifts = const <LiveGift>[],
     this.chatGiftParts = const <String, List<GiftChatPart>>{},
+    this.event,
+    this.eventLoaded = false,
   });
 
   final List<LiveComment> comments;
@@ -98,6 +104,13 @@ class LiveRoomCommentsState {
   /// ("50× Rosa + 1× Dragão"), por id da linha em [chatGifts].
   final Map<String, List<GiftChatPart>> chatGiftParts;
 
+  /// Evento com prazo em vigor na sala (multiplicador de pontos).
+  final LiveEvent? event;
+
+  /// True depois que o servidor informou o estado do evento (sala carregada
+  /// ou `event_update`); antes disso a tela usa o evento inicial da sala.
+  final bool eventLoaded;
+
   LiveRoomCommentsState copyWith({
     List<LiveComment>? comments,
     int? viewerCount,
@@ -124,6 +137,9 @@ class LiveRoomCommentsState {
     String? myUsername,
     List<LiveGift>? chatGifts,
     Map<String, List<GiftChatPart>>? chatGiftParts,
+    LiveEvent? event,
+    bool clearEvent = false,
+    bool? eventLoaded,
   }) {
     return LiveRoomCommentsState(
       comments: comments ?? this.comments,
@@ -151,6 +167,8 @@ class LiveRoomCommentsState {
       myUsername: myUsername ?? this.myUsername,
       chatGifts: chatGifts ?? this.chatGifts,
       chatGiftParts: chatGiftParts ?? this.chatGiftParts,
+      event: clearEvent ? null : event ?? this.event,
+      eventLoaded: eventLoaded ?? this.eventLoaded,
     );
   }
 }
@@ -198,6 +216,7 @@ class GifterEntry {
     required this.totalValue,
     required this.giftCount,
     this.level,
+    this.award,
   });
 
   /// Parse tolerante de um item do ranking (socket ou REST).
@@ -221,6 +240,7 @@ class GifterEntry {
           (raw['total_gifts'] as num?)?.toInt() ??
           0,
       level: (raw['level'] as num?)?.toInt(),
+      award: UserAward.tryParse(raw['award']),
     );
   }
 
@@ -230,6 +250,9 @@ class GifterEntry {
   }
 
   final int? level;
+
+  /// Prêmio ativo (moldura/badge) — ausente em servidor antigo.
+  final UserAward? award;
   final String userId;
   final String name;
   final String? avatarUrl;
@@ -247,6 +270,7 @@ class GifterEntry {
     totalValue: totalValue + value,
     giftCount: giftCount + count,
     level: level,
+    award: award,
   );
 }
 
@@ -259,6 +283,7 @@ class GifterOvertakenEvent {
     required this.gapPoints,
     required this.previousRank,
     this.yourRank,
+    this.multiplier,
   });
 
   /// Identificador crescente — permite à UI detectar evento novo.
@@ -268,6 +293,9 @@ class GifterOvertakenEvent {
   final int gapPoints;
   final int previousRank;
   final int? yourRank;
+
+  /// Multiplicador de evento em vigor (ex.: 2.0); `null` = sem evento.
+  final double? multiplier;
 }
 
 /// Novo #1 da live (`top_gifter_changed`).
@@ -299,6 +327,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
   StreamSubscription<LiveGift>? _giftsRankingSubscription;
   StreamSubscription<LiveCompetitionEvent>? _competitionSubscription;
   StreamSubscription<void>? _reconnectSubscription;
+  StreamSubscription<LiveRoomEvent>? _roomEventSubscription;
   int _eventSeq = 0;
   DateTime? _lastOvertakenAt;
   final Set<String> _seenGiftIds = {};
@@ -322,6 +351,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
       _giftsRankingSubscription?.cancel();
       _competitionSubscription?.cancel();
       _reconnectSubscription?.cancel();
+      _roomEventSubscription?.cancel();
       repository.disconnectFromRoom(_roomId);
     });
 
@@ -412,6 +442,16 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
     // Socket reconectou: pode ter perdido eventos — refaz o snapshot.
     _reconnectSubscription = repository.watchReconnects().listen((_) {
       _refreshRanking();
+      _refreshEvent();
+    });
+    // Evento com prazo começou/terminou (servidor antigo nunca emite).
+    _roomEventSubscription = repository.watchRoomEvents(roomId).listen((e) {
+      if (e.type == LiveRoomEvent.chatError) {
+        _dropRejectedOptimistic();
+        return;
+      }
+      if (e.type != LiveRoomEvent.eventUpdate) return;
+      _applyEvent(LiveEvent.tryParse(e.data['event']));
     });
 
     try {
@@ -433,6 +473,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
           likeCount: room.totalLikes,
           totalComments: room.totalMessages,
         );
+        if (room is LiveRoom) _applyEvent(room.event);
       }
 
       // 🏆 Busca ranking inicial de gifters da API (dados persistidos).
@@ -452,6 +493,18 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         errorMessage: const Failure.unknown().toDisplayMessage(),
       );
     }
+  }
+
+  void _applyEvent(LiveEvent? e) {
+    if (!ref.mounted) return;
+    state = e == null
+        ? state.copyWith(clearEvent: true, eventLoaded: true)
+        : state.copyWith(event: e, eventLoaded: true);
+  }
+
+  Future<void> _refreshEvent() async {
+    final res = await ref.read(liveRepositoryProvider).getActiveEvent(_roomId);
+    if (res.ok) _applyEvent(res.event);
   }
 
   /// Aplica um snapshot do servidor (socket ou REST) como fonte de verdade.
@@ -515,6 +568,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
           totalValue: entry.totalValue,
           giftCount: entry.giftCount,
           level: entry.level,
+          award: entry.award,
         );
       }
     }
@@ -664,6 +718,7 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
             gapPoints: gap,
             previousRank: (d['previous_rank'] as num?)?.toInt() ?? 1,
             yourRank: (d['your_rank'] as num?)?.toInt(),
+            multiplier: activeMultiplier(d['multiplier']),
           ),
         );
     }
@@ -738,6 +793,20 @@ class LiveRoomCommentsViewModel extends _$LiveRoomCommentsViewModel {
         errorMessage: const Failure.unknown().toDisplayMessage(),
       );
       return false;
+    }
+  }
+
+  /// `chat_error`: o servidor recusou a mensagem que acabei de mandar — tira
+  /// o eco otimista mais recente (sem eco real, ele ficaria no chat).
+  void _dropRejectedOptimistic() {
+    final now = DateTime.now();
+    for (var i = state.comments.length - 1; i >= 0; i--) {
+      final c = state.comments[i];
+      if (c.id.startsWith('local-') &&
+          now.difference(c.timestamp).inSeconds.abs() <= 10) {
+        _removeComment(c.id);
+        return;
+      }
     }
   }
 

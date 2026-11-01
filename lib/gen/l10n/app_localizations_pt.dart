@@ -5749,4 +5749,148 @@ class SPt extends S {
 
   @override
   String get commentsMentionFollowing => 'Seguindo';
+
+  @override
+  String eventChipEndsIn(String time) {
+    return 'termina em $time';
+  }
+
+  @override
+  String get rankingTabEvent => 'Evento';
+
+  @override
+  String rankingPrizeFirst(String prize) {
+    return 'Prêmio do 1º lugar: $prize';
+  }
+
+  @override
+  String get awardGrantedTitle => 'Você ganhou um prêmio!';
+
+  @override
+  String get profileAwardsTitle => 'Prêmios';
+
+  @override
+  String profileAwardUntil(String date) {
+    return 'até $date';
+  }
+
+  @override
+  String get chatErrorNotSent => 'Mensagem não enviada';
+
+  @override
+  String get chatErrorLink => 'Links não são permitidos no chat';
+
+  @override
+  String get chatErrorPhone => 'Telefones não são permitidos no chat';
+
+  @override
+  String chatErrorMutedUntil(String time) {
+    return 'Você foi silenciado até $time';
+  }
+
+  @override
+  String get chatErrorMutedLiveEnd => 'Você foi silenciado até o fim da live';
+
+  @override
+  String chatErrorSlowWait(int seconds) {
+    return 'Modo lento: aguarde $seconds s';
+  }
+
+  @override
+  String get chatErrorSlowGeneric => 'Modo lento: aguarde um instante';
+
+  @override
+  String chatSlowModeHint(int seconds) {
+    return 'Modo lento: $seconds s';
+  }
+
+  @override
+  String get chatPinnedUnpin => 'Desafixar';
+
+  @override
+  String get chatModeratorBadge => 'Moderador';
+
+  @override
+  String get modMute5 => 'Silenciar 5 min';
+
+  @override
+  String get modMute60 => 'Silenciar 1 h';
+
+  @override
+  String get modMuteRest => 'Silenciar até o fim da live';
+
+  @override
+  String get modPinMessage => 'Fixar mensagem';
+
+  @override
+  String get modMakeModerator => 'Tornar moderador';
+
+  @override
+  String get modRemoveModerator => 'Remover moderador';
+
+  @override
+  String modMutedToast(String name) {
+    return '$name foi silenciado';
+  }
+
+  @override
+  String get modPinnedToast => 'Mensagem fixada';
+
+  @override
+  String get modUnpinnedToast => 'Mensagem desafixada';
+
+  @override
+  String modMadeModeratorToast(String name) {
+    return '$name agora é moderador';
+  }
+
+  @override
+  String modRemovedModeratorToast(String name) {
+    return '$name não é mais moderador';
+  }
+
+  @override
+  String get modActionFailed => 'Não foi possível concluir a ação';
+
+  @override
+  String get modNotAllowed => 'Você não tem permissão para isso';
+
+  @override
+  String get modModeratorsTitle => 'Moderadores';
+
+  @override
+  String get modModeratorsSubtitle => 'Quem ajuda a cuidar do chat da sua live';
+
+  @override
+  String get modModeratorsEmpty =>
+      'Você ainda não tem moderadores. Toque no nome de alguém no chat para promovê-lo.';
+
+  @override
+  String get modModeratorsLoadFailed =>
+      'Não foi possível carregar os moderadores';
+
+  @override
+  String get modRemoveConfirm => 'Remover';
+
+  @override
+  String get battleDurationLabel => 'Duração';
+
+  @override
+  String battleDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String battleDurationSeconds(int seconds) {
+    return '$seconds s';
+  }
+
+  @override
+  String get questFrequencyWeekly => 'Semanal';
+
+  @override
+  String get questFrequencyEvent => 'Evento';
+
+  @override
+  String get questFrequencyDaily => 'Diária';
 }

@@ -15,9 +15,9 @@ class QuestsRepository {
   final QuestsService _service;
   QuestsRepository(this._service);
 
-  Future<QuestsData> getDailyQuests() async {
+  Future<QuestsData> getDailyQuests({String? lang}) async {
     try {
-      final json = await _service.getDailyQuests();
+      final json = await _service.getDailyQuests(lang: lang);
       return QuestsData.fromJson(json);
     } catch (_) {
       throw const Failure.network();

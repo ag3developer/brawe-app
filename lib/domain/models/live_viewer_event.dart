@@ -1,3 +1,45 @@
+import 'user_award.dart';
+
+/// Efeito de entrada do tier do viewer (`viewer_joined.entry`).
+///
+/// Só VAP e Lottie tocam; qualquer outro tipo (ou URL vazia) vira `null`
+/// no parser — servidor antigo simplesmente não manda o campo.
+class ViewerEntryEffect {
+  const ViewerEntryEffect({
+    required this.type,
+    required this.url,
+    this.presentation,
+    this.soundEnabled = true,
+  });
+
+  /// `vap` ou `lottie`.
+  final String type;
+  final String url;
+
+  /// Receita crua (mesmo formato de `GiftPresentation`); `null` = padrão.
+  final Map<String, dynamic>? presentation;
+  final bool soundEnabled;
+
+  bool get isVap => type == 'vap';
+
+  static ViewerEntryEffect? tryParse(dynamic raw) {
+    if (raw is! Map) return null;
+    final type = raw['type']?.toString().toLowerCase().trim();
+    final url = raw['url']?.toString().trim();
+    if ((type != 'vap' && type != 'lottie') || url == null || url.isEmpty) {
+      return null;
+    }
+    final pr = raw['presentation'];
+    final sound = raw['sound_enabled'];
+    return ViewerEntryEffect(
+      type: type!,
+      url: url,
+      presentation: pr is Map ? Map<String, dynamic>.from(pr) : null,
+      soundEnabled: sound is bool ? sound : sound?.toString() != 'false',
+    );
+  }
+}
+
 /// Evento de viewer entrando/saindo da live (não persistido — só UI).
 class LiveViewerEvent {
   const LiveViewerEvent({
@@ -12,6 +54,10 @@ class LiveViewerEvent {
     this.badgeImageUrl,
     this.entryEffect,
     this.rankingPosition,
+    this.entry,
+    this.tierName,
+    this.award,
+    this.isModerator = false,
   });
 
   final String userId;
@@ -30,9 +76,32 @@ class LiveViewerEvent {
   /// Posição (1-based) no ranking da live; `null` se fora do ranking.
   final int? rankingPosition;
 
-  /// Entrada "especial": nível >= 10 ou top 3 do ranking.
+  /// Efeito de entrada do tier (ausente em servidor antigo ou sem VIP).
+  final ViewerEntryEffect? entry;
+
+  /// Nome do tier por idioma (`{pt,en,es}`), se o servidor enviar.
+  final Map<String, String>? tierName;
+
+  /// Prêmio ativo mais prestigioso (ausente em servidor antigo).
+  final UserAward? award;
+
+  /// Quem entrou é moderador do criador da live.
+  final bool isModerator;
+
+  /// Nome do tier no idioma [lang] (cai para pt e depois para qualquer um).
+  String? localizedTierName(String lang) {
+    final n = tierName;
+    if (n == null || n.isEmpty) return null;
+    return n[lang] ?? n['pt'] ?? n.values.first;
+  }
+
+  /// Entrada "especial": nível >= 10, top 3 do ranking ou tier com efeito
+  /// de entrada (o servidor só manda `entry` para tiers VIP / #1).
   bool get isSpecialEntry =>
-      joined && (level >= 10 || (rankingPosition != null && rankingPosition! <= 3));
+      joined &&
+      (level >= 10 ||
+          entry != null ||
+          (rankingPosition != null && rankingPosition! <= 3));
 
   factory LiveViewerEvent.fromSocket(Map<String, dynamic> data, {required bool joined}) {
     return LiveViewerEvent(
@@ -49,7 +118,24 @@ class LiveViewerEvent {
       badgeImageUrl: _badgeField(data['badge'], 'image_url'),
       entryEffect: _str(data['entry_effect']),
       rankingPosition: int.tryParse('${data['ranking_position']}'),
+      entry: ViewerEntryEffect.tryParse(data['entry']),
+      award: UserAward.tryParse(data['award']),
+      isModerator: data['is_moderator'] == true,
+      tierName: _names(data['tier_name'] ?? data['name'] ?? _badgeRaw(data['badge'], 'name')),
     );
+  }
+
+  static dynamic _badgeRaw(dynamic badge, String key) =>
+      badge is Map ? badge[key] : null;
+
+  static Map<String, String>? _names(dynamic raw) {
+    if (raw is! Map) return null;
+    final out = <String, String>{};
+    raw.forEach((k, v) {
+      final s = _str(v);
+      if (s != null) out[k.toString()] = s;
+    });
+    return out.isEmpty ? null : out;
   }
 
   /// `badge` chega como objeto ({badge,label,color,image_url,...}) ou como

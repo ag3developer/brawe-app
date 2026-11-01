@@ -1,13 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../domain/models/live_comment.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../level_chip.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Ação escolhida no cartão do autor de uma mensagem do chat.
-enum ChatUserAction { reply, viewProfile }
+enum ChatUserAction {
+  reply,
+  viewProfile,
+  mute5,
+  mute60,
+  muteRest,
+  pinMessage,
+  makeModerator,
+  removeModerator;
+
+  bool get isModeration =>
+      this != ChatUserAction.reply && this != ChatUserAction.viewProfile;
+}
+
+/// O que EU posso fazer com o autor da mensagem. Só existe quando sou o
+/// criador ou moderador da live.
+class ChatModerationAccess {
+  const ChatModerationAccess({required this.isCreator});
+
+  /// Criador da live (também pode promover/remover moderadores).
+  final bool isCreator;
+}
 
 /// Cartão (bottom sheet) que abre ao tocar numa mensagem do chat da live —
 /// estilo TikTok: avatar, nome, @username, nível e as ações
@@ -17,9 +40,13 @@ class ChatUserSheet extends StatelessWidget {
     super.key,
     required this.comment,
     this.allowProfile = true,
+    this.moderation,
   });
 
   final LiveComment comment;
+
+  /// `null` = sou espectador comum (sem ferramentas de moderação).
+  final ChatModerationAccess? moderation;
 
   /// `false` no streamer: abrir um perfil por cima da transmissão tiraria
   /// a câmera da tela no meio da live.
@@ -30,6 +57,7 @@ class ChatUserSheet extends StatelessWidget {
     BuildContext context,
     LiveComment comment, {
     bool allowProfile = true,
+    ChatModerationAccess? moderation,
   }) {
     // Fecha o teclado antes: senão o Flutter devolve o foco ao input
     // quando o sheet fecha e o teclado reabre sozinho.
@@ -38,8 +66,13 @@ class ChatUserSheet extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),
+      isScrollControlled: true,
       builder: (_) => ForceDarkTheme(
-        child: ChatUserSheet(comment: comment, allowProfile: allowProfile),
+        child: ChatUserSheet(
+          comment: comment,
+          allowProfile: allowProfile,
+          moderation: moderation,
+        ),
       ),
     );
   }
@@ -173,6 +206,86 @@ class ChatUserSheet extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+            ..._moderationRows(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _moderationRows(BuildContext context) {
+    final access = moderation;
+    if (access == null) return const [];
+    // Moderador não age sobre outro moderador (o servidor recusa).
+    final canAct = access.isCreator || !comment.isModerator;
+    final s = S.of(context);
+    void pop(ChatUserAction a) => Navigator.pop(context, a);
+    return [
+      const SizedBox(height: 14),
+      Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+      if (canAct) ...[
+        _ModRow(
+          icon: LucideIcons.volumeX,
+          label: s.modMute5,
+          onTap: () => pop(ChatUserAction.mute5),
+        ),
+        _ModRow(
+          icon: LucideIcons.volumeX,
+          label: s.modMute60,
+          onTap: () => pop(ChatUserAction.mute60),
+        ),
+        _ModRow(
+          icon: LucideIcons.volumeX,
+          label: s.modMuteRest,
+          onTap: () => pop(ChatUserAction.muteRest),
+        ),
+      ],
+      _ModRow(
+        icon: LucideIcons.pin,
+        label: s.modPinMessage,
+        onTap: () => pop(ChatUserAction.pinMessage),
+      ),
+      if (access.isCreator)
+        _ModRow(
+          icon: comment.isModerator ? LucideIcons.userMinus : LucideIcons.shield,
+          label: comment.isModerator ? s.modRemoveModerator : s.modMakeModerator,
+          onTap: () => pop(
+            comment.isModerator
+                ? ChatUserAction.removeModerator
+                : ChatUserAction.makeModerator,
+          ),
+        ),
+    ];
+  }
+}
+
+class _ModRow extends StatelessWidget {
+  const _ModRow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        height: 44,
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: Colors.white70),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),

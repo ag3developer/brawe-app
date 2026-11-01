@@ -4,6 +4,8 @@ import 'dart:io' show Platform;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../live/shared/widgets/overlays/combo_tier_layer.dart';
+import '../../live/shared/widgets/overlays/entrance_effect_layer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,10 +25,14 @@ import '../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../live/shared/widgets/overlays/gift_animation_overlay.dart';
 import '../../live/shared/widgets/actions/actions.dart';
 import '../../live/shared/widgets/chat/chat.dart';
+import '../../live/shared/widgets/sheets/moderators_sheet.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
 import '../../live/shared/widgets/hud/live_gift_ticker.dart';
+import '../../live/shared/widgets/hud/live_event_chip.dart';
+import '../../live/shared/widgets/sheets/gifter_ranking_sheet.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -1443,8 +1449,23 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       context,
       comment,
       allowProfile: false,
+      // O criador sempre pode moderar (exceto a si mesmo).
+      moderation: comment.userId == _room.streamerId
+          ? null
+          : const ChatModerationAccess(isCreator: true),
     );
-    if (!mounted || action != ChatUserAction.reply) return;
+    if (!mounted || action == null) return;
+    if (action.isModeration) {
+      await performChatModeration(
+        context,
+        ref,
+        roomId: widget.room.id,
+        comment: comment,
+        action: action,
+      );
+      return;
+    }
+    if (action != ChatUserAction.reply) return;
     ChatUserSheet.insertMention(_chatCtrl, comment);
     setState(() => _showChatInput = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1637,6 +1658,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   },
                 ),
                 MoreOptionTile(
+                  icon: LucideIcons.shield,
+                  iconColor: const Color(0xFF4FC3F7),
+                  title: s.modModeratorsTitle,
+                  subtitle: s.modModeratorsSubtitle,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ModeratorsSheet.show(context);
+                  },
+                ),
+                MoreOptionTile(
                   icon: Icons.share_outlined,
                   iconColor: Colors.white,
                   title: s.broadcasterMoreShareLive,
@@ -1794,6 +1825,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
               // ===== Gift animations =====
               GiftAnimationOverlay(roomId: widget.room.id),
+              // ===== Efeito de entrada de viewer (criador vê quem chega) =====
+              EntranceEffectLayer(
+                roomId: widget.room.id,
+                ignoreUserId: widget.room.streamerId,
+              ),
+              // ===== Degraus do combo =====
+              ComboTierLayer(roomId: widget.room.id),
 
               // ===== Battle HUD (streamer) =====
               if (_activeBattleId != null)
@@ -1838,6 +1876,17 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         const SizedBox(height: 6),
                         Row(
                           children: [
+                            LiveEventChip(
+                              roomId: widget.room.id,
+                              initialEvent: _room.event,
+                              onTap: (_) => GifterRankingSheet.show(
+                                context,
+                                roomId: widget.room.id,
+                                streamerId: _room.streamerId,
+                                ranking: commentsState.gifterRanking,
+                                openEventTab: true,
+                              ),
+                            ),
                             LiveGoalsPill(
                               key: _goalsKey,
                               roomId: widget.room.id,
@@ -1915,7 +1964,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           ctx,
                         ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
                       ),
-                      child: ChatTicker(
+                      child: PinnedAboveChat(
+                        roomId: widget.room.id,
+                        isHost: true,
+                        child: ChatTicker(
                 giftParts: commentsState.chatGiftParts,
                         // Bloqueados (nos dois sentidos) não aparecem no chat da live.
                         comments: commentsState.comments
@@ -1930,15 +1982,19 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         onCommentTap: _onCommentTap,
                         maxHeight: maxHeight,
                       ),
+                      ),
                     ),
                   ),
                   input: _showChatInput
-                      ? _CreatorChatInput(
-                          controller: _chatCtrl,
-                          focusNode: _chatFocus,
-                          hint: S.of(context).liveCommentsHint,
-                          onSend: _sendCreatorComment,
-                          onClose: _closeChatInput,
+                      ? ChatErrorAbove(
+                          roomId: widget.room.id,
+                          child: _CreatorChatInput(
+                            controller: _chatCtrl,
+                            focusNode: _chatFocus,
+                            hint: S.of(context).liveCommentsHint,
+                            onSend: _sendCreatorComment,
+                            onClose: _closeChatInput,
+                          ),
                         )
                       : null,
                   actionBar: !_showCountdown && (_isStreaming || _isPaused)

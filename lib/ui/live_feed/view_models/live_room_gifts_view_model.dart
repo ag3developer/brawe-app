@@ -159,6 +159,10 @@ class LiveRoomGiftsViewModel extends _$LiveRoomGiftsViewModel {
         quantity: existing.quantity + gift.quantity,
         timestamp: now,
         value: existing.value > gift.value ? existing.value : gift.value,
+        comboCount: gift.comboCount ?? existing.comboCount,
+        comboNextAt: gift.comboCount != null
+            ? gift.comboNextAt
+            : existing.comboNextAt,
       );
       next = [...state]..removeAt(existingIndex);
       next.add(entry);

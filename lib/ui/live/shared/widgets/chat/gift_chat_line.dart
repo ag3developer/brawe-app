@@ -6,6 +6,7 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../../core/widgets/gift_icon.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart'
     show GiftChatPart;
+import '../award_badge.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Linha do chat representando um presente enviado — estilo TikTok MINIMALISTA.
@@ -101,6 +102,10 @@ class GiftChatLine extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  if (gift.senderAward != null) ...[
+                    AwardBadge(award: gift.senderAward!, height: 15),
+                    const SizedBox(width: 5),
+                  ],
                   Flexible(
                     child: RichText(
                       overflow: TextOverflow.ellipsis,

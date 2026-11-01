@@ -30,6 +30,9 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   artistTotalTracks: (json['artist_total_tracks'] as num?)?.toInt() ?? 0,
   artistTotalPlays: (json['artist_total_plays'] as num?)?.toInt() ?? 0,
   createdAt: json['created_at'] as String?,
+  activeAwards: json['active_awards'] == null
+      ? const <UserAward>[]
+      : userAwardsFromJson(json['active_awards']),
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{

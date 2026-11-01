@@ -3,6 +3,7 @@ import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_room.dart';
 
 import '../../domain/models/live_goal.dart';
+import '../../domain/models/live_event.dart';
 
 part 'live_room_dto.freezed.dart';
 part 'live_room_dto.g.dart';
@@ -48,6 +49,8 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'goal_progress_points') @Default(0) int goalProgressPoints,
     // Metas da live: lista crua, convertida em `LiveGoal` no toDomain.
     List<dynamic>? goals,
+    // Evento com prazo da sala: mapa cru, convertido no toDomain.
+    Map<String, dynamic>? event,
   }) = _LiveRoomDto;
 
   factory LiveRoomDto.fromJson(Map<String, dynamic> json) =>
@@ -124,6 +127,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       goalTitle: goalTitle,
       goalProgressPoints: goalProgressPoints,
       goals: LiveGoal.listFrom(goals),
+      event: LiveEvent.tryParse(event),
     );
   }
 }

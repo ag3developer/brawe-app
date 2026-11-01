@@ -169,6 +169,18 @@ class GiftPresentation {
     haptic: GiftHaptic.heavy,
   );
 
+  /// Padrão dos efeitos de entrada de viewer (Fase 1 — níveis).
+  static const GiftPresentation entranceDefault = GiftPresentation(
+    enter: GiftPhase(GiftTransition.slideLeft, 400),
+    exit: GiftPhase(GiftTransition.fade, 300),
+    position: GiftPosition.center,
+    scale: 0.6,
+    layer: GiftLayer.underChat,
+    backdrop: GiftBackdrop.none,
+    backdropOpacity: 0.35,
+    haptic: GiftHaptic.light,
+  );
+
   /// Padrão conforme o visual. [haptic] é o padrão por nível do presente.
   static GiftPresentation defaultsFor({
     required bool fullscreenLook,

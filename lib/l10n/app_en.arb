@@ -2571,5 +2571,122 @@
   "liveOwnEndError": "Couldn't end the live",
   "liveWaitingSignal": "No signal from the creator right now.\nTrying again…",
   "commentsHintAddMention": "Add a comment... use @ to tag",
-  "commentsMentionFollowing": "Following"
+  "commentsMentionFollowing": "Following",
+  "eventChipEndsIn": "ends in {time}",
+  "@eventChipEndsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "rankingTabEvent": "Event",
+  "rankingPrizeFirst": "1st place prize: {prize}",
+  "@rankingPrizeFirst": {
+    "placeholders": {
+      "prize": {
+        "type": "String"
+      }
+    }
+  },
+  "awardGrantedTitle": "You won an award!",
+  "profileAwardsTitle": "Awards",
+  "profileAwardUntil": "until {date}",
+  "@profileAwardUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "chatErrorNotSent": "Message not sent",
+  "chatErrorLink": "Links are not allowed in chat",
+  "chatErrorPhone": "Phone numbers are not allowed in chat",
+  "chatErrorMutedUntil": "You were muted until {time}",
+  "@chatErrorMutedUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "chatErrorMutedLiveEnd": "You were muted until the end of the live",
+  "chatErrorSlowWait": "Slow mode: wait {seconds} s",
+  "@chatErrorSlowWait": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "chatErrorSlowGeneric": "Slow mode: wait a moment",
+  "chatSlowModeHint": "Slow mode: {seconds} s",
+  "@chatSlowModeHint": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "chatPinnedUnpin": "Unpin",
+  "chatModeratorBadge": "Moderator",
+  "modMute5": "Mute 5 min",
+  "modMute60": "Mute 1 h",
+  "modMuteRest": "Mute until the end of the live",
+  "modPinMessage": "Pin message",
+  "modMakeModerator": "Make moderator",
+  "modRemoveModerator": "Remove moderator",
+  "modMutedToast": "{name} was muted",
+  "@modMutedToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modPinnedToast": "Message pinned",
+  "modUnpinnedToast": "Message unpinned",
+  "modMadeModeratorToast": "{name} is now a moderator",
+  "@modMadeModeratorToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modRemovedModeratorToast": "{name} is no longer a moderator",
+  "@modRemovedModeratorToast": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "modActionFailed": "Could not complete the action",
+  "modNotAllowed": "You are not allowed to do that",
+  "modModeratorsTitle": "Moderators",
+  "modModeratorsSubtitle": "People who help look after your live chat",
+  "modModeratorsEmpty": "You have no moderators yet. Tap someone's name in the chat to promote them.",
+  "modModeratorsLoadFailed": "Could not load moderators",
+  "modRemoveConfirm": "Remove",
+  "battleDurationLabel": "Duration",
+  "battleDurationMinutes": "{minutes} min",
+  "@battleDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "battleDurationSeconds": "{seconds} s",
+  "@battleDurationSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "questFrequencyWeekly": "Weekly",
+  "questFrequencyEvent": "Event",
+  "questFrequencyDaily": "Daily"
 }

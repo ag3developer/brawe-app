@@ -83,6 +83,9 @@ dependencies:
   webview_flutter: ^4.10.0
   record: ^5.2.1
   just_audio: ^0.9.43
+  # SFX de baixa latência (degraus de combo, sons de presente); cai no
+  # just_audio se a inicialização nativa falhar.
+  flutter_soloud: ^3.1.0
   audio_session: ^0.1.21
 
   # ── QR Code: geração (meu perfil / login) + leitura (escanear) ────────
@@ -133,6 +136,7 @@ dependencies:
   lottie: ^3.5.1
   flutter_volume_controller: ^2.0.2
   flutter_vap_player: ^2.2.0
+  firebase_remote_config: ^6.7.1
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que

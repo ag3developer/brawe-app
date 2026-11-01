@@ -380,7 +380,10 @@ GoRouter router(Ref ref) {
               if (userId.startsWith('@')) {
                 userId = userId.substring(1);
               }
-              return ProfileScreen(userId: userId);
+              return ProfileScreen(
+                userId: userId,
+                section: state.uri.queryParameters['section'],
+              );
             },
           ),
           // Alias usado no CONTEÚDO do QR code de perfil e nos links
@@ -397,7 +400,10 @@ GoRouter router(Ref ref) {
               if (userId.startsWith('@')) {
                 userId = userId.substring(1);
               }
-              return ProfileScreen(userId: userId);
+              return ProfileScreen(
+                userId: userId,
+                section: state.uri.queryParameters['section'],
+              );
             },
           ),
           GoRoute(

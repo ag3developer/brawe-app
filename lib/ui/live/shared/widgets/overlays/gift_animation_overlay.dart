@@ -4,17 +4,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_vap_player/flutter_vap_player.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../../../data/repositories/gift_repository.dart';
 import '../../../../../data/services/gift_effect_cache.dart';
+import '../../../../../data/services/sfx_player.dart';
+import '../../../../../domain/models/combo_tier.dart';
 
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../domain/models/gift_display_type.dart';
 import '../../../../../domain/models/gift_presentation.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../layout/live_dock_metrics.dart';
+import '../award_badge.dart';
 import '../level_chip.dart';
 import 'gift_stage.dart';
 import '../../../../core/themes/app_colors.dart';
@@ -267,24 +269,8 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
   void _playSound(LiveGift gift) {
     final url = gift.soundUrl;
     if (!gift.soundEnabled || url == null || url.isEmpty) return;
-    final player = AudioPlayer();
-    final file = GiftEffectCache.instance.cachedFile(url);
-    Future<void> run() async {
-      try {
-        if (file != null) {
-          await player.setFilePath(file.path);
-        } else {
-          await player.setUrl(url);
-        }
-        await player.play();
-      } catch (e) {
-        debugPrint('[GIFT-FX] som falhou: $e');
-      } finally {
-        await player.dispose();
-      }
-    }
-
-    run();
+    // Baixa latência (flutter_soloud) com reserva no just_audio.
+    SfxPlayer.instance.play(url);
   }
 
   void _rememberShown(String id) {
@@ -322,7 +308,9 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
         final dedupKey = g.id;
         if (_shownVisual.contains(dedupKey)) continue;
         _rememberShown(dedupKey);
-        debugPrint('[GIFT-FX] overlay dispara ${g.giftName} (${displayType.name})');
+        debugPrint(
+          '[GIFT-FX] overlay dispara ${g.giftName} (${displayType.name})',
+        );
 
         switch (displayType) {
           case GiftDisplayType.centerSmall:
@@ -441,6 +429,10 @@ class _GiftToastState extends ConsumerState<_GiftToast>
   Timer? _safetyTimer;
   bool _exiting = false;
   int _lastQuantity = 0;
+  // Combo que evolui: último degrau mirado e o anterior (base da barra).
+  int? _lastNextAt;
+  int _prevTierAt = 0;
+  late final AnimationController _tierCtrl; // pulso ao cruzar um degrau
 
   /// `true` quando o toast deve aparecer no lado direito da tela (lado B
   /// da batalha). Calculado uma vez aqui pra os 2 animations + Positioned
@@ -481,7 +473,11 @@ class _GiftToastState extends ConsumerState<_GiftToast>
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 1),
       TweenSequenceItem(tween: Tween(begin: 1.35, end: 1.0), weight: 1),
     ]).animate(_pulseCtrl);
-    _anim = Listenable.merge([_ctrl, _exitCtrl, _pulseCtrl]);
+    _tierCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 520),
+    );
+    _anim = Listenable.merge([_ctrl, _exitCtrl, _pulseCtrl, _tierCtrl]);
     _ctrl.forward();
     LiveDockMetrics.top.addListener(_onDockMoved);
     // Garantia: nunca fica preso na tela se o estado se perder.
@@ -506,7 +502,14 @@ class _GiftToastState extends ConsumerState<_GiftToast>
     _ctrl.dispose();
     _exitCtrl.dispose();
     _pulseCtrl.dispose();
+    _tierCtrl.dispose();
     super.dispose();
+  }
+
+  /// 0..1..0 durante o pulso de cruzar um degrau.
+  double _tierBump() {
+    final v = _tierCtrl.value;
+    return v <= 0 || v >= 1 ? 0 : (v < 0.4 ? v / 0.4 : (1 - v) / 0.6);
   }
 
   String _giftEmoji(String giftName) {
@@ -561,6 +564,20 @@ class _GiftToastState extends ConsumerState<_GiftToast>
       _lastQuantity = gift.quantity;
       _pulseCtrl.forward(from: 0);
     }
+    // 🔥 Contagem do servidor (igual para todos); sem ela, a local.
+    final count = ComboMath.displayCount(
+      serverCount: gift.comboCount,
+      localCount: gift.quantity,
+    );
+    final nextAt = gift.comboNextAt;
+    final prevNext = _lastNextAt;
+    if (prevNext != null && count >= prevNext && nextAt != prevNext) {
+      // Cruzou o degrau: o contador "estoura" e a barra recomeça dali.
+      _prevTierAt = prevNext;
+      _tierCtrl.forward(from: 0);
+    }
+    _lastNextAt = nextAt;
+    final showBar = nextAt != null && nextAt > count;
 
     const chatTickerHeight = 240.0;
     const chatTickerBottomAnchor = 120.0;
@@ -632,124 +649,156 @@ class _GiftToastState extends ConsumerState<_GiftToast>
                             color: Colors.white.withValues(alpha: 0.12),
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // 1) Avatar circular
-                            _AvatarCircle(
-                              url: gift.senderAvatarUrl,
-                              fallback: gift.senderName,
-                            ),
-                            const SizedBox(width: 8),
-                            // 2) Nome + chip de level + "enviou {gift}"
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Chip de nível (💎 Lv34) estilo TikTok —
-                                    // altura reduzida (era o default 18px,
-                                    // grande o suficiente pra roubar a
-                                    // atenção do nome do remetente). 15px
-                                    // mantém legibilidade com discrição,
-                                    // combinando com o restante do toast.
-                                    LevelChip(
-                                      level: gift.gifterLevel,
-                                      badge: gift.gifterBadge,
-                                      colorHex: gift.gifterColor,
-                                      imageUrl: gift.gifterImageUrl,
-                                      height: 15,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 160,
+                        child: IntrinsicWidth(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // 1) Avatar circular
+                                  _AvatarCircle(
+                                    url: gift.senderAvatarUrl,
+                                    fallback: gift.senderName,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // 2) Nome + chip de level + "enviou {gift}"
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Chip de nível (💎 Lv34) estilo TikTok —
+                                          // altura reduzida (era o default 18px,
+                                          // grande o suficiente pra roubar a
+                                          // atenção do nome do remetente). 15px
+                                          // mantém legibilidade com discrição,
+                                          // combinando com o restante do toast.
+                                          LevelChip(
+                                            level: gift.gifterLevel,
+                                            badge: gift.gifterBadge,
+                                            colorHex: gift.gifterColor,
+                                            imageUrl: gift.gifterImageUrl,
+                                            height: 15,
+                                          ),
+                                          if (gift.senderAward != null) ...[
+                                            const SizedBox(width: 4),
+                                            AwardBadge(
+                                              award: gift.senderAward!,
+                                              height: 15,
+                                            ),
+                                          ],
+                                          const SizedBox(width: 6),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 160,
+                                            ),
+                                            child: Text(
+                                              gift.senderName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 13,
+                                                decoration: TextDecoration.none,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      child: Text(
-                                        gift.senderName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'enviou ',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.7,
+                                              ),
+                                              fontSize: 11,
+                                              decoration: TextDecoration.none,
+                                            ),
+                                          ),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 120,
+                                            ),
+                                            child: Text(
+                                              gift.giftName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Color(0xFFFFD166),
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 11,
+                                                decoration: TextDecoration.none,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 10),
+                                  // 3) Presente à direita: Lottie do painel → imagem do
+                                  // painel → PNG do app (ver `_GiftVisual`).
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _GiftVisual(
+                                      gift: gift,
+                                      size: 46,
+                                      fallbackIcon: Text(
+                                        _giftEmoji(gift.giftName),
                                         style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13,
+                                          fontSize: 28,
                                           decoration: TextDecoration.none,
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'enviou ',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.7,
-                                        ),
-                                        fontSize: 11,
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                    ConstrainedBox(
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 120,
-                                      ),
-                                      child: Text(
-                                        gift.giftName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Color(0xFFFFD166),
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 11,
-                                          decoration: TextDecoration.none,
+                                  ),
+                                  // 4) Multiplicador xN (contagem do servidor quando há)
+                                  if (count > 1) ...[
+                                    const SizedBox(width: 4),
+                                    ScaleTransition(
+                                      scale: _pulse,
+                                      child: Transform.scale(
+                                        scale: 1 + 0.5 * _tierBump(),
+                                        child: Text(
+                                          'x$count',
+                                          style: TextStyle(
+                                            color: Color.lerp(
+                                              AppColors.braweEmber,
+                                              const Color(0xFFFFD166),
+                                              _tierBump(),
+                                            ),
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 16,
+                                            decoration: TextDecoration.none,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
+                                ],
+                              ),
+                              // 5) Barra até o próximo degrau: "×37 · faltam 13"
+                              if (showBar) ...[
+                                const SizedBox(height: 5),
+                                _ComboBar(
+                                  count: count,
+                                  nextAt: nextAt,
+                                  prevAt: _prevTierAt,
                                 ),
                               ],
-                            ),
-                            const SizedBox(width: 10),
-                            // 3) Presente à direita: Lottie do painel → imagem do
-                            // painel → PNG do app (ver `_GiftVisual`).
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: _GiftVisual(
-                                gift: gift,
-                                size: 46,
-                                fallbackIcon: Text(
-                                  _giftEmoji(gift.giftName),
-                                  style: const TextStyle(
-                                    fontSize: 28,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // 4) Multiplicador xN
-                            if (gift.quantity > 1) ...[
-                              const SizedBox(width: 4),
-                              ScaleTransition(
-                                scale: _pulse,
-                                child: Text(
-                                  'x${gift.quantity}',
-                                  style: const TextStyle(
-                                    color: AppColors.braweEmber,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    decoration: TextDecoration.none,
-                                  ),
-                                ),
-                              ),
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -760,6 +809,62 @@ class _GiftToastState extends ConsumerState<_GiftToast>
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Barra de progresso do combo até o próximo degrau.
+class _ComboBar extends StatelessWidget {
+  const _ComboBar({
+    required this.count,
+    required this.nextAt,
+    required this.prevAt,
+  });
+  final int count;
+  final int nextAt;
+  final int prevAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = ComboMath.progress(count, nextAt, prevAt: prevAt);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: SizedBox(
+            height: 4,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(color: Colors.white.withValues(alpha: 0.18)),
+                FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: p,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.braweEmber, Color(0xFFFFD166)],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          ComboMath.progressText(count, nextAt),
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            decoration: TextDecoration.none,
+          ),
+        ),
+      ],
     );
   }
 }

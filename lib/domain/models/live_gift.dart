@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'gift_display_type.dart';
 import 'gift_presentation.dart';
+import 'user_award.dart';
 
 part 'live_gift.freezed.dart';
 part 'live_gift.g.dart';
@@ -36,6 +37,11 @@ sealed class LiveGift with _$LiveGift {
     String? gifterColor, // hex string ex. "#FFD700"
     String? gifterImageUrl, // PNG remoto do pin (CDN ou /static fallback)
     @Default(false) bool levelUpgraded,
+    // 🏅 Prêmio ativo do remetente + multiplicador de evento (ausentes em
+    // servidor antigo). Fora do JSON: só o parser do socket preenche.
+    @JsonKey(includeFromJson: false, includeToJson: false) UserAward? senderAward,
+    double? eventMultiplier,
+    int? eventPoints,
     // 🎯 Lado da batalha que recebeu o gift (`'a'` esquerda, `'b'` direita).
     // `null` em lives solo. O toast do gift comum usa pra alinhar à lateral
     // certa do split-screen (lado A → bottom-left, lado B → bottom-right).
@@ -67,6 +73,10 @@ sealed class LiveGift with _$LiveGift {
     // 🎭 Encenação por presente (contrato v1) — mapa cru do servidor.
     // Use [resolvedPresentation]; `null` = padrão do display_type.
     Map<String, dynamic>? presentation,
+    // 🔥 Combo que evolui (Fase 3): contagem do servidor na janela e o
+    // próximo degrau (`null` = sem degraus / servidor antigo).
+    int? comboCount,
+    int? comboNextAt,
   }) = _LiveGift;
 
   factory LiveGift.fromJson(Map<String, dynamic> json) =>

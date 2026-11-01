@@ -945,8 +945,28 @@ class _QuestCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_isLiveQuest(quest.actionType) ||
-                        quest.category == 'live') ...[
-                      _LiveQuestTag(color: palette.end),
+                        quest.category == 'live' ||
+                        quest.isWeekly ||
+                        quest.isEvent) ...[
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          if (quest.isWeekly)
+                            _LiveQuestTag(
+                              color: palette.end,
+                              label: S.of(context).questFrequencyWeekly,
+                            ),
+                          if (quest.isEvent)
+                            _LiveQuestTag(
+                              color: palette.end,
+                              label: S.of(context).questFrequencyEvent,
+                            ),
+                          if (_isLiveQuest(quest.actionType) ||
+                              quest.category == 'live')
+                            _LiveQuestTag(color: palette.end),
+                        ],
+                      ),
                       const SizedBox(height: 4),
                     ],
                     Text(
@@ -1048,8 +1068,11 @@ String _liveQuestFallbackTitle(S l10n, String actionType) {
 }
 
 class _LiveQuestTag extends StatelessWidget {
-  const _LiveQuestTag({required this.color});
+  const _LiveQuestTag({required this.color, this.label});
   final Color color;
+
+  /// Texto da etiqueta; sem ele, "AO VIVO".
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -1060,7 +1083,7 @@ class _LiveQuestTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        S.of(context).questLiveTag,
+        label ?? S.of(context).questLiveTag,
         style: TextStyle(
           color: color,
           fontSize: 10.5,

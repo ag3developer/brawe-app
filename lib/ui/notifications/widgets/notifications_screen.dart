@@ -90,7 +90,14 @@ class NotificationsScreen extends ConsumerWidget {
                           final nav = ref.read(
                             notificationNavigationServiceProvider,
                           );
-                          if (n.data != null && n.data!.isNotEmpty) {
+                          if (n.type.toLowerCase() == 'award_received') {
+                            // Prêmio: abre o perfil na seção de prêmios.
+                            nav.handleData({
+                              if (n.linkUrl != null) 'link_url': n.linkUrl,
+                              ...?n.data,
+                              'type': n.type,
+                            });
+                          } else if (n.data != null && n.data!.isNotEmpty) {
                             nav.handleData(n.data);
                           } else if (n.linkUrl != null) {
                             nav.handleRoute(n.linkUrl);
@@ -261,6 +268,8 @@ class _NotificationTile extends StatelessWidget {
         return (LucideIcons.swords, AppColors.mutedRed);
       case 'creator_approved':
         return (LucideIcons.badgeCheck, AppColors.braweBlue);
+      case 'award_received':
+        return (LucideIcons.award, Colors.amber);
       case 'creator_level_up':
         return (LucideIcons.trendingUp, AppColors.braweBlue);
       default:

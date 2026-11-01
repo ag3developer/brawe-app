@@ -10370,6 +10370,246 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Seguindo'**
   String get commentsMentionFollowing;
+
+  /// No description provided for @eventChipEndsIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'termina em {time}'**
+  String eventChipEndsIn(String time);
+
+  /// No description provided for @rankingTabEvent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Evento'**
+  String get rankingTabEvent;
+
+  /// No description provided for @rankingPrizeFirst.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmio do 1º lugar: {prize}'**
+  String rankingPrizeFirst(String prize);
+
+  /// No description provided for @awardGrantedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ganhou um prêmio!'**
+  String get awardGrantedTitle;
+
+  /// No description provided for @profileAwardsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmios'**
+  String get profileAwardsTitle;
+
+  /// No description provided for @profileAwardUntil.
+  ///
+  /// In pt, this message translates to:
+  /// **'até {date}'**
+  String profileAwardUntil(String date);
+
+  /// No description provided for @chatErrorNotSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem não enviada'**
+  String get chatErrorNotSent;
+
+  /// No description provided for @chatErrorLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Links não são permitidos no chat'**
+  String get chatErrorLink;
+
+  /// No description provided for @chatErrorPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Telefones não são permitidos no chat'**
+  String get chatErrorPhone;
+
+  /// No description provided for @chatErrorMutedUntil.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você foi silenciado até {time}'**
+  String chatErrorMutedUntil(String time);
+
+  /// No description provided for @chatErrorMutedLiveEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você foi silenciado até o fim da live'**
+  String get chatErrorMutedLiveEnd;
+
+  /// No description provided for @chatErrorSlowWait.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo lento: aguarde {seconds} s'**
+  String chatErrorSlowWait(int seconds);
+
+  /// No description provided for @chatErrorSlowGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo lento: aguarde um instante'**
+  String get chatErrorSlowGeneric;
+
+  /// No description provided for @chatSlowModeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo lento: {seconds} s'**
+  String chatSlowModeHint(int seconds);
+
+  /// No description provided for @chatPinnedUnpin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desafixar'**
+  String get chatPinnedUnpin;
+
+  /// No description provided for @chatModeratorBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moderador'**
+  String get chatModeratorBadge;
+
+  /// No description provided for @modMute5.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar 5 min'**
+  String get modMute5;
+
+  /// No description provided for @modMute60.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar 1 h'**
+  String get modMute60;
+
+  /// No description provided for @modMuteRest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar até o fim da live'**
+  String get modMuteRest;
+
+  /// No description provided for @modPinMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fixar mensagem'**
+  String get modPinMessage;
+
+  /// No description provided for @modMakeModerator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tornar moderador'**
+  String get modMakeModerator;
+
+  /// No description provided for @modRemoveModerator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover moderador'**
+  String get modRemoveModerator;
+
+  /// No description provided for @modMutedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} foi silenciado'**
+  String modMutedToast(String name);
+
+  /// No description provided for @modPinnedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem fixada'**
+  String get modPinnedToast;
+
+  /// No description provided for @modUnpinnedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem desafixada'**
+  String get modUnpinnedToast;
+
+  /// No description provided for @modMadeModeratorToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} agora é moderador'**
+  String modMadeModeratorToast(String name);
+
+  /// No description provided for @modRemovedModeratorToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} não é mais moderador'**
+  String modRemovedModeratorToast(String name);
+
+  /// No description provided for @modActionFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir a ação'**
+  String get modActionFailed;
+
+  /// No description provided for @modNotAllowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não tem permissão para isso'**
+  String get modNotAllowed;
+
+  /// No description provided for @modModeratorsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moderadores'**
+  String get modModeratorsTitle;
+
+  /// No description provided for @modModeratorsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem ajuda a cuidar do chat da sua live'**
+  String get modModeratorsSubtitle;
+
+  /// No description provided for @modModeratorsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem moderadores. Toque no nome de alguém no chat para promovê-lo.'**
+  String get modModeratorsEmpty;
+
+  /// No description provided for @modModeratorsLoadFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os moderadores'**
+  String get modModeratorsLoadFailed;
+
+  /// No description provided for @modRemoveConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover'**
+  String get modRemoveConfirm;
+
+  /// No description provided for @battleDurationLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração'**
+  String get battleDurationLabel;
+
+  /// No description provided for @battleDurationMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'{minutes} min'**
+  String battleDurationMinutes(int minutes);
+
+  /// No description provided for @battleDurationSeconds.
+  ///
+  /// In pt, this message translates to:
+  /// **'{seconds} s'**
+  String battleDurationSeconds(int seconds);
+
+  /// No description provided for @questFrequencyWeekly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Semanal'**
+  String get questFrequencyWeekly;
+
+  /// No description provided for @questFrequencyEvent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Evento'**
+  String get questFrequencyEvent;
+
+  /// No description provided for @questFrequencyDaily.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diária'**
+  String get questFrequencyDaily;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

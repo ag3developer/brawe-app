@@ -295,6 +295,24 @@ class LiveService {
     return _toMap(response.data);
   }
 
+  /// 🎉 Ranking do evento: `{data: [...], me, prizes}`.
+  Future<Map<String, dynamic>> getEventRanking(String eventId, {int limit = 10}) async {
+    final response = await _dio.get(
+      '/live/events/$eventId/ranking',
+      queryParameters: {'limit': limit},
+    );
+    return _toMap(response.data);
+  }
+
+  /// 🎉 Evento ativo da sala: `{event|null}`.
+  Future<Map<String, dynamic>> getActiveEvent(String roomId) async {
+    final response = await _dio.get(
+      '/live/events/active',
+      queryParameters: {'room_id': roomId},
+    );
+    return _toMap(response.data);
+  }
+
   Future<Map<String, dynamic>> getTopLikers(String roomId, {int limit = 10}) async {
     final response = await _dio.get(
       '/live/gifts/top-likers/$roomId',

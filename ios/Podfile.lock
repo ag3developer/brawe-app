@@ -2,6 +2,8 @@ PODS:
   - Flutter (1.0.0)
   - flutter_native_video_trimmer (1.0.0):
     - Flutter
+  - flutter_soloud (0.0.1):
+    - Flutter
   - get_thumbnail_video (0.0.1):
     - Flutter
     - libwebp
@@ -29,6 +31,7 @@ PODS:
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_native_video_trimmer (from `.symlinks/plugins/flutter_native_video_trimmer/ios`)
+  - flutter_soloud (from `.symlinks/plugins/flutter_soloud/ios`)
   - get_thumbnail_video (from `.symlinks/plugins/get_thumbnail_video/ios`)
   - record_darwin (from `.symlinks/plugins/record_darwin/ios`)
   - rtmp_broadcaster (from `.symlinks/plugins/rtmp_broadcaster/ios`)
@@ -44,6 +47,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_native_video_trimmer:
     :path: ".symlinks/plugins/flutter_native_video_trimmer/ios"
+  flutter_soloud:
+    :path: ".symlinks/plugins/flutter_soloud/ios"
   get_thumbnail_video:
     :path: ".symlinks/plugins/get_thumbnail_video/ios"
   record_darwin:
@@ -54,6 +59,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_native_video_trimmer: 11f6c679971dc3844519b485b9c878df8675ae3a
+  flutter_soloud: 272cc604453b6ca135f274045fb259e7c6426122
   get_thumbnail_video: 1a754d46b860dffefcc57b7290a43089cd5d7e58
   HaishinKit: d1786896ace24065d466bde02356c5352ac001b0
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8

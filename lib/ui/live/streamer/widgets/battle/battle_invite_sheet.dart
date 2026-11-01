@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/services/battle_service.dart';
 import '../../../../../domain/models/battle_candidate.dart';
+import '../../../../../domain/models/battle_config.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -56,12 +58,34 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
   bool _sending = false;
   String? _inviteError;
 
+  /// Durações permitidas (do servidor; se falhar, as de sempre).
+  BattleConfig _config = BattleConfig.fallback;
+
   @override
   void initState() {
     super.initState();
     _searchCtrl.addListener(_onSearchChanged);
     _load(reset: true);
+    _loadConfig();
   }
+
+  Future<void> _loadConfig() async {
+    try {
+      final raw = await ref.read(battleServiceProvider).getBattleConfig();
+      final cfg = BattleConfig.tryParse(raw);
+      if (!mounted || cfg == null) return;
+      setState(() {
+        _config = cfg;
+        _durationSeconds = cfg.defaultDurationS;
+      });
+    } catch (_) {
+      // Sem configuração: mantém as opções e o padrão atuais.
+    }
+  }
+
+  String _durationLabel(S s, int seconds) => seconds % 60 == 0
+      ? s.battleDurationMinutes(seconds ~/ 60)
+      : s.battleDurationSeconds(seconds);
 
   @override
   void dispose() {
@@ -297,54 +321,58 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
   Widget _buildDurationPicker() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Text(
-            'Duração:',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontSize: 13,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Text(
+              '${S.of(context).battleDurationLabel}:',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 13,
+              ),
             ),
-          ),
-          const SizedBox(width: 10),
-          ...[('3 min', 180), ('5 min', 300), ('10 min', 600)].map((opt) {
-            final selected = _durationSeconds == opt.$2;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: GestureDetector(
-                onTap: () => setState(() => _durationSeconds = opt.$2),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.braweBlue.withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.braweBlue.withValues(alpha: 0.7)
-                          : Colors.white.withValues(alpha: 0.1),
+            const SizedBox(width: 10),
+            ...[
+              for (final d in _config.durationsS)
+                (_durationLabel(S.of(context), d), d),
+            ].map((opt) {
+              final selected = _durationSeconds == opt.$2;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _durationSeconds = opt.$2),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
                     ),
-                  ),
-                  child: Text(
-                    opt.$1,
-                    style: TextStyle(
+                    decoration: BoxDecoration(
                       color: selected
-                          ? AppColors.braweBlue
-                          : Colors.white60,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                          ? AppColors.braweBlue.withValues(alpha: 0.25)
+                          : Colors.white.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.braweBlue.withValues(alpha: 0.7)
+                            : Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Text(
+                      opt.$1,
+                      style: TextStyle(
+                        color: selected ? AppColors.braweBlue : Colors.white60,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ],
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -570,10 +598,13 @@ class _CandidateTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.braweBlue.withValues(
-                    alpha: 0.3,
-                  ),
-                  backgroundImage: avatar != null ? ResizeImage(NetworkImage(avatar), width: context.decodePx(48)) : null,
+                  backgroundColor: AppColors.braweBlue.withValues(alpha: 0.3),
+                  backgroundImage: avatar != null
+                      ? ResizeImage(
+                          NetworkImage(avatar),
+                          width: context.decodePx(48),
+                        )
+                      : null,
                   child: avatar == null
                       ? Text(
                           c.displayName.replaceFirst('@', '').isNotEmpty

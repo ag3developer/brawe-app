@@ -28,6 +28,8 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   gifterColor: json['gifterColor'] as String?,
   gifterImageUrl: json['gifterImageUrl'] as String?,
   levelUpgraded: json['levelUpgraded'] as bool? ?? false,
+  eventMultiplier: (json['eventMultiplier'] as num?)?.toDouble(),
+  eventPoints: (json['eventPoints'] as num?)?.toInt(),
   battleSide: json['battleSide'] as String?,
   isAnimating: json['isAnimating'] as bool? ?? true,
   displayType: json['displayType'] as String?,
@@ -38,6 +40,8 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   soundUrl: json['soundUrl'] as String?,
   animationDurationMs: (json['animationDurationMs'] as num?)?.toInt(),
   presentation: json['presentation'] as Map<String, dynamic>?,
+  comboCount: (json['comboCount'] as num?)?.toInt(),
+  comboNextAt: (json['comboNextAt'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
@@ -62,6 +66,8 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'gifterColor': instance.gifterColor,
   'gifterImageUrl': instance.gifterImageUrl,
   'levelUpgraded': instance.levelUpgraded,
+  'eventMultiplier': instance.eventMultiplier,
+  'eventPoints': instance.eventPoints,
   'battleSide': instance.battleSide,
   'isAnimating': instance.isAnimating,
   'displayType': instance.displayType,
@@ -72,4 +78,6 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'soundUrl': instance.soundUrl,
   'animationDurationMs': instance.animationDurationMs,
   'presentation': instance.presentation,
+  'comboCount': instance.comboCount,
+  'comboNextAt': instance.comboNextAt,
 };

@@ -1,3 +1,5 @@
+import 'user_award.dart';
+
 class LiveComment {
   const LiveComment({
     required this.id,
@@ -14,6 +16,8 @@ class LiveComment {
     this.gifterColor,
     this.gifterImageUrl,
     this.isSystem = false,
+    this.award,
+    this.isModerator = false,
   });
 
   final String id;
@@ -36,6 +40,12 @@ class LiveComment {
 
   /// Linha de sistema (ex.: "fulano subiu para o nível 10") — sem autor.
   final bool isSystem;
+
+  /// Prêmio mais prestigioso ativo do autor (ausente em servidor antigo).
+  final UserAward? award;
+
+  /// Autor é moderador do criador desta live (selo de escudo).
+  final bool isModerator;
 
   LiveComment copyWith({
     String? id,
@@ -67,6 +77,8 @@ class LiveComment {
       gifterColor: gifterColor ?? this.gifterColor,
       gifterImageUrl: gifterImageUrl ?? this.gifterImageUrl,
       isSystem: isSystem,
+      award: award,
+      isModerator: isModerator,
     );
   }
 }

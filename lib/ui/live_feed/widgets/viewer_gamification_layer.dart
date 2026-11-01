@@ -9,6 +9,7 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/live_room_event.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../live/shared/widgets/award_badge.dart';
 import '../../live/shared/widgets/level_chip.dart';
 import '../view_models/live_room_comments_view_model.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -105,6 +106,8 @@ class ViewerEntranceToast extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = S.of(context);
     final isTop = event.rankingPosition == 1;
+    final tierName =
+        event.localizedTierName(Localizations.localeOf(context).languageCode);
     final color = isTop ? const Color(0xFFFFC107) : _entryColor(event);
     final avatar = event.viewerAvatar;
     final hasAvatar = avatar != null && avatar.isNotEmpty;
@@ -179,6 +182,10 @@ class ViewerEntranceToast extends StatelessWidget {
                       imageUrl: event.badgeImageUrl,
                       height: 16,
                     ),
+                    if (event.award != null) ...[
+                      const SizedBox(width: 4),
+                      AwardBadge(award: event.award!, height: 16),
+                    ],
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
@@ -199,6 +206,17 @@ class ViewerEntranceToast extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (tierName != null)
+                  Text(
+                    tierName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
           ),

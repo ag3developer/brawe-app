@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../award_badge.dart';
 import '../level_chip.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -189,10 +191,24 @@ class ChatLine extends StatelessWidget {
                           ),
                         ),
                       ),
+                    // 🏅 Prêmio ativo (evento / semana / live / batalha)
+                    if (comment.award != null)
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 5),
+                          child: AwardBadge(award: comment.award!, height: 15),
+                        ),
+                      ),
                     if (isHost)
                       const WidgetSpan(
                         alignment: PlaceholderAlignment.middle,
                         child: _HostBadge(),
+                      )
+                    else if (comment.isModerator)
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: ModeratorBadge(),
                       ),
                     TextSpan(
                       text: '${comment.userName} ',
@@ -237,6 +253,26 @@ class _HostBadge extends StatelessWidget {
           fontWeight: FontWeight.w800,
           height: 1.2,
         ),
+      ),
+    );
+  }
+}
+
+/// Escudo de moderador ao lado do nome (Lucide, sem emoji).
+class ModeratorBadge extends StatelessWidget {
+  const ModeratorBadge({super.key, this.size = 13});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Icon(
+        LucideIcons.shield,
+        size: size,
+        color: const Color(0xFF4FC3F7),
+        semanticLabel: 'Moderator',
       ),
     );
   }

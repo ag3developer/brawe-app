@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
 import '../../domain/models/live_comment.dart';
+import '../../domain/models/user_award.dart';
 import '../../domain/models/live_room.dart';
 import '../../domain/models/live_gift.dart';
 import '../../domain/models/live_viewer_event.dart';
 import '../../domain/models/live_competition_event.dart';
 import '../../domain/models/live_goal.dart';
+import '../../domain/models/live_event.dart';
 import '../../domain/models/live_room_event.dart';
 import '../../domain/models/live_reaction_event.dart';
 import '../services/live_service.dart';
@@ -699,6 +701,29 @@ class LiveRepository {
     }
   }
 
+  /// 🎉 Ranking do evento (`data`, `me`, `prizes`). Vazio em falha.
+  Future<Map<String, dynamic>> getEventRanking(String eventId, {int limit = 10}) async {
+    try {
+      return await _liveService.getEventRanking(eventId, limit: limit);
+    } catch (e) {
+      debugPrint('LiveRepository: getEventRanking Error: $e');
+      return const {};
+    }
+  }
+
+  /// 🎉 Evento ativo da sala. `ok=false` em falha / servidor antigo (quem
+  /// chama mantém o que já tinha); `ok=true, event=null` = sem evento.
+  Future<({bool ok, LiveEvent? event})> getActiveEvent(String roomId) async {
+    try {
+      final res = await _liveService.getActiveEvent(roomId);
+      if (!res.containsKey('event')) return (ok: false, event: null);
+      return (ok: true, event: LiveEvent.tryParse(res['event']));
+    } catch (e) {
+      debugPrint('LiveRepository: getActiveEvent Error: $e');
+      return (ok: false, event: null);
+    }
+  }
+
   /// 🏆 Busca o ranking de top gifters da sala no backend.
   /// Retorna lista já mapeada para [GifterEntry] (importado de live_room_comments_view_model).
   /// Falhas são silenciosas — o ranking local via socket continua como fallback.
@@ -998,6 +1023,13 @@ class LiveRepository {
       LiveRoomEvent.levelUpPublic,
       LiveRoomEvent.goalUpdate,
       LiveRoomEvent.goalsUpdate,
+      LiveRoomEvent.eventUpdate,
+      LiveRoomEvent.awardGranted,
+      LiveRoomEvent.giftComboTier,
+      LiveRoomEvent.chatError,
+      LiveRoomEvent.slowMode,
+      LiveRoomEvent.chatPinned,
+      LiveRoomEvent.chatMuted,
     ]) {
       void handler(dynamic data) {
         final payload = _asMap(data);
@@ -1104,6 +1136,8 @@ class LiveRepository {
       gifterLabel: payload['gifter_label']?.toString(),
       gifterColor: payload['gifter_color']?.toString(),
       gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
+      award: UserAward.tryParse(payload['award']),
+      isModerator: payload['is_moderator'] == true,
     );
   }
 
@@ -1181,6 +1215,9 @@ class LiveRepository {
       gifterColor: payload['gifter_color']?.toString(),
       gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
       levelUpgraded: payload['level_upgraded'] == true,
+      senderAward: UserAward.tryParse(payload['award']),
+      eventMultiplier: _optDouble(payload['multiplier']),
+      eventPoints: int.tryParse(payload['event_points']?.toString() ?? ''),
       // 🎯 Lado da batalha (vem do backend quando há `battle_id`).
       // O overlay usa pra ancorar o toast no lado certo do split-screen.
       battleSide: _parseBattleSide(payload),
@@ -1201,8 +1238,13 @@ class LiveRepository {
       presentation: payload['presentation'] is Map
           ? Map<String, dynamic>.from(payload['presentation'] as Map)
           : null,
+      comboCount: int.tryParse(payload['combo_count']?.toString() ?? ''),
+      comboNextAt: int.tryParse(payload['combo_next_at']?.toString() ?? ''),
     );
   }
+
+  static double? _optDouble(dynamic v) =>
+      v is num ? v.toDouble() : double.tryParse('${v ?? ''}');
 
   /// Extrai `battle_side` do payload de gift.
   /// Backend pode mandar como `battle_side` no nível raiz OU como

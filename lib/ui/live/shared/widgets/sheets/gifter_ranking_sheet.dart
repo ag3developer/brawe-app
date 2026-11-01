@@ -4,29 +4,35 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../data/repositories/auth_state_provider.dart';
 import '../../../../../data/repositories/live_repository.dart';
+import '../../../../../domain/models/live_event.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
 import '../../../../core/themes/brawe_colors.dart';
+import '../award_badge.dart';
 import '../competition/medal_colors.dart';
 import '../overlays/gifts_overlay.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
-enum _Board { gifts, likes }
+enum _Board { gifts, likes, event }
 
 /// Gaveta do ranking da live — mesmo padrão da gaveta de compartilhar
 /// (tema do app, alça, título central com fechar).
 ///
-/// Duas abas: **Presentes** (moedas gastas — pagos e grátis; com filtro
+/// Abas: **Presentes** (moedas gastas — pagos e grátis; com filtro
 /// "Esta live | Semana do criador") e **Curtidas** (curtidas válidas
 /// contadas no servidor). Pódio dos 3 primeiros, lista até o 10º e a minha
 /// posição fixa no rodapé com quanto falta para passar quem está à frente.
+/// Durante um evento com prazo surge a aba **Evento** (ranking só do evento),
+/// e acima do pódio vai o prêmio do 1º lugar quando há regra cadastrada.
 class GifterRankingSheet extends ConsumerStatefulWidget {
   const GifterRankingSheet._({
     required this.roomId,
     required this.streamerId,
     required this.fallbackRanking,
+    required this.openEventTab,
   });
 
+  final bool openEventTab;
   final String roomId;
   final String streamerId;
   final List<GifterEntry> fallbackRanking;
@@ -36,6 +42,7 @@ class GifterRankingSheet extends ConsumerStatefulWidget {
     required String roomId,
     required String streamerId,
     List<GifterEntry> ranking = const [],
+    bool openEventTab = false,
   }) {
     // Raiz do navigator: a gaveta herda o tema do APP (claro/escuro), como a
     // de compartilhar, e não o escuro forçado da live.
@@ -49,6 +56,7 @@ class GifterRankingSheet extends ConsumerStatefulWidget {
         roomId: roomId,
         streamerId: streamerId,
         fallbackRanking: ranking,
+        openEventTab: openEventTab,
       ),
     );
   }
@@ -58,13 +66,82 @@ class GifterRankingSheet extends ConsumerStatefulWidget {
 }
 
 class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
-  _Board _board = _Board.gifts;
+  late _Board _board = widget.openEventTab ? _Board.event : _Board.gifts;
+
+  // Prêmio do 1º lugar por aba (vem em `prizes` das respostas de ranking).
+  List<PrizeRule> _livePrizes = const [];
+  List<PrizeRule> _likePrizes = const [];
+  List<PrizeRule> _weekPrizes = const [];
+  bool _likePrizesLoaded = false;
+
+  // Ranking do evento
+  bool _eventLoading = false;
+  String? _eventLoadedFor;
+  List<GifterEntry> _eventEntries = const [];
+  int? _eventMyRank;
+  int? _eventMyPoints;
+  List<PrizeRule> _eventPrizes = const [];
+
   bool _week = false;
   bool _weekLoading = false;
   bool _weekLoaded = false;
   List<GifterEntry> _weekEntries = const [];
   int? _weekMyRank;
   int? _weekMyPoints;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLivePrizes();
+      if (_board == _Board.event) _loadEvent();
+    });
+  }
+
+  LiveEvent? get _event {
+    final e = ref.read(liveRoomCommentsViewModelProvider(widget.roomId)).event;
+    return (e == null || e.isEnded(DateTime.now())) ? null : e;
+  }
+
+  Future<void> _loadLivePrizes() async {
+    final res = await ref.read(liveRepositoryProvider).getTopGiftersFull(widget.roomId, limit: 1);
+    if (!mounted) return;
+    setState(() => _livePrizes = PrizeRule.listFrom(res['prizes']));
+  }
+
+  Future<void> _loadLikePrizes() async {
+    if (_likePrizesLoaded) return;
+    _likePrizesLoaded = true;
+    final res = await ref.read(liveRepositoryProvider).getTopLikers(widget.roomId, limit: 1);
+    if (!mounted) return;
+    setState(() => _likePrizes = PrizeRule.listFrom(res['prizes']));
+  }
+
+  Future<void> _loadEvent() async {
+    final event = _event;
+    if (event == null || _eventLoading) return;
+    setState(() => _eventLoading = true);
+    final res = await ref.read(liveRepositoryProvider).getEventRanking(event.id, limit: 20);
+    if (!mounted) return;
+    final raw = res['data'];
+    final me = res['me'];
+    setState(() {
+      _eventEntries = raw is List
+          ? raw.whereType<Map>().map(GifterEntry.fromMap).whereType<GifterEntry>().take(10).toList()
+          : const [];
+      _eventMyRank = me is Map ? (me['rank'] as num?)?.toInt() : null;
+      _eventMyPoints = me is Map ? (me['points'] as num?)?.toInt() : null;
+      _eventPrizes = PrizeRule.listFrom(res['prizes']);
+      _eventLoading = false;
+      _eventLoadedFor = event.id;
+    });
+  }
+
+  void _selectBoard(_Board b) {
+    setState(() => _board = b);
+    if (b == _Board.likes) _loadLikePrizes();
+    if (b == _Board.event) _loadEvent();
+  }
 
   Future<void> _loadWeek() async {
     if (_weekLoaded || _weekLoading) return;
@@ -81,6 +158,7 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
           : const [];
       _weekMyRank = me is Map ? (me['rank'] as num?)?.toInt() : null;
       _weekMyPoints = me is Map ? (me['points'] as num?)?.toInt() : null;
+      _weekPrizes = PrizeRule.listFrom(res['prizes']);
       _weekLoading = false;
       _weekLoaded = true;
     });
@@ -99,26 +177,43 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
     final s = S.of(context);
     final st = ref.watch(liveRoomCommentsViewModelProvider(widget.roomId));
     final myId = ref.watch(authStateProvider).value?.id;
-    final likes = _board == _Board.likes;
+    final liveEvent = st.event == null || st.event!.isEnded(DateTime.now()) ? null : st.event;
+    // Sem evento em vigor a aba "Evento" não existe (caiu no meio da gaveta).
+    final board = (_board == _Board.event && liveEvent == null) ? _Board.gifts : _board;
+    final likes = board == _Board.likes;
+    final isEvent = board == _Board.event;
 
     final List<GifterEntry> entries;
     final int? myRank;
     final int? myValue;
-    if (likes) {
+    final List<PrizeRule> prizes;
+    if (isEvent) {
+      entries = _eventEntries;
+      myRank = _eventMyRank;
+      myValue = _eventMyPoints;
+      prizes = _eventPrizes;
+    } else if (likes) {
       entries = st.likerRanking;
       myRank = st.myLikeRank;
       myValue = st.myLikes;
+      prizes = _likePrizes;
     } else if (_week) {
       entries = _weekEntries;
       myRank = _weekMyRank;
       myValue = _weekMyPoints;
+      prizes = _weekPrizes;
     } else {
       entries = st.gifterRanking.isNotEmpty ? st.gifterRanking : widget.fallbackRanking;
       myRank = st.myRank;
       myValue = st.myPoints;
+      prizes = _livePrizes;
     }
     final top = entries.take(10).toList();
-    final loading = !likes && _week && _weekLoading;
+    final loading = isEvent ? _eventLoadedFor == null : (!likes && _week && _weekLoading);
+    final prize = PrizeRule.firstPlace(prizes);
+    final lang = Localizations.localeOf(context).languageCode;
+    // Pontos valem em dobro etc. enquanto o evento está no ar (live e evento).
+    final multiplier = (!likes && !(_week && !isEvent)) ? liveEvent?.multiplier : null;
 
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.86),
@@ -141,18 +236,19 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: _BoardTabs(
-                board: _board,
-                onChanged: (b) => setState(() => _board = b),
+                board: board,
+                boards: [_Board.gifts, _Board.likes, if (liveEvent != null) _Board.event],
+                onChanged: _selectBoard,
               ),
             ),
             const SizedBox(height: 10),
-            _summary(colors, s, st, likes),
+            _summary(colors, s, st, likes, isEvent ? liveEvent : null, multiplier, lang),
             Divider(height: 20, color: colors.divider),
             Flexible(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 child: KeyedSubtree(
-                  key: ValueKey('${_board.name}-$_week-${top.length}'),
+                  key: ValueKey('${board.name}-$_week-${top.length}'),
                   child: loading
                       ? const Padding(
                           padding: EdgeInsets.all(40),
@@ -164,6 +260,7 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
                           shrinkWrap: true,
                           padding: const EdgeInsets.only(bottom: 8),
                           children: [
+                            if (prize != null) _PrizeLine(text: s.rankingPrizeFirst(prize.label.resolve(lang))),
                             _Podium(entries: top.take(3).toList(), likes: likes, myId: myId),
                             for (var i = 3; i < top.length; i++)
                               _Row(position: i + 1, entry: top[i], likes: likes, isMe: top[i].userId == myId),
@@ -212,7 +309,15 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
   }
 
   /// Linha de resumo: total da live (ou filtro da semana) / total de curtidas.
-  Widget _summary(BraweColors colors, S s, LiveRoomCommentsState st, bool likes) {
+  Widget _summary(
+    BraweColors colors,
+    S s,
+    LiveRoomCommentsState st,
+    bool likes,
+    LiveEvent? eventBoard,
+    double? multiplier,
+    String lang,
+  ) {
     final style = TextStyle(color: colors.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w600);
     if (likes) {
       return Padding(
@@ -222,6 +327,27 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
             const Icon(LucideIcons.heart, size: 14, color: Color(0xFFFF3D7F)),
             const SizedBox(width: 6),
             Expanded(child: Text(s.likesRoomTotal(compactPoints(st.likeCount), st.uniqueLikers), style: style)),
+          ],
+        ),
+      );
+    }
+    if (eventBoard != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.calendarDays, size: 14, color: Color(0xFFFFC53D)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                eventBoard.localizedName(lang),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+            const SizedBox(width: 8),
+            _MultiplierTag(multiplier: eventBoard.multiplier),
           ],
         ),
       );
@@ -250,6 +376,10 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
             const SizedBox(width: 4),
             Text(compactPoints(st.rankingTotalPoints), style: style),
           ],
+          if (!_week && multiplier != null) ...[
+            const SizedBox(width: 8),
+            _MultiplierTag(multiplier: multiplier),
+          ],
         ],
       ),
     );
@@ -259,9 +389,10 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
 // ─── Abas Presentes | Curtidas ──────────────────────────────────────────────
 
 class _BoardTabs extends StatelessWidget {
-  const _BoardTabs({required this.board, required this.onChanged});
+  const _BoardTabs({required this.board, required this.boards, required this.onChanged});
 
   final _Board board;
+  final List<_Board> boards;
   final ValueChanged<_Board> onChanged;
 
   @override
@@ -270,7 +401,9 @@ class _BoardTabs extends StatelessWidget {
     final s = S.of(context);
     return LayoutBuilder(
       builder: (context, c) {
-        final half = (c.maxWidth - 8) / 2;
+        final n = boards.length;
+        final w = (c.maxWidth - 8) / n;
+        final index = boards.indexOf(board).clamp(0, n - 1);
         return Container(
           height: 42,
           padding: const EdgeInsets.all(4),
@@ -280,10 +413,10 @@ class _BoardTabs extends StatelessWidget {
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
-                left: board == _Board.gifts ? 0 : half,
+                left: index * w,
                 top: 0,
                 bottom: 0,
-                width: half,
+                width: w,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: colors.surfaceElevated,
@@ -296,8 +429,12 @@ class _BoardTabs extends StatelessWidget {
               ),
               Row(
                 children: [
-                  _tab(context, _Board.gifts, LucideIcons.gift, s.rankingTabGifts, const Color(0xFFFFB800)),
-                  _tab(context, _Board.likes, LucideIcons.heart, s.rankingTabLikes, const Color(0xFFFF3D7F)),
+                  for (final b in boards)
+                    switch (b) {
+                      _Board.gifts => _tab(context, b, LucideIcons.gift, s.rankingTabGifts, const Color(0xFFFFB800)),
+                      _Board.likes => _tab(context, b, LucideIcons.heart, s.rankingTabLikes, const Color(0xFFFF3D7F)),
+                      _Board.event => _tab(context, b, LucideIcons.calendarDays, s.rankingTabEvent, const Color(0xFFFFC53D)),
+                    },
                 ],
               ),
             ],
@@ -319,16 +456,80 @@ class _BoardTabs extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: selected ? accent : colors.textTertiary),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected ? colors.textPrimary : colors.textSecondary,
-                fontSize: 13.5,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected ? colors.textPrimary : colors.textSecondary,
+                  fontSize: 13.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "2×" ao lado dos pontos enquanto um evento multiplica o ranking.
+class _MultiplierTag extends StatelessWidget {
+  const _MultiplierTag({required this.multiplier});
+
+  final double multiplier;
+
+  @override
+  Widget build(BuildContext context) {
+    const gold = Color(0xFFFFC53D);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: gold.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: gold.withValues(alpha: 0.7)),
+      ),
+      child: Text(
+        formatMultiplier(multiplier),
+        style: const TextStyle(color: gold, fontSize: 11.5, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+/// "Prêmio do 1º lugar: …" acima do pódio.
+class _PrizeLine extends StatelessWidget {
+  const _PrizeLine({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    const gold = Color(0xFFFFC53D);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: gold.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: gold.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.award, size: 16, color: gold),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: colors.textPrimary, fontSize: 12.5, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -421,18 +622,22 @@ class _PodiumSeat extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.bottomCenter,
           children: [
-            Container(
-              width: size,
-              height: size,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: SweepGradient(colors: [medal, medal.withValues(alpha: 0.45), medal]),
-                boxShadow: position == 1
-                    ? [BoxShadow(color: medal.withValues(alpha: 0.45), blurRadius: 18)]
-                    : null,
+            AvatarFrame(
+              size: size,
+              frameUrl: e.award?.frameUrl,
+              child: Container(
+                width: size,
+                height: size,
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: SweepGradient(colors: [medal, medal.withValues(alpha: 0.45), medal]),
+                  boxShadow: position == 1
+                      ? [BoxShadow(color: medal.withValues(alpha: 0.45), blurRadius: 18)]
+                      : null,
+                ),
+                child: _Avatar(entry: e, size: size - 6),
               ),
-              child: _Avatar(entry: e, size: size - 6),
             ),
             Positioned(
               bottom: -8,
