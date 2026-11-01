@@ -68,61 +68,46 @@ class ViewersStack extends StatelessWidget {
 }
 
 extension on ViewersStack {
+  /// Top 3 compacto, na altura dos outros botões do topo: avatares de 22px
+  /// sobrepostos, só o anel da medalha (o #1 por cima). Os pontos ficam na
+  /// gaveta do ranking — aqui não cabem sem estourar o topo.
   Widget _buildGifters(BuildContext context) {
     final top = topGifters.take(3).toList();
-    const slot = 31.0;
+    const size = 22.0;
+    const step = 14.0; // sobreposição
+    // Desenha do 3º para o 1º: o #1 fica por cima.
+    final order = [for (var i = top.length - 1; i >= 0; i--) top[i].userId];
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(5, 3, 9, 6),
+        height: 30,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
-            width: 0.5,
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.5),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Stack por userId: AnimatedPositioned anima a troca de posição.
-            SizedBox(
-              width: slot * top.length,
-              height: 34,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  for (final id in ([...top.map((e) => e.userId)]..sort()))
-                    AnimatedPositioned(
-                      key: ValueKey(id),
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeOutCubic,
-                      left:
-                          top.indexWhere((e) => e.userId == id) * slot,
-                      top: 0,
-                      child: _GifterBadge(
-                        entry: top.firstWhere((e) => e.userId == id),
-                        position:
-                            top.indexWhere((e) => e.userId == id) + 1,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 3),
-              child: Text(
-                ViewersStack.formatBucket(viewerCount),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+        child: SizedBox(
+          width: size + step * (top.length - 1),
+          height: size,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (final id in order)
+                AnimatedPositioned(
+                  key: ValueKey(id),
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutCubic,
+                  left: top.indexWhere((e) => e.userId == id) * step,
+                  top: 0,
+                  child: _GifterBadge(
+                    entry: top.firstWhere((e) => e.userId == id),
+                    position: top.indexWhere((e) => e.userId == id) + 1,
+                    size: size,
+                  ),
                 ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -130,65 +115,33 @@ extension on ViewersStack {
 }
 
 class _GifterBadge extends StatelessWidget {
-  const _GifterBadge({required this.entry, required this.position});
+  const _GifterBadge({required this.entry, required this.position, required this.size});
 
   final GifterEntry entry;
   final int position;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     final color = medalColor(position);
     final url = entry.avatarUrl;
-    return SizedBox(
-      width: 28,
-      height: 34,
-      child: Stack(
-        clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.25),
-              border: Border.all(color: color, width: 1.8),
-            ),
-            child: ClipOval(
-              child: url != null
-                  ? Image.network(
-                      url,
-                      cacheWidth: context.decodePx(26),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _Initial(
-                        name: entry.name,
-                        color: color,
-                      ),
-                    )
-                  : _Initial(name: entry.name, color: color),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                compactPoints(entry.totalValue),
-                maxLines: 1,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 8,
-                  height: 1.25,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        ],
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF1A1D2B),
+        border: Border.all(color: color, width: 1.5),
+      ),
+      child: ClipOval(
+        child: url != null
+            ? Image.network(
+                url,
+                cacheWidth: context.decodePx(size),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => _Initial(name: entry.name, color: color),
+              )
+            : _Initial(name: entry.name, color: color),
       ),
     );
   }
@@ -203,7 +156,7 @@ class _Initial extends StatelessWidget {
   Widget build(BuildContext context) => Center(
     child: Text(
       name.isNotEmpty ? name[0].toUpperCase() : '?',
-      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800),
+      style: TextStyle(color: color, fontSize: 9.5, fontWeight: FontWeight.w800),
     ),
   );
 }

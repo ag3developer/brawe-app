@@ -5716,4 +5716,32 @@ class SEs extends S {
 
   @override
   String get goalsSaveError => 'No se pudieron guardar las metas';
+
+  @override
+  String giftTickerText(String sender, String gift, String streamer) {
+    return '$sender envió $gift a $streamer';
+  }
+
+  @override
+  String get videoFullscreen => 'Pantalla completa';
+
+  @override
+  String get liveOwnEnd => 'Finalizar este live';
+
+  @override
+  String get liveOwnEndConfirmTitle => '¿Finalizar el live?';
+
+  @override
+  String get liveOwnEndConfirmBody =>
+      'El live termina para todos, incluso en el otro dispositivo.';
+
+  @override
+  String get liveOwnEnded => 'Live finalizado';
+
+  @override
+  String get liveOwnEndError => 'No se pudo finalizar el live';
+
+  @override
+  String get liveWaitingSignal =>
+      'Sin señal del creador por ahora.\nIntentando de nuevo…';
 }

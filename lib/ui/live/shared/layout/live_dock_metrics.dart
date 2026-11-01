@@ -52,3 +52,40 @@ class _LiveDockTopReporterState extends State<LiveDockTopReporter> {
     );
   }
 }
+
+/// Efeito premium em cena (vídeo VAP, animação grande ou tela cheia).
+/// Enquanto > 0, o chat e o painel de avisos esmaecem: o presente é o
+/// protagonista por alguns segundos e o texto não briga com a animação.
+class LiveStageFocus {
+  LiveStageFocus._();
+
+  static final ValueNotifier<int> active = ValueNotifier<int>(0);
+
+  static void enter() => active.value = active.value + 1;
+
+  static void leave() {
+    if (active.value > 0) active.value = active.value - 1;
+  }
+}
+
+/// Esmaece o filho enquanto um efeito premium está na tela.
+class StageFocusDimmer extends StatelessWidget {
+  const StageFocusDimmer({super.key, required this.child, this.dimmedOpacity = 0.12});
+
+  final Widget child;
+  final double dimmedOpacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: LiveStageFocus.active,
+      builder: (_, active, child) => AnimatedOpacity(
+        opacity: active > 0 ? dimmedOpacity : 1,
+        duration: Duration(milliseconds: active > 0 ? 250 : 450),
+        curve: Curves.easeOut,
+        child: child,
+      ),
+      child: child,
+    );
+  }
+}

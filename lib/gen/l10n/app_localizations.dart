@@ -10310,6 +10310,54 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Não foi possível salvar as metas'**
   String get goalsSaveError;
+
+  /// No description provided for @giftTickerText.
+  ///
+  /// In pt, this message translates to:
+  /// **'{sender} enviou {gift} para {streamer}'**
+  String giftTickerText(String sender, String gift, String streamer);
+
+  /// No description provided for @videoFullscreen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tela cheia'**
+  String get videoFullscreen;
+
+  /// No description provided for @liveOwnEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar esta live'**
+  String get liveOwnEnd;
+
+  /// No description provided for @liveOwnEndConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar a live?'**
+  String get liveOwnEndConfirmTitle;
+
+  /// No description provided for @liveOwnEndConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A live termina para todos, inclusive no outro aparelho.'**
+  String get liveOwnEndConfirmBody;
+
+  /// No description provided for @liveOwnEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live encerrada'**
+  String get liveOwnEnded;
+
+  /// No description provided for @liveOwnEndError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível encerrar a live'**
+  String get liveOwnEndError;
+
+  /// No description provided for @liveWaitingSignal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem sinal do criador no momento.\nTentando de novo…'**
+  String get liveWaitingSignal;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -221,12 +221,6 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     }
   }
 
-  void _onGift() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(S.of(context).giftComingSoon)));
-  }
-
   void _onProfile() {
     final authorId = widget.item.author.id;
     if (authorId.isEmpty) return;
@@ -264,7 +258,6 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       onComment: _onComment,
       onShare: _onShare,
       onFollow: _onFollow,
-      onGift: _onGift,
       onProfile: _onProfile,
       onLikeLongPress: _isPost
           ? () async {

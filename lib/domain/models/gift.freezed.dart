@@ -324,7 +324,9 @@ as int,
 /// @nodoc
 mixin _$GiftTier {
 
- String get name; List<Gift> get gifts;
+ String get name; List<Gift> get gifts;// Categoria temática do admin (ex.: Halloween): nome por idioma
+// {pt, en, es}. Vazio nos tiers fixos (free, basic…).
+ Map<String, String> get names;
 /// Create a copy of GiftTier
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -337,16 +339,16 @@ $GiftTierCopyWith<GiftTier> get copyWith => _$GiftTierCopyWithImpl<GiftTier>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GiftTier&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.gifts, gifts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GiftTier&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.gifts, gifts)&&const DeepCollectionEquality().equals(other.names, names));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(gifts));
+int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(gifts),const DeepCollectionEquality().hash(names));
 
 @override
 String toString() {
-  return 'GiftTier(name: $name, gifts: $gifts)';
+  return 'GiftTier(name: $name, gifts: $gifts, names: $names)';
 }
 
 
@@ -357,7 +359,7 @@ abstract mixin class $GiftTierCopyWith<$Res>  {
   factory $GiftTierCopyWith(GiftTier value, $Res Function(GiftTier) _then) = _$GiftTierCopyWithImpl;
 @useResult
 $Res call({
- String name, List<Gift> gifts
+ String name, List<Gift> gifts, Map<String, String> names
 });
 
 
@@ -374,11 +376,12 @@ class _$GiftTierCopyWithImpl<$Res>
 
 /// Create a copy of GiftTier
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? gifts = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? gifts = null,Object? names = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,gifts: null == gifts ? _self.gifts : gifts // ignore: cast_nullable_to_non_nullable
-as List<Gift>,
+as List<Gift>,names: null == names ? _self.names : names // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,
   ));
 }
 
@@ -460,10 +463,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  List<Gift> gifts)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name,  List<Gift> gifts,  Map<String, String> names)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GiftTier() when $default != null:
-return $default(_that.name,_that.gifts);case _:
+return $default(_that.name,_that.gifts,_that.names);case _:
   return orElse();
 
 }
@@ -481,10 +484,10 @@ return $default(_that.name,_that.gifts);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  List<Gift> gifts)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name,  List<Gift> gifts,  Map<String, String> names)  $default,) {final _that = this;
 switch (_that) {
 case _GiftTier():
-return $default(_that.name,_that.gifts);}
+return $default(_that.name,_that.gifts,_that.names);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -498,10 +501,10 @@ return $default(_that.name,_that.gifts);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  List<Gift> gifts)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name,  List<Gift> gifts,  Map<String, String> names)?  $default,) {final _that = this;
 switch (_that) {
 case _GiftTier() when $default != null:
-return $default(_that.name,_that.gifts);case _:
+return $default(_that.name,_that.gifts,_that.names);case _:
   return null;
 
 }
@@ -513,7 +516,7 @@ return $default(_that.name,_that.gifts);case _:
 @JsonSerializable()
 
 class _GiftTier implements GiftTier {
-  const _GiftTier({required this.name, required final  List<Gift> gifts}): _gifts = gifts;
+  const _GiftTier({required this.name, required final  List<Gift> gifts, final  Map<String, String> names = const <String, String>{}}): _gifts = gifts,_names = names;
   factory _GiftTier.fromJson(Map<String, dynamic> json) => _$GiftTierFromJson(json);
 
 @override final  String name;
@@ -522,6 +525,17 @@ class _GiftTier implements GiftTier {
   if (_gifts is EqualUnmodifiableListView) return _gifts;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_gifts);
+}
+
+// Categoria temática do admin (ex.: Halloween): nome por idioma
+// {pt, en, es}. Vazio nos tiers fixos (free, basic…).
+ final  Map<String, String> _names;
+// Categoria temática do admin (ex.: Halloween): nome por idioma
+// {pt, en, es}. Vazio nos tiers fixos (free, basic…).
+@override@JsonKey() Map<String, String> get names {
+  if (_names is EqualUnmodifiableMapView) return _names;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_names);
 }
 
 
@@ -538,16 +552,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GiftTier&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other._gifts, _gifts));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GiftTier&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other._gifts, _gifts)&&const DeepCollectionEquality().equals(other._names, _names));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(_gifts));
+int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(_gifts),const DeepCollectionEquality().hash(_names));
 
 @override
 String toString() {
-  return 'GiftTier(name: $name, gifts: $gifts)';
+  return 'GiftTier(name: $name, gifts: $gifts, names: $names)';
 }
 
 
@@ -558,7 +572,7 @@ abstract mixin class _$GiftTierCopyWith<$Res> implements $GiftTierCopyWith<$Res>
   factory _$GiftTierCopyWith(_GiftTier value, $Res Function(_GiftTier) _then) = __$GiftTierCopyWithImpl;
 @override @useResult
 $Res call({
- String name, List<Gift> gifts
+ String name, List<Gift> gifts, Map<String, String> names
 });
 
 
@@ -575,11 +589,12 @@ class __$GiftTierCopyWithImpl<$Res>
 
 /// Create a copy of GiftTier
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? gifts = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? gifts = null,Object? names = null,}) {
   return _then(_GiftTier(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,gifts: null == gifts ? _self._gifts : gifts // ignore: cast_nullable_to_non_nullable
-as List<Gift>,
+as List<Gift>,names: null == names ? _self._names : names // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,
   ));
 }
 

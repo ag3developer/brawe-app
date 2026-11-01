@@ -59,7 +59,11 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
   Future<void> _loadNext() async {
     try {
       final rooms = await ref.read(liveRepositoryProvider).getLiveFeed(limit: 12);
-      final next = rooms.where((r) => r.id != widget.room.id && r.status == 'live').firstOrNull;
+      // Nunca a própria live de quem está vendo (mesma conta em outro aparelho).
+      final myId = ref.read(authStateProvider).value?.id;
+      final next = rooms
+          .where((r) => r.id != widget.room.id && r.status == 'live' && r.streamerId != myId)
+          .firstOrNull;
       if (!mounted) return;
       setState(() {
         _next = next;

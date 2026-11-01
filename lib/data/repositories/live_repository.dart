@@ -49,6 +49,14 @@ class LiveRepository {
   _competitionControllers = {};
   final StreamController<void> _reconnectController =
       StreamController<void>.broadcast();
+
+  /// 📰 Faixa de notícia: presentes grandes de QUALQUER live (evento global
+  /// `global_gift_ticker`, sem filtro de sala).
+  final StreamController<Map<String, dynamic>> _globalTickerController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  bool _globalTickerRegistered = false;
+
+  Stream<Map<String, dynamic>> watchGlobalGiftTicker() => _globalTickerController.stream;
   final Map<String, void Function(dynamic)> _competitionHandlers = {};
   VoidCallback? _competitionReconnectCb;
   final Map<String, StreamController<LiveRoomEvent>> _roomEventControllers =
@@ -407,6 +415,7 @@ class LiveRepository {
     _connectedRooms.clear();
     _roomConnectionLeases.clear();
     _socketHandlersRegistered = false;
+    _globalTickerRegistered = false;
   }
 
   void disconnectFromRoom(String roomId) {
@@ -973,6 +982,15 @@ class LiveRepository {
     };
     _socketService.on(AppConstants.eventLiveReaction, _onLiveReaction!);
     _registerCompetitionHandlers();
+    if (!_globalTickerRegistered) {
+      _globalTickerRegistered = true;
+      _socketService.on('global_gift_ticker', (dynamic data) {
+        final payload = _asMap(data);
+        if (payload != null && !_globalTickerController.isClosed) {
+          _globalTickerController.add(Map<String, dynamic>.from(payload));
+        }
+      });
+    }
 
     // 🎮 Gamificação: level-up do próprio usuário, level-up público e meta.
     for (final type in const [

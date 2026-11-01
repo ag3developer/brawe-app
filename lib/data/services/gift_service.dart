@@ -14,9 +14,12 @@ class GiftService {
 
   GiftService(this._dio);
 
+  /// Resposta completa: `data` (abas → presentes) e `collections` (nomes
+  /// das categorias temáticas por idioma).
   Future<Map<String, dynamic>> getGiftCatalog() async {
     final response = await _dio.get('/live/gifts/catalog');
-    return response.data['data'] ?? response.data;
+    final body = response.data;
+    return body is Map<String, dynamic> ? body : <String, dynamic>{};
   }
 
   /// Envia um gift no contexto de um story (não de uma live).

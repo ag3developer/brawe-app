@@ -36,6 +36,7 @@ import '../../live/shared/layout/live_dock_metrics.dart';
 import 'live_notice_lane.dart';
 import 'viewer_gamification_layer.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
+import '../../live/shared/widgets/hud/live_gift_ticker.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
 import '../view_models/battle_view_model.dart';
@@ -527,7 +528,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _schedulePlayerRetry() {
     if (!mounted || _ended) return;
     final seconds = min(6, 1 << min(_playerAttempts, 3));
-    _playerAttempts++;
+    // setState: a mensagem de "sem sinal" depende do número de tentativas.
+    setState(() => _playerAttempts++);
     _playerRetryTimer?.cancel();
     _playerRetryTimer = Timer(Duration(seconds: seconds), () {
       if (mounted && !_ended && _controller == null) _initializePlayer();
@@ -918,13 +920,17 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               right: 12,
               // Metas do criador: pílula compacta; toque abre a sacola já
               // no presente da meta (ou a lista, se houver mais de uma).
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: LiveGoalsPill(
-                  roomId: widget.room.id,
-                  streamerId: widget.room.streamerId,
-                  initialGoals: widget.room.goals,
-                ),
+              // Linha: metas à esquerda + faixa de notícia correndo ao lado.
+              child: Row(
+                children: [
+                  LiveGoalsPill(
+                    roomId: widget.room.id,
+                    streamerId: widget.room.streamerId,
+                    initialGoals: widget.room.goals,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: LiveGiftTicker(currentRoomId: widget.room.id)),
+                ],
               ),
             ),
 
@@ -1125,7 +1131,12 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               ),
               const SizedBox(height: 14),
               Text(
-                S.of(context).liveConnecting,
+                // Depois de algumas tentativas sem vídeo (ex.: HTTP 412 do
+                // provedor = transmissão parada), diz o que está acontecendo.
+                _playerAttempts >= 3
+                    ? S.of(context).liveWaitingSignal
+                    : S.of(context).liveConnecting,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,

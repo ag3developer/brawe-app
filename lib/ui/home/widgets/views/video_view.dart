@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import 'dart:async';
@@ -16,6 +17,7 @@ import '../../../shared/widgets/content_sound_attribution.dart';
 import '../../../sounds/view_models/sound_player_view_model.dart';
 import '../../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../../view_models/feed_video_mute_provider.dart';
+import 'landscape_video_page.dart';
 import 'shared/_caption_block.dart';
 import 'shared/_feed_actions_rail.dart';
 import '../../../../core/network/media_headers.dart';
@@ -284,13 +286,11 @@ class _VideoViewState extends ConsumerState<VideoView> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Camada 1: thumbnail (fallback até inicializar) ─────
-          Image.network(
-            widget.item.thumbnailUrl,
-            headers: mediaHeadersFor(widget.item.thumbnailUrl),
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(color: AppColors.slate),
-          ),
+          // ── Camada 1: capa até o vídeo carregar — no MESMO enquadramento
+          // do vídeo (vertical preenche; horizontal = fundo desfocado +
+          // inteira no centro). Antes a capa sempre preenchia a tela e o
+          // vídeo horizontal "esticava" e depois pulava para o lugar.
+          _FeedThumbnail(url: widget.item.thumbnailUrl),
 
           // ── Camada 2: player com fit inteligente ───────────────
           // • Vídeo vertical (≥ 9:16) → cover (TikTok-like)
@@ -325,6 +325,48 @@ class _VideoViewState extends ConsumerState<VideoView> {
               ),
             ),
           ],
+
+          // ── Camada 2.5: vídeo horizontal → botão "Tela cheia" logo
+          // abaixo do vídeo (gira para paisagem, mesmo player).
+          if (_initialized && _ctrl != null && _ctrl!.value.aspectRatio > 1.05)
+            LayoutBuilder(
+              builder: (context, box) {
+                final videoH = box.maxWidth / _ctrl!.value.aspectRatio;
+                return Stack(
+                  children: [
+                    Positioned(
+                      top: box.maxHeight / 2 + videoH / 2 + 12,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: GestureDetector(
+                          onTap: () => LandscapeVideoPage.open(context, _ctrl!),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.45),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(LucideIcons.maximize, size: 15, color: Colors.white),
+                                const SizedBox(width: 6),
+                                Text(
+                                  S.of(context).videoFullscreen,
+                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
 
           // ── Camada 3: gradiente p/ legibilidade da UI ──────────
           IgnorePointer(
@@ -510,3 +552,72 @@ class _MuteButton extends StatelessWidget {
   }
 }
 
+
+
+/// Capa do vídeo enquadrada pela proporção da própria imagem, com a mesma
+/// regra do player. A proporção fica guardada por URL: voltar ao vídeo não
+/// pisca.
+class _FeedThumbnail extends StatefulWidget {
+  const _FeedThumbnail({required this.url});
+
+  final String url;
+
+  static final Map<String, double> _ratios = {};
+
+  @override
+  State<_FeedThumbnail> createState() => _FeedThumbnailState();
+}
+
+class _FeedThumbnailState extends State<_FeedThumbnail> {
+  ImageStream? _stream;
+  ImageStreamListener? _listener;
+  double? _ratio;
+
+  ImageProvider get _provider => NetworkImage(widget.url, headers: mediaHeadersFor(widget.url));
+
+  @override
+  void initState() {
+    super.initState();
+    _ratio = _FeedThumbnail._ratios[widget.url];
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_ratio == null && _stream == null && widget.url.isNotEmpty) {
+      _stream = _provider.resolve(createLocalImageConfiguration(context));
+      _listener = ImageStreamListener((info, _) {
+        final r = info.image.width / info.image.height;
+        _FeedThumbnail._ratios[widget.url] = r;
+        if (mounted) setState(() => _ratio = r);
+      }, onError: (_, _) {});
+      _stream!.addListener(_listener!);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_listener != null) _stream?.removeListener(_listener!);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = _ratio;
+    if (r == null) return Container(color: AppColors.slate);
+    final image = Image(image: _provider, gaplessPlayback: true, errorBuilder: (_, _, _) => Container(color: AppColors.slate));
+    if (r <= 9 / 16) {
+      return Image(image: _provider, fit: BoxFit.cover, gaplessPlayback: true, errorBuilder: (_, _, _) => Container(color: AppColors.slate));
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: Image(image: _provider, fit: BoxFit.cover, gaplessPlayback: true),
+        ),
+        Center(child: AspectRatio(aspectRatio: r, child: image)),
+      ],
+    );
+  }
+}

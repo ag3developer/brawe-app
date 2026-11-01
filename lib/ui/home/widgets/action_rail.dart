@@ -13,7 +13,6 @@ class ActionRail extends StatelessWidget {
     required this.onComment,
     required this.onShare,
     required this.onFollow,
-    required this.onGift,
     required this.onProfile,
     this.onLikeLongPress,
     this.onLikeCountTap,
@@ -25,7 +24,6 @@ class ActionRail extends StatelessWidget {
   final VoidCallback onComment;
   final VoidCallback onShare;
   final VoidCallback onFollow;
-  final VoidCallback onGift;
   final VoidCallback onProfile;
   final VoidCallback? onLikeLongPress;
   final VoidCallback? onLikeCountTap;
@@ -59,9 +57,6 @@ class ActionRail extends StatelessWidget {
           label: _format(item.commentsCount),
           onTap: onComment,
         ),
-        const SizedBox(height: 18),
-        // Mystery Gift — animated, signature button
-        _MysteryGiftButton(onTap: onGift),
         const SizedBox(height: 18),
         // Toque: compartilhar. Toque longo: repostar/desfazer — quando já
         // repostado, o ícone vira "repetir" em verde.
@@ -247,92 +242,6 @@ class _ViewsLabel extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _MysteryGiftButton extends StatefulWidget {
-  const _MysteryGiftButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  State<_MysteryGiftButton> createState() => _MysteryGiftButtonState();
-}
-
-class _MysteryGiftButtonState extends State<_MysteryGiftButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Column(
-        children: [
-          AnimatedBuilder(
-            animation: _ctrl,
-            builder: (_, _) {
-              final scale = 1.0 + _ctrl.value * 0.12;
-              return Transform.scale(
-                scale: scale,
-                child: Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFFFFD54F),
-                        Color(0xFFFF6F61),
-                        AppColors.braweBlue,
-                      ],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(
-                          0xFFFF6F61,
-                        ).withValues(alpha: 0.5 + _ctrl.value * 0.3),
-                        blurRadius: 14,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.card_giftcard,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Mistério',
-            style: TextStyle(
-              color: context.colors.textPrimary,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

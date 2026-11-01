@@ -2561,5 +2561,13 @@
   "goalAddLikes": "Add {count} likes",
   "goalsSave": "Save goals",
   "goalsRemoveAll": "Remove goals",
-  "goalsSaveError": "Couldn't save the goals"
+  "goalsSaveError": "Couldn't save the goals",
+  "giftTickerText": "{sender} sent {gift} to {streamer}",
+  "videoFullscreen": "Full screen",
+  "liveOwnEnd": "End this live",
+  "liveOwnEndConfirmTitle": "End the live?",
+  "liveOwnEndConfirmBody": "The live ends for everyone, including on the other device.",
+  "liveOwnEnded": "Live ended",
+  "liveOwnEndError": "Couldn't end the live",
+  "liveWaitingSignal": "No signal from the creator right now.\nTrying again…"
 }

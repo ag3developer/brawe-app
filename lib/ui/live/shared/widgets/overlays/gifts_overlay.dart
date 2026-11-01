@@ -359,7 +359,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                       // Localizado via GiftTierNames — "free" vira
                       // "COFRE" (PT) / "VAULT" (EN) / "BÓVEDA" (ES). UPPER
                       // pra manter o estilo TikTok dos tabs da live.
-                      (t) => Tab(text: GiftTierNames.ofUpper(context, t.name)),
+                      (t) => Tab(text: GiftTierNames.label(context, t.name, t.names).toUpperCase()),
                     )
                     .toList(),
               ),

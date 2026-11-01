@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/live_room.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/widgets/brawe_avatar.dart';
@@ -26,10 +27,48 @@ class LiveViewerGate extends ConsumerWidget {
   }
 }
 
-class _OwnLiveNotice extends StatelessWidget {
+class _OwnLiveNotice extends ConsumerStatefulWidget {
   const _OwnLiveNotice({required this.room});
 
   final LiveRoom room;
+
+  @override
+  ConsumerState<_OwnLiveNotice> createState() => _OwnLiveNoticeState();
+}
+
+class _OwnLiveNoticeState extends ConsumerState<_OwnLiveNotice> {
+  bool _ending = false;
+
+  LiveRoom get room => widget.room;
+
+  /// Encerra a live daqui — útil quando ela ficou presa no outro aparelho
+  /// (app travado, simulador aberto) e aparece para todo mundo.
+  Future<void> _end() async {
+    final s = S.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.liveOwnEndConfirmTitle),
+        content: Text(s.liveOwnEndConfirmBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.liveOwnBack)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(s.liveOwnEnd)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _ending = true);
+    try {
+      await ref.read(liveRepositoryProvider).endLive(room.id);
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(s.liveOwnEnded)));
+      _back(context);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _ending = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(s.liveOwnEndError)));
+    }
+  }
 
   void _back(BuildContext context) {
     if (context.canPop()) {
@@ -90,6 +129,22 @@ class _OwnLiveNotice extends StatelessWidget {
                 style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 15, height: 1.4),
               ),
               const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _ending ? null : _end,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF2D55),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: _ending
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(S.of(context).liveOwnEnd, style: const TextStyle(fontWeight: FontWeight.w800)),
+                ),
+              ),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(

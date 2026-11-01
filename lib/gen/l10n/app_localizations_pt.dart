@@ -5714,4 +5714,32 @@ class SPt extends S {
 
   @override
   String get goalsSaveError => 'Não foi possível salvar as metas';
+
+  @override
+  String giftTickerText(String sender, String gift, String streamer) {
+    return '$sender enviou $gift para $streamer';
+  }
+
+  @override
+  String get videoFullscreen => 'Tela cheia';
+
+  @override
+  String get liveOwnEnd => 'Encerrar esta live';
+
+  @override
+  String get liveOwnEndConfirmTitle => 'Encerrar a live?';
+
+  @override
+  String get liveOwnEndConfirmBody =>
+      'A live termina para todos, inclusive no outro aparelho.';
+
+  @override
+  String get liveOwnEnded => 'Live encerrada';
+
+  @override
+  String get liveOwnEndError => 'Não foi possível encerrar a live';
+
+  @override
+  String get liveWaitingSignal =>
+      'Sem sinal do criador no momento.\nTentando de novo…';
 }

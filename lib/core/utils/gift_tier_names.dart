@@ -58,6 +58,17 @@ class GiftTierNames {
     return of(context, tierName).toUpperCase();
   }
 
+  /// Nome da aba: categoria temática do admin no idioma do usuário (com
+  /// português como reserva); senão o nome do tier.
+  static String label(BuildContext context, String tierName, Map<String, String> names) {
+    if (names.isNotEmpty) {
+      final lang = Localizations.localeOf(context).languageCode;
+      final n = names[lang] ?? names['pt'] ?? names.values.first;
+      if (n.trim().isNotEmpty) return n.trim();
+    }
+    return of(context, tierName);
+  }
+
   static String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1).toLowerCase();
 }

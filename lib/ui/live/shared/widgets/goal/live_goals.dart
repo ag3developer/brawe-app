@@ -6,16 +6,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../data/repositories/live_repository.dart';
+import '../../../../../core/utils/gift_tier_names.dart';
 import '../../../../../domain/models/gift.dart';
 import '../../../../../domain/models/live_goal.dart';
 import '../../../../../domain/models/live_room_event.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/brawe_colors.dart';
+import '../../../../core/widgets/gift_icon.dart';
 import '../../../../live_feed/view_models/gift_catalog_view_model.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../competition/medal_colors.dart';
 import '../overlays/gifts_overlay.dart';
-import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 const _gold = Color(0xFFFFC53D);
 const _pink = Color(0xFFFF3D7F);
@@ -34,18 +35,12 @@ class _GoalIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (goal.isLikes) return Icon(LucideIcons.heart, size: size * 0.85, color: _pink);
-    final url = goal.giftIconUrl;
-    final fallback = Icon(LucideIcons.gift, size: size * 0.85, color: _gold);
-    if (url == null) return SizedBox(width: size, height: size, child: fallback);
-    return SizedBox(
-      width: size,
-      height: size,
-      child: Image.network(
-        url,
-        cacheWidth: context.decodePx(size),
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => fallback,
-      ),
+    // Mesmo componente da sacola: imagem do app → do servidor → genérico.
+    return GiftIcon(
+      slug: goal.giftSlug ?? '',
+      tier: goal.giftTier ?? 'basic',
+      iconUrl: goal.giftIconUrl,
+      size: size,
     );
   }
 }
@@ -444,6 +439,7 @@ class _Draft {
         giftSlug: gift?.slug,
         giftName: gift?.name,
         giftIconUrl: gift?.iconUrl,
+        giftTier: gift?.tier,
       );
 
   LiveGoalDraft get request => type == LiveGoal.typeLikes
@@ -460,6 +456,15 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
     for (final g in widget.current) _Draft(type: g.type, target: g.target, existing: g),
   ];
   bool _likesMode = false;
+  int _category = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Catálogo atualizado ao abrir: presente/categoria recém-criado no
+    // painel já aparece aqui.
+    Future.microtask(() => ref.read(giftCatalogViewModelProvider.notifier).refresh());
+  }
   Gift? _gift;
   int _amount = 10;
   bool _saving = false;
@@ -592,65 +597,102 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
     );
   }
 
+  /// Categorias do catálogo (as mesmas abas da sacola, inclusive as
+  /// temáticas criadas no painel) e os presentes da categoria escolhida.
   Widget _giftPicker(BuildContext context) {
     final colors = context.colors;
     final catalog = ref.watch(giftCatalogViewModelProvider);
-    final gifts = catalog.maybeWhen(
-      data: (tiers) => [for (final t in tiers) ...t.gifts],
-      orElse: () => const <Gift>[],
+    final tiers = catalog.maybeWhen(
+      data: (t) => t.where((x) => x.gifts.isNotEmpty).toList(),
+      orElse: () => const <GiftTier>[],
     );
-    if (gifts.isEmpty) {
+    if (tiers.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(20),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
-    return SizedBox(
-      height: 88,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        itemCount: gifts.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final g = gifts[i];
-          final selected = _gift?.id == g.id;
-          return GestureDetector(
-            onTap: () => setState(() => _gift = g),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: 64,
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: selected ? colors.accentPrimary.withValues(alpha: 0.14) : colors.surfaceHighest,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: selected ? colors.accentPrimary : Colors.transparent, width: 1.5),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: g.iconUrl == null
-                        ? const Icon(LucideIcons.gift, color: _gold)
-                        : Image.network(
-                            g.iconUrl!,
-                            cacheWidth: context.decodePx(40),
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, _, _) => const Icon(LucideIcons.gift, color: _gold),
-                          ),
+    final cat = _category.clamp(0, tiers.length - 1);
+    final gifts = tiers[cat].gifts;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            itemCount: tiers.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 6),
+            itemBuilder: (_, i) {
+              final selected = i == cat;
+              return GestureDetector(
+                onTap: () => setState(() => _category = i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? colors.textPrimary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: selected ? colors.textPrimary : colors.border),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    g.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: colors.textSecondary, fontSize: 10.5, fontWeight: FontWeight.w600),
+                  child: Text(
+                    GiftTierNames.label(context, tiers[i].name, tiers[i].names),
+                    style: TextStyle(
+                      color: selected ? colors.surfaceElevated : colors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        ),
+        SizedBox(
+          height: 92,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            itemCount: gifts.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (_, i) {
+              final g = gifts[i];
+              final selected = _gift?.id == g.id;
+              return GestureDetector(
+                onTap: () => setState(() => _gift = g),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  width: 66,
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: selected ? colors.accentPrimary.withValues(alpha: 0.14) : colors.surfaceHighest,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: selected ? colors.accentPrimary : Colors.transparent, width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: GiftIcon(slug: g.slug, tier: g.tier, iconUrl: g.iconUrl, size: 40),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        g.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: colors.textSecondary, fontSize: 10.5, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

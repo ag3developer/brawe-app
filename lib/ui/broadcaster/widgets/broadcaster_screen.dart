@@ -26,6 +26,7 @@ import '../../live/shared/widgets/chat/chat.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
 import 'share_live_sheet.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
+import '../../live/shared/widgets/hud/live_gift_ticker.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -1835,16 +1836,19 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                               : null,
                         ),
                         const SizedBox(height: 6),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: LiveGoalsPill(
-                            key: _goalsKey,
-                            roomId: widget.room.id,
-                            streamerId: _room.streamerId,
-                            initialGoals: _room.goals,
-                            isCreator: true,
-                            onEdit: _openGoals,
-                          ),
+                        Row(
+                          children: [
+                            LiveGoalsPill(
+                              key: _goalsKey,
+                              roomId: widget.room.id,
+                              streamerId: _room.streamerId,
+                              initialGoals: _room.goals,
+                              isCreator: true,
+                              onEdit: _openGoals,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: LiveGiftTicker(currentRoomId: widget.room.id)),
+                          ],
                         ),
                         const SizedBox(height: 6),
                         if (viewerEvent != null)

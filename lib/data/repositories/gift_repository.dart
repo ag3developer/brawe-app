@@ -25,18 +25,35 @@ class GiftRepository {
 
   Future<List<GiftTier>> getGiftCatalog() async {
     try {
-      final data = await _giftService.getGiftCatalog();
-      // Expecting { "basic": [...], "premium": [...], "exclusive": [...] }
+      final body = await _giftService.getGiftCatalog();
+      // `data`: { "<categoria do admin>": [...], "free": [...], "basic": [...] }
+      // na ordem do servidor — categoria nova do painel vira aba sozinha.
+      final raw = body['data'];
+      final data = raw is Map ? raw : body;
+      final names = <String, Map<String, String>>{};
+      final collections = body['collections'];
+      if (collections is List) {
+        for (final c in collections.whereType<Map>()) {
+          final n = c['name'];
+          if (c['slug'] != null && n is Map) {
+            names[c['slug'].toString()] = {
+              for (final e in n.entries)
+                if (e.value != null) e.key.toString(): e.value.toString(),
+            };
+          }
+        }
+      }
       final List<GiftTier> tiers = [];
 
       data.forEach((key, value) {
         if (value is List) {
           tiers.add(
             GiftTier(
-              name: key,
+              name: key.toString(),
               gifts: value
-                  .map((g) => Gift.fromJson(g as Map<String, dynamic>))
+                  .map((g) => Gift.fromJson(Map<String, dynamic>.from(g as Map)))
                   .toList(),
+              names: names[key.toString()] ?? const {},
             ),
           );
         }

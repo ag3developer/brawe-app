@@ -5689,4 +5689,32 @@ class SEn extends S {
 
   @override
   String get goalsSaveError => 'Couldn\'t save the goals';
+
+  @override
+  String giftTickerText(String sender, String gift, String streamer) {
+    return '$sender sent $gift to $streamer';
+  }
+
+  @override
+  String get videoFullscreen => 'Full screen';
+
+  @override
+  String get liveOwnEnd => 'End this live';
+
+  @override
+  String get liveOwnEndConfirmTitle => 'End the live?';
+
+  @override
+  String get liveOwnEndConfirmBody =>
+      'The live ends for everyone, including on the other device.';
+
+  @override
+  String get liveOwnEnded => 'Live ended';
+
+  @override
+  String get liveOwnEndError => 'Couldn\'t end the live';
+
+  @override
+  String get liveWaitingSignal =>
+      'No signal from the creator right now.\nTrying again…';
 }

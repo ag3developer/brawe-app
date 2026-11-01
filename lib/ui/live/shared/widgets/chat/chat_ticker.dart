@@ -6,8 +6,10 @@ import '../../../../../domain/models/live_comment.dart';
 import '../../../../../domain/models/live_gift.dart';
 import 'chat_line.dart';
 import 'gift_chat_line.dart';
-import '../../../../live_feed/view_models/live_room_comments_view_model.dart' show GiftChatPart;
+import '../../../../live_feed/view_models/live_room_comments_view_model.dart'
+    show GiftChatPart;
 import 'ticker_item.dart';
+import '../../layout/live_dock_metrics.dart';
 
 /// Ticker do chat da live: mescla comentários + presentes em uma única
 /// timeline ordenada por timestamp — usado pelo espectador E pelo streamer.
@@ -86,7 +88,8 @@ class _ChatTickerState extends State<ChatTicker> {
   DateTime _holdUntil = DateTime.fromMillisecondsSinceEpoch(0);
   bool _primed = false;
 
-  String _keyOf(TickerItem it) => it.comment != null ? 'c:${it.comment!.id}' : 'g:${it.gift!.id}';
+  String _keyOf(TickerItem it) =>
+      it.comment != null ? 'c:${it.comment!.id}' : 'g:${it.gift!.id}';
 
   bool _isPriority(TickerItem it) {
     final c = it.comment;
@@ -104,8 +107,10 @@ class _ChatTickerState extends State<ChatTicker> {
   }
 
   List<TickerItem> _allItems() => <TickerItem>[
-    for (final c in widget.comments) TickerItem(timestamp: c.timestamp, comment: c),
-    for (final g in widget.gifts.where((g) => g.showInChat)) TickerItem(timestamp: g.timestamp, gift: g),
+    for (final c in widget.comments)
+      TickerItem(timestamp: c.timestamp, comment: c),
+    for (final g in widget.gifts.where((g) => g.showInChat))
+      TickerItem(timestamp: g.timestamp, gift: g),
   ]..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
   /// Separa o que é novo: prioridade aparece já; o resto vai para a fila.
@@ -143,7 +148,9 @@ class _ChatTickerState extends State<ChatTicker> {
   void _schedulePace() {
     if (_paceTimer != null || _pending.isEmpty) return;
     final backlog = _pending.length;
-    var wait = Duration(milliseconds: backlog <= 3 ? 320 : (backlog <= 8 ? 190 : 120));
+    var wait = Duration(
+      milliseconds: backlog <= 3 ? 320 : (backlog <= 8 ? 190 : 120),
+    );
     final hold = _holdUntil.difference(DateTime.now());
     if (hold > wait) wait = hold;
     _paceTimer = Timer(wait, () {
@@ -214,8 +221,10 @@ class _ChatTickerState extends State<ChatTicker> {
         final spamKey = '${c.userId}|${c.message.trim().toLowerCase()}';
         final prev = lastIndexBySpam[spamKey];
         if (prev != null &&
-            it.timestamp.difference(items[prev].timestamp).inSeconds.abs() <= 20) {
-          repeats[_keyOf(items[prev])] = (repeats[_keyOf(items[prev])] ?? 1) + 1;
+            it.timestamp.difference(items[prev].timestamp).inSeconds.abs() <=
+                20) {
+          repeats[_keyOf(items[prev])] =
+              (repeats[_keyOf(items[prev])] ?? 1) + 1;
           continue;
         }
         lastIndexBySpam[spamKey] = items.length;
@@ -228,117 +237,129 @@ class _ChatTickerState extends State<ChatTicker> {
         ? items.sublist(items.length - _maxItems)
         : items;
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ShaderMask(
-          shaderCallback: (rect) => const LinearGradient(
-            colors: [Colors.transparent, Colors.black, Colors.black],
-            stops: [0, 0.08, 1],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ).createShader(rect),
-          blendMode: BlendMode.dstIn,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: widget.maxHeight),
-            // reverse + shrinkWrap: índice 0 = mais recente, desenhado na
-            // base. Com poucas mensagens a lista fica curta e colada no
-            // input (antes ficava no topo de uma caixa fixa de 240px).
-            child: ListView.builder(
-              controller: _scrollController,
-              reverse: true,
-              shrinkWrap: true,
-              padding: const EdgeInsets.only(top: 12),
-              physics: const ClampingScrollPhysics(),
-              itemCount: visible.length,
-              itemBuilder: (_, i) {
-                final it = visible[visible.length - 1 - i];
-                final c = it.comment;
-                if (c != null) {
-                  final isMine = c.isSystem || c.userId == widget.myUserId || c.isPending;
-                  final times = repeats[_keyOf(it)] ?? 1;
-                  final line = ChatLine(
-                    comment: c,
-                    isHost:
-                        widget.hostUserId != null &&
-                        c.userId == widget.hostUserId,
-                    mentionsMe: widget._mentionsMe(c),
-                    onTap: isMine || widget.onCommentTap == null
-                        ? null
-                        : () => widget.onCommentTap!(c),
-                  );
-                  if (times <= 1) return line;
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Flexible(child: line),
-                      Container(
-                        margin: const EdgeInsets.only(left: 4, top: 2),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(8),
+    return StageFocusDimmer(
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          ShaderMask(
+            shaderCallback: (rect) => const LinearGradient(
+              colors: [Colors.transparent, Colors.black, Colors.black],
+              stops: [0, 0.08, 1],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(rect),
+            blendMode: BlendMode.dstIn,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: widget.maxHeight),
+              // reverse + shrinkWrap: índice 0 = mais recente, desenhado na
+              // base. Com poucas mensagens a lista fica curta e colada no
+              // input (antes ficava no topo de uma caixa fixa de 240px).
+              child: ListView.builder(
+                controller: _scrollController,
+                reverse: true,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(top: 12),
+                physics: const ClampingScrollPhysics(),
+                itemCount: visible.length,
+                itemBuilder: (_, i) {
+                  final it = visible[visible.length - 1 - i];
+                  final c = it.comment;
+                  if (c != null) {
+                    final isMine =
+                        c.isSystem ||
+                        c.userId == widget.myUserId ||
+                        c.isPending;
+                    final times = repeats[_keyOf(it)] ?? 1;
+                    final line = ChatLine(
+                      comment: c,
+                      isHost:
+                          widget.hostUserId != null &&
+                          c.userId == widget.hostUserId,
+                      mentionsMe: widget._mentionsMe(c),
+                      onTap: isMine || widget.onCommentTap == null
+                          ? null
+                          : () => widget.onCommentTap!(c),
+                    );
+                    if (times <= 1) return line;
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(child: line),
+                        Container(
+                          margin: const EdgeInsets.only(left: 4, top: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '×$times',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          '×$times',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
+                      ],
+                    );
+                  }
+                  return GiftChatLine(
+                    gift: it.gift!,
+                    parts: widget.giftParts[it.gift!.id],
                   );
-                }
-                return GiftChatLine(
-                  gift: it.gift!,
-                  parts: widget.giftParts[it.gift!.id],
-                );
-              },
-            ),
-          ),
-        ),
-        if (_unread > 0)
-          Positioned(
-            left: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onTap: _jumpToLatest,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black38, blurRadius: 6),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _unread == 1
-                          ? '1 nova mensagem'
-                          : '$_unread novas mensagens',
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Colors.black87,
-                      size: 16,
-                    ),
-                  ],
-                ),
+                },
               ),
             ),
           ),
-      ],
+          if (_unread > 0)
+            Positioned(
+              left: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: _jumpToLatest,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black38, blurRadius: 6),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _unread == 1
+                            ? '1 nova mensagem'
+                            : '$_unread novas mensagens',
+                        style: const TextStyle(
+                          color: Colors.black87,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.black87,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

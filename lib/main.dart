@@ -97,6 +97,9 @@ Future<void> main() async {
       };
 
       _ImageMemoryGuard.install();
+      // App de vídeo vertical: só retrato. A tela cheia de vídeo horizontal
+      // (LandscapeVideoPage) libera paisagem enquanto está aberta.
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
       runApp(const ProviderScope(child: BraweApp()));
     },
     (error, stack) {

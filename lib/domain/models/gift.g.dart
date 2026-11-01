@@ -51,9 +51,15 @@ _GiftTier _$GiftTierFromJson(Map<String, dynamic> json) => _GiftTier(
   gifts: (json['gifts'] as List<dynamic>)
       .map((e) => Gift.fromJson(e as Map<String, dynamic>))
       .toList(),
+  names:
+      (json['names'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, e as String),
+      ) ??
+      const <String, String>{},
 );
 
 Map<String, dynamic> _$GiftTierToJson(_GiftTier instance) => <String, dynamic>{
   'name': instance.name,
   'gifts': instance.gifts,
+  'names': instance.names,
 };

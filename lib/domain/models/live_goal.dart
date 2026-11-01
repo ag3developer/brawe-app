@@ -10,6 +10,7 @@ class LiveGoal {
     this.giftSlug,
     this.giftName,
     this.giftIconUrl,
+    this.giftTier,
   });
 
   static const typeGift = 'gift';
@@ -23,6 +24,7 @@ class LiveGoal {
   final String? giftSlug;
   final String? giftName;
   final String? giftIconUrl;
+  final String? giftTier;
 
   bool get isGift => type == typeGift;
   bool get isLikes => type == typeLikes;
@@ -50,6 +52,7 @@ class LiveGoal {
       giftSlug: str('gift_slug'),
       giftName: str('gift_name'),
       giftIconUrl: str('gift_icon_url'),
+      giftTier: str('gift_tier'),
     );
   }
 

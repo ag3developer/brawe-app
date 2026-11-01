@@ -12,6 +12,7 @@ import '../../../data/repositories/live_repository.dart';
 import '../../../domain/models/live_room_event.dart';
 import '../../../domain/models/live_viewer_event.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../live/shared/layout/live_dock_metrics.dart';
 import '../../live/shared/widgets/competition/medal_colors.dart' show fmtGap;
 import '../../live/shared/widgets/level_chip.dart';
 import '../../live/shared/widgets/overlays/gifts_overlay.dart';
@@ -105,7 +106,14 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     _giftSub = repo.watchGifts(widget.roomId).listen((gift) {
       final me = _myId;
       if (me == null || gift.senderId != me || !gift.levelUpgraded) return;
-      _levelUp(_LevelUp(gift.gifterLevel, gift.gifterBadge, gift.gifterColor, gift.gifterImageUrl));
+      _levelUp(
+        _LevelUp(
+          gift.gifterLevel,
+          gift.gifterBadge,
+          gift.gifterColor,
+          gift.gifterImageUrl,
+        ),
+      );
     });
   }
 
@@ -126,7 +134,11 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     // Só o aviso mais recente de cada tipo importa (ex.: novo #1 em rajada).
     _queue.removeWhere((q) => q.kind == n.kind);
     _queue.add(n);
-    _queue.sort((a, b) => a.priority != b.priority ? a.priority.compareTo(b.priority) : a.seq.compareTo(b.seq));
+    _queue.sort(
+      (a, b) => a.priority != b.priority
+          ? a.priority.compareTo(b.priority)
+          : a.seq.compareTo(b.seq),
+    );
     final cur = _current;
     // Pessoal com ação passa na frente de aviso da sala que está na tela.
     if (cur != null && n.priority < cur.priority && n.kind == _Kind.overtaken) {
@@ -140,7 +152,8 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     if (_current != null || _queue.isEmpty || !mounted) return;
     final next = _queue.removeAt(0);
     setState(() => _current = next);
-    if (next.kind == _Kind.overtaken || next.kind == _Kind.levelUp) HapticFeedback.mediumImpact();
+    if (next.kind == _Kind.overtaken || next.kind == _Kind.levelUp)
+      HapticFeedback.mediumImpact();
     _noticeTimer?.cancel();
     _noticeTimer = Timer(next.duration, _dismiss);
   }
@@ -234,45 +247,63 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
   @override
   Widget build(BuildContext context) {
     final vm = liveRoomCommentsViewModelProvider(widget.roomId);
-    ref.listen<GifterOvertakenEvent?>(vm.select((s) => s.overtaken), (prev, next) {
-      if (next != null && next.id != prev?.id) _push(_Notice(_Kind.overtaken, next));
+    ref.listen<GifterOvertakenEvent?>(vm.select((s) => s.overtaken), (
+      prev,
+      next,
+    ) {
+      if (next != null && next.id != prev?.id)
+        _push(_Notice(_Kind.overtaken, next));
     });
-    ref.listen<TopGifterChangedEvent?>(vm.select((s) => s.newTopGifter), (prev, next) {
-      if (next != null && next.id != prev?.id) _push(_Notice(_Kind.newTop, next));
+    ref.listen<TopGifterChangedEvent?>(vm.select((s) => s.newTopGifter), (
+      prev,
+      next,
+    ) {
+      if (next != null && next.id != prev?.id)
+        _push(_Notice(_Kind.newTop, next));
     });
-    ref.listen<LikeMilestoneEvent?>(vm.select((s) => s.likeMilestone), (prev, next) {
-      if (next != null && next.id != prev?.id) _push(_Notice(_Kind.milestone, next));
+    ref.listen<LikeMilestoneEvent?>(vm.select((s) => s.likeMilestone), (
+      prev,
+      next,
+    ) {
+      if (next != null && next.id != prev?.id)
+        _push(_Notice(_Kind.milestone, next));
     });
 
     final notice = _current;
     final entrance = _entrance;
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      alignment: Alignment.bottomLeft,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _slide(
-            notice == null
-                ? const SizedBox.shrink(key: ValueKey('no-notice'))
-                : Padding(
-                    key: ValueKey('notice-${notice.seq}'),
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: _card(notice),
-                  ),
-          ),
-          _slide(
-            entrance == null
-                ? const SizedBox.shrink(key: ValueKey('no-entrance'))
-                : Padding(
-                    key: ValueKey('entrance-${entrance.userId}-${entrance.hashCode}'),
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: IgnorePointer(child: ViewerEntranceToast(event: entrance)),
-                  ),
-          ),
-        ],
+    return StageFocusDimmer(
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.bottomLeft,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _slide(
+              notice == null
+                  ? const SizedBox.shrink(key: ValueKey('no-notice'))
+                  : Padding(
+                      key: ValueKey('notice-${notice.seq}'),
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _card(notice),
+                    ),
+            ),
+            _slide(
+              entrance == null
+                  ? const SizedBox.shrink(key: ValueKey('no-entrance'))
+                  : Padding(
+                      key: ValueKey(
+                        'entrance-${entrance.userId}-${entrance.hashCode}',
+                      ),
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: IgnorePointer(
+                        child: ViewerEntranceToast(event: entrance),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -283,7 +314,10 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeIn,
       transitionBuilder: (child, anim) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(-0.35, 0), end: Offset.zero).animate(anim),
+        position: Tween<Offset>(
+          begin: const Offset(-0.35, 0),
+          end: Offset.zero,
+        ).animate(anim),
         child: FadeTransition(opacity: anim, child: child),
       ),
       layoutBuilder: (current, previous) => Stack(
@@ -301,7 +335,11 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
         final e = n.payload as GifterOvertakenEvent;
         return _NoticeCard(
           accent: const Color(0xFFFFB800),
-          leading: _NoticeAvatar(url: e.byAvatarUrl, name: e.byName, ring: const Color(0xFFFFB800)),
+          leading: _NoticeAvatar(
+            url: e.byAvatarUrl,
+            name: e.byName,
+            ring: const Color(0xFFFFB800),
+          ),
           title: s.noticeOvertakenTitle(e.byName),
           subtitle: s.noticeOvertakenBody(fmtGap(e.gapPoints), e.previousRank),
           action: s.overtakenRetake,
@@ -313,7 +351,13 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
         final l = n.payload as _LevelUp;
         return _NoticeCard(
           accent: const Color(0xFFFFD166),
-          leading: LevelChip(level: l.level, badge: l.badge, colorHex: l.colorHex, imageUrl: l.imageUrl, height: 22),
+          leading: LevelChip(
+            level: l.level,
+            badge: l.badge,
+            colorHex: l.colorHex,
+            imageUrl: l.imageUrl,
+            height: 22,
+          ),
           title: s.liveLevelUpTitle,
           subtitle: s.noticeLevelUpBody(l.level),
           personal: true,
@@ -340,9 +384,15 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
             height: 34,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [Color(0xFFFF3D7F), Color(0xFFFF7A59)]),
+              gradient: LinearGradient(
+                colors: [Color(0xFFFF3D7F), Color(0xFFFF7A59)],
+              ),
             ),
-            child: const Icon(Icons.favorite_rounded, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.favorite_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           title: s.likeMilestoneBanner(fmtGap(e.milestone)),
         );
@@ -383,12 +433,17 @@ class _NoticeCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [accent.withValues(alpha: 0.28), Colors.black.withValues(alpha: 0.55)],
+              colors: [
+                accent.withValues(alpha: 0.28),
+                Colors.black.withValues(alpha: 0.55),
+              ],
               stops: const [0, 0.55],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: personal ? accent.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.12),
+              color: personal
+                  ? accent.withValues(alpha: 0.85)
+                  : Colors.white.withValues(alpha: 0.12),
               width: personal ? 1.3 : 1,
             ),
           ),
@@ -406,7 +461,11 @@ class _NoticeCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     if (subtitle != null && subtitle!.isNotEmpty)
                       Text(
@@ -427,16 +486,30 @@ class _NoticeCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onAction,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.gift, size: 14, color: Colors.black),
+                        const Icon(
+                          LucideIcons.gift,
+                          size: 14,
+                          color: Colors.black,
+                        ),
                         const SizedBox(width: 5),
                         Text(
                           action!,
-                          style: const TextStyle(color: Colors.black, fontSize: 12.5, fontWeight: FontWeight.w900),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                       ],
                     ),
@@ -449,7 +522,11 @@ class _NoticeCard extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 6, right: 2),
-                    child: Icon(Icons.close_rounded, size: 16, color: Colors.white.withValues(alpha: 0.7)),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
                   ),
                 ),
             ],
@@ -461,7 +538,12 @@ class _NoticeCard extends StatelessWidget {
 }
 
 class _NoticeAvatar extends StatelessWidget {
-  const _NoticeAvatar({required this.url, required this.name, required this.ring, this.badge});
+  const _NoticeAvatar({
+    required this.url,
+    required this.name,
+    required this.ring,
+    this.badge,
+  });
 
   final String? url;
   final String name;
@@ -476,16 +558,25 @@ class _NoticeAvatar extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: ring, width: 2)),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: ring, width: 2),
+          ),
           child: CircleAvatar(
             radius: 15,
             backgroundColor: Colors.white24,
-            backgroundImage: has ? ResizeImage(NetworkImage(url!), width: context.decodePx(30)) : null,
+            backgroundImage: has
+                ? ResizeImage(NetworkImage(url!), width: context.decodePx(30))
+                : null,
             child: has
                 ? null
                 : Text(
                     name.isEmpty ? '?' : name[0].toUpperCase(),
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
           ),
         ),

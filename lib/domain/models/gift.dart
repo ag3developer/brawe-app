@@ -43,6 +43,9 @@ sealed class GiftTier with _$GiftTier {
   const factory GiftTier({
     required String name,
     required List<Gift> gifts,
+    // Categoria temática do admin (ex.: Halloween): nome por idioma
+    // {pt, en, es}. Vazio nos tiers fixos (free, basic…).
+    @Default(<String, String>{}) Map<String, String> names,
   }) = _GiftTier;
 
   factory GiftTier.fromJson(Map<String, dynamic> json) => _$GiftTierFromJson(json);

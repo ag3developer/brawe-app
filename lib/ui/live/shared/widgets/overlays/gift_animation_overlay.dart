@@ -791,6 +791,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
   @override
   void initState() {
     super.initState();
+    LiveStageFocus.enter();
     // 🎯 Duração dinâmica (Fase 7) — não mais hardcoded 2600ms. Vem do
     // backend, já clampada nos limites de FULLSCREEN (6000-12000ms), e
     // reclampada aqui como defesa em profundidade.
@@ -802,6 +803,7 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
 
   @override
   void dispose() {
+    LiveStageFocus.leave();
     _ctrl.dispose();
     super.dispose();
   }
@@ -1012,6 +1014,7 @@ class _CenterLargeBurstState extends State<_CenterLargeBurst>
   @override
   void initState() {
     super.initState();
+    LiveStageFocus.enter();
     _ctrl = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
@@ -1037,6 +1040,7 @@ class _CenterLargeBurstState extends State<_CenterLargeBurst>
 
   @override
   void dispose() {
+    LiveStageFocus.leave();
     _ctrl.dispose();
     super.dispose();
   }
@@ -1238,6 +1242,7 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
   @override
   void initState() {
     super.initState();
+    LiveStageFocus.enter();
     _ctrl = VapPlayerController.file(
       widget.file,
       options: VapPlayerOptions(
@@ -1276,6 +1281,7 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
 
   @override
   void dispose() {
+    LiveStageFocus.leave();
     _events?.cancel();
     _safety?.cancel();
     _ctrl.dispose();
@@ -1284,8 +1290,6 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    final gift = widget.gift;
     return IgnorePointer(
       child: Directionality(
         textDirection: TextDirection.ltr,
@@ -1299,63 +1303,9 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                // Só o efeito: quem enviou aparece na faixa de notícia (ao
+                // lado das metas) e no chat — nada por cima do presente.
                 if (_ready) VapPlayer(_ctrl),
-                Positioned(
-                  top: MediaQuery.paddingOf(context).top + 72,
-                  left: 16,
-                  right: 16,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(4, 4, 14, 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _AvatarCircle(
-                            url: gift.senderAvatarUrl,
-                            fallback: gift.senderName,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: gift.senderName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text:
-                                        ' ${s.livePlayerGiftSentVerb.trim()} ',
-                                  ),
-                                  TextSpan(
-                                    text: gift.giftName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  if (gift.quantity > 1)
-                                    TextSpan(text: ' x${gift.quantity}'),
-                                ],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),

@@ -2561,5 +2561,13 @@
   "goalAddLikes": "Agregar {count} me gusta",
   "goalsSave": "Guardar metas",
   "goalsRemoveAll": "Quitar metas",
-  "goalsSaveError": "No se pudieron guardar las metas"
+  "goalsSaveError": "No se pudieron guardar las metas",
+  "giftTickerText": "{sender} envió {gift} a {streamer}",
+  "videoFullscreen": "Pantalla completa",
+  "liveOwnEnd": "Finalizar este live",
+  "liveOwnEndConfirmTitle": "¿Finalizar el live?",
+  "liveOwnEndConfirmBody": "El live termina para todos, incluso en el otro dispositivo.",
+  "liveOwnEnded": "Live finalizado",
+  "liveOwnEndError": "No se pudo finalizar el live",
+  "liveWaitingSignal": "Sin señal del creador por ahora.\nIntentando de nuevo…"
 }
