@@ -12,10 +12,11 @@ import '../../../../../data/services/gift_effect_cache.dart';
 
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../domain/models/gift_display_type.dart';
+import '../../../../../domain/models/gift_presentation.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
-import '../../../../../gen/l10n/app_localizations.dart';
 import '../../layout/live_dock_metrics.dart';
 import '../level_chip.dart';
+import 'gift_stage.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -769,214 +770,76 @@ class _GiftToastState extends ConsumerState<_GiftToast>
 // `resolvedDurationMs` (clampada nos limites seguros do tipo fullscreen).
 // ────────────────────────────────────────────────────────────────────────
 
-class _PremiumGiftBurst extends StatefulWidget {
+class _PremiumGiftBurst extends StatelessWidget {
   const _PremiumGiftBurst({required this.gift, required this.onDone});
   final LiveGift gift;
   final VoidCallback onDone;
 
   @override
-  State<_PremiumGiftBurst> createState() => _PremiumGiftBurstState();
-}
-
-class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    LiveStageFocus.enter();
-    // 🎯 Duração dinâmica (Fase 7) — não mais hardcoded 2600ms. Vem do
-    // backend, já clampada nos limites de FULLSCREEN (6000-12000ms), e
-    // reclampada aqui como defesa em profundidade.
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
-    )..forward().then((_) => widget.onDone());
-  }
-
-  @override
-  void dispose() {
-    LiveStageFocus.leave();
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    return IgnorePointer(
-      // 🛡️ Wrap em Directionality + Material + DefaultTextStyle: OverlayEntry
-      // não fornece ancestor Material/Directionality, então Text widgets sem
-      // estilo explícito renderizam com `decoration: double-underline yellow`
-      // (warning style) — exatamente as linhas amarelas que apareciam embaixo
-      // do nome do presenteador.
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Material(
-          type: MaterialType.transparency,
-          child: DefaultTextStyle(
-            style: const TextStyle(
-              color: Colors.white,
-              decoration: TextDecoration.none,
-            ),
-            child: AnimatedBuilder(
-              animation: _ctrl,
-              builder: (context, _) {
-                final t = _ctrl.value;
-                // Phase 1 (0..0.5) — light beam expands + icon scales up
-                // Phase 2 (0.5..0.85) — hold
-                // Phase 3 (0.85..1) — fade out
-                final opacity = t < 0.15
-                    ? (t / 0.15)
-                    : t > 0.85
-                    ? ((1 - t) / 0.15).clamp(0.0, 1.0)
-                    : 1.0;
-                final scale = t < 0.4
-                    ? Curves.elasticOut.transform((t / 0.4).clamp(0.0, 1.0))
-                    : 1.0;
-                final beam = (t < 0.7 ? (t / 0.7) : 1.0);
-
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Backdrop dimmer (subtle)
-                    Opacity(
-                      opacity: opacity * 0.45,
-                      child: Container(color: Colors.black),
-                    ),
-                    // Radial light beam
-                    Center(
-                      child: Opacity(
-                        opacity: opacity * 0.85,
-                        child: Container(
-                          width: 600 * beam,
-                          height: 600 * beam,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                Color(0xFFFFE08A),
-                                Color(0x66FF6A09),
-                                Color(0x00000000),
-                              ],
-                              stops: [0.0, 0.5, 1.0],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Center icon + label
-                    Center(
-                      child: Opacity(
-                        opacity: opacity,
-                        child: Transform.scale(
-                          scale: scale,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 160,
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFFFFD166),
-                                      AppColors.braweEmber,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      blurRadius: 60,
-                                      spreadRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                padding: const EdgeInsets.all(20),
-                                // Ícone/animação central — usa Lottie local
-                                // se disponível para o slug (ver
-                                // `_kLottieTestAssets`), senão mantém o PNG
-                                // remoto + fallback de sempre.
-                                child: _GiftVisual(
-                                  gift: widget.gift,
-                                  size: 120,
-                                  fallbackIcon: const Icon(
-                                    Icons.workspace_premium,
-                                    size: 100,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black54,
-                                  borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFD166),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: widget.gift.senderName,
-                                        style: const TextStyle(
-                                          color: Color(0xFFFFD166),
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      const TextSpan(text: ' '),
-                                      TextSpan(
-                                        text: s.livePlayerGiftSentVerb.trim(),
-                                      ),
-                                      const TextSpan(text: ' '),
-                                      TextSpan(
-                                        text: widget.gift.giftName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                      ),
-                                      if (widget.gift.quantity > 1)
-                                        TextSpan(
-                                          text: ' x${widget.gift.quantity}',
-                                          style: const TextStyle(
-                                            color: Color(0xFFFFD166),
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+    // 🎭 Entrada/saída, fundo, camada e háptico vêm da encenação do presente
+    // (padrão: fade 300/400 + escurecer 0.25, tela cheia). O tempo em cena é
+    // `hold_ms` ou a duração dinâmica do backend (6000-12000ms).
+    return GiftStage(
+      presentation: gift.resolvedPresentation,
+      holdMs: gift.resolvedPresentation.holdMs ?? gift.resolvedDurationMs,
+      onDone: onDone,
+      builder: (context, size) {
+        final unit = size.shortestSide.clamp(0.0, 420.0).toDouble();
+        final disc = unit * 0.4;
+        final beam = unit * 1.5;
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: beam,
+              height: beam,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    Color(0xD9FFE08A),
+                    Color(0x66FF6A09),
+                    Color(0x00000000),
                   ],
-                );
-              },
+                  stops: [0.0, 0.5, 1.0],
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
+            Container(
+              width: disc,
+              height: disc,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD166), AppColors.braweEmber],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.6),
+                    blurRadius: 60,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.all(disc * 0.125),
+              // Lottie do painel → imagem do painel → PNG do app.
+              child: _GiftVisual(
+                gift: gift,
+                size: disc * 0.75,
+                fallbackIcon: Icon(
+                  Icons.workspace_premium,
+                  size: disc * 0.6,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -990,164 +853,27 @@ class _PremiumGiftBurstState extends State<_PremiumGiftBurst>
 // Duração dinâmica: 4000-7000ms, vinda do backend via `resolvedDurationMs`.
 // ────────────────────────────────────────────────────────────────────────
 
-class _CenterLargeBurst extends StatefulWidget {
+class _CenterLargeBurst extends StatelessWidget {
   const _CenterLargeBurst({required this.gift, required this.onDone});
   final LiveGift gift;
   final VoidCallback onDone;
 
   @override
-  State<_CenterLargeBurst> createState() => _CenterLargeBurstState();
-}
-
-class _CenterLargeBurstState extends State<_CenterLargeBurst>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-  late final Animation<double> _fade;
-
-  @override
-  void initState() {
-    super.initState();
-    LiveStageFocus.enter();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: widget.gift.resolvedDurationMs),
-    );
-    _scale = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(
-          begin: 0.6,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.elasticOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 55),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.85), weight: 15),
-    ]).animate(_ctrl);
-    _fade = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 12),
-      TweenSequenceItem(tween: ConstantTween(1.0), weight: 73),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 15),
-    ]).animate(_ctrl);
-    _ctrl.forward().then((_) => widget.onDone());
-  }
-
-  @override
-  void dispose() {
-    LiveStageFocus.leave();
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    // 📐 Responsivo (Fase 12): ~55% da largura da tela, com piso/teto
-    // seguros pra não ficar minúsculo em telas pequenas nem gigante em
-    // tablets — atende a faixa conceitual de 40%-75% pedida na
-    // especificação (usamos o meio da faixa como valor confortável).
-    final screenWidth = MediaQuery.of(context).size.width;
-    final visualSize = (screenWidth * 0.55).clamp(220.0, 420.0);
-
-    return IgnorePointer(
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Material(
-          type: MaterialType.transparency,
-          child: DefaultTextStyle(
-            style: const TextStyle(
-              color: Colors.white,
-              decoration: TextDecoration.none,
-            ),
-            child: AnimatedBuilder(
-              animation: _ctrl,
-              builder: (context, _) {
-                return Center(
-                  // Levemente acima do centro geométrico — deixa a metade
-                  // inferior da tela (chat, controles) mais livre, como
-                  // pedido na Fase 5 (TIPO 3): "controles críticos
-                  // continuam acima" / "chat parcialmente visível".
-                  heightFactor: 0.75,
-                  child: Opacity(
-                    opacity: _fade.value,
-                    child: Transform.scale(
-                      scale: _scale.value,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: visualSize,
-                            height: visualSize,
-                            child: _GiftVisual(
-                              gift: widget.gift,
-                              size: visualSize,
-                              fallbackIcon: Icon(
-                                Icons.auto_awesome,
-                                size: visualSize * 0.6,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: AppColors.braweSky,
-                                width: 1.2,
-                              ),
-                            ),
-                            child: RichText(
-                              text: TextSpan(
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: widget.gift.senderName,
-                                    style: const TextStyle(
-                                      color: AppColors.braweSky,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  const TextSpan(text: ' '),
-                                  TextSpan(
-                                    text: s.livePlayerGiftSentVerb.trim(),
-                                  ),
-                                  const TextSpan(text: ' '),
-                                  TextSpan(
-                                    text: widget.gift.giftName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  if (widget.gift.quantity > 1)
-                                    TextSpan(
-                                      text: ' x${widget.gift.quantity}',
-                                      style: const TextStyle(
-                                        color: AppColors.braweSky,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+    // 🎭 Padrão: zoom 450 / fade 350, centro, 70% da largura, sobre o chat.
+    // Tempo em cena = `hold_ms` ou duração dinâmica do backend (4000-7000ms).
+    final pr = gift.resolvedPresentation;
+    return GiftStage(
+      presentation: pr,
+      holdMs: pr.holdMs ?? gift.resolvedDurationMs,
+      onDone: onDone,
+      builder: (context, size) => _GiftVisual(
+        gift: gift,
+        size: size.shortestSide,
+        fallbackIcon: Icon(
+          Icons.auto_awesome,
+          size: size.shortestSide * 0.6,
+          color: Colors.white,
         ),
       ),
     );
@@ -1228,6 +954,8 @@ class _VapGiftEffect extends StatefulWidget {
 
 class _VapGiftEffectState extends State<_VapGiftEffect> {
   late final VapPlayerController _ctrl;
+  late final GiftPresentation _pr;
+  final GlobalKey<GiftStageState> _stageKey = GlobalKey<GiftStageState>();
   StreamSubscription<VapEvent>? _events;
   Timer? _safety;
   bool _ready = false;
@@ -1236,7 +964,7 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
   @override
   void initState() {
     super.initState();
-    LiveStageFocus.enter();
+    _pr = widget.gift.resolvedPresentation;
     _ctrl = VapPlayerController.file(
       widget.file,
       options: VapPlayerOptions(
@@ -1245,10 +973,19 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
       ),
     );
     _events = _ctrl.events.listen((e) {
-      if (e is VapCompletedEvent || e is VapErrorEvent) _finish();
+      if (e is VapCompletedEvent) {
+        _endOfVideo();
+      } else if (e is VapErrorEvent) {
+        _finish();
+      }
     }, onError: (_) => _finish());
+    // Trava de segurança: duração do backend (ou hold_ms) + transições.
+    final hold = _pr.holdMs ?? widget.gift.resolvedDurationMs;
     _safety = Timer(
-      Duration(milliseconds: widget.gift.resolvedDurationMs + 3000),
+      Duration(
+        milliseconds:
+            hold + _pr.enter.effectiveMs + _pr.exit.effectiveMs + 3000,
+      ),
       _finish,
     );
     _start();
@@ -1266,6 +1003,16 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
     }
   }
 
+  /// O vídeo acabou: sai com a transição de saída da encenação.
+  void _endOfVideo() {
+    final stage = _stageKey.currentState;
+    if (stage == null) {
+      _finish();
+    } else {
+      stage.requestExit();
+    }
+  }
+
   void _finish() {
     if (_done) return;
     _done = true;
@@ -1275,7 +1022,6 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
 
   @override
   void dispose() {
-    LiveStageFocus.leave();
     _events?.cancel();
     _safety?.cancel();
     _ctrl.dispose();
@@ -1284,27 +1030,17 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Material(
-          type: MaterialType.transparency,
-          child: DefaultTextStyle(
-            style: const TextStyle(
-              color: Colors.white,
-              decoration: TextDecoration.none,
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Só o efeito: quem enviou aparece na faixa de notícia (ao
-                // lado das metas) e no chat — nada por cima do presente.
-                if (_ready) VapPlayer(_ctrl),
-              ],
-            ),
-          ),
-        ),
-      ),
+    // Só o efeito: quem enviou aparece na faixa de notícia (ao lado das
+    // metas) e no chat — nada por cima do presente. A cena só começa quando
+    // o vídeo está pronto, para a entrada não se perder na inicialização.
+    // Sem `hold_ms` o presente fica até o vídeo terminar, depois sai.
+    if (!_ready) return const SizedBox.shrink();
+    return GiftStage(
+      key: _stageKey,
+      presentation: _pr,
+      holdMs: _pr.holdMs,
+      onDone: _finish,
+      builder: (context, size) => VapPlayer(_ctrl),
     );
   }
 }

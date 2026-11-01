@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'gift_display_type.dart';
+import 'gift_presentation.dart';
 
 part 'live_gift.freezed.dart';
 part 'live_gift.g.dart';
@@ -63,6 +64,9 @@ sealed class LiveGift with _$LiveGift {
     // Flutter reclampa de novo via `resolvedDisplayType.clampDuration()`
     // como defesa em profundidade — nunca confiar só na rede).
     int? animationDurationMs,
+    // 🎭 Encenação por presente (contrato v1) — mapa cru do servidor.
+    // Use [resolvedPresentation]; `null` = padrão do display_type.
+    Map<String, dynamic>? presentation,
   }) = _LiveGift;
 
   factory LiveGift.fromJson(Map<String, dynamic> json) =>
@@ -97,4 +101,22 @@ sealed class LiveGift with _$LiveGift {
   /// resolvido — nunca confia ciegamente no valor da rede.
   int get resolvedDurationMs =>
       resolvedDisplayType.clampDuration(animationDurationMs);
+
+  /// 🎭 Encenação efetiva: receita do servidor sobre o padrão do visual
+  /// (fullscreen e VAP = tela cheia; center_large = zoom central). O háptico
+  /// padrão aproxima o nível: fullscreen forte, center_large médio, resto leve.
+  GiftPresentation get resolvedPresentation {
+    final type = resolvedDisplayType;
+    final isVap = animationType?.toLowerCase() == 'vap';
+    final haptic = switch (type) {
+      GiftDisplayType.fullscreen => GiftHaptic.heavy,
+      GiftDisplayType.centerLarge => GiftHaptic.medium,
+      _ => GiftHaptic.light,
+    };
+    final base = GiftPresentation.defaultsFor(
+      fullscreenLook: isVap || type == GiftDisplayType.fullscreen,
+      haptic: haptic,
+    );
+    return GiftPresentation.parse(presentation, fallback: base);
+  }
 }

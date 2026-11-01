@@ -37,6 +37,7 @@ _LiveGift _$LiveGiftFromJson(Map<String, dynamic> json) => _LiveGift(
   soundEnabled: json['soundEnabled'] as bool? ?? false,
   soundUrl: json['soundUrl'] as String?,
   animationDurationMs: (json['animationDurationMs'] as num?)?.toInt(),
+  presentation: json['presentation'] as Map<String, dynamic>?,
 );
 
 Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
@@ -70,4 +71,5 @@ Map<String, dynamic> _$LiveGiftToJson(_LiveGift instance) => <String, dynamic>{
   'soundEnabled': instance.soundEnabled,
   'soundUrl': instance.soundUrl,
   'animationDurationMs': instance.animationDurationMs,
+  'presentation': instance.presentation,
 };

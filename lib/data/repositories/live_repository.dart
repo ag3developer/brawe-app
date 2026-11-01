@@ -1198,6 +1198,9 @@ class LiveRepository {
       animationDurationMs: int.tryParse(
         payload['animation_duration_ms']?.toString() ?? '',
       ),
+      presentation: payload['presentation'] is Map
+          ? Map<String, dynamic>.from(payload['presentation'] as Map)
+          : null,
     );
   }
 

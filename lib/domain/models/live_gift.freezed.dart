@@ -42,7 +42,9 @@ mixin _$LiveGift {
  String? get soundUrl;// Duração pretendida pelo backend (já validada/clampada lá, mas o
 // Flutter reclampa de novo via `resolvedDisplayType.clampDuration()`
 // como defesa em profundidade — nunca confiar só na rede).
- int? get animationDurationMs;
+ int? get animationDurationMs;// 🎭 Encenação por presente (contrato v1) — mapa cru do servidor.
+// Use [resolvedPresentation]; `null` = padrão do display_type.
+ Map<String, dynamic>? get presentation;
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -55,16 +57,16 @@ $LiveGiftCopyWith<LiveGift> get copyWith => _$LiveGiftCopyWithImpl<LiveGift>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftSlug, giftSlug) || other.giftSlug == giftSlug)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide)&&(identical(other.isAnimating, isAnimating) || other.isAnimating == isAnimating)&&(identical(other.displayType, displayType) || other.displayType == displayType)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.showInChat, showInChat) || other.showInChat == showInChat)&&(identical(other.showSender, showSender) || other.showSender == showSender)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftSlug, giftSlug) || other.giftSlug == giftSlug)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide)&&(identical(other.isAnimating, isAnimating) || other.isAnimating == isAnimating)&&(identical(other.displayType, displayType) || other.displayType == displayType)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.showInChat, showInChat) || other.showInChat == showInChat)&&(identical(other.showSender, showSender) || other.showSender == showSender)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&const DeepCollectionEquality().equals(other.presentation, presentation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftSlug,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide,isAnimating,displayType,priority,showInChat,showSender,soundEnabled,soundUrl,animationDurationMs]);
+int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftSlug,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide,isAnimating,displayType,priority,showInChat,showSender,soundEnabled,soundUrl,animationDurationMs,const DeepCollectionEquality().hash(presentation)]);
 
 @override
 String toString() {
-  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftSlug: $giftSlug, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide, isAnimating: $isAnimating, displayType: $displayType, priority: $priority, showInChat: $showInChat, showSender: $showSender, soundEnabled: $soundEnabled, soundUrl: $soundUrl, animationDurationMs: $animationDurationMs)';
+  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftSlug: $giftSlug, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide, isAnimating: $isAnimating, displayType: $displayType, priority: $priority, showInChat: $showInChat, showSender: $showSender, soundEnabled: $soundEnabled, soundUrl: $soundUrl, animationDurationMs: $animationDurationMs, presentation: $presentation)';
 }
 
 
@@ -75,7 +77,7 @@ abstract mixin class $LiveGiftCopyWith<$Res>  {
   factory $LiveGiftCopyWith(LiveGift value, $Res Function(LiveGift) _then) = _$LiveGiftCopyWithImpl;
 @useResult
 $Res call({
- String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftSlug, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide, bool isAnimating, String? displayType, int? priority, bool showInChat, bool showSender, bool soundEnabled, String? soundUrl, int? animationDurationMs
+ String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftSlug, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide, bool isAnimating, String? displayType, int? priority, bool showInChat, bool showSender, bool soundEnabled, String? soundUrl, int? animationDurationMs, Map<String, dynamic>? presentation
 });
 
 
@@ -92,7 +94,7 @@ class _$LiveGiftCopyWithImpl<$Res>
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftSlug = freezed,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,Object? isAnimating = null,Object? displayType = freezed,Object? priority = freezed,Object? showInChat = null,Object? showSender = null,Object? soundEnabled = null,Object? soundUrl = freezed,Object? animationDurationMs = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftSlug = freezed,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,Object? isAnimating = null,Object? displayType = freezed,Object? priority = freezed,Object? showInChat = null,Object? showSender = null,Object? soundEnabled = null,Object? soundUrl = freezed,Object? animationDurationMs = freezed,Object? presentation = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -124,7 +126,8 @@ as bool,showSender: null == showSender ? _self.showSender : showSender // ignore
 as bool,soundEnabled: null == soundEnabled ? _self.soundEnabled : soundEnabled // ignore: cast_nullable_to_non_nullable
 as bool,soundUrl: freezed == soundUrl ? _self.soundUrl : soundUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationDurationMs: freezed == animationDurationMs ? _self.animationDurationMs : animationDurationMs // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,presentation: freezed == presentation ? _self.presentation : presentation // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,
   ));
 }
 
@@ -206,10 +209,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs,  Map<String, dynamic>? presentation)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _LiveGift() when $default != null:
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs);case _:
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs,_that.presentation);case _:
   return orElse();
 
 }
@@ -227,10 +230,10 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs,  Map<String, dynamic>? presentation)  $default,) {final _that = this;
 switch (_that) {
 case _LiveGift():
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs);}
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs,_that.presentation);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -244,10 +247,10 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String senderId,  String senderName,  String? senderAvatarUrl,  String giftId,  String giftName,  String? giftSlug,  String? giftIconUrl,  String? animationUrl,  String? animationType,  bool isFullscreen,  String? emoji,  int quantity,  int value,  DateTime timestamp,  int gifterLevel,  String? gifterBadge,  String? gifterLabel,  String? gifterColor,  String? gifterImageUrl,  bool levelUpgraded,  String? battleSide,  bool isAnimating,  String? displayType,  int? priority,  bool showInChat,  bool showSender,  bool soundEnabled,  String? soundUrl,  int? animationDurationMs,  Map<String, dynamic>? presentation)?  $default,) {final _that = this;
 switch (_that) {
 case _LiveGift() when $default != null:
-return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs);case _:
+return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_that.giftId,_that.giftName,_that.giftSlug,_that.giftIconUrl,_that.animationUrl,_that.animationType,_that.isFullscreen,_that.emoji,_that.quantity,_that.value,_that.timestamp,_that.gifterLevel,_that.gifterBadge,_that.gifterLabel,_that.gifterColor,_that.gifterImageUrl,_that.levelUpgraded,_that.battleSide,_that.isAnimating,_that.displayType,_that.priority,_that.showInChat,_that.showSender,_that.soundEnabled,_that.soundUrl,_that.animationDurationMs,_that.presentation);case _:
   return null;
 
 }
@@ -259,7 +262,7 @@ return $default(_that.id,_that.senderId,_that.senderName,_that.senderAvatarUrl,_
 @JsonSerializable()
 
 class _LiveGift extends LiveGift {
-  const _LiveGift({required this.id, required this.senderId, required this.senderName, this.senderAvatarUrl, required this.giftId, required this.giftName, this.giftSlug, this.giftIconUrl, this.animationUrl, this.animationType, this.isFullscreen = false, this.emoji, required this.quantity, this.value = 0, required this.timestamp, this.gifterLevel = 1, this.gifterBadge, this.gifterLabel, this.gifterColor, this.gifterImageUrl, this.levelUpgraded = false, this.battleSide, this.isAnimating = true, this.displayType, this.priority, this.showInChat = true, this.showSender = true, this.soundEnabled = false, this.soundUrl, this.animationDurationMs}): super._();
+  const _LiveGift({required this.id, required this.senderId, required this.senderName, this.senderAvatarUrl, required this.giftId, required this.giftName, this.giftSlug, this.giftIconUrl, this.animationUrl, this.animationType, this.isFullscreen = false, this.emoji, required this.quantity, this.value = 0, required this.timestamp, this.gifterLevel = 1, this.gifterBadge, this.gifterLabel, this.gifterColor, this.gifterImageUrl, this.levelUpgraded = false, this.battleSide, this.isAnimating = true, this.displayType, this.priority, this.showInChat = true, this.showSender = true, this.soundEnabled = false, this.soundUrl, this.animationDurationMs, final  Map<String, dynamic>? presentation}): _presentation = presentation,super._();
   factory _LiveGift.fromJson(Map<String, dynamic> json) => _$LiveGiftFromJson(json);
 
 @override final  String id;
@@ -319,6 +322,19 @@ class _LiveGift extends LiveGift {
 // Flutter reclampa de novo via `resolvedDisplayType.clampDuration()`
 // como defesa em profundidade — nunca confiar só na rede).
 @override final  int? animationDurationMs;
+// 🎭 Encenação por presente (contrato v1) — mapa cru do servidor.
+// Use [resolvedPresentation]; `null` = padrão do display_type.
+ final  Map<String, dynamic>? _presentation;
+// 🎭 Encenação por presente (contrato v1) — mapa cru do servidor.
+// Use [resolvedPresentation]; `null` = padrão do display_type.
+@override Map<String, dynamic>? get presentation {
+  final value = _presentation;
+  if (value == null) return null;
+  if (_presentation is EqualUnmodifiableMapView) return _presentation;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(value);
+}
+
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
@@ -333,16 +349,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftSlug, giftSlug) || other.giftSlug == giftSlug)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide)&&(identical(other.isAnimating, isAnimating) || other.isAnimating == isAnimating)&&(identical(other.displayType, displayType) || other.displayType == displayType)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.showInChat, showInChat) || other.showInChat == showInChat)&&(identical(other.showSender, showSender) || other.showSender == showSender)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _LiveGift&&(identical(other.id, id) || other.id == id)&&(identical(other.senderId, senderId) || other.senderId == senderId)&&(identical(other.senderName, senderName) || other.senderName == senderName)&&(identical(other.senderAvatarUrl, senderAvatarUrl) || other.senderAvatarUrl == senderAvatarUrl)&&(identical(other.giftId, giftId) || other.giftId == giftId)&&(identical(other.giftName, giftName) || other.giftName == giftName)&&(identical(other.giftSlug, giftSlug) || other.giftSlug == giftSlug)&&(identical(other.giftIconUrl, giftIconUrl) || other.giftIconUrl == giftIconUrl)&&(identical(other.animationUrl, animationUrl) || other.animationUrl == animationUrl)&&(identical(other.animationType, animationType) || other.animationType == animationType)&&(identical(other.isFullscreen, isFullscreen) || other.isFullscreen == isFullscreen)&&(identical(other.emoji, emoji) || other.emoji == emoji)&&(identical(other.quantity, quantity) || other.quantity == quantity)&&(identical(other.value, value) || other.value == value)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.gifterLevel, gifterLevel) || other.gifterLevel == gifterLevel)&&(identical(other.gifterBadge, gifterBadge) || other.gifterBadge == gifterBadge)&&(identical(other.gifterLabel, gifterLabel) || other.gifterLabel == gifterLabel)&&(identical(other.gifterColor, gifterColor) || other.gifterColor == gifterColor)&&(identical(other.gifterImageUrl, gifterImageUrl) || other.gifterImageUrl == gifterImageUrl)&&(identical(other.levelUpgraded, levelUpgraded) || other.levelUpgraded == levelUpgraded)&&(identical(other.battleSide, battleSide) || other.battleSide == battleSide)&&(identical(other.isAnimating, isAnimating) || other.isAnimating == isAnimating)&&(identical(other.displayType, displayType) || other.displayType == displayType)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.showInChat, showInChat) || other.showInChat == showInChat)&&(identical(other.showSender, showSender) || other.showSender == showSender)&&(identical(other.soundEnabled, soundEnabled) || other.soundEnabled == soundEnabled)&&(identical(other.soundUrl, soundUrl) || other.soundUrl == soundUrl)&&(identical(other.animationDurationMs, animationDurationMs) || other.animationDurationMs == animationDurationMs)&&const DeepCollectionEquality().equals(other._presentation, _presentation));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftSlug,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide,isAnimating,displayType,priority,showInChat,showSender,soundEnabled,soundUrl,animationDurationMs]);
+int get hashCode => Object.hashAll([runtimeType,id,senderId,senderName,senderAvatarUrl,giftId,giftName,giftSlug,giftIconUrl,animationUrl,animationType,isFullscreen,emoji,quantity,value,timestamp,gifterLevel,gifterBadge,gifterLabel,gifterColor,gifterImageUrl,levelUpgraded,battleSide,isAnimating,displayType,priority,showInChat,showSender,soundEnabled,soundUrl,animationDurationMs,const DeepCollectionEquality().hash(_presentation)]);
 
 @override
 String toString() {
-  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftSlug: $giftSlug, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide, isAnimating: $isAnimating, displayType: $displayType, priority: $priority, showInChat: $showInChat, showSender: $showSender, soundEnabled: $soundEnabled, soundUrl: $soundUrl, animationDurationMs: $animationDurationMs)';
+  return 'LiveGift(id: $id, senderId: $senderId, senderName: $senderName, senderAvatarUrl: $senderAvatarUrl, giftId: $giftId, giftName: $giftName, giftSlug: $giftSlug, giftIconUrl: $giftIconUrl, animationUrl: $animationUrl, animationType: $animationType, isFullscreen: $isFullscreen, emoji: $emoji, quantity: $quantity, value: $value, timestamp: $timestamp, gifterLevel: $gifterLevel, gifterBadge: $gifterBadge, gifterLabel: $gifterLabel, gifterColor: $gifterColor, gifterImageUrl: $gifterImageUrl, levelUpgraded: $levelUpgraded, battleSide: $battleSide, isAnimating: $isAnimating, displayType: $displayType, priority: $priority, showInChat: $showInChat, showSender: $showSender, soundEnabled: $soundEnabled, soundUrl: $soundUrl, animationDurationMs: $animationDurationMs, presentation: $presentation)';
 }
 
 
@@ -353,7 +369,7 @@ abstract mixin class _$LiveGiftCopyWith<$Res> implements $LiveGiftCopyWith<$Res>
   factory _$LiveGiftCopyWith(_LiveGift value, $Res Function(_LiveGift) _then) = __$LiveGiftCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftSlug, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide, bool isAnimating, String? displayType, int? priority, bool showInChat, bool showSender, bool soundEnabled, String? soundUrl, int? animationDurationMs
+ String id, String senderId, String senderName, String? senderAvatarUrl, String giftId, String giftName, String? giftSlug, String? giftIconUrl, String? animationUrl, String? animationType, bool isFullscreen, String? emoji, int quantity, int value, DateTime timestamp, int gifterLevel, String? gifterBadge, String? gifterLabel, String? gifterColor, String? gifterImageUrl, bool levelUpgraded, String? battleSide, bool isAnimating, String? displayType, int? priority, bool showInChat, bool showSender, bool soundEnabled, String? soundUrl, int? animationDurationMs, Map<String, dynamic>? presentation
 });
 
 
@@ -370,7 +386,7 @@ class __$LiveGiftCopyWithImpl<$Res>
 
 /// Create a copy of LiveGift
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftSlug = freezed,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,Object? isAnimating = null,Object? displayType = freezed,Object? priority = freezed,Object? showInChat = null,Object? showSender = null,Object? soundEnabled = null,Object? soundUrl = freezed,Object? animationDurationMs = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? senderId = null,Object? senderName = null,Object? senderAvatarUrl = freezed,Object? giftId = null,Object? giftName = null,Object? giftSlug = freezed,Object? giftIconUrl = freezed,Object? animationUrl = freezed,Object? animationType = freezed,Object? isFullscreen = null,Object? emoji = freezed,Object? quantity = null,Object? value = null,Object? timestamp = null,Object? gifterLevel = null,Object? gifterBadge = freezed,Object? gifterLabel = freezed,Object? gifterColor = freezed,Object? gifterImageUrl = freezed,Object? levelUpgraded = null,Object? battleSide = freezed,Object? isAnimating = null,Object? displayType = freezed,Object? priority = freezed,Object? showInChat = null,Object? showSender = null,Object? soundEnabled = null,Object? soundUrl = freezed,Object? animationDurationMs = freezed,Object? presentation = freezed,}) {
   return _then(_LiveGift(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,senderId: null == senderId ? _self.senderId : senderId // ignore: cast_nullable_to_non_nullable
@@ -402,7 +418,8 @@ as bool,showSender: null == showSender ? _self.showSender : showSender // ignore
 as bool,soundEnabled: null == soundEnabled ? _self.soundEnabled : soundEnabled // ignore: cast_nullable_to_non_nullable
 as bool,soundUrl: freezed == soundUrl ? _self.soundUrl : soundUrl // ignore: cast_nullable_to_non_nullable
 as String?,animationDurationMs: freezed == animationDurationMs ? _self.animationDurationMs : animationDurationMs // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,presentation: freezed == presentation ? _self._presentation : presentation // ignore: cast_nullable_to_non_nullable
+as Map<String, dynamic>?,
   ));
 }
 
