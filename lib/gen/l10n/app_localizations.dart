@@ -10358,6 +10358,18 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Sem sinal do criador no momento.\nTentando de novo…'**
   String get liveWaitingSignal;
+
+  /// No description provided for @commentsHintAddMention.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar comentário... use @ para marcar'**
+  String get commentsHintAddMention;
+
+  /// No description provided for @commentsMentionFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get commentsMentionFollowing;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

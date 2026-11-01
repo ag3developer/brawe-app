@@ -2288,10 +2288,12 @@ class _CreatorChatInput extends StatelessWidget {
       children: [
         Expanded(
           child: Container(
+            // Mesmo padrão do campo do espectador (LiveBottomBar): véu
+            // escuro leve + borda branca suave.
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              color: Colors.black.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
             ),
             child: TextField(
               controller: controller,
@@ -2305,8 +2307,13 @@ class _CreatorChatInput extends StatelessWidget {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
+                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+                // Sem isso o campo herdava o tema global (fundo cinza
+                // preenchido + borda azul ao focar).
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
                 counterText: '',
                 contentPadding: const EdgeInsets.symmetric(

@@ -227,8 +227,11 @@ class StreamerQuickSheet extends StatelessWidget {
                         label: 'Ver perfil',
                         filled: false,
                         onTap: () {
+                          // Roteador capturado ANTES de fechar a gaveta (o
+                          // contexto dela morre no pop).
+                          final router = GoRouter.of(context);
                           Navigator.of(context).pop();
-                          context.push('/profile/${room.streamerId}');
+                          router.push('/people/${room.streamerId}');
                         },
                       ),
                     ),

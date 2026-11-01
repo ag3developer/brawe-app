@@ -3034,5 +3034,7 @@
   "liveOwnEndConfirmBody": "A live termina para todos, inclusive no outro aparelho.",
   "liveOwnEnded": "Live encerrada",
   "liveOwnEndError": "Não foi possível encerrar a live",
-  "liveWaitingSignal": "Sem sinal do criador no momento.\nTentando de novo…"
+  "liveWaitingSignal": "Sem sinal do criador no momento.\nTentando de novo…",
+  "commentsHintAddMention": "Adicionar comentário... use @ para marcar",
+  "commentsMentionFollowing": "Seguindo"
 }

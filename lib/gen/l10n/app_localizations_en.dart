@@ -5717,4 +5717,10 @@ class SEn extends S {
   @override
   String get liveWaitingSignal =>
       'No signal from the creator right now.\nTrying again…';
+
+  @override
+  String get commentsHintAddMention => 'Add a comment... use @ to tag';
+
+  @override
+  String get commentsMentionFollowing => 'Following';
 }

@@ -591,6 +591,17 @@ GoRouter router(Ref ref) {
           return const ForceDarkTheme(child: StartLiveScreen());
         },
       ),
+      // Perfil em tela cheia, no mesmo nível da live: abrir um perfil de
+      // dentro da live por `/profile/:id` (que vive no Shell com a barra de
+      // baixo) dava tela preta. Telas de tela cheia usam esta rota.
+      GoRoute(
+        path: '/people/:userId',
+        builder: (context, state) {
+          var userId = state.pathParameters['userId']!;
+          if (userId.startsWith('@')) userId = userId.substring(1);
+          return ProfileScreen(userId: userId);
+        },
+      ),
       GoRoute(
         path: '/live/:roomId',
         builder: (context, state) {

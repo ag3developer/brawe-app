@@ -69,6 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final state = ref.watch(loginViewModelProvider);
     final notifier = ref.read(loginViewModelProvider.notifier);
     final colors = context.colors;
+    final compact = MediaQuery.sizeOf(context).height < 760;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -99,7 +100,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 52),
+                      // Celular baixo (SE, mini): espaços menores para o
+                      // botão Entrar caber acima do teclado.
+                      SizedBox(height: compact ? 20 : 52),
 
                       // ── Logo + Título ────────────────────────────────────
                       // Widget de marca reutilizável, consistente com o
@@ -110,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         s.authWelcomeBackTitle,
                         style: TextStyle(
                           color: colors.textPrimary,
-                          fontSize: 34,
+                          fontSize: compact ? 28 : 34,
                           fontWeight: FontWeight.w700,
                           height: 1.1,
                           letterSpacing: -0.8,
@@ -126,13 +129,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 48),
+                      SizedBox(height: compact ? 24 : 48),
 
                       // ── Campos ───────────────────────────────────────────
                       AuthInputField(
                         controller: _emailController,
                         label: s.authEmailLabel,
-                        hintText: s.authEmailHint,
+                        hintText: '',
                         keyboardType: TextInputType.emailAddress,
                         onChanged: notifier.updateEmail,
                       ),

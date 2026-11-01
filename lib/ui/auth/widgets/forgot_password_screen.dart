@@ -100,7 +100,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     AuthInputField(
                       controller: _emailController,
                       label: s.forgotEmailLabel,
-                      hintText: s.forgotEmailHint,
+                      hintText: '',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.mail_outline,
                       onChanged: (_) {},

@@ -811,7 +811,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         });
       case ChatUserAction.viewProfile:
         if (comment.userId.isNotEmpty) {
-          context.push('/profile/${comment.userId}');
+          context.push('/people/${comment.userId}');
         }
     }
   }

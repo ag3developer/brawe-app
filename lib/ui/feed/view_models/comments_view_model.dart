@@ -42,8 +42,18 @@ class CommentsViewModel extends _$CommentsViewModel {
   }
 
   Future<void> toggleLike(PostComment comment) async {
-    final repo = ref.read(commentRepositoryProvider);
-    await repo.toggleLike(comment.id, comment.userLiked);
+    // Otimista: o coração muda na hora; se o servidor falhar, volta.
+    final before = state.value;
+    _applyLike(comment);
+    try {
+      await ref.read(commentRepositoryProvider).toggleLike(comment.id, comment.userLiked);
+    } catch (_) {
+      if (before != null) state = AsyncData(before);
+    }
+  }
+
+  void _applyLike(PostComment comment) {
+    if (state.value == null) return;
     state = AsyncData(state.value!.map((c) {
       if (c.id == comment.id) {
         return PostComment(

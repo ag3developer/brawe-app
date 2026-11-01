@@ -8,7 +8,6 @@ import '../../../../../data/repositories/social_repository.dart';
 import '../../../../../data/services/feedback_service.dart';
 import '../../../../../domain/models/feed_item.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
-import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../feed/widgets/comments_sheet.dart';
 import '../../../../feed/widgets/share_to_chat_sheet.dart';
 import '../../../../feed/widgets/reactions_bar.dart';
@@ -133,8 +132,9 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       isScrollControlled: true,
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          ForceDarkTheme(child: CommentsSheet(postId: widget.item.id)),
+      // Tema do app (claro/escuro), como a gaveta de compartilhar — não o
+      // escuro forçado do vídeo atrás.
+      builder: (_) => CommentsSheet(postId: widget.item.id),
     );
   }
 

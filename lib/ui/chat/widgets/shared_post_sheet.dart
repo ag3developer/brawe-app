@@ -195,7 +195,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
   void _openAuthor(Post post) {
     final router = GoRouter.of(context);
     final nav = Navigator.of(context);
-    router.push('/profile/${post.author.id}');
+    router.push('/people/${post.author.id}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (nav.canPop()) nav.pop();
     });

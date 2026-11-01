@@ -5742,4 +5742,11 @@ class SPt extends S {
   @override
   String get liveWaitingSignal =>
       'Sem sinal do criador no momento.\nTentando de novo…';
+
+  @override
+  String get commentsHintAddMention =>
+      'Adicionar comentário... use @ para marcar';
+
+  @override
+  String get commentsMentionFollowing => 'Seguindo';
 }

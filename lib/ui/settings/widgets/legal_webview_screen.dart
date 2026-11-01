@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
 /// Tela in-app para exibir páginas legais (Termos, Privacidade, FAQ).
@@ -19,6 +20,24 @@ class LegalWebViewScreen extends StatefulWidget {
   final String url;
   final String title;
 
+  /// Termos ou Privacidade DENTRO do app, no idioma do usuário (pt/en/es),
+  /// em modo embutido (sem o cabeçalho do site).
+  static Future<void> openLegal(BuildContext context, {required bool privacy}) {
+    final s = S.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final locale = const {'pt', 'en', 'es'}.contains(lang) ? lang : 'en';
+    final doc = privacy ? 'privacy' : 'terms';
+    return Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => LegalWebViewScreen(
+          url: '${AppConstants.legalBaseUrl}/$locale/$doc?embed=1',
+          title: privacy ? s.settingsPrivacyPolicy : s.settingsTermsOfUse,
+        ),
+      ),
+    );
+  }
+
   @override
   State<LegalWebViewScreen> createState() => _LegalWebViewScreenState();
 }
@@ -33,7 +52,6 @@ class _LegalWebViewScreenState extends State<LegalWebViewScreen> {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Theme.of(context).scaffoldBackgroundColor)
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) {
@@ -55,6 +73,18 @@ class _LegalWebViewScreenState extends State<LegalWebViewScreen> {
         ),
       )
       ..loadRequest(Uri.parse(widget.url));
+  }
+
+  bool _bgSet = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Tema só pode ser lido depois do initState.
+    if (!_bgSet) {
+      _bgSet = true;
+      _controller.setBackgroundColor(Theme.of(context).scaffoldBackgroundColor);
+    }
   }
 
   Future<void> _openExternal() async {

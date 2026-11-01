@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/ui/app_spacing.dart';
@@ -146,6 +147,17 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
     final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
     final navigator = Navigator.of(context);
     final reason = widget.battleId != null ? 'battle' : 'gift';
+
+    // Vibração proporcional ao presente: quem envia "sente" o envio.
+    switch (gift.tier.toLowerCase()) {
+      case 'luxury':
+      case 'legendary':
+        HapticFeedback.heavyImpact();
+      case 'premium':
+        HapticFeedback.mediumImpact();
+      default:
+        HapticFeedback.lightImpact();
+    }
 
     // ── POP OTIMISTA: fecha a tela imediatamente ──
     // A animação do gift dispara via socket assim que o backend processa —
@@ -906,6 +918,25 @@ class _GiftIcon extends StatelessWidget {
     // O asset 3.0x tem 768px (pensado pra animação grande); na sacola
     // decodifica só no tamanho do tile pra não pesar na memória.
     final cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    // Imagem subida no painel (URL absoluta) vence o PNG antigo do app.
+    final url = gift.iconUrl?.trim() ?? '';
+    if (url.startsWith('http') && !url.contains('/gifts/v1/')) {
+      return Image.network(
+        url,
+        width: size,
+        height: size,
+        cacheWidth: cachePx,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => Image.asset(
+          assetPath,
+          width: size,
+          height: size,
+          cacheWidth: cachePx,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => _fallback(),
+        ),
+      );
+    }
     return Image.asset(
       assetPath,
       width: size,

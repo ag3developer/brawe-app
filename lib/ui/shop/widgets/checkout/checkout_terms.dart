@@ -1,10 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/constants/app_constants.dart';
 import '../../../core/themes/brawe_colors.dart';
 import '../../../../gen/l10n/app_localizations.dart';
+import '../../../settings/widgets/legal_webview_screen.dart';
 
 /// Small, clickable terms/privacy notice shown near the bottom of
 /// checkout. Reuses the same `AppConstants.termsUrl`/`privacyUrl` pattern
@@ -24,9 +23,9 @@ class _CheckoutTermsState extends State<CheckoutTerms> {
   void initState() {
     super.initState();
     _termsTap = TapGestureRecognizer()
-      ..onTap = () => _open(AppConstants.termsUrl);
+      ..onTap = () => LegalWebViewScreen.openLegal(context, privacy: false);
     _privacyTap = TapGestureRecognizer()
-      ..onTap = () => _open(AppConstants.privacyUrl);
+      ..onTap = () => LegalWebViewScreen.openLegal(context, privacy: true);
   }
 
   @override
@@ -34,17 +33,6 @@ class _CheckoutTermsState extends State<CheckoutTerms> {
     _termsTap.dispose();
     _privacyTap.dispose();
     super.dispose();
-  }
-
-  Future<void> _open(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).signupCantOpenUrl(url))),
-        );
-      }
-    }
   }
 
   @override

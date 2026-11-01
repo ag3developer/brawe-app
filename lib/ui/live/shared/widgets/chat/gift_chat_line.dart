@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/models/live_gift.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
+import '../../../../core/widgets/gift_icon.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart'
     show GiftChatPart;
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -18,27 +19,6 @@ class GiftChatLine extends StatelessWidget {
 
   /// Presentes diferentes da mesma pessoa numa linha só (rajada).
   final List<GiftChatPart>? parts;
-
-  /// 🎁 Emoji de fallback por nome do presente — usado quando não há
-  /// `giftIconUrl` (ou falha o load), pra não cair no ícone genérico
-  /// de "caixinha" (Icons.card_giftcard) que não representa o presente.
-  /// Espelha `_giftEmoji` de `gift_animation_overlay.dart`.
-  static String _giftEmoji(String giftName) {
-    final n = giftName.toLowerCase();
-    if (n.contains('rose') || n.contains('rosa')) return '🌹';
-    if (n.contains('heart') || n.contains('coração')) return '❤️';
-    if (n.contains('star') || n.contains('estrela')) return '⭐';
-    if (n.contains('fire') || n.contains('fogo')) return '🔥';
-    if (n.contains('crown') || n.contains('coroa')) return '👑';
-    if (n.contains('diamond') || n.contains('diamante')) return '💎';
-    if (n.contains('kiss') || n.contains('beijo')) return '💋';
-    if (n.contains('money') || n.contains('dinheiro')) return '💰';
-    if (n.contains('unicorn') || n.contains('unicórnio')) return '🦄';
-    if (n.contains('rocket') || n.contains('foguete')) return '🚀';
-    if (n.contains('bomb') || n.contains('bomba')) return '💣';
-    if (n.contains('butterfly') || n.contains('borboleta')) return '🦋';
-    return '🎁';
-  }
 
   /// " 50× [ícone] Rosa + 1× [ícone] Dragão"
   List<InlineSpan> _partSpans(BuildContext context, List<GiftChatPart> parts) {
@@ -58,28 +38,7 @@ class GiftChatLine extends StatelessWidget {
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: p.iconUrl != null && p.iconUrl!.isNotEmpty
-                ? Image.network(
-                    p.iconUrl!,
-                    cacheWidth: context.decodePx(16),
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Center(
-                      child: Text(
-                        _giftEmoji(p.giftName),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                  )
-                : Center(
-                    child: Text(
-                      _giftEmoji(p.giftName),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-          ),
+          child: GiftIcon(slug: p.key, tier: '', iconUrl: p.iconUrl, size: 20),
         ),
       );
       spans.add(TextSpan(text: ' ${p.giftName}', style: gold));
@@ -191,34 +150,14 @@ class GiftChatLine extends StatelessWidget {
                   ),
                   if (parts == null || parts!.length <= 1) ...[
                     const SizedBox(width: 6),
-                    // Ícone do gift (pequeno) — emoji correspondente ao
-                    // presente como fallback (nunca a caixinha genérica).
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child:
-                          gift.giftIconUrl != null &&
-                              gift.giftIconUrl!.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(3),
-                              child: Image.network(
-                                cacheWidth: context.decodePx(18),
-                                gift.giftIconUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Center(
-                                  child: Text(
-                                    _giftEmoji(gift.giftName),
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Text(
-                                _giftEmoji(gift.giftName),
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                            ),
+                    // Imagem do presente guardada no app (por slug) →
+                    // servidor → genérico. Antes vinha só do servidor (que
+                    // falha) e caía num emoji minúsculo.
+                    GiftIcon(
+                      slug: gift.giftSlug ?? '',
+                      tier: '',
+                      iconUrl: gift.giftIconUrl,
+                      size: 22,
                     ),
                     // Quantidade se > 1
                     if (gift.quantity > 1) ...[

@@ -33,13 +33,20 @@ class GiftIcon extends StatelessWidget {
   /// Possíveis caminhos de asset local — backend pode retornar `mini_crown`
   /// enquanto o arquivo é `mini-crown.png` (e vice-versa); tier pode vir como
   /// `PREMIUM` (enum) ou `premium` (folder name).
+  /// Tier vazio (ex.: presente que chegou pelo socket sem categoria):
+  /// procura a imagem em todas as pastas.
+  static const _allTiers = ['basic', 'free', 'premium', 'luxury', 'legendary'];
+
   List<String> get _assetCandidates {
     final tierLower = tier.toLowerCase();
+    final tiers = tierLower.isEmpty ? _allTiers : [tierLower];
     final slugKebab = slug.toLowerCase().replaceAll('_', '-');
     final slugSnake = slug.toLowerCase().replaceAll('-', '_');
     final slugs = {slug.toLowerCase(), slugKebab, slugSnake};
+    if (slug.trim().isEmpty) return const [];
     return [
-      for (final s in slugs) 'assets/images/gifts/$tierLower/$s.png',
+      for (final t in tiers)
+        for (final s in slugs) 'assets/images/gifts/$t/$s.png',
     ];
   }
 
@@ -57,6 +64,18 @@ class GiftIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     // Decodifica no tamanho exibido (o asset 3.0x tem 768px).
     final cachePx = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    // Imagem subida no painel (URL absoluta) vence o PNG antigo do app.
+    final url = iconUrl?.trim() ?? '';
+    if (url.startsWith('http') && !url.contains('/gifts/v1/')) {
+      return Image.network(
+        url,
+        width: size,
+        height: size,
+        cacheWidth: cachePx,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => _buildAssetChain(_assetCandidates, 0, cachePx),
+      );
+    }
     return _buildAssetChain(_assetCandidates, 0, cachePx);
   }
 

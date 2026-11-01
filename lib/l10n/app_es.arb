@@ -2569,5 +2569,7 @@
   "liveOwnEndConfirmBody": "El live termina para todos, incluso en el otro dispositivo.",
   "liveOwnEnded": "Live finalizado",
   "liveOwnEndError": "No se pudo finalizar el live",
-  "liveWaitingSignal": "Sin señal del creador por ahora.\nIntentando de nuevo…"
+  "liveWaitingSignal": "Sin señal del creador por ahora.\nIntentando de nuevo…",
+  "commentsHintAddMention": "Agregar comentario... usa @ para etiquetar",
+  "commentsMentionFollowing": "Siguiendo"
 }

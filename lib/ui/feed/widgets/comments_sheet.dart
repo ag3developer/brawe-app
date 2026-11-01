@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../data/services/comment_service.dart';
 import '../../../domain/models/post_comment.dart';
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -35,8 +38,61 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   /// rolar até o topo depois de enviar — o comentário novo entra no topo.
   ScrollController? _listController;
 
+  // ── Marcar alguém (@) ──
+  // Ao digitar "@nome" aparecem sugestões (quem eu sigo primeiro); tocar
+  // troca o trecho por "@username " — quem foi marcado recebe um aviso.
+  static final _mentionAtCursor = RegExp(r'@([A-Za-z0-9_.]{1,30})$');
+  List<Map<String, dynamic>> _mentions = const [];
+  Timer? _mentionDebounce;
+  String? _mentionQuery;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    final sel = _controller.selection;
+    final upTo = sel.isValid && sel.baseOffset >= 0
+        ? _controller.text.substring(0, sel.baseOffset)
+        : _controller.text;
+    final m = _mentionAtCursor.firstMatch(upTo);
+    final q = m?.group(1);
+    if (q == _mentionQuery) return;
+    _mentionQuery = q;
+    _mentionDebounce?.cancel();
+    if (q == null) {
+      if (_mentions.isNotEmpty) setState(() => _mentions = const []);
+      return;
+    }
+    _mentionDebounce = Timer(const Duration(milliseconds: 220), () async {
+      try {
+        final res = await ref.read(commentServiceProvider).searchMentions(q);
+        if (mounted && _mentionQuery == q) setState(() => _mentions = res);
+      } catch (_) {}
+    });
+  }
+
+  void _pickMention(String username) {
+    final text = _controller.text;
+    final cursor = _controller.selection.baseOffset < 0 ? text.length : _controller.selection.baseOffset;
+    final before = text.substring(0, cursor);
+    final start = before.lastIndexOf('@');
+    if (start < 0) return;
+    final insert = '@$username ';
+    final next = text.replaceRange(start, cursor, insert);
+    _controller.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: start + insert.length),
+    );
+    setState(() => _mentions = const []);
+  }
+
   @override
   void dispose() {
+    _mentionDebounce?.cancel();
+    _controller.removeListener(_onTextChanged);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -240,6 +296,70 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     ),
                   ),
 
+                // Sugestões de @ (acima do campo)
+                if (_mentions.isNotEmpty)
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceElevated,
+                      border: Border(top: BorderSide(color: context.colors.divider)),
+                    ),
+                    child: ListView(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      children: [
+                        for (final u in _mentions)
+                          InkWell(
+                            onTap: () => _pickMention(u['username']?.toString() ?? ''),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: context.colors.surfaceHighest,
+                                    backgroundImage: (u['avatar_url']?.toString().isNotEmpty ?? false)
+                                        ? NetworkImage(u['avatar_url'].toString())
+                                        : null,
+                                    child: (u['avatar_url']?.toString().isNotEmpty ?? false)
+                                        ? null
+                                        : Icon(Icons.person, size: 16, color: context.colors.textSecondary),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          u['display_name']?.toString() ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: context.colors.textPrimary,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          '@${u['username'] ?? ''}',
+                                          style: TextStyle(color: context.colors.textSecondary, fontSize: 12.5),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (u['follows'] == true)
+                                    Text(
+                                      s.commentsMentionFollowing,
+                                      style: TextStyle(color: context.colors.textTertiary, fontSize: 11.5),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
                 // Input
                 Container(
                   padding: EdgeInsets.fromLTRB(
@@ -273,7 +393,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           decoration: InputDecoration(
                             hintText: _replyingTo != null
                                 ? s.commentsHintReply
-                                : s.commentsHintAdd,
+                                : s.commentsHintAddMention,
                             hintStyle: TextStyle(
                               color: context.colors.textSecondary,
                               fontSize: 14,

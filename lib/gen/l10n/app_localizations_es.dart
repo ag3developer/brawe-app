@@ -5744,4 +5744,11 @@ class SEs extends S {
   @override
   String get liveWaitingSignal =>
       'Sin señal del creador por ahora.\nIntentando de nuevo…';
+
+  @override
+  String get commentsHintAddMention =>
+      'Agregar comentario... usa @ para etiquetar';
+
+  @override
+  String get commentsMentionFollowing => 'Siguiendo';
 }

@@ -19,14 +19,6 @@ import '../level_chip.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
-/// 🧪 TESTE (Fase de validação Lottie): slugs que têm asset Lottie local
-/// disponível em `assets/lottie_test/<slug>.json`. Fora desta lista, o
-/// comportamento é IDENTICO ao anterior (Image.network do ícone PNG).
-/// Isolado de propósito para não afetar nenhum outro presente existente.
-const Map<String, String> _kLottieTestAssets = {
-  'star': 'assets/lottie_test/estrela.json',
-};
-
 /// 🖼️ Mapa slug → tier, usado para localizar o PNG local em
 /// `assets/images/gifts/<tier>/<slug>.png` (mesmo pacote de assets já
 /// usado pela sacola de presentes em `GiftsOverlay`/`_GiftIcon`).
@@ -85,22 +77,8 @@ class _GiftVisual extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slug = gift.giftSlug;
-    final lottiePath = slug != null ? _kLottieTestAssets[slug] : null;
 
-    // Lottie local de teste tem prioridade absoluta (independe do
-    // animationType vindo do backend — é um asset já embutido no app).
-    if (lottiePath != null) {
-      return Lottie.asset(
-        lottiePath,
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
-        repeat: false,
-        errorBuilder: (_, __, ___) => _networkOrFallback(context),
-      );
-    }
-
-    // 🎬 Lottie do servidor: do arquivo já baixado (prefetch ao entrar na
+    // 🎬 Lottie do servidor (subido no painel) — prioridade máxima: do arquivo já baixado (prefetch ao entrar na
     // live) ou, se ainda não chegou, direto da rede.
     final remoteLottie = gift.animationType?.toLowerCase() == 'lottie'
         ? gift.animationUrl
@@ -141,6 +119,23 @@ class _GiftVisual extends StatelessWidget {
       );
     }
 
+    // 🖼️ Imagem subida no painel (URL absoluta do CDN) vence o PNG antigo
+    // embutido no app — senão trocar a imagem no painel não mudava nada.
+    final icon = gift.giftIconUrl?.trim() ?? '';
+    if (icon.startsWith('http') && !icon.contains('/gifts/v1/')) {
+      return Image.network(
+        icon,
+        cacheWidth: context.decodePx(size),
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => _assetOrFallback(context, slug),
+      );
+    }
+    return _assetOrFallback(context, slug);
+  }
+
+  Widget _assetOrFallback(BuildContext context, String? slug) {
     final tier = slug != null ? _kGiftSlugTier[slug] : null;
     if (tier != null) {
       return Image.asset(
@@ -721,14 +716,13 @@ class _GiftToastState extends ConsumerState<_GiftToast>
                               ],
                             ),
                             const SizedBox(width: 10),
-                            // 3) Ícone/animação do gift (à direita) — usa Lottie
-                            // local se disponível para o slug (ver
-                            // `_kLottieTestAssets`), senão mantém o PNG remoto.
+                            // 3) Presente à direita: Lottie do painel → imagem do
+                            // painel → PNG do app (ver `_GiftVisual`).
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: _GiftVisual(
                                 gift: gift,
-                                size: 36,
+                                size: 46,
                                 fallbackIcon: Text(
                                   _giftEmoji(gift.giftName),
                                   style: const TextStyle(

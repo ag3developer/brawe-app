@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -14,9 +13,9 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/signup_view_model.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
-import '../../../core/constants/app_constants.dart';
 import 'common/auth_input_field.dart';
 import '../../core/widgets/brawe_logo.dart';
+import '../../settings/widgets/legal_webview_screen.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -68,6 +67,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(signupViewModelProvider);
+    // Celular baixo (SE, mini): menos respiro para o formulário inteiro
+    // caber e o botão Criar conta ficar à vista.
+    final compact = MediaQuery.sizeOf(context).height < 760;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -88,7 +90,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TopBar(onBack: () => context.go('/welcome')),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: compact ? AppSpacing.sm : AppSpacing.lg),
                   FadeTransition(
                     opacity: _fade,
                     child: SlideTransition(
@@ -96,7 +98,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                       child: const _Hero(),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: compact ? AppSpacing.md : AppSpacing.xl),
                   FadeTransition(
                     opacity: _fade,
                     child: SlideTransition(
@@ -203,12 +205,12 @@ class _Hero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const BraweLogo(size: 36),
-        const SizedBox(height: AppSpacing.lg),
+        SizedBox(height: MediaQuery.sizeOf(context).height < 760 ? AppSpacing.sm : AppSpacing.lg),
         Text(
           s.signupTitle,
           style: TextStyle(
             color: colors.textPrimary,
-            fontSize: 36,
+            fontSize: MediaQuery.sizeOf(context).height < 760 ? 30 : 36,
             fontWeight: FontWeight.w800,
             height: 1.05,
             letterSpacing: -1.2,
@@ -302,7 +304,7 @@ class _SignupCardState extends State<_SignupCard> {
               AuthInputField(
                 controller: widget.emailController,
                 label: s.signupEmailLabel,
-                hintText: 'voce@brawe.app',
+                hintText: '',
                 keyboardType: TextInputType.emailAddress,
                 onChanged: widget.notifier.updateEmail,
                 prefixIcon: LucideIcons.atSign,
@@ -546,20 +548,9 @@ class _TermsRichTextState extends State<_TermsRichText> {
   void initState() {
     super.initState();
     _termsTap = TapGestureRecognizer()
-      ..onTap = () => _open(AppConstants.termsUrl);
+      ..onTap = () => LegalWebViewScreen.openLegal(context, privacy: false);
     _privacyTap = TapGestureRecognizer()
-      ..onTap = () => _open(AppConstants.privacyUrl);
-  }
-
-  Future<void> _open(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).signupCantOpenUrl(url))),
-        );
-      }
-    }
+      ..onTap = () => LegalWebViewScreen.openLegal(context, privacy: true);
   }
 
   @override

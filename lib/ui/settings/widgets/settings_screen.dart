@@ -148,21 +148,13 @@ class SettingsScreen extends ConsumerWidget {
               leading: const Icon(Icons.description_outlined),
               title: Text(s.settingsTermsOfUse),
               trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => _openLegal(
-                context,
-                url: AppConstants.termsUrl,
-                title: s.settingsTermsOfUse,
-              ),
+              onTap: () => LegalWebViewScreen.openLegal(context, privacy: false),
             ),
             ListTile(
               leading: const Icon(Icons.privacy_tip_outlined),
               title: Text(s.settingsPrivacyPolicy),
               trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => _openLegal(
-                context,
-                url: AppConstants.privacyUrl,
-                title: s.settingsPrivacyPolicy,
-              ),
+              onTap: () => LegalWebViewScreen.openLegal(context, privacy: true),
             ),
             ListTile(
               leading: const Icon(Icons.support_agent_outlined),

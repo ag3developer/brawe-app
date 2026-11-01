@@ -110,11 +110,20 @@ class CommentService {
     );
   }
 
+  // A rota do servidor fica sob /posts (antes chamava /comments/... e toda
+  // curtida em comentário dava 404 em silêncio).
   Future<void> likeComment(String commentId) async {
-    await _dio.post('/comments/$commentId/like');
+    await _dio.post('/posts/comments/$commentId/like');
   }
 
   Future<void> unlikeComment(String commentId) async {
-    await _dio.delete('/comments/$commentId/like');
+    await _dio.delete('/posts/comments/$commentId/like');
+  }
+
+  /// Pessoas para marcar (@) — quem eu sigo primeiro.
+  Future<List<Map<String, dynamic>>> searchMentions(String q) async {
+    final response = await _dio.get('/posts/mentions/search', queryParameters: {'q': q, 'limit': 6});
+    final data = (response.data is Map) ? response.data['data'] : null;
+    return data is List ? data.whereType<Map>().map((m) => Map<String, dynamic>.from(m)).toList() : const [];
   }
 }
