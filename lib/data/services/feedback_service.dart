@@ -80,6 +80,30 @@ class FeedbackService {
     HapticFeedback.selectionClick();
   }
 
+  /// Missão coletada: moedas tilintando.
+  Future<void> questClaim() async {
+    HapticFeedback.mediumImpact();
+    await _play(_Sound.questClaim);
+  }
+
+  /// Subiu de nível: arpejo de vitória.
+  Future<void> questLevelUp() async {
+    HapticFeedback.heavyImpact();
+    await _play(_Sound.questLevelUp);
+  }
+
+  /// Emblema desbloqueado: sino mágico.
+  Future<void> questBadge() async {
+    HapticFeedback.heavyImpact();
+    await _play(_Sound.questBadge);
+  }
+
+  /// Toque leve (abrir emblema, trocar aba da tela de missões).
+  Future<void> questTap() async {
+    HapticFeedback.selectionClick();
+    await _play(_Sound.questTap);
+  }
+
   /// Erro genérico.
   Future<void> error() async {
     HapticFeedback.heavyImpact();
@@ -121,7 +145,18 @@ class FeedbackService {
 /// Sons curtos do app. Quando o asset ainda não existe em
 /// `assets/sounds/`, basta deixar `null` em [_assetMap] — o serviço
 /// vai apenas vibrar sem tocar nada (graceful degradation).
-enum _Sound { like, reaction, share, repost, publish, gift }
+enum _Sound {
+  like,
+  reaction,
+  share,
+  repost,
+  publish,
+  gift,
+  questClaim,
+  questLevelUp,
+  questBadge,
+  questTap,
+}
 
 extension on _Sound {
   String? get assetPath {
@@ -134,6 +169,10 @@ extension on _Sound {
       _Sound.repost: null,     // TODO: assets/sounds/repost.mp3
       _Sound.publish: null,    // TODO: assets/sounds/publish_chime.mp3
       _Sound.gift: null,       // TODO: assets/sounds/gift_bell.mp3
+      _Sound.questClaim: 'assets/sounds/quest_claim.mp3',
+      _Sound.questLevelUp: 'assets/sounds/quest_level_up.mp3',
+      _Sound.questBadge: 'assets/sounds/quest_badge.mp3',
+      _Sound.questTap: 'assets/sounds/quest_tap.mp3',
     };
     return map[this];
   }

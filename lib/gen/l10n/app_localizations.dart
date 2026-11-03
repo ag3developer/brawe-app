@@ -10748,6 +10748,372 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Sua conta continua suspensa.'**
   String get suspendedStillActive;
+
+  /// No description provided for @questsTabMissions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões'**
+  String get questsTabMissions;
+
+  /// No description provided for @questsTabAchievements.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistas'**
+  String get questsTabAchievements;
+
+  /// No description provided for @questsTabJourney.
+  ///
+  /// In pt, this message translates to:
+  /// **'Jornada'**
+  String get questsTabJourney;
+
+  /// No description provided for @questsResetsIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novas missões em {time}'**
+  String questsResetsIn(String time);
+
+  /// No description provided for @questsDayProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{done} de {total} concluídas'**
+  String questsDayProgress(int done, int total);
+
+  /// No description provided for @questsSectionDaily.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões diárias'**
+  String get questsSectionDaily;
+
+  /// No description provided for @questsSectionWeekly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões da semana'**
+  String get questsSectionWeekly;
+
+  /// No description provided for @questsSectionEvent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões de evento'**
+  String get questsSectionEvent;
+
+  /// No description provided for @questsAllDoneMascot.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você completou todas as missões de hoje! Volte amanhã para manter a sequência.'**
+  String get questsAllDoneMascot;
+
+  /// No description provided for @questsStreakMascot.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sequência de {days} dias! Continue assim!'**
+  String questsStreakMascot(int days);
+
+  /// No description provided for @questsStartMascot.
+  ///
+  /// In pt, this message translates to:
+  /// **'Complete todas as missões de hoje para começar uma sequência e ganhar emblemas.'**
+  String get questsStartMascot;
+
+  /// No description provided for @questsNextBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximo emblema em {days} dias'**
+  String questsNextBadge(int days);
+
+  /// No description provided for @questsStreakBonus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bônus de sequência {label}'**
+  String questsStreakBonus(String label);
+
+  /// No description provided for @questsLevelUpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Subiu de nível!'**
+  String get questsLevelUpTitle;
+
+  /// No description provided for @questsLevelUpBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você chegou ao nível {level}'**
+  String questsLevelUpBody(int level);
+
+  /// No description provided for @questsBadgeUnlockedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emblema desbloqueado!'**
+  String get questsBadgeUnlockedTitle;
+
+  /// No description provided for @questsContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get questsContinue;
+
+  /// No description provided for @questsStatsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus números'**
+  String get questsStatsTitle;
+
+  /// No description provided for @questsStatQuests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões concluídas'**
+  String get questsStatQuests;
+
+  /// No description provided for @questsStatXp.
+  ///
+  /// In pt, this message translates to:
+  /// **'XP total'**
+  String get questsStatXp;
+
+  /// No description provided for @questsStatCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas ganhas'**
+  String get questsStatCoins;
+
+  /// No description provided for @questsStatBestStreak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Maior sequência'**
+  String get questsStatBestStreak;
+
+  /// No description provided for @questsBadgesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emblemas'**
+  String get questsBadgesTitle;
+
+  /// No description provided for @questsBadgesCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{unlocked} de {total}'**
+  String questsBadgesCount(int unlocked, int total);
+
+  /// No description provided for @questsBadgeLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloqueado'**
+  String get questsBadgeLocked;
+
+  /// No description provided for @questsBadgeEarned.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistado'**
+  String get questsBadgeEarned;
+
+  /// No description provided for @questsBadgeEarnedOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistado em {date}'**
+  String questsBadgeEarnedOn(String date);
+
+  /// No description provided for @questsBadgeRequirement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Complete todas as missões do dia por {days} dias seguidos.'**
+  String questsBadgeRequirement(int days);
+
+  /// No description provided for @questsBadgeProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{current} de {target} dias'**
+  String questsBadgeProgress(int current, int target);
+
+  /// No description provided for @questBadgeStreak3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Iniciante Dedicado'**
+  String get questBadgeStreak3;
+
+  /// No description provided for @questBadgeStreak7.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guerreiro Semanal'**
+  String get questBadgeStreak7;
+
+  /// No description provided for @questBadgeStreak14.
+  ///
+  /// In pt, this message translates to:
+  /// **'Veterano'**
+  String get questBadgeStreak14;
+
+  /// No description provided for @questBadgeStreak30.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lenda do Mês'**
+  String get questBadgeStreak30;
+
+  /// No description provided for @questBadgeStreak60.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mestre da Consistência'**
+  String get questBadgeStreak60;
+
+  /// No description provided for @questBadgeStreak100.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ícone Brawe'**
+  String get questBadgeStreak100;
+
+  /// No description provided for @questsAwardsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmios recebidos'**
+  String get questsAwardsTitle;
+
+  /// No description provided for @questsAwardsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não recebeu prêmios. Participe de lives, eventos e batalhas para ganhar.'**
+  String get questsAwardsEmpty;
+
+  /// No description provided for @questsAwardActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativo'**
+  String get questsAwardActive;
+
+  /// No description provided for @questsAwardExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Expirado'**
+  String get questsAwardExpired;
+
+  /// No description provided for @questsAwardRevoked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revogado'**
+  String get questsAwardRevoked;
+
+  /// No description provided for @questsAwardScheduled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve'**
+  String get questsAwardScheduled;
+
+  /// No description provided for @questsAwardValidUntil.
+  ///
+  /// In pt, this message translates to:
+  /// **'Válido até {date}'**
+  String questsAwardValidUntil(String date);
+
+  /// No description provided for @questsAwardEndedOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrado em {date}'**
+  String questsAwardEndedOn(String date);
+
+  /// No description provided for @questsAwardStartsOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começa em {date}'**
+  String questsAwardStartsOn(String date);
+
+  /// No description provided for @questsAwardSourceEvent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Evento'**
+  String get questsAwardSourceEvent;
+
+  /// No description provided for @questsAwardSourceCreatorWeek.
+  ///
+  /// In pt, this message translates to:
+  /// **'Semana do criador'**
+  String get questsAwardSourceCreatorWeek;
+
+  /// No description provided for @questsAwardSourceLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live'**
+  String get questsAwardSourceLive;
+
+  /// No description provided for @questsAwardSourceBattle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha'**
+  String get questsAwardSourceBattle;
+
+  /// No description provided for @questsAwardRank.
+  ///
+  /// In pt, this message translates to:
+  /// **'{rank}º lugar'**
+  String questsAwardRank(int rank);
+
+  /// No description provided for @questsAwardCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'+{coins} moedas'**
+  String questsAwardCoins(int coins);
+
+  /// No description provided for @questsAwardFrame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moldura'**
+  String get questsAwardFrame;
+
+  /// No description provided for @questsAwardEntry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrada especial'**
+  String get questsAwardEntry;
+
+  /// No description provided for @questsTimelineEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua jornada começa agora. Conclua missões para ver suas conquistas aqui.'**
+  String get questsTimelineEmpty;
+
+  /// No description provided for @questsTimelineToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get questsTimelineToday;
+
+  /// No description provided for @questsTimelineYesterday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ontem'**
+  String get questsTimelineYesterday;
+
+  /// No description provided for @questsTimelineQuest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missão concluída'**
+  String get questsTimelineQuest;
+
+  /// No description provided for @questsTimelineAward.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmio recebido'**
+  String get questsTimelineAward;
+
+  /// No description provided for @questsTimelineBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emblema conquistado'**
+  String get questsTimelineBadge;
+
+  /// No description provided for @questsTimelineLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {level} alcançado'**
+  String questsTimelineLevel(int level);
+
+  /// No description provided for @questsJourneyError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar sua jornada.'**
+  String get questsJourneyError;
+
+  /// No description provided for @questsLevelShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nv. {level}'**
+  String questsLevelShort(int level);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

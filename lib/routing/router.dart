@@ -434,7 +434,21 @@ GoRouter router(Ref ref) {
           ),
           GoRoute(
             path: '/quests',
-            builder: (context, state) => const QuestsScreen(),
+            builder: (context, state) {
+              // Notificação: "/quests?quest=<key>" abre na missão;
+              // "/quests?tab=achievements|journey" abre na aba.
+              final qp = state.uri.queryParameters;
+              final tab = switch (qp['tab']) {
+                'achievements' || 'awards' || 'badges' => 1,
+                'journey' || 'timeline' => 2,
+                _ => 0,
+              };
+              return QuestsScreen(
+                key: ValueKey(state.uri.toString()),
+                highlightQuest: qp['quest'],
+                initialTab: tab,
+              );
+            },
           ),
           GoRoute(
             path: '/wallet',

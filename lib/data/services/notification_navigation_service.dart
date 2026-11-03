@@ -130,11 +130,30 @@ class NotificationNavigationService {
 
     final link = data['link_url'] ?? data['linkUrl'];
     if (link is String) {
-      if (link.startsWith('/')) return link;
+      if (link.startsWith('/')) return _withQuest(link, data);
       final fromLink = routeFromDeepLink(link);
-      if (fromLink != null) return fromLink;
+      if (fromLink != null) return _withQuest(fromLink, data);
+    }
+
+    // Missões: abre a tela mesmo sem rota/link (notificações antigas).
+    final kind = (data['kind'] ?? data['type'] ?? data['notification_type'])
+        ?.toString()
+        .toLowerCase();
+    if (kind != null && kind.contains('quest')) {
+      return _withQuest('/quests', data);
     }
     return null;
+  }
+
+  /// "/quests" + `quest_key` dos dados → `/quests?quest=KEY` (destaca a
+  /// missão ao abrir).
+  static String _withQuest(String route, Map<String, dynamic> data) {
+    final key = data['quest_key']?.toString();
+    if (key == null || key.isEmpty) return route;
+    if (Uri.parse(route).path != '/quests' || route.contains('quest=')) {
+      return route;
+    }
+    return route.contains('?') ? '$route&quest=$key' : '$route?quest=$key';
   }
 
   /// Converte `brawe://post/abc/comments?commentId=x` em

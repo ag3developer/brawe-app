@@ -26,6 +26,21 @@ class QuestsService {
     return <String, dynamic>{};
   }
 
+  /// Jornada: totais, emblemas, prêmios e linha do tempo (paginada por
+  /// [before], a data do último item da página anterior).
+  Future<Map<String, dynamic>> getJourney({String? lang, String? before}) async {
+    final r = await _dio.get(
+      '/quests/journey',
+      queryParameters: {
+        if (lang != null && lang.isNotEmpty) 'lang': lang,
+        if (before != null && before.isNotEmpty) 'before': before,
+      },
+    );
+    final data = r.data;
+    if (data is Map<String, dynamic>) return data;
+    return <String, dynamic>{};
+  }
+
   Future<Map<String, dynamic>> claimQuest(String questKey) async {
     final r = await _dio.post('/quests/$questKey/claim');
     final data = r.data;

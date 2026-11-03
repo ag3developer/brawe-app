@@ -90,18 +90,14 @@ class NotificationsScreen extends ConsumerWidget {
                           final nav = ref.read(
                             notificationNavigationServiceProvider,
                           );
-                          if (n.type.toLowerCase() == 'award_received') {
-                            // Prêmio: abre o perfil na seção de prêmios.
-                            nav.handleData({
-                              if (n.linkUrl != null) 'link_url': n.linkUrl,
-                              ...?n.data,
-                              'type': n.type,
-                            });
-                          } else if (n.data != null && n.data!.isNotEmpty) {
-                            nav.handleData(n.data);
-                          } else if (n.linkUrl != null) {
-                            nav.handleRoute(n.linkUrl);
-                          }
+                          // O `link_url` sempre vai junto: antes, uma
+                          // notificação com `data` sem rota (ex.: missão
+                          // completa) ignorava o link e não abria nada.
+                          nav.handleData({
+                            if (n.linkUrl != null) 'link_url': n.linkUrl,
+                            ...?n.data,
+                            'type': n.type,
+                          });
                         },
                       ),
                     );

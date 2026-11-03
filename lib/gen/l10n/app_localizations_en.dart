@@ -5943,4 +5943,225 @@ class SEn extends S {
 
   @override
   String get suspendedStillActive => 'Your account is still suspended.';
+
+  @override
+  String get questsTabMissions => 'Missions';
+
+  @override
+  String get questsTabAchievements => 'Achievements';
+
+  @override
+  String get questsTabJourney => 'Journey';
+
+  @override
+  String questsResetsIn(String time) {
+    return 'New missions in $time';
+  }
+
+  @override
+  String questsDayProgress(int done, int total) {
+    return '$done of $total done';
+  }
+
+  @override
+  String get questsSectionDaily => 'Daily missions';
+
+  @override
+  String get questsSectionWeekly => 'Weekly missions';
+
+  @override
+  String get questsSectionEvent => 'Event missions';
+
+  @override
+  String get questsAllDoneMascot =>
+      'You completed all of today\'s missions! Come back tomorrow to keep your streak.';
+
+  @override
+  String questsStreakMascot(int days) {
+    return '$days-day streak! Keep it up!';
+  }
+
+  @override
+  String get questsStartMascot =>
+      'Complete all of today\'s missions to start a streak and earn badges.';
+
+  @override
+  String questsNextBadge(int days) {
+    return 'Next badge in $days days';
+  }
+
+  @override
+  String questsStreakBonus(String label) {
+    return 'Streak bonus $label';
+  }
+
+  @override
+  String get questsLevelUpTitle => 'Level up!';
+
+  @override
+  String questsLevelUpBody(int level) {
+    return 'You reached level $level';
+  }
+
+  @override
+  String get questsBadgeUnlockedTitle => 'Badge unlocked!';
+
+  @override
+  String get questsContinue => 'Continue';
+
+  @override
+  String get questsStatsTitle => 'Your stats';
+
+  @override
+  String get questsStatQuests => 'Missions completed';
+
+  @override
+  String get questsStatXp => 'Total XP';
+
+  @override
+  String get questsStatCoins => 'Coins earned';
+
+  @override
+  String get questsStatBestStreak => 'Best streak';
+
+  @override
+  String get questsBadgesTitle => 'Badges';
+
+  @override
+  String questsBadgesCount(int unlocked, int total) {
+    return '$unlocked of $total';
+  }
+
+  @override
+  String get questsBadgeLocked => 'Locked';
+
+  @override
+  String get questsBadgeEarned => 'Earned';
+
+  @override
+  String questsBadgeEarnedOn(String date) {
+    return 'Earned on $date';
+  }
+
+  @override
+  String questsBadgeRequirement(int days) {
+    return 'Complete all daily missions for $days days in a row.';
+  }
+
+  @override
+  String questsBadgeProgress(int current, int target) {
+    return '$current of $target days';
+  }
+
+  @override
+  String get questBadgeStreak3 => 'Dedicated Rookie';
+
+  @override
+  String get questBadgeStreak7 => 'Weekly Warrior';
+
+  @override
+  String get questBadgeStreak14 => 'Veteran';
+
+  @override
+  String get questBadgeStreak30 => 'Legend of the Month';
+
+  @override
+  String get questBadgeStreak60 => 'Master of Consistency';
+
+  @override
+  String get questBadgeStreak100 => 'Brawe Icon';
+
+  @override
+  String get questsAwardsTitle => 'Awards received';
+
+  @override
+  String get questsAwardsEmpty =>
+      'You haven\'t received any awards yet. Join lives, events and battles to win.';
+
+  @override
+  String get questsAwardActive => 'Active';
+
+  @override
+  String get questsAwardExpired => 'Expired';
+
+  @override
+  String get questsAwardRevoked => 'Revoked';
+
+  @override
+  String get questsAwardScheduled => 'Upcoming';
+
+  @override
+  String questsAwardValidUntil(String date) {
+    return 'Valid until $date';
+  }
+
+  @override
+  String questsAwardEndedOn(String date) {
+    return 'Ended on $date';
+  }
+
+  @override
+  String questsAwardStartsOn(String date) {
+    return 'Starts on $date';
+  }
+
+  @override
+  String get questsAwardSourceEvent => 'Event';
+
+  @override
+  String get questsAwardSourceCreatorWeek => 'Creator week';
+
+  @override
+  String get questsAwardSourceLive => 'Live';
+
+  @override
+  String get questsAwardSourceBattle => 'Battle';
+
+  @override
+  String questsAwardRank(int rank) {
+    return '#$rank place';
+  }
+
+  @override
+  String questsAwardCoins(int coins) {
+    return '+$coins coins';
+  }
+
+  @override
+  String get questsAwardFrame => 'Frame';
+
+  @override
+  String get questsAwardEntry => 'Special entrance';
+
+  @override
+  String get questsTimelineEmpty =>
+      'Your journey starts now. Complete missions to see your achievements here.';
+
+  @override
+  String get questsTimelineToday => 'Today';
+
+  @override
+  String get questsTimelineYesterday => 'Yesterday';
+
+  @override
+  String get questsTimelineQuest => 'Mission completed';
+
+  @override
+  String get questsTimelineAward => 'Award received';
+
+  @override
+  String get questsTimelineBadge => 'Badge earned';
+
+  @override
+  String questsTimelineLevel(int level) {
+    return 'Reached level $level';
+  }
+
+  @override
+  String get questsJourneyError => 'Couldn\'t load your journey.';
+
+  @override
+  String questsLevelShort(int level) {
+    return 'Lv. $level';
+  }
 }

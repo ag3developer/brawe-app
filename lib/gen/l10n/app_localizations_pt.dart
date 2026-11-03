@@ -5968,4 +5968,225 @@ class SPt extends S {
 
   @override
   String get suspendedStillActive => 'Sua conta continua suspensa.';
+
+  @override
+  String get questsTabMissions => 'Missões';
+
+  @override
+  String get questsTabAchievements => 'Conquistas';
+
+  @override
+  String get questsTabJourney => 'Jornada';
+
+  @override
+  String questsResetsIn(String time) {
+    return 'Novas missões em $time';
+  }
+
+  @override
+  String questsDayProgress(int done, int total) {
+    return '$done de $total concluídas';
+  }
+
+  @override
+  String get questsSectionDaily => 'Missões diárias';
+
+  @override
+  String get questsSectionWeekly => 'Missões da semana';
+
+  @override
+  String get questsSectionEvent => 'Missões de evento';
+
+  @override
+  String get questsAllDoneMascot =>
+      'Você completou todas as missões de hoje! Volte amanhã para manter a sequência.';
+
+  @override
+  String questsStreakMascot(int days) {
+    return 'Sequência de $days dias! Continue assim!';
+  }
+
+  @override
+  String get questsStartMascot =>
+      'Complete todas as missões de hoje para começar uma sequência e ganhar emblemas.';
+
+  @override
+  String questsNextBadge(int days) {
+    return 'Próximo emblema em $days dias';
+  }
+
+  @override
+  String questsStreakBonus(String label) {
+    return 'Bônus de sequência $label';
+  }
+
+  @override
+  String get questsLevelUpTitle => 'Subiu de nível!';
+
+  @override
+  String questsLevelUpBody(int level) {
+    return 'Você chegou ao nível $level';
+  }
+
+  @override
+  String get questsBadgeUnlockedTitle => 'Emblema desbloqueado!';
+
+  @override
+  String get questsContinue => 'Continuar';
+
+  @override
+  String get questsStatsTitle => 'Seus números';
+
+  @override
+  String get questsStatQuests => 'Missões concluídas';
+
+  @override
+  String get questsStatXp => 'XP total';
+
+  @override
+  String get questsStatCoins => 'Moedas ganhas';
+
+  @override
+  String get questsStatBestStreak => 'Maior sequência';
+
+  @override
+  String get questsBadgesTitle => 'Emblemas';
+
+  @override
+  String questsBadgesCount(int unlocked, int total) {
+    return '$unlocked de $total';
+  }
+
+  @override
+  String get questsBadgeLocked => 'Bloqueado';
+
+  @override
+  String get questsBadgeEarned => 'Conquistado';
+
+  @override
+  String questsBadgeEarnedOn(String date) {
+    return 'Conquistado em $date';
+  }
+
+  @override
+  String questsBadgeRequirement(int days) {
+    return 'Complete todas as missões do dia por $days dias seguidos.';
+  }
+
+  @override
+  String questsBadgeProgress(int current, int target) {
+    return '$current de $target dias';
+  }
+
+  @override
+  String get questBadgeStreak3 => 'Iniciante Dedicado';
+
+  @override
+  String get questBadgeStreak7 => 'Guerreiro Semanal';
+
+  @override
+  String get questBadgeStreak14 => 'Veterano';
+
+  @override
+  String get questBadgeStreak30 => 'Lenda do Mês';
+
+  @override
+  String get questBadgeStreak60 => 'Mestre da Consistência';
+
+  @override
+  String get questBadgeStreak100 => 'Ícone Brawe';
+
+  @override
+  String get questsAwardsTitle => 'Prêmios recebidos';
+
+  @override
+  String get questsAwardsEmpty =>
+      'Você ainda não recebeu prêmios. Participe de lives, eventos e batalhas para ganhar.';
+
+  @override
+  String get questsAwardActive => 'Ativo';
+
+  @override
+  String get questsAwardExpired => 'Expirado';
+
+  @override
+  String get questsAwardRevoked => 'Revogado';
+
+  @override
+  String get questsAwardScheduled => 'Em breve';
+
+  @override
+  String questsAwardValidUntil(String date) {
+    return 'Válido até $date';
+  }
+
+  @override
+  String questsAwardEndedOn(String date) {
+    return 'Encerrado em $date';
+  }
+
+  @override
+  String questsAwardStartsOn(String date) {
+    return 'Começa em $date';
+  }
+
+  @override
+  String get questsAwardSourceEvent => 'Evento';
+
+  @override
+  String get questsAwardSourceCreatorWeek => 'Semana do criador';
+
+  @override
+  String get questsAwardSourceLive => 'Live';
+
+  @override
+  String get questsAwardSourceBattle => 'Batalha';
+
+  @override
+  String questsAwardRank(int rank) {
+    return '$rankº lugar';
+  }
+
+  @override
+  String questsAwardCoins(int coins) {
+    return '+$coins moedas';
+  }
+
+  @override
+  String get questsAwardFrame => 'Moldura';
+
+  @override
+  String get questsAwardEntry => 'Entrada especial';
+
+  @override
+  String get questsTimelineEmpty =>
+      'Sua jornada começa agora. Conclua missões para ver suas conquistas aqui.';
+
+  @override
+  String get questsTimelineToday => 'Hoje';
+
+  @override
+  String get questsTimelineYesterday => 'Ontem';
+
+  @override
+  String get questsTimelineQuest => 'Missão concluída';
+
+  @override
+  String get questsTimelineAward => 'Prêmio recebido';
+
+  @override
+  String get questsTimelineBadge => 'Emblema conquistado';
+
+  @override
+  String questsTimelineLevel(int level) {
+    return 'Nível $level alcançado';
+  }
+
+  @override
+  String get questsJourneyError => 'Não foi possível carregar sua jornada.';
+
+  @override
+  String questsLevelShort(int level) {
+    return 'Nv. $level';
+  }
 }

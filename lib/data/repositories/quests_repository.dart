@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/models/failure.dart';
 import '../../domain/models/quest.dart';
+import '../../domain/models/quest_journey.dart';
 import '../services/quests_service.dart';
 
 part 'quests_repository.g.dart';
@@ -24,9 +25,19 @@ class QuestsRepository {
     }
   }
 
-  Future<Map<String, dynamic>> claim(String questKey) async {
+  Future<QuestClaimResult> claim(String questKey) async {
     try {
-      return await _service.claimQuest(questKey);
+      return QuestClaimResult.fromJson(await _service.claimQuest(questKey));
+    } catch (_) {
+      throw const Failure.network();
+    }
+  }
+
+  Future<QuestJourney> getJourney({String? lang, String? before}) async {
+    try {
+      return QuestJourney.fromJson(
+        await _service.getJourney(lang: lang, before: before),
+      );
     } catch (_) {
       throw const Failure.network();
     }

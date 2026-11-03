@@ -1,8 +1,10 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../config/locale_provider.dart';
 import '../../../data/repositories/quests_repository.dart';
 import '../../../domain/models/quest.dart';
+import '../../../domain/models/quest_journey.dart';
 
 part 'quests_view_model.g.dart';
 
@@ -19,57 +21,106 @@ class QuestsViewModel extends _$QuestsViewModel {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(
       () => ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang),
     );
   }
 
-  /// Optimistically marks quest claimed and increments XP/coins.
-  /// On failure: rolls back and rethrows.
-  Future<void> claimQuest(String questKey) async {
+  /// Marca a missão como coletada na hora (otimista) e devolve o resultado
+  /// do servidor (XP, moedas, subiu de nível, emblemas novos).
+  /// Em caso de falha, desfaz e relança.
+  Future<QuestClaimResult?> claimQuest(String questKey) async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) return null;
 
     final idx = current.quests.indexWhere((q) => q.questKey == questKey);
-    if (idx < 0) return;
+    if (idx < 0) return null;
     final quest = current.quests[idx];
-    if (!quest.isClaimable) return;
+    if (!quest.isClaimable) return null;
 
     final optimistic = [...current.quests];
     optimistic[idx] = quest.copyWith(isClaimed: true);
     state = AsyncValue.data(current.copyWith(quests: optimistic));
 
     try {
-      await ref.read(questsRepositoryProvider).claim(questKey);
-      // Silently refetch to sync XP/coins/level
-      final fresh =
-          await ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang);
-      state = AsyncValue.data(fresh);
+      final result =
+          await ref.read(questsRepositoryProvider).claim(questKey);
+      await _syncAfterClaim();
+      return result;
     } catch (e) {
       state = AsyncValue.data(current);
       rethrow;
     }
   }
 
-  Future<int> claimAll() async {
+  /// Coleta todas as resgatáveis. Devolve a soma (ou null se nenhuma deu certo).
+  Future<QuestClaimResult?> claimAll() async {
     final current = state.value;
-    if (current == null) return 0;
+    if (current == null) return null;
     final claimable = current.quests.where((q) => q.isClaimable).toList();
-    int ok = 0;
+    final results = <QuestClaimResult>[];
     for (final q in claimable) {
       try {
-        await ref.read(questsRepositoryProvider).claim(q.questKey);
-        ok++;
+        results.add(await ref.read(questsRepositoryProvider).claim(q.questKey));
       } catch (_) {
-        // continue
+        // segue para as próximas
       }
     }
-    if (ok > 0) {
+    if (results.isEmpty) return null;
+    await _syncAfterClaim();
+    return QuestClaimResult.merge(results);
+  }
+
+  Future<void> _syncAfterClaim() async {
+    try {
       final fresh =
           await ref.read(questsRepositoryProvider).getDailyQuests(lang: _lang);
       state = AsyncValue.data(fresh);
+    } catch (_) {
+      // mantém o estado otimista
     }
-    return ok;
+    // A jornada (linha do tempo, totais, emblemas) mudou.
+    ref.invalidate(questJourneyProvider);
+  }
+}
+
+/// Jornada do usuário: totais, emblemas, prêmios e linha do tempo.
+final questJourneyProvider =
+    AsyncNotifierProvider.autoDispose<QuestJourneyNotifier, QuestJourney>(
+  QuestJourneyNotifier.new,
+);
+
+class QuestJourneyNotifier extends AsyncNotifier<QuestJourney> {
+  bool _loadingMore = false;
+
+  String get _lang => ref.read(localeControllerProvider).languageCode;
+
+  @override
+  Future<QuestJourney> build() async {
+    ref.watch(localeControllerProvider);
+    return ref.read(questsRepositoryProvider).getJourney(lang: _lang);
+  }
+
+  Future<void> refresh() async {
+    state = await AsyncValue.guard(
+      () => ref.read(questsRepositoryProvider).getJourney(lang: _lang),
+    );
+  }
+
+  /// Próxima página da linha do tempo.
+  Future<void> loadMore() async {
+    final current = state.value;
+    if (current == null || !current.hasMore || _loadingMore) return;
+    _loadingMore = true;
+    try {
+      final next = await ref
+          .read(questsRepositoryProvider)
+          .getJourney(lang: _lang, before: current.nextBefore);
+      state = AsyncValue.data(current.appendPage(next));
+    } catch (_) {
+      // tenta de novo no próximo scroll
+    } finally {
+      _loadingMore = false;
+    }
   }
 }
