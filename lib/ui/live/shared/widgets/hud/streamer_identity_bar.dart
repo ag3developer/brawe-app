@@ -9,6 +9,8 @@ import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../core/ui/follow_button.dart';
 import '../../../../core/view_models/follow_view_model.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../core/widgets/report_sheet.dart';
 
 /// Pílula glass com avatar + nome do streamer.
 ///
@@ -250,6 +252,32 @@ class StreamerQuickSheet extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                TextButton.icon(
+                  onPressed: () {
+                    // Contexto do navegador capturado ANTES de fechar a
+                    // gaveta (o contexto dela morre no pop).
+                    final navCtx = Navigator.of(context).context;
+                    Navigator.of(context).pop();
+                    showReportSheet(
+                      navCtx,
+                      targetType: 'live',
+                      targetId: room.id,
+                    );
+                  },
+                  icon: Icon(
+                    Icons.flag_outlined,
+                    size: 16,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ),
+                  label: Text(
+                    S.of(context).liveReport,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ],
             ),

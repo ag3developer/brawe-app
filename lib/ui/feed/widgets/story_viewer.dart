@@ -27,6 +27,7 @@ import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
 import 'gift_flight_overlay.dart';
 import '../../../core/network/media_headers.dart';
+import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Visualizador de stories full-screen.
@@ -750,6 +751,10 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                       ),
                     ),
                   ),
+                ),
+                ReportChildSafetyTile(
+                  onTap: () =>
+                      Navigator.pop(sheetCtx, kReportReasonChildSafety),
                 ),
                 _reasonTile(sheetCtx, 'spam', S.of(sheetCtx).viewerReportSpam),
                 _reasonTile(

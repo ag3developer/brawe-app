@@ -14,6 +14,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../view_models/settings_view_model.dart';
 import '../view_models/theme_view_model.dart';
 import 'language_picker_sheet.dart';
+import 'feedback_screen.dart';
 import 'legal_webview_screen.dart';
 
 /// Lê a versão do app em runtime via package_info_plus.
@@ -155,6 +156,20 @@ class SettingsScreen extends ConsumerWidget {
               title: Text(s.settingsPrivacyPolicy),
               trailing: const Icon(Icons.chevron_right, size: 20),
               onTap: () => LegalWebViewScreen.openLegal(context, privacy: true),
+            ),
+            ListTile(
+              leading: const Icon(Icons.feedback_outlined),
+              title: Text(s.settingsSendFeedback),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.shield_outlined),
+              title: Text(s.settingsChildSafety),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => LegalWebViewScreen.openChildSafety(context),
             ),
             ListTile(
               leading: const Icon(Icons.support_agent_outlined),

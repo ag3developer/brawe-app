@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'account_suspension.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_constants.dart';
@@ -21,6 +22,9 @@ Dio dio(Ref ref) {
       },
     ),
   );
+
+  // Conta suspensa pela moderação → tela /suspended.
+  dio.interceptors.add(AccountSuspension.interceptor());
 
   dio.interceptors.add(
     InterceptorsWrapper(

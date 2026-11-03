@@ -286,6 +286,7 @@ class _GifterRankingSheetState extends ConsumerState<GifterRankingSheet> {
 
   Widget _header(BraweColors colors, S s) {
     return SizedBox(
+      width: double.infinity,
       height: 48,
       child: Stack(
         alignment: Alignment.center,

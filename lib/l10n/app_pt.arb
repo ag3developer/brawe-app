@@ -2628,7 +2628,7 @@
   "profileTabReposts": "Reposts",
   "profileNoReposts": "Nenhum repost ainda",
   "liveEndedTitle": "Live encerrada",
-  "liveEndedByStreamer": "{name} encerrou a live.",
+  "liveEndedByStreamer": "Obrigado por assistir!",
   "@liveEndedByStreamer": {
     "placeholders": {
       "name": {
@@ -2636,7 +2636,7 @@
       }
     }
   },
-  "liveEndedAlready": "Esta live já foi encerrada por {name}.",
+  "liveEndedAlready": "Você chegou depois que ela terminou.",
   "@liveEndedAlready": {
     "placeholders": {
       "name": {
@@ -3153,5 +3153,29 @@
   },
   "questFrequencyWeekly": "Semanal",
   "questFrequencyEvent": "Evento",
-  "questFrequencyDaily": "Diária"
+  "questFrequencyDaily": "Diária",
+  "reportReasonChildSafety": "Abuso ou exploração de menores",
+  "reportChildSafetyNote": "Se uma criança estiver em perigo imediato, procure as autoridades (no Brasil: Disque 100 ou 190).",
+  "liveReport": "Denunciar live",
+  "settingsSendFeedback": "Enviar feedback",
+  "settingsChildSafety": "Normas de Segurança Infantil",
+  "feedbackIntro": "Conte o que aconteceu. Sua mensagem vai direto para a nossa equipe, sem sair do app.",
+  "feedbackTypeBug": "Problema no app",
+  "feedbackTypeSuggestion": "Sugestão",
+  "feedbackTypeChildSafety": "Segurança infantil",
+  "feedbackHint": "Descreva aqui…",
+  "feedbackSend": "Enviar",
+  "feedbackSent": "Feedback enviado. Obrigado!",
+  "feedbackError": "Não foi possível enviar. Tente novamente.",
+  "feedbackTooShort": "Escreva pelo menos 10 caracteres.",
+  "suspendedTitle": "Conta suspensa",
+  "suspendedBody": "Sua conta no Brawe Connect foi suspensa por violar as nossas Diretrizes da Comunidade.",
+  "suspendedReasonLabel": "Motivo",
+  "suspendedUntil": "A suspensão termina em {date}.",
+  "@suspendedUntil": {"placeholders": {"date": {"type": "String"}}},
+  "suspendedPermanent": "Esta suspensão é permanente.",
+  "suspendedAppeal": "Se você acredita que foi um engano, fale com o nosso suporte.",
+  "suspendedContact": "Falar com o suporte",
+  "suspendedRetry": "Verificar novamente",
+  "suspendedStillActive": "Sua conta continua suspensa."
 }

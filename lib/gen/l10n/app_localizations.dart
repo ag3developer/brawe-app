@@ -9624,13 +9624,13 @@ abstract class S {
   /// No description provided for @liveEndedByStreamer.
   ///
   /// In pt, this message translates to:
-  /// **'{name} encerrou a live.'**
+  /// **'Obrigado por assistir!'**
   String liveEndedByStreamer(String name);
 
   /// No description provided for @liveEndedAlready.
   ///
   /// In pt, this message translates to:
-  /// **'Esta live já foi encerrada por {name}.'**
+  /// **'Você chegou depois que ela terminou.'**
   String liveEndedAlready(String name);
 
   /// No description provided for @liveEndedLasted.
@@ -10610,6 +10610,144 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Diária'**
   String get questFrequencyDaily;
+
+  /// No description provided for @reportReasonChildSafety.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abuso ou exploração de menores'**
+  String get reportReasonChildSafety;
+
+  /// No description provided for @reportChildSafetyNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se uma criança estiver em perigo imediato, procure as autoridades (no Brasil: Disque 100 ou 190).'**
+  String get reportChildSafetyNote;
+
+  /// No description provided for @liveReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar live'**
+  String get liveReport;
+
+  /// No description provided for @settingsSendFeedback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar feedback'**
+  String get settingsSendFeedback;
+
+  /// No description provided for @settingsChildSafety.
+  ///
+  /// In pt, this message translates to:
+  /// **'Normas de Segurança Infantil'**
+  String get settingsChildSafety;
+
+  /// No description provided for @feedbackIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte o que aconteceu. Sua mensagem vai direto para a nossa equipe, sem sair do app.'**
+  String get feedbackIntro;
+
+  /// No description provided for @feedbackTypeBug.
+  ///
+  /// In pt, this message translates to:
+  /// **'Problema no app'**
+  String get feedbackTypeBug;
+
+  /// No description provided for @feedbackTypeSuggestion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestão'**
+  String get feedbackTypeSuggestion;
+
+  /// No description provided for @feedbackTypeChildSafety.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segurança infantil'**
+  String get feedbackTypeChildSafety;
+
+  /// No description provided for @feedbackHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descreva aqui…'**
+  String get feedbackHint;
+
+  /// No description provided for @feedbackSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get feedbackSend;
+
+  /// No description provided for @feedbackSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Feedback enviado. Obrigado!'**
+  String get feedbackSent;
+
+  /// No description provided for @feedbackError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar. Tente novamente.'**
+  String get feedbackError;
+
+  /// No description provided for @feedbackTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva pelo menos 10 caracteres.'**
+  String get feedbackTooShort;
+
+  /// No description provided for @suspendedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta suspensa'**
+  String get suspendedTitle;
+
+  /// No description provided for @suspendedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta no Brawe Connect foi suspensa por violar as nossas Diretrizes da Comunidade.'**
+  String get suspendedBody;
+
+  /// No description provided for @suspendedReasonLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivo'**
+  String get suspendedReasonLabel;
+
+  /// No description provided for @suspendedUntil.
+  ///
+  /// In pt, this message translates to:
+  /// **'A suspensão termina em {date}.'**
+  String suspendedUntil(String date);
+
+  /// No description provided for @suspendedPermanent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta suspensão é permanente.'**
+  String get suspendedPermanent;
+
+  /// No description provided for @suspendedAppeal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se você acredita que foi um engano, fale com o nosso suporte.'**
+  String get suspendedAppeal;
+
+  /// No description provided for @suspendedContact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falar com o suporte'**
+  String get suspendedContact;
+
+  /// No description provided for @suspendedRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar novamente'**
+  String get suspendedRetry;
+
+  /// No description provided for @suspendedStillActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta continua suspensa.'**
+  String get suspendedStillActive;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

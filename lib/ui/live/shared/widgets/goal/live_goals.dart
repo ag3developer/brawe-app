@@ -370,6 +370,7 @@ class _SheetFrame extends StatelessWidget {
                 decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2)),
               ),
               SizedBox(
+                width: double.infinity,
                 height: 48,
                 child: Stack(
                   alignment: Alignment.center,

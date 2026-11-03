@@ -39,6 +39,7 @@ import 'stories_rail.dart';
 import 'story_ring_avatar.dart';
 import 'suggested_users_rail.dart';
 import '../../../core/network/media_headers.dart';
+import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
@@ -1417,6 +1418,9 @@ class _PostCardState extends ConsumerState<PostCard>
             children: [
               const _SheetHandle(),
               const _ReportReasonHeader(),
+              ReportChildSafetyTile(
+                onTap: () => Navigator.pop(sheetCtx, kReportReasonChildSafety),
+              ),
               _ReportReasonTile(reason: 'spam', label: s.feedReportSpam),
               _ReportReasonTile(
                 reason: 'harassment',

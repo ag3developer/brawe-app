@@ -29,6 +29,7 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/post.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import 'shared_post_sheet.dart';
+import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
@@ -362,11 +363,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 color: AppColors.mutedRed,
                 onTap: () {
                   Navigator.pop(sheetCtx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(S.of(context).chatDetailReportSent),
-                      backgroundColor: context.colors.surfaceElevated,
-                    ),
+                  showReportSheet(
+                    context,
+                    targetType: 'conversation',
+                    targetId: widget.conversationId,
                   );
                 },
               ),

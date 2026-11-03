@@ -5285,12 +5285,12 @@ class SPt extends S {
 
   @override
   String liveEndedByStreamer(String name) {
-    return '$name encerrou a live.';
+    return 'Obrigado por assistir!';
   }
 
   @override
   String liveEndedAlready(String name) {
-    return 'Esta live já foi encerrada por $name.';
+    return 'Você chegou depois que ela terminou.';
   }
 
   @override
@@ -5893,4 +5893,79 @@ class SPt extends S {
 
   @override
   String get questFrequencyDaily => 'Diária';
+
+  @override
+  String get reportReasonChildSafety => 'Abuso ou exploração de menores';
+
+  @override
+  String get reportChildSafetyNote =>
+      'Se uma criança estiver em perigo imediato, procure as autoridades (no Brasil: Disque 100 ou 190).';
+
+  @override
+  String get liveReport => 'Denunciar live';
+
+  @override
+  String get settingsSendFeedback => 'Enviar feedback';
+
+  @override
+  String get settingsChildSafety => 'Normas de Segurança Infantil';
+
+  @override
+  String get feedbackIntro =>
+      'Conte o que aconteceu. Sua mensagem vai direto para a nossa equipe, sem sair do app.';
+
+  @override
+  String get feedbackTypeBug => 'Problema no app';
+
+  @override
+  String get feedbackTypeSuggestion => 'Sugestão';
+
+  @override
+  String get feedbackTypeChildSafety => 'Segurança infantil';
+
+  @override
+  String get feedbackHint => 'Descreva aqui…';
+
+  @override
+  String get feedbackSend => 'Enviar';
+
+  @override
+  String get feedbackSent => 'Feedback enviado. Obrigado!';
+
+  @override
+  String get feedbackError => 'Não foi possível enviar. Tente novamente.';
+
+  @override
+  String get feedbackTooShort => 'Escreva pelo menos 10 caracteres.';
+
+  @override
+  String get suspendedTitle => 'Conta suspensa';
+
+  @override
+  String get suspendedBody =>
+      'Sua conta no Brawe Connect foi suspensa por violar as nossas Diretrizes da Comunidade.';
+
+  @override
+  String get suspendedReasonLabel => 'Motivo';
+
+  @override
+  String suspendedUntil(String date) {
+    return 'A suspensão termina em $date.';
+  }
+
+  @override
+  String get suspendedPermanent => 'Esta suspensão é permanente.';
+
+  @override
+  String get suspendedAppeal =>
+      'Se você acredita que foi um engano, fale com o nosso suporte.';
+
+  @override
+  String get suspendedContact => 'Falar com o suporte';
+
+  @override
+  String get suspendedRetry => 'Verificar novamente';
+
+  @override
+  String get suspendedStillActive => 'Sua conta continua suspensa.';
 }

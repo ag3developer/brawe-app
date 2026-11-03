@@ -133,6 +133,9 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
       child: Stack(
         fit: StackFit.expand,
         children: [
+          // Base opaca: sem ela o "Conectando à live…" e o HUD do player
+          // vazavam por trás quando a live não tem capa.
+          const ColoredBox(color: Color(0xFF070B1A)),
           // Fundo: capa da live desfocada + escurecida.
           if (room.thumbnailUrl != null && room.thumbnailUrl!.isNotEmpty)
             ImageFiltered(

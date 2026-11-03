@@ -38,6 +38,22 @@ class LegalWebViewScreen extends StatefulWidget {
     );
   }
 
+  /// Normas de Segurança Infantil (padrões contra CSAE) dentro do app.
+  static Future<void> openChildSafety(BuildContext context) {
+    final s = S.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final locale = const {'pt', 'en', 'es'}.contains(lang) ? lang : 'en';
+    return Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => LegalWebViewScreen(
+          url: '${AppConstants.legalBaseUrl}/$locale/child-safety?embed=1',
+          title: s.settingsChildSafety,
+        ),
+      ),
+    );
+  }
+
   @override
   State<LegalWebViewScreen> createState() => _LegalWebViewScreenState();
 }

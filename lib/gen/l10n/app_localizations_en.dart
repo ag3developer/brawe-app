@@ -5261,12 +5261,12 @@ class SEn extends S {
 
   @override
   String liveEndedByStreamer(String name) {
-    return '$name ended the live.';
+    return 'Thanks for watching!';
   }
 
   @override
   String liveEndedAlready(String name) {
-    return 'This live was already ended by $name.';
+    return 'You arrived after it ended.';
   }
 
   @override
@@ -5868,4 +5868,79 @@ class SEn extends S {
 
   @override
   String get questFrequencyDaily => 'Daily';
+
+  @override
+  String get reportReasonChildSafety => 'Child sexual abuse or exploitation';
+
+  @override
+  String get reportChildSafetyNote =>
+      'If a child is in immediate danger, contact your local authorities.';
+
+  @override
+  String get liveReport => 'Report live';
+
+  @override
+  String get settingsSendFeedback => 'Send feedback';
+
+  @override
+  String get settingsChildSafety => 'Child Safety Standards';
+
+  @override
+  String get feedbackIntro =>
+      'Tell us what happened. Your message goes straight to our team, without leaving the app.';
+
+  @override
+  String get feedbackTypeBug => 'App problem';
+
+  @override
+  String get feedbackTypeSuggestion => 'Suggestion';
+
+  @override
+  String get feedbackTypeChildSafety => 'Child safety';
+
+  @override
+  String get feedbackHint => 'Describe it here…';
+
+  @override
+  String get feedbackSend => 'Send';
+
+  @override
+  String get feedbackSent => 'Feedback sent. Thank you!';
+
+  @override
+  String get feedbackError => 'Couldn\'t send. Please try again.';
+
+  @override
+  String get feedbackTooShort => 'Please write at least 10 characters.';
+
+  @override
+  String get suspendedTitle => 'Account suspended';
+
+  @override
+  String get suspendedBody =>
+      'Your Brawe Connect account has been suspended for violating our Community Guidelines.';
+
+  @override
+  String get suspendedReasonLabel => 'Reason';
+
+  @override
+  String suspendedUntil(String date) {
+    return 'The suspension ends on $date.';
+  }
+
+  @override
+  String get suspendedPermanent => 'This suspension is permanent.';
+
+  @override
+  String get suspendedAppeal =>
+      'If you believe this is a mistake, contact our support team.';
+
+  @override
+  String get suspendedContact => 'Contact support';
+
+  @override
+  String get suspendedRetry => 'Check again';
+
+  @override
+  String get suspendedStillActive => 'Your account is still suspended.';
 }

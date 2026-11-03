@@ -16,6 +16,8 @@ import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/auth/widgets/forgot_password_screen.dart';
 import '../ui/auth/widgets/reset_password_screen.dart';
 import '../ui/settings/widgets/change_password_screen.dart';
+import '../ui/settings/widgets/account_suspended_screen.dart';
+import '../core/network/account_suspension.dart';
 import '../ui/settings/widgets/delete_account_screen.dart';
 import '../ui/feed/widgets/feed_screen.dart';
 import '../ui/feed/widgets/post_detail_screen.dart';
@@ -212,6 +214,14 @@ GoRouter router(Ref ref) {
         return isLoggingIn ? null : '/welcome';
       }
 
+      // ── Conta suspensa pela moderação ─────────────────────────────────
+      // O interceptor do Dio liga `AccountSuspension` ao receber 403
+      // `account_suspended`; enquanto durar, o usuário só vê /suspended.
+      final suspended = AccountSuspension.instance.value != null;
+      final onSuspended = state.matchedLocation == '/suspended';
+      if (suspended && !onSuspended) return '/suspended';
+      if (!suspended && onSuspended) return '/home';
+
       if (isLoggingIn) {
         final pending = _pendingAuthLocation;
         _pendingAuthLocation = null;
@@ -237,6 +247,10 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const WelcomeScreen(),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/suspended',
+        builder: (context, state) => const AccountSuspendedScreen(),
+      ),
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
@@ -724,6 +738,7 @@ class RouterRefreshListenable extends ChangeNotifier {
       authStateProvider,
       (previous, next) => notifyListeners(),
     );
+    AccountSuspension.instance.addListener(notifyListeners);
   }
 
   late final ProviderSubscription _subscription;
@@ -731,6 +746,7 @@ class RouterRefreshListenable extends ChangeNotifier {
   @override
   void dispose() {
     _subscription.close();
+    AccountSuspension.instance.removeListener(notifyListeners);
     super.dispose();
   }
 }

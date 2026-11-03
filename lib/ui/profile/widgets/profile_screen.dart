@@ -39,6 +39,7 @@ import '../../chat/view_models/presence_provider.dart';
 import '../view_models/profile_reposts_provider.dart';
 import '../../../domain/models/user_award.dart';
 import '../../live/shared/widgets/award_badge.dart';
+import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
@@ -527,6 +528,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   fontSize: 16,
                 ),
               ),
+            ),
+            ReportChildSafetyTile(
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _submitReport(context, kReportReasonChildSafety);
+              },
             ),
             for (final r in reasons)
               ListTile(
