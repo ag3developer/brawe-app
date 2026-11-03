@@ -532,17 +532,23 @@ class _PulseState extends State<Pulse> with SingleTickerProviderStateMixin {
 }
 
 /// Faixa de luz atravessando o filho de tempos em tempos.
+///
+/// Feita com uma camada por cima (sem ShaderMask): a máscara de shader
+/// gerava blocos coloridos no iOS ao voltar para uma aba mantida em memória
+/// e rolar a lista.
 class ShineSweep extends StatefulWidget {
   const ShineSweep({
     super.key,
     required this.child,
     this.period = const Duration(milliseconds: 3200),
     this.opacity = 0.35,
+    this.borderRadius = BorderRadius.zero,
   });
 
   final Widget child;
   final Duration period;
   final double opacity;
+  final BorderRadius borderRadius;
 
   @override
   State<ShineSweep> createState() => _ShineSweepState();
@@ -563,27 +569,39 @@ class _ShineSweepState extends State<ShineSweep>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (_, child) {
-        // A faixa passa nos primeiros 40% do ciclo; no resto fica parada.
-        final t = (_c.value / 0.4).clamp(0.0, 1.0);
-        final x = -1.5 + 3.0 * t;
-        return ShaderMask(
-          blendMode: BlendMode.srcATop,
-          shaderCallback: (rect) => LinearGradient(
-            begin: Alignment(x - 0.4, -0.6),
-            end: Alignment(x + 0.4, 0.6),
-            colors: [
-              Colors.white.withValues(alpha: 0),
-              Colors.white.withValues(alpha: widget.opacity),
-              Colors.white.withValues(alpha: 0),
-            ],
-          ).createShader(rect),
-          child: child,
-        );
-      },
-      child: widget.child,
+    return Stack(
+      children: [
+        widget.child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: ClipRRect(
+              borderRadius: widget.borderRadius,
+              child: AnimatedBuilder(
+                animation: _c,
+                builder: (_, _) {
+                  // A faixa passa nos primeiros 40% do ciclo; depois some.
+                  final t = (_c.value / 0.4).clamp(0.0, 1.0);
+                  if (t >= 1) return const SizedBox.expand();
+                  final x = -1.5 + 3.0 * t;
+                  return DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment(x - 0.4, -0.6),
+                        end: Alignment(x + 0.4, 0.6),
+                        colors: [
+                          Colors.white.withValues(alpha: 0),
+                          Colors.white.withValues(alpha: widget.opacity),
+                          Colors.white.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

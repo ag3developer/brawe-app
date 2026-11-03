@@ -119,67 +119,72 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final items = [
-      (s.questsStatQuests, stats.totalQuestsCompleted, 'assets/images/illustrations/trophy_3d.png', const Color(0xFF7C5CFF)),
-      (s.questsStatXp, stats.totalXpEarned, 'assets/images/quests/xp_bolt.png', const Color(0xFF22D3EE)),
-      (s.questsStatCoins, stats.totalCoinsEarned, 'assets/images/illustrations/coin_3d.png', const Color(0xFFFFB800)),
-      (s.questsStatBestStreak, stats.longestStreak, 'assets/images/quests/mascot_fire.png', const Color(0xFFFF5E3A)),
+      (s.questsStatQuests, stats.totalQuestsCompleted, 'assets/images/quests/stat_trophy.png', const Color(0xFF7C5CFF)),
+      (s.questsStatXp, stats.totalXpEarned, 'assets/images/quests/stat_xp.png', const Color(0xFF22D3EE)),
+      (s.questsStatCoins, stats.totalCoinsEarned, 'assets/images/quests/stat_coin.png', const Color(0xFFFFB800)),
+      (s.questsStatBestStreak, stats.longestStreak, 'assets/images/quests/stat_streak.png', const Color(0xFFFF5E3A)),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Header(title: s.questsStatsTitle),
         const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.5,
-          children: [
-            for (var i = 0; i < items.length; i++)
-              GameTile(
+        // Carrossel: ocupa uma faixa só e a imagem ganha destaque.
+        SizedBox(
+          height: 104,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            physics: const BouncingScrollPhysics(),
+            itemCount: items.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
+            itemBuilder: (_, i) => SizedBox(
+              width: 178,
+              child: GameTile(
                 tint: items[i].$4,
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                child: Stack(
+                radius: 22,
+                padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+                child: Row(
                   children: [
-                    Positioned(
-                      right: -2,
-                      top: -2,
-                      child: Floating(
-                        phase: i * 0.25,
-                        amplitude: 3,
-                        child: Image.asset(
-                          items[i].$3,
-                          width: 40,
-                          height: 40,
-                          errorBuilder: (_, _, _) => const SizedBox(width: 40),
-                        ),
+                    Floating(
+                      phase: i * 0.25,
+                      amplitude: 3,
+                      child: Image.asset(
+                        items[i].$3,
+                        width: 62,
+                        height: 62,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const SizedBox(width: 62),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.bottomLeft,
+                    const SizedBox(width: 8),
+                    Expanded(
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          CountUpText(
-                            value: items[i].$2,
-                            style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 24,
-                              letterSpacing: -0.5,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: CountUpText(
+                              value: items[i].$2,
+                              style: TextStyle(
+                                color: context.colors.textPrimary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 24,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                           ),
                           Text(
                             items[i].$1,
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: context.colors.textSecondary,
-                              fontSize: 12,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w700,
+                              height: 1.15,
                             ),
                           ),
                         ],
@@ -188,7 +193,8 @@ class _StatsGrid extends StatelessWidget {
                   ],
                 ),
               ),
-          ],
+            ),
+          ),
         ),
       ],
     );
@@ -593,7 +599,7 @@ class _AwardsEmpty extends StatelessWidget {
         children: [
           Floating(
             child: Image.asset(
-              'assets/images/illustrations/gift_3d.png',
+              'assets/images/quests/stat_gift.png',
               width: 64,
               height: 64,
               errorBuilder: (_, _, _) => const SizedBox(width: 64),

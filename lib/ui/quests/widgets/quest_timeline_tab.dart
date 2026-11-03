@@ -212,7 +212,7 @@ class _EventRow extends StatelessWidget {
         content = Row(
           children: [
             Image.asset(
-              'assets/images/illustrations/trophy_3d.png',
+              'assets/images/quests/stat_trophy.png',
               width: 46,
               height: 46,
               errorBuilder: (_, _, _) => const SizedBox(width: 46),

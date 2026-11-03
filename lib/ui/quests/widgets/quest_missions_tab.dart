@@ -518,6 +518,7 @@ class _ClaimAllButton extends StatelessWidget {
               ),
               child: ShineSweep(
                 opacity: 0.45,
+                borderRadius: BorderRadius.circular(18),
                 period: const Duration(milliseconds: 2400),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),

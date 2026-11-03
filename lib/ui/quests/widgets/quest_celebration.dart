@@ -501,7 +501,7 @@ class _LevelHero extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Image.asset(
-            'assets/images/illustrations/trophy_3d.png',
+            'assets/images/quests/stat_trophy.png',
             width: 120,
             height: 120,
             errorBuilder: (_, _, _) => const Icon(

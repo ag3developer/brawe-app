@@ -51,6 +51,7 @@ class QuestHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(26),
         child: ShineSweep(
           opacity: 0.18,
+          borderRadius: BorderRadius.circular(26),
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
