@@ -13316,6 +13316,12 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Lendário'**
   String get chatVaultTierLegendary;
+
+  /// No description provided for @chatVaultReplay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver de novo'**
+  String get chatVaultReplay;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

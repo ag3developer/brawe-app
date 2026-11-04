@@ -189,17 +189,30 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
   void _handleIncomingMessage(ChatMessage message) {
     final messages = [...state.messages];
-    final optimisticIndex = messages.indexWhere(
+    // Já tenho essa mensagem (a resposta do envio chegou antes do socket).
+    if (messages.any((m) => m.id == message.id)) return;
+
+    // Eco da MINHA mensagem pelo socket: troca a provisória ("local-")
+    // mais antiga do mesmo tipo. Não dá para comparar o conteúdo: em foto,
+    // arquivo e áudio a provisória tem o caminho local e o eco tem a URL.
+    var optimisticIndex = messages.indexWhere(
       (m) =>
           m.id.startsWith('local-') &&
           m.content == message.content &&
-          m.senderId == message.senderId,
+          m.messageType == message.messageType,
     );
+    if (optimisticIndex < 0) {
+      optimisticIndex = messages.indexWhere(
+        (m) =>
+            m.id.startsWith('local-') &&
+            m.isPending &&
+            m.messageType == message.messageType &&
+            (m.senderId == message.senderId || m.senderId == 'current-user'),
+      );
+    }
     var isTrulyNew = false;
     if (optimisticIndex >= 0) {
       messages[optimisticIndex] = message;
-    } else if (messages.any((m) => m.id == message.id)) {
-      return;
     } else {
       messages.add(message);
       isTrulyNew = true;
@@ -411,10 +424,16 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   }
 
   void _replaceMessage(String oldId, ChatMessage newMessage) {
+    // Se o eco do socket já colocou a mensagem real na lista, só tira a
+    // provisória (senão ficariam duas iguais).
+    final alreadyThere =
+        state.messages.any((m) => m.id == newMessage.id && m.id != oldId);
     state = state.copyWith(
-      messages: state.messages
-          .map((m) => m.id == oldId ? newMessage : m)
-          .toList(growable: false),
+      messages: alreadyThere
+          ? state.messages.where((m) => m.id != oldId).toList(growable: false)
+          : state.messages
+              .map((m) => m.id == oldId ? newMessage : m)
+              .toList(growable: false),
     );
   }
 

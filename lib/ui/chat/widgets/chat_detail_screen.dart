@@ -1028,7 +1028,10 @@ class _MessageBubble extends ConsumerWidget {
   final void Function(ChatMessage) onReply;
   final void Function(ChatMessage, String) onReact;
 
-  bool get _isImage => message.messageType == 'image';
+  /// Foto exibida "crua" (sem bolha colorida). Visualização única NÃO
+  /// entra aqui: vira um cartão com texto e usa a bolha normal.
+  bool get _isImage =>
+      message.messageType == 'image' && !message.isViewOnce;
   bool get _isGif =>
       message.messageType == 'text' && message.content.startsWith('gif:');
 
@@ -1103,7 +1106,7 @@ class _MessageBubble extends ConsumerWidget {
     } else if (_isGif) {
       final gifUrl = message.content.substring(4); // strip 'gif:'
       content = _GifBubbleContent(gifUrl: gifUrl, isMe: isMe);
-    } else if (_isImage && message.isViewOnce) {
+    } else if (message.messageType == 'image' && message.isViewOnce) {
       // Visualização única: a foto NUNCA aparece na conversa (nem para quem
       // enviou). Quem recebe toca para abrir uma vez; depois vira "Aberta".
       content = _ViewOnceBubbleContent(

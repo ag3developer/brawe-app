@@ -7479,4 +7479,7 @@ class SEs extends S {
 
   @override
   String get chatVaultTierLegendary => 'Legendario';
+
+  @override
+  String get chatVaultReplay => 'Ver de nuevo';
 }

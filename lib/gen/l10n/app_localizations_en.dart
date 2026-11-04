@@ -7441,4 +7441,7 @@ class SEn extends S {
 
   @override
   String get chatVaultTierLegendary => 'Legendary';
+
+  @override
+  String get chatVaultReplay => 'Play again';
 }

@@ -1149,3 +1149,141 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Efeito do presente FORA da live (ex.: cofre de presente de story no chat)
+
+/// Toca o efeito real de um presente por cima de tudo (overlay raiz):
+/// - VAP (vídeo com transparência e som) → tela cheia, igual à live;
+/// - Lottie → animação grande no centro, com o som do presente.
+/// Completa quando o efeito termina. Se o presente não tem efeito (ou o
+/// arquivo não baixou a tempo), completa na hora com `false`.
+Future<bool> playGiftEffectStandalone(
+  BuildContext context,
+  LiveGift gift,
+) async {
+  final type = gift.animationType?.toLowerCase();
+  final url = gift.animationUrl;
+  if (url == null || url.isEmpty || (type != 'vap' && type != 'lottie')) {
+    return false;
+  }
+  final overlay = Overlay.of(context, rootOverlay: true);
+  final done = Completer<bool>();
+  late OverlayEntry entry;
+  void finish() {
+    try {
+      entry.remove();
+    } catch (_) {}
+    if (!done.isCompleted) done.complete(true);
+  }
+
+  if (type == 'vap') {
+    var file = GiftEffectCache.instance.cachedFile(url);
+    file ??= await GiftEffectCache.instance
+        .fetch(url)
+        .timeout(const Duration(seconds: 10), onTimeout: () => null);
+    if (file == null) return false;
+    final vapFile = file;
+    entry = OverlayEntry(
+      builder: (_) => _VapGiftEffect(file: vapFile, gift: gift, onDone: finish),
+    );
+  } else {
+    final sound = gift.soundUrl;
+    if (gift.soundEnabled && sound != null && sound.isNotEmpty) {
+      SfxPlayer.instance.play(sound);
+    }
+    entry = OverlayEntry(
+      builder: (_) => _StandaloneLottie(url: url, gift: gift, onDone: finish),
+    );
+  }
+  overlay.insert(entry);
+  return done.future;
+}
+
+class _StandaloneLottie extends StatefulWidget {
+  const _StandaloneLottie({
+    required this.url,
+    required this.gift,
+    required this.onDone,
+  });
+  final String url;
+  final LiveGift gift;
+  final VoidCallback onDone;
+
+  @override
+  State<_StandaloneLottie> createState() => _StandaloneLottieState();
+}
+
+class _StandaloneLottieState extends State<_StandaloneLottie>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this);
+  Timer? _safety;
+  bool _closing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trava de segurança caso o arquivo não carregue.
+    _safety = Timer(
+      Duration(milliseconds: widget.gift.resolvedDurationMs + 6000),
+      _close,
+    );
+  }
+
+  void _close() {
+    if (_closing) return;
+    _closing = true;
+    _safety?.cancel();
+    widget.onDone();
+  }
+
+  @override
+  void dispose() {
+    _safety?.cancel();
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final full = widget.gift.resolvedDisplayType == GiftDisplayType.fullscreen;
+    final file = GiftEffectCache.instance.cachedFile(widget.url);
+    final side = full ? size.width : size.width * 0.8;
+    void onLoaded(LottieComposition comp) {
+      _c
+        ..duration = comp.duration
+        ..forward().whenComplete(_close);
+    }
+
+    return IgnorePointer(
+      child: Center(
+        child: SizedBox(
+          width: side,
+          height: full ? size.height : side,
+          child: file != null
+              ? Lottie.file(
+                  file,
+                  controller: _c,
+                  fit: BoxFit.contain,
+                  onLoaded: onLoaded,
+                  errorBuilder: (_, _, _) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _close());
+                    return const SizedBox.shrink();
+                  },
+                )
+              : Lottie.network(
+                  widget.url,
+                  controller: _c,
+                  fit: BoxFit.contain,
+                  onLoaded: onLoaded,
+                  errorBuilder: (_, _, _) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => _close());
+                    return const SizedBox.shrink();
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+}

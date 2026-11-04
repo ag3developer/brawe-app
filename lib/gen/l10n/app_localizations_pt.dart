@@ -7476,4 +7476,7 @@ class SPt extends S {
 
   @override
   String get chatVaultTierLegendary => 'Lendário';
+
+  @override
+  String get chatVaultReplay => 'Ver de novo';
 }

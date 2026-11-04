@@ -454,11 +454,6 @@ GoRouter router(Ref ref) {
             builder: (context, state) => const WalletScreen(),
           ),
           GoRoute(
-            path: '/earnings',
-            redirect: (_, _) => kEnableMonetization ? null : '/home',
-            builder: (context, state) => const EarningsScreen(),
-          ),
-          GoRoute(
             path: '/notifications',
             builder: (context, state) => const NotificationsScreen(),
           ),
@@ -647,6 +642,14 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: '/gifter-level',
         builder: (context, state) => const GifterLevelScreen(),
+      ),
+      // Recompensas do criador: fora do Shell para poder abrir por cima do
+      // chat (o cofre tem "Ver recompensas") e da live. Dentro do Shell,
+      // abrir a partir de /chat criava um 2º Shell → crash de GlobalKey.
+      GoRoute(
+        path: '/earnings',
+        redirect: (_, _) => kEnableMonetization ? null : '/home',
+        builder: (context, state) => const EarningsScreen(),
       ),
       GoRoute(
         path: '/live/:roomId',

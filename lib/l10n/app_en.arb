@@ -3139,5 +3139,6 @@
   "chatVaultTierCommon": "Common",
   "chatVaultTierRare": "Rare",
   "chatVaultTierEpic": "Epic",
-  "chatVaultTierLegendary": "Legendary"
+  "chatVaultTierLegendary": "Legendary",
+  "chatVaultReplay": "Play again"
 }

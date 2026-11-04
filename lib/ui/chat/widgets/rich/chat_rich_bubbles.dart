@@ -13,7 +13,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/services/feedback_service.dart';
 import '../../../../domain/models/conversation.dart';
 import '../../../../gen/l10n/app_localizations.dart';
+import '../../../../domain/models/live_gift.dart';
 import '../../../core/themes/brawe_colors.dart';
+import '../../../live/shared/widgets/overlays/gift_animation_overlay.dart';
+import '../../../live_feed/view_models/gift_catalog_view_model.dart';
 
 /// Bolhas "ricas" do chat: interação com story, cofre de presente,
 /// localização e arquivo. O conteúdo vem em `message.payload` (JSON).
@@ -136,18 +139,18 @@ class StoryInteractionBubble extends StatelessWidget {
 // Cofre (presente recebido no story)
 
 Color vaultTierColor(String? tier) => switch (tier) {
-      'legendary' => const Color(0xFFF59E0B),
-      'epic' => const Color(0xFFA855F7),
-      'rare' => const Color(0xFF3B82F6),
-      _ => const Color(0xFF94A3B8),
-    };
+  'legendary' => const Color(0xFFF59E0B),
+  'epic' => const Color(0xFFA855F7),
+  'rare' => const Color(0xFF3B82F6),
+  _ => const Color(0xFF94A3B8),
+};
 
 String vaultTierName(S s, String? tier) => switch (tier) {
-      'legendary' => s.chatVaultTierLegendary,
-      'epic' => s.chatVaultTierEpic,
-      'rare' => s.chatVaultTierRare,
-      _ => s.chatVaultTierCommon,
-    };
+  'legendary' => s.chatVaultTierLegendary,
+  'epic' => s.chatVaultTierEpic,
+  'rare' => s.chatVaultTierRare,
+  _ => s.chatVaultTierCommon,
+};
 
 /// Desenho do cofre (porta redonda com segredo e travas), na cor da raridade.
 class VaultArt extends StatelessWidget {
@@ -175,16 +178,16 @@ class VaultArt extends StatelessWidget {
     final steelLo = Color.lerp(const Color(0xFF1F2937), tint, 0.25)!;
 
     Widget bolt(Alignment a) => Align(
-          alignment: a,
-          child: Container(
-            width: size * 0.07,
-            height: size * 0.07,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [steelHi, steelLo]),
-            ),
-          ),
-        );
+      alignment: a,
+      child: Container(
+        width: size * 0.07,
+        height: size * 0.07,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [steelHi, steelLo]),
+        ),
+      ),
+    );
 
     final door = Container(
       width: size * 0.7,
@@ -283,6 +286,60 @@ class VaultArt extends StatelessWidget {
   }
 }
 
+/// Busca o presente no catálogo (animação, tipo, som, tela cheia) e monta
+/// um [LiveGift] para tocar o MESMO efeito da live. `null` = sem efeito.
+Future<LiveGift?> vaultGiftEffect(WidgetRef ref, Map<String, dynamic> p) async {
+  String? animUrl = p['animation_url']?.toString();
+  String? animType = p['animation_type']?.toString();
+  String? soundUrl;
+  var fullscreen = false;
+  var durationMs = 0;
+  String? icon = p['gift_image_url']?.toString();
+  try {
+    final tiers = await ref.read(giftCatalogViewModelProvider.future);
+    final id = p['gift_id']?.toString();
+    final slug = p['gift_slug']?.toString();
+    for (final t in tiers) {
+      for (final g in t.gifts) {
+        if (g.id == id || (slug != null && g.slug == slug)) {
+          animUrl = g.animationUrl ?? animUrl;
+          animType = g.animationType;
+          soundUrl = g.soundUrl;
+          fullscreen = g.isFullscreen;
+          durationMs = g.animationDurationMs;
+          icon ??= g.iconUrl;
+        }
+      }
+    }
+  } catch (_) {}
+  if (animUrl == null || animUrl.isEmpty) return null;
+  // Sem tipo do catálogo: deduz pela extensão.
+  if (animType == null || (animType != 'vap' && animType != 'lottie')) {
+    final u = animUrl.toLowerCase();
+    animType = u.endsWith('.mp4')
+        ? 'vap'
+        : (u.endsWith('.json') || u.endsWith('.lottie') ? 'lottie' : animType);
+  }
+  if (animType != 'vap' && animType != 'lottie') return null;
+  return LiveGift(
+    id: 'vault-${DateTime.now().microsecondsSinceEpoch}',
+    senderId: '',
+    senderName: '',
+    giftId: p['gift_id']?.toString() ?? '',
+    giftName: p['gift_name']?.toString() ?? '',
+    giftSlug: p['gift_slug']?.toString(),
+    giftIconUrl: icon,
+    animationUrl: animUrl,
+    animationType: animType,
+    isFullscreen: fullscreen || animType == 'vap',
+    quantity: (p['quantity'] as num?)?.toInt() ?? 1,
+    timestamp: DateTime.now(),
+    soundEnabled: true,
+    soundUrl: soundUrl,
+    animationDurationMs: durationMs > 0 ? durationMs : null,
+  );
+}
+
 /// Imagem do presente (URL) ou emoji.
 class _GiftImage extends StatelessWidget {
   const _GiftImage({required this.payload, required this.size});
@@ -308,7 +365,7 @@ class _GiftImage extends StatelessWidget {
   }
 }
 
-class GiftVaultBubble extends StatelessWidget {
+class GiftVaultBubble extends ConsumerWidget {
   const GiftVaultBubble({
     super.key,
     required this.message,
@@ -323,7 +380,7 @@ class GiftVaultBubble extends StatelessWidget {
   final Future<ChatMessage?> Function() onOpen;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     final p = message.payload ?? const {};
     final opened = p['opened'] == true;
@@ -348,9 +405,15 @@ class GiftVaultBubble extends StatelessWidget {
     }
 
     final canOpen = !isMe && !opened && !message.isPending;
+    // Já aberto: tocar repete o efeito do presente.
+    final canReplay = opened && !message.isPending;
 
     Widget art = opened && !isMe
-        ? SizedBox(width: 64, height: 64, child: Center(child: _GiftImage(payload: p, size: 54)))
+        ? SizedBox(
+            width: 64,
+            height: 64,
+            child: Center(child: _GiftImage(payload: p, size: 54)),
+          )
         : VaultArt(size: 64, tint: tint, doorOpen: opened ? 0.6 : 0);
     if (canOpen) art = _Wiggle(child: art);
 
@@ -358,6 +421,14 @@ class GiftVaultBubble extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: canOpen
           ? () => showVaultReveal(context, payload: p, onOpen: onOpen)
+          : canReplay
+          ? () async {
+              HapticFeedback.selectionClick();
+              final g = await vaultGiftEffect(ref, p);
+              if (g != null && context.mounted) {
+                await playGiftEffectStandalone(context, g);
+              }
+            }
           : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -370,8 +441,10 @@ class GiftVaultBubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: tint.withValues(alpha: isMe ? 0.35 : 0.18),
                     borderRadius: BorderRadius.circular(8),
@@ -396,6 +469,29 @@ class GiftVaultBubble extends StatelessWidget {
                   ),
                 ),
                 Text(subtitle, style: TextStyle(color: sub, fontSize: 12)),
+                if (canReplay)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.rotateCcw,
+                          size: 12,
+                          color: isMe ? Colors.white : tint,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          s.chatVaultReplay,
+                          style: TextStyle(
+                            color: isMe ? Colors.white : tint,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -473,6 +569,10 @@ enum _Phase { idle, unlocking, revealed }
 class _VaultRevealState extends ConsumerState<_VaultReveal>
     with TickerProviderStateMixin {
   _Phase _phase = _Phase.idle;
+
+  /// Efeito do presente tocando: esconde o cofre para o efeito aparecer
+  /// limpo por cima.
+  bool _playingEffect = false;
   late final AnimationController _shake = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 500),
@@ -505,8 +605,9 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
     final fb = ref.read(feedbackServiceProvider);
     HapticFeedback.mediumImpact();
     fb.questTap();
-    // Servidor e animação em paralelo.
+    // Servidor, efeito do presente e animação do cofre em paralelo.
     final server = widget.onOpen();
+    final effect = vaultGiftEffect(ref, widget.payload);
     await _shake.forward(from: 0);
     HapticFeedback.heavyImpact();
     final unlocking = _unlock.forward(from: 0);
@@ -516,6 +617,15 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
     if (result == null) {
       Navigator.of(context).pop();
       return;
+    }
+    // Porta aberta: toca o efeito real do presente (VAP em tela cheia ou
+    // Lottie no centro), igual à live. Depois mostra o que ganhou.
+    final gift = await effect;
+    if (gift != null && mounted) {
+      setState(() => _playingEffect = true);
+      await playGiftEffectStandalone(context, gift);
+      if (!mounted) return;
+      _playingEffect = false;
     }
     HapticFeedback.heavyImpact();
     fb.questBadge();
@@ -539,217 +649,234 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
 
     return Material(
       color: Colors.transparent,
-      child: SafeArea(
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Raios de luz girando atrás (aparecem ao abrir).
-            AnimatedBuilder(
-              animation: Listenable.merge([_unlock, _burst]),
-              builder: (_, _) {
-                final o = _phase == _Phase.revealed
-                    ? 1.0
-                    : (_unlock.value - 0.6).clamp(0.0, 0.4) / 0.4;
-                return Opacity(
-                  opacity: o,
-                  child: Transform.rotate(
-                    angle: _burst.value * math.pi / 2,
-                    child: CustomPaint(
-                      size: const Size(420, 420),
-                      painter: _RaysPainter(tint),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 250),
+        opacity: _playingEffect ? 0 : 1,
+        child: SafeArea(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Raios de luz girando atrás (aparecem ao abrir).
+              AnimatedBuilder(
+                animation: Listenable.merge([_unlock, _burst]),
+                builder: (_, _) {
+                  final o = _phase == _Phase.revealed
+                      ? 1.0
+                      : (_unlock.value - 0.6).clamp(0.0, 0.4) / 0.4;
+                  return Opacity(
+                    opacity: o,
+                    child: Transform.rotate(
+                      angle: _burst.value * math.pi / 2,
+                      child: CustomPaint(
+                        size: const Size(420, 420),
+                        painter: _RaysPainter(tint),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            if (_phase == _Phase.revealed)
-              IgnorePointer(
-                child: AnimatedBuilder(
-                  animation: _burst,
-                  builder: (_, _) => CustomPaint(
-                    size: MediaQuery.sizeOf(context),
-                    painter: _ConfettiPainter(_burst.value, tint),
-                  ),
-                ),
+                  );
+                },
               ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tint.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: tint.withValues(alpha: 0.6)),
-                  ),
-                  child: Text(
-                    vaultTierName(s, tier).toUpperCase(),
-                    style: TextStyle(
-                      color: tint,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
-                      fontSize: 12,
+              if (_phase == _Phase.revealed)
+                IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _burst,
+                    builder: (_, _) => CustomPaint(
+                      size: MediaQuery.sizeOf(context),
+                      painter: _ConfettiPainter(_burst.value, tint),
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: 220,
-                  height: 220,
-                  child: _phase == _Phase.revealed
-                      ? AnimatedBuilder(
-                          animation: _burst,
-                          builder: (_, _) {
-                            final t = Curves.elasticOut
-                                .transform((_burst.value * 2.2).clamp(0, 1));
-                            return Transform.scale(
-                              scale: 0.3 + 0.7 * t,
-                              child: Center(
-                                child: _GiftImage(payload: p, size: 170),
-                              ),
-                            );
-                          },
-                        )
-                      : GestureDetector(
-                          onTap: _start,
-                          child: AnimatedBuilder(
-                            animation: Listenable.merge([_shake, _unlock, _idle]),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: tint.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: tint.withValues(alpha: 0.6)),
+                    ),
+                    child: Text(
+                      vaultTierName(s, tier).toUpperCase(),
+                      style: TextStyle(
+                        color: tint,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: _phase == _Phase.revealed
+                        ? AnimatedBuilder(
+                            animation: _burst,
                             builder: (_, _) {
-                              final shake =
-                                  math.sin(_shake.value * math.pi * 8) *
-                                      (1 - _shake.value) *
-                                      0.12;
-                              final breathe = _phase == _Phase.idle
-                                  ? 1 + _idle.value * 0.04
-                                  : 1.0;
-                              final dial = Curves.easeInOut
-                                  .transform((_unlock.value / 0.6).clamp(0, 1));
-                              final door = Curves.easeOutBack.transform(
-                                ((_unlock.value - 0.6) / 0.4).clamp(0, 1),
+                              final t = Curves.elasticOut.transform(
+                                (_burst.value * 2.2).clamp(0, 1),
                               );
-                              return Transform.rotate(
-                                angle: shake,
-                                child: Transform.scale(
-                                  scale: breathe,
-                                  child: VaultArt(
-                                    size: 200,
-                                    tint: tint,
-                                    dialTurns: dial * 1.5,
-                                    doorOpen: door,
-                                  ),
+                              return Transform.scale(
+                                scale: 0.3 + 0.7 * t,
+                                child: Center(
+                                  child: _GiftImage(payload: p, size: 170),
                                 ),
                               );
                             },
+                          )
+                        : GestureDetector(
+                            onTap: _start,
+                            child: AnimatedBuilder(
+                              animation: Listenable.merge([
+                                _shake,
+                                _unlock,
+                                _idle,
+                              ]),
+                              builder: (_, _) {
+                                final shake =
+                                    math.sin(_shake.value * math.pi * 8) *
+                                    (1 - _shake.value) *
+                                    0.12;
+                                final breathe = _phase == _Phase.idle
+                                    ? 1 + _idle.value * 0.04
+                                    : 1.0;
+                                final dial = Curves.easeInOut.transform(
+                                  (_unlock.value / 0.6).clamp(0, 1),
+                                );
+                                final door = Curves.easeOutBack.transform(
+                                  ((_unlock.value - 0.6) / 0.4).clamp(0, 1),
+                                );
+                                return Transform.rotate(
+                                  angle: shake,
+                                  child: Transform.scale(
+                                    scale: breathe,
+                                    child: VaultArt(
+                                      size: 200,
+                                      tint: tint,
+                                      dialTurns: dial * 1.5,
+                                      doorOpen: door,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                ),
-                const SizedBox(height: 28),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _phase == _Phase.revealed
-                      ? Column(
-                          key: const ValueKey('rev'),
-                          children: [
-                            Text(
-                              s.chatVaultYouGot,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              qty > 1 ? '$giftName ×$qty' : giftName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            if (earnings > 0) ...[
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
+                  ),
+                  const SizedBox(height: 28),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _phase == _Phase.revealed
+                        ? Column(
+                            key: const ValueKey('rev'),
+                            children: [
+                              Text(
+                                s.chatVaultYouGot,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981)
-                                      .withValues(alpha: 0.18),
-                                  borderRadius: BorderRadius.circular(14),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                qty > 1 ? '$giftName ×$qty' : giftName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                child: Text(
-                                  s.chatVaultEarnings(money),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFF34D399),
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
+                              ),
+                              if (earnings > 0) ...[
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
                                   ),
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 28),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (earnings > 0) ...[
-                                  OutlinedButton(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      side: const BorderSide(
-                                        color: Colors.white38,
-                                      ),
-                                      shape: const StadiumBorder(),
-                                    ),
-                                    onPressed: () {
-                                      final router = GoRouter.of(context);
-                                      Navigator.of(context).pop();
-                                      router.push('/earnings');
-                                    },
-                                    child: Text(s.chatVaultSeeRewards),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF10B981,
+                                    ).withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  const SizedBox(width: 10),
-                                ],
-                                FilledButton(
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: tint,
-                                    foregroundColor: Colors.white,
-                                    shape: const StadiumBorder(),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 28,
+                                  child: Text(
+                                    s.chatVaultEarnings(money),
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Color(0xFF34D399),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                  onPressed: () => Navigator.of(context).pop(),
-                                  child: Text(s.chatVaultCollect),
                                 ),
                               ],
+                              const SizedBox(height: 28),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (earnings > 0) ...[
+                                    OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Colors.white38,
+                                        ),
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      onPressed: () {
+                                        final router = GoRouter.of(context);
+                                        Navigator.of(context).pop();
+                                        router.push('/earnings');
+                                      },
+                                      child: Text(s.chatVaultSeeRewards),
+                                    ),
+                                    const SizedBox(width: 10),
+                                  ],
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: tint,
+                                      foregroundColor: Colors.white,
+                                      shape: const StadiumBorder(),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 28,
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: Text(s.chatVaultCollect),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        : Text(
+                            key: const ValueKey('hint'),
+                            _phase == _Phase.idle ? s.chatVaultTapHint : '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
                             ),
-                          ],
-                        )
-                      : Text(
-                          key: const ValueKey('hint'),
-                          _phase == _Phase.idle ? s.chatVaultTapHint : '',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
                           ),
-                        ),
-                ),
-              ],
-            ),
-            if (_phase == _Phase.idle)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                  ),
+                ],
               ),
-          ],
+              if (_phase == _Phase.idle)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white70,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -807,7 +934,8 @@ class _ConfettiPainter extends CustomPainter {
       final angle = a * 2 * math.pi;
       final dist = (120 + sp * 260) * Curves.easeOut.transform(t);
       final fall = t * t * 260;
-      final pos = c + Offset(math.cos(angle) * dist, math.sin(angle) * dist + fall);
+      final pos =
+          c + Offset(math.cos(angle) * dist, math.sin(angle) * dist + fall);
       final paint = Paint()
         ..color = colors[ci].withValues(alpha: (1 - t).clamp(0, 1));
       canvas.save();
@@ -837,7 +965,9 @@ class LocationBubble extends StatelessWidget {
     if (lat == null || lng == null) return;
     final uri = Platform.isIOS
         ? Uri.parse('https://maps.apple.com/?ll=$lat,$lng&q=$lat,$lng')
-        : Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+        : Uri.parse(
+            'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+          );
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
@@ -984,12 +1114,16 @@ class FileBubble extends StatelessWidget {
       'ZIP' || 'RAR' => const Color(0xFF8B5CF6),
       _ => const Color(0xFF64748B),
     };
-    final info = [ext, _size(p['size'] as num?)].where((e) => e.isNotEmpty).join(' · ');
+    final info = [
+      ext,
+      _size(p['size'] as num?),
+    ].where((e) => e.isNotEmpty).join(' · ');
 
     return GestureDetector(
       onTap: (url.isEmpty || message.isPending)
           ? null
-          : () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+          : () =>
+                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1011,7 +1145,9 @@ class FileBubble extends StatelessWidget {
                     ),
                   )
                 : Text(
-                    ext.isEmpty ? '•' : (ext.length > 4 ? ext.substring(0, 4) : ext),
+                    ext.isEmpty
+                        ? '•'
+                        : (ext.length > 4 ? ext.substring(0, 4) : ext),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w900,
