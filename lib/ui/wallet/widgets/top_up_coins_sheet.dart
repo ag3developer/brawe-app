@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../config/feature_flags.dart';
 import '../../../data/services/iap_service.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -39,6 +40,15 @@ class TopUpCoinsSheet extends ConsumerStatefulWidget {
   const TopUpCoinsSheet({super.key, this.reason});
 
   static Future<void> show(BuildContext context, {String? reason}) {
+    // Compra desligada: não abre pagamento, só avisa.
+    if (!kCoinPurchaseEnabled) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(S.of(context).rewardsPurchaseDisabled)),
+        );
+      return Future.value();
+    }
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

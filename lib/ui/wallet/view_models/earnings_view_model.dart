@@ -51,3 +51,10 @@ final purchaseOrdersProvider =
     FutureProvider<List<PurchaseOrder>>((ref) async {
   return ref.read(creditsRepositoryProvider).getPurchaseOrders();
 });
+
+/// Histórico de presentes (enviados + recebidos) com folga para filtrar
+/// por período no app (o endpoint pagina; pedimos o máximo de 100).
+final rewardsTransactionsProvider =
+    FutureProvider<List<WalletTransaction>>((ref) async {
+  return ref.read(creditsRepositoryProvider).getTransactions(limit: 100);
+});

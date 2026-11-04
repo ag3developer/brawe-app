@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:brawe_app/config/feature_flags.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/ui/app_spacing.dart';
 import '../../../../../core/utils/gift_tier_names.dart';
@@ -127,10 +128,17 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
       final balance = ref.read(creditsViewModelProvider).value?.toInt() ?? 0;
       final cost = gift.priceCredits.ceil();
       if (balance < cost) {
-        await TopUpCoinsSheet.show(
-          context,
-          reason: widget.battleId != null ? 'battle' : 'gift',
-        );
+        if (kCoinPurchaseEnabled) {
+          await TopUpCoinsSheet.show(
+            context,
+            reason: widget.battleId != null ? 'battle' : 'gift',
+          );
+        } else {
+          // Compra de moedas ainda não existe: só avisa o saldo.
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(content: Text(s.topUpReasonGift)),
+          );
+        }
         return;
       }
     }
@@ -185,9 +193,11 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         SnackBar(
           content: Text(message),
           backgroundColor: Colors.red.shade700,
-          action: sendNotifier.lastErrorIsBalance && gift.isMonetary
+          action: kCoinPurchaseEnabled &&
+                  sendNotifier.lastErrorIsBalance &&
+                  gift.isMonetary
               ? SnackBarAction(
-                  label: 'Recarregar',
+                  label: s.liveTopUpAction,
                   textColor: Colors.white,
                   onPressed: () {
                     if (navigator.mounted) {
@@ -792,7 +802,9 @@ class _BalanceFooter extends ConsumerWidget {
           child: Row(
             children: [
               GestureDetector(
-                onTap: () => TopUpCoinsSheet.show(context),
+                onTap: kCoinPurchaseEnabled
+                    ? () => TopUpCoinsSheet.show(context)
+                    : null,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -6192,4 +6192,289 @@ class SEs extends S {
   String questsLevelShort(int level) {
     return 'Nv. $level';
   }
+
+  @override
+  String get findFriendsSearchHint => 'Buscar por nombre o @usuario';
+
+  @override
+  String findFriendsSearchNoResults(String query) {
+    return 'No se encontró a nadie para \"$query\"';
+  }
+
+  @override
+  String get findFriendsSearchError =>
+      'No se pudo buscar ahora. Revisa tu conexión.';
+
+  @override
+  String get findFriendsSuggestionsError =>
+      'No se pudieron cargar las sugerencias.';
+
+  @override
+  String get findFriendsRetry => 'Intentar de nuevo';
+
+  @override
+  String get creatorGuideTitle => 'Guía del Creador';
+
+  @override
+  String get creatorGuideIntro =>
+      'Todo lo que necesitas saber para crecer en Brawe.';
+
+  @override
+  String get creatorGuideToc => 'Contenido';
+
+  @override
+  String get creatorGuideSecWhat => 'Qué es';
+
+  @override
+  String get creatorGuideSecBenefits => 'Beneficios';
+
+  @override
+  String get creatorGuideSecLevels => 'Niveles';
+
+  @override
+  String get creatorGuideSecHow => 'Cómo entrar';
+
+  @override
+  String get creatorGuideSecRules => 'Directrices';
+
+  @override
+  String get creatorGuideSecFaq => 'Preguntas frecuentes';
+
+  @override
+  String get creatorGuideWhatBody =>
+      'Programa oficial de Brawe para quienes crean contenido y quieren crecer, ser descubiertos y construir comunidad.';
+
+  @override
+  String get creatorGuideWhatPoint1 => 'Gratis para inscribirse';
+
+  @override
+  String get creatorGuideWhatPoint2 => 'Revisión hecha por personas';
+
+  @override
+  String get creatorGuideWhatPoint3 => 'Crece por niveles';
+
+  @override
+  String get creatorGuideHowStep1 => 'Completa la inscripción';
+
+  @override
+  String get creatorGuideHowStep2 => 'Nuestro equipo revisa tu perfil';
+
+  @override
+  String get creatorGuideHowStep3 => 'Recibes la respuesta en la app';
+
+  @override
+  String get creatorGuideHowStep4 => 'Aprobado, activa tu perfil de creator';
+
+  @override
+  String get creatorGuideRule1 => 'Contenido original o con créditos';
+
+  @override
+  String get creatorGuideRule2 => 'Respeto a la comunidad, sin odio ni acoso';
+
+  @override
+  String get creatorGuideRule3 =>
+      'Nada de seguidores falsos ni compra de interacción';
+
+  @override
+  String get creatorGuideRule4 => 'La seguridad de los menores es lo primero';
+
+  @override
+  String get creatorGuideRule5 =>
+      'Sigue los Términos y la Política de Privacidad';
+
+  @override
+  String get creatorGuideFaq1Q => '¿Cuánto cuesta participar?';
+
+  @override
+  String get creatorGuideFaq1A =>
+      'Nada. La inscripción y la participación en la red son gratuitas.';
+
+  @override
+  String get creatorGuideFaq2Q => '¿Cuánto tarda la revisión?';
+
+  @override
+  String get creatorGuideFaq2A =>
+      'Te avisamos en cuanto haya novedades. Sigue el estado en la app.';
+
+  @override
+  String get creatorGuideFaq3Q => '¿Necesito muchos seguidores?';
+
+  @override
+  String get creatorGuideFaq3A =>
+      'No. Evaluamos constancia, calidad y potencial, no solo números.';
+
+  @override
+  String get creatorGuideFaq4Q => '¿Puedo volver a inscribirme si me rechazan?';
+
+  @override
+  String get creatorGuideFaq4A =>
+      'Sí. Mejora tu perfil y envía una nueva inscripción más tarde.';
+
+  @override
+  String get creatorGuideCtaTerms => 'Leer los términos';
+
+  @override
+  String get creatorApplyTypeTitle => 'Tipo de creador';
+
+  @override
+  String get creatorApplyTypeHint =>
+      'Elige lo que mejor describe tu contenido.';
+
+  @override
+  String get creatorApplyNicheLifestyle => 'Estilo de vida';
+
+  @override
+  String get creatorApplyNicheGames => 'Juegos';
+
+  @override
+  String get creatorApplyNicheMusic => 'Música';
+
+  @override
+  String get creatorApplyNicheFashion => 'Moda';
+
+  @override
+  String get creatorApplyNicheBeauty => 'Belleza';
+
+  @override
+  String get creatorApplyNicheFitness => 'Fitness';
+
+  @override
+  String get creatorApplyNicheComedy => 'Comedia';
+
+  @override
+  String get creatorApplyNicheBusiness => 'Negocios';
+
+  @override
+  String get creatorApplyNicheTech => 'Tecnología';
+
+  @override
+  String get creatorApplyNicheEducation => 'Educación';
+
+  @override
+  String get creatorApplyNicheTravel => 'Viajes';
+
+  @override
+  String get creatorApplyNicheEntertainment => 'Entretenimiento';
+
+  @override
+  String get creatorApplyNicheSports => 'Deportes';
+
+  @override
+  String get creatorApplyNicheCooking => 'Cocina';
+
+  @override
+  String get creatorApplyNicheOther => 'Otro';
+
+  @override
+  String get creatorApplyTermsAnd => ' y la ';
+
+  @override
+  String get creatorApplyTermsUse => 'Términos de Uso';
+
+  @override
+  String get creatorApplyAcceptButton => 'Leí y acepto';
+
+  @override
+  String get creatorApplyErrUsername => 'Mínimo 2 caracteres';
+
+  @override
+  String get creatorApplyErrName => 'Indica nombre y apellido';
+
+  @override
+  String get creatorApplyErrUrl => 'Indica un enlace válido (https://...)';
+
+  @override
+  String get creatorApplyErrCountry => 'Selecciona tu país';
+
+  @override
+  String get creatorApplyErrPhone => 'Teléfono no válido';
+
+  @override
+  String get creatorApplyErrFollowers => 'Indica un número válido';
+
+  @override
+  String get creatorApplyErrNetwork =>
+      'Sin conexión. Revisa tu internet e inténtalo de nuevo.';
+
+  @override
+  String get creatorApplyErrServer =>
+      'Servidor no disponible. Inténtalo de nuevo en unos instantes.';
+
+  @override
+  String get creatorApplyErrSession =>
+      'Tu sesión expiró. Inicia sesión de nuevo para inscribirte.';
+
+  @override
+  String creatorApplyErrFields(String fields) {
+    return 'Algunos datos no fueron aceptados. Revisa el formulario: $fields.';
+  }
+
+  @override
+  String get creatorApplyOptional => 'opcional';
+
+  @override
+  String get creatorApplyInstagramHint => 'usuario (sin @)';
+
+  @override
+  String get creatorApplyCategoryHint => 'Opcional: el nivel al que aspiras.';
+
+  @override
+  String get rewardsTabReceived => 'Recibidos';
+
+  @override
+  String get rewardsTabSent => 'Enviados';
+
+  @override
+  String get rewardsPeriodToday => 'Hoy';
+
+  @override
+  String get rewardsPeriod7d => '7 días';
+
+  @override
+  String get rewardsPeriod30d => '30 días';
+
+  @override
+  String get rewardsPeriodAll => 'Todo';
+
+  @override
+  String get rewardsHistoryTitle => 'Historial de regalos';
+
+  @override
+  String get rewardsHistorySubtitle => 'Regalos que recibiste y enviaste';
+
+  @override
+  String get rewardsNoSent => 'Aún no has enviado regalos.';
+
+  @override
+  String get rewardsNoSentHint =>
+      'Los regalos que envíes en directos aparecerán aquí.';
+
+  @override
+  String get rewardsNoPeriod => 'Nada en este período.';
+
+  @override
+  String get rewardsNoPeriodHint => 'Prueba otro período para ver más.';
+
+  @override
+  String get rewardsPeriodTotalReceived => 'Total recibido en el período';
+
+  @override
+  String get rewardsPeriodTotalSent => 'Total enviado en el período';
+
+  @override
+  String rewardsGiftsCount(int n) {
+    return '$n regalos';
+  }
+
+  @override
+  String rewardsFromTo(String label, String name) {
+    return '$label $name';
+  }
+
+  @override
+  String get rewardsPurchaseDisabled =>
+      'La compra de monedas estará disponible pronto.';
+
+  @override
+  String get liveTopUpAction => 'Recargar';
 }

@@ -13,13 +13,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/feature_flags.dart';
+import '../../../core/utils/gift_names.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_coin.dart';
+import '../../core/widgets/gift_icon.dart';
 import '../view_models/earnings_view_model.dart';
-import '../view_models/wallet_view_model.dart';
 
 class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
@@ -88,30 +90,31 @@ class EarningsScreen extends ConsumerWidget {
           onRefresh: () async {
             await ref.read(earningsViewModelProvider.notifier).refresh();
             ref.invalidate(purchaseOrdersProvider);
-            ref.invalidate(walletTransactionsProvider);
+            ref.invalidate(rewardsTransactionsProvider);
           },
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               _BalanceCards(data: data),
-              const SizedBox(height: 12),
-              const _DisclaimerBanner(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               _LifetimeStats(data: data),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               _SectionHeader(
-                title: s.earningsPurchaseHistoryTitle,
-                subtitle: s.earningsPurchaseHistorySubtitle,
+                title: s.rewardsHistoryTitle,
+                subtitle: s.rewardsHistorySubtitle,
               ),
               const SizedBox(height: 12),
-              const _PurchaseOrdersList(),
-              const SizedBox(height: 24),
-              _SectionHeader(
-                title: s.earningsGiftHistoryTitle,
-                subtitle: s.earningsGiftHistorySubtitle,
-              ),
-              const SizedBox(height: 12),
-              const _GiftReceivedList(),
+              const _GiftHistory(),
+              // Histórico de compras só existe com a compra de moedas ativa.
+              if (kCoinPurchaseEnabled) ...[
+                const SizedBox(height: 28),
+                _SectionHeader(
+                  title: s.earningsPurchaseHistoryTitle,
+                  subtitle: s.earningsPurchaseHistorySubtitle,
+                ),
+                const SizedBox(height: 12),
+                const _PurchaseOrdersList(),
+              ],
               const SizedBox(height: 24),
             ],
           ),
@@ -524,50 +527,277 @@ class _PurchaseOrderTile extends StatelessWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-//   Lista de gifts recebidos (origem dos diamantes)
+//   Histórico de presentes: abas Recebidos/Enviados + filtro de período
 // ───────────────────────────────────────────────────────────────────────────
-class _GiftReceivedList extends ConsumerWidget {
-  const _GiftReceivedList();
+enum _Period { today, week, month, all }
+
+class _GiftHistory extends ConsumerStatefulWidget {
+  const _GiftHistory();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(walletTransactionsProvider);
-    final scheme = Theme.of(context).colorScheme;
-    return async.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-      ),
-      error: (_, _) => _EmptyTile(text: S.of(context).earningsLoadError),
-      data: (items) {
-        final received = items
-            .where((t) => t.type == 'received')
-            .take(20)
-            .toList();
-        if (received.isEmpty) {
-          return _EmptyTile(
-            text: S.of(context).earningsNoGifts,
-            hint: S.of(context).earningsNoGiftsHint,
-            illustrationAsset: 'assets/images/illustrations/gift_3d.png',
-          );
-        }
-        return Container(
+  ConsumerState<_GiftHistory> createState() => _GiftHistoryState();
+}
+
+class _GiftHistoryState extends ConsumerState<_GiftHistory> {
+  bool _received = true;
+  _Period _period = _Period.all;
+
+  DateTime? get _since {
+    final now = DateTime.now();
+    return switch (_period) {
+      _Period.today => DateTime(now.year, now.month, now.day),
+      _Period.week => now.subtract(const Duration(days: 7)),
+      _Period.month => now.subtract(const Duration(days: 30)),
+      _Period.all => null,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final colors = context.colors;
+    final async = ref.watch(rewardsTransactionsProvider);
+
+    final periodLabels = {
+      _Period.today: s.rewardsPeriodToday,
+      _Period.week: s.rewardsPeriod7d,
+      _Period.month: s.rewardsPeriod30d,
+      _Period.all: s.rewardsPeriodAll,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Abas (segmentadas)
+        Container(
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: scheme.surface,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
-          child: Column(
+          child: Row(
             children: [
-              for (int i = 0; i < received.length; i++) ...[
-                _GiftTile(tx: received[i]),
-                if (i < received.length - 1)
-                  Divider(height: 1, color: Theme.of(context).dividerColor),
+              _TabPill(
+                label: s.rewardsTabReceived,
+                selected: _received,
+                onTap: () => setState(() => _received = true),
+              ),
+              _TabPill(
+                label: s.rewardsTabSent,
+                selected: !_received,
+                onTap: () => setState(() => _received = false),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Filtro de período
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final p in _Period.values) ...[
+                ChoiceChip(
+                  label: Text(periodLabels[p]!),
+                  selected: _period == p,
+                  showCheckmark: false,
+                  onSelected: (_) => setState(() => _period = p),
+                ),
+                const SizedBox(width: 8),
               ],
             ],
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 12),
+        async.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          ),
+          error: (_, _) => _EmptyTile(text: s.earningsLoadError),
+          data: (all) {
+            final type = _received ? 'received' : 'sent';
+            final ofType = all.where((t) => t.type == type).toList();
+            final since = _since;
+            final items = since == null
+                ? ofType
+                : ofType
+                      .where(
+                        (t) => t.createdAt != null &&
+                            t.createdAt!.toLocal().isAfter(since),
+                      )
+                      .toList();
+            if (ofType.isEmpty) {
+              return _received
+                  ? _EmptyTile(
+                      text: s.earningsNoGifts,
+                      hint: s.earningsNoGiftsHint,
+                      illustrationAsset:
+                          'assets/images/illustrations/gift_3d.png',
+                    )
+                  : _EmptyTile(
+                      text: s.rewardsNoSent,
+                      hint: s.rewardsNoSentHint,
+                      illustrationAsset:
+                          'assets/images/illustrations/gift_3d.png',
+                    );
+            }
+            if (items.isEmpty) {
+              return _EmptyTile(
+                text: s.rewardsNoPeriod,
+                hint: s.rewardsNoPeriodHint,
+              );
+            }
+            final total = items.fold<int>(
+              0,
+              (sum, t) => sum + t.amountCredits.abs(),
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _PeriodSummary(
+                  received: _received,
+                  total: total,
+                  count: items.length,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < items.length; i++) ...[
+                        _GiftTile(tx: items[i]),
+                        if (i < items.length - 1)
+                          Divider(
+                            height: 1,
+                            indent: 72,
+                            color: Theme.of(context).dividerColor,
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _TabPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.braweBlue : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13.5,
+              color: selected ? Colors.white : colors.textSecondary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PeriodSummary extends StatelessWidget {
+  final bool received;
+  final int total;
+  final int count;
+  const _PeriodSummary({
+    required this.received,
+    required this.total,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final colors = context.colors;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            received ? s.rewardsPeriodTotalReceived : s.rewardsPeriodTotalSent,
+            style: TextStyle(color: colors.textSecondary, fontSize: 12.5),
+          ),
+        ),
+        _AmountBadge(received: received, amount: total, signed: false),
+        const SizedBox(width: 8),
+        Text(
+          s.rewardsGiftsCount(count),
+          style: TextStyle(color: colors.textTertiary, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+/// Valor com ícone: diamante para recebidos, moeda para enviados.
+class _AmountBadge extends StatelessWidget {
+  final bool received;
+  final int amount;
+  final bool signed;
+  const _AmountBadge({
+    required this.received,
+    required this.amount,
+    required this.signed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final prefix = !signed ? '' : (received ? '+' : '-');
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        received
+            ? Image.asset(
+                'assets/images/illustrations/diamond_3d.png',
+                width: 16,
+                height: 16,
+              )
+            : const BraweCoin(size: 16),
+        const SizedBox(width: 4),
+        Text(
+          '$prefix${_formatInt(amount)}',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+            color: signed && received ? Colors.green : colors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -578,22 +808,33 @@ class _GiftTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    final colors = context.colors;
+    final received = tx.type == 'received';
+    final name = tx.giftSlug.isEmpty
+        ? tx.giftName
+        : GiftNames.of(context, tx.giftSlug, fallback: tx.giftName);
+    final who = s.rewardsFromTo(
+      received ? s.walletTxFrom : s.walletTxTo,
+      tx.counterpartyName,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 46,
+            height: 46,
             decoration: BoxDecoration(
-              color: const Color(0xFF00C2FF).withValues(alpha: 0.12),
-              shape: BoxShape.circle,
+              color: AppColors.braweBlue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
-              Icons.diamond,
-              color: Color(0xFF00C2FF),
-              size: 20,
+            alignment: Alignment.center,
+            child: GiftIcon(
+              slug: tx.giftSlug,
+              tier: tx.giftTier,
+              iconUrl: tx.giftIconUrl,
+              size: 34,
             ),
           ),
           const SizedBox(width: 12),
@@ -602,7 +843,9 @@ class _GiftTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tx.giftName,
+                  tx.quantity > 1 ? '$name  x${tx.quantity}' : name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
@@ -610,23 +853,19 @@ class _GiftTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${S.of(context).walletTxFrom} ${tx.counterpartyName} '
-                  '· ${_formatDate(tx.createdAt)}',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: scheme.onSurface.withValues(alpha: 0.6),
-                  ),
+                  '$who · ${_formatDate(tx.createdAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11.5, color: colors.textSecondary),
                 ),
               ],
             ),
           ),
-          Text(
-            '+${tx.amountCredits.abs()}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w800,
-              color: Colors.green,
-              fontSize: 14,
-            ),
+          const SizedBox(width: 8),
+          _AmountBadge(
+            received: received,
+            amount: tx.amountCredits.abs(),
+            signed: true,
           ),
         ],
       ),
@@ -755,64 +994,4 @@ String _formatDate(DateTime? d) {
   if (d == null) return '';
   String two(int x) => x.toString().padLeft(2, '0');
   return '${two(d.day)}/${two(d.month)}/${d.year}';
-}
-
-// ───────────────────────────────────────────────────────────────────────────
-// Disclaimer banner — Apple 3.1.1 / Google Play Real-Money compliance.
-// Esclarece que moedas/diamantes são itens virtuais não-resgatáveis.
-// ───────────────────────────────────────────────────────────────────────────
-class _DisclaimerBanner extends StatelessWidget {
-  const _DisclaimerBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    final colors = context.colors;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.surface.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colors.accentPrimary.withValues(alpha: 0.25),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.info_outline_rounded,
-            color: colors.accentPrimary,
-            size: 20,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.earningsDisclaimerTitle,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  s.earningsDisclaimerBody,
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

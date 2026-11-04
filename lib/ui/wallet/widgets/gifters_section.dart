@@ -606,7 +606,7 @@ class _ErrorBox extends StatelessWidget {
           const Icon(Icons.error_outline, size: 18),
           const SizedBox(width: 8),
           Expanded(child: Text(message)),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          TextButton(onPressed: onRetry, child: Text(S.of(context).commonRetry)),
         ],
       ),
     );

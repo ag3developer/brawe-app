@@ -8,6 +8,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../domain/models/creator_network.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -138,6 +139,79 @@ extension ApplicationStatusL10n on ApplicationStatus {
         return s.creatorStatusApprovedBody;
       case ApplicationStatus.rejected:
         return s.creatorStatusRejectedBody;
+    }
+  }
+}
+
+/// Rótulo traduzido e ícone Lucide de cada tipo de criador (nicho).
+extension ContentNicheL10n on ContentNiche {
+  String label(S s) {
+    switch (this) {
+      case ContentNiche.lifestyle:
+        return s.creatorApplyNicheLifestyle;
+      case ContentNiche.games:
+        return s.creatorApplyNicheGames;
+      case ContentNiche.music:
+        return s.creatorApplyNicheMusic;
+      case ContentNiche.fashion:
+        return s.creatorApplyNicheFashion;
+      case ContentNiche.beauty:
+        return s.creatorApplyNicheBeauty;
+      case ContentNiche.fitness:
+        return s.creatorApplyNicheFitness;
+      case ContentNiche.comedy:
+        return s.creatorApplyNicheComedy;
+      case ContentNiche.business:
+        return s.creatorApplyNicheBusiness;
+      case ContentNiche.tech:
+        return s.creatorApplyNicheTech;
+      case ContentNiche.education:
+        return s.creatorApplyNicheEducation;
+      case ContentNiche.travel:
+        return s.creatorApplyNicheTravel;
+      case ContentNiche.entertainment:
+        return s.creatorApplyNicheEntertainment;
+      case ContentNiche.sports:
+        return s.creatorApplyNicheSports;
+      case ContentNiche.cooking:
+        return s.creatorApplyNicheCooking;
+      case ContentNiche.other:
+        return s.creatorApplyNicheOther;
+    }
+  }
+
+  IconData get lucide {
+    switch (this) {
+      case ContentNiche.lifestyle:
+        return LucideIcons.coffee;
+      case ContentNiche.games:
+        return LucideIcons.gamepad2;
+      case ContentNiche.music:
+        return LucideIcons.music;
+      case ContentNiche.fashion:
+        return LucideIcons.shirt;
+      case ContentNiche.beauty:
+        return LucideIcons.sparkles;
+      case ContentNiche.fitness:
+        return LucideIcons.dumbbell;
+      case ContentNiche.comedy:
+        return LucideIcons.laugh;
+      case ContentNiche.business:
+        return LucideIcons.briefcase;
+      case ContentNiche.tech:
+        return LucideIcons.cpu;
+      case ContentNiche.education:
+        return LucideIcons.graduationCap;
+      case ContentNiche.travel:
+        return LucideIcons.plane;
+      case ContentNiche.entertainment:
+        return LucideIcons.clapperboard;
+      case ContentNiche.sports:
+        return LucideIcons.trophy;
+      case ContentNiche.cooking:
+        return LucideIcons.chefHat;
+      case ContentNiche.other:
+        return LucideIcons.shapes;
     }
   }
 }

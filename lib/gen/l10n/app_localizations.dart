@@ -11114,6 +11114,528 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Nv. {level}'**
   String questsLevelShort(int level);
+
+  /// No description provided for @findFriendsSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar por nome ou @usuário'**
+  String get findFriendsSearchHint;
+
+  /// No description provided for @findFriendsSearchNoResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma pessoa encontrada para \"{query}\"'**
+  String findFriendsSearchNoResults(String query);
+
+  /// No description provided for @findFriendsSearchError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível buscar agora. Verifique sua conexão.'**
+  String get findFriendsSearchError;
+
+  /// No description provided for @findFriendsSuggestionsError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar as sugestões.'**
+  String get findFriendsSuggestionsError;
+
+  /// No description provided for @findFriendsRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get findFriendsRetry;
+
+  /// No description provided for @creatorGuideTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guia do Criador'**
+  String get creatorGuideTitle;
+
+  /// No description provided for @creatorGuideIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tudo o que você precisa saber para crescer na Brawe.'**
+  String get creatorGuideIntro;
+
+  /// No description provided for @creatorGuideToc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sumário'**
+  String get creatorGuideToc;
+
+  /// No description provided for @creatorGuideSecWhat.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que é'**
+  String get creatorGuideSecWhat;
+
+  /// No description provided for @creatorGuideSecBenefits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Benefícios'**
+  String get creatorGuideSecBenefits;
+
+  /// No description provided for @creatorGuideSecLevels.
+  ///
+  /// In pt, this message translates to:
+  /// **'Níveis'**
+  String get creatorGuideSecLevels;
+
+  /// No description provided for @creatorGuideSecHow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como entrar'**
+  String get creatorGuideSecHow;
+
+  /// No description provided for @creatorGuideSecRules.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diretrizes'**
+  String get creatorGuideSecRules;
+
+  /// No description provided for @creatorGuideSecFaq.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perguntas frequentes'**
+  String get creatorGuideSecFaq;
+
+  /// No description provided for @creatorGuideWhatBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Programa oficial da Brawe para quem cria conteúdo e quer crescer, ser descoberto e construir comunidade.'**
+  String get creatorGuideWhatBody;
+
+  /// No description provided for @creatorGuideWhatPoint1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gratuito para se inscrever'**
+  String get creatorGuideWhatPoint1;
+
+  /// No description provided for @creatorGuideWhatPoint2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análise feita por pessoas'**
+  String get creatorGuideWhatPoint2;
+
+  /// No description provided for @creatorGuideWhatPoint3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cresça por níveis'**
+  String get creatorGuideWhatPoint3;
+
+  /// No description provided for @creatorGuideHowStep1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preencha a inscrição'**
+  String get creatorGuideHowStep1;
+
+  /// No description provided for @creatorGuideHowStep2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nossa equipe analisa seu perfil'**
+  String get creatorGuideHowStep2;
+
+  /// No description provided for @creatorGuideHowStep3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você recebe a resposta no app'**
+  String get creatorGuideHowStep3;
+
+  /// No description provided for @creatorGuideHowStep4.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovado, ative seu perfil de creator'**
+  String get creatorGuideHowStep4;
+
+  /// No description provided for @creatorGuideRule1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo original ou com créditos'**
+  String get creatorGuideRule1;
+
+  /// No description provided for @creatorGuideRule2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Respeito à comunidade, sem ódio ou assédio'**
+  String get creatorGuideRule2;
+
+  /// No description provided for @creatorGuideRule3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada de seguidores falsos ou compra de engajamento'**
+  String get creatorGuideRule3;
+
+  /// No description provided for @creatorGuideRule4.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segurança de menores sempre em primeiro lugar'**
+  String get creatorGuideRule4;
+
+  /// No description provided for @creatorGuideRule5.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga os Termos e a Política de Privacidade'**
+  String get creatorGuideRule5;
+
+  /// No description provided for @creatorGuideFaq1Q.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quanto custa participar?'**
+  String get creatorGuideFaq1Q;
+
+  /// No description provided for @creatorGuideFaq1A.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada. A inscrição e a participação na rede são gratuitas.'**
+  String get creatorGuideFaq1A;
+
+  /// No description provided for @creatorGuideFaq2Q.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quanto tempo leva a análise?'**
+  String get creatorGuideFaq2Q;
+
+  /// No description provided for @creatorGuideFaq2A.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avisamos você assim que houver novidade. Acompanhe o status no app.'**
+  String get creatorGuideFaq2A;
+
+  /// No description provided for @creatorGuideFaq3Q.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preciso de muitos seguidores?'**
+  String get creatorGuideFaq3Q;
+
+  /// No description provided for @creatorGuideFaq3A.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não. Avaliamos consistência, qualidade e potencial, não só números.'**
+  String get creatorGuideFaq3A;
+
+  /// No description provided for @creatorGuideFaq4Q.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posso me inscrever de novo se for recusado?'**
+  String get creatorGuideFaq4Q;
+
+  /// No description provided for @creatorGuideFaq4A.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sim. Melhore seu perfil e envie uma nova inscrição depois.'**
+  String get creatorGuideFaq4A;
+
+  /// No description provided for @creatorGuideCtaTerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ler os termos'**
+  String get creatorGuideCtaTerms;
+
+  /// No description provided for @creatorApplyTypeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo de criador'**
+  String get creatorApplyTypeTitle;
+
+  /// No description provided for @creatorApplyTypeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha o que melhor descreve seu conteúdo.'**
+  String get creatorApplyTypeHint;
+
+  /// No description provided for @creatorApplyNicheLifestyle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lifestyle'**
+  String get creatorApplyNicheLifestyle;
+
+  /// No description provided for @creatorApplyNicheGames.
+  ///
+  /// In pt, this message translates to:
+  /// **'Games'**
+  String get creatorApplyNicheGames;
+
+  /// No description provided for @creatorApplyNicheMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música'**
+  String get creatorApplyNicheMusic;
+
+  /// No description provided for @creatorApplyNicheFashion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moda'**
+  String get creatorApplyNicheFashion;
+
+  /// No description provided for @creatorApplyNicheBeauty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Beleza'**
+  String get creatorApplyNicheBeauty;
+
+  /// No description provided for @creatorApplyNicheFitness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fitness'**
+  String get creatorApplyNicheFitness;
+
+  /// No description provided for @creatorApplyNicheComedy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comédia'**
+  String get creatorApplyNicheComedy;
+
+  /// No description provided for @creatorApplyNicheBusiness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Negócios'**
+  String get creatorApplyNicheBusiness;
+
+  /// No description provided for @creatorApplyNicheTech.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tecnologia'**
+  String get creatorApplyNicheTech;
+
+  /// No description provided for @creatorApplyNicheEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação'**
+  String get creatorApplyNicheEducation;
+
+  /// No description provided for @creatorApplyNicheTravel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Viagens'**
+  String get creatorApplyNicheTravel;
+
+  /// No description provided for @creatorApplyNicheEntertainment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entretenimento'**
+  String get creatorApplyNicheEntertainment;
+
+  /// No description provided for @creatorApplyNicheSports.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esportes'**
+  String get creatorApplyNicheSports;
+
+  /// No description provided for @creatorApplyNicheCooking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Culinária'**
+  String get creatorApplyNicheCooking;
+
+  /// No description provided for @creatorApplyNicheOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get creatorApplyNicheOther;
+
+  /// No description provided for @creatorApplyTermsAnd.
+  ///
+  /// In pt, this message translates to:
+  /// **' e a '**
+  String get creatorApplyTermsAnd;
+
+  /// No description provided for @creatorApplyTermsUse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos de Uso'**
+  String get creatorApplyTermsUse;
+
+  /// No description provided for @creatorApplyAcceptButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Li e aceito'**
+  String get creatorApplyAcceptButton;
+
+  /// No description provided for @creatorApplyErrUsername.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo de 2 caracteres'**
+  String get creatorApplyErrUsername;
+
+  /// No description provided for @creatorApplyErrName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe nome e sobrenome'**
+  String get creatorApplyErrName;
+
+  /// No description provided for @creatorApplyErrUrl.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe um link válido (https://...)'**
+  String get creatorApplyErrUrl;
+
+  /// No description provided for @creatorApplyErrCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione seu país'**
+  String get creatorApplyErrCountry;
+
+  /// No description provided for @creatorApplyErrPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Telefone inválido'**
+  String get creatorApplyErrPhone;
+
+  /// No description provided for @creatorApplyErrFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe um número válido'**
+  String get creatorApplyErrFollowers;
+
+  /// No description provided for @creatorApplyErrNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão. Verifique sua internet e tente novamente.'**
+  String get creatorApplyErrNetwork;
+
+  /// No description provided for @creatorApplyErrServer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Servidor indisponível no momento. Tente novamente em instantes.'**
+  String get creatorApplyErrServer;
+
+  /// No description provided for @creatorApplyErrSession.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua sessão expirou. Entre novamente para se inscrever.'**
+  String get creatorApplyErrSession;
+
+  /// No description provided for @creatorApplyErrFields.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alguns dados não foram aceitos. Revise o formulário: {fields}.'**
+  String creatorApplyErrFields(String fields);
+
+  /// No description provided for @creatorApplyOptional.
+  ///
+  /// In pt, this message translates to:
+  /// **'opcional'**
+  String get creatorApplyOptional;
+
+  /// No description provided for @creatorApplyInstagramHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'usuario (sem @)'**
+  String get creatorApplyInstagramHint;
+
+  /// No description provided for @creatorApplyCategoryHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Opcional: o nível que você pretende alcançar.'**
+  String get creatorApplyCategoryHint;
+
+  /// No description provided for @rewardsTabReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebidos'**
+  String get rewardsTabReceived;
+
+  /// No description provided for @rewardsTabSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviados'**
+  String get rewardsTabSent;
+
+  /// No description provided for @rewardsPeriodToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get rewardsPeriodToday;
+
+  /// No description provided for @rewardsPeriod7d.
+  ///
+  /// In pt, this message translates to:
+  /// **'7 dias'**
+  String get rewardsPeriod7d;
+
+  /// No description provided for @rewardsPeriod30d.
+  ///
+  /// In pt, this message translates to:
+  /// **'30 dias'**
+  String get rewardsPeriod30d;
+
+  /// No description provided for @rewardsPeriodAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tudo'**
+  String get rewardsPeriodAll;
+
+  /// No description provided for @rewardsHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de presentes'**
+  String get rewardsHistoryTitle;
+
+  /// No description provided for @rewardsHistorySubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes que você recebeu e enviou'**
+  String get rewardsHistorySubtitle;
+
+  /// No description provided for @rewardsNoSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não enviou presentes.'**
+  String get rewardsNoSent;
+
+  /// No description provided for @rewardsNoSentHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os presentes que você enviar em lives aparecerão aqui.'**
+  String get rewardsNoSentHint;
+
+  /// No description provided for @rewardsNoPeriod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada neste período.'**
+  String get rewardsNoPeriod;
+
+  /// No description provided for @rewardsNoPeriodHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente outro período para ver mais itens.'**
+  String get rewardsNoPeriodHint;
+
+  /// No description provided for @rewardsPeriodTotalReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total recebido no período'**
+  String get rewardsPeriodTotalReceived;
+
+  /// No description provided for @rewardsPeriodTotalSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total enviado no período'**
+  String get rewardsPeriodTotalSent;
+
+  /// No description provided for @rewardsGiftsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} presentes'**
+  String rewardsGiftsCount(int n);
+
+  /// No description provided for @rewardsFromTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'{label} {name}'**
+  String rewardsFromTo(String label, String name);
+
+  /// No description provided for @rewardsPurchaseDisabled.
+  ///
+  /// In pt, this message translates to:
+  /// **'A compra de moedas estará disponível em breve.'**
+  String get rewardsPurchaseDisabled;
+
+  /// No description provided for @liveTopUpAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recarregar'**
+  String get liveTopUpAction;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

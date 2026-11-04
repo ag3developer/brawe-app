@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -35,7 +36,7 @@ class CreatorApplicationSubmittedScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.check_rounded,
+                child: const Icon(LucideIcons.check,
                     size: 64, color: Colors.white),
               ),
               const SizedBox(height: 24),
@@ -59,7 +60,7 @@ class CreatorApplicationSubmittedScreen extends ConsumerWidget {
               ),
               const Spacer(),
               FilledButton.icon(
-                icon: const Icon(Icons.timeline_rounded),
+                icon: const Icon(LucideIcons.route),
                 label: Text(s.creatorSubmittedTrack),
                 onPressed: () => context.go('/creator/status'),
                 style: FilledButton.styleFrom(

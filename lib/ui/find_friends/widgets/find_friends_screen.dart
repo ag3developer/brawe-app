@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
@@ -12,27 +14,123 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/social_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
-import '../../feed/widgets/suggested_users_rail.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
-/// Página "Encontrar amigos" — estilo TikTok: mostra o QR code do próprio
-/// perfil (para outras pessoas escanearem e seguir/ver o perfil), um botão
-/// para escanear o código de outra pessoa (ou um QR de login de outro
-/// dispositivo), e uma lista de sugestões de pessoas para seguir.
+/// Provider com a lista completa de sugestões (usada na tela Encontrar amigos
+/// e aberta pelo "Ver todos" do feed). Mais itens que o carrossel do feed.
+final allSuggestionsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+      return ref.watch(socialServiceProvider).getSuggestions(limit: 50);
+    });
+
+/// Página "Encontrar amigos" — estilo TikTok/Instagram: campo de busca por
+/// nome/@usuário em destaque no topo, atalhos compactos para o QR do próprio
+/// perfil e para escanear o código de outra pessoa, e a lista de sugestões.
 ///
-/// Acessada a partir do ícone (usuário+) que substituiu o "@username" no
-/// AppBar do próprio perfil (ver `profile_screen.dart`).
-class FindFriendsScreen extends ConsumerWidget {
+/// Acessada a partir do ícone (usuário+) no perfil e pelo "Ver todos" do
+/// carrossel de sugestões no feed.
+class FindFriendsScreen extends ConsumerStatefulWidget {
   const FindFriendsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FindFriendsScreen> createState() => _FindFriendsScreenState();
+}
+
+class _FindFriendsScreenState extends ConsumerState<FindFriendsScreen> {
+  final _controller = TextEditingController();
+  Timer? _debounce;
+  String _query = '';
+  bool _searching = false;
+  bool _error = false;
+  List<Map<String, dynamic>> _results = const [];
+  int _requestId = 0;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onChanged(String value) {
+    _debounce?.cancel();
+    final q = value.trim().replaceFirst(RegExp(r'^@+'), '');
+    if (q.isEmpty) {
+      _requestId++;
+      setState(() {
+        _query = '';
+        _searching = false;
+        _error = false;
+        _results = const [];
+      });
+      return;
+    }
+    setState(() {
+      _query = q;
+      _searching = true;
+      _error = false;
+    });
+    _debounce = Timer(const Duration(milliseconds: 350), _search);
+  }
+
+  Future<void> _search() async {
+    final q = _query;
+    if (q.isEmpty) return;
+    final id = ++_requestId;
+    setState(() {
+      _searching = true;
+      _error = false;
+    });
+    try {
+      final res = await ref.read(socialServiceProvider).searchUsers(q);
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _results = res;
+        _searching = false;
+      });
+    } catch (_) {
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _error = true;
+        _searching = false;
+      });
+    }
+  }
+
+  void _clear() {
+    _controller.clear();
+    _onChanged('');
+  }
+
+  void _showMyQr(String profileUrl, String? avatarUrl, String? name) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: _MyQrCard(
+              profileUrl: profileUrl,
+              avatarUrl: avatarUrl,
+              name: name,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = S.of(context);
     final colors = context.colors;
     final currentUser = ref.watch(authStateProvider).value;
     final profileUrl = currentUser != null
         ? AppConstants.profileUrl(currentUser.id)
         : null;
+    final searching = _query.isNotEmpty;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -52,29 +150,246 @@ class FindFriendsScreen extends ConsumerWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+          children: [
+            _SearchField(
+              controller: _controller,
+              onChanged: _onChanged,
+              onClear: _clear,
+            ),
+            const SizedBox(height: 14),
+            if (!searching) ...[
+              Row(
+                children: [
+                  if (profileUrl != null) ...[
+                    Expanded(
+                      child: _ShortcutButton(
+                        icon: LucideIcons.qrCode,
+                        label: s.findFriendsMyQrCode,
+                        onTap: () => _showMyQr(
+                          profileUrl,
+                          currentUser?.avatarUrl,
+                          currentUser?.name,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: _ShortcutButton(
+                      icon: LucideIcons.scanLine,
+                      label: s.findFriendsScanButton,
+                      onTap: () => context.push('/scan-qr'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                s.findFriendsSuggestionsTitle,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const _SuggestionsList(),
+            ] else
+              _buildResults(s, colors),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResults(S s, BraweColors colors) {
+    if (_searching && _results.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error) {
+      return _MessageState(
+        icon: LucideIcons.wifiOff,
+        text: s.findFriendsSearchError,
+        actionLabel: s.findFriendsRetry,
+        onAction: _search,
+      );
+    }
+    if (_results.isEmpty) {
+      return _MessageState(
+        icon: LucideIcons.searchX,
+        text: s.findFriendsSearchNoResults(_query),
+      );
+    }
+    return Opacity(
+      opacity: _searching ? 0.6 : 1,
+      child: Column(
+        children: _results
+            .map(
+              (u) => _UserTile(
+                key: ValueKey(u['user_id']),
+                user: u,
+                initialFollowing: u['is_following'] as bool? ?? false,
+              ),
+            )
+            .toList(growable: false),
+      ),
+    );
+  }
+}
+
+/// Campo de busca arredondado, com ícone de lupa e botão de limpar.
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return TextField(
+      controller: controller,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      autocorrect: false,
+      style: TextStyle(color: colors.textPrimary, fontSize: 15),
+      cursorColor: colors.accentPrimary,
+      decoration: InputDecoration(
+        hintText: S.of(context).findFriendsSearchHint,
+        hintStyle: TextStyle(color: colors.textSecondary, fontSize: 15),
+        prefixIcon: Icon(
+          LucideIcons.search,
+          size: 18,
+          color: colors.textSecondary,
+        ),
+        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller,
+          builder: (_, v, __) => v.text.isEmpty
+              ? const SizedBox.shrink()
+              : IconButton(
+                  icon: Icon(
+                    Icons.cancel,
+                    size: 18,
+                    color: colors.textSecondary,
+                  ),
+                  onPressed: onClear,
+                ),
+        ),
+        filled: true,
+        fillColor: colors.surfaceElevated,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: colors.accentPrimary, width: 1.2),
+        ),
+      ),
+    );
+  }
+}
+
+/// Estado vazio/erro com ícone, texto e ação opcional.
+class _MessageState extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  const _MessageState({
+    required this.icon,
+    required this.text,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
         children: [
-          if (profileUrl != null)
-            _MyQrCard(
-              profileUrl: profileUrl,
-              avatarUrl: currentUser?.avatarUrl,
-              name: currentUser?.name,
-            ),
-          const SizedBox(height: 14),
-          _ScanButton(onTap: () => context.push('/scan-qr')),
-          const SizedBox(height: 24),
-          Text(
-            s.findFriendsSuggestionsTitle,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Icon(icon, size: 36, color: colors.textSecondary),
           const SizedBox(height: 12),
-          const _SuggestionsList(),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.textSecondary, fontSize: 14),
+          ),
+          if (actionLabel != null) ...[
+            const SizedBox(height: 8),
+            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// Botão compacto de atalho (Meu QR / Escanear).
+class _ShortcutButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ShortcutButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Material(
+      color: colors.surfaceElevated,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: colors.accentPrimary),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -210,58 +525,6 @@ class _MyQrCard extends StatelessWidget {
   }
 }
 
-/// Botão minimalista "Escanear código" — abre a câmera para ler o QR de
-/// outra pessoa (perfil) ou um QR de login exibido em outro dispositivo.
-class _ScanButton extends StatelessWidget {
-  final VoidCallback onTap;
-  const _ScanButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Material(
-      color: colors.surfaceElevated,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: colors.accentPrimary.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  LucideIcons.scanLine,
-                  size: 18,
-                  color: colors.accentPrimary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  S.of(context).findFriendsScanButton,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14.5,
-                  ),
-                ),
-              ),
-              Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Lista de sugestões de amigos — reaproveita o mesmo provider/serviço
 /// (`suggestedUsersProvider`/`getSuggestions`) usado no feed, mas em
 /// layout de lista vertical (em vez do carrossel horizontal) e sem o
@@ -271,7 +534,7 @@ class _SuggestionsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(suggestedUsersProvider);
+    final async = ref.watch(allSuggestionsProvider);
     final colors = context.colors;
     final s = S.of(context);
 
@@ -280,7 +543,12 @@ class _SuggestionsList extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, __) => _MessageState(
+        icon: LucideIcons.wifiOff,
+        text: s.findFriendsSuggestionsError,
+        actionLabel: s.findFriendsRetry,
+        onAction: () => ref.invalidate(allSuggestionsProvider),
+      ),
       data: (users) {
         if (users.isEmpty) {
           return Padding(
@@ -295,7 +563,7 @@ class _SuggestionsList extends ConsumerWidget {
         }
         return Column(
           children: users
-              .map((u) => _SuggestionTile(user: u))
+              .map((u) => _UserTile(key: ValueKey(u['user_id']), user: u))
               .toList(growable: false),
         );
       },
@@ -303,16 +571,18 @@ class _SuggestionsList extends ConsumerWidget {
   }
 }
 
-class _SuggestionTile extends ConsumerStatefulWidget {
+/// Linha de usuário (sugestão ou resultado de busca) com botão Seguir.
+class _UserTile extends ConsumerStatefulWidget {
   final Map<String, dynamic> user;
-  const _SuggestionTile({required this.user});
+  final bool initialFollowing;
+  const _UserTile({super.key, required this.user, this.initialFollowing = false});
 
   @override
-  ConsumerState<_SuggestionTile> createState() => _SuggestionTileState();
+  ConsumerState<_UserTile> createState() => _UserTileState();
 }
 
-class _SuggestionTileState extends ConsumerState<_SuggestionTile> {
-  bool _following = false;
+class _UserTileState extends ConsumerState<_UserTile> {
+  late bool _following = widget.initialFollowing;
   bool _loading = false;
 
   Future<void> _toggleFollow(String userId) async {

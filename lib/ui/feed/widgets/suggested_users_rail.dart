@@ -129,7 +129,8 @@ class _RailContent extends ConsumerWidget {
                 ),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () => context.push('/find-friends'),
+                  behavior: HitTestBehavior.opaque,
                   child: Text(
                     S.of(context).suggestedSeeAll,
                     style: TextStyle(

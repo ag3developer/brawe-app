@@ -79,6 +79,11 @@ class WalletTransaction {
   final double amountUsdt;
   final DateTime? createdAt;
 
+  /// Dados visuais do presente (vazios se o backend ainda não os enviar).
+  final String giftSlug;
+  final String giftTier;
+  final String giftIconUrl;
+
   const WalletTransaction({
     required this.id,
     required this.type,
@@ -89,6 +94,9 @@ class WalletTransaction {
     required this.amountCredits,
     required this.amountUsdt,
     this.createdAt,
+    this.giftSlug = '',
+    this.giftTier = '',
+    this.giftIconUrl = '',
   });
 
   factory WalletTransaction.fromJson(Map<String, dynamic> json) {
@@ -102,6 +110,9 @@ class WalletTransaction {
       amountCredits: (json['amount_credits'] as num?)?.toInt() ?? 0,
       amountUsdt: (json['amount_usdt'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
+      giftSlug: (json['gift_slug'] ?? '').toString(),
+      giftTier: (json['gift_tier'] ?? '').toString(),
+      giftIconUrl: (json['gift_icon_url'] ?? '').toString(),
     );
   }
 }

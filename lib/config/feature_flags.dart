@@ -14,3 +14,11 @@ library;
 /// usar In-App Purchase. IAP implementado em v1.0.5+ (Android + iOS),
 /// portanto monetização ativa.
 const bool kEnableMonetization = true;
+
+/// 🪙 Compra de moedas (Apple/Google IAP).
+///
+/// Enquanto o pagamento pela loja não estiver implementado, mantenha
+/// `false`: esconde a seção "Comprar moedas" da carteira, o histórico de
+/// compras e o sheet de recarga (`TopUpCoinsSheet.show` vira aviso).
+/// Para ligar depois, basta trocar para `true`.
+const bool kCoinPurchaseEnabled = false;

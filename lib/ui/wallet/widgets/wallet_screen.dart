@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../../../config/feature_flags.dart';
 import '../../../data/services/iap_service.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -36,16 +37,19 @@ class WalletScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               const _QuickActionsRow(),
               const SizedBox(height: 24),
-              _SectionHeader(
-                title: s.walletSectionBuyTitle,
-                subtitle: s.walletSectionBuySubtitle,
-              ),
-              const SizedBox(height: 12),
-              _PackagesGrid(
-                packages: kCoinPackages,
-                onSelect: (p) => _showPurchaseSheet(context, p),
-              ),
-              const SizedBox(height: 24),
+              // Compra de moedas escondida até a IAP existir (feature_flags).
+              if (kCoinPurchaseEnabled) ...[
+                _SectionHeader(
+                  title: s.walletSectionBuyTitle,
+                  subtitle: s.walletSectionBuySubtitle,
+                ),
+                const SizedBox(height: 12),
+                _PackagesGrid(
+                  packages: kCoinPackages,
+                  onSelect: (p) => _showPurchaseSheet(context, p),
+                ),
+                const SizedBox(height: 24),
+              ],
               _SectionHeader(
                 title: s.walletSectionHistoryTitle,
                 subtitle: s.walletSectionHistorySubtitle,

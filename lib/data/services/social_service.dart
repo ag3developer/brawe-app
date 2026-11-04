@@ -101,4 +101,15 @@ class SocialService {
     if (list is List) return List<Map<String, dynamic>>.from(list);
     return [];
   }
+
+  /// Busca pessoas por nome ou @usuário.
+  Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 20}) async {
+    final response = await _dio.get(
+      '/social/users/search',
+      queryParameters: {'q': query, 'limit': limit},
+    );
+    final list = response.data is Map ? response.data['data'] : response.data;
+    if (list is List) return List<Map<String, dynamic>>.from(list);
+    return [];
+  }
 }
