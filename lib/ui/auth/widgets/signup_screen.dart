@@ -16,6 +16,9 @@ import 'common/auth_background.dart';
 import 'common/auth_input_field.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../../settings/widgets/legal_webview_screen.dart';
+import 'package:dio/dio.dart';
+import '../../../data/services/auth_service.dart';
+import 'email_code_screen.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -111,6 +114,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
                         passwordController: _passwordController,
                         sponsorController: _sponsorController,
                         onSubmit: _onSubmit,
+                        sendingCode: _sendingCode,
                       ),
                     ),
                   ),
@@ -130,14 +134,85 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
     );
   }
 
+  bool _sendingCode = false;
+
+  /// Criar conta: 1) confere o formulário, 2) envia o código para o e-mail,
+  /// 3) abre a tela do código, 4) só com o código certo cria a conta (com o
+  /// e-mail já confirmado). Assim não nasce conta com e-mail falso.
   Future<void> _onSubmit() async {
-    final success = await ref.read(signupViewModelProvider.notifier).submit();
+    final s = S.of(context);
+    final vm = ref.read(signupViewModelProvider.notifier);
+    if (_sendingCode) return;
+    if (!vm.validate()) {
+      final error = ref.read(signupViewModelProvider).errorMessage;
+      if (error != null) {
+        AppSnackBar.showError(context, signupErrorText(s, error));
+      }
+      return;
+    }
+    final email = ref.read(signupViewModelProvider).email.trim().toLowerCase();
+    setState(() => _sendingCode = true);
+    String? token;
+    var serverHasCode = true;
+    try {
+      await ref.read(authServiceProvider).sendRegisterCode(
+            email,
+            language: Localizations.localeOf(context).languageCode,
+          );
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final d = e.response?.data;
+      final detail = d is Map ? d['detail']?.toString() : null;
+      if (status == 404 || status == 405) {
+        // Servidor antigo, sem o código: segue o cadastro de antes.
+        serverHasCode = false;
+      } else if (status == 429 && detail == 'resend_too_soon') {
+        // Já enviamos há pouco: segue para a tela do código.
+      } else {
+        if (mounted) {
+          setState(() => _sendingCode = false);
+          AppSnackBar.showError(
+            context,
+            switch (detail) {
+              'email_already_registered' => s.signupErrEmailTaken,
+              'invalid_email' => s.signupErrEmail,
+              'too_many_requests' => s.codeTooManyRequests,
+              _ when status == 409 => s.signupErrEmailTaken,
+              // Bloqueios do servidor (domínio descartável etc.) já vêm
+              // com mensagem legível.
+              _ when status == 400 && detail != null => detail,
+              _ => s.codeError,
+            },
+          );
+        }
+        return;
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _sendingCode = false);
+        AppSnackBar.showError(context, s.codeError);
+      }
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _sendingCode = false);
+
+    if (serverHasCode) {
+      token = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (_) => EmailCodeScreen(email: email)),
+      );
+      if (token == null || !mounted) return; // voltou para trocar o e-mail
+    }
+
+    final success = await vm.submit(emailVerificationToken: token);
     if (mounted) {
       if (success) {
-        AppSnackBar.showSuccess(context, S.of(context).signupSuccess);
+        AppSnackBar.showSuccess(context, s.signupSuccess);
       } else {
         final error = ref.read(signupViewModelProvider).errorMessage;
-        if (error != null) AppSnackBar.showError(context, error);
+        if (error != null) {
+          AppSnackBar.showError(context, signupErrorText(s, error));
+        }
       }
     }
   }
@@ -241,7 +316,11 @@ class _SignupCard extends StatefulWidget {
     required this.passwordController,
     required this.sponsorController,
     required this.onSubmit,
+    this.sendingCode = false,
   });
+
+  /// Enviando o código de confirmação para o e-mail.
+  final bool sendingCode;
 
   final SignupState state;
   final SignupViewModel notifier;
@@ -374,7 +453,7 @@ class _SignupCardState extends State<_SignupCard> {
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
-                          state.errorMessage!,
+                          signupErrorText(S.of(context), state.errorMessage!),
                           style: textTheme.bodySmall?.copyWith(
                             color: colors.danger,
                           ),
@@ -386,10 +465,14 @@ class _SignupCardState extends State<_SignupCard> {
               ],
               const SizedBox(height: AppSpacing.lg),
               AuthActionButton(
-                label: state.status.isLoading
-                    ? s.signupCreatingAccount
-                    : s.signupCreateAccountButton,
-                onPressed: state.canSubmit ? widget.onSubmit : null,
+                label: widget.sendingCode
+                    ? s.signupSendingCode
+                    : (state.status.isLoading
+                        ? s.signupCreatingAccount
+                        : s.signupCreateAccountButton),
+                onPressed: state.canSubmit && !widget.sendingCode
+                    ? widget.onSubmit
+                    : null,
               ),
               const SizedBox(height: AppSpacing.md),
               Row(
@@ -596,3 +679,13 @@ class _TermsRichTextState extends State<_TermsRichText> {
     );
   }
 }
+
+
+/// Traduz os erros do formulário de cadastro (o view model grava códigos).
+String signupErrorText(S s, String raw) => switch (raw) {
+      'signup.err.name' => s.signupErrName,
+      'signup.err.email' => s.signupErrEmail,
+      'signup.err.password' => s.signupErrPassword,
+      'signup.err.terms' => s.signupErrTerms,
+      _ => raw,
+    };

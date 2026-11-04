@@ -29,6 +29,7 @@ class AuthService {
     String? sponsorCode,
     bool termsAccepted = false,
     bool privacyAccepted = false,
+    String? emailVerificationToken,
   }) async {
     final response = await _dio.post(
       '/auth/register/affiliate',
@@ -40,9 +41,34 @@ class AuthService {
           'sponsor_code': sponsorCode,
         'terms_accepted': termsAccepted,
         'privacy_accepted': privacyAccepted,
+        if (emailVerificationToken != null)
+          'email_verification_token': emailVerificationToken,
       },
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  /// Cadastro: envia o código de 6 dígitos para o e-mail (a conta ainda
+  /// NÃO existe). 409 = e-mail já cadastrado; 429 = reenvio cedo demais.
+  Future<Map<String, dynamic>> sendRegisterCode(
+    String email, {
+    String? language,
+  }) async {
+    final response = await _dio.post(
+      '/auth/register/send-code',
+      data: {'email': email, 'language': ?language},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Confere o código. Devolve o passe (`verification_token`) usado para
+  /// criar a conta com o e-mail já confirmado.
+  Future<String> verifyRegisterCode(String email, String code) async {
+    final response = await _dio.post(
+      '/auth/register/verify-code',
+      data: {'email': email, 'code': code},
+    );
+    return (response.data as Map)['verification_token'] as String;
   }
 
   Future<Map<String, dynamic>> getCurrentUser() async {

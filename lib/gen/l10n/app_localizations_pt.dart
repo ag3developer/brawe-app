@@ -7657,4 +7657,75 @@ class SPt extends S {
   @override
   String get videoPubTrimPrepareError =>
       'Não foi possível preparar o vídeo cortado. Tente novamente.';
+
+  @override
+  String get signupErrName => 'Digite seu nome (mínimo 2 letras).';
+
+  @override
+  String get signupErrEmail => 'Digite um e-mail válido.';
+
+  @override
+  String get signupErrPassword =>
+      'A senha precisa ter pelo menos 8 caracteres.';
+
+  @override
+  String get signupErrTerms =>
+      'Você precisa aceitar os Termos e a Política de Privacidade.';
+
+  @override
+  String get signupErrEmailTaken =>
+      'Este e-mail já tem conta. Entre com ele ou recupere a senha.';
+
+  @override
+  String get signupSendingCode => 'Enviando código…';
+
+  @override
+  String get codeTitle => 'Confirme seu e-mail';
+
+  @override
+  String codeSubtitle(String email) {
+    return 'Enviamos um código de 6 dígitos para\n$email';
+  }
+
+  @override
+  String get codeVerifying => 'Verificando…';
+
+  @override
+  String codeInvalid(int count) {
+    return 'Código incorreto. Restam $count tentativas.';
+  }
+
+  @override
+  String get codeInvalidSimple => 'Código incorreto.';
+
+  @override
+  String get codeExpired => 'O código expirou. Peça um novo.';
+
+  @override
+  String get codeTooMany => 'Muitas tentativas. Peça um novo código.';
+
+  @override
+  String get codeResend => 'Reenviar código';
+
+  @override
+  String codeResendIn(int seconds) {
+    return 'Reenviar em ${seconds}s';
+  }
+
+  @override
+  String get codeResent => 'Enviamos um novo código.';
+
+  @override
+  String get codeChangeEmail => 'Trocar e-mail';
+
+  @override
+  String get codeSpamHint =>
+      'Não chegou? Confira a caixa de spam ou promoções.';
+
+  @override
+  String get codeError => 'Não foi possível enviar o código. Tente de novo.';
+
+  @override
+  String get codeTooManyRequests =>
+      'Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.';
 }

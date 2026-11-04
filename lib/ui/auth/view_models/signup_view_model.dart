@@ -72,28 +72,35 @@ class SignupViewModel extends _$SignupViewModel {
     );
   }
 
-  Future<bool> submit() async {
+  /// Confere os campos do formulário (antes de pedir o código por e-mail).
+  bool validate() {
     if (state.status.isLoading) return false;
 
     if (state.name.length < 2) {
-      _setError('Name is too short.');
+      _setError('signup.err.name');
       return false;
     }
 
     if (!state.email.contains('@')) {
-      _setError('Enter a valid email address.');
+      _setError('signup.err.email');
       return false;
     }
 
     if (state.password.length < 8) {
-      _setError('Password must be at least 8 characters.');
+      _setError('signup.err.password');
       return false;
     }
 
     if (!state.termsAccepted) {
-      _setError('Você precisa aceitar os Termos e a Política de Privacidade.');
+      _setError('signup.err.terms');
       return false;
     }
+
+    return true;
+  }
+
+  Future<bool> submit({String? emailVerificationToken}) async {
+    if (!validate()) return false;
 
     state = state.copyWith(status: const AsyncValue.loading());
 
@@ -107,6 +114,7 @@ class SignupViewModel extends _$SignupViewModel {
             sponsorCode: state.sponsorCode,
             termsAccepted: state.termsAccepted,
             privacyAccepted: state.termsAccepted,
+            emailVerificationToken: emailVerificationToken,
           );
       state = state.copyWith(status: AsyncValue.data(user));
       ref.read(authStateProvider.notifier).updateSession(user);

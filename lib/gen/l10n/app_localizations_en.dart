@@ -7622,4 +7622,74 @@ class SEn extends S {
   @override
   String get videoPubTrimPrepareError =>
       'Could not prepare the trimmed video. Please try again.';
+
+  @override
+  String get signupErrName => 'Enter your name (at least 2 letters).';
+
+  @override
+  String get signupErrEmail => 'Enter a valid email.';
+
+  @override
+  String get signupErrPassword => 'Password must be at least 8 characters.';
+
+  @override
+  String get signupErrTerms =>
+      'You need to accept the Terms and Privacy Policy.';
+
+  @override
+  String get signupErrEmailTaken =>
+      'This email already has an account. Sign in or reset your password.';
+
+  @override
+  String get signupSendingCode => 'Sending code…';
+
+  @override
+  String get codeTitle => 'Confirm your email';
+
+  @override
+  String codeSubtitle(String email) {
+    return 'We sent a 6-digit code to\n$email';
+  }
+
+  @override
+  String get codeVerifying => 'Verifying…';
+
+  @override
+  String codeInvalid(int count) {
+    return 'Wrong code. $count attempts left.';
+  }
+
+  @override
+  String get codeInvalidSimple => 'Wrong code.';
+
+  @override
+  String get codeExpired => 'The code expired. Request a new one.';
+
+  @override
+  String get codeTooMany => 'Too many attempts. Request a new code.';
+
+  @override
+  String get codeResend => 'Resend code';
+
+  @override
+  String codeResendIn(int seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get codeResent => 'We sent a new code.';
+
+  @override
+  String get codeChangeEmail => 'Change email';
+
+  @override
+  String get codeSpamHint =>
+      'Didn\'t get it? Check your spam or promotions folder.';
+
+  @override
+  String get codeError => 'Couldn\'t send the code. Try again.';
+
+  @override
+  String get codeTooManyRequests =>
+      'Too many attempts from this network. Try again in a few minutes.';
 }

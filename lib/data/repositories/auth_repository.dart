@@ -81,6 +81,7 @@ class AuthRepository {
     String? sponsorCode,
     bool termsAccepted = false,
     bool privacyAccepted = false,
+    String? emailVerificationToken,
   }) async {
     try {
       final data = await _authService.registerAffiliate(
@@ -90,6 +91,7 @@ class AuthRepository {
         sponsorCode: sponsorCode,
         termsAccepted: termsAccepted,
         privacyAccepted: privacyAccepted,
+        emailVerificationToken: emailVerificationToken,
       );
 
       // Persist the token first so any follow-up calls are authenticated even

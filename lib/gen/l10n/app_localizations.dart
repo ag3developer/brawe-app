@@ -13640,6 +13640,126 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Não foi possível preparar o vídeo cortado. Tente novamente.'**
   String get videoPubTrimPrepareError;
+
+  /// No description provided for @signupErrName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite seu nome (mínimo 2 letras).'**
+  String get signupErrName;
+
+  /// No description provided for @signupErrEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite um e-mail válido.'**
+  String get signupErrEmail;
+
+  /// No description provided for @signupErrPassword.
+  ///
+  /// In pt, this message translates to:
+  /// **'A senha precisa ter pelo menos 8 caracteres.'**
+  String get signupErrPassword;
+
+  /// No description provided for @signupErrTerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você precisa aceitar os Termos e a Política de Privacidade.'**
+  String get signupErrTerms;
+
+  /// No description provided for @signupErrEmailTaken.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este e-mail já tem conta. Entre com ele ou recupere a senha.'**
+  String get signupErrEmailTaken;
+
+  /// No description provided for @signupSendingCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviando código…'**
+  String get signupSendingCode;
+
+  /// No description provided for @codeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme seu e-mail'**
+  String get codeTitle;
+
+  /// No description provided for @codeSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviamos um código de 6 dígitos para\n{email}'**
+  String codeSubtitle(String email);
+
+  /// No description provided for @codeVerifying.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificando…'**
+  String get codeVerifying;
+
+  /// No description provided for @codeInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código incorreto. Restam {count} tentativas.'**
+  String codeInvalid(int count);
+
+  /// No description provided for @codeInvalidSimple.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código incorreto.'**
+  String get codeInvalidSimple;
+
+  /// No description provided for @codeExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'O código expirou. Peça um novo.'**
+  String get codeExpired;
+
+  /// No description provided for @codeTooMany.
+  ///
+  /// In pt, this message translates to:
+  /// **'Muitas tentativas. Peça um novo código.'**
+  String get codeTooMany;
+
+  /// No description provided for @codeResend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar código'**
+  String get codeResend;
+
+  /// No description provided for @codeResendIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar em {seconds}s'**
+  String codeResendIn(int seconds);
+
+  /// No description provided for @codeResent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviamos um novo código.'**
+  String get codeResent;
+
+  /// No description provided for @codeChangeEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar e-mail'**
+  String get codeChangeEmail;
+
+  /// No description provided for @codeSpamHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não chegou? Confira a caixa de spam ou promoções.'**
+  String get codeSpamHint;
+
+  /// No description provided for @codeError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o código. Tente de novo.'**
+  String get codeError;
+
+  /// No description provided for @codeTooManyRequests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.'**
+  String get codeTooManyRequests;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
