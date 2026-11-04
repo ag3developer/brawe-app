@@ -82,6 +82,15 @@ part 'router.g.dart';
 /// deep links recebidos, não define o idioma do app em si.
 const _kWebLocales = {'pt', 'es', 'en'};
 
+/// Primeiro segmento das páginas da rede social no endereço curto do site
+/// (`brawe.app/pt/u/:id` = `brawe.app/pt/connect/u/:id`).
+const _kConnectShortSegments = {
+  'u', 'p', 'profile', 'foryou', 'explore', 'lives', 'live', 'messages',
+  'notifications', 'settings', 'wallet', 'quests', 'battles', 'coins',
+  'saved', 'following', 'followers', 'favorites', 'analytics', 'shopping',
+  'go-live', 'help', 'mystery-gifts',
+};
+
 /// Páginas do site (já sem o prefixo de idioma) → rota equivalente no app.
 const _kWebPathAliases = {
   '/': '/home',
@@ -110,9 +119,16 @@ String? _normalizeDeepLink(Uri uri) {
   var path = uri.path;
 
   // 1) Remove prefixo de locale: "/pt/connect/..." → "/connect/...".
+  //    Endereço curto do site (padrão das grandes redes): "/pt/u/:id",
+  //    "/pt/p/:id", "/pt/foryou"… → mesma página com "/connect" na frente.
   final segments = uri.pathSegments;
   if (segments.isNotEmpty && _kWebLocales.contains(segments.first)) {
     path = '/${segments.skip(1).join('/')}';
+    if (segments.length == 1) {
+      path = '/connect';
+    } else if (_kConnectShortSegments.contains(segments[1])) {
+      path = '/connect$path';
+    }
   }
 
   // 2) Alias interno do site → rota canônica de perfil do app.
