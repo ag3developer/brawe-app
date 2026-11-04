@@ -84,7 +84,9 @@ class AnalyticsAudienceBody extends ConsumerWidget {
             async: async,
             onRetry: () => ref.invalidate(viewersSeriesProvider(period)),
             isEmpty: (d) => d.emptyFor() && d.emptyFor(second: true),
-            emptyMessage: s.analyticsEmptyViewers(analyticsRangeLabel(s, period)),
+            emptyMessage: s.analyticsEmptyViewers(
+              analyticsRangeLabel(s, period),
+            ),
             builder: (d) => seriesLineChart(
               context,
               d,
@@ -137,19 +139,26 @@ class AnalyticsAudienceBody extends ConsumerWidget {
               );
             }
             final best = top.take(5).toList();
-            return Column(
-              children: [
-                for (var i = 0; i < best.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _DayTile(
+            return AnalyticsCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var i = 0; i < best.length; i++) ...[
+                    if (i > 0)
+                      Divider(
+                        height: 1,
+                        indent: 40,
+                        color: context.colors.border,
+                      ),
+                    _DayTile(
                       rank: i + 1,
                       point: best[i],
                       pct: best[i].value / best.first.value,
                       weekly: period == '365d',
                     ),
-                  ),
-              ],
+                  ],
+                ],
+              ),
             );
           },
         ),
@@ -176,7 +185,7 @@ class _DayTile extends StatelessWidget {
     final fmt = AnalyticsFmt.of(context);
     final s = S.of(context);
     final first = rank == 1;
-    return AnalyticsCard(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
@@ -211,7 +220,9 @@ class _DayTile extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: pct.clamp(0.0, 1.0),
                     minHeight: 5,
-                    backgroundColor: AppColors.braweBlue.withValues(alpha: 0.14),
+                    backgroundColor: AppColors.braweBlue.withValues(
+                      alpha: 0.14,
+                    ),
                     valueColor: AlwaysStoppedAnimation(
                       first ? AppColors.amber : AppColors.braweBlue,
                     ),

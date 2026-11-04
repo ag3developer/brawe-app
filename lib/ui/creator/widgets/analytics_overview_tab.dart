@@ -154,20 +154,25 @@ class AnalyticsOverviewBody extends ConsumerWidget {
             style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
           ),
         ),
-        for (var i = 0; i < cards.length; i += 2)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(child: cards[i]),
-                  const SizedBox(width: 10),
-                  Expanded(child: cards[i + 1]),
-                ],
-              ),
-            ),
+        // Lista compacta num cartão só (estilo "Ações" do iPhone).
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: context.colors.border),
           ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                if (i > 0)
+                  Divider(height: 1, indent: 44, color: context.colors.border),
+                cards[i],
+              ],
+            ],
+          ),
+        ),
         AnalyticsTopGifts(
           period: period,
           featuredOnly: true,
@@ -208,77 +213,90 @@ class _OverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final d = async.value;
-    if (d == null) {
-      if (async.hasError) {
-        return GameTile(
-          tint: color,
-          depth: 4,
-          radius: 18,
-          onTap: onRetry,
-          child: Center(
-            child: Icon(LucideIcons.refreshCw, size: 18, color: colors.textTertiary),
-          ),
-        );
-      }
-      return const AnalyticsSkeleton(height: 132, radius: 18);
-    }
-    return GameTile(
-      tint: color,
-      depth: 4,
-      radius: 18,
-      onTap: onTap,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 13, color: color),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
+    final label = Text(
+      this.label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        color: colors.textSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+    Widget row(Widget trailing, {Widget? valueWidget, VoidCallback? tap}) => InkWell(
+          onTap: tap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+            child: Row(
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      label,
+                      if (valueWidget != null) ...[
+                        const SizedBox(height: 2),
+                        valueWidget,
+                      ],
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: CountUpText(
-              value: (value(d) * 100).round(),
-              format: (n) => format(n / 100),
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 20,
-                height: 1.1,
-              ),
+                trailing,
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          AnalyticsDelta(pct: delta(d)),
-          const SizedBox(height: 6),
-          AnalyticsSparkline(values: spark(d), color: color),
+        );
+
+    if (d == null) {
+      if (async.hasError) {
+        return row(
+          Icon(LucideIcons.refreshCw, size: 16, color: colors.textTertiary),
+          tap: onRetry,
+        );
+      }
+      return row(
+        const SizedBox(width: 120, child: AnalyticsSkeleton(height: 28, radius: 8)),
+        valueWidget: const SizedBox(width: 80, child: AnalyticsSkeleton(height: 18, radius: 6)),
+      );
+    }
+    return row(
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 64,
+            height: 28,
+            child: AnalyticsSparkline(values: spark(d), color: color),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 64,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: AnalyticsDelta(pct: delta(d)),
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, size: 16, color: colors.textTertiary),
         ],
       ),
+      valueWidget: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: CountUpText(
+          value: (value(d) * 100).round(),
+          format: (n) => format(n / 100),
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+            height: 1.15,
+          ),
+        ),
+      ),
+      tap: onTap,
     );
   }
 }

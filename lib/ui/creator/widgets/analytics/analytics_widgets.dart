@@ -269,7 +269,8 @@ class AnalyticsKpi {
   });
 }
 
-/// Grade de KPIs (2 por linha) com variação % vs. período anterior.
+/// KPIs num cartão ÚNICO e compacto: até 3 por linha, separados por linhas
+/// finas; a legenda "vs. período anterior" aparece uma vez só no rodapé.
 /// [kpis] null = carregando (skeleton).
 class AnalyticsKpiGrid extends StatelessWidget {
   final List<AnalyticsKpi>? kpis;
@@ -278,79 +279,100 @@ class AnalyticsKpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = kpis?.length ?? skeletonCount;
-    final rows = <Widget>[];
-    for (var i = 0; i < count; i += 2) {
-      rows.add(
-        Padding(
-          padding: EdgeInsets.only(bottom: i + 2 < count ? 10 : 0),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var j = i; j < i + 2; j++) ...[
-                  if (j > i) const SizedBox(width: 10),
-                  Expanded(
-                    child: j < count
-                        ? (kpis == null
-                              ? const AnalyticsSkeleton(height: 104, radius: 18)
-                              : _KpiCard(kpi: kpis![j]))
-                        : const SizedBox(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      );
+    final colors = context.colors;
+    final list = kpis;
+    if (list == null) {
+      final rows = (skeletonCount / 3).ceil();
+      return AnalyticsSkeleton(height: 64.0 * rows + 28, radius: 16);
     }
-    return Column(children: rows);
+    // 4 itens ficam 2+2; o resto, até 3 por linha.
+    final perRow = list.length == 4 ? 2 : (list.length < 3 ? list.length : 3);
+    final rows = <List<AnalyticsKpi>>[];
+    for (var i = 0; i < list.length; i += perRow) {
+      rows.add(list.sublist(i, (i + perRow).clamp(0, list.length)));
+    }
+    final anyDelta = list.any((k) => k.hasDelta);
+    final divider = colors.border;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 10),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var r = 0; r < rows.length; r++) ...[
+            if (r > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Container(height: 1, color: divider),
+              ),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var c = 0; c < perRow; c++) ...[
+                    if (c > 0) Container(width: 1, color: divider),
+                    Expanded(
+                      child: c < rows[r].length
+                          ? _KpiCell(kpi: rows[r][c])
+                          : const SizedBox(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          if (anyDelta)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+              child: Text(
+                S.of(context).analyticsVsPrevious,
+                style: TextStyle(color: colors.textTertiary, fontSize: 10.5),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
-class _KpiCard extends StatelessWidget {
+class _KpiCell extends StatelessWidget {
   final AnalyticsKpi kpi;
-  const _KpiCard({required this.kpi});
+  const _KpiCell({required this.kpi});
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return GameTile(
-      tint: kpi.color,
-      depth: 4,
-      radius: 18,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: kpi.color.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(kpi.icon, size: 14, color: kpi.color),
-              ),
-              const SizedBox(width: 8),
+              Icon(kpi.icon, size: 13, color: kpi.color),
+              const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   kpi.label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: colors.textSecondary,
-                    fontSize: 11.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
+                    height: 1.15,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -361,16 +383,15 @@ class _KpiCard extends StatelessWidget {
               style: TextStyle(
                 color: colors.textPrimary,
                 fontWeight: FontWeight.w800,
-                fontSize: 22,
-                height: 1.1,
+                fontSize: 18,
+                height: 1.15,
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          if (kpi.hasDelta)
-            AnalyticsDelta(pct: kpi.deltaPct, showLabel: true)
-          else
-            const SizedBox(height: 18),
+          if (kpi.hasDelta) ...[
+            const SizedBox(height: 4),
+            AnalyticsDelta(pct: kpi.deltaPct),
+          ],
         ],
       ),
     );

@@ -230,12 +230,15 @@ class AnalyticsLineChart extends StatelessWidget {
           barWidth: l.isPrevious ? 1.6 : (l.area ? 2.8 : 2),
           isStrokeCapRound: true,
           dashArray: l.isPrevious ? [5, 4] : null,
+          // Bolinhas só com poucos pontos; com muitos, apenas no último dia
+          // (antes 30 bolinhas coladas viravam uma "corrente").
           dotData: FlDotData(
-            show: (n <= 31 || n <= 1) && !l.isPrevious && l.area,
+            show: !l.isPrevious && l.area,
+            checkToShowDot: (spot, _) => n <= 8 || spot.x == n - 1,
             getDotPainter: (s, p, b, i) => FlDotCirclePainter(
-              radius: 2.6,
+              radius: i == n - 1 && n > 8 ? 4 : 2.6,
               color: colors.background,
-              strokeWidth: 2,
+              strokeWidth: 2.2,
               strokeColor: l.color,
             ),
           ),
@@ -245,7 +248,8 @@ class AnalyticsLineChart extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                l.color.withValues(alpha: context.isDark ? 0.32 : 0.26),
+                // Degradê suave: linha reta não vira um "bloco" azul.
+                l.color.withValues(alpha: context.isDark ? 0.20 : 0.14),
                 l.color.withValues(alpha: 0),
               ],
             ),

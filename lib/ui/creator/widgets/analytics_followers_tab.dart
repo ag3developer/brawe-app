@@ -94,7 +94,8 @@ class _AnalyticsFollowersBodyState
             async: async,
             onRetry: () => ref.invalidate(followersSeriesProvider(period)),
             // vazio = nenhum seguidor no início e nenhum novo no período
-            isEmpty: (d) => accumulated ? d.emptyFor() : d.emptyFor(second: true),
+            isEmpty: (d) =>
+                accumulated ? d.emptyFor() : d.emptyFor(second: true),
             emptyMessage: accumulated
                 ? s.analyticsEmptyFollowersTotal
                 : s.analyticsEmptyFollowersNew(analyticsRangeLabel(s, period)),
@@ -148,71 +149,35 @@ class _Summary extends StatelessWidget {
     final followers = (data['followers_count'] as num?)?.toInt() ?? 0;
     final following = (data['following_count'] as num?)?.toInt() ?? 0;
     final lives = (data['total_lives'] as num?)?.toInt() ?? 0;
-    final rows = [
-      (
-        LucideIcons.users,
-        s.analyticsFollowersSummaryFollowers,
-        fmt.integer(followers),
-        context.colors.accentPrimary,
-      ),
-      (
-        LucideIcons.userCheck,
-        s.analyticsFollowersSummaryFollowing,
-        fmt.integer(following),
-        AppColors.braweSky,
-      ),
-      (
-        LucideIcons.radio,
-        s.analyticsFollowersSummaryLives,
-        fmt.integer(lives),
-        AppColors.hotPink,
-      ),
-      (
-        LucideIcons.activity,
-        s.analyticsFollowersSummaryRatio,
-        lives > 0 ? fmt.axis(double.parse((followers / lives).toStringAsFixed(1))) : '—',
-        AppColors.success,
-      ),
-    ];
-    return AnalyticsCard(
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0) Divider(height: 18, color: context.colors.divider),
-            Row(
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: rows[i].$4.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(rows[i].$1, size: 15, color: rows[i].$4),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    rows[i].$2,
-                    style: TextStyle(
-                      color: context.colors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Text(
-                  rows[i].$3,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
+    // Seguidores já aparecem no topo: aqui só o que complementa.
+    return AnalyticsKpiGrid(
+      kpis: [
+        AnalyticsKpi(
+          icon: LucideIcons.userCheck,
+          color: AppColors.braweSky,
+          label: s.analyticsFollowersSummaryFollowing,
+          value: following.toDouble(),
+          format: (v) => fmt.integer(v.round()),
+          hasDelta: false,
+        ),
+        AnalyticsKpi(
+          icon: LucideIcons.radio,
+          color: AppColors.hotPink,
+          label: s.analyticsFollowersSummaryLives,
+          value: lives.toDouble(),
+          format: (v) => fmt.integer(v.round()),
+          hasDelta: false,
+        ),
+        AnalyticsKpi(
+          icon: LucideIcons.activity,
+          color: AppColors.success,
+          label: s.analyticsFollowersSummaryRatio,
+          value: lives > 0 ? followers / lives : 0,
+          format: (v) =>
+              lives > 0 ? fmt.axis(double.parse(v.toStringAsFixed(1))) : '—',
+          hasDelta: false,
+        ),
+      ],
     );
   }
 }
@@ -225,48 +190,67 @@ class _Tips extends StatelessWidget {
     final s = S.of(context);
     final colors = context.colors;
     final tips = [
-      (LucideIcons.radio, s.analyticsFollowersTip1Title, s.analyticsFollowersTip1Subtitle),
-      (LucideIcons.messageCircle, s.analyticsFollowersTip2Title, s.analyticsFollowersTip2Subtitle),
-      (LucideIcons.share2, s.analyticsFollowersTip3Title, s.analyticsFollowersTip3Subtitle),
+      (
+        LucideIcons.radio,
+        s.analyticsFollowersTip1Title,
+        s.analyticsFollowersTip1Subtitle,
+      ),
+      (
+        LucideIcons.messageCircle,
+        s.analyticsFollowersTip2Title,
+        s.analyticsFollowersTip2Subtitle,
+      ),
+      (
+        LucideIcons.share2,
+        s.analyticsFollowersTip3Title,
+        s.analyticsFollowersTip3Subtitle,
+      ),
     ];
-    return Column(
-      children: [
-        for (final t in tips)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: AnalyticsCard(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(t.$1, size: 18, color: AppColors.braweBlue),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          t.$2,
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
+    return AnalyticsCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Column(
+        children: [
+          for (var k = 0; k < tips.length; k++) ...[
+            if (k > 0) Divider(height: 1, indent: 30, color: colors.border),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Builder(
+                builder: (_) {
+                  final t = tips[k];
+                  return Row(
+                    children: [
+                      Icon(t.$1, size: 18, color: AppColors.braweBlue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.$2,
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              t.$3,
+                              style: TextStyle(
+                                color: colors.textSecondary,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          t.$3,
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
-          ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 }
