@@ -71,6 +71,39 @@ class AnalyticsService {
     return [];
   }
 
+  // ─── Séries completas (data + previous + summary) ──────────────────
+
+  /// Devolve o corpo inteiro de uma rota de série temporal:
+  /// `{ data: [...], previous: [...], summary: {...} }`.
+  /// [path]: "earnings" | "viewers" | "followers" | "lives-series"
+  Future<Map<String, dynamic>> getSeries(
+    String path, {
+    String period = '30d',
+  }) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/analytics/$path',
+      queryParameters: {'period': period},
+    );
+    return r.data ?? {};
+  }
+
+  /// Top gifts de um período (null = todo o histórico).
+  /// Cada item: gift_name, gift_slug, gift_tier, icon_url, count, quantity,
+  /// total_usdt, earnings_usdt, share_pct.
+  Future<List<Map<String, dynamic>>> getTopGiftsByPeriod({
+    String? period,
+    int limit = 10,
+  }) async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/analytics/top-gifts',
+      queryParameters: {'limit': limit, 'period': ?period},
+    );
+    final raw = r.data ?? {};
+    final data = raw['data'] ?? raw;
+    if (data is List) return List<Map<String, dynamic>>.from(data);
+    return [];
+  }
+
   // ─── Top gifts ──────────────────────────────────────────────────────
 
   /// Retorna lista de { gift_name, gift_slug, count, total_usdt }

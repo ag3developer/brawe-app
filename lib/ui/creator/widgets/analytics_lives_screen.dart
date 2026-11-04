@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:chewie/chewie.dart';
 import 'package:dio/dio.dart';
@@ -15,11 +14,17 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/story_video_trim_screen.dart';
+import '../../quests/widgets/quest_visuals.dart';
 import '../view_models/creator_analytics_view_model.dart';
+import 'analytics/analytics_async_chart.dart';
+import 'analytics/analytics_data.dart';
+import 'analytics/analytics_format.dart';
+import 'analytics/analytics_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANALYTICS — HISTÓRICO DE LIVES
-// GET /analytics/live-history?page=1&limit=20
+// ANALYTICS — LIVES
+// GET /analytics/lives-series  → lives/minutos/espectadores por dia + anterior
+// GET /analytics/live-history?page=1&limit=20 → histórico paginado
 // GET /profile/:userId/lives  → playback_url (Mux HLS, válido 30 dias)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -36,6 +41,7 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
   final List<LiveHistoryItem> _items = [];
   bool _hasMore = true;
   bool _loadingMore = false;
+  int _metric = 0; // 0 = lives (barras), 1 = minutos (linha)
   final _scrollController = ScrollController();
 
   @override
@@ -62,209 +68,237 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
   Future<void> _loadMore() async {
     if (_loadingMore || !_hasMore) return;
     setState(() => _loadingMore = true);
-    final next = await ref.read(liveHistoryPageProvider(_page + 1).future);
+    try {
+      final next = await ref.read(liveHistoryPageProvider(_page + 1).future);
+      if (!mounted) return;
+      setState(() {
+        _page++;
+        _items.addAll(next.items);
+        _hasMore = _items.length < next.total;
+        _loadingMore = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _refresh(String period) async {
+    ref.invalidate(liveHistoryPageProvider);
+    ref.invalidate(livesSeriesProvider(period));
     setState(() {
-      _page++;
-      _items.addAll(next.items);
-      _hasMore = _items.length < next.total;
-      _loadingMore = false;
+      _page = 1;
+      _items.clear();
+      _hasMore = true;
     });
+    await ref
+        .read(livesSeriesProvider(period).future)
+        .then((_) {}, onError: (_) {});
+  }
+
+  /// "2h 05min" / "45 min"
+  String _duration(S s, double minutes) {
+    final t = minutes.round();
+    if (t < 60) return s.analyticsMinutesShort(t.toString());
+    return s.analyticsHoursMinutes((t ~/ 60).toString(), (t % 60).toString());
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+    final colors = context.colors;
+    final fmt = AnalyticsFmt.of(context);
+    final period = ref.watch(analyticsPeriodProvider);
+    final seriesAsync = ref.watch(livesSeriesProvider(period));
     final firstPageAsync = ref.watch(liveHistoryPageProvider(1));
+    const livesColor = AppColors.hotPink;
+    const minColor = AppColors.braweOrange;
+
+    List<AnalyticsKpi>? kpis;
+    final d = seriesAsync.value;
+    if (d != null) {
+      kpis = [
+        AnalyticsKpi(
+          icon: LucideIcons.radio,
+          color: livesColor,
+          label: s.analyticsLivesKpiTotal,
+          value: d.val('lives'),
+          format: fmt.integer,
+          deltaPct: d.pct('lives_change_pct'),
+        ),
+        AnalyticsKpi(
+          icon: LucideIcons.clock,
+          color: minColor,
+          label: s.analyticsLivesMinutesLabel,
+          value: d.val('minutes'),
+          format: (v) => _duration(s, v),
+          deltaPct: d.pct('minutes_change_pct'),
+        ),
+        AnalyticsKpi(
+          icon: LucideIcons.eye,
+          color: AppColors.braweBlue,
+          label: s.analyticsViewersTotalViewers,
+          value: d.val('viewers'),
+          format: fmt.compact,
+          deltaPct: d.pct('viewers_change_pct'),
+        ),
+        AnalyticsKpi(
+          icon: LucideIcons.gift,
+          color: AppColors.success,
+          label: s.analyticsEarningsLabel,
+          value: d.val('gifts_usdt'),
+          format: fmt.moneyCompact,
+          deltaPct: d.pct('gifts_change_pct'),
+        ),
+      ];
+    }
+
+    final isLives = _metric == 0;
+    final label = isLives ? s.analyticsLivesChartLives : s.analyticsLivesChartMinutes;
+    final color = isLives ? livesColor : minColor;
 
     return Scaffold(
-      backgroundColor: context.colors.background,
-      extendBodyBehindAppBar: true,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: context.colors.background.withValues(alpha: 0.88),
+        backgroundColor: colors.background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: const SizedBox.expand(),
-          ),
-        ),
+        scrolledUnderElevation: 0,
+        centerTitle: false,
         leading: IconButton(
-          icon: Icon(
-            LucideIcons.arrowLeft,
-            size: 20,
-            color: context.colors.textPrimary,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(LucideIcons.arrowLeft, size: 20, color: colors.textPrimary),
+          onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
-          S.of(context).analyticsLivesTitle,
+          s.analyticsLivesTitle,
           style: TextStyle(
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 17,
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
           ),
         ),
       ),
-      body: firstPageAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                LucideIcons.alertCircle,
-                color: context.colors.textTertiary,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                S.of(context).analyticsLivesErrorLoad,
-                style: TextStyle(color: context.colors.textSecondary),
-              ),
-              TextButton(
-                onPressed: () => ref.invalidate(liveHistoryPageProvider),
-                child: Text(S.of(context).analyticsLivesRetry),
-              ),
-            ],
+      body: RefreshIndicator(
+        color: AppColors.braweBlue,
+        onRefresh: () => _refresh(period),
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
           ),
-        ),
-        data: (page1) {
-          final allItems = _items.isEmpty ? page1.items : _items;
-          if (allItems.isEmpty) {
-            return _EmptyLives();
-          }
-
-          return RefreshIndicator(
-            color: AppColors.braweBlue,
-            onRefresh: () async {
-              ref.invalidate(liveHistoryPageProvider);
-              setState(() {
-                _page = 1;
-                _items.clear();
-                _hasMore = true;
-              });
-            },
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Header com KPIs
-                SliverPadding(
-                  padding: EdgeInsets.only(
-                    top:
-                        MediaQuery.of(context).padding.top +
-                        kToolbarHeight +
-                        16,
-                    left: 16,
-                    right: 16,
-                    bottom: 8,
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 14),
+                    child: AnalyticsPeriodSegment(),
                   ),
-                  sliver: SliverToBoxAdapter(
-                    child: _LivesKpiRow(items: allItems),
+                  AnalyticsKpiGrid(kpis: kpis, skeletonCount: 4),
+                  const SizedBox(height: 16),
+                  AnalyticsChartPanel(
+                    title: label,
+                    toolbar: AnalyticsChipToggle(
+                      labels: [
+                        s.analyticsLivesChartLives,
+                        s.analyticsLivesChartMinutes,
+                      ],
+                      selected: _metric,
+                      color: color,
+                      onChanged: (i) => setState(() => _metric = i),
+                    ),
+                    builder: (compare) => AnalyticsAsyncChart(
+                      async: seriesAsync,
+                      onRetry: () => ref.invalidate(livesSeriesProvider(period)),
+                      builder: (series) => isLives
+                          ? seriesBarChart(
+                              context,
+                              series,
+                              label: label,
+                              color: color,
+                              compare: compare,
+                              format: fmt.integer,
+                            )
+                          : seriesLineChart(
+                              context,
+                              series,
+                              label: label,
+                              color: color,
+                              useSecond: true,
+                              compare: compare,
+                              format: (v) => _duration(s, v),
+                            ),
+                    ),
+                    legendBuilder: (compare) =>
+                        seriesLegend(context, [(color: color, label: label)], compare),
                   ),
-                ),
-
-                // Lista de lives
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, i) {
-                      if (i == allItems.length) {
-                        return _loadingMore
-                            ? const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
-                            : const SizedBox.shrink();
-                      }
-                      return _LiveTile(item: allItems[i]);
-                    }, childCount: allItems.length + 1),
-                  ),
-                ),
-              ],
+                  AnalyticsSectionTitle(title: s.analyticsLivesHistoryTitle),
+                ]),
+              ),
             ),
-          );
-        },
+            ..._historySlivers(firstPageAsync),
+          ],
+        ),
       ),
     );
   }
-}
 
-// ── KPIs do histórico ─────────────────────────────────────────────────────────
-
-class _LivesKpiRow extends StatelessWidget {
-  final List<LiveHistoryItem> items;
-  const _LivesKpiRow({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    final total = items.length;
-    final totalViewers = items.fold(0, (s, e) => s + e.viewerCount);
-    final avgViewers = total > 0 ? totalViewers ~/ total : 0;
-    final totalGifts = items.fold(0.0, (s, e) => s + e.giftsValue);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final s = S.of(context);
-    final stats = [
-      (
-        LucideIcons.radio,
-        s.analyticsLivesKpiTotal,
-        '$total',
-        const Color(0xFFEC4899),
-      ),
-      (
-        LucideIcons.eye,
-        s.analyticsLivesKpiAvgViewers,
-        '$avgViewers',
-        const Color(0xFF3B82F6),
-      ),
-      (
-        LucideIcons.gift,
-        s.analyticsLivesKpiGifts,
-        totalGifts.toStringAsFixed(1),
-        const Color(0xFFF59E0B),
-      ),
-    ];
-
-    return Row(
-      children: stats.asMap().entries.map((e) {
-        final s = e.value;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: e.key < stats.length - 1 ? 8 : 0),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: s.$4.withValues(alpha: isDark ? 0.12 : 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
+  List<Widget> _historySlivers(
+    AsyncValue<({List<LiveHistoryItem> items, int total})> firstPageAsync,
+  ) {
+    return firstPageAsync.when(
+      loading: () => [
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 32),
+          sliver: SliverToBoxAdapter(
             child: Column(
               children: [
-                Icon(s.$1, color: s.$4, size: 16),
-                const SizedBox(height: 4),
-                Text(
-                  s.$3,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  s.$2,
-                  style: TextStyle(
-                    color: context.colors.textSecondary,
-                    fontSize: 10,
-                  ),
-                ),
+                AnalyticsSkeleton(height: 96, radius: 16),
+                SizedBox(height: 10),
+                AnalyticsSkeleton(height: 96, radius: 16),
               ],
             ),
           ),
-        );
-      }).toList(),
+        ),
+      ],
+      error: (e, _) => [
+        SliverToBoxAdapter(
+          child: AnalyticsErrorView(
+            height: 180,
+            onRetry: () => ref.invalidate(liveHistoryPageProvider),
+          ),
+        ),
+      ],
+      data: (page1) {
+        final allItems = _items.isEmpty ? page1.items : _items;
+        if (allItems.isEmpty) {
+          return [
+            SliverToBoxAdapter(
+              child: SizedBox(height: 320, child: _EmptyLives()),
+            ),
+          ];
+        }
+        return [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, i) {
+                if (i == allItems.length) {
+                  return _loadingMore
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : const SizedBox.shrink();
+                }
+                return StaggerIn(index: i.clamp(0, 6), child: _LiveTile(item: allItems[i]));
+              }, childCount: allItems.length + 1),
+            ),
+          ),
+        ];
+      },
     );
   }
 }
@@ -364,21 +398,21 @@ class _LiveTile extends StatelessWidget {
               children: [
                 _MetricChip(
                   icon: LucideIcons.eye,
-                  value: '${item.viewerCount}',
+                  value: AnalyticsFmt.of(context).integer(item.viewerCount),
                   label: s.analyticsLivesMetricViewers,
                 ),
                 const SizedBox(width: 8),
                 _MetricChip(
                   icon: LucideIcons.trendingUp,
-                  value: '${item.peakViewers}',
+                  value: AnalyticsFmt.of(context).integer(item.peakViewers),
                   label: s.analyticsLivesMetricPeak,
                 ),
                 const SizedBox(width: 8),
                 if (item.giftsValue > 0)
                   _MetricChip(
                     icon: LucideIcons.gift,
-                    value: item.giftsValue.toStringAsFixed(1),
-                    label: s.analyticsLivesMetricUsdt,
+                    value: AnalyticsFmt.of(context).money(item.giftsValue),
+                    label: s.analyticsLivesMetricEarned,
                   ),
               ],
             ),

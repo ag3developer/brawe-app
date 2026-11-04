@@ -4497,7 +4497,7 @@ class SPt extends S {
   String get analyticsLivesKpiAvgViewers => 'Viewers méd.';
 
   @override
-  String get analyticsLivesKpiGifts => 'Gifts (USDT)';
+  String get analyticsLivesKpiGifts => 'Gifts (USD)';
 
   @override
   String analyticsLivesDuration(String min) {
@@ -4514,7 +4514,7 @@ class SPt extends S {
   String get analyticsLivesMetricPeak => 'pico';
 
   @override
-  String get analyticsLivesMetricUsdt => 'USDT';
+  String get analyticsLivesMetricUsdt => 'USD';
 
   @override
   String get analyticsLivesReplayLabel => 'Replay';
@@ -4544,13 +4544,13 @@ class SPt extends S {
   String get analyticsReachKpiGifts => 'Gifts recebidos';
 
   @override
-  String get analyticsReachKpiEarnings => 'Ganhos (USDT)';
+  String get analyticsReachKpiEarnings => 'Ganhos (USD)';
 
   @override
   String get analyticsReachEarningsChartTitle => 'Ganhos por dia';
 
   @override
-  String get analyticsReachLegendEarnings => 'Ganhos USDT';
+  String get analyticsReachLegendEarnings => 'Ganhos USD';
 
   @override
   String get analyticsReachLegendFee => 'Taxa plataforma';
@@ -6844,4 +6844,112 @@ class SPt extends S {
 
   @override
   String get creatorDashShowLess => 'Ver menos';
+
+  @override
+  String get analyticsPreviousPeriod => 'Período anterior';
+
+  @override
+  String get analyticsNoDataTitle => 'Sem dados no período';
+
+  @override
+  String get analyticsNoDataSubtitle =>
+      'Tente outro período ou volte após novas atividades.';
+
+  @override
+  String get analyticsPeriod7d => '7D';
+
+  @override
+  String get analyticsPeriod30d => '30D';
+
+  @override
+  String get analyticsPeriod90d => '3M';
+
+  @override
+  String get analyticsPeriod365d => '1A';
+
+  @override
+  String get analyticsVsPrevious => 'vs. período anterior';
+
+  @override
+  String get analyticsCompare => 'Comparar';
+
+  @override
+  String get analyticsErrorTitle => 'Não foi possível carregar';
+
+  @override
+  String get analyticsRetry => 'Tentar novamente';
+
+  @override
+  String get analyticsTopGiftsTitle => 'Top presentes';
+
+  @override
+  String get analyticsTopGiftsSubtitle => 'Os mais recebidos no período';
+
+  @override
+  String get analyticsTopGiftsEmpty => 'Nenhum presente recebido neste período';
+
+  @override
+  String get analyticsTopGiftsBest => 'Mais valioso';
+
+  @override
+  String analyticsTopGiftsReceived(String count) {
+    return '$count recebidos';
+  }
+
+  @override
+  String get analyticsEarningsLabel => 'Ganhos';
+
+  @override
+  String get analyticsGiftsLabel => 'Presentes';
+
+  @override
+  String get analyticsAvgPerGift => 'Média por presente';
+
+  @override
+  String get analyticsEarningsChartTitle => 'Ganhos por dia';
+
+  @override
+  String get analyticsGiftsChartTitle => 'Presentes por dia';
+
+  @override
+  String get analyticsFollowersNew => 'Novos seguidores';
+
+  @override
+  String get analyticsFollowersChartTotal => 'Seguidores acumulados';
+
+  @override
+  String get analyticsFollowersChartNew => 'Novos por dia';
+
+  @override
+  String get analyticsViewersKpiPeak => 'Pico de audiência';
+
+  @override
+  String analyticsWeekOf(String date) {
+    return 'Semana de $date';
+  }
+
+  @override
+  String get analyticsLivesMinutesLabel => 'Tempo ao vivo';
+
+  @override
+  String get analyticsLivesChartLives => 'Lives por dia';
+
+  @override
+  String get analyticsLivesChartMinutes => 'Minutos ao vivo';
+
+  @override
+  String get analyticsLivesHistoryTitle => 'Histórico de lives';
+
+  @override
+  String get analyticsLivesMetricEarned => 'em presentes';
+
+  @override
+  String analyticsMinutesShort(String n) {
+    return '$n min';
+  }
+
+  @override
+  String analyticsHoursMinutes(String h, String m) {
+    return '${h}h ${m}min';
+  }
 }

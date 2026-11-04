@@ -1,17 +1,20 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/creator_analytics_view_model.dart';
-import 'analytics_chart_painter.dart';
+import 'analytics/analytics_async_chart.dart';
+import 'analytics/analytics_charts.dart';
+import 'analytics/analytics_data.dart';
+import 'analytics/analytics_format.dart';
+import 'analytics/analytics_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ANALYTICS — VIEWERS / AUDIÊNCIA
-// GET /analytics/viewers?period=30d
+// ANALYTICS — AUDIÊNCIA
+// GET /analytics/viewers → espectadores/pico por dia + período anterior
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AnalyticsViewersScreen extends ConsumerWidget {
@@ -20,248 +23,217 @@ class AnalyticsViewersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
+    final fmt = AnalyticsFmt.of(context);
     final period = ref.watch(analyticsPeriodProvider);
-    final pointsAsync = ref.watch(viewersHistoryProvider(period));
-    final kpisAsync = ref.watch(creatorDashboardKpisProvider);
+    final async = ref.watch(viewersSeriesProvider(period));
+    const viewColor = AppColors.braweBlue;
+    const peakColor = AppColors.hotPink;
 
-    return Scaffold(
-      backgroundColor: context.colors.background,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: context.colors.background.withValues(alpha: 0.88),
-        elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: const SizedBox.expand(),
-          ),
+    List<AnalyticsKpi>? kpis;
+    final data = async.value;
+    if (data != null) {
+      kpis = [
+        AnalyticsKpi(
+          icon: LucideIcons.eye,
+          color: viewColor,
+          label: s.analyticsViewersTotalViewers,
+          value: data.val('viewers'),
+          format: fmt.compact,
+          deltaPct: data.pct('viewers_change_pct'),
         ),
-        leading: IconButton(
-          icon: Icon(
-            LucideIcons.arrowLeft,
-            size: 20,
-            color: context.colors.textPrimary,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
+        AnalyticsKpi(
+          icon: LucideIcons.trendingUp,
+          color: AppColors.success,
+          label: s.analyticsViewersAvgPerLive,
+          value: data.val('avg_per_live'),
+          format: fmt.compact,
+          deltaPct: data.pct('avg_change_pct'),
         ),
-        title: Text(
-          s.analyticsViewersTitle,
-          style: TextStyle(
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.w700,
-            fontSize: 17,
-          ),
+        AnalyticsKpi(
+          icon: LucideIcons.flame,
+          color: peakColor,
+          label: s.analyticsViewersKpiPeak,
+          value: data.val('peak_viewers'),
+          format: fmt.compact,
+          deltaPct: data.pct('peak_change_pct'),
         ),
-        actions: [
-          AnalyticsPeriodPicker(
-            selected: period,
-            onChanged: (p) => ref.read(analyticsPeriodProvider.notifier).set(p),
-          ),
-        ],
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
-              left: 16,
-              right: 16,
-              bottom: 32,
-            ),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                kpisAsync.when(
-                  loading: () => const AnalyticsKpiRow(items: null),
-                  error: (_, __) => const SizedBox.shrink(),
-                  data: (k) => AnalyticsKpiRow(
-                    items: [
-                      AnalyticsKpiItem(
-                        icon: LucideIcons.eye,
-                        color: const Color(0xFF3B82F6),
-                        label: s.analyticsViewersTotalViewers,
-                        value: analyticsFormatCount(k.totalViewers),
-                      ),
-                      AnalyticsKpiItem(
-                        icon: LucideIcons.trendingUp,
-                        color: const Color(0xFF10B981),
-                        label: s.analyticsViewersAvgPerLive,
-                        value: k.avgViewersPerLive.toStringAsFixed(0),
-                      ),
-                    ],
-                  ),
+        AnalyticsKpi(
+          icon: LucideIcons.radio,
+          color: AppColors.braweOrange,
+          label: s.analyticsLivesKpiTotal,
+          value: data.val('lives'),
+          format: fmt.integer,
+          hasDelta: false,
+        ),
+      ];
+    }
+
+    return AnalyticsPage(
+      title: s.analyticsViewersTitle,
+      onRefresh: () async {
+        ref.invalidate(viewersSeriesProvider(period));
+        await ref
+            .read(viewersSeriesProvider(period).future)
+            .then((_) {}, onError: (_) {});
+      },
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 4, bottom: 14),
+          child: AnalyticsPeriodSegment(),
+        ),
+        AnalyticsKpiGrid(kpis: kpis, skeletonCount: 4),
+        const SizedBox(height: 16),
+        AnalyticsChartPanel(
+          title: s.analyticsViewersChartTitle,
+          builder: (compare) => AnalyticsAsyncChart(
+            async: async,
+            onRetry: () => ref.invalidate(viewersSeriesProvider(period)),
+            builder: (d) => seriesLineChart(
+              context,
+              d,
+              label: s.analyticsViewersLegendViewers,
+              color: viewColor,
+              compare: compare,
+              format: fmt.integer,
+              extra: [
+                ChartLine(
+                  label: s.analyticsViewersLegendPeak,
+                  color: peakColor,
+                  values: [for (final p in d.current) p.second ?? 0],
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  s.analyticsViewersChartTitle,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    AnalyticsLegendDot(
-                      color: const Color(0xFF3B82F6),
-                      label: s.analyticsViewersLegendViewers,
-                    ),
-                    const SizedBox(width: 12),
-                    AnalyticsLegendDot(
-                      color: const Color(0xFFEC4899),
-                      label: s.analyticsViewersLegendPeak,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                pointsAsync.when(
-                  loading: () => const AnalyticsChartSkeleton(),
-                  error: (e, _) => AnalyticsChartError(message: '$e'),
-                  data: (points) => AnalyticsChartCard(
-                    child: AnalyticsLineChart(
-                      points: points,
-                      color: const Color(0xFF3B82F6),
-                      showSecondary: true,
-                      secondaryColor: const Color(0xFFEC4899),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  s.analyticsViewersBestDays,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                pointsAsync.when(
-                  loading: () => const AnalyticsListSkeleton(count: 5),
-                  error: (_, __) => const SizedBox.shrink(),
-                  data: (points) {
-                    final sorted = [...points]
-                      ..sort((a, b) => b.value.compareTo(a.value));
-                    final top = sorted.take(5).toList();
-                    if (top.isEmpty) {
-                      return Center(child: Text(s.analyticsViewersNoData));
-                    }
-                    return Column(
-                      children: top.asMap().entries.map((e) {
-                        final rank = e.key + 1;
-                        final pt = e.value;
-                        final pct = sorted.first.value > 0
-                            ? pt.value / sorted.first.value
-                            : 0.0;
-                        return _DayRankTile(
-                          rank: rank,
-                          date: pt.date,
-                          value: pt.value.toInt(),
-                          pct: pct,
-                          color: const Color(0xFF3B82F6),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-              ]),
+              ],
             ),
           ),
-        ],
-      ),
+          legendBuilder: (compare) => seriesLegend(context, [
+            (color: viewColor, label: s.analyticsViewersLegendViewers),
+            (color: peakColor, label: s.analyticsViewersLegendPeak),
+          ], compare),
+        ),
+        AnalyticsSectionTitle(title: s.analyticsViewersBestDays),
+        async.when(
+          loading: () => const Column(
+            children: [
+              AnalyticsSkeleton(height: 56, radius: 16),
+              SizedBox(height: 8),
+              AnalyticsSkeleton(height: 56, radius: 16),
+              SizedBox(height: 8),
+              AnalyticsSkeleton(height: 56, radius: 16),
+            ],
+          ),
+          error: (_, _) => AnalyticsErrorView(
+            height: 150,
+            onRetry: () => ref.invalidate(viewersSeriesProvider(period)),
+          ),
+          data: (d) {
+            final top = d.current.where((p) => p.value > 0).toList()
+              ..sort((a, b) => b.value.compareTo(a.value));
+            if (top.isEmpty) {
+              return AnalyticsCard(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    s.analyticsNoDataTitle,
+                    style: TextStyle(color: context.colors.textSecondary),
+                  ),
+                ),
+              );
+            }
+            final best = top.take(5).toList();
+            return Column(
+              children: [
+                for (var i = 0; i < best.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _DayTile(
+                      rank: i + 1,
+                      point: best[i],
+                      pct: best[i].value / best.first.value,
+                      weekly: period == '365d',
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class _DayRankTile extends StatelessWidget {
+class _DayTile extends StatelessWidget {
   final int rank;
-  final DateTime date;
-  final int value;
+  final SeriesPoint point;
   final double pct;
-  final Color color;
-
-  const _DayRankTile({
+  final bool weekly;
+  const _DayTile({
     required this.rank,
-    required this.date,
-    required this.value,
+    required this.point,
     required this.pct,
-    required this.color,
+    required this.weekly,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final fmt = AnalyticsFmt.of(context);
     final s = S.of(context);
-    final months = s.analyticsLivesMonthsShort.split(',');
-    final dateStr = '${date.day} ${months[date.month - 1]}';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+    final first = rank == 1;
+    return AnalyticsCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.04)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.black.withValues(alpha: 0.05),
-        ),
-      ),
       child: Row(
         children: [
           SizedBox(
-            width: 24,
+            width: 28,
             child: Text(
               '#$rank',
               style: TextStyle(
-                color: rank == 1
-                    ? const Color(0xFFF59E0B)
-                    : context.colors.textTertiary,
+                color: first ? AppColors.amber : colors.textTertiary,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
             ),
           ),
-          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  dateStr,
+                  weekly
+                      ? s.analyticsWeekOf(fmt.dayShort(point.date))
+                      : fmt.dayLong(point.date),
                   style: TextStyle(
-                    color: context.colors.textPrimary,
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 3,
-                    backgroundColor: color.withValues(alpha: 0.12),
-                    valueColor: AlwaysStoppedAnimation(color),
+                    value: pct.clamp(0.0, 1.0),
+                    minHeight: 5,
+                    backgroundColor: AppColors.braweBlue.withValues(alpha: 0.14),
+                    valueColor: AlwaysStoppedAnimation(
+                      first ? AppColors.amber : AppColors.braweBlue,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Text(
-            analyticsFormatCount(value),
+            fmt.compact(point.value),
             style: TextStyle(
-              color: context.colors.textPrimary,
+              color: colors.textPrimary,
               fontWeight: FontWeight.w800,
               fontSize: 15,
             ),
           ),
           Text(
             s.analyticsViewersUnit,
-            style: TextStyle(color: context.colors.textSecondary, fontSize: 11),
+            style: TextStyle(color: colors.textSecondary, fontSize: 11),
           ),
         ],
       ),

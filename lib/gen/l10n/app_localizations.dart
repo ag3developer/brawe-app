@@ -8172,7 +8172,7 @@ abstract class S {
   /// No description provided for @analyticsLivesKpiGifts.
   ///
   /// In pt, this message translates to:
-  /// **'Gifts (USDT)'**
+  /// **'Gifts (USD)'**
   String get analyticsLivesKpiGifts;
 
   /// No description provided for @analyticsLivesDuration.
@@ -8202,7 +8202,7 @@ abstract class S {
   /// No description provided for @analyticsLivesMetricUsdt.
   ///
   /// In pt, this message translates to:
-  /// **'USDT'**
+  /// **'USD'**
   String get analyticsLivesMetricUsdt;
 
   /// No description provided for @analyticsLivesReplayLabel.
@@ -8256,7 +8256,7 @@ abstract class S {
   /// No description provided for @analyticsReachKpiEarnings.
   ///
   /// In pt, this message translates to:
-  /// **'Ganhos (USDT)'**
+  /// **'Ganhos (USD)'**
   String get analyticsReachKpiEarnings;
 
   /// No description provided for @analyticsReachEarningsChartTitle.
@@ -8268,7 +8268,7 @@ abstract class S {
   /// No description provided for @analyticsReachLegendEarnings.
   ///
   /// In pt, this message translates to:
-  /// **'Ganhos USDT'**
+  /// **'Ganhos USD'**
   String get analyticsReachLegendEarnings;
 
   /// No description provided for @analyticsReachLegendFee.
@@ -12182,6 +12182,204 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Ver menos'**
   String get creatorDashShowLess;
+
+  /// No description provided for @analyticsPreviousPeriod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Período anterior'**
+  String get analyticsPreviousPeriod;
+
+  /// No description provided for @analyticsNoDataTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem dados no período'**
+  String get analyticsNoDataTitle;
+
+  /// No description provided for @analyticsNoDataSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente outro período ou volte após novas atividades.'**
+  String get analyticsNoDataSubtitle;
+
+  /// No description provided for @analyticsPeriod7d.
+  ///
+  /// In pt, this message translates to:
+  /// **'7D'**
+  String get analyticsPeriod7d;
+
+  /// No description provided for @analyticsPeriod30d.
+  ///
+  /// In pt, this message translates to:
+  /// **'30D'**
+  String get analyticsPeriod30d;
+
+  /// No description provided for @analyticsPeriod90d.
+  ///
+  /// In pt, this message translates to:
+  /// **'3M'**
+  String get analyticsPeriod90d;
+
+  /// No description provided for @analyticsPeriod365d.
+  ///
+  /// In pt, this message translates to:
+  /// **'1A'**
+  String get analyticsPeriod365d;
+
+  /// No description provided for @analyticsVsPrevious.
+  ///
+  /// In pt, this message translates to:
+  /// **'vs. período anterior'**
+  String get analyticsVsPrevious;
+
+  /// No description provided for @analyticsCompare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comparar'**
+  String get analyticsCompare;
+
+  /// No description provided for @analyticsErrorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar'**
+  String get analyticsErrorTitle;
+
+  /// No description provided for @analyticsRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get analyticsRetry;
+
+  /// No description provided for @analyticsTopGiftsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Top presentes'**
+  String get analyticsTopGiftsTitle;
+
+  /// No description provided for @analyticsTopGiftsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os mais recebidos no período'**
+  String get analyticsTopGiftsSubtitle;
+
+  /// No description provided for @analyticsTopGiftsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum presente recebido neste período'**
+  String get analyticsTopGiftsEmpty;
+
+  /// No description provided for @analyticsTopGiftsBest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais valioso'**
+  String get analyticsTopGiftsBest;
+
+  /// No description provided for @analyticsTopGiftsReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} recebidos'**
+  String analyticsTopGiftsReceived(String count);
+
+  /// No description provided for @analyticsEarningsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos'**
+  String get analyticsEarningsLabel;
+
+  /// No description provided for @analyticsGiftsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get analyticsGiftsLabel;
+
+  /// No description provided for @analyticsAvgPerGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Média por presente'**
+  String get analyticsAvgPerGift;
+
+  /// No description provided for @analyticsEarningsChartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos por dia'**
+  String get analyticsEarningsChartTitle;
+
+  /// No description provided for @analyticsGiftsChartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes por dia'**
+  String get analyticsGiftsChartTitle;
+
+  /// No description provided for @analyticsFollowersNew.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos seguidores'**
+  String get analyticsFollowersNew;
+
+  /// No description provided for @analyticsFollowersChartTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores acumulados'**
+  String get analyticsFollowersChartTotal;
+
+  /// No description provided for @analyticsFollowersChartNew.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos por dia'**
+  String get analyticsFollowersChartNew;
+
+  /// No description provided for @analyticsViewersKpiPeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pico de audiência'**
+  String get analyticsViewersKpiPeak;
+
+  /// No description provided for @analyticsWeekOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Semana de {date}'**
+  String analyticsWeekOf(String date);
+
+  /// No description provided for @analyticsLivesMinutesLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tempo ao vivo'**
+  String get analyticsLivesMinutesLabel;
+
+  /// No description provided for @analyticsLivesChartLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives por dia'**
+  String get analyticsLivesChartLives;
+
+  /// No description provided for @analyticsLivesChartMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Minutos ao vivo'**
+  String get analyticsLivesChartMinutes;
+
+  /// No description provided for @analyticsLivesHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de lives'**
+  String get analyticsLivesHistoryTitle;
+
+  /// No description provided for @analyticsLivesMetricEarned.
+  ///
+  /// In pt, this message translates to:
+  /// **'em presentes'**
+  String get analyticsLivesMetricEarned;
+
+  /// No description provided for @analyticsMinutesShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} min'**
+  String analyticsMinutesShort(String n);
+
+  /// No description provided for @analyticsHoursMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'{h}h {m}min'**
+  String analyticsHoursMinutes(String h, String m);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
