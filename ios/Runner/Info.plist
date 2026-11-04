@@ -12,8 +12,6 @@
 	<string>A Brawe precisa de acesso à câmera para você tirar fotos, gravar vídeos e transmitir ao vivo.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>A Brawe precisa de acesso ao microfone para transmitir seu áudio durante lives e gravar vídeos.</string>
-	<key>NSContactsUsageDescription</key>
-	<string>A Brawe pode acessar seus contatos para ajudar a encontrar amigos na plataforma.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

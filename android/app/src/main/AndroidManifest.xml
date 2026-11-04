@@ -55,7 +55,6 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
 
     <!-- Biometria (login seguro) -->
-    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
     <!-- NOTA: NÃO declarar FOREGROUND_SERVICE_* aqui. O app não roda câmera/
          microfone/mídia com a tela bloqueada — quando o usuário sai do app,
