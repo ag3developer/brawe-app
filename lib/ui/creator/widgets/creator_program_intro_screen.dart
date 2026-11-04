@@ -69,7 +69,7 @@ class _CreatorProgramIntroScreenState
           ),
           child: FilledButton.icon(
             onPressed: () => _onCta(context, applicationAsync, creatorAsync),
-            icon: const Icon(LucideIcons.zap, size: 18),
+            icon: Icon(_ctaIcon(applicationAsync, creatorAsync), size: 18),
             label: Text(_ctaLabel(s, applicationAsync, creatorAsync)),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(50),
@@ -287,6 +287,17 @@ class _CreatorProgramIntroScreenState
         },
       ),
     );
+  }
+
+  /// Ícone acompanha a ação: preencher a inscrição, acompanhar o status ou
+  /// abrir o painel de criador.
+  IconData _ctaIcon(
+    AsyncValue<CreatorApplication?> appAsync,
+    AsyncValue<CreatorProfile?> creatorAsync,
+  ) {
+    if (creatorAsync.value != null) return LucideIcons.layoutDashboard;
+    if (appAsync.value != null) return LucideIcons.clipboardCheck;
+    return LucideIcons.clipboardPenLine;
   }
 
   String _ctaLabel(

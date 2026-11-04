@@ -8,6 +8,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/models/creator_journey.dart';
 import '../../domain/models/creator_network.dart';
 import '../../domain/models/failure.dart';
 import '../services/creator_network_service.dart';
@@ -126,6 +127,16 @@ class CreatorNetworkRepository {
   // ──────────────────────────────────────────────────────────
   // USER — Creator
   // ──────────────────────────────────────────────────────────
+  Future<CreatorJourney> getMyJourney() async {
+    try {
+      return await _service.getMyJourney();
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
   Future<CreatorProfile?> getMyCreator() async {
     try {
       return await _service.getMyCreator();

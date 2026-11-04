@@ -11636,6 +11636,552 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Recarregar'**
   String get liveTopUpAction;
+
+  /// No description provided for @rewardsToggleCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas'**
+  String get rewardsToggleCoins;
+
+  /// No description provided for @rewardsToggleDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes'**
+  String get rewardsToggleDiamonds;
+
+  /// No description provided for @rewardsDiamondsAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes disponíveis'**
+  String get rewardsDiamondsAvailable;
+
+  /// No description provided for @rewardsPeriodLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Período'**
+  String get rewardsPeriodLabel;
+
+  /// No description provided for @creatorDashSince.
+  ///
+  /// In pt, this message translates to:
+  /// **'Creator desde {date}'**
+  String creatorDashSince(String date);
+
+  /// No description provided for @creatorDashCurrentLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu nível'**
+  String get creatorDashCurrentLevel;
+
+  /// No description provided for @creatorDashOverallProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{percent}% do caminho até {tier}'**
+  String creatorDashOverallProgress(int percent, String tier);
+
+  /// No description provided for @creatorDashInviteNext.
+  ///
+  /// In pt, this message translates to:
+  /// **'O próximo nível é por convite da equipe Brawe. Continue criando e brilhando!'**
+  String get creatorDashInviteNext;
+
+  /// No description provided for @creatorDashTopLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você chegou ao topo da jornada. Obrigado por construir a Brawe!'**
+  String get creatorDashTopLevel;
+
+  /// No description provided for @creatorDashTrailTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua trilha'**
+  String get creatorDashTrailTitle;
+
+  /// No description provided for @creatorDashTrailHere.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está aqui'**
+  String get creatorDashTrailHere;
+
+  /// No description provided for @creatorDashTrailLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloqueado'**
+  String get creatorDashTrailLocked;
+
+  /// No description provided for @creatorDashTrailInviteOnly.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por convite'**
+  String get creatorDashTrailInviteOnly;
+
+  /// No description provided for @creatorDashTrailSince.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desde {date}'**
+  String creatorDashTrailSince(String date);
+
+  /// No description provided for @creatorDashGoalsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Metas para {tier}'**
+  String creatorDashGoalsTitle(String tier);
+
+  /// No description provided for @creatorDashGoalsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cumpra as metas e mostre à equipe que você está pronto.'**
+  String get creatorDashGoalsHint;
+
+  /// No description provided for @creatorDashGoalsAllDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Metas cumpridas! A equipe Brawe vai avaliar seu perfil para o próximo nível.'**
+  String get creatorDashGoalsAllDone;
+
+  /// No description provided for @creatorDashGoalOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'{current} de {target}'**
+  String creatorDashGoalOf(String current, String target);
+
+  /// No description provided for @creatorDashGoalDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta cumprida'**
+  String get creatorDashGoalDone;
+
+  /// No description provided for @creatorJourneyMetricFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get creatorJourneyMetricFollowers;
+
+  /// No description provided for @creatorJourneyMetricLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives realizadas'**
+  String get creatorJourneyMetricLives;
+
+  /// No description provided for @creatorJourneyMetricLiveMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Minutos ao vivo'**
+  String get creatorJourneyMetricLiveMinutes;
+
+  /// No description provided for @creatorJourneyMetricPosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posts publicados'**
+  String get creatorJourneyMetricPosts;
+
+  /// No description provided for @creatorJourneyMetricGiftCredits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes recebidos'**
+  String get creatorJourneyMetricGiftCredits;
+
+  /// No description provided for @creatorJourneyMetricActiveDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dias como creator'**
+  String get creatorJourneyMetricActiveDays;
+
+  /// No description provided for @creatorJourneyMetricViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espectadores nas lives'**
+  String get creatorJourneyMetricViewers;
+
+  /// No description provided for @creatorJourneyRemainingFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 seguidor} other{Faltam {n} seguidores}}'**
+  String creatorJourneyRemainingFollowers(int n);
+
+  /// No description provided for @creatorJourneyRemainingLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 live} other{Faltam {n} lives}}'**
+  String creatorJourneyRemainingLives(int n);
+
+  /// No description provided for @creatorJourneyRemainingLiveMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 minuto ao vivo} other{Faltam {n} minutos ao vivo}}'**
+  String creatorJourneyRemainingLiveMinutes(int n);
+
+  /// No description provided for @creatorJourneyRemainingPosts.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 post} other{Faltam {n} posts}}'**
+  String creatorJourneyRemainingPosts(int n);
+
+  /// No description provided for @creatorJourneyRemainingGiftCredits.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 crédito em presentes} other{Faltam {n} créditos em presentes}}'**
+  String creatorJourneyRemainingGiftCredits(int n);
+
+  /// No description provided for @creatorJourneyRemainingActiveDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Falta 1 dia} other{Faltam {n} dias}}'**
+  String creatorJourneyRemainingActiveDays(int n);
+
+  /// No description provided for @creatorDashWeekTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua semana'**
+  String get creatorDashWeekTitle;
+
+  /// No description provided for @creatorDashWeekSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Últimos 7 dias comparados aos 7 anteriores'**
+  String get creatorDashWeekSubtitle;
+
+  /// No description provided for @creatorDashWeekNewFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos seguidores'**
+  String get creatorDashWeekNewFollowers;
+
+  /// No description provided for @creatorDashWeekUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} a mais que na semana passada'**
+  String creatorDashWeekUp(String n);
+
+  /// No description provided for @creatorDashWeekDown.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} a menos que na semana passada'**
+  String creatorDashWeekDown(String n);
+
+  /// No description provided for @creatorDashWeekSame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Igual à semana passada'**
+  String get creatorDashWeekSame;
+
+  /// No description provided for @creatorDashWeekSeeMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver análise'**
+  String get creatorDashWeekSeeMore;
+
+  /// No description provided for @creatorDashBenefitsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus benefícios'**
+  String get creatorDashBenefitsTitle;
+
+  /// No description provided for @creatorDashBenefitsNextTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Libera em {tier}'**
+  String creatorDashBenefitsNextTitle(String tier);
+
+  /// No description provided for @creatorDashBenefitActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativo'**
+  String get creatorDashBenefitActive;
+
+  /// No description provided for @creatorDashShortcutAnalytics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análises'**
+  String get creatorDashShortcutAnalytics;
+
+  /// No description provided for @creatorDashShortcutSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configurações'**
+  String get creatorDashShortcutSettings;
+
+  /// No description provided for @creatorDashErrorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos carregar sua jornada. Puxe para tentar de novo.'**
+  String get creatorDashErrorTitle;
+
+  /// No description provided for @creatorJourneyBadgeGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge de creator'**
+  String get creatorJourneyBadgeGeneric;
+
+  /// No description provided for @creatorJourneyBadgeEarnedOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistado em {date}'**
+  String creatorJourneyBadgeEarnedOn(String date);
+
+  /// No description provided for @creatorJourneyBadgeBenefitsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Benefícios ativos'**
+  String get creatorJourneyBadgeBenefitsTitle;
+
+  /// No description provided for @creatorJourneyBadgeNextTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximo nível'**
+  String get creatorJourneyBadgeNextTitle;
+
+  /// No description provided for @creatorJourneyBadgeAllTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus badges'**
+  String get creatorJourneyBadgeAllTitle;
+
+  /// No description provided for @creatorJourneyBadgeOpenDashboard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir painel do creator'**
+  String get creatorJourneyBadgeOpenDashboard;
+
+  /// No description provided for @creatorJourneyBenefitRisingBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge Rising'**
+  String get creatorJourneyBenefitRisingBadgeTitle;
+
+  /// No description provided for @creatorJourneyBenefitRisingBadgeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu selo oficial de creator aparece no perfil, nas lives e nos comentários.'**
+  String get creatorJourneyBenefitRisingBadgeDesc;
+
+  /// No description provided for @creatorJourneyBenefitCreatorProfileTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil de Creator'**
+  String get creatorJourneyBenefitCreatorProfileTitle;
+
+  /// No description provided for @creatorJourneyBenefitCreatorProfileDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil com identidade própria na rede de creators da Brawe.'**
+  String get creatorJourneyBenefitCreatorProfileDesc;
+
+  /// No description provided for @creatorJourneyBenefitDiscoverySuggestionsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sugestões de descoberta'**
+  String get creatorJourneyBenefitDiscoverySuggestionsTitle;
+
+  /// No description provided for @creatorJourneyBenefitDiscoverySuggestionsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu conteúdo pode ser sugerido a pessoas que ainda não te seguem.'**
+  String get creatorJourneyBenefitDiscoverySuggestionsDesc;
+
+  /// No description provided for @creatorJourneyBenefitAnalyticsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análises detalhadas'**
+  String get creatorJourneyBenefitAnalyticsTitle;
+
+  /// No description provided for @creatorJourneyBenefitAnalyticsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acompanhe seguidores, alcance e lives com gráficos e números reais.'**
+  String get creatorJourneyBenefitAnalyticsDesc;
+
+  /// No description provided for @creatorJourneyBenefitFeaturedBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge Featured'**
+  String get creatorJourneyBenefitFeaturedBadgeTitle;
+
+  /// No description provided for @creatorJourneyBenefitFeaturedBadgeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selo de destaque que mostra que você é um creator consistente.'**
+  String get creatorJourneyBenefitFeaturedBadgeDesc;
+
+  /// No description provided for @creatorJourneyBenefitEditorialHighlightTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Destaque editorial'**
+  String get creatorJourneyBenefitEditorialHighlightTitle;
+
+  /// No description provided for @creatorJourneyBenefitEditorialHighlightDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chance de aparecer nas vitrines selecionadas pela equipe Brawe.'**
+  String get creatorJourneyBenefitEditorialHighlightDesc;
+
+  /// No description provided for @creatorJourneyBenefitMoreReachTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais alcance orgânico'**
+  String get creatorJourneyBenefitMoreReachTitle;
+
+  /// No description provided for @creatorJourneyBenefitMoreReachDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu conteúdo ganha mais força na descoberta e chega a mais gente.'**
+  String get creatorJourneyBenefitMoreReachDesc;
+
+  /// No description provided for @creatorJourneyBenefitLiveBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge Live'**
+  String get creatorJourneyBenefitLiveBadgeTitle;
+
+  /// No description provided for @creatorJourneyBenefitLiveBadgeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selo exclusivo para quem constrói comunidade ao vivo.'**
+  String get creatorJourneyBenefitLiveBadgeDesc;
+
+  /// No description provided for @creatorJourneyBenefitAdvancedLiveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recursos avançados de live'**
+  String get creatorJourneyBenefitAdvancedLiveTitle;
+
+  /// No description provided for @creatorJourneyBenefitAdvancedLiveDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ferramentas extras para fazer lives mais profissionais.'**
+  String get creatorJourneyBenefitAdvancedLiveDesc;
+
+  /// No description provided for @creatorJourneyBenefitLiveBattlesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalhas ao vivo'**
+  String get creatorJourneyBenefitLiveBattlesTitle;
+
+  /// No description provided for @creatorJourneyBenefitLiveBattlesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Participe de batalhas e dispute presentes com outros creators.'**
+  String get creatorJourneyBenefitLiveBattlesDesc;
+
+  /// No description provided for @creatorJourneyBenefitLiveRankingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ranking de Live Creators'**
+  String get creatorJourneyBenefitLiveRankingTitle;
+
+  /// No description provided for @creatorJourneyBenefitLiveRankingDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apareça no ranking público dos creators que mais brilham nas lives.'**
+  String get creatorJourneyBenefitLiveRankingDesc;
+
+  /// No description provided for @creatorJourneyBenefitAmbassadorBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge Ambassador'**
+  String get creatorJourneyBenefitAmbassadorBadgeTitle;
+
+  /// No description provided for @creatorJourneyBenefitAmbassadorBadgeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selo de quem representa a Brawe com reconhecimento oficial.'**
+  String get creatorJourneyBenefitAmbassadorBadgeDesc;
+
+  /// No description provided for @creatorJourneyBenefitAmbassadorPageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Página de embaixador'**
+  String get creatorJourneyBenefitAmbassadorPageTitle;
+
+  /// No description provided for @creatorJourneyBenefitAmbassadorPageDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uma página oficial para contar sua história e suas conquistas.'**
+  String get creatorJourneyBenefitAmbassadorPageDesc;
+
+  /// No description provided for @creatorJourneyBenefitOfficialCampaignsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Campanhas oficiais'**
+  String get creatorJourneyBenefitOfficialCampaignsTitle;
+
+  /// No description provided for @creatorJourneyBenefitOfficialCampaignsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convites para participar de campanhas e ações da marca Brawe.'**
+  String get creatorJourneyBenefitOfficialCampaignsDesc;
+
+  /// No description provided for @creatorJourneyBenefitPremiumHighlightTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Destaque premium'**
+  String get creatorJourneyBenefitPremiumHighlightTitle;
+
+  /// No description provided for @creatorJourneyBenefitPremiumHighlightDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posição privilegiada nos destaques da plataforma.'**
+  String get creatorJourneyBenefitPremiumHighlightDesc;
+
+  /// No description provided for @creatorJourneyBenefitFoundingBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Badge Founding'**
+  String get creatorJourneyBenefitFoundingBadgeTitle;
+
+  /// No description provided for @creatorJourneyBenefitFoundingBadgeDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'O selo mais raro: para quem constrói a Brawe desde o início.'**
+  String get creatorJourneyBenefitFoundingBadgeDesc;
+
+  /// No description provided for @creatorJourneyBenefitFoundingSealTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selo de Fundador'**
+  String get creatorJourneyBenefitFoundingSealTitle;
+
+  /// No description provided for @creatorJourneyBenefitFoundingSealDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reconhecimento permanente como parte da história da Brawe.'**
+  String get creatorJourneyBenefitFoundingSealDesc;
+
+  /// No description provided for @creatorJourneyBenefitEarlyAccessTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acesso antecipado'**
+  String get creatorJourneyBenefitEarlyAccessTitle;
+
+  /// No description provided for @creatorJourneyBenefitEarlyAccessDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Teste novos recursos antes de todo mundo.'**
+  String get creatorJourneyBenefitEarlyAccessDesc;
+
+  /// No description provided for @creatorJourneyBenefitRoadmapVoiceTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voz no roadmap'**
+  String get creatorJourneyBenefitRoadmapVoiceTitle;
+
+  /// No description provided for @creatorJourneyBenefitRoadmapVoiceDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua opinião ajuda a decidir o que a Brawe vai construir.'**
+  String get creatorJourneyBenefitRoadmapVoiceDesc;
+
+  /// No description provided for @creatorDashShowAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver todos'**
+  String get creatorDashShowAll;
+
+  /// No description provided for @creatorDashShowLess.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver menos'**
+  String get creatorDashShowLess;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

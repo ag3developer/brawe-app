@@ -26,60 +26,15 @@ import '../view_models/earnings_view_model.dart';
 class EarningsScreen extends ConsumerWidget {
   const EarningsScreen({super.key});
 
-  static const _currencies = ['USD', 'BRL', 'EUR'];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     final earnings = ref.watch(earningsViewModelProvider);
-    final currency = ref.watch(displayCurrencyProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(s.earningsTitle),
         leading: const BackButton(),
-        actions: [
-          PopupMenuButton<String>(
-            initialValue: currency,
-            tooltip: s.earningsCurrency,
-            onSelected: (v) {
-              ref.read(displayCurrencyProvider.notifier).set(v);
-              ref.invalidate(earningsViewModelProvider);
-            },
-            itemBuilder: (_) => [
-              for (final c in _currencies)
-                PopupMenuItem(
-                  value: c,
-                  child: Row(
-                    children: [
-                      if (c == currency)
-                        const Icon(
-                          Icons.check,
-                          size: 16,
-                          color: AppColors.braweBlue,
-                        )
-                      else
-                        const SizedBox(width: 16),
-                      const SizedBox(width: 8),
-                      Text(c),
-                    ],
-                  ),
-                ),
-            ],
-            child: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Row(
-                children: [
-                  Text(
-                    currency,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const Icon(Icons.arrow_drop_down),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
       body: earnings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -93,17 +48,10 @@ class EarningsScreen extends ConsumerWidget {
             ref.invalidate(rewardsTransactionsProvider);
           },
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              _BalanceCards(data: data),
-              const SizedBox(height: 16),
-              _LifetimeStats(data: data),
-              const SizedBox(height: 28),
-              _SectionHeader(
-                title: s.rewardsHistoryTitle,
-                subtitle: s.rewardsHistorySubtitle,
-              ),
-              const SizedBox(height: 12),
+              _BalanceCard(data: data),
+              const SizedBox(height: 24),
               const _GiftHistory(),
               // Histórico de compras só existe com a compra de moedas ativa.
               if (kCoinPurchaseEnabled) ...[
@@ -115,7 +63,6 @@ class EarningsScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 const _PurchaseOrdersList(),
               ],
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -125,230 +72,253 @@ class EarningsScreen extends ConsumerWidget {
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-//   Cards de saldo (Coins + Diamonds) lado a lado
+//   Cartão único de saldo: chave Moedas | Diamantes, valor convertido,
+//   seletor de moeda e totais da vida toda no rodapé.
 // ───────────────────────────────────────────────────────────────────────────
-class _BalanceCards extends StatelessWidget {
+class _BalanceCard extends ConsumerStatefulWidget {
   final Earnings data;
-  const _BalanceCards({required this.data});
+  const _BalanceCard({required this.data});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _BalanceTile(
-            label: S.of(context).earningsCoinsBalance,
-            amount: _formatInt(data.coinsBalance.round()),
-            valueInCurrency: _formatCurrency(
-              data.coinsValueInCurrency,
-              data.currency,
-            ),
-            gradient: const [AppColors.braweBlue, AppColors.braweSky],
-            icon: const BraweCoin(size: 28, glow: true),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _BalanceTile(
-            label: S.of(context).earningsDiamondsBalance,
-            amount: _formatInt(data.diamondsBalance.round()),
-            valueInCurrency: _formatCurrency(
-              data.diamondsValueInCurrency,
-              data.currency,
-            ),
-            gradient: const [AppColors.braweSky, AppColors.braweDeep],
-            icon: Image.asset(
-              'assets/images/illustrations/diamond_3d.png',
-              width: 32,
-              height: 32,
-              filterQuality: FilterQuality.medium,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  ConsumerState<_BalanceCard> createState() => _BalanceCardState();
 }
 
-class _BalanceTile extends StatelessWidget {
-  final String label;
-  final String amount;
-  final String valueInCurrency;
-  final List<Color> gradient;
-  final Widget icon;
-
-  const _BalanceTile({
-    required this.label,
-    required this.amount,
-    required this.valueInCurrency,
-    required this.gradient,
-    required this.icon,
-  });
+class _BalanceCardState extends ConsumerState<_BalanceCard> {
+  static const _currencies = ['USD', 'BRL', 'EUR'];
+  bool _coins = true;
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
+    final data = widget.data;
+    final currency = ref.watch(displayCurrencyProvider);
+
+    final amount = _coins ? data.coinsBalance : data.diamondsBalance;
+    final value = _coins ? data.coinsValueInCurrency : data.diamondsValueInCurrency;
+    final label = _coins ? s.earningsCoinsBalance : s.rewardsDiamondsAvailable;
+    final lifetimeLabel = _coins ? s.earningsTotalSpent : s.earningsTotalEarned;
+    final lifetime = _coins ? data.coinsSpentLifetime : data.diamondsLifetime;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: gradient,
+        gradient: const LinearGradient(
+          colors: [AppColors.braweBlue, AppColors.braweSky],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: gradient.first.withValues(alpha: 0.25),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: AppColors.braweBlue.withValues(alpha: 0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Chave Moedas | Diamantes + moeda de exibição
           Row(
             children: [
-              icon,
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+              _CardToggle(
+                coins: _coins,
+                coinsLabel: s.rewardsToggleCoins,
+                diamondsLabel: s.rewardsToggleDiamonds,
+                onChanged: (v) => setState(() => _coins = v),
+              ),
+              const Spacer(),
+              PopupMenuButton<String>(
+                initialValue: currency,
+                tooltip: s.earningsCurrency,
+                onSelected: (v) {
+                  ref.read(displayCurrencyProvider.notifier).set(v);
+                  ref.invalidate(earningsViewModelProvider);
+                },
+                itemBuilder: (_) => [
+                  for (final c in _currencies)
+                    CheckedPopupMenuItem(value: c, checked: c == currency, child: Text(c)),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(10, 5, 4, 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        currency,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 18),
           Text(
-            amount,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '≈ $valueInCurrency',
+            label,
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.85),
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ───────────────────────────────────────────────────────────────────────────
-//   Estatísticas (lifetime) — coins gastas, diamantes ganhos no total
-// ───────────────────────────────────────────────────────────────────────────
-class _LifetimeStats extends StatelessWidget {
-  final Earnings data;
-  const _LifetimeStats({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(
-        children: [
-          _StatRow(
-            icon: Icons.savings_outlined,
-            label: s.earningsTotalSpent,
-            value: _formatInt(data.coinsSpentLifetime.round()),
-            unit: s.walletCoins,
-          ),
-          const Divider(height: 20),
-          _StatRow(
-            icon: Icons.workspace_premium_outlined,
-            label: s.earningsTotalEarned,
-            value: _formatInt(data.diamondsLifetime.round()),
-            unit: s.earningsDiamonds,
-          ),
-          if (data.accountNumber != null) ...[
-            const Divider(height: 20),
-            _StatRow(
-              icon: Icons.tag,
-              label: s.earningsAccountNumber,
-              value: data.accountNumber!,
-              unit: '',
-              monospace: true,
+          const SizedBox(height: 4),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(anim),
+                child: child,
+              ),
             ),
-          ],
+            child: Row(
+              key: ValueKey(_coins),
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _coins
+                    ? const BraweCoin(size: 34, glow: true)
+                    : Image.asset(
+                        'assets/images/illustrations/diamond_3d.png',
+                        width: 36,
+                        height: 36,
+                        filterQuality: FilterQuality.medium,
+                      ),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      _formatInt(amount.round()),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '≈ ${_formatCurrency(value, data.currency)}',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w700,
+              fontSize: 13.5,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(height: 1, color: Colors.white.withValues(alpha: 0.18)),
+          const SizedBox(height: 10),
+          // Rodapé: total da vida toda do tipo escolhido + Brawe ID
+          Row(
+            children: [
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: '$lifetimeLabel  '),
+                      TextSpan(
+                        text: _formatInt(lifetime.round()),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              if (data.accountNumber != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  'ID ${data.accountNumber!}',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String unit;
-  final bool monospace;
-
-  const _StatRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.unit,
-    this.monospace = false,
+/// Chave Moedas | Diamantes dentro do cartão.
+class _CardToggle extends StatelessWidget {
+  final bool coins;
+  final String coinsLabel;
+  final String diamondsLabel;
+  final ValueChanged<bool> onChanged;
+  const _CardToggle({
+    required this.coins,
+    required this.coinsLabel,
+    required this.diamondsLabel,
+    required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.braweBlue),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: scheme.onSurface.withValues(alpha: 0.75),
+    Widget pill(String text, bool selected, bool value) => GestureDetector(
+          onTap: () => onChanged(value),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: selected ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: selected ? AppColors.braweBlue : Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12.5,
+              ),
             ),
           ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 14,
-            fontFamily: monospace ? 'monospace' : null,
-          ),
-        ),
-        if (unit.isNotEmpty) ...[
-          const SizedBox(width: 4),
-          Text(
-            unit,
-            style: TextStyle(
-              fontSize: 11,
-              color: scheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
+        );
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          pill(coinsLabel, coins, true),
+          pill(diamondsLabel, !coins, false),
         ],
-      ],
+      ),
     );
   }
 }
@@ -568,9 +538,61 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Abas (segmentadas)
+        // Título + seletor de período (um botão só, em vez de 4 chips)
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                s.rewardsHistoryTitle,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            PopupMenuButton<_Period>(
+              initialValue: _period,
+              tooltip: s.rewardsPeriodLabel,
+              onSelected: (p) => setState(() => _period = p),
+              itemBuilder: (_) => [
+                for (final p in _Period.values)
+                  CheckedPopupMenuItem(
+                    value: p,
+                    checked: p == _period,
+                    child: Text(periodLabels[p]!),
+                  ),
+              ],
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
+                decoration: BoxDecoration(
+                  color: colors.surfaceHighest,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_today_rounded, size: 14, color: colors.textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      periodLabels[_period]!,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    Icon(Icons.arrow_drop_down, size: 20, color: colors.textSecondary),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Abas (segmentadas, compactas)
         Container(
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(14),
@@ -588,24 +610,6 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
                 selected: !_received,
                 onTap: () => setState(() => _received = false),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Filtro de período
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final p in _Period.values) ...[
-                ChoiceChip(
-                  label: Text(periodLabels[p]!),
-                  selected: _period == p,
-                  showCheckmark: false,
-                  onSelected: (_) => setState(() => _period = p),
-                ),
-                const SizedBox(width: 8),
-              ],
             ],
           ),
         ),
@@ -653,13 +657,14 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
               0,
               (sum, t) => sum + t.amountCredits.abs(),
             );
+            final groups = _GiftGroup.build(items);
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _PeriodSummary(
                   received: _received,
                   total: total,
-                  count: items.length,
+                  count: groups.fold<int>(0, (n, g) => n + g.quantity),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -670,9 +675,9 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
                   ),
                   child: Column(
                     children: [
-                      for (int i = 0; i < items.length; i++) ...[
-                        _GiftTile(tx: items[i]),
-                        if (i < items.length - 1)
+                      for (int i = 0; i < groups.length; i++) ...[
+                        _GiftTile(group: groups[i]),
+                        if (i < groups.length - 1)
                           Divider(
                             height: 1,
                             indent: 72,
@@ -710,7 +715,7 @@ class _TabPill extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: selected ? AppColors.braweBlue : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
@@ -802,9 +807,48 @@ class _AmountBadge extends StatelessWidget {
   }
 }
 
+/// Mesmo presente + mesma pessoa + mesmo dia = uma linha só.
+class _GiftGroup {
+  _GiftGroup(this.tx) : quantity = tx.quantity < 1 ? 1 : tx.quantity, amount = tx.amountCredits.abs(), sends = 1;
+  final WalletTransaction tx; // a mais recente do grupo
+  int quantity;
+  int amount;
+  int sends;
+
+  static String keyOf(WalletTransaction t) {
+    final d = t.createdAt?.toLocal();
+    final day = d == null ? '' : '${d.year}-${d.month}-${d.day}';
+    final gift = t.giftSlug.isNotEmpty ? t.giftSlug : t.giftName;
+    final who = t.counterpartyId.isNotEmpty ? t.counterpartyId : t.counterpartyName;
+    return '${t.type}|$who|$gift|$day';
+  }
+
+  /// Agrupa mantendo a ordem (mais recente primeiro).
+  static List<_GiftGroup> build(List<WalletTransaction> items) {
+    final map = <String, _GiftGroup>{};
+    final out = <_GiftGroup>[];
+    for (final t in items) {
+      final k = keyOf(t);
+      final g = map[k];
+      if (g == null) {
+        final ng = _GiftGroup(t);
+        map[k] = ng;
+        out.add(ng);
+      } else {
+        g.quantity += t.quantity < 1 ? 1 : t.quantity;
+        g.amount += t.amountCredits.abs();
+        g.sends += 1;
+      }
+    }
+    return out;
+  }
+}
+
 class _GiftTile extends StatelessWidget {
-  final WalletTransaction tx;
-  const _GiftTile({required this.tx});
+  final _GiftGroup group;
+  const _GiftTile({required this.group});
+
+  WalletTransaction get tx => group.tx;
 
   @override
   Widget build(BuildContext context) {
@@ -843,7 +887,7 @@ class _GiftTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tx.quantity > 1 ? '$name  x${tx.quantity}' : name,
+                  group.quantity > 1 ? '$name  ×${group.quantity}' : name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -864,7 +908,7 @@ class _GiftTile extends StatelessWidget {
           const SizedBox(width: 8),
           _AmountBadge(
             received: received,
-            amount: tx.amountCredits.abs(),
+            amount: group.amount,
             signed: true,
           ),
         ],

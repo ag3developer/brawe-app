@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/live_dio_provider.dart';
+import '../../domain/models/creator_journey.dart';
 import '../../domain/models/creator_network.dart';
 
 part 'creator_network_service.g.dart';
@@ -74,6 +75,14 @@ class CreatorNetworkService {
       if (e.response?.statusCode == 404) return null;
       rethrow;
     }
+  }
+
+  /// Jornada do criador: trilha, metas, semana e benefícios.
+  Future<CreatorJourney> getMyJourney() async {
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/creator/network/me/journey',
+    );
+    return CreatorJourney.fromJson(r.data!);
   }
 
   Future<OnboardingChecklist> getOnboarding() async {

@@ -6445,4 +6445,371 @@ class SEn extends S {
 
   @override
   String get liveTopUpAction => 'Top up';
+
+  @override
+  String get rewardsToggleCoins => 'Coins';
+
+  @override
+  String get rewardsToggleDiamonds => 'Diamonds';
+
+  @override
+  String get rewardsDiamondsAvailable => 'Available diamonds';
+
+  @override
+  String get rewardsPeriodLabel => 'Period';
+
+  @override
+  String creatorDashSince(String date) {
+    return 'Creator since $date';
+  }
+
+  @override
+  String get creatorDashCurrentLevel => 'Your level';
+
+  @override
+  String creatorDashOverallProgress(int percent, String tier) {
+    return '$percent% of the way to $tier';
+  }
+
+  @override
+  String get creatorDashInviteNext =>
+      'The next level is by invitation from the Brawe team. Keep creating and shining!';
+
+  @override
+  String get creatorDashTopLevel =>
+      'You reached the top of the journey. Thank you for building Brawe!';
+
+  @override
+  String get creatorDashTrailTitle => 'Your path';
+
+  @override
+  String get creatorDashTrailHere => 'You are here';
+
+  @override
+  String get creatorDashTrailLocked => 'Locked';
+
+  @override
+  String get creatorDashTrailInviteOnly => 'By invitation';
+
+  @override
+  String creatorDashTrailSince(String date) {
+    return 'Since $date';
+  }
+
+  @override
+  String creatorDashGoalsTitle(String tier) {
+    return 'Goals for $tier';
+  }
+
+  @override
+  String get creatorDashGoalsHint =>
+      'Complete the goals and show the team you are ready.';
+
+  @override
+  String get creatorDashGoalsAllDone =>
+      'Goals complete! The Brawe team will review your profile for the next level.';
+
+  @override
+  String creatorDashGoalOf(String current, String target) {
+    return '$current of $target';
+  }
+
+  @override
+  String get creatorDashGoalDone => 'Goal complete';
+
+  @override
+  String get creatorJourneyMetricFollowers => 'Followers';
+
+  @override
+  String get creatorJourneyMetricLives => 'Lives hosted';
+
+  @override
+  String get creatorJourneyMetricLiveMinutes => 'Minutes live';
+
+  @override
+  String get creatorJourneyMetricPosts => 'Posts published';
+
+  @override
+  String get creatorJourneyMetricGiftCredits => 'Gifts received';
+
+  @override
+  String get creatorJourneyMetricActiveDays => 'Days as a creator';
+
+  @override
+  String get creatorJourneyMetricViewers => 'Live viewers';
+
+  @override
+  String creatorJourneyRemainingFollowers(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n followers to go',
+      one: '1 follower to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorJourneyRemainingLives(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n lives to go',
+      one: '1 live to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorJourneyRemainingLiveMinutes(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n minutes live to go',
+      one: '1 minute live to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorJourneyRemainingPosts(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n posts to go',
+      one: '1 post to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorJourneyRemainingGiftCredits(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n gift credits to go',
+      one: '1 gift credit to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String creatorJourneyRemainingActiveDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days to go',
+      one: '1 day to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get creatorDashWeekTitle => 'Your week';
+
+  @override
+  String get creatorDashWeekSubtitle =>
+      'Last 7 days compared to the previous 7';
+
+  @override
+  String get creatorDashWeekNewFollowers => 'New followers';
+
+  @override
+  String creatorDashWeekUp(String n) {
+    return '$n more than last week';
+  }
+
+  @override
+  String creatorDashWeekDown(String n) {
+    return '$n fewer than last week';
+  }
+
+  @override
+  String get creatorDashWeekSame => 'Same as last week';
+
+  @override
+  String get creatorDashWeekSeeMore => 'See analysis';
+
+  @override
+  String get creatorDashBenefitsTitle => 'Your benefits';
+
+  @override
+  String creatorDashBenefitsNextTitle(String tier) {
+    return 'Unlocks at $tier';
+  }
+
+  @override
+  String get creatorDashBenefitActive => 'Active';
+
+  @override
+  String get creatorDashShortcutAnalytics => 'Analytics';
+
+  @override
+  String get creatorDashShortcutSettings => 'Settings';
+
+  @override
+  String get creatorDashErrorTitle =>
+      'We could not load your journey. Pull to try again.';
+
+  @override
+  String get creatorJourneyBadgeGeneric => 'Creator badge';
+
+  @override
+  String creatorJourneyBadgeEarnedOn(String date) {
+    return 'Earned on $date';
+  }
+
+  @override
+  String get creatorJourneyBadgeBenefitsTitle => 'Active benefits';
+
+  @override
+  String get creatorJourneyBadgeNextTitle => 'Next level';
+
+  @override
+  String get creatorJourneyBadgeAllTitle => 'Your badges';
+
+  @override
+  String get creatorJourneyBadgeOpenDashboard => 'Open creator dashboard';
+
+  @override
+  String get creatorJourneyBenefitRisingBadgeTitle => 'Rising badge';
+
+  @override
+  String get creatorJourneyBenefitRisingBadgeDesc =>
+      'Your official creator badge shows on your profile, lives and comments.';
+
+  @override
+  String get creatorJourneyBenefitCreatorProfileTitle => 'Creator profile';
+
+  @override
+  String get creatorJourneyBenefitCreatorProfileDesc =>
+      'A profile with its own identity in Brawe\'s creator network.';
+
+  @override
+  String get creatorJourneyBenefitDiscoverySuggestionsTitle =>
+      'Discovery suggestions';
+
+  @override
+  String get creatorJourneyBenefitDiscoverySuggestionsDesc =>
+      'Your content can be suggested to people who do not follow you yet.';
+
+  @override
+  String get creatorJourneyBenefitAnalyticsTitle => 'Detailed analytics';
+
+  @override
+  String get creatorJourneyBenefitAnalyticsDesc =>
+      'Track followers, reach and lives with real charts and numbers.';
+
+  @override
+  String get creatorJourneyBenefitFeaturedBadgeTitle => 'Featured badge';
+
+  @override
+  String get creatorJourneyBenefitFeaturedBadgeDesc =>
+      'A highlight badge showing you are a consistent creator.';
+
+  @override
+  String get creatorJourneyBenefitEditorialHighlightTitle =>
+      'Editorial spotlight';
+
+  @override
+  String get creatorJourneyBenefitEditorialHighlightDesc =>
+      'A chance to appear in showcases curated by the Brawe team.';
+
+  @override
+  String get creatorJourneyBenefitMoreReachTitle => 'More organic reach';
+
+  @override
+  String get creatorJourneyBenefitMoreReachDesc =>
+      'Your content gets a boost in discovery and reaches more people.';
+
+  @override
+  String get creatorJourneyBenefitLiveBadgeTitle => 'Live badge';
+
+  @override
+  String get creatorJourneyBenefitLiveBadgeDesc =>
+      'An exclusive badge for those who build community live.';
+
+  @override
+  String get creatorJourneyBenefitAdvancedLiveTitle => 'Advanced live tools';
+
+  @override
+  String get creatorJourneyBenefitAdvancedLiveDesc =>
+      'Extra tools to make more professional lives.';
+
+  @override
+  String get creatorJourneyBenefitLiveBattlesTitle => 'Live battles';
+
+  @override
+  String get creatorJourneyBenefitLiveBattlesDesc =>
+      'Join battles and compete for gifts against other creators.';
+
+  @override
+  String get creatorJourneyBenefitLiveRankingTitle => 'Live Creators ranking';
+
+  @override
+  String get creatorJourneyBenefitLiveRankingDesc =>
+      'Show up in the public ranking of the brightest live creators.';
+
+  @override
+  String get creatorJourneyBenefitAmbassadorBadgeTitle => 'Ambassador badge';
+
+  @override
+  String get creatorJourneyBenefitAmbassadorBadgeDesc =>
+      'The badge of those who represent Brawe with official recognition.';
+
+  @override
+  String get creatorJourneyBenefitAmbassadorPageTitle => 'Ambassador page';
+
+  @override
+  String get creatorJourneyBenefitAmbassadorPageDesc =>
+      'An official page to tell your story and achievements.';
+
+  @override
+  String get creatorJourneyBenefitOfficialCampaignsTitle =>
+      'Official campaigns';
+
+  @override
+  String get creatorJourneyBenefitOfficialCampaignsDesc =>
+      'Invitations to join Brawe brand campaigns and activations.';
+
+  @override
+  String get creatorJourneyBenefitPremiumHighlightTitle => 'Premium spotlight';
+
+  @override
+  String get creatorJourneyBenefitPremiumHighlightDesc =>
+      'A privileged spot in the platform highlights.';
+
+  @override
+  String get creatorJourneyBenefitFoundingBadgeTitle => 'Founding badge';
+
+  @override
+  String get creatorJourneyBenefitFoundingBadgeDesc =>
+      'The rarest badge: for those building Brawe from the start.';
+
+  @override
+  String get creatorJourneyBenefitFoundingSealTitle => 'Founder seal';
+
+  @override
+  String get creatorJourneyBenefitFoundingSealDesc =>
+      'Permanent recognition as part of Brawe\'s story.';
+
+  @override
+  String get creatorJourneyBenefitEarlyAccessTitle => 'Early access';
+
+  @override
+  String get creatorJourneyBenefitEarlyAccessDesc =>
+      'Try new features before everyone else.';
+
+  @override
+  String get creatorJourneyBenefitRoadmapVoiceTitle => 'A voice in the roadmap';
+
+  @override
+  String get creatorJourneyBenefitRoadmapVoiceDesc =>
+      'Your feedback helps decide what Brawe builds next.';
+
+  @override
+  String get creatorDashShowAll => 'Show all';
+
+  @override
+  String get creatorDashShowLess => 'Show less';
 }
