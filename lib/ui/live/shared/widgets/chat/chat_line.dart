@@ -6,6 +6,7 @@ import '../../../../core/themes/app_colors.dart';
 import '../award_badge.dart';
 import '../level_chip.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Linha de comentário do chat da live — estilo TikTok Live.
 ///
@@ -211,7 +212,9 @@ class ChatLine extends StatelessWidget {
                         child: ModeratorBadge(),
                       ),
                     TextSpan(
-                      text: '${comment.userName} ',
+                      text: comment.isVerified
+                          ? comment.userName
+                          : '${comment.userName} ',
                       style: TextStyle(
                         color: isHost
                             ? const Color(0xFFFFD166)
@@ -220,6 +223,10 @@ class ChatLine extends StatelessWidget {
                         fontSize: 12.5,
                       ),
                     ),
+                    if (comment.isVerified) ...[
+                      VerifiedBadge.span(size: 12, gap: 3),
+                      const TextSpan(text: ' '),
+                    ],
                     ..._messageSpans(),
                   ],
                 ),

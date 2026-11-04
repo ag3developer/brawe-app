@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Conversation {
   const Conversation({
     required this.id,
@@ -11,6 +13,9 @@ class Conversation {
     this.isArchived = false,
     this.isOnline = false,
     this.lastSeen,
+    this.participantIsVerified = false,
+    this.isMuted = false,
+    this.isPinned = false,
   });
 
   final String id;
@@ -24,6 +29,13 @@ class Conversation {
   final bool isArchived;
   final bool isOnline;
   final DateTime? lastSeen;
+  final bool participantIsVerified;
+
+  /// Silenciada por mim (sem push dessa conversa).
+  final bool isMuted;
+
+  /// Fixada no topo da lista (por mim).
+  final bool isPinned;
 
   Conversation copyWith({
     String? id,
@@ -37,6 +49,9 @@ class Conversation {
     bool? isArchived,
     bool? isOnline,
     DateTime? lastSeen,
+    bool? participantIsVerified,
+    bool? isMuted,
+    bool? isPinned,
   }) {
     return Conversation(
       id: id ?? this.id,
@@ -50,6 +65,10 @@ class Conversation {
       isArchived: isArchived ?? this.isArchived,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
+      participantIsVerified:
+          participantIsVerified ?? this.participantIsVerified,
+      isMuted: isMuted ?? this.isMuted,
+      isPinned: isPinned ?? this.isPinned,
     );
   }
 
@@ -83,6 +102,9 @@ class Conversation {
       isArchived: json['is_archived'] == true,
       isOnline: json['is_online'] == true,
       lastSeen: _parseDateTime(json['last_seen']),
+      participantIsVerified: json['other_user_is_verified'] == true,
+      isMuted: json['is_muted'] == true,
+      isPinned: json['is_pinned'] == true,
     );
   }
 }
@@ -104,6 +126,8 @@ class ChatMessage {
     this.replyTo,
     this.reactions = const {},
     this.audioDuration,
+    this.editedAt,
+    this.isForwarded = false,
   });
 
   final String id;
@@ -130,6 +154,33 @@ class ChatMessage {
   /// Duração em segundos (apenas para messageType == 'audio').
   final int? audioDuration;
 
+  /// Quando foi editada (null = nunca).
+  final DateTime? editedAt;
+
+  /// Encaminhada de outra conversa.
+  final bool isForwarded;
+
+  /// Tipos cujo `content` é um JSON (cartões ricos).
+  static const richTypes = {
+    'live_invite',
+    'story_reaction',
+    'story_reply',
+    'story_gift',
+    'location',
+    'file',
+  };
+
+  /// `content` decodificado quando a mensagem é de um tipo rico.
+  Map<String, dynamic>? get payload {
+    if (!richTypes.contains(messageType)) return null;
+    try {
+      final v = jsonDecode(content);
+      return v is Map ? Map<String, dynamic>.from(v) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   ChatMessage copyWith({
     String? id,
     String? conversationId,
@@ -146,6 +197,8 @@ class ChatMessage {
     ReplyPreview? replyTo,
     Map<String, List<String>>? reactions,
     int? audioDuration,
+    DateTime? editedAt,
+    bool? isForwarded,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -163,6 +216,8 @@ class ChatMessage {
       replyTo: replyTo ?? this.replyTo,
       reactions: reactions ?? this.reactions,
       audioDuration: audioDuration ?? this.audioDuration,
+      editedAt: editedAt ?? this.editedAt,
+      isForwarded: isForwarded ?? this.isForwarded,
     );
   }
 
@@ -209,6 +264,8 @@ class ChatMessage {
       replyTo: replyTo,
       reactions: reactions,
       audioDuration: json['audio_duration'] is int ? json['audio_duration'] as int : int.tryParse(json['audio_duration']?.toString() ?? ''),
+      editedAt: _parseDateTime(json['edited_at']),
+      isForwarded: json['is_forwarded'] == true,
     );
   }
 }

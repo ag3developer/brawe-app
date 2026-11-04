@@ -12,6 +12,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../view_models/comments_view_model.dart';
 import 'story_ring_avatar.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
   const CommentsSheet({
@@ -496,14 +497,7 @@ class _CommentTile extends StatelessWidget {
                               fontSize: 13,
                             ),
                           ),
-                          if (comment.authorIsVerified) ...[
-                            const SizedBox(width: 3),
-                            const Icon(
-                              Icons.verified,
-                              color: AppColors.braweBlue,
-                              size: 13,
-                            ),
-                          ],
+                          if (comment.authorIsVerified) const VerifiedBadge(size: 13, gap: 3),
                           const SizedBox(width: 6),
                           Text(
                             comment.timeAgo,
@@ -592,13 +586,23 @@ class _CommentTile extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      reply.authorName,
-                                      style: TextStyle(
-                                        color: context.colors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            reply.authorName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: context.colors.textPrimary,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        if (reply.authorIsVerified)
+                                          const VerifiedBadge(size: 12, gap: 3),
+                                      ],
                                     ),
                                     Text(
                                       reply.content,

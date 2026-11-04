@@ -133,6 +133,9 @@ class _JourneyBody extends ConsumerWidget {
               journey: journey,
               onTap: () => context.push('/creator/badge'),
             ),
+            const SizedBox(height: 18),
+            // Atalhos logo no topo: ganhos, análises, ao vivo, post.
+            const JourneyShortcuts(),
             const SizedBox(height: 22),
             JourneyTrail(journey: journey),
             const SizedBox(height: 22),
@@ -143,8 +146,6 @@ class _JourneyBody extends ConsumerWidget {
             JourneyWeekSection(journey: journey),
             const SizedBox(height: 22),
             JourneyBenefitsSection(journey: journey),
-            const SizedBox(height: 22),
-            const JourneyShortcuts(),
           ],
         ),
       ),

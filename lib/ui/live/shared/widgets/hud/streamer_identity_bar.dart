@@ -11,6 +11,7 @@ import '../../../../core/view_models/follow_view_model.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/widgets/report_sheet.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Pílula glass com avatar + nome do streamer.
 ///
@@ -110,11 +111,7 @@ class StreamerIdentityBar extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (room.streamerVerified) ...[
-                  const SizedBox(width: 3),
-                  const Icon(Icons.verified,
-                      color: AppColors.braweSky, size: 13),
-                ],
+                if (room.streamerVerified) const VerifiedBadge(size: 13, gap: 3),
                 // Botão "Seguir" só aparece se NÃO segue (HUD limpo para fãs).
                 if (!isFollowing) ...[
                   const SizedBox(width: 8),
@@ -202,11 +199,7 @@ class StreamerQuickSheet extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (room.streamerVerified) ...[
-                      const SizedBox(width: 6),
-                      const Icon(Icons.verified,
-                          color: AppColors.braweSky, size: 18),
-                    ],
+                    if (room.streamerVerified) const VerifiedBadge(size: 18, gap: 6),
                   ],
                 ),
                 const SizedBox(height: 4),

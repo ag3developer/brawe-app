@@ -15,6 +15,7 @@ import '../../../view_models/feed_video_mute_provider.dart';
 import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// 👤 Provider que busca o perfil completo de um streamer pelo id,
 /// usado para garantir que avatar + nome real sempre apareçam no card de
@@ -735,14 +736,7 @@ class StreamerIdentity extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (effectiveVerified) ...[
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.verified,
-                        color: AppColors.braweBlueSoft,
-                        size: 15,
-                      ),
-                    ],
+                    if (effectiveVerified) const VerifiedBadge(size: 15, gap: 4),
                   ],
                 ),
                 if (effectiveUsername.isNotEmpty)

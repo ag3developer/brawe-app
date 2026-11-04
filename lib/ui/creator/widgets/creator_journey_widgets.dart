@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../config/feature_flags.dart';
 import '../../../domain/models/creator_journey.dart';
 import '../../../domain/models/creator_network.dart' hide CreatorTierX;
 import '../../../gen/l10n/app_localizations.dart';
@@ -879,15 +880,18 @@ class JourneyShortcuts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    // Ganhos e análises primeiro: o painel é o centro do criador
+    // (recompensas saíram do menu do perfil e moram aqui).
     final items = <(IconData, String, String, Color)>[
-      (LucideIcons.squarePen, s.creatorDashboardQuickCreatePost, '/feed',
-          const Color(0xFF10B981)),
-      (LucideIcons.radio, s.creatorDashboardQuickGoLive, '/live/start',
-          const Color(0xFFEC4899)),
+      if (kEnableMonetization)
+        (LucideIcons.wallet, s.creatorShortcutEarnings, '/earnings',
+            const Color(0xFF10B981)),
       (LucideIcons.chartColumn, s.creatorDashShortcutAnalytics,
           '/creator/analytics', const Color(0xFF3B82F6)),
-      (LucideIcons.settings, s.creatorDashShortcutSettings,
-          '/creator/profile-settings', const Color(0xFF94A3B8)),
+      (LucideIcons.radio, s.creatorDashboardQuickGoLive, '/live/start',
+          const Color(0xFFEC4899)),
+      (LucideIcons.squarePen, s.creatorDashboardQuickCreatePost, '/feed',
+          const Color(0xFFF59E0B)),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

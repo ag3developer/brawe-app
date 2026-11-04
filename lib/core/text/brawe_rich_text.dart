@@ -56,6 +56,52 @@ class BraweRichText extends StatelessWidget {
     return null;
   }
 
+  /// Link de post do próprio Brawe (formato novo e legado).
+  static final RegExp sharedPostRegex = RegExp(
+    r'https?://(?:www\.)?brawe\.app/(?:post|connect/p)/[a-zA-Z0-9_\-\.]+',
+  );
+
+  /// Versão "bonita" de um link para exibir: só o site e um pedaço curto do
+  /// caminho (`https://www.youtube.com/watch?v=abc` → `youtube.com/watch…`).
+  /// O toque continua abrindo o link completo.
+  static String prettyUrl(String url) {
+    final normalized = url.startsWith('http') ? url : 'https://$url';
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || uri.host.isEmpty) return url;
+    final host = uri.host.replaceFirst(RegExp(r'^www\.'), '');
+    final path = uri.path == '/' ? '' : uri.path;
+    if (path.isEmpty && uri.query.isEmpty) return host;
+    final firstSeg = path.split('/').firstWhere(
+          (e) => e.isNotEmpty,
+          orElse: () => '',
+        );
+    if (firstSeg.isEmpty) return host;
+    final seg = firstSeg.length > 14 ? '${firstSeg.substring(0, 14)}…' : firstSeg;
+    final more = path.split('/').where((e) => e.isNotEmpty).length > 1 ||
+        uri.query.isNotEmpty;
+    return '$host/$seg${more ? '…' : ''}';
+  }
+
+  /// Texto puro "humanizado" para prévias (notificações, lista de conversas):
+  /// link de post vira [sharedPostLabel] e os demais links viram só o site.
+  static String humanize(String text, {required String sharedPostLabel}) {
+    var out = text.replaceAll(sharedPostRegex, '\u0000');
+    out = out.replaceAllMapped(
+      RegExp(r'(?:https?:\/\/|www\.)[^\s]+'),
+      (m) => prettyUrl(m.group(0)!),
+    );
+    final trimmed = out.trim();
+    if (trimmed == '\u0000') return sharedPostLabel;
+    return out.replaceAll('\u0000', sharedPostLabel).trim();
+  }
+
+  /// `true` quando o texto é só um link (sem mais nada escrito).
+  static bool isOnlyUrl(String text) {
+    final t = text.trim();
+    if (t.isEmpty || t.contains(RegExp(r'\s'))) return false;
+    return RegExp(r'^(?:https?:\/\/|www\.)[^\s]+$').hasMatch(t);
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseStyle = style ?? DefaultTextStyle.of(context).style;
@@ -80,7 +126,8 @@ class BraweRichText extends StatelessWidget {
             : 'https://$urlMatch';
         spans.add(
           TextSpan(
-            text: urlMatch,
+            // Mostra só o site (e um pedaço do caminho), não a URL inteira.
+            text: prettyUrl(urlMatch),
             style: baseStyle.copyWith(
               color: effectiveLinkColor,
               decoration: TextDecoration.underline,

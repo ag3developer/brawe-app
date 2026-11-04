@@ -7,6 +7,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 class ForYouLiveListScreen extends ConsumerStatefulWidget {
   const ForYouLiveListScreen({super.key});
@@ -266,7 +267,7 @@ class _LiveThumbnailCard extends StatelessWidget {
                             : null,
                       ),
                       const SizedBox(width: 6),
-                      Expanded(
+                      Flexible(
                         child: Text(
                           room.streamerName,
                           style: const TextStyle(
@@ -278,6 +279,8 @@ class _LiveThumbnailCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (room.streamerVerified)
+                        const VerifiedBadge(size: 12, gap: 3),
                     ],
                   ),
                   const SizedBox(height: 4),

@@ -59,6 +59,9 @@ class ChatRepository {
   void Function(dynamic)? _onMessageReaction;
   void Function(dynamic)? _onAuthenticated;
   void Function(dynamic)? _onMessageDeleted;
+  void Function(dynamic)? _onMessageEdited;
+  void Function(dynamic)? _onMessageUpdated;
+  final Map<String, StreamController<MessageUpdate>> _updateControllers = {};
 
   // ────────────────────── lifecycle ──────────────────────
 
@@ -172,6 +175,32 @@ class ChatRepository {
       }
     };
     _socketService.on('message_deleted', _onMessageDeleted!);
+
+    _onMessageEdited = (data) {
+      final p = _asMap(data);
+      if (p == null) return;
+      final conv = p['conversation_id']?.toString();
+      final id = p['message_id']?.toString();
+      if (conv == null || id == null) return;
+      _updateControllers[conv]?.add(MessageUpdate(
+        messageId: id,
+        content: p['content']?.toString(),
+        editedAt: DateTime.tryParse(p['edited_at']?.toString() ?? '')?.toLocal(),
+      ));
+    };
+    _socketService.on('message_edited', _onMessageEdited!);
+
+    _onMessageUpdated = (data) {
+      final p = _asMap(data);
+      if (p == null) return;
+      final conv = p['conversation_id']?.toString();
+      if (conv == null) return;
+      final msg = ChatMessage.fromApi(p, fallbackConversationId: conv);
+      _updateControllers[conv]?.add(
+        MessageUpdate(messageId: msg.id, message: msg),
+      );
+    };
+    _socketService.on('message_updated', _onMessageUpdated!);
   }
 
   void dispose() {
@@ -186,6 +215,12 @@ class ChatRepository {
     _socketService.off(AppConstants.eventMessageReaction, _onMessageReaction);
     _socketService.off('authenticated', _onAuthenticated);
     _socketService.off('message_deleted', _onMessageDeleted);
+    _socketService.off('message_edited', _onMessageEdited);
+    _socketService.off('message_updated', _onMessageUpdated);
+    for (final c in _updateControllers.values) {
+      c.close();
+    }
+    _updateControllers.clear();
 
     for (final c in _messageControllers.values) {
       c.close();
@@ -395,6 +430,94 @@ class ChatRepository {
     }
   }
 
+  /// Envia uma mensagem "crua" (qualquer tipo) — usado para localização e
+  /// para encaminhar.
+  Future<ChatMessage> sendRaw({
+    required String conversationId,
+    required String content,
+    required String messageType,
+    bool isForwarded = false,
+  }) async {
+    try {
+      return await _messagesService.sendMessage(
+        conversationId: conversationId,
+        content: content,
+        messageType: messageType,
+        isForwarded: isForwarded,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<ChatMessage> uploadFile({
+    required String conversationId,
+    required String filePath,
+    String? fileName,
+  }) async {
+    try {
+      return await _messagesService.uploadFile(
+        conversationId: conversationId,
+        filePath: filePath,
+        fileName: fileName,
+      );
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<ChatMessage> editMessage(String messageId, String content) async {
+    try {
+      return await _messagesService.editMessage(messageId, content);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<ChatMessage> openGift(String messageId) async {
+    try {
+      return await _messagesService.openGift(messageId);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<bool> muteConversation(String conversationId, bool muted) async {
+    try {
+      return await _messagesService.muteConversation(conversationId, muted);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<bool> pinConversation(String conversationId, bool pinned) async {
+    try {
+      return await _messagesService.pinConversation(conversationId, pinned);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  Future<List<ChatMessage>> searchMessages(
+    String conversationId,
+    String query,
+  ) async {
+    try {
+      return await _messagesService.searchMessages(conversationId, query);
+    } on DioException catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  /// Mensagem editada ou atualizada (cofre aberto) em tempo real.
+  Stream<MessageUpdate> watchUpdates(String conversationId) {
+    final c = _updateControllers.putIfAbsent(
+      conversationId,
+      () => StreamController<MessageUpdate>.broadcast(),
+    );
+    return c.stream;
+  }
+
   Future<void> burnMessage(String messageId) async {
     try {
       await _messagesService.burnMessage(messageId);
@@ -534,4 +657,21 @@ class MessageReactionUpdate {
   });
   final String messageId;
   final Map<String, List<String>> reactions;
+}
+
+
+/// Atualização de uma mensagem já exibida: edição (conteúdo + editedAt) ou a
+/// mensagem inteira nova (ex.: cofre aberto).
+class MessageUpdate {
+  const MessageUpdate({
+    required this.messageId,
+    this.content,
+    this.editedAt,
+    this.message,
+  });
+
+  final String messageId;
+  final String? content;
+  final DateTime? editedAt;
+  final ChatMessage? message;
 }

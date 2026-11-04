@@ -58,12 +58,14 @@ class GifterBadge {
   final String label;
   final String color; // hex "#RRGGBB"
   final String? entryEffect; // "spark" | "shield" | "fire" | "galaxy" | "crown" | "epic" | null
+  final String? imageUrl; // PNG do emblema da faixa (admin → Faixas)
 
   const GifterBadge({
     this.emoji,
     required this.label,
     required this.color,
     this.entryEffect,
+    this.imageUrl,
   });
 
   factory GifterBadge.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,9 @@ class GifterBadge {
       label: (json['label'] as String?) ?? 'Visitante',
       color: (json['color'] as String?) ?? '#AAAAAA',
       entryEffect: json['entry_effect'] as String?,
+      imageUrl: (json['image_url'] as String?)?.trim().isEmpty ?? true
+          ? null
+          : (json['image_url'] as String).trim(),
     );
   }
 }

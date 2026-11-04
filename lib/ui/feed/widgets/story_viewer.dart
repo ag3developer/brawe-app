@@ -29,6 +29,7 @@ import 'gift_flight_overlay.dart';
 import '../../../core/network/media_headers.dart';
 import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Visualizador de stories full-screen.
 ///
@@ -1045,14 +1046,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
-                                        if (story.isVerified) ...[
-                                          const SizedBox(width: 4),
-                                          const Icon(
-                                            Icons.verified,
-                                            color: AppColors.braweBlue,
-                                            size: 14,
-                                          ),
-                                        ],
+                                        if (story.isVerified) const VerifiedBadge(size: 14, gap: 4),
                                       ],
                                     ),
                                     Text(
@@ -1656,14 +1650,7 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (v.isVerified) ...[
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.verified,
-                                color: AppColors.braweBlue,
-                                size: 14,
-                              ),
-                            ],
+                            if (v.isVerified) const VerifiedBadge(size: 14, gap: 4),
                           ],
                         ),
                         subtitle: Text(

@@ -8,6 +8,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import '../view_models/follows_view_model.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 class FollowsScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -378,14 +379,7 @@ class _UserRow extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (user.isVerified) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: context.colors.accentPrimary,
-                        ),
-                      ],
+                      if (user.isVerified) const VerifiedBadge(size: 14, gap: 4),
                     ],
                   ),
                   if (user.username.isNotEmpty)

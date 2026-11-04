@@ -45,6 +45,78 @@ class LevelChip extends StatelessWidget {
     final iconSize = (height * 0.62).clamp(8.0, 13.0);
     final radius = height / 2; // pill perfeito, mais premium que squircle
 
+    // 🎖️ Com imagem da faixa (estilo TikTok): retângulo arredondado na cor
+    // da faixa, com o emblema DENTRO ocupando a altura toda (levemente
+    // maior, sem aumentar a linha) e o número ao lado. Compacto e legível.
+    final hasImage = imageUrl != null && imageUrl!.trim().isNotEmpty;
+    if (hasImage) {
+      final icon = height * 1.18;
+      final textColor = base.computeLuminance() > 0.62
+          ? Color.lerp(base, Colors.black, 0.72)!
+          : Colors.white;
+      return Container(
+        height: height,
+        padding: EdgeInsets.only(left: height * 0.06, right: height * 0.34),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(height * 0.32),
+          gradient: LinearGradient(
+            colors: [
+              Color.lerp(base, Colors.white, 0.16)!,
+              base,
+              Color.lerp(base, Colors.black, 0.2)!,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.3),
+            width: 0.6,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: height * 0.98,
+              height: height,
+              child: OverflowBox(
+                maxWidth: icon,
+                maxHeight: icon,
+                child: _BadgeIcon(
+                  imageUrl: imageUrl,
+                  emoji: badge ?? '💎',
+                  size: icon,
+                ),
+              ),
+            ),
+            SizedBox(width: height * 0.14),
+            Text(
+              '$level',
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w800,
+                fontSize: fontSize,
+                height: 1.0,
+                letterSpacing: -0.1,
+                decoration: TextDecoration.none,
+                shadows: textColor == Colors.white
+                    ? const [
+                        Shadow(
+                          color: Colors.black38,
+                          blurRadius: 1.5,
+                          offset: Offset(0, 0.5),
+                        ),
+                      ]
+                    : null,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       height: height,
       padding: EdgeInsets.symmetric(horizontal: height * 0.16),
@@ -121,7 +193,7 @@ class _BadgeIcon extends StatelessWidget {
       child: imageUrl == null || imageUrl!.trim().isEmpty
           ? _emojiFallback()
           : Image.network(
-            cacheWidth: context.decodePx(size),
+              cacheWidth: context.decodePx(size),
               imageUrl!,
               width: size,
               height: size,

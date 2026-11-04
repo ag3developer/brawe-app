@@ -58,6 +58,7 @@ class LiveViewerEvent {
     this.tierName,
     this.award,
     this.isModerator = false,
+    this.isVerified = false,
   });
 
   final String userId;
@@ -87,6 +88,9 @@ class LiveViewerEvent {
 
   /// Quem entrou é moderador do criador da live.
   final bool isModerator;
+
+  /// Quem entrou tem conta verificada.
+  final bool isVerified;
 
   /// Nome do tier no idioma [lang] (cai para pt e depois para qualquer um).
   String? localizedTierName(String lang) {
@@ -121,6 +125,7 @@ class LiveViewerEvent {
       entry: ViewerEntryEffect.tryParse(data['entry']),
       award: UserAward.tryParse(data['award']),
       isModerator: data['is_moderator'] == true,
+      isVerified: data['is_verified'] == true,
       tierName: _names(data['tier_name'] ?? data['name'] ?? _badgeRaw(data['badge'], 'name')),
     );
   }

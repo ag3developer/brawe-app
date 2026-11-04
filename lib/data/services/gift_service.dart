@@ -80,4 +80,17 @@ class GiftService {
     }
     return <String, dynamic>{};
   }
+
+  /// Jornada de nível: faixas, status e regras de XP.
+  /// Backend: `GET /live/gifts/me/level/journey`.
+  Future<Map<String, dynamic>> getMyGifterLevelJourney() async {
+    final response = await _dio.get('/live/gifts/me/level/journey');
+    final raw = response.data;
+    if (raw is Map<String, dynamic>) {
+      final data = raw['data'];
+      if (data is Map<String, dynamic>) return data;
+      return raw;
+    }
+    return <String, dynamic>{};
+  }
 }

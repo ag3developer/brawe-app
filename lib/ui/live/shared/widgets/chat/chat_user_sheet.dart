@@ -7,6 +7,7 @@ import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../level_chip.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Ação escolhida no cartão do autor de uma mensagem do chat.
 enum ChatUserAction {
@@ -171,6 +172,7 @@ class ChatUserSheet extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (c.isVerified) const VerifiedBadge(size: 17, gap: 5),
               ],
             ),
             if (c.username != null) ...[

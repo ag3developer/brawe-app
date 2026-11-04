@@ -12494,6 +12494,828 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Toque num indicador para ver os detalhes'**
   String get analyticsOverviewSeeDetails;
+
+  /// No description provided for @gifterLevelTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meu nível'**
+  String get gifterLevelTitle;
+
+  /// No description provided for @gifterLevelLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {level}'**
+  String gifterLevelLevel(int level);
+
+  /// No description provided for @gifterLevelXpProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{current} / {total} XP'**
+  String gifterLevelXpProgress(String current, String total);
+
+  /// No description provided for @gifterLevelXpMissing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {xp} XP para o nível {level}'**
+  String gifterLevelXpMissing(String xp, int level);
+
+  /// No description provided for @gifterLevelMaxReached.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível máximo alcançado'**
+  String get gifterLevelMaxReached;
+
+  /// No description provided for @gifterLevelNextTier.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próxima faixa'**
+  String get gifterLevelNextTier;
+
+  /// No description provided for @gifterLevelNextTierLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} · nível {level} · faltam {xp} XP'**
+  String gifterLevelNextTierLine(String name, int level, String xp);
+
+  /// No description provided for @gifterLevelHowToEarn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como ganhar XP'**
+  String get gifterLevelHowToEarn;
+
+  /// No description provided for @gifterLevelRuleGiftPerCoin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presentes · {xp} XP por moeda (até {cap} por envio)'**
+  String gifterLevelRuleGiftPerCoin(int xp, String cap);
+
+  /// No description provided for @gifterLevelRuleGiftPerCoinNoCap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presentes · {xp} XP por moeda'**
+  String gifterLevelRuleGiftPerCoinNoCap(int xp);
+
+  /// No description provided for @gifterLevelRuleGiftFlat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presentes · +{xp} XP por presente'**
+  String gifterLevelRuleGiftFlat(int xp);
+
+  /// No description provided for @gifterLevelRuleWatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir lives · {xp} XP por minuto (até {cap} min)'**
+  String gifterLevelRuleWatch(int xp, int cap);
+
+  /// No description provided for @gifterLevelRuleWatchNoCap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir lives · {xp} XP por minuto'**
+  String gifterLevelRuleWatchNoCap(int xp);
+
+  /// No description provided for @gifterLevelRuleJoin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar numa live · +{xp} XP'**
+  String gifterLevelRuleJoin(int xp);
+
+  /// No description provided for @gifterLevelRuleChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentar no chat · +{xp} XP'**
+  String gifterLevelRuleChat(int xp);
+
+  /// No description provided for @gifterLevelTiers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faixas'**
+  String get gifterLevelTiers;
+
+  /// No description provided for @gifterLevelRange.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {from}–{to}'**
+  String gifterLevelRange(int from, int to);
+
+  /// No description provided for @gifterLevelRangeOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível {from}'**
+  String gifterLevelRangeOpen(int from);
+
+  /// No description provided for @gifterLevelXpRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'{xp} XP'**
+  String gifterLevelXpRequired(String xp);
+
+  /// No description provided for @gifterLevelBenefitVip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrada VIP'**
+  String get gifterLevelBenefitVip;
+
+  /// No description provided for @gifterLevelBenefitEntryEffect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Efeito de entrada'**
+  String get gifterLevelBenefitEntryEffect;
+
+  /// No description provided for @gifterLevelBenefitAnnounce.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio ao subir de nível'**
+  String get gifterLevelBenefitAnnounce;
+
+  /// No description provided for @gifterLevelYouAreHere.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está aqui'**
+  String get gifterLevelYouAreHere;
+
+  /// No description provided for @gifterLevelTierXpMissing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {xp} XP'**
+  String gifterLevelTierXpMissing(String xp);
+
+  /// No description provided for @gifterLevelLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar seu nível.'**
+  String get gifterLevelLoadError;
+
+  /// No description provided for @gifterLevelRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get gifterLevelRetry;
+
+  /// No description provided for @gifterLevelSeeLevels.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver níveis'**
+  String get gifterLevelSeeLevels;
+
+  /// No description provided for @gifterLevelStatusAchieved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistada'**
+  String get gifterLevelStatusAchieved;
+
+  /// No description provided for @gifterLevelStatusCurrent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faixa atual'**
+  String get gifterLevelStatusCurrent;
+
+  /// No description provided for @gifterLevelStatusLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bloqueada'**
+  String get gifterLevelStatusLocked;
+
+  /// No description provided for @gifterLevelBackToCurrent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar ao meu nível'**
+  String get gifterLevelBackToCurrent;
+
+  /// No description provided for @gifterLevelBenefits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Benefícios'**
+  String get gifterLevelBenefits;
+
+  /// No description provided for @gifterLevelNoBenefits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emblema exclusivo no chat'**
+  String get gifterLevelNoBenefits;
+
+  /// No description provided for @gifterLevelSwipeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deslize para ver todas as faixas'**
+  String get gifterLevelSwipeHint;
+
+  /// No description provided for @gifterLevelUnlockedAt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conquistada ao chegar em {xp} XP'**
+  String gifterLevelUnlockedAt(String xp);
+
+  /// No description provided for @gifterLevelTierProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você tem {current} de {total} XP'**
+  String gifterLevelTierProgress(String current, String total);
+
+  /// No description provided for @gifterLevelTiersCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{done} de {total} faixas'**
+  String gifterLevelTiersCount(int done, int total);
+
+  /// No description provided for @menuSectionProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meu progresso'**
+  String get menuSectionProgress;
+
+  /// No description provided for @menuSectionMoney.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas e presentes'**
+  String get menuSectionMoney;
+
+  /// No description provided for @menuSectionCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criador'**
+  String get menuSectionCreator;
+
+  /// No description provided for @menuSectionAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get menuSectionAccount;
+
+  /// No description provided for @menuSectionProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil'**
+  String get menuSectionProfile;
+
+  /// No description provided for @menuSectionPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Privacidade e segurança'**
+  String get menuSectionPrivacy;
+
+  /// No description provided for @menuQuestsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões, conquistas e jornada'**
+  String get menuQuestsSubtitle;
+
+  /// No description provided for @menuLevelSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faixas, emblemas e XP'**
+  String get menuLevelSubtitle;
+
+  /// No description provided for @menuWalletSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas moedas para presentear'**
+  String get menuWalletSubtitle;
+
+  /// No description provided for @menuCreatorSubtitleMember.
+  ///
+  /// In pt, this message translates to:
+  /// **'Painel, ganhos e análises'**
+  String get menuCreatorSubtitleMember;
+
+  /// No description provided for @menuCreatorSubtitleJoin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saiba como ganhar com suas lives'**
+  String get menuCreatorSubtitleJoin;
+
+  /// No description provided for @menuSettingsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Privacidade, notificações e mais'**
+  String get menuSettingsSubtitle;
+
+  /// No description provided for @creatorShortcutEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos'**
+  String get creatorShortcutEarnings;
+
+  /// No description provided for @notifFilterAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todas'**
+  String get notifFilterAll;
+
+  /// No description provided for @notifFilterLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get notifFilterLives;
+
+  /// No description provided for @notifFilterSocial.
+  ///
+  /// In pt, this message translates to:
+  /// **'Social'**
+  String get notifFilterSocial;
+
+  /// No description provided for @notifFilterMissions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Missões'**
+  String get notifFilterMissions;
+
+  /// No description provided for @notifFilterGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get notifFilterGifts;
+
+  /// No description provided for @notifFilterOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sistema'**
+  String get notifFilterOther;
+
+  /// No description provided for @notifGroupToday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Hoje'**
+  String get notifGroupToday;
+
+  /// No description provided for @notifGroupYesterday.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ontem'**
+  String get notifGroupYesterday;
+
+  /// No description provided for @notifGroupWeek.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta semana'**
+  String get notifGroupWeek;
+
+  /// No description provided for @notifGroupOlder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anteriores'**
+  String get notifGroupOlder;
+
+  /// No description provided for @notifFilterEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nada por aqui nesta categoria'**
+  String get notifFilterEmpty;
+
+  /// No description provided for @notifMarkAllTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcar todas como lidas'**
+  String get notifMarkAllTooltip;
+
+  /// No description provided for @linkSharedPost.
+  ///
+  /// In pt, this message translates to:
+  /// **'📎 Publicação compartilhada'**
+  String get linkSharedPost;
+
+  /// No description provided for @chatViewOncePhoto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Foto'**
+  String get chatViewOncePhoto;
+
+  /// No description provided for @chatViewOnceTapToOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para abrir · visualização única'**
+  String get chatViewOnceTapToOpen;
+
+  /// No description provided for @chatViewOnceSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualização única · enviada'**
+  String get chatViewOnceSent;
+
+  /// No description provided for @chatViewOnceOpened.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aberta'**
+  String get chatViewOnceOpened;
+
+  /// No description provided for @chatCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem copiada'**
+  String get chatCopied;
+
+  /// No description provided for @chatEmojiKeyboard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Teclado'**
+  String get chatEmojiKeyboard;
+
+  /// No description provided for @chatDeleteForEveryone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar para todos'**
+  String get chatDeleteForEveryone;
+
+  /// No description provided for @chatDeleteForEveryoneTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar para todos?'**
+  String get chatDeleteForEveryoneTitle;
+
+  /// No description provided for @chatDeleteForEveryoneBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A mensagem some para você e para a outra pessoa.'**
+  String get chatDeleteForEveryoneBody;
+
+  /// No description provided for @chatMessageDeleted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem apagada'**
+  String get chatMessageDeleted;
+
+  /// No description provided for @chatErrLoadMessages.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar as mensagens.'**
+  String get chatErrLoadMessages;
+
+  /// No description provided for @chatErrSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a mensagem.'**
+  String get chatErrSend;
+
+  /// No description provided for @chatErrReact.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível reagir à mensagem.'**
+  String get chatErrReact;
+
+  /// No description provided for @chatErrAudio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o áudio.'**
+  String get chatErrAudio;
+
+  /// No description provided for @chatErrImage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a imagem.'**
+  String get chatErrImage;
+
+  /// No description provided for @chatErrDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível apagar a mensagem.'**
+  String get chatErrDelete;
+
+  /// No description provided for @chatErrLoadConversations.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar as conversas.'**
+  String get chatErrLoadConversations;
+
+  /// No description provided for @chatErrArchive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível arquivar a conversa.'**
+  String get chatErrArchive;
+
+  /// No description provided for @chatErrUnarchive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível desarquivar a conversa.'**
+  String get chatErrUnarchive;
+
+  /// No description provided for @chatErrDeleteConversation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível apagar a conversa.'**
+  String get chatErrDeleteConversation;
+
+  /// No description provided for @chatErrStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível iniciar a conversa.'**
+  String get chatErrStart;
+
+  /// No description provided for @chatMicDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permissão de microfone negada'**
+  String get chatMicDenied;
+
+  /// No description provided for @chatErrEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível editar a mensagem.'**
+  String get chatErrEdit;
+
+  /// No description provided for @chatErrOpenGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o cofre. Tente de novo.'**
+  String get chatErrOpenGift;
+
+  /// No description provided for @chatErrFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o arquivo.'**
+  String get chatErrFile;
+
+  /// No description provided for @chatEdit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar'**
+  String get chatEdit;
+
+  /// No description provided for @chatEditTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar mensagem'**
+  String get chatEditTitle;
+
+  /// No description provided for @chatEditSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get chatEditSave;
+
+  /// No description provided for @chatEdited.
+  ///
+  /// In pt, this message translates to:
+  /// **'editada'**
+  String get chatEdited;
+
+  /// No description provided for @chatForward.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encaminhar'**
+  String get chatForward;
+
+  /// No description provided for @chatForwarded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encaminhada'**
+  String get chatForwarded;
+
+  /// No description provided for @chatForwardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encaminhar para'**
+  String get chatForwardTitle;
+
+  /// No description provided for @chatForwardSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem encaminhada'**
+  String get chatForwardSent;
+
+  /// No description provided for @chatForwardEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem outras conversas'**
+  String get chatForwardEmpty;
+
+  /// No description provided for @chatMsgSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar mensagens'**
+  String get chatMsgSearchHint;
+
+  /// No description provided for @chatSearchEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma mensagem encontrada'**
+  String get chatSearchEmpty;
+
+  /// No description provided for @chatSearchMinChars.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite pelo menos 2 letras'**
+  String get chatSearchMinChars;
+
+  /// No description provided for @chatUnmute.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativar notificações'**
+  String get chatUnmute;
+
+  /// No description provided for @chatMutedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conversa silenciada'**
+  String get chatMutedToast;
+
+  /// No description provided for @chatUnmutedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificações ativadas'**
+  String get chatUnmutedToast;
+
+  /// No description provided for @chatPin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fixar conversa'**
+  String get chatPin;
+
+  /// No description provided for @chatUnpin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desafixar conversa'**
+  String get chatUnpin;
+
+  /// No description provided for @chatPinnedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conversa fixada no topo'**
+  String get chatPinnedToast;
+
+  /// No description provided for @chatUnpinnedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conversa desafixada'**
+  String get chatUnpinnedToast;
+
+  /// No description provided for @chatPinLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode fixar até 5 conversas'**
+  String get chatPinLimit;
+
+  /// No description provided for @chatLocationTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Localização'**
+  String get chatLocationTitle;
+
+  /// No description provided for @chatLocationOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir no mapa'**
+  String get chatLocationOpen;
+
+  /// No description provided for @chatLocationDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Permita o acesso à localização nos Ajustes para enviar.'**
+  String get chatLocationDenied;
+
+  /// No description provided for @chatLocationGetting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obtendo sua localização…'**
+  String get chatLocationGetting;
+
+  /// No description provided for @chatLocationError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível obter sua localização.'**
+  String get chatLocationError;
+
+  /// No description provided for @chatLocationConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar sua localização atual?'**
+  String get chatLocationConfirmTitle;
+
+  /// No description provided for @chatLocationConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A outra pessoa verá onde você está agora.'**
+  String get chatLocationConfirmBody;
+
+  /// No description provided for @chatSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get chatSend;
+
+  /// No description provided for @chatFileOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para abrir'**
+  String get chatFileOpen;
+
+  /// No description provided for @chatStoryReacted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reagiu ao seu story'**
+  String get chatStoryReacted;
+
+  /// No description provided for @chatStoryReactedMine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você reagiu ao story'**
+  String get chatStoryReactedMine;
+
+  /// No description provided for @chatStoryReplied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Respondeu ao seu story'**
+  String get chatStoryReplied;
+
+  /// No description provided for @chatStoryRepliedMine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você respondeu ao story'**
+  String get chatStoryRepliedMine;
+
+  /// No description provided for @chatStoryUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story não disponível'**
+  String get chatStoryUnavailable;
+
+  /// No description provided for @chatVaultReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você recebeu um cofre!'**
+  String get chatVaultReceived;
+
+  /// No description provided for @chatVaultFromStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente do seu story'**
+  String get chatVaultFromStory;
+
+  /// No description provided for @chatVaultTapToOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para abrir'**
+  String get chatVaultTapToOpen;
+
+  /// No description provided for @chatVaultSentMine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você enviou um cofre'**
+  String get chatVaultSentMine;
+
+  /// No description provided for @chatVaultWaiting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando ser aberto'**
+  String get chatVaultWaiting;
+
+  /// No description provided for @chatVaultOpenedBy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cofre aberto'**
+  String get chatVaultOpenedBy;
+
+  /// No description provided for @chatVaultYouGot.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ganhou'**
+  String get chatVaultYouGot;
+
+  /// No description provided for @chatVaultEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'+{value} nas suas recompensas de criador'**
+  String chatVaultEarnings(String value);
+
+  /// No description provided for @chatVaultCollect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Guardar'**
+  String get chatVaultCollect;
+
+  /// No description provided for @chatVaultSeeRewards.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver recompensas'**
+  String get chatVaultSeeRewards;
+
+  /// No description provided for @chatVaultTapHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque no cofre!'**
+  String get chatVaultTapHint;
+
+  /// No description provided for @chatVaultTierCommon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comum'**
+  String get chatVaultTierCommon;
+
+  /// No description provided for @chatVaultTierRare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Raro'**
+  String get chatVaultTierRare;
+
+  /// No description provided for @chatVaultTierEpic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Épico'**
+  String get chatVaultTierEpic;
+
+  /// No description provided for @chatVaultTierLegendary.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lendário'**
+  String get chatVaultTierLegendary;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

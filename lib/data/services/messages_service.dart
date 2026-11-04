@@ -73,10 +73,12 @@ class MessagesService {
     required String content,
     String messageType = 'text',
     String? replyToMessageId,
+    bool isForwarded = false,
   }) async {
     final body = <String, dynamic>{
       'content': content,
       'message_type': messageType,
+      if (isForwarded) 'is_forwarded': true,
     };
     if (replyToMessageId != null && replyToMessageId.isNotEmpty) {
       body['reply_to_message_id'] = replyToMessageId;
@@ -199,6 +201,78 @@ class MessagesService {
     final data = response.data['data'];
     final map = data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
     map['conversation_id'] ??= conversationId;
+    return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
+  }
+
+  /// `POST /messages/conversations/{id}/upload-file` (multipart `file`).
+  Future<ChatMessage> uploadFile({
+    required String conversationId,
+    required String filePath,
+    String? fileName,
+  }) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath, filename: fileName),
+    });
+    final response = await _dio.post(
+      '/messages/conversations/$conversationId/upload-file',
+      data: form,
+    );
+    return _messageFrom(response.data['data'], conversationId);
+  }
+
+  /// `PUT /messages/messages/{id}` — editar texto (até 15 min).
+  Future<ChatMessage> editMessage(String messageId, String content) async {
+    final response = await _dio.put(
+      '/messages/messages/$messageId',
+      data: {'content': content},
+    );
+    return _messageFrom(response.data['data'], '');
+  }
+
+  /// `POST /messages/messages/{id}/open-gift` — abrir o cofre do presente.
+  Future<ChatMessage> openGift(String messageId) async {
+    final response = await _dio.post('/messages/messages/$messageId/open-gift');
+    return _messageFrom(response.data['data'], '');
+  }
+
+  /// `POST /messages/conversations/{id}/mute`.
+  Future<bool> muteConversation(String conversationId, bool muted) async {
+    final response = await _dio.post(
+      '/messages/conversations/$conversationId/mute',
+      data: {'muted': muted},
+    );
+    return response.data['is_muted'] == true;
+  }
+
+  /// `POST /messages/conversations/{id}/pin`.
+  Future<bool> pinConversation(String conversationId, bool pinned) async {
+    final response = await _dio.post(
+      '/messages/conversations/$conversationId/pin',
+      data: {'pinned': pinned},
+    );
+    return response.data['is_pinned'] == true;
+  }
+
+  /// `GET /messages/conversations/{id}/search?q=`.
+  Future<List<ChatMessage>> searchMessages(
+    String conversationId,
+    String query,
+  ) async {
+    final response = await _dio.get(
+      '/messages/conversations/$conversationId/search',
+      queryParameters: {'q': query, 'limit': 50},
+    );
+    final raw = (response.data['data'] as List?) ?? const [];
+    return raw
+        .whereType<Map>()
+        .map((m) => _messageFrom(m, conversationId))
+        .toList();
+  }
+
+  ChatMessage _messageFrom(dynamic data, String conversationId) {
+    final map =
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    if (conversationId.isNotEmpty) map['conversation_id'] ??= conversationId;
     return ChatMessage.fromApi(map, fallbackConversationId: conversationId);
   }
 

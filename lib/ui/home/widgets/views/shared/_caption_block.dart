@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../domain/models/feed_item.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Caption bottom-left: nome + texto.
 class CaptionBlock extends StatelessWidget {
@@ -24,10 +25,7 @@ class CaptionBlock extends StatelessWidget {
                 shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
               ),
             ),
-            if (author.isVerified) ...[
-              const SizedBox(width: 4),
-              const Icon(Icons.verified, color: Colors.lightBlueAccent, size: 16),
-            ],
+            if (author.isVerified) const VerifiedBadge(size: 16, gap: 4),
           ],
         ),
         const SizedBox(height: 6),

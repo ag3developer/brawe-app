@@ -18,6 +18,7 @@ class LiveComment {
     this.isSystem = false,
     this.award,
     this.isModerator = false,
+    this.isVerified = false,
   });
 
   final String id;
@@ -46,6 +47,9 @@ class LiveComment {
 
   /// Autor é moderador do criador desta live (selo de escudo).
   final bool isModerator;
+
+  /// Autor tem conta verificada.
+  final bool isVerified;
 
   LiveComment copyWith({
     String? id,
@@ -79,6 +83,7 @@ class LiveComment {
       isSystem: isSystem,
       award: award,
       isModerator: isModerator,
+      isVerified: isVerified,
     );
   }
 }

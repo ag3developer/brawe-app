@@ -215,7 +215,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       ),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: AppColors.braweBlue.withValues(
+                          color: context.colors.accentPrimary.withValues(
                             alpha: 0.5,
                           ),
                         ),
@@ -226,16 +226,16 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         children: [
                           Text(
                             _audienceLabel(s, _audience),
-                            style: const TextStyle(
-                              color: AppColors.braweBlue,
+                            style: TextStyle(
+                              color: context.colors.accentPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(
+                          Icon(
                             Icons.keyboard_arrow_down,
-                            color: AppColors.braweBlue,
+                            color: context.colors.accentPrimary,
                             size: 14,
                           ),
                         ],
@@ -243,35 +243,31 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     ),
                   ),
                   const Spacer(),
-                  TextButton(
+                  // Botão padrão do app (FilledButton do tema): mesma cor e
+                  // texto de todos os botões principais, nos dois temas.
+                  FilledButton(
                     onPressed: canPost && !_isPosting ? _post : null,
-                    style: TextButton.styleFrom(
-                      backgroundColor: canPost && !_isPosting
-                          ? AppColors.braweBlue
-                          : context.colors.surfaceElevated,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      shape: const StadiumBorder(),
+                      backgroundColor: context.colors.accentPrimary,
+                      foregroundColor: context.colors.textOnAccent,
+                      disabledBackgroundColor: context.colors.surfaceHighest,
+                      disabledForegroundColor: context.colors.textTertiary,
                     ),
                     child: _isPosting
                         ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                              color: context.colors.textPrimary,
+                              color: context.colors.textOnAccent,
                               strokeWidth: 2,
                             ),
                           )
                         : Text(
                             s.postPublish,
-                            style: TextStyle(
-                              color: context.colors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                   ),
                 ],
@@ -405,7 +401,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                             backgroundColor: context.colors.border,
                             color: _charCount > _maxChars * 0.9
                                 ? Colors.orange
-                                : AppColors.braweBlue,
+                                : context.colors.accentPrimary,
                           ),
                           if (_charCount > _maxChars * 0.8)
                             Text(
@@ -469,14 +465,14 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                       ? Icons.people
                       : Icons.lock,
                   color: _audience == option
-                      ? AppColors.braweBlue
+                      ? context.colors.accentPrimary
                       : context.colors.textPrimary,
                 ),
                 title: Text(
                   _audienceLabel(S.of(context), option),
                   style: TextStyle(
                     color: _audience == option
-                        ? AppColors.braweBlue
+                        ? context.colors.accentPrimary
                         : context.colors.textPrimary,
                     fontWeight: _audience == option
                         ? FontWeight.bold
@@ -484,7 +480,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   ),
                 ),
                 trailing: _audience == option
-                    ? const Icon(Icons.check, color: AppColors.braweBlue)
+                    ? Icon(Icons.check, color: context.colors.accentPrimary)
                     : null,
                 onTap: () {
                   setState(() => _audience = option);
@@ -514,7 +510,7 @@ class _ToolbarBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active
-        ? (activeColor ?? AppColors.braweBlue)
+        ? (activeColor ?? context.colors.accentPrimary)
         : context.colors.textSecondary;
     return IconButton(
       icon: Icon(icon, color: color, size: 22),

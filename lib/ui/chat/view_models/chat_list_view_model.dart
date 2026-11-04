@@ -100,7 +100,7 @@ class ChatListViewModel extends _$ChatListViewModel {
       debugPrint('[ChatListViewModel] _loadConversations error: $e\n$st');
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Erro ao carregar conversas: $e',
+        errorMessage: 'chat.err.loadConversations',
       );
     }
   }
@@ -128,7 +128,7 @@ class ChatListViewModel extends _$ChatListViewModel {
       debugPrint('archive failed: $e');
       state = state.copyWith(
         conversations: snapshot,
-        errorMessage: 'Não foi possível arquivar a conversa',
+        errorMessage: 'chat.err.archive',
       );
     }
   }
@@ -147,9 +147,60 @@ class ChatListViewModel extends _$ChatListViewModel {
       debugPrint('unarchive failed: $e');
       state = state.copyWith(
         conversations: snapshot,
-        errorMessage: 'Não foi possível desarquivar a conversa',
+        errorMessage: 'chat.err.unarchive',
       );
     }
+  }
+
+  /// Silenciar/ativar notificações de uma conversa. Otimista.
+  /// Devolve o estado final (ou null se falhou).
+  Future<bool?> setMuted(String conversationId, bool muted) async {
+    _patch(conversationId, (c) => c.copyWith(isMuted: muted));
+    try {
+      final v = await ref
+          .read(chatRepositoryProvider)
+          .muteConversation(conversationId, muted);
+      _patch(conversationId, (c) => c.copyWith(isMuted: v));
+      return v;
+    } catch (_) {
+      _patch(conversationId, (c) => c.copyWith(isMuted: !muted));
+      return null;
+    }
+  }
+
+  /// Fixar/desafixar no topo. Otimista; reordena a lista.
+  /// Devolve o estado final (ou null se falhou — ex.: limite de 5).
+  Future<bool?> setPinned(String conversationId, bool pinned) async {
+    _patch(conversationId, (c) => c.copyWith(isPinned: pinned));
+    _sortPinnedFirst();
+    try {
+      final v = await ref
+          .read(chatRepositoryProvider)
+          .pinConversation(conversationId, pinned);
+      _patch(conversationId, (c) => c.copyWith(isPinned: v));
+      _sortPinnedFirst();
+      return v;
+    } catch (_) {
+      _patch(conversationId, (c) => c.copyWith(isPinned: !pinned));
+      _sortPinnedFirst();
+      return null;
+    }
+  }
+
+  void _patch(String id, Conversation Function(Conversation) f) {
+    state = state.copyWith(
+      conversations: state.conversations
+          .map((c) => c.id == id ? f(c) : c)
+          .toList(growable: false),
+    );
+  }
+
+  void _sortPinnedFirst() {
+    final list = [...state.conversations];
+    // Estável: fixadas primeiro, mantendo a ordem relativa.
+    final pinned = list.where((c) => c.isPinned).toList();
+    final rest = list.where((c) => !c.isPinned).toList();
+    state = state.copyWith(conversations: [...pinned, ...rest]);
   }
 
   Future<void> deleteConversation(String conversationId) async {
@@ -166,7 +217,7 @@ class ChatListViewModel extends _$ChatListViewModel {
       debugPrint('deleteConversation failed: $e');
       state = state.copyWith(
         conversations: snapshot,
-        errorMessage: 'Não foi possível apagar a conversa',
+        errorMessage: 'chat.err.deleteConversation',
       );
     }
   }
@@ -183,7 +234,7 @@ class ChatListViewModel extends _$ChatListViewModel {
       state = state.copyWith(errorMessage: failure.toDisplayMessage());
       return null;
     } catch (_) {
-      state = state.copyWith(errorMessage: 'Não foi possível iniciar a conversa');
+      state = state.copyWith(errorMessage: 'chat.err.start');
       return null;
     }
   }

@@ -11,6 +11,7 @@ import '../../../data/repositories/social_repository.dart';
 import '../../../domain/models/follow_user.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Bottom sheet "Compartilhar live" — envia preview clicável da live aos
 /// seguidores selecionados via DM. Cada destinatário recebe uma mensagem
@@ -576,14 +577,7 @@ class _RecipientTile extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (isVerified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: AppColors.braweSky,
-                        ),
-                      ],
+                      if (isVerified) const VerifiedBadge(size: 14, gap: 4),
                     ],
                   ),
                   if (username != null && username!.isNotEmpty)

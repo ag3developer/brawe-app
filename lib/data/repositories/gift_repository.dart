@@ -4,6 +4,7 @@ import '../../domain/models/failure.dart';
 import '../../domain/models/gift.dart';
 import '../../domain/models/gifter.dart';
 import '../../domain/models/gifter_level.dart';
+import '../../domain/models/gifter_level_journey.dart';
 import '../services/gift_service.dart';
 import '../services/live_service.dart';
 
@@ -127,6 +128,18 @@ class GiftRepository {
     try {
       final data = await _giftService.getMyGifterLevel();
       return GifterLevel.fromJson(data);
+    } on DioException catch (e) {
+      throw _mapFailure(e);
+    } catch (e) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Jornada de nível (faixas + regras de XP). `GET /live/gifts/me/level/journey`.
+  Future<GifterLevelJourney> getMyGifterLevelJourney() async {
+    try {
+      final data = await _giftService.getMyGifterLevelJourney();
+      return GifterLevelJourney.fromJson(data);
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {

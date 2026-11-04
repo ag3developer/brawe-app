@@ -9,6 +9,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 part 'suggested_users_rail.g.dart';
 
@@ -274,17 +275,7 @@ class _UserCardState extends ConsumerState<_UserCard>
                       ),
                     ),
                   ),
-                  if (isVerified) ...[
-                    const SizedBox(width: 3),
-                    ShaderMask(
-                      shaderCallback: (b) => _T.brand.createShader(b),
-                      child: const Icon(
-                        Icons.verified_rounded,
-                        color: Colors.white,
-                        size: 13,
-                      ),
-                    ),
-                  ],
+                  if (isVerified) const VerifiedBadge(size: 13, gap: 3),
                 ],
               ),
             ),

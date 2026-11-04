@@ -13,6 +13,7 @@ import '../../core/widgets/brawe_avatar.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_composer_screen.dart';
 import 'story_viewer.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Fileira de stories — avatares circulares (padrão familiar).
 ///
@@ -137,6 +138,7 @@ class StoriesRail extends ConsumerWidget {
         return _StoryItem(
           avatarUrl: g.avatarUrl,
           name: name,
+          verified: g.isVerified,
           ring: g.isLive
               ? _RingStyle.live
               : (g.hasUnviewed ? _RingStyle.unseen : _RingStyle.seen),
@@ -263,24 +265,34 @@ class _RingAvatar extends StatelessWidget {
 }
 
 class _ItemLabel extends StatelessWidget {
-  const _ItemLabel(this.text);
+  const _ItemLabel(this.text, {this.verified = false});
   final String text;
+  final bool verified;
 
   @override
   Widget build(BuildContext context) {
+    final label = Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        color: context.colors.textSecondary,
+        fontSize: 12,
+        height: 1.3,
+      ),
+    );
     return SizedBox(
       width: StoriesRail._outer + 4,
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          color: context.colors.textSecondary,
-          fontSize: 12,
-          height: 1.3,
-        ),
-      ),
+      child: verified
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(child: label),
+                const VerifiedBadge(size: 11, gap: 2),
+              ],
+            )
+          : label,
     );
   }
 }
@@ -359,10 +371,12 @@ class _StoryItem extends StatelessWidget {
     required this.name,
     required this.ring,
     required this.onTap,
+    this.verified = false,
   });
 
   final String? avatarUrl;
   final String name;
+  final bool verified;
   final _RingStyle ring;
   final VoidCallback onTap;
 
@@ -414,7 +428,7 @@ class _StoryItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            _ItemLabel(name),
+            _ItemLabel(name, verified: verified),
           ],
         ),
       ),

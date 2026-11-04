@@ -11,6 +11,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 part 'new_conversation_screen.g.dart';
 
@@ -356,14 +357,7 @@ class _UserTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (isVerified) ...[
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.verified,
-                            color: AppColors.braweSky,
-                            size: 14,
-                          ),
-                        ],
+                        if (isVerified) const VerifiedBadge(size: 14, gap: 4),
                       ],
                     ),
                     if (username.isNotEmpty) ...[

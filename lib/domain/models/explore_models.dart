@@ -11,6 +11,7 @@ class TrendingLive {
   final String? category;
   final int viewerCount;
   final String? thumbnailUrl;
+  final bool streamerIsVerified;
 
   const TrendingLive({
     required this.roomId,
@@ -21,6 +22,7 @@ class TrendingLive {
     this.category,
     this.viewerCount = 0,
     this.thumbnailUrl,
+    this.streamerIsVerified = false,
   });
 
   factory TrendingLive.fromJson(Map<String, dynamic> j) => TrendingLive(
@@ -32,6 +34,7 @@ class TrendingLive {
     category: j['category'] as String?,
     viewerCount: (j['viewer_count'] ?? 0) as int,
     thumbnailUrl: j['thumbnail_url'] as String?,
+    streamerIsVerified: j['streamer_is_verified'] == true,
   );
 }
 
@@ -42,6 +45,7 @@ class TrendingStreamer {
   final bool isLive;
   final int viewerCount;
   final int followerCount;
+  final bool isVerified;
 
   const TrendingStreamer({
     required this.userId,
@@ -50,6 +54,7 @@ class TrendingStreamer {
     this.isLive = false,
     this.viewerCount = 0,
     this.followerCount = 0,
+    this.isVerified = false,
   });
 
   factory TrendingStreamer.fromJson(Map<String, dynamic> j) => TrendingStreamer(
@@ -59,6 +64,7 @@ class TrendingStreamer {
     isLive: (j['is_live'] ?? false) as bool,
     viewerCount: (j['viewer_count'] ?? 0) as int,
     followerCount: (j['follower_count'] ?? 0) as int,
+    isVerified: j['is_verified'] == true,
   );
 }
 
@@ -91,6 +97,7 @@ class SearchResult {
   final String? subtitle;
   final String? thumbnail;
   final Map<String, dynamic> metadata;
+  final bool isVerified;
 
   const SearchResult({
     required this.type,
@@ -99,6 +106,7 @@ class SearchResult {
     this.subtitle,
     this.thumbnail,
     this.metadata = const {},
+    this.isVerified = false,
   });
 
   factory SearchResult.fromJson(Map<String, dynamic> j) => SearchResult(
@@ -110,6 +118,8 @@ class SearchResult {
     metadata: (j['metadata'] is Map)
         ? Map<String, dynamic>.from(j['metadata'] as Map)
         : const {},
+    isVerified: j['is_verified'] == true ||
+        (j['metadata'] is Map && (j['metadata'] as Map)['is_verified'] == true),
   );
 }
 

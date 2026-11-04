@@ -31,6 +31,14 @@ import '../../feed/widgets/story_ring_avatar.dart';
 import 'shared_post_sheet.dart';
 import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import '../view_models/chat_list_view_model.dart';
+import '../utils/chat_error_text.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'rich/chat_rich_bubbles.dart';
+import 'rich/chat_extra_sheets.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -320,32 +328,73 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   });
                 },
               ),
-              _MoreMenuItem(
-                icon: Icons.notifications_outlined,
-                label: S.of(context).chatDetailMute,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(S.of(context).chatDetailComingSoon),
-                      backgroundColor: context.colors.surfaceElevated,
+              // Silenciar / Fixar / Buscar — estado vem da lista de conversas.
+              Builder(builder: (_) {
+                final conv = ref
+                    .read(chatListViewModelProvider)
+                    .conversations
+                    .where((c) => c.id == widget.conversationId)
+                    .firstOrNull;
+                final muted = conv?.isMuted ?? false;
+                final pinned = conv?.isPinned ?? false;
+                final s = S.of(context);
+                final messenger = ScaffoldMessenger.of(context);
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _MoreMenuItem(
+                      icon: Icons.search,
+                      label: s.chatDetailSearchInChat,
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        showChatSearchSheet(
+                          context,
+                          conversationId: widget.conversationId,
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-              _MoreMenuItem(
-                icon: Icons.search,
-                label: S.of(context).chatDetailSearchInChat,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(S.of(context).chatDetailComingSoon),
-                      backgroundColor: context.colors.surfaceElevated,
+                    _MoreMenuItem(
+                      icon: muted
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_off_outlined,
+                      label: muted ? s.chatUnmute : s.chatDetailMute,
+                      onTap: () async {
+                        Navigator.pop(sheetCtx);
+                        final v = await ref
+                            .read(chatListViewModelProvider.notifier)
+                            .setMuted(widget.conversationId, !muted);
+                        if (v == null) return;
+                        messenger.showSnackBar(SnackBar(
+                          content: Text(
+                            v ? s.chatMutedToast : s.chatUnmutedToast,
+                          ),
+                          duration: const Duration(seconds: 1),
+                        ));
+                      },
                     ),
-                  );
-                },
-              ),
+                    _MoreMenuItem(
+                      icon: pinned
+                          ? Icons.push_pin
+                          : Icons.push_pin_outlined,
+                      label: pinned ? s.chatUnpin : s.chatPin,
+                      onTap: () async {
+                        Navigator.pop(sheetCtx);
+                        final v = await ref
+                            .read(chatListViewModelProvider.notifier)
+                            .setPinned(widget.conversationId, !pinned);
+                        messenger.showSnackBar(SnackBar(
+                          content: Text(
+                            v == null
+                                ? s.chatPinLimit
+                                : (v ? s.chatPinnedToast : s.chatUnpinnedToast),
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ));
+                      },
+                    ),
+                  ],
+                );
+              }),
               _MoreMenuItem(
                 icon: Icons.block,
                 label: S
@@ -423,7 +472,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     vertical: 6,
                   ),
                   child: Text(
-                    state.errorMessage!,
+                    chatErrorText(S.of(context), state.errorMessage!),
                     style: const TextStyle(
                       color: AppColors.mutedRed,
                       fontSize: 12,
@@ -546,15 +595,30 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    if (ref
+                        .watch(chatListViewModelProvider)
+                        .conversations
+                        .any(
+                          (c) =>
+                              c.participantId == participantId &&
+                              c.participantIsVerified,
+                        ))
+                      const VerifiedBadge(size: 14),
+                  ],
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -581,8 +645,6 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        _AppBarAction(icon: Icons.videocam_outlined, onTap: () {}),
-        _AppBarAction(icon: Icons.call_outlined, onTap: () {}),
         _AppBarAction(icon: Icons.more_vert, onTap: onMoreTap ?? () {}),
         const SizedBox(width: 4),
       ],
@@ -967,7 +1029,29 @@ class _MessageBubble extends ConsumerWidget {
   final void Function(ChatMessage, String) onReact;
 
   bool get _isImage => message.messageType == 'image';
-  bool get _isGif => message.content.startsWith('gif:');
+  bool get _isGif =>
+      message.messageType == 'text' && message.content.startsWith('gif:');
+
+  /// Conteúdo rico + hora embaixo (as bolhas ricas não desenham a hora).
+  Widget _withTime(BuildContext context, Widget child) {
+    final t = message.timestamp;
+    final hh = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        child,
+        const SizedBox(height: 4),
+        Text(
+          hh,
+          style: TextStyle(
+            color: isMe ? Colors.white70 : context.colors.textSecondary,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
   bool get _isAudio => message.messageType == 'audio';
 
   @override
@@ -1019,6 +1103,19 @@ class _MessageBubble extends ConsumerWidget {
     } else if (_isGif) {
       final gifUrl = message.content.substring(4); // strip 'gif:'
       content = _GifBubbleContent(gifUrl: gifUrl, isMe: isMe);
+    } else if (_isImage && message.isViewOnce) {
+      // Visualização única: a foto NUNCA aparece na conversa (nem para quem
+      // enviou). Quem recebe toca para abrir uma vez; depois vira "Aberta".
+      content = _ViewOnceBubbleContent(
+        message: message,
+        isMe: isMe,
+        onOpen: () async {
+          await _openImageFullScreen(context, message);
+          if (!message.isBurned) {
+            await notifier.burnMessage(message.id);
+          }
+        },
+      );
     } else if (_isImage) {
       content = _ImageBubbleContent(
         message: message,
@@ -1032,8 +1129,37 @@ class _MessageBubble extends ConsumerWidget {
       );
     } else if (_isAudio) {
       content = _AudioBubbleContent(message: message, isMe: isMe);
+    } else if (message.messageType == 'story_reaction' ||
+        message.messageType == 'story_reply') {
+      content = _withTime(
+        context,
+        StoryInteractionBubble(message: message, isMe: isMe),
+      );
+    } else if (message.messageType == 'story_gift') {
+      content = _withTime(
+        context,
+        GiftVaultBubble(
+          message: message,
+          isMe: isMe,
+          onOpen: () => notifier.openGift(message.id),
+        ),
+      );
+    } else if (message.messageType == 'location') {
+      content = _withTime(
+        context,
+        LocationBubble(message: message, isMe: isMe),
+      );
+    } else if (message.messageType == 'file') {
+      content = _withTime(context, FileBubble(message: message, isMe: isMe));
     } else {
       content = _TextBubbleContent(message: message, isMe: isMe);
+    }
+    if (message.isForwarded && !message.isBurned) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [ForwardedLabel(isMe: isMe), content],
+      );
     }
 
     final bubble = ConstrainedBox(
@@ -1246,6 +1372,49 @@ class _MessageBubble extends ConsumerWidget {
                   onReply(message);
                 },
               ),
+            // Editar: só minha mensagem de texto, até 15 minutos.
+            if (isMe &&
+                !message.isPending &&
+                message.messageType == 'text' &&
+                !message.content.startsWith('gif:') &&
+                DateTime.now().difference(message.timestamp).inMinutes < 15)
+              ListTile(
+                leading: Icon(
+                  LucideIcons.pencil,
+                  color: context.colors.textPrimary,
+                ),
+                title: Text(
+                  S.of(context).chatEdit,
+                  style: TextStyle(color: context.colors.textPrimary),
+                ),
+                onTap: () async {
+                  Navigator.pop(sheetCtx);
+                  final text =
+                      await showEditMessageSheet(context, message.content);
+                  if (text != null) {
+                    await notifier.editMessage(message.id, text);
+                  }
+                },
+              ),
+            if (canForward(message))
+              ListTile(
+                leading: Icon(
+                  LucideIcons.forward,
+                  color: context.colors.textPrimary,
+                ),
+                title: Text(
+                  S.of(context).chatForward,
+                  style: TextStyle(color: context.colors.textPrimary),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  showForwardSheet(
+                    context,
+                    message: message,
+                    currentConversationId: conversationId,
+                  );
+                },
+              ),
             if (!message.isBurned && message.messageType == 'text')
               ListTile(
                 leading: Icon(Icons.copy, color: context.colors.textPrimary),
@@ -1255,8 +1424,19 @@ class _MessageBubble extends ConsumerWidget {
                 ),
                 onTap: () {
                   Navigator.pop(sheetCtx);
+                  Clipboard.setData(ClipboardData(text: message.content));
+                  HapticFeedback.lightImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(S.of(context).chatCopied),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
                 },
               ),
+            // Apagar direto do menu: "para mim" sai na hora (só some do
+            // meu lado); "para todos" pede uma confirmação curta, porque
+            // não dá para desfazer para a outra pessoa.
             ListTile(
               leading: const Icon(
                 Icons.delete_outline,
@@ -1268,9 +1448,31 @@ class _MessageBubble extends ConsumerWidget {
               ),
               onTap: () {
                 Navigator.pop(sheetCtx);
-                _confirmDelete(context, notifier);
+                notifier.deleteMessage(message.id);
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(S.of(context).chatMessageDeleted),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
               },
             ),
+            if (isMe && !message.isPending)
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_forever_outlined,
+                  color: AppColors.mutedRed,
+                ),
+                title: Text(
+                  S.of(context).chatDeleteForEveryone,
+                  style: const TextStyle(color: AppColors.mutedRed),
+                ),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _confirmDeleteForEveryone(context, notifier);
+                },
+              ),
           ],
         ),
       ),
@@ -1286,60 +1488,36 @@ class _MessageBubble extends ConsumerWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, ChatDetailViewModel notifier) {
-    showDialog(
+  Future<void> _confirmDeleteForEveryone(
+    BuildContext context,
+    ChatDetailViewModel notifier,
+  ) async {
+    final s = S.of(context);
+    final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Apagar mensagem',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('Escolha uma opção para apagar esta mensagem.'),
-        actionsAlignment: MainAxisAlignment.start,
+        title: Text(s.chatDeleteForEveryoneTitle),
+        content: Text(s.chatDeleteForEveryoneBody),
         actions: [
-          // "Apagar para todos" — só aparece para quem enviou
-          if (isMe)
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  alignment: Alignment.centerLeft,
-                  foregroundColor: AppColors.mutedRed,
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  notifier.deleteMessage(message.id, forEveryone: true);
-                },
-                child: const Text(
-                  'Apagar para todos',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-              onPressed: () {
-                Navigator.pop(ctx);
-                notifier.deleteMessage(message.id);
-              },
-              child: const Text('Apagar para mim'),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.actionCancel),
           ),
-          SizedBox(
-            width: double.infinity,
-            child: TextButton(
-              style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar'),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppColors.mutedRed),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              s.chatDeleteForEveryone,
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
     );
+    if (ok == true) {
+      notifier.deleteMessage(message.id, forEveryone: true);
+      HapticFeedback.lightImpact();
+    }
   }
 }
 
@@ -1381,7 +1559,10 @@ class _TextBubbleContent extends ConsumerWidget {
           _ReplyQuote(reply: message.replyTo!, isMe: isMe),
           const SizedBox(height: 6),
         ],
-        if (caption.isNotEmpty)
+        // Mensagem que é só um link: o card de prévia já mostra o site,
+        // então o texto cru do link não aparece (como no iMessage).
+        if (caption.isNotEmpty &&
+            !(previewUrl != null && BraweRichText.isOnlyUrl(caption)))
           BraweRichText(
             caption,
             style: TextStyle(
@@ -1397,7 +1578,8 @@ class _TextBubbleContent extends ConsumerWidget {
           if (caption.isNotEmpty) const SizedBox(height: 6),
           _SharedPostPreview(postId: postId, isMe: isMe),
         ] else if (previewUrl != null) ...[
-          if (caption.isNotEmpty) const SizedBox(height: 6),
+          if (caption.isNotEmpty && !BraweRichText.isOnlyUrl(caption))
+            const SizedBox(height: 6),
           LinkPreviewCard(url: previewUrl, compact: true),
         ],
         const SizedBox(height: 4),
@@ -1405,7 +1587,9 @@ class _TextBubbleContent extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _formatTime(message.timestamp),
+              message.editedAt != null
+                  ? '${S.of(context).chatEdited} · ${_formatTime(message.timestamp)}'
+                  : _formatTime(message.timestamp),
               style: TextStyle(
                 color: isMe
                     ? Colors.white70
@@ -1613,6 +1797,103 @@ class _ImageBubbleContent extends StatelessWidget {
   }
 }
 
+/// Bolha de foto de visualização única (estilo WhatsApp): só um cartão com
+/// ícone e estado — a imagem em si só aparece em tela cheia, uma vez, para
+/// quem recebeu.
+class _ViewOnceBubbleContent extends StatelessWidget {
+  const _ViewOnceBubbleContent({
+    required this.message,
+    required this.isMe,
+    required this.onOpen,
+  });
+
+  final ChatMessage message;
+  final bool isMe;
+  final Future<void> Function() onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final opened = message.isBurned || message.viewedAt != null;
+    final canOpen = !isMe && !opened && !message.isPending;
+    final fg = isMe ? Colors.white : context.colors.textPrimary;
+    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+
+    final String subtitle;
+    if (opened) {
+      subtitle = s.chatViewOnceOpened;
+    } else if (isMe) {
+      subtitle = s.chatViewOnceSent;
+    } else {
+      subtitle = s.chatViewOnceTapToOpen;
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: canOpen ? onOpen : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: opened ? sub : fg,
+                  width: 1.6,
+                  strokeAlign: BorderSide.strokeAlignInside,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: message.isPending
+                  ? SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: fg,
+                      ),
+                    )
+                  : Text(
+                      '1',
+                      style: TextStyle(
+                        color: opened ? sub : fg,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    s.chatViewOncePhoto,
+                    style: TextStyle(
+                      color: opened ? sub : fg,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: sub, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _BurnedPlaceholder extends StatelessWidget {
   const _BurnedPlaceholder({required this.isMe});
   final bool isMe;
@@ -1787,6 +2068,10 @@ class _ComposerState extends ConsumerState<_Composer>
     with SingleTickerProviderStateMixin {
   // ── recording state ──
   final _recorder = AudioRecorder();
+  final _focus = FocusNode();
+
+  /// Painel de emoji aberto no lugar do teclado (estilo WhatsApp).
+  bool _emojiOpen = false;
   bool _isRecording = false;
   bool _isCancelling = false;
   String? _recordingPath;
@@ -1814,6 +2099,7 @@ class _ComposerState extends ConsumerState<_Composer>
   void dispose() {
     _recordTimer?.cancel();
     _recorder.dispose();
+    _focus.dispose();
     _pulseCtrl.dispose();
     super.dispose();
   }
@@ -1830,7 +2116,7 @@ class _ComposerState extends ConsumerState<_Composer>
     if (!perm) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissão de microfone negada')),
+          SnackBar(content: Text(S.of(context).chatMicDenied)),
         );
       }
       return;
@@ -1958,11 +2244,12 @@ class _ComposerState extends ConsumerState<_Composer>
                                     ),
                                   ),
                                   Text(
-                                    widget.replyingTo!.messageType == 'image'
-                                        ? S
-                                              .of(context)
-                                              .chatDetailReplyImagePreview
-                                        : widget.replyingTo!.content,
+                                    _richPreviewLabel(
+                                          S.of(context),
+                                          widget.replyingTo!.messageType,
+                                          widget.replyingTo!.content,
+                                        ) ??
+                                        widget.replyingTo!.content,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -2032,6 +2319,12 @@ class _ComposerState extends ConsumerState<_Composer>
                                   Expanded(
                                     child: TextField(
                                       controller: widget.controller,
+                                      focusNode: _focus,
+                                      onTap: () {
+                                        if (_emojiOpen) {
+                                          setState(() => _emojiOpen = false);
+                                        }
+                                      },
                                       onChanged: widget.onChanged,
                                       minLines: 1,
                                       maxLines: 5,
@@ -2055,18 +2348,31 @@ class _ComposerState extends ConsumerState<_Composer>
                                       ),
                                     ),
                                   ),
-                                  Builder(
-                                    builder: (ctx) => IconButton(
-                                      icon: Icon(
-                                        Icons.emoji_emotions_outlined,
-                                        color: context.colors.textSecondary,
-                                      ),
-                                      onPressed: () => _openEmojiPicker(
-                                        ctx,
-                                        widget.controller,
-                                        onGifPick: widget.onSendGif,
-                                      ),
+                                  // Emoji ⇄ teclado: o painel abre no
+                                  // lugar do teclado e o texto continua
+                                  // visível; o emoji entra no campo (não
+                                  // envia sozinho).
+                                  IconButton(
+                                    tooltip: _emojiOpen
+                                        ? S.of(context).chatEmojiKeyboard
+                                        : null,
+                                    icon: Icon(
+                                      _emojiOpen
+                                          ? Icons.keyboard_outlined
+                                          : Icons.emoji_emotions_outlined,
+                                      color: _emojiOpen
+                                          ? context.colors.accentPrimary
+                                          : context.colors.textSecondary,
                                     ),
+                                    onPressed: () {
+                                      if (_emojiOpen) {
+                                        setState(() => _emojiOpen = false);
+                                        _focus.requestFocus();
+                                      } else {
+                                        _focus.unfocus();
+                                        setState(() => _emojiOpen = true);
+                                      }
+                                    },
                                   ),
                                 ],
                               ),
@@ -2112,10 +2418,96 @@ class _ComposerState extends ConsumerState<_Composer>
                       ),
                     ),
             ),
+            // Painel de emoji no lugar do teclado.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              child: _emojiOpen && !_isRecording
+                  ? _EmojiPickerSheet(
+                      inline: true,
+                      onPick: (e) {
+                        _insertEmoji(widget.controller, e);
+                        widget.onChanged(widget.controller.text);
+                      },
+                      onGifPick: widget.onSendGif == null
+                          ? null
+                          : (url) {
+                              setState(() => _emojiOpen = false);
+                              widget.onSendGif!(url);
+                            },
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  /// Localização atual: confirma, pede permissão e envia.
+  Future<void> _sendLocation() async {
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.chatLocationConfirmTitle),
+        content: Text(s.chatLocationConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.actionCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.chatSend),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    var perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      perm = await Geolocator.requestPermission();
+    }
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.deniedForever) {
+      messenger.showSnackBar(SnackBar(content: Text(s.chatLocationDenied)));
+      return;
+    }
+    messenger.showSnackBar(SnackBar(
+      content: Text(s.chatLocationGetting),
+      duration: const Duration(seconds: 2),
+    ));
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+      await ref
+          .read(chatDetailViewModelProvider(widget.conversationId).notifier)
+          .sendLocation(pos.latitude, pos.longitude);
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.chatLocationError)));
+    }
+  }
+
+  /// Escolhe um documento e envia.
+  Future<void> _pickFile() async {
+    final res = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const [
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+        'txt', 'csv', 'zip', 'rar',
+      ],
+    );
+    final f = res?.files.singleOrNull;
+    if (f == null || f.path == null) return;
+    await ref
+        .read(chatDetailViewModelProvider(widget.conversationId).notifier)
+        .sendFile(f.path!, name: f.name);
   }
 
   void _showAttachSheet(BuildContext context) {
@@ -2151,14 +2543,18 @@ class _ComposerState extends ConsumerState<_Composer>
               _AttachOption(
                 icon: Icons.location_on,
                 label: S.of(context).chatDetailAttachLocation,
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _sendLocation();
+                },
               ),
               _AttachOption(
                 icon: Icons.insert_drive_file,
                 label: S.of(context).chatDetailAttachFile,
-              ),
-              _AttachOption(
-                icon: Icons.card_giftcard,
-                label: S.of(context).chatDetailAttachMystery,
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _pickFile();
+                },
               ),
             ],
           ),
@@ -2603,14 +2999,7 @@ class _SharedPostPreview extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (post.author.isVerified) ...[
-                    const SizedBox(width: 3),
-                    const Icon(
-                      Icons.verified,
-                      color: AppColors.braweSky,
-                      size: 13,
-                    ),
-                  ],
+                  if (post.author.isVerified) const VerifiedBadge(size: 13, gap: 3),
                 ],
               ),
               if (post.content.isNotEmpty) ...[
@@ -2850,7 +3239,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
     if (!perm) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permissão de microfone negada')),
+          SnackBar(content: Text(S.of(context).chatMicDenied)),
         );
         Navigator.pop(context);
       }
@@ -3275,11 +3664,8 @@ class _ReplyQuote extends StatelessWidget {
     final s = S.of(context);
     final preview = reply.isBurned
         ? s.chatDetailBurnedPreview
-        : reply.messageType == 'image'
-        ? s.chatDetailReplyImagePreview
-        : reply.content.isEmpty
-        ? '...'
-        : reply.content;
+        : _richPreviewLabel(s, reply.messageType, reply.content) ??
+              (reply.content.isEmpty ? '...' : reply.content);
     return Container(
       constraints: const BoxConstraints(maxWidth: 280),
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
@@ -3388,25 +3774,6 @@ class _ReactionChips extends StatelessWidget {
 // Emoji Picker (lightweight, no external deps)
 // ===========================================================================
 
-void _openEmojiPicker(
-  BuildContext context,
-  TextEditingController controller, {
-  void Function(String gifUrl)? onGifPick,
-}) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: context.colors.surface,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (_) => _EmojiPickerSheet(
-      onPick: (emoji) => _insertEmoji(controller, emoji),
-      onGifPick: onGifPick,
-    ),
-  );
-}
-
 void _insertEmoji(TextEditingController controller, String emoji) {
   final value = controller.value;
   final text = value.text;
@@ -3421,9 +3788,16 @@ void _insertEmoji(TextEditingController controller, String emoji) {
 }
 
 class _EmojiPickerSheet extends StatefulWidget {
-  const _EmojiPickerSheet({required this.onPick, this.onGifPick});
+  const _EmojiPickerSheet({
+    required this.onPick,
+    this.onGifPick,
+    this.inline = false,
+  });
   final ValueChanged<String> onPick;
   final void Function(String gifUrl)? onGifPick;
+
+  /// `true` = painel embutido no lugar do teclado (não é bottom sheet).
+  final bool inline;
 
   @override
   State<_EmojiPickerSheet> createState() => _EmojiPickerSheetState();
@@ -3858,19 +4232,23 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
     return SafeArea(
       top: false,
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.45,
+        height: widget.inline
+            ? 280
+            : MediaQuery.of(context).size.height * 0.45,
         child: Column(
           children: [
-            // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: context.colors.textTertiary.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+            if (!widget.inline) ...[
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.colors.textTertiary.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 8),
             // Tabs
             SizedBox(
@@ -3962,7 +4340,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                       onPick: (url) {
                         if (widget.onGifPick != null) {
                           widget.onGifPick!(url);
-                          Navigator.pop(context);
+                          if (!widget.inline) Navigator.pop(context);
                         }
                       },
                     )
@@ -4368,5 +4746,32 @@ class _LiveInviteCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+
+/// Rótulo curto para citar mensagens que não são texto (imagem, áudio,
+/// story, cofre, localização, arquivo). `null` = é texto, usar o conteúdo.
+String? _richPreviewLabel(S s, String type, String content) {
+  switch (type) {
+    case 'image':
+      return s.chatDetailReplyImagePreview;
+    case 'audio':
+      return '🎤';
+    case 'location':
+      return '📍 ${s.chatLocationTitle}';
+    case 'story_gift':
+      return '🎁 ${s.chatVaultReceived}';
+    case 'story_reaction':
+    case 'story_reply':
+      return '📸 Story';
+    case 'file':
+      try {
+        final m = jsonDecode(content);
+        if (m is Map && m['name'] != null) return '📎 ${m['name']}';
+      } catch (_) {}
+      return '📎 ${s.chatDetailAttachFile}';
+    default:
+      return null;
   }
 }

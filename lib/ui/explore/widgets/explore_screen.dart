@@ -9,6 +9,7 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/explore_view_model.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -453,19 +454,28 @@ class _LiveCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    S
-                        .of(context)
-                        .exploreLiveSubtitle(
-                          live.streamerName ?? '',
-                          live.category ?? S.of(context).exploreCategoryGeneral,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          S
+                              .of(context)
+                              .exploreLiveSubtitle(
+                                live.streamerName ?? '',
+                                live.category ??
+                                    S.of(context).exploreCategoryGeneral,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: context.colors.textSecondary,
+                            fontSize: 11,
+                          ),
                         ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: context.colors.textSecondary,
-                      fontSize: 11,
-                    ),
+                      ),
+                      if (live.streamerIsVerified)
+                        const VerifiedBadge(size: 11, gap: 3),
+                    ],
                   ),
                 ],
               ),
@@ -529,13 +539,22 @@ class _StreamerTile extends StatelessWidget {
             ),
         ],
       ),
-      title: Text(
-        streamer.displayName,
-        style: TextStyle(
-          color: context.colors.textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              streamer.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          if (streamer.isVerified) const VerifiedBadge(size: 14),
+        ],
       ),
       subtitle: Text(
         S.of(context).exploreFollowersCount(streamer.followerCount),
@@ -570,7 +589,7 @@ class _CategoryCard extends StatelessWidget {
             Text(
               category.name,
               style: TextStyle(
-                color: context.colors.textPrimary,
+                color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -579,14 +598,14 @@ class _CategoryCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.live_tv,
-                  color: context.colors.textSecondary,
+                  color: Colors.white70,
                   size: 14,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   S.of(context).exploreCategoryLiveCount(category.liveCount),
                   style: TextStyle(
-                    color: context.colors.textSecondary,
+                    color: Colors.white70,
                     fontSize: 12,
                   ),
                 ),
@@ -655,7 +674,7 @@ class _SearchTile extends StatelessWidget {
                 ),
               ),
             ),
-          Expanded(
+          Flexible(
             child: Text(
               result.title,
               maxLines: 1,
@@ -663,6 +682,7 @@ class _SearchTile extends StatelessWidget {
               style: TextStyle(color: context.colors.textPrimary),
             ),
           ),
+          if (result.isVerified) const VerifiedBadge(size: 14),
         ],
       ),
       subtitle: result.subtitle != null

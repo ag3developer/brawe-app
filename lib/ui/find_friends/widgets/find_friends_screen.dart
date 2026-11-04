@@ -15,6 +15,7 @@ import '../../../data/services/social_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Provider com a lista completa de sugestões (usada na tela Encontrar amigos
 /// e aberta pelo "Ver todos" do feed). Mais itens que o carrossel do feed.
@@ -648,14 +649,7 @@ class _UserTileState extends ConsumerState<_UserTile> {
                           ),
                         ),
                       ),
-                      if (isVerified) ...[
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.verified,
-                          size: 14,
-                          color: colors.accentPrimary,
-                        ),
-                      ],
+                      if (isVerified) const VerifiedBadge(size: 14, gap: 4),
                     ],
                   ),
                   if (username != null && username.isNotEmpty)

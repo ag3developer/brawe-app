@@ -1138,6 +1138,7 @@ class LiveRepository {
       gifterImageUrl: _resolveBadgeUrl(payload['gifter_image_url']?.toString()),
       award: UserAward.tryParse(payload['award']),
       isModerator: payload['is_moderator'] == true,
+      isVerified: payload['is_verified'] == true,
     );
   }
 

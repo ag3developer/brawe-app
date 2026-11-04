@@ -41,6 +41,7 @@ import 'suggested_users_rail.dart';
 import '../../../core/network/media_headers.dart';
 import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -1000,14 +1001,7 @@ class _PostCardState extends ConsumerState<PostCard>
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (post.author.isVerified) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.verified_rounded,
-                            color: context.colors.accentPrimary,
-                            size: 15,
-                          ),
-                        ],
+                        if (post.author.isVerified) const VerifiedBadge(size: 15, gap: 4),
                       ],
                     ),
                     const SizedBox(height: 1),

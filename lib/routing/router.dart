@@ -36,6 +36,7 @@ import '../ui/core/themes/force_dark_theme.dart';
 import '../ui/profile/widgets/profile_screen.dart';
 import '../ui/settings/widgets/settings_screen.dart';
 import '../ui/quests/widgets/quests_screen.dart';
+import '../ui/live/shared/widgets/gifter_level/gifter_level_screen.dart';
 import '../ui/edit_profile/widgets/artist_profile_screen.dart';
 import '../ui/edit_profile/widgets/business_profile_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
@@ -640,6 +641,12 @@ GoRouter router(Ref ref) {
           if (userId.startsWith('@')) userId = userId.substring(1);
           return ProfileScreen(userId: userId);
         },
+      ),
+      // "Meu nível" do presenteador: fora do Shell (no mesmo nível da live)
+      // para abrir POR CIMA da live — dentro do Shell ela abria por baixo.
+      GoRoute(
+        path: '/gifter-level',
+        builder: (context, state) => const GifterLevelScreen(),
       ),
       GoRoute(
         path: '/live/:roomId',

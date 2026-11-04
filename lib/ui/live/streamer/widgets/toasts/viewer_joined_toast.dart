@@ -4,6 +4,7 @@ import '../../../../../domain/models/live_viewer_event.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Animated toast shown to the streamer when a viewer joins the room.
 class ViewerJoinedToast extends StatelessWidget {
@@ -73,6 +74,7 @@ class ViewerJoinedToast extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                if (event.isVerified) const VerifiedBadge(size: 12, gap: 4),
                 const SizedBox(width: 6),
                 const Text('👋', style: TextStyle(fontSize: 12)),
               ],

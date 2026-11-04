@@ -11,13 +11,13 @@ part 'notifications_view_model.g.dart';
 class NotificationsViewModel extends _$NotificationsViewModel {
   @override
   Future<NotificationsPage> build() async {
-    return ref.read(notificationsRepositoryProvider).list();
+    return ref.read(notificationsRepositoryProvider).list(limit: 60);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => ref.read(notificationsRepositoryProvider).list(),
+      () => ref.read(notificationsRepositoryProvider).list(limit: 60),
     );
   }
 

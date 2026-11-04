@@ -12,6 +12,7 @@ import '../award_badge.dart';
 import '../competition/medal_colors.dart';
 import '../overlays/gifts_overlay.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 enum _Board { gifts, likes, event }
 
@@ -662,15 +663,23 @@ class _PodiumSeat extends StatelessWidget {
         const SizedBox(height: 14),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            isMe ? S.of(context).rankingYouBadge : e.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: isMe ? colors.accentPrimary : colors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  isMe ? S.of(context).rankingYouBadge : e.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isMe ? colors.accentPrimary : colors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (e.isVerified) const VerifiedBadge(size: 12, gap: 3),
+            ],
           ),
         ),
         const SizedBox(height: 3),
@@ -719,11 +728,18 @@ class _Row extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isMe ? s.rankingYouBadge : entry.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        isMe ? s.rankingYouBadge : entry.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    if (entry.isVerified) const VerifiedBadge(size: 13, gap: 3),
+                  ],
                 ),
                 if (!likes && entry.giftCount > 0)
                   Text(

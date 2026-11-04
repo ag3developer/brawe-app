@@ -6,6 +6,8 @@
 	<string>O Brawe precisa de acesso à sua galeria para você escolher fotos e vídeos nas suas publicações e stories.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>O Brawe precisa de permissão para salvar fotos e vídeos capturados na sua galeria.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>O Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>O Brawe precisa de acesso à câmera para você tirar fotos, gravar vídeos e transmitir ao vivo.</string>
 	<key>NSMicrophoneUsageDescription</key>

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:brawe_app/config/feature_flags.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/ui/app_spacing.dart';
@@ -17,6 +18,7 @@ import '../../../../../domain/models/user.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import '../level_chip.dart';
 
 /// 🎁 Catálogo de presentes — layout TikTok-style.
 class GiftsOverlay extends ConsumerStatefulWidget {
@@ -443,7 +445,14 @@ class _GamerLevelHeader extends ConsumerWidget {
     final progress = next?.progressFraction ?? 1.0;
     final missing = next?.xpNeeded ?? 0;
     final badgeEmoji = data.badge.emoji;
-    final badgeColor = _parseHex(data.badge.color) ?? const Color(0xFF3B82F6);
+
+    // Fecha a sacola e abre "Meu nível". O router é capturado ANTES do pop:
+    // depois dele o context da sacola está morto.
+    void openLevelScreen() {
+      final router = GoRouter.of(context);
+      Navigator.of(context).pop();
+      router.push('/gifter-level');
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -454,7 +463,10 @@ class _GamerLevelHeader extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Stack(
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: openLevelScreen,
+            child: Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
@@ -486,51 +498,33 @@ class _GamerLevelHeader extends ConsumerWidget {
                       : _avatarFallback(user),
                 ),
               ),
+              // Selo de nível: mesmo chip do chat (cápsula na cor da faixa +
+              // emblema + número), centralizado na base do avatar.
               Positioned(
-                left: -4,
-                bottom: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: badgeColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFF0A1230),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (badgeEmoji != null && badgeEmoji.isNotEmpty)
-                        Text(
-                          badgeEmoji,
-                          style: const TextStyle(fontSize: 9, height: 1.0),
-                        )
-                      else
-                        const Icon(
-                          Icons.diamond_rounded,
-                          size: 9,
-                          color: Colors.white,
-                        ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '$level',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          height: 1.0,
-                        ),
+                left: -12,
+                right: -12,
+                bottom: -7,
+                child: Center(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(
+                        color: const Color(0xFF0A1230),
+                        width: 1.5,
                       ),
-                    ],
+                    ),
+                    child: LevelChip(
+                      level: level,
+                      badge: badgeEmoji,
+                      colorHex: data.badge.color,
+                      imageUrl: data.badge.imageUrl,
+                      height: 16,
+                    ),
                   ),
                 ),
               ),
             ],
+          ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -577,8 +571,8 @@ class _GamerLevelHeader extends ConsumerWidget {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right, color: Colors.white60),
-            onPressed: () {},
-            tooltip: 'Ver níveis',
+            onPressed: openLevelScreen,
+            tooltip: S.of(context).gifterLevelSeeLevels,
           ),
         ],
       ),
@@ -601,14 +595,6 @@ class _GamerLevelHeader extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  static Color? _parseHex(String hex) {
-    final h = hex.replaceAll('#', '');
-    if (h.length != 6) return null;
-    final v = int.tryParse(h, radix: 16);
-    if (v == null) return null;
-    return Color(0xFF000000 | v);
   }
 }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/themes/app_colors.dart';
@@ -6,9 +7,12 @@ import '../../core/themes/brawe_colors.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../view_models/chat_list_view_model.dart';
+import '../../../core/text/brawe_rich_text.dart';
 import '../view_models/presence_provider.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import 'user_status_sheet.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import '../utils/chat_error_text.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -324,7 +328,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            chatState.errorMessage!,
+                            chatErrorText(S.of(context), chatState.errorMessage!),
                             style: TextStyle(
                               color: context.colors.textPrimary,
                               fontSize: 12,
@@ -530,6 +534,8 @@ class _ConversationTile extends ConsumerWidget {
               'participantId': conversation.participantId,
             },
           ),
+          // Segurar: fixar no topo / silenciar.
+          onLongPress: () => _showQuickActions(context, ref),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
@@ -568,7 +574,7 @@ class _ConversationTile extends ConsumerWidget {
                     children: [
                       Row(
                         children: [
-                          Expanded(
+                          Flexible(
                             child: Text(
                               conversation.participantName,
                               style: TextStyle(
@@ -581,6 +587,27 @@ class _ConversationTile extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (conversation.participantIsVerified)
+                            const VerifiedBadge(size: 14),
+                          if (conversation.isMuted)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 4),
+                              child: Icon(
+                                Icons.notifications_off_outlined,
+                                size: 14,
+                                color: context.colors.textTertiary,
+                              ),
+                            ),
+                          const Spacer(),
+                          if (conversation.isPinned)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Icon(
+                                Icons.push_pin,
+                                size: 13,
+                                color: context.colors.textTertiary,
+                              ),
+                            ),
                           Text(
                             _formatTime(context, conversation.updatedAt),
                             style: TextStyle(
@@ -600,8 +627,13 @@ class _ConversationTile extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              conversation.lastMessage?.content ??
-                                  S.of(context).chatListTapToTalk,
+                              conversation.lastMessage?.content != null
+                                  ? BraweRichText.humanize(
+                                      conversation.lastMessage!.content,
+                                      sharedPostLabel:
+                                          S.of(context).linkSharedPost,
+                                    )
+                                  : S.of(context).chatListTapToTalk,
                               style: TextStyle(
                                 color: hasUnread
                                     ? context.colors.textPrimary
@@ -661,6 +693,65 @@ class _ConversationTile extends ConsumerWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showQuickActions(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    final notifier = ref.read(chatListViewModelProvider.notifier);
+    final messenger = ScaffoldMessenger.of(context);
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: context.colors.surfaceElevated,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(
+                conversation.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+              ),
+              title: Text(conversation.isPinned ? s.chatUnpin : s.chatPin),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final v =
+                    await notifier.setPinned(conversation.id, !conversation.isPinned);
+                messenger.showSnackBar(SnackBar(
+                  content: Text(
+                    v == null
+                        ? s.chatPinLimit
+                        : (v ? s.chatPinnedToast : s.chatUnpinnedToast),
+                  ),
+                  duration: const Duration(seconds: 2),
+                ));
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                conversation.isMuted
+                    ? Icons.notifications_active_outlined
+                    : Icons.notifications_off_outlined,
+              ),
+              title: Text(
+                conversation.isMuted ? s.chatUnmute : s.chatDetailMute,
+              ),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final v =
+                    await notifier.setMuted(conversation.id, !conversation.isMuted);
+                if (v == null) return;
+                messenger.showSnackBar(SnackBar(
+                  content: Text(v ? s.chatMutedToast : s.chatUnmutedToast),
+                  duration: const Duration(seconds: 1),
+                ));
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );

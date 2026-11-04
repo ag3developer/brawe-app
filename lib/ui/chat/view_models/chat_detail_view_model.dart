@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -65,6 +66,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   StreamSubscription<MessageReactionUpdate>? _reactionSubscription;
   StreamSubscription<String>? _deletedSubscription;
   StreamSubscription? _reconnectSubscription;
+  StreamSubscription<MessageUpdate>? _updateSubscription;
   Timer? _typingStopTimer;
   int _currentPage = 1;
 
@@ -79,6 +81,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _reactionSubscription?.cancel();
       _deletedSubscription?.cancel();
       _reconnectSubscription?.cancel();
+      _updateSubscription?.cancel();
       _typingStopTimer?.cancel();
       try {
         ref.read(chatRepositoryProvider).leaveConversation(conversationId);
@@ -116,6 +119,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         repo.reactionStream(conversationId).listen(_handleReactionUpdate);
     _deletedSubscription =
         repo.watchDeleted(conversationId).listen(_removeMessage);
+    _updateSubscription =
+        repo.watchUpdates(conversationId).listen(_handleUpdate);
 
     await _loadInitial();
 
@@ -145,7 +150,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Não foi possível carregar as mensagens.',
+        errorMessage: 'chat.err.loadMessages',
       );
     }
   }
@@ -272,7 +277,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _removeMessage(optimisticMessage.id);
       state = state.copyWith(
         isSending: false,
-        errorMessage: 'Não foi possível enviar a mensagem.',
+        errorMessage: 'chat.err.send',
       );
     }
   }
@@ -322,7 +327,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       // Reverter em caso de falha
       _patchMessage(messageId, (m) => m.copyWith(reactions: snapshot));
       state = state.copyWith(
-        errorMessage: 'Não foi possível reagir à mensagem.',
+        errorMessage: 'chat.err.react',
       );
     }
   }
@@ -420,6 +425,118 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     );
   }
 
+  void _handleUpdate(MessageUpdate u) {
+    state = state.copyWith(
+      messages: state.messages.map((m) {
+        if (m.id != u.messageId) return m;
+        if (u.message != null) return u.message!;
+        return m.copyWith(content: u.content, editedAt: u.editedAt);
+      }).toList(growable: false),
+    );
+  }
+
+  /// Editar uma mensagem de texto minha (até 15 min). Otimista.
+  Future<bool> editMessage(String messageId, String content) async {
+    final text = content.trim();
+    if (text.isEmpty) return false;
+    final snapshot = state.messages;
+    state = state.copyWith(
+      messages: state.messages
+          .map((m) => m.id == messageId
+              ? m.copyWith(content: text, editedAt: DateTime.now())
+              : m)
+          .toList(growable: false),
+    );
+    try {
+      final saved =
+          await ref.read(chatRepositoryProvider).editMessage(messageId, text);
+      _handleUpdate(MessageUpdate(
+        messageId: messageId,
+        content: saved.content,
+        editedAt: saved.editedAt ?? DateTime.now(),
+      ));
+      return true;
+    } catch (_) {
+      state = state.copyWith(messages: snapshot, errorMessage: 'chat.err.edit');
+      return false;
+    }
+  }
+
+  /// Abre o cofre de um presente de story. Devolve a mensagem atualizada.
+  Future<ChatMessage?> openGift(String messageId) async {
+    try {
+      final updated =
+          await ref.read(chatRepositoryProvider).openGift(messageId);
+      _handleUpdate(MessageUpdate(messageId: messageId, message: updated));
+      return updated;
+    } catch (_) {
+      state = state.copyWith(errorMessage: 'chat.err.openGift');
+      return null;
+    }
+  }
+
+  /// Envia localização (`{"lat","lng","name"}`).
+  Future<void> sendLocation(double lat, double lng, {String? name}) =>
+      _sendRich(
+        'location',
+        jsonEncode({'lat': lat, 'lng': lng, 'name': name}),
+      );
+
+  /// Envia um arquivo (PDF, DOC, ZIP...).
+  Future<void> sendFile(String path, {String? name}) async {
+    final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final authState = ref.read(authStateProvider);
+    final me = authState is AsyncData<User?> ? authState.value : null;
+    _appendMessage(ChatMessage(
+      id: optimisticId,
+      conversationId: _conversationId,
+      senderId: me?.id ?? 'current-user',
+      content: jsonEncode({'name': name ?? path.split('/').last, 'url': ''}),
+      timestamp: DateTime.now(),
+      isPending: true,
+      messageType: 'file',
+    ));
+    try {
+      final sent = await ref.read(chatRepositoryProvider).uploadFile(
+            conversationId: _conversationId,
+            filePath: path,
+            fileName: name,
+          );
+      _replaceMessage(optimisticId, sent);
+      ref.read(chatSoundsServiceProvider).playSent();
+    } catch (_) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(errorMessage: 'chat.err.file');
+    }
+  }
+
+  Future<void> _sendRich(String type, String content) async {
+    final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
+    final authState = ref.read(authStateProvider);
+    final me = authState is AsyncData<User?> ? authState.value : null;
+    _appendMessage(ChatMessage(
+      id: optimisticId,
+      conversationId: _conversationId,
+      senderId: me?.id ?? 'current-user',
+      content: content,
+      timestamp: DateTime.now(),
+      isPending: true,
+      messageType: type,
+    ));
+    try {
+      final sent = await ref.read(chatRepositoryProvider).sendRaw(
+            conversationId: _conversationId,
+            content: content,
+            messageType: type,
+          );
+      _replaceMessage(optimisticId, sent);
+      ref.read(chatSoundsServiceProvider).playSent();
+    } catch (_) {
+      _removeMessage(optimisticId);
+      state = state.copyWith(errorMessage: 'chat.err.send');
+    }
+  }
+
   void _handleBurnEvent(String messageId) {
     state = state.copyWith(
       messages: state.messages
@@ -470,7 +587,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _removeMessage(optimisticId);
       state = state.copyWith(
         isSending: false,
-        errorMessage: 'Não foi possível enviar o áudio.',
+        errorMessage: 'chat.err.audio',
       );
     }
   }
@@ -515,7 +632,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _removeMessage(optimisticId);
       state = state.copyWith(
         isSending: false,
-        errorMessage: 'Não foi possível enviar a imagem.',
+        errorMessage: 'chat.err.image',
       );
     }
   }
@@ -546,7 +663,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     } catch (_) {
       state = state.copyWith(
         messages: snapshot,
-        errorMessage: 'Não foi possível apagar a mensagem.',
+        errorMessage: 'chat.err.delete',
       );
     }
   }

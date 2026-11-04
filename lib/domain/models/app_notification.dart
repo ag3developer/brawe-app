@@ -11,6 +11,7 @@ class AppNotification {
   final String? actorAvatar;
   final String? linkUrl;
   final DateTime? createdAt;
+  final bool actorIsVerified;
 
   const AppNotification({
     required this.id,
@@ -24,6 +25,7 @@ class AppNotification {
     this.actorAvatar,
     this.linkUrl,
     this.createdAt,
+    this.actorIsVerified = false,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class AppNotification {
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
+      actorIsVerified: json['actor_is_verified'] == true,
     );
   }
 
@@ -59,6 +62,7 @@ class AppNotification {
       actorAvatar: actorAvatar,
       linkUrl: linkUrl,
       createdAt: createdAt,
+      actorIsVerified: actorIsVerified,
     );
   }
 }

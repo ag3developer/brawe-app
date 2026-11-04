@@ -27,12 +27,12 @@ import '../../../data/services/feedback_service.dart';
 import '../../../domain/models/post.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/text/brawe_rich_text.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../feed/widgets/comments_sheet.dart';
 import '../../feed/widgets/share_to_chat_sheet.dart';
 import '../../../core/network/media_headers.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 bool _isVideoUrl(String url) {
   final u = url.toLowerCase().split('?').first;
@@ -363,14 +363,7 @@ class _SheetContent extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                if (post.author.isVerified) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.verified,
-                                    color: AppColors.braweSky,
-                                    size: 16,
-                                  ),
-                                ],
+                                if (post.author.isVerified) const VerifiedBadge(size: 16, gap: 4),
                               ],
                             ),
                             if (post.author.username.isNotEmpty)

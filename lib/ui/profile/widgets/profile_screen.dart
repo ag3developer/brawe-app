@@ -29,6 +29,8 @@ import '../../../domain/models/profile_state.dart';
 import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
+import 'profile_menu_widgets.dart';
+import '../../creator/view_models/creator_network_view_model.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/services.dart'
     show Clipboard, ClipboardData, SystemChrome, SystemUiMode, SystemUiOverlay;
@@ -41,6 +43,7 @@ import '../../../domain/models/user_award.dart';
 import '../../live/shared/widgets/award_badge.dart';
 import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 
 /// Retorna um handle "real" para mostrar como @username.
 /// Filtra valores vazios, IDs internos (ex.: BF-10006, AF-2023) e UUIDs.
@@ -259,15 +262,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       context.push('/shop/creator/${widget.userId}'),
                 ),
               if (isMe)
-                IconButton(
-                  icon: Icon(
-                    Icons.emoji_events_outlined,
-                    color: context.colors.textPrimary,
-                  ),
-                  tooltip: s.profileTooltipQuests,
-                  onPressed: () => context.push('/quests'),
-                ),
-              if (isMe)
                 Consumer(
                   builder: (context, ref, _) {
                     final unread =
@@ -310,8 +304,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               ),
                               child: Text(
                                 unread > 99 ? '99+' : unread.toString(),
-                                style: TextStyle(
-                                  color: context.colors.textPrimary,
+                                style: const TextStyle(
+                                  color: Colors.white,
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -323,17 +317,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     );
                   },
                 ),
-              if (isMe && kEnableMonetization)
-                IconButton(
-                  icon: Icon(
-                    Icons.account_balance_wallet_outlined,
-                    color: context.colors.textPrimary,
-                  ),
-                  tooltip: s.profileTooltipWallet,
-                  onPressed: () => context.push('/wallet'),
-                ),
               IconButton(
-                icon: Icon(Icons.more_vert, color: context.colors.textPrimary),
+                icon: Icon(
+                  isMe ? LucideIcons.menu : LucideIcons.ellipsisVertical,
+                  color: context.colors.textPrimary,
+                  size: 22,
+                ),
                 onPressed: () => _showOptions(context, isMe),
               ),
             ],
@@ -573,215 +562,158 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   void _showOptions(BuildContext context, bool isMe) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         final s = S.of(ctx);
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        // Fecha a folha e executa a ação com o context da tela.
+        VoidCallback go(VoidCallback action) => () {
+          Navigator.of(ctx).pop();
+          action();
+        };
+
+        if (!isMe) {
+          return ProfileMenuSheet(
             children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: context.colors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              if (!isMe) ...[
-                ListTile(
-                  leading: Icon(
-                    Icons.share_outlined,
-                    color: context.colors.textPrimary,
+              ProfileMenuGroup(
+                title: s.menuSectionProfile,
+                items: [
+                  ProfileMenuItem(
+                    icon: LucideIcons.share2,
+                    color: const Color(0xFF3B82F6),
+                    title: s.profileOptionShareProfile,
+                    onTap: go(() => _shareProfile(context)),
                   ),
-                  title: Text(
-                    s.profileOptionShareProfile,
-                    style: TextStyle(color: context.colors.textPrimary),
+                  ProfileMenuItem(
+                    icon: LucideIcons.link,
+                    color: const Color(0xFF8B5CF6),
+                    title: s.profileOptionCopyLink,
+                    showChevron: false,
+                    onTap: go(() => _copyProfileLink(context)),
                   ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _shareProfile(context);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.link, color: context.colors.textPrimary),
-                  title: Text(
-                    s.profileOptionCopyLink,
-                    style: TextStyle(color: context.colors.textPrimary),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _copyProfileLink(context);
-                  },
-                ),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final muted = (ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState())
-                        .muted
-                        .contains(widget.userId);
-                    return ListTile(
-                      leading: Icon(
-                        muted ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        color: context.colors.textPrimary,
-                      ),
-                      title: Text(
-                        muted ? s.relShowPosts : s.relHidePosts,
-                        style: TextStyle(color: context.colors.textPrimary),
-                      ),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                        _toggleMute(context, muted);
-                      },
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.block, color: context.colors.textPrimary),
-                  title: Text(
-                    s.profileBlockTitle,
-                    style: TextStyle(color: context.colors.textPrimary),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _confirmBlock(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.flag_outlined, color: Colors.red),
-                  title: Text(
-                    s.profileOptionReport,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _showReportSheet(context);
-                  },
-                ),
-              ] else ...[
-                ListTile(
-                  leading: Icon(
-                    Icons.emoji_events_outlined,
-                    color: context.colors.textPrimary,
-                  ),
-                  title: Text(
-                    s.profileOptionDailyQuests,
-                    style: TextStyle(color: context.colors.textPrimary),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    context.push('/quests');
-                  },
-                ),
-                Divider(color: context.colors.divider, height: 1),
-                ListTile(
-                  leading: Icon(
-                    Icons.workspace_premium_rounded,
-                    color: context.colors.accentGold,
-                  ),
-                  title: Text(
-                    s.creatorProgramTitle,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: context.colors.textTertiary,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    context.push('/creator/intro');
-                  },
-                ),
-                Divider(color: context.colors.divider, height: 1),
-                if (kEnableMonetization) ...[
-                  ListTile(
-                    leading: Icon(
-                      Icons.account_balance_wallet_outlined,
-                      color: context.colors.textPrimary,
-                    ),
-                    title: Text(
-                      s.profileOptionWallet,
-                      style: TextStyle(color: context.colors.textPrimary),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.push('/wallet');
-                    },
-                  ),
-                  Divider(color: context.colors.divider, height: 1),
-                  ListTile(
-                    leading: Icon(
-                      Icons.show_chart_rounded,
-                      color: context.colors.textPrimary,
-                    ),
-                    title: Text(
-                      s.earningsTitle,
-                      style: TextStyle(color: context.colors.textPrimary),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.push('/earnings');
-                    },
-                  ),
-                  Divider(color: context.colors.divider, height: 1),
                 ],
-                ListTile(
-                  leading: Icon(
-                    Icons.notifications_outlined,
-                    color: context.colors.textPrimary,
+              ),
+              ProfileMenuGroup(
+                title: s.menuSectionPrivacy,
+                items: [
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final muted =
+                          (ref.watch(hiddenUsersProvider).value ??
+                                  const HiddenUsersState())
+                              .muted
+                              .contains(widget.userId);
+                      return ProfileMenuItem(
+                        icon: muted ? LucideIcons.eye : LucideIcons.eyeOff,
+                        color: const Color(0xFF64748B),
+                        title: muted ? s.relShowPosts : s.relHidePosts,
+                        showChevron: false,
+                        onTap: go(() => _toggleMute(context, muted)),
+                      );
+                    },
                   ),
-                  title: Text(
-                    s.profileOptionNotifications,
-                    style: TextStyle(color: context.colors.textPrimary),
+                  ProfileMenuItem(
+                    icon: LucideIcons.ban,
+                    color: const Color(0xFFF97316),
+                    title: s.profileBlockTitle,
+                    showChevron: false,
+                    onTap: go(() => _confirmBlock(context)),
                   ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    context.push('/notifications');
-                  },
-                ),
-                Divider(color: context.colors.divider, height: 1),
-                ListTile(
-                  leading: Icon(
-                    Icons.settings_outlined,
-                    color: context.colors.textPrimary,
+                  ProfileMenuItem(
+                    icon: LucideIcons.flag,
+                    color: const Color(0xFFEF4444),
+                    title: s.profileOptionReport,
+                    destructive: true,
+                    onTap: go(() => _showReportSheet(context)),
                   ),
-                  title: Text(
-                    s.profileOptionSettings,
-                    style: TextStyle(color: context.colors.textPrimary),
-                  ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    context.push('/settings');
-                  },
-                ),
-                Divider(color: context.colors.divider, height: 1),
-                ListTile(
-                  leading: const Icon(
-                    Icons.logout_rounded,
-                    color: AppColors.mutedRed,
-                  ),
-                  title: Text(
-                    s.profileOptionLogout,
-                    style: const TextStyle(
-                      color: AppColors.mutedRed,
-                      fontWeight: FontWeight.w600,
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Consumer(
+          builder: (ctx, ref, _) {
+            final isCreator = ref.watch(myCreatorProfileProvider).value != null;
+            return ProfileMenuSheet(
+              children: [
+                ProfileMenuGroup(
+                  title: s.menuSectionProgress,
+                  items: [
+                    ProfileMenuItem(
+                      icon: LucideIcons.trophy,
+                      color: const Color(0xFFF59E0B),
+                      title: s.profileOptionDailyQuests,
+                      subtitle: s.menuQuestsSubtitle,
+                      onTap: go(() => context.push('/quests')),
                     ),
+                    ProfileMenuItem(
+                      icon: LucideIcons.medal,
+                      color: const Color(0xFF8B5CF6),
+                      title: s.gifterLevelTitle,
+                      subtitle: s.menuLevelSubtitle,
+                      onTap: go(() => context.push('/gifter-level')),
+                    ),
+                  ],
+                ),
+                if (kEnableMonetization)
+                  ProfileMenuGroup(
+                    title: s.menuSectionMoney,
+                    items: [
+                      ProfileMenuItem(
+                        icon: LucideIcons.wallet,
+                        color: const Color(0xFF10B981),
+                        title: s.profileOptionWallet,
+                        subtitle: s.menuWalletSubtitle,
+                        onTap: go(() => context.push('/wallet')),
+                      ),
+                    ],
                   ),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _confirmLogout(context);
-                  },
+                ProfileMenuGroup(
+                  title: s.menuSectionCreator,
+                  items: [
+                    ProfileMenuItem(
+                      icon: LucideIcons.crown,
+                      color: context.colors.accentGold,
+                      title: isCreator
+                          ? s.creatorDashboardTitle
+                          : s.creatorProgramTitle,
+                      subtitle: isCreator
+                          ? s.menuCreatorSubtitleMember
+                          : s.menuCreatorSubtitleJoin,
+                      onTap: go(
+                        () => context.push(
+                          isCreator ? '/creator/dashboard' : '/creator/intro',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ProfileMenuGroup(
+                  title: s.menuSectionAccount,
+                  items: [
+                    ProfileMenuItem(
+                      icon: LucideIcons.settings,
+                      color: const Color(0xFF64748B),
+                      title: s.profileOptionSettings,
+                      subtitle: s.menuSettingsSubtitle,
+                      onTap: go(() => context.push('/settings')),
+                    ),
+                    ProfileMenuItem(
+                      icon: LucideIcons.logOut,
+                      color: const Color(0xFFEF4444),
+                      title: s.profileOptionLogout,
+                      destructive: true,
+                      onTap: go(() => _confirmLogout(context)),
+                    ),
+                  ],
                 ),
               ],
-              const SizedBox(height: 8),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -933,14 +865,7 @@ class _ProfileHeader extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (profile.isVerified) ...[
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.verified,
-                      color: AppColors.braweBlue,
-                      size: 20,
-                    ),
-                  ],
+                  if (profile.isVerified) const VerifiedBadge(size: 20, gap: 6),
                   CreatorTierBadgeForUser(userId: profile.id, size: 18),
                 ],
               ),
@@ -1920,8 +1845,8 @@ class _AvatarFallback extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: TextStyle(
-          color: context.colors.textPrimary,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 32,
           fontWeight: FontWeight.w800,
           letterSpacing: -1,

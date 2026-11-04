@@ -217,6 +217,7 @@ class GifterEntry {
     required this.giftCount,
     this.level,
     this.award,
+    this.isVerified = false,
   });
 
   /// Parse tolerante de um item do ranking (socket ou REST).
@@ -241,6 +242,7 @@ class GifterEntry {
           0,
       level: (raw['level'] as num?)?.toInt(),
       award: UserAward.tryParse(raw['award']),
+      isVerified: raw['is_verified'] == true,
     );
   }
 
@@ -253,6 +255,7 @@ class GifterEntry {
 
   /// Prêmio ativo (moldura/badge) — ausente em servidor antigo.
   final UserAward? award;
+  final bool isVerified;
   final String userId;
   final String name;
   final String? avatarUrl;

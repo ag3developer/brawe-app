@@ -7022,4 +7022,458 @@ class SPt extends S {
   @override
   String get analyticsOverviewSeeDetails =>
       'Toque num indicador para ver os detalhes';
+
+  @override
+  String get gifterLevelTitle => 'Meu nível';
+
+  @override
+  String gifterLevelLevel(int level) {
+    return 'Nível $level';
+  }
+
+  @override
+  String gifterLevelXpProgress(String current, String total) {
+    return '$current / $total XP';
+  }
+
+  @override
+  String gifterLevelXpMissing(String xp, int level) {
+    return 'Faltam $xp XP para o nível $level';
+  }
+
+  @override
+  String get gifterLevelMaxReached => 'Nível máximo alcançado';
+
+  @override
+  String get gifterLevelNextTier => 'Próxima faixa';
+
+  @override
+  String gifterLevelNextTierLine(String name, int level, String xp) {
+    return '$name · nível $level · faltam $xp XP';
+  }
+
+  @override
+  String get gifterLevelHowToEarn => 'Como ganhar XP';
+
+  @override
+  String gifterLevelRuleGiftPerCoin(int xp, String cap) {
+    return 'Enviar presentes · $xp XP por moeda (até $cap por envio)';
+  }
+
+  @override
+  String gifterLevelRuleGiftPerCoinNoCap(int xp) {
+    return 'Enviar presentes · $xp XP por moeda';
+  }
+
+  @override
+  String gifterLevelRuleGiftFlat(int xp) {
+    return 'Enviar presentes · +$xp XP por presente';
+  }
+
+  @override
+  String gifterLevelRuleWatch(int xp, int cap) {
+    return 'Assistir lives · $xp XP por minuto (até $cap min)';
+  }
+
+  @override
+  String gifterLevelRuleWatchNoCap(int xp) {
+    return 'Assistir lives · $xp XP por minuto';
+  }
+
+  @override
+  String gifterLevelRuleJoin(int xp) {
+    return 'Entrar numa live · +$xp XP';
+  }
+
+  @override
+  String gifterLevelRuleChat(int xp) {
+    return 'Comentar no chat · +$xp XP';
+  }
+
+  @override
+  String get gifterLevelTiers => 'Faixas';
+
+  @override
+  String gifterLevelRange(int from, int to) {
+    return 'Nível $from–$to';
+  }
+
+  @override
+  String gifterLevelRangeOpen(int from) {
+    return 'Nível $from';
+  }
+
+  @override
+  String gifterLevelXpRequired(String xp) {
+    return '$xp XP';
+  }
+
+  @override
+  String get gifterLevelBenefitVip => 'Entrada VIP';
+
+  @override
+  String get gifterLevelBenefitEntryEffect => 'Efeito de entrada';
+
+  @override
+  String get gifterLevelBenefitAnnounce => 'Anúncio ao subir de nível';
+
+  @override
+  String get gifterLevelYouAreHere => 'Você está aqui';
+
+  @override
+  String gifterLevelTierXpMissing(String xp) {
+    return 'Faltam $xp XP';
+  }
+
+  @override
+  String get gifterLevelLoadError => 'Não foi possível carregar seu nível.';
+
+  @override
+  String get gifterLevelRetry => 'Tentar de novo';
+
+  @override
+  String get gifterLevelSeeLevels => 'Ver níveis';
+
+  @override
+  String get gifterLevelStatusAchieved => 'Conquistada';
+
+  @override
+  String get gifterLevelStatusCurrent => 'Faixa atual';
+
+  @override
+  String get gifterLevelStatusLocked => 'Bloqueada';
+
+  @override
+  String get gifterLevelBackToCurrent => 'Voltar ao meu nível';
+
+  @override
+  String get gifterLevelBenefits => 'Benefícios';
+
+  @override
+  String get gifterLevelNoBenefits => 'Emblema exclusivo no chat';
+
+  @override
+  String get gifterLevelSwipeHint => 'Deslize para ver todas as faixas';
+
+  @override
+  String gifterLevelUnlockedAt(String xp) {
+    return 'Conquistada ao chegar em $xp XP';
+  }
+
+  @override
+  String gifterLevelTierProgress(String current, String total) {
+    return 'Você tem $current de $total XP';
+  }
+
+  @override
+  String gifterLevelTiersCount(int done, int total) {
+    return '$done de $total faixas';
+  }
+
+  @override
+  String get menuSectionProgress => 'Meu progresso';
+
+  @override
+  String get menuSectionMoney => 'Moedas e presentes';
+
+  @override
+  String get menuSectionCreator => 'Criador';
+
+  @override
+  String get menuSectionAccount => 'Conta';
+
+  @override
+  String get menuSectionProfile => 'Perfil';
+
+  @override
+  String get menuSectionPrivacy => 'Privacidade e segurança';
+
+  @override
+  String get menuQuestsSubtitle => 'Missões, conquistas e jornada';
+
+  @override
+  String get menuLevelSubtitle => 'Faixas, emblemas e XP';
+
+  @override
+  String get menuWalletSubtitle => 'Suas moedas para presentear';
+
+  @override
+  String get menuCreatorSubtitleMember => 'Painel, ganhos e análises';
+
+  @override
+  String get menuCreatorSubtitleJoin => 'Saiba como ganhar com suas lives';
+
+  @override
+  String get menuSettingsSubtitle => 'Privacidade, notificações e mais';
+
+  @override
+  String get creatorShortcutEarnings => 'Ganhos';
+
+  @override
+  String get notifFilterAll => 'Todas';
+
+  @override
+  String get notifFilterLives => 'Lives';
+
+  @override
+  String get notifFilterSocial => 'Social';
+
+  @override
+  String get notifFilterMissions => 'Missões';
+
+  @override
+  String get notifFilterGifts => 'Presentes';
+
+  @override
+  String get notifFilterOther => 'Sistema';
+
+  @override
+  String get notifGroupToday => 'Hoje';
+
+  @override
+  String get notifGroupYesterday => 'Ontem';
+
+  @override
+  String get notifGroupWeek => 'Esta semana';
+
+  @override
+  String get notifGroupOlder => 'Anteriores';
+
+  @override
+  String get notifFilterEmpty => 'Nada por aqui nesta categoria';
+
+  @override
+  String get notifMarkAllTooltip => 'Marcar todas como lidas';
+
+  @override
+  String get linkSharedPost => '📎 Publicação compartilhada';
+
+  @override
+  String get chatViewOncePhoto => 'Foto';
+
+  @override
+  String get chatViewOnceTapToOpen => 'Toque para abrir · visualização única';
+
+  @override
+  String get chatViewOnceSent => 'Visualização única · enviada';
+
+  @override
+  String get chatViewOnceOpened => 'Aberta';
+
+  @override
+  String get chatCopied => 'Mensagem copiada';
+
+  @override
+  String get chatEmojiKeyboard => 'Teclado';
+
+  @override
+  String get chatDeleteForEveryone => 'Apagar para todos';
+
+  @override
+  String get chatDeleteForEveryoneTitle => 'Apagar para todos?';
+
+  @override
+  String get chatDeleteForEveryoneBody =>
+      'A mensagem some para você e para a outra pessoa.';
+
+  @override
+  String get chatMessageDeleted => 'Mensagem apagada';
+
+  @override
+  String get chatErrLoadMessages => 'Não foi possível carregar as mensagens.';
+
+  @override
+  String get chatErrSend => 'Não foi possível enviar a mensagem.';
+
+  @override
+  String get chatErrReact => 'Não foi possível reagir à mensagem.';
+
+  @override
+  String get chatErrAudio => 'Não foi possível enviar o áudio.';
+
+  @override
+  String get chatErrImage => 'Não foi possível enviar a imagem.';
+
+  @override
+  String get chatErrDelete => 'Não foi possível apagar a mensagem.';
+
+  @override
+  String get chatErrLoadConversations =>
+      'Não foi possível carregar as conversas.';
+
+  @override
+  String get chatErrArchive => 'Não foi possível arquivar a conversa.';
+
+  @override
+  String get chatErrUnarchive => 'Não foi possível desarquivar a conversa.';
+
+  @override
+  String get chatErrDeleteConversation => 'Não foi possível apagar a conversa.';
+
+  @override
+  String get chatErrStart => 'Não foi possível iniciar a conversa.';
+
+  @override
+  String get chatMicDenied => 'Permissão de microfone negada';
+
+  @override
+  String get chatErrEdit => 'Não foi possível editar a mensagem.';
+
+  @override
+  String get chatErrOpenGift =>
+      'Não foi possível abrir o cofre. Tente de novo.';
+
+  @override
+  String get chatErrFile => 'Não foi possível enviar o arquivo.';
+
+  @override
+  String get chatEdit => 'Editar';
+
+  @override
+  String get chatEditTitle => 'Editar mensagem';
+
+  @override
+  String get chatEditSave => 'Salvar';
+
+  @override
+  String get chatEdited => 'editada';
+
+  @override
+  String get chatForward => 'Encaminhar';
+
+  @override
+  String get chatForwarded => 'Encaminhada';
+
+  @override
+  String get chatForwardTitle => 'Encaminhar para';
+
+  @override
+  String get chatForwardSent => 'Mensagem encaminhada';
+
+  @override
+  String get chatForwardEmpty => 'Você ainda não tem outras conversas';
+
+  @override
+  String get chatMsgSearchHint => 'Buscar mensagens';
+
+  @override
+  String get chatSearchEmpty => 'Nenhuma mensagem encontrada';
+
+  @override
+  String get chatSearchMinChars => 'Digite pelo menos 2 letras';
+
+  @override
+  String get chatUnmute => 'Ativar notificações';
+
+  @override
+  String get chatMutedToast => 'Conversa silenciada';
+
+  @override
+  String get chatUnmutedToast => 'Notificações ativadas';
+
+  @override
+  String get chatPin => 'Fixar conversa';
+
+  @override
+  String get chatUnpin => 'Desafixar conversa';
+
+  @override
+  String get chatPinnedToast => 'Conversa fixada no topo';
+
+  @override
+  String get chatUnpinnedToast => 'Conversa desafixada';
+
+  @override
+  String get chatPinLimit => 'Você pode fixar até 5 conversas';
+
+  @override
+  String get chatLocationTitle => 'Localização';
+
+  @override
+  String get chatLocationOpen => 'Abrir no mapa';
+
+  @override
+  String get chatLocationDenied =>
+      'Permita o acesso à localização nos Ajustes para enviar.';
+
+  @override
+  String get chatLocationGetting => 'Obtendo sua localização…';
+
+  @override
+  String get chatLocationError => 'Não foi possível obter sua localização.';
+
+  @override
+  String get chatLocationConfirmTitle => 'Enviar sua localização atual?';
+
+  @override
+  String get chatLocationConfirmBody =>
+      'A outra pessoa verá onde você está agora.';
+
+  @override
+  String get chatSend => 'Enviar';
+
+  @override
+  String get chatFileOpen => 'Toque para abrir';
+
+  @override
+  String get chatStoryReacted => 'Reagiu ao seu story';
+
+  @override
+  String get chatStoryReactedMine => 'Você reagiu ao story';
+
+  @override
+  String get chatStoryReplied => 'Respondeu ao seu story';
+
+  @override
+  String get chatStoryRepliedMine => 'Você respondeu ao story';
+
+  @override
+  String get chatStoryUnavailable => 'Story não disponível';
+
+  @override
+  String get chatVaultReceived => 'Você recebeu um cofre!';
+
+  @override
+  String get chatVaultFromStory => 'Presente do seu story';
+
+  @override
+  String get chatVaultTapToOpen => 'Toque para abrir';
+
+  @override
+  String get chatVaultSentMine => 'Você enviou um cofre';
+
+  @override
+  String get chatVaultWaiting => 'Aguardando ser aberto';
+
+  @override
+  String get chatVaultOpenedBy => 'Cofre aberto';
+
+  @override
+  String get chatVaultYouGot => 'Você ganhou';
+
+  @override
+  String chatVaultEarnings(String value) {
+    return '+$value nas suas recompensas de criador';
+  }
+
+  @override
+  String get chatVaultCollect => 'Guardar';
+
+  @override
+  String get chatVaultSeeRewards => 'Ver recompensas';
+
+  @override
+  String get chatVaultTapHint => 'Toque no cofre!';
+
+  @override
+  String get chatVaultTierCommon => 'Comum';
+
+  @override
+  String get chatVaultTierRare => 'Raro';
+
+  @override
+  String get chatVaultTierEpic => 'Épico';
+
+  @override
+  String get chatVaultTierLegendary => 'Lendário';
 }
