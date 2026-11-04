@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/user.dart';
 import 'auth_repository.dart';
+import '../../ui/onboarding/onboarding_gate.dart';
 
 part 'auth_state_provider.g.dart';
 
@@ -16,6 +17,7 @@ class AuthState extends _$AuthState {
   }
 
   Future<void> logout() async {
+    OnboardingGate.instance.reset();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(null);
   }

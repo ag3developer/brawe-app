@@ -42,6 +42,7 @@ import '../../../core/network/media_headers.dart';
 import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import 'package:brawe_app/core/media/media_utils.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -960,7 +961,8 @@ class _PostCardState extends ConsumerState<PostCard>
   @override
   Widget build(BuildContext context) {
     final post = _post;
-    final isVideo = post.imageUrl != null && _isVideoUrl(post.imageUrl!);
+    final isVideo = post.imageUrl != null &&
+        isVideoMedia(mediaType: post.mediaType, url: post.imageUrl);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1082,17 +1084,27 @@ class _PostCardState extends ConsumerState<PostCard>
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.width * 1.25,
-                      ),
-                      child: isVideo
+                    // Quadro com proporção FIXA desde o 1º frame (do servidor
+                    // ou da memória) — antes nascia 4:5 e mudava quando a
+                    // mídia carregava/saía da tela ("estica e volta").
+                    child: isVideo
                           ? _FeedVideoTile(
                               // Versão leve (HLS do Bunny) quando existe; senão o original.
                               url: (post.hlsUrl?.isNotEmpty ?? false) ? post.hlsUrl! : post.imageUrl!,
-                              posterUrl: post.hlsThumbnailUrl,
+                              posterUrl: post.coverUrl,
+                              mediaAspect: post.aspectRatio ??
+                                  MediaAspectCache.get(post.imageUrl),
+                              cacheKey: post.imageUrl!,
+                              postId: post.id,
+                              sound: post.sound,
+                              soundVolume: post.soundVolume,
+                              originalAudioVolume: post.originalAudioVolume,
                             )
-                          : CachedNetworkImage(
+                          : _FeedPhoto(
+                              url: post.imageUrl!,
+                              mediaAspect: post.aspectRatio ??
+                                  MediaAspectCache.get(post.imageUrl),
+                              child: CachedNetworkImage(
                               imageUrl: post.imageUrl!,
                               width: double.infinity,
                               fit: BoxFit.cover,
@@ -1124,7 +1136,7 @@ class _PostCardState extends ConsumerState<PostCard>
                                 ),
                               ),
                             ),
-                    ),
+                          ),
                   ),
                 ),
                 // Coração do duplo toque — desenhado SOBRE a mídia, por
@@ -2465,30 +2477,75 @@ class _LightboxAction extends StatelessWidget {
 
 // ─── Vídeo inline no feed (Threads-style: autoplay muted, loop) ──────────────
 
-bool _isVideoUrl(String url) {
-  final u = url.toLowerCase().split('?').first;
-  return u.endsWith('.mp4') ||
-      u.endsWith('.mov') ||
-      u.endsWith('.webm') ||
-      u.endsWith('.m4v');
-}
+bool _isVideoUrl(String url) => isVideoUrl(url);
 
-class _FeedVideoTile extends StatefulWidget {
-  const _FeedVideoTile({required this.url, this.posterUrl});
+class _FeedVideoTile extends ConsumerStatefulWidget {
+  const _FeedVideoTile({
+    required this.url,
+    this.posterUrl,
+    this.mediaAspect,
+    required this.cacheKey,
+    required this.postId,
+    this.sound,
+    this.soundVolume = 1.0,
+    this.originalAudioVolume = 1.0,
+  });
+
+  final String postId;
+
+  /// Música anexada ao post (Brawe Sound) — toca junto quando o som está
+  /// ligado (antes só tocava na tela cheia).
+  final SoundPreview? sound;
+  final double soundVolume;
+  final double originalAudioVolume;
   final String url;
+
+  /// Proporção real da mídia (servidor ou memória). Null = desconhecida.
+  final double? mediaAspect;
+
+  /// Chave da memória de proporção (link original do post).
+  final String cacheKey;
 
   /// Miniatura do vídeo (gerada pelo Bunny). Aparece até o vídeo tocar.
   final String? posterUrl;
 
   @override
-  State<_FeedVideoTile> createState() => _FeedVideoTileState();
+  ConsumerState<_FeedVideoTile> createState() => _FeedVideoTileState();
 }
 
 /// Vídeo do feed no padrão Instagram/TikTok:
 /// - só baixa quando o vídeo está chegando na tela (economiza 4G);
 /// - só toca o que está ≥ 60% visível, e um por vez;
 /// - ao sair da tela, pausa e libera o player (memória e banda).
-class _FeedVideoTileState extends State<_FeedVideoTile> {
+class _FeedVideoTileState extends ConsumerState<_FeedVideoTile> {
+  String get _owner => 'feed:${widget.postId}';
+
+  /// Volume do áudio do VÍDEO com o som ligado (com música anexada o
+  /// autor pode ter abaixado o áudio original).
+  double get _videoVolume => widget.sound != null
+      ? widget.originalAudioVolume.clamp(0.0, 1.0)
+      : 1.0;
+
+  /// Música anexada: toca só com vídeo tocando E som ligado.
+  void _syncMusic() {
+    final sound = widget.sound;
+    if (sound == null) return;
+    final notifier = ref.read(soundPlayerViewModelProvider.notifier);
+    final c = _ctrl;
+    final shouldPlay =
+        !_muted && c != null && _ready && c.value.isPlaying && _playing == this;
+    if (shouldPlay) {
+      if (!notifier.isOwner(_owner)) {
+        notifier.play(
+          sound.toPlayableSound(volume: widget.soundVolume),
+          owner: _owner,
+        );
+      }
+    } else if (notifier.isOwner(_owner)) {
+      notifier.stop();
+    }
+  }
+
   /// O único vídeo tocando no feed.
   static _FeedVideoTileState? _playing;
 
@@ -2502,6 +2559,16 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
   bool _initializing = false;
   double _visible = 0;
   ScrollPosition? _scroll;
+
+  /// Proporção real conhecida (servidor/memória ou descoberta ao tocar).
+  /// O QUADRO usa [feedFrameAspect] dela e não muda mais depois.
+  double? _mediaAspect;
+
+  @override
+  void initState() {
+    super.initState();
+    _mediaAspect = widget.mediaAspect;
+  }
 
   @override
   void didChangeDependencies() {
@@ -2548,12 +2615,14 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     } else {
       _pause();
     }
+    _syncMusic();
   }
 
   void _pause() {
     final c = _ctrl;
     if (c != null && c.value.isPlaying) c.pause();
     if (_playing == this) _playing = null;
+    _syncMusic();
   }
 
   /// Fora da tela: libera o player. Volta a carregar se a pessoa rolar de volta.
@@ -2564,6 +2633,7 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     _ctrl = null;
     if (mounted) setState(() => _ready = false);
     c.dispose();
+    _syncMusic();
   }
 
   Future<void> _init() async {
@@ -2579,10 +2649,14 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
         return;
       }
       await c.setLooping(true);
-      await c.setVolume(_muted ? 0 : 1);
+      await c.setVolume(_muted ? 0 : _videoVolume);
+      final real = c.value.aspectRatio;
+      if (real > 0) MediaAspectCache.put(widget.cacheKey, real);
       setState(() {
         _ctrl = c;
         _ready = true;
+        // Só ajusta se ainda não sabíamos (post antigo, 1ª vez).
+        if (_mediaAspect == null && real > 0) _mediaAspect = real;
       });
       _onScroll(); // decide tocar ou não com a posição atual
     } catch (_) {
@@ -2598,6 +2672,12 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     _scroll?.removeListener(_onScroll);
     if (_playing == this) _playing = null;
     _ctrl?.dispose();
+    if (widget.sound != null) {
+      try {
+        final n = ref.read(soundPlayerViewModelProvider.notifier);
+        if (n.isOwner(_owner)) n.stop();
+      } catch (_) {}
+    }
     super.dispose();
   }
 
@@ -2605,14 +2685,15 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
     final c = _ctrl;
     if (c == null) return;
     setState(() => _muted = !_muted);
-    c.setVolume(_muted ? 0 : 1);
+    c.setVolume(_muted ? 0 : _videoVolume);
+    _syncMusic();
   }
 
   /// Miniatura (ou fundo neutro) enquanto o vídeo não toca.
   Widget _poster(BuildContext context, {bool loading = false}) {
     final poster = widget.posterUrl;
     return AspectRatio(
-      aspectRatio: 4 / 5,
+      aspectRatio: feedFrameAspect(_mediaAspect),
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -2665,14 +2746,19 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
       return _poster(context, loading: _initializing);
     }
     final c = _ctrl!;
-    final aspect = c.value.aspectRatio == 0 ? 9 / 16 : c.value.aspectRatio;
+    final frame = feedFrameAspect(_mediaAspect);
+    final real = c.value.aspectRatio == 0 ? frame : c.value.aspectRatio;
+    // Vídeo mais largo que o quadro (ex.: 16:9 num quadro 4:5 por falta de
+    // dado): mostra inteiro com faixas; senão preenche (recorte suave).
+    final fit = real > frame + 0.02 ? BoxFit.contain : BoxFit.cover;
     return AspectRatio(
-      aspectRatio: aspect.clamp(0.5, 1.91),
+      aspectRatio: frame,
       child: Stack(
         fit: StackFit.expand,
         children: [
+          if (fit == BoxFit.contain) const ColoredBox(color: Colors.black),
           FittedBox(
-            fit: BoxFit.cover,
+            fit: fit,
             child: SizedBox(
               width: c.value.size.width,
               height: c.value.size.height,
@@ -2707,6 +2793,71 @@ class _FeedVideoTileState extends State<_FeedVideoTile> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+/// Foto do feed com quadro de proporção fixa. Sem tamanho do servidor (post
+/// antigo), descobre o tamanho da imagem UMA vez e guarda na memória.
+class _FeedPhoto extends StatefulWidget {
+  const _FeedPhoto({
+    required this.url,
+    required this.mediaAspect,
+    required this.child,
+  });
+  final String url;
+  final double? mediaAspect;
+  final Widget child;
+
+  @override
+  State<_FeedPhoto> createState() => _FeedPhotoState();
+}
+
+class _FeedPhotoState extends State<_FeedPhoto> {
+  double? _aspect;
+  ImageStream? _stream;
+  ImageStreamListener? _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    _aspect = widget.mediaAspect;
+    if (_aspect == null) _measure();
+  }
+
+  void _measure() {
+    final stream = CachedNetworkImageProvider(widget.url)
+        .resolve(const ImageConfiguration());
+    _listener = ImageStreamListener((info, _) {
+      final w = info.image.width, h = info.image.height;
+      if (w > 0 && h > 0) {
+        final a = w / h;
+        MediaAspectCache.put(widget.url, a);
+        if (mounted && _aspect == null) setState(() => _aspect = a);
+      }
+      _stop();
+    }, onError: (_, _) => _stop());
+    _stream = stream..addListener(_listener!);
+  }
+
+  void _stop() {
+    final l = _listener;
+    if (l != null) _stream?.removeListener(l);
+    _listener = null;
+  }
+
+  @override
+  void dispose() {
+    _stop();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: feedFrameAspect(_aspect),
+      child: SizedBox.expand(child: widget.child),
     );
   }
 }

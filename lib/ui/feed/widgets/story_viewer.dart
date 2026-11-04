@@ -58,6 +58,11 @@ class StoryViewer extends ConsumerStatefulWidget {
 class _StoryViewerState extends ConsumerState<StoryViewer>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late int _currentIndex;
+
+  /// Stories em ordem de publicação (mais antigo → mais novo), como no
+  /// Instagram. O servidor antigo mandava do mais novo para o mais antigo,
+  /// e o último publicado aparecia primeiro.
+  late final List<Story> _stories;
   final GlobalKey _creatorAvatarKey = GlobalKey();
 
   late AnimationController _progressController;
@@ -102,12 +107,40 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   /// "ver post original"). Elementos adicionais empilham a partir daqui.
   static const _kStoryBottomBase = 80.0;
 
-  Story get _story => widget.stories[_currentIndex];
+  Story get _story => _stories[_currentIndex];
+
+  /// Toque na foto/nome do autor → perfil oficial dele. Fecha o story antes
+  /// (ele está por cima da navegação) e abre o perfil pelo roteador.
+  void _openAuthorProfile() {
+    final id = _story.authorId;
+    if (id.isEmpty) return;
+    HapticFeedback.selectionClick();
+    final router = GoRouter.of(context);
+    Navigator.of(context).pop();
+    router.push('/profile/$id');
+  }
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _stories = [...widget.stories]
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    // Começa no primeiro AINDA NÃO VISTO; se todos já foram vistos, no
+    // story pedido por quem abriu o visualizador.
+    final firstUnseen = _stories.indexWhere((st) => !st.isSeen);
+    if (firstUnseen >= 0) {
+      _currentIndex = firstUnseen;
+    } else {
+      final asked =
+          (widget.initialIndex >= 0 &&
+              widget.initialIndex < widget.stories.length)
+          ? widget.stories[widget.initialIndex].id
+          : null;
+      final i = asked == null
+          ? -1
+          : _stories.indexWhere((st) => st.id == asked);
+      _currentIndex = i >= 0 ? i : 0;
+    }
     _progressController = AnimationController(vsync: this);
     WidgetsBinding.instance.addObserver(this);
     _startStory();
@@ -173,8 +206,8 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   }
 
   void _notifyViewed() {
-    if (_currentIndex < 0 || _currentIndex >= widget.stories.length) return;
-    final storyId = widget.stories[_currentIndex].id;
+    if (_currentIndex < 0 || _currentIndex >= _stories.length) return;
+    final storyId = _stories[_currentIndex].id;
     // Callback do parent (UI cache).
     widget.onStoryViewed?.call(storyId);
     // Persiste no backend (fire-and-forget; ignora falhas silenciosamente).
@@ -389,8 +422,8 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   void _precacheNeighbors() {
     // i+1 é o caso comum (usuário sempre avança).
     final next = _currentIndex + 1;
-    if (next < widget.stories.length) {
-      final s = widget.stories[next];
+    if (next < _stories.length) {
+      final s = _stories[next];
       if (s.mediaUrl.isNotEmpty) {
         if (s.isVideo) {
           // Warm-up assíncrono (DNS+TLS+manifest); não bloqueia UI.
@@ -459,7 +492,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   }
 
   void _nextStory() {
-    if (_currentIndex < widget.stories.length - 1) {
+    if (_currentIndex < _stories.length - 1) {
       setState(() => _currentIndex++);
       _startStory();
       _notifyViewed();
@@ -691,7 +724,9 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       return;
     }
     try {
-      await ref.read(hiddenUsersProvider.notifier).block(
+      await ref
+          .read(hiddenUsersProvider.notifier)
+          .block(
             slug: _story.authorUsername.isNotEmpty
                 ? _story.authorUsername
                 : _story.authorId,
@@ -973,7 +1008,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
-                          children: List.generate(widget.stories.length, (i) {
+                          children: List.generate(_stories.length, (i) {
                             return Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -1014,15 +1049,19 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                               // determinístico de cor — ver BraweAvatar.
                               // Substitui o CircleAvatar legado que mostrava
                               // a letra inicial enquanto baixava.
-                              Padding(
-                                key: _creatorAvatarKey,
-                                padding: EdgeInsets.zero,
-                                child: BraweAvatar(
-                                  avatarUrl: story.authorAvatarUrl,
-                                  displayName: story.authorName.isNotEmpty
-                                      ? story.authorName
-                                      : story.authorUsername,
-                                  size: 36,
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: _openAuthorProfile,
+                                child: Padding(
+                                  key: _creatorAvatarKey,
+                                  padding: EdgeInsets.zero,
+                                  child: BraweAvatar(
+                                    avatarUrl: story.authorAvatarUrl,
+                                    displayName: story.authorName.isNotEmpty
+                                        ? story.authorName
+                                        : story.authorUsername,
+                                    size: 36,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -1031,23 +1070,31 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            story.authorName.isNotEmpty
-                                                ? story.authorName
-                                                : story.authorUsername,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
+                                    GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: _openAuthorProfile,
+                                      child: Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              story.authorName.isNotEmpty
+                                                  ? story.authorName
+                                                  : story.authorUsername,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                        if (story.isVerified) const VerifiedBadge(size: 14, gap: 4),
-                                      ],
+                                          if (story.isVerified)
+                                            const VerifiedBadge(
+                                              size: 14,
+                                              gap: 4,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                     Text(
                                       story.timeAgo,
@@ -1650,7 +1697,8 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (v.isVerified) const VerifiedBadge(size: 14, gap: 4),
+                            if (v.isVerified)
+                              const VerifiedBadge(size: 14, gap: 4),
                           ],
                         ),
                         subtitle: Text(

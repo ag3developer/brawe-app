@@ -46,6 +46,21 @@ class VideoFullscreenScreen extends ConsumerStatefulWidget {
 class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     with WidgetsBindingObserver {
   VideoPlayerController? _ctrl;
+
+  /// Paisagem ligada pelo botão (só para vídeo deitado).
+  bool _landscape = false;
+
+  void _toggleLandscape() {
+    setState(() => _landscape = !_landscape);
+    SystemChrome.setPreferredOrientations(
+      _landscape
+          ? const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ]
+          : const [DeviceOrientation.portraitUp],
+    );
+  }
   Post? _post;
   bool _loading = true;
   bool _error = false;
@@ -254,6 +269,12 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     WidgetsBinding.instance.removeObserver(this);
     _session++; // aborta bootstrap/drift-correction pendentes
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Sai da paisagem: o app é travado em retrato.
+    if (_landscape) {
+      SystemChrome.setPreferredOrientations(
+        const [DeviceOrientation.portraitUp],
+      );
+    }
     _syncTimer?.cancel();
     _ctrl?.removeListener(_onTick);
     _ctrl?.dispose();
@@ -499,6 +520,18 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
                         onPressed: () => Navigator.of(context).maybePop(),
                       ),
                       const Spacer(),
+                      // Vídeo deitado: botão para girar (paisagem).
+                      if ((_ctrl?.value.aspectRatio ?? 0) > 1.05)
+                        IconButton(
+                          tooltip: 'Landscape',
+                          icon: Icon(
+                            _landscape
+                                ? Icons.screen_lock_portrait_rounded
+                                : Icons.screen_rotation_rounded,
+                            color: Colors.white,
+                          ),
+                          onPressed: _toggleLandscape,
+                        ),
                       IconButton(
                         icon: Icon(
                           _muted

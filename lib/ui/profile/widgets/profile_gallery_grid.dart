@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
@@ -414,6 +415,11 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
         if (!mounted) return;
         setState(() {
           _chewie = ChewieController(
+            // Ao sair da tela cheia volta para RETRATO (o app é travado em
+            // retrato; o padrão do Chewie liberava todas as orientações).
+            deviceOrientationsAfterFullScreen: const [
+              DeviceOrientation.portraitUp,
+            ],
             videoPlayerController: _video!,
             autoPlay: true,
             looping: true,

@@ -39,7 +39,31 @@ sealed class Post with _$Post {
     @JsonKey(name: 'original_audio_volume')
     @Default(1.0)
     double originalAudioVolume,
+    // ── Mídia: tamanho real (rotação já corrigida no servidor) ──
+    // Com isso o feed reserva o espaço certo ANTES de carregar (sem
+    // "esticar e voltar"). Null em posts antigos ainda não medidos.
+    int? mediaWidth,
+    int? mediaHeight,
+    double? durationSec,
+    // Capa do vídeo: personalizada pelo autor ou automática (frame).
+    String? thumbnailUrl,
+    // 'image' | 'video' (null em servidor antigo → decide pela URL).
+    String? mediaType,
   }) = _Post;
+
+  const Post._();
+
+  /// Proporção largura/altura da mídia, se conhecida.
+  double? get aspectRatio {
+    final w = mediaWidth, h = mediaHeight;
+    if (w == null || h == null || w <= 0 || h <= 0) return null;
+    return w / h;
+  }
+
+  /// Capa para exibir: personalizada/automática ou a do HLS.
+  String? get coverUrl => (thumbnailUrl != null && thumbnailUrl!.isNotEmpty)
+      ? thumbnailUrl
+      : hlsThumbnailUrl;
 }
 
 @freezed

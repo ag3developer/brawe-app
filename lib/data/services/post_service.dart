@@ -139,6 +139,11 @@ class PostService {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    String? mediaType, // 'video' | 'image'
+    int? width,
+    int? height,
+    double? durationSec,
+    String? thumbnailUrl,
   }) async {
     await _dio.post(
       '/posts',
@@ -150,6 +155,11 @@ class PostService {
         'sound_trim_end_ms': ?soundTrimEndMs,
         if (soundId != null) 'sound_volume': soundVolume,
         if (soundId != null) 'original_audio_volume': originalAudioVolume,
+        'media_type': ?mediaType,
+        'width': ?width,
+        'height': ?height,
+        'duration_sec': ?durationSec,
+        'thumbnail_url': ?thumbnailUrl,
       },
     );
   }
@@ -168,22 +178,73 @@ class PostService {
 
   /// Upload de vídeo curto para post (Reels/Shorts).
   /// Backend: POST /posts/upload-video (multipart, field "file")
-  /// Aceita MP4/MOV/WebM, máx 100MB (definido no backend).
-  /// Retorno: { success, url, mime_type, size, duration? }
-  Future<String> uploadVideo(String filePath) async {
+  /// Retorno: { url, width?, height?, duration_sec?, thumbnail_url? }
+  /// Campos extras são opcionais (servidor antigo não os devolve).
+  Future<VideoUploadResult> uploadVideo(String filePath) async {
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(filePath),
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: _safeName(filePath, 'mp4'),
+      ),
     });
     final response = await _dio.post(
       '/posts/upload-video',
       data: formData,
       options: Options(
-        // Vídeos podem demorar mais — sobe o timeout p/ 2 min.
-        sendTimeout: const Duration(minutes: 2),
-        receiveTimeout: const Duration(minutes: 2),
+        sendTimeout: const Duration(minutes: 3),
+        receiveTimeout: const Duration(minutes: 3),
       ),
     );
-    final data = response.data as Map<String, dynamic>;
-    return data['url']?.toString() ?? '';
+    final d = response.data as Map<String, dynamic>;
+    return VideoUploadResult(
+      url: d['url']?.toString() ?? '',
+      width: _asInt(d['width']),
+      height: _asInt(d['height']),
+      durationSec: _asDouble(d['duration_sec']),
+      thumbnailUrl: d['thumbnail_url']?.toString(),
+    );
   }
+
+  /// Upload de capa personalizada. Backend: POST /posts/upload-cover.
+  /// Retorno: { url, width, height }. Devolve a URL.
+  Future<String> uploadCover(String filePath) async {
+    final ext = filePath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: _safeName(filePath, ext),
+      ),
+    });
+    final response = await _dio.post('/posts/upload-cover', data: formData);
+    final d = response.data as Map<String, dynamic>;
+    return d['url']?.toString() ?? '';
+  }
+
+  static String _safeName(String path, String ext) {
+    final base = path.split('/').last.split('.').first;
+    final clean = base.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return '${clean.isEmpty ? 'file' : clean}.$ext';
+  }
+
+  static int? _asInt(dynamic v) =>
+      v is num ? v.round() : int.tryParse('${v ?? ''}');
+  static double? _asDouble(dynamic v) =>
+      v is num ? v.toDouble() : double.tryParse('${v ?? ''}');
+}
+
+/// Resultado do upload de vídeo (campos além de [url] são opcionais).
+class VideoUploadResult {
+  const VideoUploadResult({
+    required this.url,
+    this.width,
+    this.height,
+    this.durationSec,
+    this.thumbnailUrl,
+  });
+
+  final String url;
+  final int? width;
+  final int? height;
+  final double? durationSec;
+  final String? thumbnailUrl;
 }

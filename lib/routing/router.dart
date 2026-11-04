@@ -70,6 +70,9 @@ import '../ui/shop/pages/shop_vitrine_page.dart';
 import '../ui/shop/pages/shop_cart_page.dart';
 import '../ui/shop/pages/shop_checkout_page.dart';
 import '../ui/shop/pages/shop_payment_page.dart';
+import '../ui/onboarding/onboarding_gate.dart';
+import '../ui/onboarding/onboarding_screen.dart';
+import '../data/services/profile_service.dart';
 
 part 'router.g.dart';
 
@@ -226,15 +229,20 @@ GoRouter router(Ref ref) {
         return pending ?? '/home';
       }
 
-      // ── Onboarding obrigatório de avatar ──────────────────────────────
-      // Sem foto de perfil o usuário fica preso em /edit-profile. Isso é
-      // requisito do gate de Live (e melhora qualidade geral da rede).
-      final avatar = user.avatarUrl?.trim() ?? '';
-      final needsAvatar = avatar.isEmpty;
-      final isOnEditProfile = state.matchedLocation == '/edit-profile';
-      final isOnSettings = state.matchedLocation.startsWith('/settings');
-      if (needsAvatar && !isOnEditProfile && !isOnSettings) {
-        return '/edit-profile';
+      // ── Cadastro em passos (onboarding) ───────────────────────────────
+      // Falta data de nascimento (18+), @ ou foto → /onboarding, que mostra
+      // só os passos que faltam e termina no Feed. Contas antigas sem esses
+      // dados passam por ele uma única vez.
+      final onOnboarding = state.matchedLocation == '/onboarding';
+      if (onOnboarding) return null;
+      final gate = OnboardingGate.instance;
+      gate.ensureFor(
+        user.id,
+        () => ref.read(profileServiceProvider).getMyProfile(),
+      );
+      final needsAvatar = (user.avatarUrl?.trim() ?? '').isEmpty;
+      if (needsAvatar || (gate.value?.blocking ?? false)) {
+        return '/onboarding';
       }
 
       return null;
@@ -639,6 +647,11 @@ GoRouter router(Ref ref) {
       ),
       // "Meu nível" do presenteador: fora do Shell (no mesmo nível da live)
       // para abrir POR CIMA da live — dentro do Shell ela abria por baixo.
+      // Cadastro em passos — fora do Shell (sem barra de baixo).
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(
         path: '/gifter-level',
         builder: (context, state) => const GifterLevelScreen(),
@@ -768,6 +781,7 @@ class RouterRefreshListenable extends ChangeNotifier {
       (previous, next) => notifyListeners(),
     );
     AccountSuspension.instance.addListener(notifyListeners);
+    OnboardingGate.instance.addListener(notifyListeners);
   }
 
   late final ProviderSubscription _subscription;
@@ -776,6 +790,7 @@ class RouterRefreshListenable extends ChangeNotifier {
   void dispose() {
     _subscription.close();
     AccountSuspension.instance.removeListener(notifyListeners);
+    OnboardingGate.instance.removeListener(notifyListeners);
     super.dispose();
   }
 }

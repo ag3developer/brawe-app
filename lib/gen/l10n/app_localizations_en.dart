@@ -7444,4 +7444,182 @@ class SEn extends S {
 
   @override
   String get chatVaultReplay => 'Play again';
+
+  @override
+  String onbStepOf(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get onbContinue => 'Continue';
+
+  @override
+  String get onbSkip => 'Skip';
+
+  @override
+  String get onbSignOut => 'Sign out';
+
+  @override
+  String get onbError => 'Something went wrong. Try again.';
+
+  @override
+  String get onbBirthTitle => 'When were you born?';
+
+  @override
+  String get onbBirthSubtitle =>
+      'We need to confirm your age. It won\'t appear on your profile.';
+
+  @override
+  String get onbUnderageTitle => 'Brawe is for people 18 and older';
+
+  @override
+  String get onbUnderageBody =>
+      'For the safety of our community, accounts for people under 18 are not allowed.';
+
+  @override
+  String get onbUsernameTitle => 'Choose your @';
+
+  @override
+  String get onbUsernameSubtitle =>
+      'This is how people will find and mention you.';
+
+  @override
+  String get onbUsernameRules =>
+      '3 to 30 characters: letters, numbers, dot and _';
+
+  @override
+  String get onbUsernameChecking => 'Checking…';
+
+  @override
+  String get onbUsernameAvailable => 'Available';
+
+  @override
+  String get onbPhotoTitle => 'Add a photo';
+
+  @override
+  String get onbPhotoSubtitle =>
+      'People trust profiles with a photo more. It\'s required to use Brawe.';
+
+  @override
+  String get onbPhotoGallery => 'Choose from library';
+
+  @override
+  String get onbPhotoCamera => 'Take a photo';
+
+  @override
+  String get onbPhotoChange => 'Change photo';
+
+  @override
+  String get onbPhotoPosition => 'Adjust your photo';
+
+  @override
+  String get onbPhotoError => 'Couldn\'t upload the photo. Try again.';
+
+  @override
+  String get onbBioTitle => 'Tell us a bit about you';
+
+  @override
+  String get onbBioSubtitle =>
+      'A short line for your bio. You can change it later.';
+
+  @override
+  String get onbBioHint => 'E.g.: Music, games and lives every Friday 🎮';
+
+  @override
+  String get onbFollowTitle => 'Follow people';
+
+  @override
+  String get onbFollowSubtitle =>
+      'Follow at least 3 people to see content in your feed.';
+
+  @override
+  String get onbFollow => 'Follow';
+
+  @override
+  String get onbFollowing => 'Following';
+
+  @override
+  String get onbFollowAll => 'Follow all';
+
+  @override
+  String onbFollowers(String count) {
+    return '$count followers';
+  }
+
+  @override
+  String get onbFollowEmpty =>
+      'No suggestions yet. You can find people later in \"Find friends\".';
+
+  @override
+  String get onbFinish => 'Get started';
+
+  @override
+  String get onbInterestsTitle => 'What are you into?';
+
+  @override
+  String get onbInterestsSubtitle =>
+      'Pick the topics you want to see. We use this to suggest people and content.';
+
+  @override
+  String onbInterestsCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get videoPubTrim => 'Trim';
+
+  @override
+  String get videoPubCover => 'Cover';
+
+  @override
+  String get videoPubCoverAuto => 'Automatic cover';
+
+  @override
+  String get videoPubCoverCustom => 'Custom cover';
+
+  @override
+  String get videoPubCoverFrame => 'Video frame';
+
+  @override
+  String get videoPubCoverGallery => 'Gallery image';
+
+  @override
+  String get videoPubCoverRemove => 'Use automatic cover';
+
+  @override
+  String get videoPubCoverTitle => 'Choose cover';
+
+  @override
+  String get videoPubCoverFrameHint => 'Drag to choose the cover frame';
+
+  @override
+  String get videoPubCoverUse => 'Use this cover';
+
+  @override
+  String get videoPubCoverCrop => 'Adjust cover';
+
+  @override
+  String get videoPubCoverError =>
+      'Could not create the cover. Try another frame or image.';
+
+  @override
+  String get videoPubStepVideo => 'Uploading video...';
+
+  @override
+  String get videoPubStepCover => 'Uploading cover...';
+
+  @override
+  String get videoPubStepPost => 'Publishing...';
+
+  @override
+  String get videoPubCoverUploadError =>
+      'Failed to upload the cover. Check your connection and try again.';
+
+  @override
+  String get videoPubTooLong =>
+      'The video is longer than 3 minutes. Trim it to publish.';
+
+  @override
+  String get videoPubTrimPrepareError =>
+      'Could not prepare the trimmed video. Please try again.';
 }

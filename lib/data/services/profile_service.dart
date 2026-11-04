@@ -119,6 +119,25 @@ class ProfileService {
 
   /// Verifica se o username está disponível.
   /// Retorna `null` se disponível, ou uma mensagem de erro se não estiver.
+  /// Salva a data de nascimento (cadastro). O servidor recusa menores de
+  /// 18 anos (422 "underage").
+  Future<void> updateBirthDate(DateTime date) async {
+    final d = '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+    await _dio.put('/profile/me', data: {'birth_date': d});
+  }
+
+  /// Interesses do cadastro (nichos: games, music, fashion…).
+  Future<void> updateInterests(List<String> interests) async {
+    await _dio.put('/profile/me', data: {'interests': interests});
+  }
+
+  /// Atualiza só a bio.
+  Future<void> updateBio(String bio) async {
+    await _dio.put('/profile/me', data: {'bio': bio});
+  }
+
   Future<String?> checkUsernameAvailability(String username) async {
     try {
       final response = await _braweApi.get('/users/check-username/$username');

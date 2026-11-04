@@ -13322,6 +13322,324 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Ver de novo'**
   String get chatVaultReplay;
+
+  /// No description provided for @onbStepOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Passo {current} de {total}'**
+  String onbStepOf(int current, int total);
+
+  /// No description provided for @onbContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get onbContinue;
+
+  /// No description provided for @onbSkip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular'**
+  String get onbSkip;
+
+  /// No description provided for @onbSignOut.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da conta'**
+  String get onbSignOut;
+
+  /// No description provided for @onbError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Algo deu errado. Tente de novo.'**
+  String get onbError;
+
+  /// No description provided for @onbBirthTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando você nasceu?'**
+  String get onbBirthTitle;
+
+  /// No description provided for @onbBirthSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisamos confirmar sua idade. Ela não aparece no seu perfil.'**
+  String get onbBirthSubtitle;
+
+  /// No description provided for @onbUnderageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O Brawe é para maiores de 18 anos'**
+  String get onbUnderageTitle;
+
+  /// No description provided for @onbUnderageBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pela segurança da comunidade, contas de menores de 18 anos não são permitidas.'**
+  String get onbUnderageBody;
+
+  /// No description provided for @onbUsernameTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha seu @'**
+  String get onbUsernameTitle;
+
+  /// No description provided for @onbUsernameSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'É assim que as pessoas vão te encontrar e te marcar.'**
+  String get onbUsernameSubtitle;
+
+  /// No description provided for @onbUsernameRules.
+  ///
+  /// In pt, this message translates to:
+  /// **'3 a 30 caracteres: letras, números, ponto e _'**
+  String get onbUsernameRules;
+
+  /// No description provided for @onbUsernameChecking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificando…'**
+  String get onbUsernameChecking;
+
+  /// No description provided for @onbUsernameAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível'**
+  String get onbUsernameAvailable;
+
+  /// No description provided for @onbPhotoTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione uma foto'**
+  String get onbPhotoTitle;
+
+  /// No description provided for @onbPhotoSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'As pessoas confiam mais em perfis com foto. Ela é necessária para usar o Brawe.'**
+  String get onbPhotoSubtitle;
+
+  /// No description provided for @onbPhotoGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher da galeria'**
+  String get onbPhotoGallery;
+
+  /// No description provided for @onbPhotoCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tirar foto'**
+  String get onbPhotoCamera;
+
+  /// No description provided for @onbPhotoChange.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar foto'**
+  String get onbPhotoChange;
+
+  /// No description provided for @onbPhotoPosition.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuste sua foto'**
+  String get onbPhotoPosition;
+
+  /// No description provided for @onbPhotoError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a foto. Tente de novo.'**
+  String get onbPhotoError;
+
+  /// No description provided for @onbBioTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte um pouco sobre você'**
+  String get onbBioTitle;
+
+  /// No description provided for @onbBioSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uma frase curta para a sua bio. Dá para mudar depois.'**
+  String get onbBioSubtitle;
+
+  /// No description provided for @onbBioHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex.: Música, games e live toda sexta 🎮'**
+  String get onbBioHint;
+
+  /// No description provided for @onbFollowTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga pessoas'**
+  String get onbFollowTitle;
+
+  /// No description provided for @onbFollowSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga pelo menos 3 pessoas para ver conteúdo no seu feed.'**
+  String get onbFollowSubtitle;
+
+  /// No description provided for @onbFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get onbFollow;
+
+  /// No description provided for @onbFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get onbFollowing;
+
+  /// No description provided for @onbFollowAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir todos'**
+  String get onbFollowAll;
+
+  /// No description provided for @onbFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} seguidores'**
+  String onbFollowers(String count);
+
+  /// No description provided for @onbFollowEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não temos sugestões. Você pode encontrar pessoas depois em \"Encontrar amigos\".'**
+  String get onbFollowEmpty;
+
+  /// No description provided for @onbFinish.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar'**
+  String get onbFinish;
+
+  /// No description provided for @onbInterestsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que você curte?'**
+  String get onbInterestsTitle;
+
+  /// No description provided for @onbInterestsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha os assuntos que você quer ver. Usamos isso para sugerir pessoas e conteúdos.'**
+  String get onbInterestsSubtitle;
+
+  /// No description provided for @onbInterestsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count} selecionados'**
+  String onbInterestsCount(int count);
+
+  /// No description provided for @videoPubTrim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cortar'**
+  String get videoPubTrim;
+
+  /// No description provided for @videoPubCover.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa'**
+  String get videoPubCover;
+
+  /// No description provided for @videoPubCoverAuto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa automática'**
+  String get videoPubCoverAuto;
+
+  /// No description provided for @videoPubCoverCustom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa personalizada'**
+  String get videoPubCoverCustom;
+
+  /// No description provided for @videoPubCoverFrame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quadro do vídeo'**
+  String get videoPubCoverFrame;
+
+  /// No description provided for @videoPubCoverGallery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Imagem da galeria'**
+  String get videoPubCoverGallery;
+
+  /// No description provided for @videoPubCoverRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar capa automática'**
+  String get videoPubCoverRemove;
+
+  /// No description provided for @videoPubCoverTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher capa'**
+  String get videoPubCoverTitle;
+
+  /// No description provided for @videoPubCoverFrameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Arraste para escolher o quadro da capa'**
+  String get videoPubCoverFrameHint;
+
+  /// No description provided for @videoPubCoverUse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar esta capa'**
+  String get videoPubCoverUse;
+
+  /// No description provided for @videoPubCoverCrop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajustar capa'**
+  String get videoPubCoverCrop;
+
+  /// No description provided for @videoPubCoverError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível gerar a capa. Tente outro quadro ou imagem.'**
+  String get videoPubCoverError;
+
+  /// No description provided for @videoPubStepVideo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviando vídeo...'**
+  String get videoPubStepVideo;
+
+  /// No description provided for @videoPubStepCover.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviando capa...'**
+  String get videoPubStepCover;
+
+  /// No description provided for @videoPubStepPost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicando...'**
+  String get videoPubStepPost;
+
+  /// No description provided for @videoPubCoverUploadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falha ao enviar a capa. Verifique sua conexão e tente de novo.'**
+  String get videoPubCoverUploadError;
+
+  /// No description provided for @videoPubTooLong.
+  ///
+  /// In pt, this message translates to:
+  /// **'O vídeo passa de 3 minutos. Corte o vídeo para publicar.'**
+  String get videoPubTooLong;
+
+  /// No description provided for @videoPubTrimPrepareError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível preparar o vídeo cortado. Tente novamente.'**
+  String get videoPubTrimPrepareError;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

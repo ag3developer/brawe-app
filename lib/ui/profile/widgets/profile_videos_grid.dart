@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +18,7 @@ import '../../core/themes/force_dark_theme.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../feed/widgets/story_composer_screen.dart';
 import '../../../core/network/media_headers.dart';
+import 'package:brawe_app/core/media/media_utils.dart';
 
 /// Grid de vídeos do perfil — mostra os vídeos publicados pelo usuário
 /// na aba "Para Você" (posts com `imageUrl` em `.mp4/.mov/.webm`).
@@ -35,14 +37,7 @@ class ProfileVideosGrid extends ConsumerWidget {
   final bool isMe;
   final AsyncValue<List<Post>> postsState;
 
-  static bool _isVideoUrl(String? url) {
-    if (url == null || url.isEmpty) return false;
-    final lower = url.toLowerCase();
-    return lower.endsWith('.mp4') ||
-        lower.endsWith('.mov') ||
-        lower.endsWith('.webm') ||
-        lower.endsWith('.m4v');
-  }
+  static bool _isVideoUrl(String? url) => isVideoUrl(url);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -109,7 +104,7 @@ class _VideoTileState extends ConsumerState<_VideoTile> {
   /// sem capa abria um player por célula só para mostrar o 1º quadro — com
   /// várias células visíveis o Android ficava sem memória e matava o app.
   String? get _posterUrl {
-    final u = widget.post.hlsThumbnailUrl;
+    final u = widget.post.coverUrl;
     return (u != null && u.isNotEmpty) ? u : null;
   }
 
@@ -617,16 +612,46 @@ class _ViewerPageState extends ConsumerState<_ViewerPage> {
         fit: StackFit.expand,
         children: [
           if (_initialized && _ctrl != null)
-            SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
+            Builder(builder: (context) {
+              final c = _ctrl!;
+              final screen = MediaQuery.sizeOf(context);
+              final screenAspect = screen.width / screen.height;
+              final a = c.value.aspectRatio;
+              // Vídeo em pé (≈ proporção da tela): preenche. Deitado,
+              // quadrado, 4:3…: mostra INTEIRO sobre o fundo desfocado
+              // (antes era cortado para preencher a tela).
+              final fill = a > 0 && a <= screenAspect * 1.15;
+              final player = FittedBox(
+                fit: fill ? BoxFit.cover : BoxFit.contain,
                 child: SizedBox(
-                  width: _ctrl!.value.size.width,
-                  height: _ctrl!.value.size.height,
-                  child: VideoPlayer(_ctrl!),
+                  width: c.value.size.width,
+                  height: c.value.size.height,
+                  child: VideoPlayer(c),
                 ),
-              ),
-            ),
+              );
+              if (fill) return SizedBox.expand(child: player);
+              final cover = post.coverUrl;
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  const ColoredBox(color: Colors.black),
+                  if (cover != null && cover.isNotEmpty)
+                    ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                      child: Opacity(
+                        opacity: 0.55,
+                        child: CachedNetworkImage(
+                          imageUrl: cover,
+                          fit: BoxFit.cover,
+                          memCacheWidth: 300,
+                          errorWidget: (_, _, _) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                  Center(child: player),
+                ],
+              );
+            }),
           if (!_initialized && !_failed)
             const Center(
               child: CircularProgressIndicator(color: AppColors.braweBlue),

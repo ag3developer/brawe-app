@@ -33,14 +33,9 @@ import '../../feed/widgets/share_to_chat_sheet.dart';
 import '../../../core/network/media_headers.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import 'package:brawe_app/core/media/media_utils.dart';
+import '../../feed/widgets/video_fullscreen_screen.dart';
 
-bool _isVideoUrl(String url) {
-  final u = url.toLowerCase().split('?').first;
-  return u.endsWith('.mp4') ||
-      u.endsWith('.mov') ||
-      u.endsWith('.webm') ||
-      u.endsWith('.m4v');
-}
 
 /// Provider local para refetch ao tocar em like / repost.
 final _sharedPostDetailProvider = FutureProvider.autoDispose
@@ -392,7 +387,14 @@ class _SheetContent extends StatelessWidget {
 
               // ── Mídia (imagem ou vídeo) ───────────────────────────
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-                _MediaBlock(url: post.imageUrl!, hlsUrl: post.hlsUrl),
+                _MediaBlock(
+                  url: post.imageUrl!,
+                  hlsUrl: post.hlsUrl,
+                  postId: post.id,
+                  mediaType: post.mediaType,
+                  mediaAspect: post.aspectRatio ??
+                      MediaAspectCache.get(post.imageUrl),
+                ),
 
               // ── Caption ───────────────────────────────────────────
               if (post.content.trim().isNotEmpty)
@@ -483,17 +485,43 @@ class _SheetContent extends StatelessWidget {
 //   MEDIA: imagem ou vídeo
 // ───────────────────────────────────────────────────────────────────────────
 class _MediaBlock extends StatelessWidget {
-  const _MediaBlock({required this.url, this.hlsUrl});
+  const _MediaBlock({
+    required this.url,
+    this.hlsUrl,
+    required this.postId,
+    this.mediaType,
+    this.mediaAspect,
+  });
   final String url;
+  final String postId;
+  final String? mediaType;
+  final double? mediaAspect;
 
   /// Versão leve (HLS do Bunny), quando o vídeo já foi convertido.
   final String? hlsUrl;
 
   @override
   Widget build(BuildContext context) {
-    if (_isVideoUrl(url)) {
+    if (isVideoMedia(mediaType: mediaType, url: url)) {
       final playUrl = (hlsUrl?.isNotEmpty ?? false) ? hlsUrl! : url;
-      return AspectRatio(aspectRatio: 1, child: _AutoplayVideo(url: playUrl));
+      // Proporção real (servidor/memória); antes era um QUADRADO fixo que
+      // cortava quase metade de um vídeo em pé.
+      return AspectRatio(
+        aspectRatio: feedFrameAspect(mediaAspect),
+        child: _AutoplayVideo(
+          url: playUrl,
+          cacheKey: url,
+          onOpenFull: () => Navigator.of(context, rootNavigator: true).push(
+            MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (_) => VideoFullscreenScreen(
+                postId: postId,
+                initialUrl: playUrl,
+              ),
+            ),
+          ),
+        ),
+      );
     }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 480),
@@ -514,8 +542,16 @@ class _MediaBlock extends StatelessWidget {
 }
 
 class _AutoplayVideo extends StatefulWidget {
-  const _AutoplayVideo({required this.url});
+  const _AutoplayVideo({
+    required this.url,
+    required this.cacheKey,
+    required this.onOpenFull,
+  });
   final String url;
+  final String cacheKey;
+
+  /// Abre o vídeo em tela cheia (com retrato/paisagem).
+  final VoidCallback onOpenFull;
 
   @override
   State<_AutoplayVideo> createState() => _AutoplayVideoState();
@@ -545,6 +581,9 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
       if (!mounted) {
         await c.dispose();
         return;
+      }
+      if (c.value.aspectRatio > 0) {
+        MediaAspectCache.put(widget.cacheKey, c.value.aspectRatio);
       }
       setState(() {
         _ctrl = c;
@@ -605,13 +644,19 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
       );
     }
     final isPlaying = c.value.isPlaying;
+    return LayoutBuilder(builder: (context, box) {
+    final frame = box.maxHeight > 0 ? box.maxWidth / box.maxHeight : 1.0;
+    final fit = c.value.aspectRatio > frame + 0.02 ? BoxFit.contain : BoxFit.cover;
     return Stack(
       fit: StackFit.expand,
       children: [
+        const ColoredBox(color: Colors.black),
         GestureDetector(
-          onTap: _togglePlay,
+          // Toque abre em tela cheia (antes só pausava).
+          onTap: widget.onOpenFull,
+          onDoubleTap: _togglePlay,
           child: FittedBox(
-            fit: BoxFit.cover,
+            fit: fit,
             child: SizedBox(
               width: c.value.size.width,
               height: c.value.size.height,
@@ -655,8 +700,28 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
             ),
           ),
         ),
+        Positioned(
+          bottom: 10,
+          left: 10,
+          child: GestureDetector(
+            onTap: widget.onOpenFull,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.fullscreen_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
       ],
     );
+    });
   }
 }
 

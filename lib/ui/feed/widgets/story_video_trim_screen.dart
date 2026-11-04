@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:video_trimmer/video_trimmer.dart';
 
 import '../../core/themes/app_colors.dart';
@@ -180,10 +181,27 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
 
       // Sanity check — se o arquivo não existe, falha silenciosamente
       // pra não corromper o fluxo do composer.
-      final out = File(outputPath!);
-      if (!await out.exists()) {
+      final raw = File(outputPath!);
+      if (!await raw.exists()) {
         if (!mounted) return;
         AppSnackBar.showError(context, S.of(context).trimError);
+        setState(() => _isProcessing = false);
+        return;
+      }
+
+      // O nativo gera MP4, mas o nome vem do original (extensão .mov) e
+      // com `:`/`,`/espaços. Copia para nome seguro `.mp4`.
+      File out;
+      try {
+        final tmp = await getTemporaryDirectory();
+        final safe = File(
+          '${tmp.path}/trim_${DateTime.now().millisecondsSinceEpoch}.mp4',
+        );
+        out = await raw.copy(safe.path);
+        if (await out.length() == 0) throw const FileSystemException('empty');
+      } catch (_) {
+        if (!mounted) return;
+        AppSnackBar.showError(context, S.of(context).videoPubTrimPrepareError);
         setState(() => _isProcessing = false);
         return;
       }

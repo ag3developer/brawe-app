@@ -140,6 +140,7 @@ dependencies:
   fl_chart: ^1.3.0
   geolocator: ^14.0.2
   file_picker: ^11.0.3
+  get_thumbnail_video: ^0.7.3
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que

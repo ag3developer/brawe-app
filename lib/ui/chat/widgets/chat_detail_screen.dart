@@ -39,6 +39,7 @@ import 'rich/chat_rich_bubbles.dart';
 import 'rich/chat_extra_sheets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:brawe_app/core/media/media_utils.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final String conversationId;
@@ -2842,14 +2843,6 @@ String _relative(BuildContext context, DateTime dt) {
 // Shared post preview card (Instagram-like rich link preview inside DM)
 // ---------------------------------------------------------------------------
 
-bool _isVideoUrl(String url) {
-  final lower = url.toLowerCase();
-  return lower.endsWith('.mp4') ||
-      lower.endsWith('.mov') ||
-      lower.endsWith('.avi') ||
-      lower.endsWith('.webm') ||
-      lower.contains('.mp4.');
-}
 
 /// Provider de busca de post para preview no chat (cacheado por postId).
 final sharedPostPreviewProvider = FutureProvider.autoDispose
@@ -2901,17 +2894,34 @@ class _SharedPostPreview extends ConsumerWidget {
       children: [
         if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
           AspectRatio(
-            aspectRatio: 1,
-            child: _isVideoUrl(post.imageUrl!)
+            aspectRatio: isVideoMedia(mediaType: post.mediaType, url: post.imageUrl)
+                ? feedFrameAspect(
+                    post.aspectRatio ?? MediaAspectCache.get(post.imageUrl))
+                : 1,
+            child: isVideoMedia(mediaType: post.mediaType, url: post.imageUrl)
                 ? Container(
-                    color: context.colors.surfaceElevated,
+                    color: Colors.black,
                     child: Stack(
                       alignment: Alignment.center,
+                      fit: StackFit.expand,
                       children: [
-                        Icon(
-                          Icons.play_circle_fill,
-                          color: context.colors.textSecondary,
-                          size: 48,
+                        // Capa do vídeo (antes era só um ícone de play).
+                        if ((post.coverUrl ?? '').isNotEmpty)
+                          CachedNetworkImage(
+                            imageUrl: post.coverUrl!,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 600,
+                            errorWidget: (_, _, _) => const SizedBox.shrink(),
+                          ),
+                        Center(
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            size: 48,
+                            shadows: const [
+                              Shadow(color: Colors.black45, blurRadius: 10),
+                            ],
+                          ),
                         ),
                         Positioned(
                           bottom: 8,

@@ -61,6 +61,11 @@ sealed class PostResponseDto with _$PostResponseDto {
     @JsonKey(name: 'original_audio_volume')
     @Default(1.0)
     double originalAudioVolume,
+    int? width,
+    int? height,
+    @JsonKey(name: 'duration_sec') double? durationSec,
+    @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
+    @JsonKey(name: 'media_type') String? mediaType,
   }) = _PostResponseDto;
 
   factory PostResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -92,6 +97,11 @@ extension PostResponseDtoMapper on PostResponseDto {
       sound: sound,
       soundVolume: soundVolume,
       originalAudioVolume: originalAudioVolume,
+      mediaWidth: width,
+      mediaHeight: height,
+      durationSec: durationSec,
+      thumbnailUrl: thumbnailUrl,
+      mediaType: mediaType,
     );
   }
 }

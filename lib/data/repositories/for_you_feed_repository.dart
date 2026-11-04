@@ -9,6 +9,7 @@ import '../../domain/models/post.dart';
 import '../../domain/models/product.dart';
 import 'live_repository.dart';
 import 'post_repository.dart';
+import 'package:brawe_app/core/media/media_utils.dart';
 
 part 'for_you_feed_repository.g.dart';
 
@@ -41,9 +42,7 @@ class ForYouFeedRepository {
           .where((p) {
             final url = p.imageUrl ?? '';
             if (url.isEmpty) return false;
-            return url.endsWith('.mp4') ||
-                url.endsWith('.mov') ||
-                url.endsWith('.webm') ||
+            return isVideoMedia(mediaType: p.mediaType, url: url) ||
                 url.contains('/video');
           })
           .map(_mapPost)
@@ -241,8 +240,8 @@ class ForYouFeedRepository {
     );
 
     final url = post.imageUrl ?? '';
-    final isVideo =
-        url.endsWith('.mp4') || url.endsWith('.mov') || url.contains('/video');
+    final isVideo = isVideoMedia(mediaType: post.mediaType, url: url) ||
+        url.contains('/video');
 
     if (isVideo) {
       return VideoFeedItem(
@@ -260,8 +259,10 @@ class ForYouFeedRepository {
         hlsUrl: post.hlsUrl,
         // Capa gerada pelo Bunny (antes apontava para o próprio vídeo e o
         // Image.network falhava — ficava tela preta até o player iniciar).
-        thumbnailUrl: post.hlsThumbnailUrl ?? url,
-        duration: Duration.zero,
+        thumbnailUrl: post.coverUrl ?? url,
+        duration: Duration(
+          milliseconds: ((post.durationSec ?? 0) * 1000).round(),
+        ),
         sound: post.sound,
         soundVolume: post.soundVolume,
         originalAudioVolume: post.originalAudioVolume,
@@ -284,8 +285,10 @@ class ForYouFeedRepository {
       viewsCount: post.viewsCount,
       videoUrl: url,
       hlsUrl: post.hlsUrl,
-      thumbnailUrl: post.hlsThumbnailUrl ?? url,
-      duration: Duration.zero,
+      thumbnailUrl: post.coverUrl ?? url,
+      duration: Duration(
+        milliseconds: ((post.durationSec ?? 0) * 1000).round(),
+      ),
       sound: post.sound,
       soundVolume: post.soundVolume,
       originalAudioVolume: post.originalAudioVolume,

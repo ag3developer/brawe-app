@@ -19,6 +19,8 @@ import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/feed_view_model.dart';
+import 'story_video_trim_screen.dart';
+import 'video_cover_picker_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// Bottom sheet de criação de post de **vídeo** (Reels / Shorts).
@@ -35,6 +37,8 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   File? _video;
   VideoPlayerController? _videoCtrl;
   bool _isPublishing = false;
+  File? _cover; // capa escolhida (null = frame automático do servidor)
+  VideoPublishStep? _step;
   bool _pickerOpened = false;
 
   // ── Brawe Sound: música anexada ao Reel/vídeo (opcional) ──────────
@@ -182,23 +186,83 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
         _snack(S.of(context).videoTooLarge, isError: true);
         return;
       }
-      final ctrl = VideoPlayerController.file(file);
-      await ctrl.initialize();
-      await ctrl.setLooping(true);
-      await ctrl.play();
-      if (!mounted) {
-        await ctrl.dispose();
-        return;
+      final ok = await _loadFile(file);
+      if (!ok || !mounted) return;
+      // Acima do limite de 3 min: obriga o corte.
+      if (_videoCtrl!.value.duration > _maxDuration) {
+        _snack(S.of(context).videoPubTooLong, isError: true);
+        await _trim();
       }
-      setState(() {
-        _video = file;
-        _videoCtrl?.dispose();
-        _videoCtrl = ctrl;
-      });
     } catch (_) {
       if (!mounted) return;
       _snack(S.of(context).videoOpenError, isError: true);
     }
+  }
+
+  /// Inicializa o player com [file] e o torna o vídeo atual (zera a capa).
+  Future<bool> _loadFile(File file) async {
+    final ctrl = VideoPlayerController.file(file);
+    try {
+      await ctrl.initialize();
+      await ctrl.setLooping(true);
+      await ctrl.play();
+    } catch (_) {
+      await ctrl.dispose();
+      rethrow;
+    }
+    if (!mounted) {
+      await ctrl.dispose();
+      return false;
+    }
+    final old = _videoCtrl;
+    setState(() {
+      _video = file;
+      _videoCtrl = ctrl;
+      _cover = null;
+    });
+    old?.dispose();
+    return true;
+  }
+
+  Future<void> _trim() async {
+    final video = _video;
+    if (video == null || _isPublishing) return;
+    await _videoCtrl?.pause();
+    if (!mounted) return;
+    final trimmed = await StoryVideoTrimScreen.push(
+      context,
+      file: video,
+      maxDuration: _maxDuration,
+    );
+    if (!mounted) return;
+    if (trimmed == null) {
+      await _videoCtrl?.play();
+      return;
+    }
+    try {
+      await _loadFile(trimmed);
+    } catch (_) {
+      if (!mounted) return;
+      _snack(S.of(context).videoPubTrimPrepareError, isError: true);
+    }
+  }
+
+  Future<void> _pickCover() async {
+    final video = _video;
+    final ctrl = _videoCtrl;
+    if (video == null || ctrl == null || _isPublishing) return;
+    await ctrl.pause();
+    if (!mounted) return;
+    final ar = ctrl.value.aspectRatio;
+    final cover = await VideoCoverPickerSheet.show(
+      context,
+      videoPath: video.path,
+      durationMs: ctrl.value.duration.inMilliseconds,
+      aspectRatio: ar > 0 ? ar : 4 / 5,
+    );
+    if (!mounted) return;
+    if (cover != null) setState(() => _cover = cover);
+    await ctrl.play();
   }
 
   void _togglePlay() {
@@ -216,9 +280,19 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   Future<void> _publish() async {
     final video = _video;
     if (video == null) return;
+    final ctrl = _videoCtrl;
+    if (ctrl != null &&
+        ctrl.value.duration > _maxDuration + const Duration(seconds: 1)) {
+      _snack(S.of(context).videoPubTooLong, isError: true);
+      return;
+    }
     FocusScope.of(context).unfocus();
-    setState(() => _isPublishing = true);
+    setState(() {
+      _isPublishing = true;
+      _step = VideoPublishStep.uploadingVideo;
+    });
     try {
+      final sz = ctrl?.value.size;
       await ref
           .read(postRepositoryProvider)
           .createVideoPost(
@@ -231,6 +305,16 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
             // `VolumeMixerSheet` (default 1.0/1.0 quando não ajustado).
             soundVolume: _soundVolume,
             originalAudioVolume: _originalAudioVolume,
+            coverLocalPath: _cover?.path,
+            fallbackWidth: (sz != null && sz.width > 0) ? sz.width.round() : null,
+            fallbackHeight:
+                (sz != null && sz.height > 0) ? sz.height.round() : null,
+            fallbackDurationSec: ctrl != null && ctrl.value.isInitialized
+                ? ctrl.value.duration.inMilliseconds / 1000
+                : null,
+            onStep: (st) {
+              if (mounted) setState(() => _step = st);
+            },
           );
       ref.invalidate(forYouFeedViewModelProvider);
       ref.invalidate(feedViewModelProvider);
@@ -238,12 +322,22 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       final s = S.of(context);
       Navigator.of(context).pop();
       _snack(s.videoPublishedSuccess);
+    } on VideoCoverUploadFailure {
+      if (!mounted) return;
+      setState(() => _isPublishing = false);
+      _snack(S.of(context).videoPubCoverUploadError, isError: true);
     } catch (_) {
       if (!mounted) return;
       setState(() => _isPublishing = false);
       _snack(S.of(context).videoPublishError, isError: true);
     }
   }
+
+  String _stepLabel(S s) => switch (_step) {
+    VideoPublishStep.uploadingCover => s.videoPubStepCover,
+    VideoPublishStep.publishing => s.videoPubStepPost,
+    _ => s.videoPubStepVideo,
+  };
 
   void _snack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -409,6 +503,30 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (hasVideo) ...[
+                          Row(
+                            children: [
+                              _ActionPill(
+                                icon: LucideIcons.scissors,
+                                label: S.of(context).videoPubTrim,
+                                onTap: _isPublishing ? null : _trim,
+                              ),
+                              const SizedBox(width: 8),
+                              _ActionPill(
+                                icon: LucideIcons.image,
+                                label: _cover != null
+                                    ? S.of(context).videoPubCoverCustom
+                                    : S.of(context).videoPubCoverAuto,
+                                thumb: _cover,
+                                onTap: _isPublishing ? null : _pickCover,
+                                onClear: (_cover != null && !_isPublishing)
+                                    ? () => setState(() => _cover = null)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
                         // Chip do som selecionado (tap = ajustar o trecho)
                         // + botão de mixer de volumes (música × áudio
                         // original — Fase D do relatório de áudio).
@@ -529,13 +647,28 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                                   borderRadius: BorderRadius.circular(18),
                                   child: Center(
                                     child: _isPublishing
-                                        ? const SizedBox(
-                                            width: 22,
-                                            height: 22,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2.5,
-                                            ),
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 2.5,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Text(
+                                                _stepLabel(S.of(context)),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ],
                                           )
                                         : Row(
                                             mainAxisSize: MainAxisSize.min,
@@ -841,6 +974,95 @@ class _DurationChipState extends State<_DurationChip> {
               fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Pílula de ação (Cortar / Capa) sobre o vídeo, no mesmo estilo "glass"
+/// dos demais controles da tela.
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.thumb,
+    this.onClear,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final File? thumb;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onTap == null ? 0.5 : 1,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  thumb != null ? 4 : 12,
+                  6,
+                  onClear != null ? 6 : 12,
+                  6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (thumb != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.file(
+                          thumb!,
+                          width: 24,
+                          height: 24,
+                          fit: BoxFit.cover,
+                          cacheWidth: 96,
+                        ),
+                      )
+                    else
+                      Icon(icon, color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (onClear != null)
+              GestureDetector(
+                onTap: onClear,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Icon(
+                    LucideIcons.x,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    size: 14,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

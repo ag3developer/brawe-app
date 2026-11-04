@@ -781,7 +781,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
 
   Future<void> _pickFromGallery() async {
     // Foto ou vídeo: ImagePicker não tem combinado; usamos pickMedia.
-    final x = await ImagePicker().pickMedia();
+    // imageQuality faz o iOS entregar a FOTO em JPEG (e não HEIC, que o
+    // servidor antigo recusava → "falha ao publicar"). Vídeo não é afetado.
+    final x = await ImagePicker().pickMedia(imageQuality: 92);
     if (x == null) return;
     final isVid = _isLocalVideo(x);
     await _setSelected(File(x.path), isVideo: isVid);

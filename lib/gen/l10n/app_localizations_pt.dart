@@ -7479,4 +7479,182 @@ class SPt extends S {
 
   @override
   String get chatVaultReplay => 'Ver de novo';
+
+  @override
+  String onbStepOf(int current, int total) {
+    return 'Passo $current de $total';
+  }
+
+  @override
+  String get onbContinue => 'Continuar';
+
+  @override
+  String get onbSkip => 'Pular';
+
+  @override
+  String get onbSignOut => 'Sair da conta';
+
+  @override
+  String get onbError => 'Algo deu errado. Tente de novo.';
+
+  @override
+  String get onbBirthTitle => 'Quando você nasceu?';
+
+  @override
+  String get onbBirthSubtitle =>
+      'Precisamos confirmar sua idade. Ela não aparece no seu perfil.';
+
+  @override
+  String get onbUnderageTitle => 'O Brawe é para maiores de 18 anos';
+
+  @override
+  String get onbUnderageBody =>
+      'Pela segurança da comunidade, contas de menores de 18 anos não são permitidas.';
+
+  @override
+  String get onbUsernameTitle => 'Escolha seu @';
+
+  @override
+  String get onbUsernameSubtitle =>
+      'É assim que as pessoas vão te encontrar e te marcar.';
+
+  @override
+  String get onbUsernameRules =>
+      '3 a 30 caracteres: letras, números, ponto e _';
+
+  @override
+  String get onbUsernameChecking => 'Verificando…';
+
+  @override
+  String get onbUsernameAvailable => 'Disponível';
+
+  @override
+  String get onbPhotoTitle => 'Adicione uma foto';
+
+  @override
+  String get onbPhotoSubtitle =>
+      'As pessoas confiam mais em perfis com foto. Ela é necessária para usar o Brawe.';
+
+  @override
+  String get onbPhotoGallery => 'Escolher da galeria';
+
+  @override
+  String get onbPhotoCamera => 'Tirar foto';
+
+  @override
+  String get onbPhotoChange => 'Trocar foto';
+
+  @override
+  String get onbPhotoPosition => 'Ajuste sua foto';
+
+  @override
+  String get onbPhotoError => 'Não foi possível enviar a foto. Tente de novo.';
+
+  @override
+  String get onbBioTitle => 'Conte um pouco sobre você';
+
+  @override
+  String get onbBioSubtitle =>
+      'Uma frase curta para a sua bio. Dá para mudar depois.';
+
+  @override
+  String get onbBioHint => 'Ex.: Música, games e live toda sexta 🎮';
+
+  @override
+  String get onbFollowTitle => 'Siga pessoas';
+
+  @override
+  String get onbFollowSubtitle =>
+      'Siga pelo menos 3 pessoas para ver conteúdo no seu feed.';
+
+  @override
+  String get onbFollow => 'Seguir';
+
+  @override
+  String get onbFollowing => 'Seguindo';
+
+  @override
+  String get onbFollowAll => 'Seguir todos';
+
+  @override
+  String onbFollowers(String count) {
+    return '$count seguidores';
+  }
+
+  @override
+  String get onbFollowEmpty =>
+      'Ainda não temos sugestões. Você pode encontrar pessoas depois em \"Encontrar amigos\".';
+
+  @override
+  String get onbFinish => 'Começar';
+
+  @override
+  String get onbInterestsTitle => 'O que você curte?';
+
+  @override
+  String get onbInterestsSubtitle =>
+      'Escolha os assuntos que você quer ver. Usamos isso para sugerir pessoas e conteúdos.';
+
+  @override
+  String onbInterestsCount(int count) {
+    return '$count selecionados';
+  }
+
+  @override
+  String get videoPubTrim => 'Cortar';
+
+  @override
+  String get videoPubCover => 'Capa';
+
+  @override
+  String get videoPubCoverAuto => 'Capa automática';
+
+  @override
+  String get videoPubCoverCustom => 'Capa personalizada';
+
+  @override
+  String get videoPubCoverFrame => 'Quadro do vídeo';
+
+  @override
+  String get videoPubCoverGallery => 'Imagem da galeria';
+
+  @override
+  String get videoPubCoverRemove => 'Usar capa automática';
+
+  @override
+  String get videoPubCoverTitle => 'Escolher capa';
+
+  @override
+  String get videoPubCoverFrameHint => 'Arraste para escolher o quadro da capa';
+
+  @override
+  String get videoPubCoverUse => 'Usar esta capa';
+
+  @override
+  String get videoPubCoverCrop => 'Ajustar capa';
+
+  @override
+  String get videoPubCoverError =>
+      'Não foi possível gerar a capa. Tente outro quadro ou imagem.';
+
+  @override
+  String get videoPubStepVideo => 'Enviando vídeo...';
+
+  @override
+  String get videoPubStepCover => 'Enviando capa...';
+
+  @override
+  String get videoPubStepPost => 'Publicando...';
+
+  @override
+  String get videoPubCoverUploadError =>
+      'Falha ao enviar a capa. Verifique sua conexão e tente de novo.';
+
+  @override
+  String get videoPubTooLong =>
+      'O vídeo passa de 3 minutos. Corte o vídeo para publicar.';
+
+  @override
+  String get videoPubTrimPrepareError =>
+      'Não foi possível preparar o vídeo cortado. Tente novamente.';
 }

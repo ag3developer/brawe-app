@@ -161,15 +161,37 @@ class PostRepository {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    String? coverLocalPath,
+    int? fallbackWidth,
+    int? fallbackHeight,
+    double? fallbackDurationSec,
+    void Function(VideoPublishStep step)? onStep,
   }) async {
     try {
-      final videoUrl = await _postService.uploadVideo(videoLocalPath);
-      if (videoUrl.isEmpty) {
+      onStep?.call(VideoPublishStep.uploadingVideo);
+      final up = await _postService.uploadVideo(videoLocalPath);
+      if (up.url.isEmpty) {
         throw const Failure.unknown();
       }
+      var thumbUrl = up.thumbnailUrl;
+      if (coverLocalPath != null) {
+        onStep?.call(VideoPublishStep.uploadingCover);
+        try {
+          final c = await _postService.uploadCover(coverLocalPath);
+          if (c.isNotEmpty) thumbUrl = c;
+        } on DioException catch (_) {
+          throw const VideoCoverUploadFailure();
+        }
+      }
+      onStep?.call(VideoPublishStep.publishing);
       await _postService.createPost(
         content: content,
-        imageUrl: videoUrl,
+        imageUrl: up.url,
+        mediaType: 'video',
+        width: up.width ?? fallbackWidth,
+        height: up.height ?? fallbackHeight,
+        durationSec: up.durationSec ?? fallbackDurationSec,
+        thumbnailUrl: thumbUrl,
         audience: audience,
         soundId: soundId,
         soundTrimStartMs: soundTrimStartMs,
@@ -177,6 +199,8 @@ class PostRepository {
         soundVolume: soundVolume,
         originalAudioVolume: originalAudioVolume,
       );
+    } on VideoCoverUploadFailure {
+      rethrow;
     } on DioException catch (_) {
       throw const Failure.network();
     } catch (_) {
@@ -256,4 +280,12 @@ class PostRepository {
       throw const Failure.unknown();
     }
   }
+}
+
+/// Etapas da publicação de vídeo (para mostrar progresso na UI).
+enum VideoPublishStep { uploadingVideo, uploadingCover, publishing }
+
+/// Falha específica do envio da capa (para mensagem dedicada).
+class VideoCoverUploadFailure implements Exception {
+  const VideoCoverUploadFailure();
 }

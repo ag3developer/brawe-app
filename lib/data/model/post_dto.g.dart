@@ -53,6 +53,11 @@ _PostResponseDto _$PostResponseDtoFromJson(
   soundVolume: (json['sound_volume'] as num?)?.toDouble() ?? 1.0,
   originalAudioVolume:
       (json['original_audio_volume'] as num?)?.toDouble() ?? 1.0,
+  width: (json['width'] as num?)?.toInt(),
+  height: (json['height'] as num?)?.toInt(),
+  durationSec: (json['duration_sec'] as num?)?.toDouble(),
+  thumbnailUrl: json['thumbnail_url'] as String?,
+  mediaType: json['media_type'] as String?,
 );
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
@@ -78,6 +83,11 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'sound': instance.sound,
       'sound_volume': instance.soundVolume,
       'original_audio_volume': instance.originalAudioVolume,
+      'width': instance.width,
+      'height': instance.height,
+      'duration_sec': instance.durationSec,
+      'thumbnail_url': instance.thumbnailUrl,
+      'media_type': instance.mediaType,
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>
