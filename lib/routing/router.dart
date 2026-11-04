@@ -88,7 +88,7 @@ const _kConnectShortSegments = {
   'u', 'p', 'profile', 'foryou', 'explore', 'lives', 'live', 'messages',
   'notifications', 'settings', 'wallet', 'quests', 'battles', 'coins',
   'saved', 'following', 'followers', 'favorites', 'analytics', 'shopping',
-  'go-live', 'help', 'mystery-gifts', 'shop',
+  'go-live', 'help', 'mystery-gifts', 'shop', 'search', 'ranking',
 };
 
 /// Páginas do site (já sem o prefixo de idioma) → rota equivalente no app.
@@ -98,6 +98,8 @@ const _kWebPathAliases = {
   '/connect/foryou': '/home',
   '/connect/lives': '/live',
   '/connect/explore': '/explore',
+  '/connect/search': '/explore',
+  '/connect/ranking': '/explore',
   '/connect/messages': '/chat',
   '/connect/notifications': '/notifications',
   '/connect/quests': '/quests',
@@ -155,6 +157,16 @@ String? _normalizeDeepLink(Uri uri) {
     path = '/shop/store/${path.substring(shopAlias.length)}';
   } else if (path == '/connect/shopping' || path == '/connect/shop') {
     path = '/home';
+  }
+
+  // 3c) Busca do site com hashtag ("/connect/search?q=%23moda") → tela da
+  //     hashtag no app; as demais buscas abrem o Explorar (alias abaixo).
+  if (path == '/connect/search') {
+    final q = (uri.queryParameters['q'] ?? '').trim();
+    final tag = RegExp(r'^#([\p{L}\p{N}_]+)$', unicode: true).firstMatch(q)?.group(1);
+    if (tag != null) {
+      return '/explore/hashtag/${Uri.encodeComponent(tag)}';
+    }
   }
 
   // 4) Formas `brawe://` do backend (`link_url` das notificações) que não
