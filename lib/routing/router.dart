@@ -88,7 +88,7 @@ const _kConnectShortSegments = {
   'u', 'p', 'profile', 'foryou', 'explore', 'lives', 'live', 'messages',
   'notifications', 'settings', 'wallet', 'quests', 'battles', 'coins',
   'saved', 'following', 'followers', 'favorites', 'analytics', 'shopping',
-  'go-live', 'help', 'mystery-gifts',
+  'go-live', 'help', 'mystery-gifts', 'shop',
 };
 
 /// Páginas do site (já sem o prefixo de idioma) → rota equivalente no app.
@@ -147,6 +147,14 @@ String? _normalizeDeepLink(Uri uri) {
     if (path.startsWith(liveAlias) && path.length > liveAlias.length) {
       path = '/live/${path.substring(liveAlias.length)}';
     }
+  }
+
+  // 3b) Página da marca no site: "/connect/shop/:slug" → loja nativa.
+  const shopAlias = '/connect/shop/';
+  if (path.startsWith(shopAlias) && path.length > shopAlias.length) {
+    path = '/shop/store/${path.substring(shopAlias.length)}';
+  } else if (path == '/connect/shopping' || path == '/connect/shop') {
+    path = '/home';
   }
 
   // 4) Formas `brawe://` do backend (`link_url` das notificações) que não
