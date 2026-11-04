@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Transições padronizadas do Brawe 2026.
+/// Transições padronizadas da Brawe 2026.
 ///
 /// Use [pageWithFadeUp] para telas modais (post detail, likers).
 /// Use [pageWithScaleFade] para tela imersiva (video fullscreen).

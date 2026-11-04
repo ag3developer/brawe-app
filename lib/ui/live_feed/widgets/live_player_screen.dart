@@ -646,7 +646,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   Future<void> _onTapShare() async {
     // 🌍 Compartilhamento EXTERNO (sistema operacional): copia link/texto
     // para apps de mensagens, redes sociais, etc. O compartilhamento
-    // interno (mandar a live para amigos do Brawe) é exposto pelo "Mais".
+    // interno (mandar a live para amigos da Brawe) é exposto pelo "Mais".
     final s = S.of(context);
     final url = 'https://brawe.app/live/${widget.room.slug}';
     final message = s.liveFeedShareMessage(widget.room.title, url);

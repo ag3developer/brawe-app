@@ -7,7 +7,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../data/services/qr_login_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
-/// Tela de câmera para escanear QR codes do Brawe.
+/// Tela de câmera para escanear QR codes da Brawe.
 ///
 /// Reconhece dois tipos de conteúdo:
 /// 1. Link de perfil (`https://brawe.app/connect/u/<handle>`) → navega

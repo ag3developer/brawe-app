@@ -167,8 +167,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     final url = AppConstants.liveUrl(slug);
     final who = widget.streamerName?.trim();
     final text = who != null && who.isNotEmpty
-        ? '$who está ao vivo no Brawe: ${widget.title}\n$url'
-        : 'Estou ao vivo no Brawe: ${widget.title}\n$url';
+        ? '$who está ao vivo na Brawe: ${widget.title}\n$url'
+        : 'Estou ao vivo na Brawe: ${widget.title}\n$url';
     try {
       await SharePlus.instance.share(ShareParams(text: text));
     } catch (e) {

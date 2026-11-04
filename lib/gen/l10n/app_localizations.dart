@@ -1182,7 +1182,7 @@ abstract class S {
   /// No description provided for @signupTermsSuffix.
   ///
   /// In pt, this message translates to:
-  /// **' do Brawe.'**
+  /// **' da Brawe.'**
   String get signupTermsSuffix;
 
   /// No description provided for @pwStrengthWeak.
@@ -1902,7 +1902,7 @@ abstract class S {
   /// No description provided for @shareOutsideBrawe.
   ///
   /// In pt, this message translates to:
-  /// **'Fora do Brawe'**
+  /// **'Fora da Brawe'**
   String get shareOutsideBrawe;
 
   /// No description provided for @shareSend.
@@ -5952,7 +5952,7 @@ abstract class S {
   /// No description provided for @liveFeedShareMessage.
   ///
   /// In pt, this message translates to:
-  /// **'Confira esta live no Brawe: {title}\n{url}'**
+  /// **'Confira esta live na Brawe: {title}\n{url}'**
   String liveFeedShareMessage(String title, String url);
 
   /// No description provided for @liveFeedBadgeLive.
@@ -9288,7 +9288,7 @@ abstract class S {
   /// No description provided for @qrScannerHint.
   ///
   /// In pt, this message translates to:
-  /// **'Aponte a câmera para um QR code do Brawe'**
+  /// **'Aponte a câmera para um QR code da Brawe'**
   String get qrScannerHint;
 
   /// No description provided for @qrScannerCameraPermissionDenied.
@@ -9576,7 +9576,7 @@ abstract class S {
   /// No description provided for @composerCameraPermissionBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para criar stories com foto e vídeo, o Brawe precisa da câmera e do microfone.'**
+  /// **'Para criar stories com foto e vídeo, a Brawe precisa da câmera e do microfone.'**
   String get composerCameraPermissionBody;
 
   /// No description provided for @composerOpenSettings.
@@ -13368,7 +13368,7 @@ abstract class S {
   /// No description provided for @onbUnderageTitle.
   ///
   /// In pt, this message translates to:
-  /// **'O Brawe é para maiores de 18 anos'**
+  /// **'A Brawe é para maiores de 18 anos'**
   String get onbUnderageTitle;
 
   /// No description provided for @onbUnderageBody.
@@ -13416,7 +13416,7 @@ abstract class S {
   /// No description provided for @onbPhotoSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'As pessoas confiam mais em perfis com foto. Ela é necessária para usar o Brawe.'**
+  /// **'As pessoas confiam mais em perfis com foto. Ela é necessária para usar a Brawe.'**
   String get onbPhotoSubtitle;
 
   /// No description provided for @onbPhotoGallery.

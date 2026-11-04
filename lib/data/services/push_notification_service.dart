@@ -28,7 +28,7 @@ class PushNotificationService {
   static const _androidChannel = AndroidNotificationChannel(
     'brawe_high_importance',
     'Brawe Notifications',
-    description: 'Notificações gerais do Brawe',
+    description: 'Notificações gerais da Brawe',
     importance: Importance.high,
   );
 

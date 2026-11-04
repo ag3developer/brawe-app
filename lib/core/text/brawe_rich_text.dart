@@ -56,7 +56,7 @@ class BraweRichText extends StatelessWidget {
     return null;
   }
 
-  /// Link de post do próprio Brawe (formato novo e legado).
+  /// Link de post do própria Brawe (formato novo e legado).
   static final RegExp sharedPostRegex = RegExp(
     r'https?://(?:www\.)?brawe\.app/(?:post|connect/p)/[a-zA-Z0-9_\-\.]+',
   );
@@ -184,7 +184,7 @@ class BraweRichText extends StatelessWidget {
     // Links de WhatsApp/Telegram/etc já têm handler nativo no SO — deixamos
     // o SO decidir (abre o app instalado direto) via `launchUrl` externo.
     // Para links "de página" comuns (http/https genéricos), preferimos o
-    // WebView in-app para não tirar o usuário do Brawe sem necessidade —
+    // WebView in-app para não tirar o usuário da Brawe sem necessidade —
     // exatamente como Instagram/TikTok fazem.
     final uri = Uri.tryParse(url);
     if (uri == null) return;

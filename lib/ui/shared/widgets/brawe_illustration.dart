@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Catálogo central de ilustrações 3D do Brawe.
+/// Catálogo central de ilustrações 3D da Brawe.
 ///
 /// Cada asset tem 3 densidades (1x/2x/3x) em
 /// `assets/images/illustrations/`, resolvidas automaticamente

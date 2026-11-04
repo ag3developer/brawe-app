@@ -584,7 +584,7 @@ class SPt extends S {
   String get signupTermsAnd => ' e a ';
 
   @override
-  String get signupTermsSuffix => ' do Brawe.';
+  String get signupTermsSuffix => ' da Brawe.';
 
   @override
   String get pwStrengthWeak => 'Fraca';
@@ -967,7 +967,7 @@ class SPt extends S {
   String get shareCommentHint => 'Adicione um comentário…';
 
   @override
-  String get shareOutsideBrawe => 'Fora do Brawe';
+  String get shareOutsideBrawe => 'Fora da Brawe';
 
   @override
   String get shareSend => 'Enviar';
@@ -3274,7 +3274,7 @@ class SPt extends S {
 
   @override
   String liveFeedShareMessage(String title, String url) {
-    return 'Confira esta live no Brawe: $title\n$url';
+    return 'Confira esta live na Brawe: $title\n$url';
   }
 
   @override
@@ -5098,7 +5098,7 @@ class SPt extends S {
   String get qrScannerTitle => 'Escanear código QR';
 
   @override
-  String get qrScannerHint => 'Aponte a câmera para um QR code do Brawe';
+  String get qrScannerHint => 'Aponte a câmera para um QR code da Brawe';
 
   @override
   String get qrScannerCameraPermissionDenied =>
@@ -5252,7 +5252,7 @@ class SPt extends S {
 
   @override
   String get composerCameraPermissionBody =>
-      'Para criar stories com foto e vídeo, o Brawe precisa da câmera e do microfone.';
+      'Para criar stories com foto e vídeo, a Brawe precisa da câmera e do microfone.';
 
   @override
   String get composerOpenSettings => 'Abrir ajustes';
@@ -7505,7 +7505,7 @@ class SPt extends S {
       'Precisamos confirmar sua idade. Ela não aparece no seu perfil.';
 
   @override
-  String get onbUnderageTitle => 'O Brawe é para maiores de 18 anos';
+  String get onbUnderageTitle => 'A Brawe é para maiores de 18 anos';
 
   @override
   String get onbUnderageBody =>
@@ -7533,7 +7533,7 @@ class SPt extends S {
 
   @override
   String get onbPhotoSubtitle =>
-      'As pessoas confiam mais em perfis com foto. Ela é necessária para usar o Brawe.';
+      'As pessoas confiam mais em perfis com foto. Ela é necessária para usar a Brawe.';
 
   @override
   String get onbPhotoGallery => 'Escolher da galeria';

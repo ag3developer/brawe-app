@@ -1679,7 +1679,7 @@ Future<void> _launchSocial(String network, String raw) async {
         break;
       case 'whatsapp':
         final digits = handle.replaceAll(RegExp(r'[^0-9]'), '');
-        final msg = Uri.encodeComponent('Oi, vim pelo Brawe!');
+        final msg = Uri.encodeComponent('Oi, vim pela Brawe!');
         url = 'https://wa.me/$digits?text=$msg';
         break;
       case 'email':
