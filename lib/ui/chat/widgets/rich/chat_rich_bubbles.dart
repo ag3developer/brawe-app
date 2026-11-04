@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../data/services/feedback_service.dart';
 import '../../../../domain/models/conversation.dart';
 import '../../../../gen/l10n/app_localizations.dart';
+import '../../../../data/services/gift_effect_cache.dart';
 import '../../../../domain/models/live_gift.dart';
 import '../../../core/themes/brawe_colors.dart';
 import '../../../live/shared/widgets/overlays/gift_animation_overlay.dart';
@@ -365,7 +366,7 @@ class _GiftImage extends StatelessWidget {
   }
 }
 
-class GiftVaultBubble extends ConsumerWidget {
+class GiftVaultBubble extends ConsumerStatefulWidget {
   const GiftVaultBubble({
     super.key,
     required this.message,
@@ -380,7 +381,48 @@ class GiftVaultBubble extends ConsumerWidget {
   final Future<ChatMessage?> Function() onOpen;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GiftVaultBubble> createState() => _GiftVaultBubbleState();
+}
+
+class _GiftVaultBubbleState extends ConsumerState<GiftVaultBubble> {
+  bool _loadingFx = false;
+
+  ChatMessage get message => widget.message;
+  bool get isMe => widget.isMe;
+  Future<ChatMessage?> Function() get onOpen => widget.onOpen;
+
+  @override
+  void initState() {
+    super.initState();
+    // Baixa o efeito já: abrir o cofre não espera o download.
+    final p = widget.message.payload;
+    if (p != null) {
+      vaultGiftEffect(ref, p).then((g) {
+        final url = g?.animationUrl;
+        if (url != null) GiftEffectCache.instance.fetch(url);
+      });
+    }
+  }
+
+  Future<void> _replay(Map<String, dynamic> p) async {
+    if (_loadingFx) return;
+    HapticFeedback.selectionClick();
+    setState(() => _loadingFx = true);
+    try {
+      final g = await vaultGiftEffect(ref, p);
+      var played = false;
+      if (g != null && mounted) {
+        played = await playGiftEffectStandalone(context, g);
+      }
+      // Sem efeito (ou não tocou): animação de reserva com o presente.
+      if (!played && mounted) await showGiftPop(context, p);
+    } finally {
+      if (mounted) setState(() => _loadingFx = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = S.of(context);
     final p = message.payload ?? const {};
     final opened = p['opened'] == true;
@@ -422,13 +464,7 @@ class GiftVaultBubble extends ConsumerWidget {
       onTap: canOpen
           ? () => showVaultReveal(context, payload: p, onOpen: onOpen)
           : canReplay
-          ? () async {
-              HapticFeedback.selectionClick();
-              final g = await vaultGiftEffect(ref, p);
-              if (g != null && context.mounted) {
-                await playGiftEffectStandalone(context, g);
-              }
-            }
+          ? () => _replay(p)
           : null,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -475,11 +511,20 @@ class GiftVaultBubble extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          LucideIcons.rotateCcw,
-                          size: 12,
-                          color: isMe ? Colors.white : tint,
-                        ),
+                        _loadingFx
+                            ? SizedBox(
+                                width: 11,
+                                height: 11,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.6,
+                                  color: isMe ? Colors.white : tint,
+                                ),
+                              )
+                            : Icon(
+                                LucideIcons.rotateCcw,
+                                size: 12,
+                                color: isMe ? Colors.white : tint,
+                              ),
                         const SizedBox(width: 4),
                         Text(
                           s.chatVaultReplay,
@@ -1180,6 +1225,95 @@ class FileBubble extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Animação de reserva: o presente "salta" no centro com raios e brilho.
+/// Usada quando o presente não tem efeito ou o efeito não pôde tocar.
+Future<void> showGiftPop(BuildContext context, Map<String, dynamic> p) {
+  return showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: 'gift',
+    barrierColor: Colors.black.withValues(alpha: 0.75),
+    transitionDuration: const Duration(milliseconds: 200),
+    pageBuilder: (_, _, _) => _GiftPop(payload: p),
+  );
+}
+
+class _GiftPop extends StatefulWidget {
+  const _GiftPop({required this.payload});
+  final Map<String, dynamic> payload;
+  @override
+  State<_GiftPop> createState() => _GiftPopState();
+}
+
+class _GiftPopState extends State<_GiftPop> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  )..forward().whenComplete(() {
+      if (mounted) Navigator.of(context).maybePop();
+    });
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = vaultTierColor(widget.payload['tier']?.toString());
+    final name = widget.payload['gift_name']?.toString() ?? '';
+    return GestureDetector(
+      onTap: () => Navigator.of(context).maybePop(),
+      child: Material(
+        color: Colors.transparent,
+        child: AnimatedBuilder(
+          animation: _c,
+          builder: (_, _) {
+            final t = _c.value;
+            final pop = Curves.elasticOut.transform((t * 2).clamp(0, 1));
+            final fade = t > 0.8 ? (1 - (t - 0.8) / 0.2) : 1.0;
+            return Opacity(
+              opacity: fade.clamp(0, 1),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Transform.rotate(
+                    angle: t * math.pi / 3,
+                    child: CustomPaint(
+                      size: const Size(380, 380),
+                      painter: _RaysPainter(tint),
+                    ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Transform.scale(
+                        scale: 0.2 + 0.8 * pop,
+                        child: _GiftImage(payload: widget.payload, size: 180),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1047,11 +1047,16 @@ class _VapGiftEffect extends StatefulWidget {
     required this.file,
     required this.gift,
     required this.onDone,
+    this.onStartFailed,
   });
 
   final File file;
   final LiveGift gift;
   final VoidCallback onDone;
+
+  /// Chamado se o vídeo não começar a tocar (ex.: simulador do iOS, onde o
+  /// VAP se recusa: "playHWDMP4 not allowed in Simulator").
+  final VoidCallback? onStartFailed;
 
   @override
   State<_VapGiftEffect> createState() => _VapGiftEffectState();
@@ -1063,6 +1068,8 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
   final GlobalKey<GiftStageState> _stageKey = GlobalKey<GiftStageState>();
   StreamSubscription<VapEvent>? _events;
   Timer? _safety;
+  Timer? _startWatchdog;
+  bool _started = false;
   bool _ready = false;
   bool _done = false;
 
@@ -1078,12 +1085,20 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
       ),
     );
     _events = _ctrl.events.listen((e) {
+      if (e is VapStartedEvent || e is VapFrameEvent) {
+        _started = true;
+        _startWatchdog?.cancel();
+      }
       if (e is VapCompletedEvent) {
         _endOfVideo();
       } else if (e is VapErrorEvent) {
+        debugPrint('[GIFT-FX] VAP erro: $e');
         _finish();
       }
-    }, onError: (_) => _finish());
+    }, onError: (Object err) {
+      debugPrint('[GIFT-FX] VAP erro no stream: $err');
+      _finish();
+    });
     // Trava de segurança: duração do backend (ou hold_ms) + transições.
     final hold = _pr.holdMs ?? widget.gift.resolvedDurationMs;
     _safety = Timer(
@@ -1093,6 +1108,13 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
       ),
       _finish,
     );
+    // Cão de guarda: sem começar em 2,5 s, desiste (não trava a tela).
+    _startWatchdog = Timer(const Duration(milliseconds: 2500), () {
+      if (_started || _done) return;
+      debugPrint('[GIFT-FX] VAP não começou — desistindo');
+      widget.onStartFailed?.call();
+      _finish();
+    });
     _start();
   }
 
@@ -1122,6 +1144,7 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
     if (_done) return;
     _done = true;
     _safety?.cancel();
+    _startWatchdog?.cancel();
     widget.onDone();
   }
 
@@ -1129,6 +1152,7 @@ class _VapGiftEffectState extends State<_VapGiftEffect> {
   void dispose() {
     _events?.cancel();
     _safety?.cancel();
+    _startWatchdog?.cancel();
     _ctrl.dispose();
     super.dispose();
   }
@@ -1162,30 +1186,49 @@ Future<bool> playGiftEffectStandalone(
   BuildContext context,
   LiveGift gift,
 ) async {
+  // O efeito precisa de um contexto ainda montado depois do download.
+  final overlayState = Overlay.of(context, rootOverlay: true);
   final type = gift.animationType?.toLowerCase();
   final url = gift.animationUrl;
+  debugPrint('[GIFT-FX] standalone: type=$type url=$url');
   if (url == null || url.isEmpty || (type != 'vap' && type != 'lottie')) {
+    debugPrint('[GIFT-FX] standalone: sem efeito suportado');
     return false;
   }
-  final overlay = Overlay.of(context, rootOverlay: true);
+  final overlay = overlayState;
   final done = Completer<bool>();
   late OverlayEntry entry;
+  var played = true;
   void finish() {
     try {
       entry.remove();
     } catch (_) {}
-    if (!done.isCompleted) done.complete(true);
+    if (!done.isCompleted) done.complete(played);
   }
 
   if (type == 'vap') {
     var file = GiftEffectCache.instance.cachedFile(url);
+    debugPrint('[GIFT-FX] standalone: em cache=${file != null}');
+    // Vídeos de tela cheia podem ter vários MB: espera mais que na live
+    // (aqui a pessoa pediu para ver; não há fila de presentes atrás).
     file ??= await GiftEffectCache.instance
         .fetch(url)
-        .timeout(const Duration(seconds: 10), onTimeout: () => null);
-    if (file == null) return false;
+        .timeout(const Duration(seconds: 30), onTimeout: () => null);
+    if (file == null) {
+      debugPrint('[GIFT-FX] standalone: download falhou/expirou');
+      return false;
+    }
+    if (!context.mounted) return false;
+    debugPrint('[GIFT-FX] standalone: tocando VAP ${file.path} '
+        '(${file.lengthSync()} bytes)');
     final vapFile = file;
     entry = OverlayEntry(
-      builder: (_) => _VapGiftEffect(file: vapFile, gift: gift, onDone: finish),
+      builder: (_) => _VapGiftEffect(
+        file: vapFile,
+        gift: gift,
+        onDone: finish,
+        onStartFailed: () => played = false,
+      ),
     );
   } else {
     final sound = gift.soundUrl;
