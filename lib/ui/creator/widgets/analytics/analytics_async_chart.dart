@@ -18,12 +18,16 @@ class AnalyticsAsyncChart extends StatelessWidget {
   /// Permite considerar vazio só a métrica exibida (padrão: série toda).
   final bool Function(AnalyticsSeries series)? isEmpty;
 
+  /// Texto do estado vazio, específico da métrica exibida.
+  final String? emptyMessage;
+
   const AnalyticsAsyncChart({
     super.key,
     required this.async,
     required this.onRetry,
     required this.builder,
     this.isEmpty,
+    this.emptyMessage,
   });
 
   @override
@@ -33,7 +37,7 @@ class AnalyticsAsyncChart extends StatelessWidget {
       error: (_, _) =>
           AnalyticsErrorView(key: const ValueKey('e'), onRetry: onRetry),
       data: (series) => (isEmpty?.call(series) ?? series.isEmpty)
-          ? const AnalyticsEmptyChart(key: ValueKey('empty'))
+          ? AnalyticsEmptyChart(key: const ValueKey('empty'), message: emptyMessage)
           : KeyedSubtree(key: ValueKey('d-${series.period}'), child: builder(series)),
     );
     return AnimatedSwitcher(
@@ -53,6 +57,7 @@ Widget seriesLineChart(
   required String Function(double) format,
   bool useSecond = false,
   bool compare = false,
+  bool integer = false,
   List<ChartLine> extra = const [],
 }) {
   final dates = [for (final p in series.current) p.date];
@@ -62,6 +67,7 @@ Widget seriesLineChart(
   final prevSrc = useSecond ? series.previousSecond : series.previous;
   return AnalyticsLineChart(
     dates: dates,
+    integerAxis: integer,
     periodDays: analyticsPeriodDays(series.period),
     valueFormatter: format,
     lines: [

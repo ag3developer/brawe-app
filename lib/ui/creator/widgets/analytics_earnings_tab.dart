@@ -17,15 +17,15 @@ import 'analytics/analytics_widgets.dart';
 // GET /analytics/top-gifts  → presentes mais recebidos (com imagem)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AnalyticsReachScreen extends ConsumerStatefulWidget {
-  const AnalyticsReachScreen({super.key});
+class AnalyticsEarningsBody extends ConsumerStatefulWidget {
+  const AnalyticsEarningsBody({super.key});
 
   @override
-  ConsumerState<AnalyticsReachScreen> createState() =>
-      _AnalyticsReachScreenState();
+  ConsumerState<AnalyticsEarningsBody> createState() =>
+      _AnalyticsEarningsBodyState();
 }
 
-class _AnalyticsReachScreenState extends ConsumerState<AnalyticsReachScreen> {
+class _AnalyticsEarningsBodyState extends ConsumerState<AnalyticsEarningsBody> {
   int _metric = 0; // 0 = ganhos, 1 = presentes
 
   @override
@@ -78,8 +78,7 @@ class _AnalyticsReachScreenState extends ConsumerState<AnalyticsReachScreen> {
     final color = isMoney ? earnColor : giftColor;
     final label = isMoney ? s.analyticsEarningsLabel : s.analyticsGiftsLabel;
 
-    return AnalyticsPage(
-      title: s.analyticsReachTitle,
+    return AnalyticsTabScroll(
       onRefresh: () async {
         ref.invalidate(earningsSeriesProvider(period));
         ref.invalidate(topGiftsByPeriodProvider(period));
@@ -89,10 +88,6 @@ class _AnalyticsReachScreenState extends ConsumerState<AnalyticsReachScreen> {
         ]).catchError((_) => <Object>[]);
       },
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 4, bottom: 14),
-          child: AnalyticsPeriodSegment(),
-        ),
         AnalyticsKpiGrid(kpis: kpis, skeletonCount: 3),
         const SizedBox(height: 16),
         AnalyticsChartPanel(
@@ -108,6 +103,10 @@ class _AnalyticsReachScreenState extends ConsumerState<AnalyticsReachScreen> {
           builder: (compare) => AnalyticsAsyncChart(
             async: async,
             onRetry: () => ref.invalidate(earningsSeriesProvider(period)),
+            isEmpty: (d) => d.emptyFor(second: !isMoney),
+            emptyMessage: isMoney
+                ? s.analyticsEmptyEarnings(analyticsRangeLabel(s, period))
+                : s.analyticsEmptyGifts(analyticsRangeLabel(s, period)),
             builder: (data) => seriesLineChart(
               context,
               data,
@@ -115,6 +114,7 @@ class _AnalyticsReachScreenState extends ConsumerState<AnalyticsReachScreen> {
               color: color,
               useSecond: !isMoney,
               compare: compare,
+              integer: !isMoney,
               format: isMoney ? fmt.money : fmt.integer,
             ),
           ),

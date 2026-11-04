@@ -6954,4 +6954,74 @@ class SEs extends S {
   String analyticsHoursMinutes(String h, String m) {
     return '${h}h ${m}min';
   }
+
+  @override
+  String get analyticsRange7d => 'en los últimos 7 días';
+
+  @override
+  String get analyticsRange30d => 'en los últimos 30 días';
+
+  @override
+  String get analyticsRange90d => 'en los últimos 3 meses';
+
+  @override
+  String get analyticsRange365d => 'en el último año';
+
+  @override
+  String analyticsEmptyFollowersNew(String range) {
+    return 'Ningún seguidor nuevo $range';
+  }
+
+  @override
+  String get analyticsEmptyFollowersTotal => 'Aún no tienes seguidores';
+
+  @override
+  String analyticsEmptyEarnings(String range) {
+    return 'Sin ganancias $range';
+  }
+
+  @override
+  String analyticsEmptyGifts(String range) {
+    return 'Ningún regalo recibido $range';
+  }
+
+  @override
+  String analyticsEmptyViewers(String range) {
+    return 'Ningún espectador $range';
+  }
+
+  @override
+  String analyticsEmptyLives(String range) {
+    return 'Ningún live $range';
+  }
+
+  @override
+  String analyticsEmptyMinutes(String range) {
+    return 'Ningún minuto en vivo $range';
+  }
+
+  @override
+  String get analyticsHubTitle => 'Análisis';
+
+  @override
+  String get analyticsTabOverview => 'Resumen';
+
+  @override
+  String get analyticsTabFollowers => 'Seguidores';
+
+  @override
+  String get analyticsTabAudience => 'Audiencia';
+
+  @override
+  String get analyticsTabLives => 'Lives';
+
+  @override
+  String get analyticsTabEarnings => 'Ganancias';
+
+  @override
+  String get analyticsOverviewTopGift => 'Regalo destacado';
+
+  @override
+  String get analyticsOverviewSeeDetails =>
+      'Toca un indicador para ver detalles';
 }

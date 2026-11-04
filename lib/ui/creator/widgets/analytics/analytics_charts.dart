@@ -51,6 +51,19 @@ double niceInterval(double maxValue, {int ticks = 4}) {
   return step * mag;
 }
 
+/// Escala do eixo Y: passo "redondo" e topo coerente (mínimo de 2 passos,
+/// para sempre haver pelo menos duas linhas de grade úteis).
+({double interval, double maxY}) niceScale(double maxValue, {bool integer = false}) {
+  if (maxValue <= 0) return (interval: 1, maxY: 2);
+  var interval = niceInterval(maxValue);
+  if (integer) interval = math.max(1, interval.ceilToDouble());
+  var maxY = (maxValue / interval).ceil() * interval;
+  // folga: se o topo encosta no valor máximo, sobe um passo
+  if (maxY <= maxValue * 1.02) maxY += interval;
+  if (maxY < interval * 2) maxY = interval * 2;
+  return (interval: interval, maxY: maxY);
+}
+
 double _maxOf(Iterable<ChartLine> lines) {
   var m = 0.0;
   for (final l in lines) {
@@ -90,17 +103,24 @@ class _RevealClipper extends CustomClipper<Rect> {
   bool shouldReclip(_RevealClipper old) => old.t != t;
 }
 
+/// Passo dos rótulos do eixo X: no máximo ~5 rótulos, sem sobreposição.
+int labelStep(int n, double width) {
+  if (n <= 1) return 1;
+  final maxLabels = (width / 70).floor().clamp(3, 6);
+  return math.max(1, ((n - 1) / (maxLabels - 1)).ceil());
+}
+
 FlTitlesData _titles(
   BuildContext context, {
   required List<DateTime> dates,
   required String Function(double) axisFmt,
   required double yInterval,
   required AnalyticsFmt fmt,
-  bool showLeft = true,
+  required double width,
 }) {
   final colors = context.colors;
   final n = dates.length;
-  final step = n <= 8 ? (n <= 7 ? 2 : 1) : math.max(1, ((n - 1) / 4).round());
+  final step = labelStep(n, width);
   final style = TextStyle(
     color: colors.textTertiary,
     fontSize: 10,
@@ -111,15 +131,17 @@ FlTitlesData _titles(
     rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
     leftTitles: AxisTitles(
       sideTitles: SideTitles(
-        showTitles: showLeft,
-        reservedSize: 38,
+        showTitles: true,
+        reservedSize: 40,
         interval: yInterval,
         getTitlesWidget: (v, meta) {
-          if (v == meta.max && v % yInterval != 0) return const SizedBox();
+          // só múltiplos exatos do passo (evita rótulo "quebrado" no topo)
+          final k = v / yInterval;
+          if ((k - k.round()).abs() > 0.001) return const SizedBox();
           return SideTitleWidget(
             meta: meta,
             space: 6,
-            child: Text(axisFmt(v), style: style),
+            child: Text(axisFmt(v), style: style, maxLines: 1),
           );
         },
       ),
@@ -127,15 +149,23 @@ FlTitlesData _titles(
     bottomTitles: AxisTitles(
       sideTitles: SideTitles(
         showTitles: true,
-        reservedSize: 26,
-        interval: step.toDouble(),
+        reservedSize: 28,
+        interval: 1,
         getTitlesWidget: (v, meta) {
           final i = v.round();
           if (i < 0 || i >= n || (v - i).abs() > 0.01) return const SizedBox();
+          // mostra só de `step` em `step`, ancorado no primeiro ponto
+          if (i % step != 0) return const SizedBox();
+          // evita colar o último rótulo no anterior
           return SideTitleWidget(
             meta: meta,
             space: 8,
-            child: Text(fmt.dayShort(dates[i]), style: style),
+            child: Text(
+              fmt.dayShort(dates[i]),
+              style: style,
+              maxLines: 1,
+              softWrap: false,
+            ),
           );
         },
       ),
@@ -166,6 +196,9 @@ class AnalyticsLineChart extends StatelessWidget {
   final int periodDays;
   final double height;
 
+  /// Valores inteiros (contagens): o eixo Y só usa passos inteiros.
+  final bool integerAxis;
+
   const AnalyticsLineChart({
     super.key,
     required this.dates,
@@ -173,15 +206,16 @@ class AnalyticsLineChart extends StatelessWidget {
     required this.valueFormatter,
     required this.periodDays,
     this.height = 220,
+    this.integerAxis = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final fmt = AnalyticsFmt.of(context);
-    final maxV = _maxOf(lines);
-    final interval = niceInterval(maxV);
-    final maxY = maxV <= 0 ? 1.0 : (maxV / interval).ceil() * interval;
+    final scale = niceScale(_maxOf(lines), integer: integerAxis);
+    final interval = scale.interval;
+    final maxY = scale.maxY;
     final n = dates.length;
     final curved = n <= 60;
 
@@ -197,7 +231,7 @@ class AnalyticsLineChart extends StatelessWidget {
           isStrokeCapRound: true,
           dashArray: l.isPrevious ? [5, 4] : null,
           dotData: FlDotData(
-            show: n <= 31 && !l.isPrevious && l.area,
+            show: (n <= 31 || n <= 1) && !l.isPrevious && l.area,
             getDotPainter: (s, p, b, i) => FlDotCirclePainter(
               radius: 2.6,
               color: colors.background,
@@ -221,7 +255,7 @@ class AnalyticsLineChart extends StatelessWidget {
 
     return SizedBox(
       height: height,
-      child: _Reveal(
+      child: LayoutBuilder(builder: (context, box) => _Reveal(
         key: ValueKey(Object.hashAll([n, lines.length, dates.first])),
         child: LineChart(
           LineChartData(
@@ -237,6 +271,7 @@ class AnalyticsLineChart extends StatelessWidget {
               axisFmt: fmt.axis,
               yInterval: interval,
               fmt: fmt,
+              width: box.maxWidth - 40,
             ),
             lineBarsData: bars,
             lineTouchData: LineTouchData(
@@ -315,7 +350,7 @@ class AnalyticsLineChart extends StatelessWidget {
           duration: const Duration(milliseconds: 450),
           curve: Curves.easeOutCubic,
         ),
-      ),
+      )),
     );
   }
 }
@@ -330,6 +365,7 @@ class AnalyticsBarChart extends StatelessWidget {
   final String Function(double) valueFormatter;
   final int periodDays;
   final double height;
+  final bool integerAxis;
 
   const AnalyticsBarChart({
     super.key,
@@ -341,6 +377,7 @@ class AnalyticsBarChart extends StatelessWidget {
     required this.periodDays,
     this.previous,
     this.height = 220,
+    this.integerAxis = true,
   });
 
   @override
@@ -350,13 +387,17 @@ class AnalyticsBarChart extends StatelessWidget {
     final n = dates.length;
     var maxV = values.fold(0.0, math.max);
     if (previous != null) maxV = previous!.fold(maxV, math.max);
-    final interval = niceInterval(maxV);
-    final maxY = maxV <= 0 ? 1.0 : (maxV / interval).ceil() * interval;
-    final w = n > 45 ? 4.0 : (n > 20 ? 6.0 : (n > 8 ? 9.0 : 16.0));
+    final scale = niceScale(maxV, integer: integerAxis);
+    final interval = scale.interval;
+    final maxY = scale.maxY;
 
     return SizedBox(
       height: height,
-      child: _Reveal(
+      child: LayoutBuilder(builder: (context, box) {
+        // largura da barra proporcional ao espaço de cada ponto
+        final slot = (box.maxWidth - 40) / math.max(1, n);
+        final w = (slot * (previous != null ? 0.38 : 0.62)).clamp(2.5, 18.0);
+        return _Reveal(
         key: ValueKey(Object.hashAll([n, previous != null, dates.first])),
         child: BarChart(
           BarChartData(
@@ -371,6 +412,7 @@ class AnalyticsBarChart extends StatelessWidget {
               axisFmt: fmt.axis,
               yInterval: interval,
               fmt: fmt,
+              width: box.maxWidth - 40,
             ),
             barGroups: [
               for (var i = 0; i < n; i++)
@@ -453,7 +495,8 @@ class AnalyticsBarChart extends StatelessWidget {
           duration: const Duration(milliseconds: 450),
           curve: Curves.easeOutCubic,
         ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -512,8 +555,12 @@ class AnalyticsLegend extends StatelessWidget {
 class AnalyticsEmptyChart extends StatelessWidget {
   final double height;
   final IconData icon;
+
+  /// Mensagem específica da métrica (ex.: "Nenhum seguidor novo nos últimos 30 dias").
+  final String? message;
   const AnalyticsEmptyChart({
     super.key,
+    this.message,
     this.height = 220,
     this.icon = LucideIcons.chartLine,
   });
@@ -543,12 +590,16 @@ class AnalyticsEmptyChart extends StatelessWidget {
                 child: Icon(icon, size: 22, color: colors.textTertiary),
               ),
               const SizedBox(height: 10),
-              Text(
-                s.analyticsNoDataTitle,
-                style: TextStyle(
-                  color: colors.textPrimary,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  message ?? s.analyticsNoDataTitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               const SizedBox(height: 2),
@@ -594,4 +645,64 @@ class _GhostPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GhostPainter old) => old.color != color;
+}
+
+/// Mini gráfico de tendência (sem eixos nem toque) para os cartões de KPI.
+class AnalyticsSparkline extends StatelessWidget {
+  final List<double> values;
+  final Color color;
+  final double height;
+  const AnalyticsSparkline({
+    super.key,
+    required this.values,
+    required this.color,
+    this.height = 34,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final n = values.length;
+    if (n < 2) return SizedBox(height: height);
+    final maxV = values.fold(0.0, math.max);
+    final flat = maxV <= 0;
+    return SizedBox(
+      height: height,
+      child: LineChart(
+        LineChartData(
+          minX: 0,
+          maxX: (n - 1).toDouble(),
+          minY: 0,
+          maxY: flat ? 1 : maxV * 1.15,
+          gridData: const FlGridData(show: false),
+          borderData: FlBorderData(show: false),
+          titlesData: const FlTitlesData(show: false),
+          lineTouchData: const LineTouchData(enabled: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: [for (var i = 0; i < n; i++) FlSpot(i.toDouble(), values[i])],
+              isCurved: n <= 60,
+              preventCurveOverShooting: true,
+              curveSmoothness: 0.22,
+              color: flat ? color.withValues(alpha: 0.35) : color,
+              barWidth: 2,
+              isStrokeCapRound: true,
+              dotData: const FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: !flat,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    color.withValues(alpha: 0.28),
+                    color.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        duration: const Duration(milliseconds: 350),
+      ),
+    );
+  }
 }

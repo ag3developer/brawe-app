@@ -28,15 +28,15 @@ import 'analytics/analytics_widgets.dart';
 // GET /profile/:userId/lives  → playback_url (Mux HLS, válido 30 dias)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AnalyticsLivesScreen extends ConsumerStatefulWidget {
-  const AnalyticsLivesScreen({super.key});
+class AnalyticsLivesBody extends ConsumerStatefulWidget {
+  const AnalyticsLivesBody({super.key});
 
   @override
-  ConsumerState<AnalyticsLivesScreen> createState() =>
-      _AnalyticsLivesScreenState();
+  ConsumerState<AnalyticsLivesBody> createState() =>
+      _AnalyticsLivesBodyState();
 }
 
-class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
+class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
   int _page = 1;
   final List<LiveHistoryItem> _items = [];
   bool _hasMore = true;
@@ -105,7 +105,6 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final colors = context.colors;
     final fmt = AnalyticsFmt.of(context);
     final period = ref.watch(analyticsPeriodProvider);
     final seriesAsync = ref.watch(livesSeriesProvider(period));
@@ -156,89 +155,68 @@ class _AnalyticsLivesScreenState extends ConsumerState<AnalyticsLivesScreen> {
     final label = isLives ? s.analyticsLivesChartLives : s.analyticsLivesChartMinutes;
     final color = isLives ? livesColor : minColor;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, size: 20, color: colors.textPrimary),
-          onPressed: () => Navigator.of(context).maybePop(),
+    return RefreshIndicator(
+      color: AppColors.braweBlue,
+      onRefresh: () => _refresh(period),
+      child: CustomScrollView(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
-        title: Text(
-          s.analyticsLivesTitle,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: RefreshIndicator(
-        color: AppColors.braweBlue,
-        onRefresh: () => _refresh(period),
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4, bottom: 14),
-                    child: AnalyticsPeriodSegment(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                AnalyticsKpiGrid(kpis: kpis, skeletonCount: 4),
+                const SizedBox(height: 16),
+                AnalyticsChartPanel(
+                  title: label,
+                  toolbar: AnalyticsChipToggle(
+                    labels: [
+                      s.analyticsLivesChartLives,
+                      s.analyticsLivesChartMinutes,
+                    ],
+                    selected: _metric,
+                    color: color,
+                    onChanged: (i) => setState(() => _metric = i),
                   ),
-                  AnalyticsKpiGrid(kpis: kpis, skeletonCount: 4),
-                  const SizedBox(height: 16),
-                  AnalyticsChartPanel(
-                    title: label,
-                    toolbar: AnalyticsChipToggle(
-                      labels: [
-                        s.analyticsLivesChartLives,
-                        s.analyticsLivesChartMinutes,
-                      ],
-                      selected: _metric,
-                      color: color,
-                      onChanged: (i) => setState(() => _metric = i),
-                    ),
-                    builder: (compare) => AnalyticsAsyncChart(
-                      async: seriesAsync,
-                      onRetry: () => ref.invalidate(livesSeriesProvider(period)),
-                      builder: (series) => isLives
-                          ? seriesBarChart(
-                              context,
-                              series,
-                              label: label,
-                              color: color,
-                              compare: compare,
-                              format: fmt.integer,
-                            )
-                          : seriesLineChart(
-                              context,
-                              series,
-                              label: label,
-                              color: color,
-                              useSecond: true,
-                              compare: compare,
-                              format: (v) => _duration(s, v),
-                            ),
-                    ),
-                    legendBuilder: (compare) =>
-                        seriesLegend(context, [(color: color, label: label)], compare),
+                  builder: (compare) => AnalyticsAsyncChart(
+                    async: seriesAsync,
+                    onRetry: () => ref.invalidate(livesSeriesProvider(period)),
+                    isEmpty: (d) => d.emptyFor(second: !isLives),
+                    emptyMessage: isLives
+                        ? s.analyticsEmptyLives(analyticsRangeLabel(s, period))
+                        : s.analyticsEmptyMinutes(analyticsRangeLabel(s, period)),
+                    builder: (series) => isLives
+                        ? seriesBarChart(
+                            context,
+                            series,
+                            label: label,
+                            color: color,
+                            compare: compare,
+                            format: fmt.integer,
+                          )
+                        : seriesLineChart(
+                            context,
+                            series,
+                            label: label,
+                            color: color,
+                            useSecond: true,
+                            integer: true,
+                            compare: compare,
+                            format: (v) => _duration(s, v),
+                          ),
                   ),
-                  AnalyticsSectionTitle(title: s.analyticsLivesHistoryTitle),
-                ]),
-              ),
+                  legendBuilder: (compare) =>
+                      seriesLegend(context, [(color: color, label: label)], compare),
+                ),
+                AnalyticsSectionTitle(title: s.analyticsLivesHistoryTitle),
+              ]),
             ),
-            ..._historySlivers(firstPageAsync),
-          ],
-        ),
+          ),
+          ..._historySlivers(firstPageAsync),
+        ],
       ),
     );
   }

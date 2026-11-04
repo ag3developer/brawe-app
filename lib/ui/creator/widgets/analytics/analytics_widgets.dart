@@ -13,53 +13,28 @@ import 'analytics_format.dart';
 // Peças compartilhadas pelas 4 telas de análise.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Estrutura comum: barra superior, pull-to-refresh e lista de seções.
-class AnalyticsPage extends StatelessWidget {
-  final String title;
+/// Corpo rolável de uma aba: pull-to-refresh + lista de seções.
+class AnalyticsTabScroll extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final List<Widget> children;
-  const AnalyticsPage({
+  const AnalyticsTabScroll({
     super.key,
-    required this.title,
     required this.onRefresh,
     required this.children,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, size: 20, color: colors.textPrimary),
-          onPressed: () => Navigator.of(context).maybePop(),
+    return RefreshIndicator(
+      color: AppColors.braweBlue,
+      onRefresh: onRefresh,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
-      ),
-      body: RefreshIndicator(
-        color: AppColors.braweBlue,
-        onRefresh: onRefresh,
-        child: ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
-          itemCount: children.length,
-          itemBuilder: (_, i) => StaggerIn(index: i, child: children[i]),
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+        itemCount: children.length,
+        itemBuilder: (_, i) => StaggerIn(index: i, child: children[i]),
       ),
     );
   }
@@ -661,3 +636,11 @@ class AnalyticsCard extends StatelessWidget {
     );
   }
 }
+
+/// "nos últimos 30 dias" etc., para mensagens de estado vazio.
+String analyticsRangeLabel(S s, String period) => switch (period) {
+  '7d' => s.analyticsRange7d,
+  '90d' => s.analyticsRange90d,
+  '365d' => s.analyticsRange365d,
+  _ => s.analyticsRange30d,
+};

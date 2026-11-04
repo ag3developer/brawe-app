@@ -17,16 +17,16 @@ import 'analytics/analytics_widgets.dart';
 // GET /social/stats/:userId → seguindo, lives (resumo da conta)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AnalyticsFollowersScreen extends ConsumerStatefulWidget {
-  const AnalyticsFollowersScreen({super.key});
+class AnalyticsFollowersBody extends ConsumerStatefulWidget {
+  const AnalyticsFollowersBody({super.key});
 
   @override
-  ConsumerState<AnalyticsFollowersScreen> createState() =>
-      _AnalyticsFollowersScreenState();
+  ConsumerState<AnalyticsFollowersBody> createState() =>
+      _AnalyticsFollowersBodyState();
 }
 
-class _AnalyticsFollowersScreenState
-    extends ConsumerState<AnalyticsFollowersScreen> {
+class _AnalyticsFollowersBodyState
+    extends ConsumerState<AnalyticsFollowersBody> {
   int _metric = 0; // 0 = acumulado, 1 = novos por dia
 
   @override
@@ -67,8 +67,7 @@ class _AnalyticsFollowersScreenState
         ? s.analyticsFollowersChartTotal
         : s.analyticsFollowersChartNew;
 
-    return AnalyticsPage(
-      title: s.analyticsFollowersTitle,
+    return AnalyticsTabScroll(
       onRefresh: () async {
         ref.invalidate(followersSeriesProvider(period));
         ref.invalidate(creatorSocialStatsProvider);
@@ -77,10 +76,6 @@ class _AnalyticsFollowersScreenState
             .then((_) {}, onError: (_) {});
       },
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 4, bottom: 14),
-          child: AnalyticsPeriodSegment(),
-        ),
         AnalyticsKpiGrid(kpis: kpis),
         const SizedBox(height: 16),
         AnalyticsChartPanel(
@@ -99,13 +94,17 @@ class _AnalyticsFollowersScreenState
             async: async,
             onRetry: () => ref.invalidate(followersSeriesProvider(period)),
             // vazio = nenhum seguidor no início e nenhum novo no período
-            isEmpty: (d) => d.val('total') == 0 && d.val('new_followers') == 0,
+            isEmpty: (d) => accumulated ? d.emptyFor() : d.emptyFor(second: true),
+            emptyMessage: accumulated
+                ? s.analyticsEmptyFollowersTotal
+                : s.analyticsEmptyFollowersNew(analyticsRangeLabel(s, period)),
             builder: (d) => accumulated
                 ? seriesLineChart(
                     context,
                     d,
                     label: label,
                     color: color,
+                    integer: true,
                     format: fmt.integer,
                   )
                 : seriesBarChart(

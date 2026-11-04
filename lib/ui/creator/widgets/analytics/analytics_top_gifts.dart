@@ -41,7 +41,18 @@ class _GiftRow {
 
 class AnalyticsTopGifts extends ConsumerWidget {
   final String period;
-  const AnalyticsTopGifts({super.key, required this.period});
+
+  /// Mostra só o nº 1 (usado na Visão geral); [onTap] abre os detalhes.
+  final bool featuredOnly;
+  final String? title;
+  final VoidCallback? onTap;
+  const AnalyticsTopGifts({
+    super.key,
+    required this.period,
+    this.featuredOnly = false,
+    this.title,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,8 +63,8 @@ class AnalyticsTopGifts extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         AnalyticsSectionTitle(
-          title: s.analyticsTopGiftsTitle,
-          subtitle: s.analyticsTopGiftsSubtitle,
+          title: title ?? s.analyticsTopGiftsTitle,
+          subtitle: featuredOnly ? null : s.analyticsTopGiftsSubtitle,
         ),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
@@ -78,7 +89,8 @@ class AnalyticsTopGifts extends ConsumerWidget {
                 final rows = [for (final j in raw) _GiftRow(context, j)];
                 return Column(
                   children: [
-                    _FeaturedGift(row: rows.first),
+                    _FeaturedGift(row: rows.first, onTap: onTap),
+                    if (!featuredOnly)
                     for (var i = 1; i < rows.length; i++) ...[
                       const SizedBox(height: 8),
                       _GiftTile(rank: i + 1, row: rows[i]),
@@ -120,7 +132,8 @@ class _NoGifts extends StatelessWidget {
 
 class _FeaturedGift extends StatelessWidget {
   final _GiftRow row;
-  const _FeaturedGift({required this.row});
+  final VoidCallback? onTap;
+  const _FeaturedGift({required this.row, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +142,7 @@ class _FeaturedGift extends StatelessWidget {
     final fmt = AnalyticsFmt.of(context);
     return GameTile(
       tint: AppColors.gold,
+      onTap: onTap,
       radius: 24,
       depth: 5,
       glow: 0.25,

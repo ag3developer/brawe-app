@@ -84,15 +84,15 @@ String journeyRemaining(S s, String metric, int n) {
 String? journeyMetricRoute(String metric) {
   switch (metric) {
     case 'followers':
-      return '/creator/analytics/followers';
+      return '/creator/analytics?tab=followers';
     case 'viewers':
-      return '/creator/analytics/viewers';
+      return '/creator/analytics?tab=audience';
     case 'lives':
     case 'live_minutes':
-      return '/creator/analytics/lives';
+      return '/creator/analytics?tab=lives';
     case 'gift_credits':
     case 'posts':
-      return '/creator/analytics/reach';
+      return '/creator/analytics?tab=earnings';
     default:
       return null;
   }

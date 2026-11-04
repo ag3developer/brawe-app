@@ -49,6 +49,7 @@ import '../ui/explore/widgets/explore_screen.dart';
 import '../ui/explore/widgets/hashtag_results_screen.dart';
 import '../ui/follows/view_models/follows_view_model.dart';
 import '../ui/home/widgets/home_bottom_nav.dart';
+import '../ui/creator/widgets/creator_analytics_hub_screen.dart';
 import '../ui/creator/widgets/creator_program_intro_screen.dart';
 import '../ui/creator/widgets/creator_levels_screen.dart';
 import '../ui/creator/widgets/creator_application_form_screen.dart';
@@ -62,10 +63,6 @@ import '../ui/creator/widgets/creator_dashboard_screen.dart';
 import '../ui/creator/widgets/admin_creator_applications_screen.dart';
 import '../ui/creator/widgets/admin_creator_application_detail_screen.dart';
 import '../ui/creator/widgets/admin_creators_management_screen.dart';
-import '../ui/creator/widgets/analytics_viewers_screen.dart';
-import '../ui/creator/widgets/analytics_followers_screen.dart';
-import '../ui/creator/widgets/analytics_lives_screen.dart';
-import '../ui/creator/widgets/analytics_reach_screen.dart';
 import '../ui/shop/pages/shop_product_page.dart';
 import '../ui/shop/pages/shop_store_page.dart';
 import '../ui/shop/pages/shop_vitrine_page.dart';
@@ -549,21 +546,29 @@ GoRouter router(Ref ref) {
             path: '/creator/dashboard',
             builder: (context, state) => const CreatorDashboardScreen(),
           ),
+          // Hub de análises (período único + abas). As rotas antigas
+          // redirecionam para a aba certa, preservando links existentes.
+          GoRoute(
+            path: '/creator/analytics',
+            builder: (context, state) => CreatorAnalyticsHubScreen(
+              initialTab: state.uri.queryParameters['tab'],
+            ),
+          ),
           GoRoute(
             path: '/creator/analytics/viewers',
-            builder: (context, state) => const AnalyticsViewersScreen(),
+            redirect: (_, _) => '/creator/analytics?tab=audience',
           ),
           GoRoute(
             path: '/creator/analytics/followers',
-            builder: (context, state) => const AnalyticsFollowersScreen(),
+            redirect: (_, _) => '/creator/analytics?tab=followers',
           ),
           GoRoute(
             path: '/creator/analytics/lives',
-            builder: (context, state) => const AnalyticsLivesScreen(),
+            redirect: (_, _) => '/creator/analytics?tab=lives',
           ),
           GoRoute(
             path: '/creator/analytics/reach',
-            builder: (context, state) => const AnalyticsReachScreen(),
+            redirect: (_, _) => '/creator/analytics?tab=earnings',
           ),
           // ── Admin ───────────────────────────────────────────────
           GoRoute(

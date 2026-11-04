@@ -12380,6 +12380,120 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'{h}h {m}min'**
   String analyticsHoursMinutes(String h, String m);
+
+  /// No description provided for @analyticsRange7d.
+  ///
+  /// In pt, this message translates to:
+  /// **'nos últimos 7 dias'**
+  String get analyticsRange7d;
+
+  /// No description provided for @analyticsRange30d.
+  ///
+  /// In pt, this message translates to:
+  /// **'nos últimos 30 dias'**
+  String get analyticsRange30d;
+
+  /// No description provided for @analyticsRange90d.
+  ///
+  /// In pt, this message translates to:
+  /// **'nos últimos 3 meses'**
+  String get analyticsRange90d;
+
+  /// No description provided for @analyticsRange365d.
+  ///
+  /// In pt, this message translates to:
+  /// **'no último ano'**
+  String get analyticsRange365d;
+
+  /// No description provided for @analyticsEmptyFollowersNew.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum seguidor novo {range}'**
+  String analyticsEmptyFollowersNew(String range);
+
+  /// No description provided for @analyticsEmptyFollowersTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não tem seguidores'**
+  String get analyticsEmptyFollowersTotal;
+
+  /// No description provided for @analyticsEmptyEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum ganho {range}'**
+  String analyticsEmptyEarnings(String range);
+
+  /// No description provided for @analyticsEmptyGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum presente recebido {range}'**
+  String analyticsEmptyGifts(String range);
+
+  /// No description provided for @analyticsEmptyViewers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum espectador {range}'**
+  String analyticsEmptyViewers(String range);
+
+  /// No description provided for @analyticsEmptyLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma live {range}'**
+  String analyticsEmptyLives(String range);
+
+  /// No description provided for @analyticsEmptyMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum minuto ao vivo {range}'**
+  String analyticsEmptyMinutes(String range);
+
+  /// No description provided for @analyticsHubTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análises'**
+  String get analyticsHubTitle;
+
+  /// No description provided for @analyticsTabOverview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visão geral'**
+  String get analyticsTabOverview;
+
+  /// No description provided for @analyticsTabFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get analyticsTabFollowers;
+
+  /// No description provided for @analyticsTabAudience.
+  ///
+  /// In pt, this message translates to:
+  /// **'Audiência'**
+  String get analyticsTabAudience;
+
+  /// No description provided for @analyticsTabLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get analyticsTabLives;
+
+  /// No description provided for @analyticsTabEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos'**
+  String get analyticsTabEarnings;
+
+  /// No description provided for @analyticsOverviewTopGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presente em destaque'**
+  String get analyticsOverviewTopGift;
+
+  /// No description provided for @analyticsOverviewSeeDetails.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque num indicador para ver os detalhes'**
+  String get analyticsOverviewSeeDetails;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

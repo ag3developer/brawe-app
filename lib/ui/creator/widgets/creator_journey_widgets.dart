@@ -885,7 +885,7 @@ class JourneyShortcuts extends StatelessWidget {
       (LucideIcons.radio, s.creatorDashboardQuickGoLive, '/live/start',
           const Color(0xFFEC4899)),
       (LucideIcons.chartColumn, s.creatorDashShortcutAnalytics,
-          '/creator/analytics/viewers', const Color(0xFF3B82F6)),
+          '/creator/analytics', const Color(0xFF3B82F6)),
       (LucideIcons.settings, s.creatorDashShortcutSettings,
           '/creator/profile-settings', const Color(0xFF94A3B8)),
     ];

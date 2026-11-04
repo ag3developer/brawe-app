@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'account_suspension.dart';
+import 'safe_log_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/app_constants.dart';
@@ -48,12 +49,7 @@ Dio liveDio(Ref ref) {
   // builds entirely).
   if (kDebugMode) {
     dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        requestHeader: false,
-        responseHeader: false,
-      ),
+      SafeLogInterceptor(),
     );
   }
 

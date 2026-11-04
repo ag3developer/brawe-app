@@ -42,6 +42,10 @@ class AnalyticsSeries {
 
   bool get isEmpty => current.every((p) => p.value == 0 && (p.second ?? 0) == 0);
 
+  /// Sem nenhum valor > 0 na métrica exibida (principal ou secundária).
+  bool emptyFor({bool second = false}) =>
+      current.every((p) => (second ? (p.second ?? 0) : p.value) == 0);
+
   double val(String key) => (summary[key] as num?)?.toDouble() ?? 0;
 
   /// Variação % do backend (null quando não há base de comparação).

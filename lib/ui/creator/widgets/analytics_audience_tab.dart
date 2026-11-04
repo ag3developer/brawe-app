@@ -17,8 +17,8 @@ import 'analytics/analytics_widgets.dart';
 // GET /analytics/viewers → espectadores/pico por dia + período anterior
 // ─────────────────────────────────────────────────────────────────────────────
 
-class AnalyticsViewersScreen extends ConsumerWidget {
-  const AnalyticsViewersScreen({super.key});
+class AnalyticsAudienceBody extends ConsumerWidget {
+  const AnalyticsAudienceBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -68,8 +68,7 @@ class AnalyticsViewersScreen extends ConsumerWidget {
       ];
     }
 
-    return AnalyticsPage(
-      title: s.analyticsViewersTitle,
+    return AnalyticsTabScroll(
       onRefresh: () async {
         ref.invalidate(viewersSeriesProvider(period));
         await ref
@@ -77,10 +76,6 @@ class AnalyticsViewersScreen extends ConsumerWidget {
             .then((_) {}, onError: (_) {});
       },
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 4, bottom: 14),
-          child: AnalyticsPeriodSegment(),
-        ),
         AnalyticsKpiGrid(kpis: kpis, skeletonCount: 4),
         const SizedBox(height: 16),
         AnalyticsChartPanel(
@@ -88,12 +83,15 @@ class AnalyticsViewersScreen extends ConsumerWidget {
           builder: (compare) => AnalyticsAsyncChart(
             async: async,
             onRetry: () => ref.invalidate(viewersSeriesProvider(period)),
+            isEmpty: (d) => d.emptyFor() && d.emptyFor(second: true),
+            emptyMessage: s.analyticsEmptyViewers(analyticsRangeLabel(s, period)),
             builder: (d) => seriesLineChart(
               context,
               d,
               label: s.analyticsViewersLegendViewers,
               color: viewColor,
               compare: compare,
+              integer: true,
               format: fmt.integer,
               extra: [
                 ChartLine(
