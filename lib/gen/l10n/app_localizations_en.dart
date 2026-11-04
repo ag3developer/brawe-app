@@ -306,7 +306,7 @@ class SEn extends S {
   String get settingsLoadError => 'We couldn\'t load your settings.';
 
   @override
-  String get settingsThemeAuto => 'Auto';
+  String get settingsThemeAuto => 'Automatic';
 
   @override
   String get settingsTermsOfUse => 'Terms of Use';
@@ -7692,4 +7692,8 @@ class SEn extends S {
   @override
   String get codeTooManyRequests =>
       'Too many attempts from this network. Try again in a few minutes.';
+
+  @override
+  String get settingsThemeAutoHint =>
+      'Follows your phone\'s light/dark mode. If your phone switches automatically, it changes at sunset and sunrise.';
 }

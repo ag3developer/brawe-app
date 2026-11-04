@@ -31,7 +31,7 @@ class UserSettings {
     this.privacyShowViewers = true,
     this.privacyAllowDm = 'everyone',
     this.language = 'pt',
-    this.theme = 'dark',
+    this.theme = 'system',
     this.soundsEnabled = true,
   });
 
@@ -48,7 +48,7 @@ class UserSettings {
       privacyShowViewers: json['privacy_show_viewers'] as bool? ?? true,
       privacyAllowDm: (json['privacy_allow_dm'] as String?) ?? 'everyone',
       language: (json['language'] as String?) ?? 'pt',
-      theme: (json['theme'] as String?) ?? 'dark',
+      theme: (json['theme'] as String?) ?? 'system',
       soundsEnabled: json['sounds_enabled'] as bool? ?? true,
     );
   }

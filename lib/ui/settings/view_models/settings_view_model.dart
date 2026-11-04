@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/settings_repository.dart';
@@ -51,7 +52,17 @@ class SettingsViewModel extends _$SettingsViewModel {
 
   Future<void> setTheme(String theme) async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null) {
+      // Configurações ainda não carregaram (ex.: sem internet): troca e
+      // salva no celular mesmo assim e tenta mandar para a conta.
+      final mode = switch (theme) {
+        'light' => ThemeMode.light,
+        'system' => ThemeMode.system,
+        _ => ThemeMode.dark,
+      };
+      await ref.read(themeControllerProvider.notifier).setModeAndSync(mode);
+      return;
+    }
     await patch({'theme': theme}, current.copyWith(theme: theme));
   }
 

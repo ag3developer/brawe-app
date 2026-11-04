@@ -65,6 +65,23 @@ class SettingsScreen extends ConsumerWidget {
                     .setTheme(backendValue);
               },
             ),
+            // Explica o "Automático": segue a aparência do celular.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              child: themeMode == ThemeMode.system
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Text(
+                        s.settingsThemeAutoHint,
+                        style: TextStyle(
+                          color: context.colors.textSecondary,
+                          fontSize: 12.5,
+                          height: 1.35,
+                        ),
+                      ),
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
             const SizedBox(height: 24),
             _SectionHeader(
               icon: Icons.language_outlined,

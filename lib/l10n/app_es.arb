@@ -92,7 +92,7 @@
   "settingsAccount": "Cuenta",
   "settingsLogout": "Cerrar sesión",
   "settingsLoadError": "No pudimos cargar tu configuración.",
-  "settingsThemeAuto": "Auto",
+  "settingsThemeAuto": "Automático",
   "settingsTermsOfUse": "Términos de Uso",
   "settingsPrivacyPolicy": "Política de Privacidad",
   "settingsSupport": "Soporte",
@@ -3213,5 +3213,6 @@
   "codeChangeEmail": "Cambiar correo",
   "codeSpamHint": "¿No llegó? Revisa la carpeta de spam o promociones.",
   "codeError": "No se pudo enviar el código. Inténtalo de nuevo.",
-  "codeTooManyRequests": "Demasiados intentos desde esta red. Inténtalo en unos minutos."
+  "codeTooManyRequests": "Demasiados intentos desde esta red. Inténtalo en unos minutos.",
+  "settingsThemeAutoHint": "Sigue el modo claro/oscuro de tu celular. Si tu celular cambia automáticamente, cambia al atardecer y al amanecer."
 }

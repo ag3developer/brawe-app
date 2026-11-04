@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' as math;
 
@@ -412,7 +413,8 @@ class _GiftVaultBubbleState extends ConsumerState<GiftVaultBubble> {
       final g = await vaultGiftEffect(ref, p);
       var played = false;
       if (g != null && mounted) {
-        played = await playGiftEffectStandalone(context, g);
+        // Modo cinema: tela escura por trás, sem as mensagens do chat.
+        played = await playGiftInCinema(context, g);
       }
       // Sem efeito (ou não tocou): animação de reserva com o presente.
       if (!played && mounted) await showGiftPop(context, p);
@@ -694,235 +696,258 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
 
     return Material(
       color: Colors.transparent,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 250),
-        opacity: _playingEffect ? 0 : 1,
-        child: SafeArea(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Raios de luz girando atrás (aparecem ao abrir).
-              AnimatedBuilder(
-                animation: Listenable.merge([_unlock, _burst]),
-                builder: (_, _) {
-                  final o = _phase == _Phase.revealed
-                      ? 1.0
-                      : (_unlock.value - 0.6).clamp(0.0, 0.4) / 0.4;
-                  return Opacity(
-                    opacity: o,
-                    child: Transform.rotate(
-                      angle: _burst.value * math.pi / 2,
-                      child: CustomPaint(
-                        size: const Size(420, 420),
-                        painter: _RaysPainter(tint),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              if (_phase == _Phase.revealed)
-                IgnorePointer(
-                  child: AnimatedBuilder(
-                    animation: _burst,
-                    builder: (_, _) => CustomPaint(
-                      size: MediaQuery.sizeOf(context),
-                      painter: _ConfettiPainter(_burst.value, tint),
-                    ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Modo cinema: ao tocar o efeito a tela fica totalmente escura
+          // (o chat por trás some — antes aparecia pela transparência).
+          IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _playingEffect ? 1 : 0,
+              child: const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [Color(0xFF15171C), Colors.black],
+                    radius: 1.1,
                   ),
                 ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
+              ),
+            ),
+          ),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 250),
+            opacity: _playingEffect ? 0 : 1,
+            child: SafeArea(
+              child: Stack(
+                alignment: Alignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: tint.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: tint.withValues(alpha: 0.6)),
-                    ),
-                    child: Text(
-                      vaultTierName(s, tier).toUpperCase(),
-                      style: TextStyle(
-                        color: tint,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                        fontSize: 12,
+                  // Raios de luz girando atrás (aparecem ao abrir).
+                  AnimatedBuilder(
+                    animation: Listenable.merge([_unlock, _burst]),
+                    builder: (_, _) {
+                      final o = _phase == _Phase.revealed
+                          ? 1.0
+                          : (_unlock.value - 0.6).clamp(0.0, 0.4) / 0.4;
+                      return Opacity(
+                        opacity: o,
+                        child: Transform.rotate(
+                          angle: _burst.value * math.pi / 2,
+                          child: CustomPaint(
+                            size: const Size(420, 420),
+                            painter: _RaysPainter(tint),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  if (_phase == _Phase.revealed)
+                    IgnorePointer(
+                      child: AnimatedBuilder(
+                        animation: _burst,
+                        builder: (_, _) => CustomPaint(
+                          size: MediaQuery.sizeOf(context),
+                          painter: _ConfettiPainter(_burst.value, tint),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: 220,
-                    height: 220,
-                    child: _phase == _Phase.revealed
-                        ? AnimatedBuilder(
-                            animation: _burst,
-                            builder: (_, _) {
-                              final t = Curves.elasticOut.transform(
-                                (_burst.value * 2.2).clamp(0, 1),
-                              );
-                              return Transform.scale(
-                                scale: 0.3 + 0.7 * t,
-                                child: Center(
-                                  child: _GiftImage(payload: p, size: 170),
-                                ),
-                              );
-                            },
-                          )
-                        : GestureDetector(
-                            onTap: _start,
-                            child: AnimatedBuilder(
-                              animation: Listenable.merge([
-                                _shake,
-                                _unlock,
-                                _idle,
-                              ]),
-                              builder: (_, _) {
-                                final shake =
-                                    math.sin(_shake.value * math.pi * 8) *
-                                    (1 - _shake.value) *
-                                    0.12;
-                                final breathe = _phase == _Phase.idle
-                                    ? 1 + _idle.value * 0.04
-                                    : 1.0;
-                                final dial = Curves.easeInOut.transform(
-                                  (_unlock.value / 0.6).clamp(0, 1),
-                                );
-                                final door = Curves.easeOutBack.transform(
-                                  ((_unlock.value - 0.6) / 0.4).clamp(0, 1),
-                                );
-                                return Transform.rotate(
-                                  angle: shake,
-                                  child: Transform.scale(
-                                    scale: breathe,
-                                    child: VaultArt(
-                                      size: 200,
-                                      tint: tint,
-                                      dialTurns: dial * 1.5,
-                                      doorOpen: door,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tint.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: tint.withValues(alpha: 0.6),
                           ),
-                  ),
-                  const SizedBox(height: 28),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: _phase == _Phase.revealed
-                        ? Column(
-                            key: const ValueKey('rev'),
-                            children: [
-                              Text(
-                                s.chatVaultYouGot,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                qty > 1 ? '$giftName ×$qty' : giftName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                              if (earnings > 0) ...[
-                                const SizedBox(height: 10),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF10B981,
-                                    ).withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Text(
-                                    s.chatVaultEarnings(money),
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Color(0xFF34D399),
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 13,
+                        ),
+                        child: Text(
+                          vaultTierName(s, tier).toUpperCase(),
+                          style: TextStyle(
+                            color: tint,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: 220,
+                        height: 220,
+                        child: _phase == _Phase.revealed
+                            ? AnimatedBuilder(
+                                animation: _burst,
+                                builder: (_, _) {
+                                  final t = Curves.elasticOut.transform(
+                                    (_burst.value * 2.2).clamp(0, 1),
+                                  );
+                                  return Transform.scale(
+                                    scale: 0.3 + 0.7 * t,
+                                    child: Center(
+                                      child: _GiftImage(payload: p, size: 170),
                                     ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 28),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (earnings > 0) ...[
-                                    OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        side: const BorderSide(
-                                          color: Colors.white38,
+                                  );
+                                },
+                              )
+                            : GestureDetector(
+                                onTap: _start,
+                                child: AnimatedBuilder(
+                                  animation: Listenable.merge([
+                                    _shake,
+                                    _unlock,
+                                    _idle,
+                                  ]),
+                                  builder: (_, _) {
+                                    final shake =
+                                        math.sin(_shake.value * math.pi * 8) *
+                                        (1 - _shake.value) *
+                                        0.12;
+                                    final breathe = _phase == _Phase.idle
+                                        ? 1 + _idle.value * 0.04
+                                        : 1.0;
+                                    final dial = Curves.easeInOut.transform(
+                                      (_unlock.value / 0.6).clamp(0, 1),
+                                    );
+                                    final door = Curves.easeOutBack.transform(
+                                      ((_unlock.value - 0.6) / 0.4).clamp(0, 1),
+                                    );
+                                    return Transform.rotate(
+                                      angle: shake,
+                                      child: Transform.scale(
+                                        scale: breathe,
+                                        child: VaultArt(
+                                          size: 200,
+                                          tint: tint,
+                                          dialTurns: dial * 1.5,
+                                          doorOpen: door,
                                         ),
-                                        shape: const StadiumBorder(),
                                       ),
-                                      onPressed: () {
-                                        final router = GoRouter.of(context);
-                                        Navigator.of(context).pop();
-                                        router.push('/earnings');
-                                      },
-                                      child: Text(s.chatVaultSeeRewards),
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 28),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _phase == _Phase.revealed
+                            ? Column(
+                                key: const ValueKey('rev'),
+                                children: [
+                                  Text(
+                                    s.chatVaultYouGot,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 14,
                                     ),
-                                    const SizedBox(width: 10),
-                                  ],
-                                  FilledButton(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: tint,
-                                      foregroundColor: Colors.white,
-                                      shape: const StadiumBorder(),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    qty > 1 ? '$giftName ×$qty' : giftName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  if (earnings > 0) ...[
+                                    const SizedBox(height: 10),
+                                    Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 28,
+                                        horizontal: 14,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF10B981,
+                                        ).withValues(alpha: 0.18),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Text(
+                                        s.chatVaultEarnings(money),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: Color(0xFF34D399),
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: Text(s.chatVaultCollect),
+                                  ],
+                                  const SizedBox(height: 28),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (earnings > 0) ...[
+                                        OutlinedButton(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: Colors.white,
+                                            side: const BorderSide(
+                                              color: Colors.white38,
+                                            ),
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          onPressed: () {
+                                            final router = GoRouter.of(context);
+                                            Navigator.of(context).pop();
+                                            router.push('/earnings');
+                                          },
+                                          child: Text(s.chatVaultSeeRewards),
+                                        ),
+                                        const SizedBox(width: 10),
+                                      ],
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: tint,
+                                          foregroundColor: Colors.white,
+                                          shape: const StadiumBorder(),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 28,
+                                          ),
+                                        ),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
+                                        child: Text(s.chatVaultCollect),
+                                      ),
+                                    ],
                                   ),
                                 ],
+                              )
+                            : Text(
+                                key: const ValueKey('hint'),
+                                _phase == _Phase.idle ? s.chatVaultTapHint : '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ],
-                          )
-                        : Text(
-                            key: const ValueKey('hint'),
-                            _phase == _Phase.idle ? s.chatVaultTapHint : '',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                      ),
+                    ],
                   ),
+                  if (_phase == _Phase.idle)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white70,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
                 ],
               ),
-              if (_phase == _Phase.idle)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Colors.white70,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -1230,7 +1255,6 @@ class FileBubble extends StatelessWidget {
   }
 }
 
-
 /// Animação de reserva: o presente "salta" no centro com raios e brilho.
 /// Usada quando o presente não tem efeito ou o efeito não pôde tocar.
 Future<void> showGiftPop(BuildContext context, Map<String, dynamic> p) {
@@ -1251,13 +1275,16 @@ class _GiftPop extends StatefulWidget {
   State<_GiftPop> createState() => _GiftPopState();
 }
 
-class _GiftPopState extends State<_GiftPop> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2200),
-  )..forward().whenComplete(() {
-      if (mounted) Navigator.of(context).maybePop();
-    });
+class _GiftPopState extends State<_GiftPop>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 2200),
+        )
+        ..forward().whenComplete(() {
+          if (mounted) Navigator.of(context).maybePop();
+        });
 
   @override
   void dispose() {
@@ -1314,6 +1341,78 @@ class _GiftPopState extends State<_GiftPop> with SingleTickerProviderStateMixin 
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Modo cinema: escurece a tela INTEIRA (sem as mensagens do chat por trás),
+// toca o efeito do presente por cima e volta ao chat quando termina.
+
+/// Toca [gift] em modo cinema. Devolve `false` se o efeito não pôde tocar
+/// (ex.: simulador do iOS ou arquivo indisponível).
+Future<bool> playGiftInCinema(BuildContext context, LiveGift gift) async {
+  final done = Completer<bool>();
+  final nav = Navigator.of(context, rootNavigator: true);
+  nav.push(
+    PageRouteBuilder<void>(
+      opaque: false,
+      barrierDismissible: false,
+      transitionDuration: const Duration(milliseconds: 280),
+      reverseTransitionDuration: const Duration(milliseconds: 320),
+      pageBuilder: (_, _, _) => _CinemaStage(gift: gift, done: done),
+      transitionsBuilder: (_, a, _, child) =>
+          FadeTransition(opacity: a, child: child),
+    ),
+  );
+  return done.future;
+}
+
+class _CinemaStage extends StatefulWidget {
+  const _CinemaStage({required this.gift, required this.done});
+  final LiveGift gift;
+  final Completer<bool> done;
+
+  @override
+  State<_CinemaStage> createState() => _CinemaStageState();
+}
+
+class _CinemaStageState extends State<_CinemaStage> {
+  @override
+  void initState() {
+    super.initState();
+    // Espera a tela escurecer e só então solta o efeito.
+    Future<void>.delayed(const Duration(milliseconds: 300), () async {
+      if (!mounted) return _finish(false);
+      final ok = await playGiftEffectStandalone(context, widget.gift);
+      _finish(ok);
+    });
+  }
+
+  void _finish(bool ok) {
+    if (!widget.done.isCompleted) widget.done.complete(ok);
+    if (mounted) Navigator.of(context).maybePop();
+  }
+
+  @override
+  void dispose() {
+    if (!widget.done.isCompleted) widget.done.complete(false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: Colors.black,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF15171C), Colors.black],
+            radius: 1.1,
+          ),
+        ),
+        child: SizedBox.expand(),
       ),
     );
   }

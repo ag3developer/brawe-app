@@ -92,7 +92,7 @@
   "settingsAccount": "Account",
   "settingsLogout": "Sign out",
   "settingsLoadError": "We couldn't load your settings.",
-  "settingsThemeAuto": "Auto",
+  "settingsThemeAuto": "Automatic",
   "settingsTermsOfUse": "Terms of Use",
   "settingsPrivacyPolicy": "Privacy Policy",
   "settingsSupport": "Support",
@@ -3213,5 +3213,6 @@
   "codeChangeEmail": "Change email",
   "codeSpamHint": "Didn't get it? Check your spam or promotions folder.",
   "codeError": "Couldn't send the code. Try again.",
-  "codeTooManyRequests": "Too many attempts from this network. Try again in a few minutes."
+  "codeTooManyRequests": "Too many attempts from this network. Try again in a few minutes.",
+  "settingsThemeAutoHint": "Follows your phone's light/dark mode. If your phone switches automatically, it changes at sunset and sunrise."
 }

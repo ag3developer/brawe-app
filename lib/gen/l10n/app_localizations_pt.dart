@@ -306,7 +306,7 @@ class SPt extends S {
       'Não conseguimos carregar suas configurações.';
 
   @override
-  String get settingsThemeAuto => 'Auto';
+  String get settingsThemeAuto => 'Automático';
 
   @override
   String get settingsTermsOfUse => 'Termos de Uso';
@@ -7728,4 +7728,8 @@ class SPt extends S {
   @override
   String get codeTooManyRequests =>
       'Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.';
+
+  @override
+  String get settingsThemeAutoHint =>
+      'Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer.';
 }

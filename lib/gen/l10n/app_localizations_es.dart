@@ -306,7 +306,7 @@ class SEs extends S {
   String get settingsLoadError => 'No pudimos cargar tu configuración.';
 
   @override
-  String get settingsThemeAuto => 'Auto';
+  String get settingsThemeAuto => 'Automático';
 
   @override
   String get settingsTermsOfUse => 'Términos de Uso';
@@ -7732,4 +7732,8 @@ class SEs extends S {
   @override
   String get codeTooManyRequests =>
       'Demasiados intentos desde esta red. Inténtalo en unos minutos.';
+
+  @override
+  String get settingsThemeAutoHint =>
+      'Sigue el modo claro/oscuro de tu celular. Si tu celular cambia automáticamente, cambia al atardecer y al amanecer.';
 }

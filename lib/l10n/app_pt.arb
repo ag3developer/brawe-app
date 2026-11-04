@@ -148,7 +148,7 @@
   "settingsAccount": "Conta",
   "settingsLogout": "Sair da conta",
   "settingsLoadError": "Não conseguimos carregar suas configurações.",
-  "settingsThemeAuto": "Auto",
+  "settingsThemeAuto": "Automático",
   "settingsTermsOfUse": "Termos de Uso",
   "settingsPrivacyPolicy": "Política de Privacidade",
   "settingsSupport": "Suporte",
@@ -3750,5 +3750,6 @@
   "codeChangeEmail": "Trocar e-mail",
   "codeSpamHint": "Não chegou? Confira a caixa de spam ou promoções.",
   "codeError": "Não foi possível enviar o código. Tente de novo.",
-  "codeTooManyRequests": "Muitas tentativas a partir desta rede. Tente de novo em alguns minutos."
+  "codeTooManyRequests": "Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.",
+  "settingsThemeAutoHint": "Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer."
 }

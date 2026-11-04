@@ -654,7 +654,7 @@ abstract class S {
   /// No description provided for @settingsThemeAuto.
   ///
   /// In pt, this message translates to:
-  /// **'Auto'**
+  /// **'Automático'**
   String get settingsThemeAuto;
 
   /// No description provided for @settingsTermsOfUse.
@@ -13760,6 +13760,12 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.'**
   String get codeTooManyRequests;
+
+  /// No description provided for @settingsThemeAutoHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer.'**
+  String get settingsThemeAutoHint;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

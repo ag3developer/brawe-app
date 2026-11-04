@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../data/repositories/settings_repository.dart';
+
 part 'theme_view_model.g.dart';
 
 /// Theme mode controller. Persists user preference locally for instant boot.
@@ -13,7 +15,9 @@ class ThemeController extends _$ThemeController {
   @override
   ThemeMode build() {
     _restore();
-    return ThemeMode.dark;
+    // Padrão das redes sociais: seguir a aparência do celular. Quem já
+    // escolheu claro/escuro tem a escolha salva (no celular e na conta).
+    return ThemeMode.system;
   }
 
   Future<void> _restore() async {
@@ -29,6 +33,37 @@ class ThemeController extends _$ThemeController {
     await prefs.setString(_key, _serialize(mode));
   }
 
+  /// Troca o tema NA HORA e salva no celular; depois tenta salvar na conta.
+  /// Sem internet o tema continua trocado (antes não fazia nada se as
+  /// configurações ainda não tinham carregado).
+  Future<void> setModeAndSync(ThemeMode mode) async {
+    await setMode(mode);
+    try {
+      await ref
+          .read(settingsRepositoryProvider)
+          .updateSettings({'theme': _serialize(mode)});
+    } catch (_) {}
+  }
+
+  String? _syncedFor;
+
+  /// Recupera o tema salvo na CONTA logo após o login / ao abrir o app —
+  /// antes só acontecia ao abrir a tela de Configurações, e em celular novo
+  /// o app abria no escuro mesmo com "claro" escolhido.
+  Future<void> syncFromServer(String userId) async {
+    if (_syncedFor == userId) return;
+    _syncedFor = userId;
+    try {
+      final settings = await ref.read(settingsRepositoryProvider).getSettings();
+      await applyFromBackend(settings.theme);
+    } catch (_) {
+      _syncedFor = null; // tenta de novo no próximo login/abertura
+    }
+  }
+
+  /// Logout: o próximo login busca o tema da nova conta.
+  void resetSync() => _syncedFor = null;
+
   /// Apply a value coming from backend ('system' | 'dark' | 'light').
   Future<void> applyFromBackend(String? theme) async {
     final mode = _parse(theme);
@@ -43,11 +78,11 @@ class ThemeController extends _$ThemeController {
     switch (raw) {
       case 'light':
         return ThemeMode.light;
-      case 'system':
-        return ThemeMode.system;
       case 'dark':
-      default:
         return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
     }
   }
 

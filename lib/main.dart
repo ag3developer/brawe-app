@@ -165,11 +165,15 @@ class _BraweAppState extends ConsumerState<BraweApp> {
     // eventual deep link de push que chegou antes do usuário estar logado
     // (ex.: app aberto a partir de uma notificação em estado terminado).
     ref.listen(authStateProvider, (previous, next) {
-      final isAuthenticated = next.asData?.value != null;
+      final user = next.asData?.value;
+      final isAuthenticated = user != null;
       if (isAuthenticated) {
         ref.read(notificationNavigationServiceProvider).consumePending();
+        // Tema escolhido na conta vale em qualquer celular.
+        ref.read(themeControllerProvider.notifier).syncFromServer(user.id);
       } else {
         ref.read(notificationNavigationServiceProvider).clearPending();
+        ref.read(themeControllerProvider.notifier).resetSync();
       }
     });
 
