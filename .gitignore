@@ -77,3 +77,6 @@ ios/Flutter/
 *.pbxproj
 releases/
 .env.r2
+
+# Gradle do plugin local rtmp_broadcaster
+packages/rtmp_broadcaster/android/.gradle/

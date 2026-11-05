@@ -136,8 +136,11 @@ class StreamerQuickSheet extends StatelessWidget {
     required this.displayName,
     required this.isFollowing,
     required this.onToggleFollow,
+    this.onViewLive,
   });
 
+  /// "Ver a live" (parceiro/oponente na batalha ou conexão).
+  final VoidCallback? onViewLive;
   final LiveRoom room;
   final String displayName;
   final bool isFollowing;
@@ -246,6 +249,18 @@ class StreamerQuickSheet extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (onViewLive != null) ...[
+                  const SizedBox(height: 10),
+                  _QuickSheetButton(
+                    icon: Icons.live_tv_rounded,
+                    label: S.of(context).viewLiveAction,
+                    filled: false,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      onViewLive!();
+                    },
+                  ),
+                ],
                 const SizedBox(height: 6),
                 TextButton.icon(
                   onPressed: () {

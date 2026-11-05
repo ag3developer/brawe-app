@@ -232,6 +232,7 @@ class LiveService {
     required String receiverId,
     int quantity = 1,
     String? battleId,
+    String? clientRequestId,
   }) async {
     final response = await _dio.post(
       '/live/gifts/send-gift',
@@ -240,7 +241,11 @@ class LiveService {
         'gift_id': giftId,
         'receiver_id': receiverId,
         'quantity': quantity,
+        // Mantido por compatibilidade: o backend resolve a batalha pela sala.
         if (battleId != null) 'battle_id': battleId,
+        // Idempotência (Batalha v2): repetir o mesmo id em 10 min não cobra
+        // nem pontua de novo.
+        if (clientRequestId != null) 'client_request_id': clientRequestId,
       },
     );
     return _toMap(response.data);

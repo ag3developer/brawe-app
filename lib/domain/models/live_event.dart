@@ -38,8 +38,15 @@ class LiveEvent {
     required this.multiplier,
     required this.endsAt,
     this.bannerImageUrl,
+    this.collectionSlug,
+    this.description,
   });
 
+  /// Coleção de presentes do evento (aba da sacola).
+  final String? collectionSlug;
+
+  /// "Como funciona" (`description_pt/en/es`); ausente no backend atual.
+  final LocalizedText? description;
   final String id;
   final String slug;
   final LocalizedText name;
@@ -82,8 +89,20 @@ class LiveEvent {
       multiplier: (mult == null || mult < 1) ? 1.0 : mult,
       endsAt: endsAt,
       bannerImageUrl: (banner == null || banner.isEmpty) ? null : banner,
+      collectionSlug: _nz(raw['collection_slug']),
+      description: LocalizedText.tryParse(raw['description']) ??
+          LocalizedText.tryParse({
+            'pt': raw['description_pt'],
+            'en': raw['description_en'],
+            'es': raw['description_es'],
+          }),
     );
   }
+}
+
+String? _nz(dynamic v) {
+  final s = v?.toString().trim();
+  return (s == null || s.isEmpty || s == 'null') ? null : s;
 }
 
 /// Multiplicador de evento > 1 vindo do servidor; senão `null`.

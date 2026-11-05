@@ -34,6 +34,9 @@ class GiftsOverlay extends ConsumerStatefulWidget {
   /// Abre já com este presente selecionado (atalho da meta da live).
   final String? preselectGiftSlug;
 
+  /// Abre a sacola já nesta coleção (aba), ex.: a do evento.
+  final String? preselectCollectionSlug;
+
   const GiftsOverlay({
     super.key,
     required this.roomId,
@@ -41,6 +44,7 @@ class GiftsOverlay extends ConsumerStatefulWidget {
     this.battleId,
     this.needPoints,
     this.preselectGiftSlug,
+    this.preselectCollectionSlug,
   });
 
   static void show(
@@ -50,6 +54,7 @@ class GiftsOverlay extends ConsumerStatefulWidget {
     String? battleId,
     int? needPoints,
     String? preselectGiftSlug,
+    String? preselectCollectionSlug,
   }) {
     showModalBottomSheet(
       context: context,
@@ -63,6 +68,7 @@ class GiftsOverlay extends ConsumerStatefulWidget {
           battleId: battleId,
           needPoints: needPoints,
           preselectGiftSlug: preselectGiftSlug,
+          preselectCollectionSlug: preselectCollectionSlug,
         ),
       ),
     );
@@ -303,6 +309,19 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
               });
             }
             break;
+          }
+        }
+        final colSlug = widget.preselectCollectionSlug;
+        if (colSlug != null && !_preselectDone) {
+          final ci = tiers.indexWhere((t) => t.name == colSlug);
+          if (ci >= 0) {
+            _preselectDone = true;
+            initialIndex = ci;
+            if (_tabController.length == tiers.length) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _tabController.animateTo(ci);
+              });
+            }
           }
         }
         if (need != null && !_preselectDone && credits.hasValue) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:convert';
+import 'package:dio/dio.dart' show DioException;
 import 'dart:ui' show ImageFilter;
 import 'dart:math' show max, min;
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:uuid/uuid.dart';
 
 import '../view_models/live_room_comments_view_model.dart';
 import '../view_models/live_room_gifts_view_model.dart';
@@ -23,6 +25,9 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/gift_repository.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/services/battle_service.dart';
+import '../../../data/services/link_service.dart';
+import '../../../domain/models/link_state.dart';
+import '../battle/link_hud.dart';
 import '../../../data/services/socket_service.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/live_comment.dart';
@@ -36,15 +41,19 @@ import '../../live/shared/widgets/hud/hud.dart';
 import '../../live/shared/widgets/overlays/overlays.dart';
 import '../../live/shared/widgets/video/live_gradients.dart';
 import 'viewer_battle_hud.dart';
+import '../../live/shared/widgets/sheets/sheets.dart';
+import '../../live/shared/widgets/sheets/event_page_sheet.dart';
 import '../../live/shared/layout/live_dock_metrics.dart';
 import 'live_notice_lane.dart';
 import 'viewer_gamification_layer.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
 import '../../live/shared/widgets/hud/live_gift_ticker.dart';
 import '../../live/shared/widgets/hud/live_event_chip.dart';
-import '../../live/shared/widgets/sheets/gifter_ranking_sheet.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
+import '../battle/battle_hud.dart';
+import '../battle/battle_layout.dart';
+import '../battle/battle_hud_parts.dart';
 import '../view_models/battle_view_model.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../wallet/widgets/top_up_coins_sheet.dart';
@@ -119,6 +128,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   // Battle
   String? _activeBattleId;
+
+  /// Conexão entre criadores ativa nesta sala (tela dupla, §8).
+  LinkState? _link;
+
+  /// Tela dividida: batalha OU conexão.
+  bool get _split => _activeBattleId != null || _link != null;
+
+  /// Payload do `connect:battle:countdown` que abriu a batalha (o VM é criado
+  /// depois dele; o HUD reaplica para não perder o "3").
+  Map<String, dynamic>? _countdownPayload;
 
   /// Pausa do criador (overlay "Já voltamos" / "Voltando…").
   _StreamerPauseState _pauseState = _StreamerPauseState.none;
@@ -244,8 +263,12 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   // 2ª batalha deixava de aparecer.
   void _subscribeToBattleEvents() {
     final socket = ref.read(socketServiceProvider);
+    socket.on(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.on(AppConstants.eventLinkStarted, _onLinkStarted);
+    socket.on(AppConstants.eventLinkEnded, _onLinkEnded);
+    socket.on(AppConstants.eventLinkMute, _onLinkMute);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -253,23 +276,34 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
     _checkActiveBattle();
+    _checkActiveLink();
   }
 
   void _reattachBattleHandlers() {
     if (!mounted) return; // widget pode ter sido descartado antes do callback
     final socket = ref.read(socketServiceProvider);
+    socket.off(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.off(AppConstants.eventLinkStarted, _onLinkStarted);
+    socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
+    socket.off(AppConstants.eventLinkMute, _onLinkMute);
     socket.off(AppConstants.eventLivePaused, _onLivePaused);
     socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
+    socket.on(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
+    socket.on(AppConstants.eventLinkStarted, _onLinkStarted);
+    socket.on(AppConstants.eventLinkEnded, _onLinkEnded);
+    socket.on(AppConstants.eventLinkMute, _onLinkMute);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
     // A live pode ter acabado durante a queda de conexão.
     _confirmStillLive();
+    // Conexão (tela dupla) pode ter começado/terminado enquanto offline.
+    unawaited(_checkActiveLink());
     // Após reconectar, valida via REST se uma batalha começou durante
     // a queda de conexão — com debounce de 5s para evitar spam em
     // reconexões rápidas (ex: restart do servidor durante deploy).
@@ -279,8 +313,12 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _unsubscribeFromBattleEvents() {
     try {
       final socket = ref.read(socketServiceProvider);
+      socket.off(AppConstants.eventBattleCountdown, _onBattleCountdown);
       socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
       socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
+      socket.off(AppConstants.eventLinkStarted, _onLinkStarted);
+      socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
+      socket.off(AppConstants.eventLinkMute, _onLinkMute);
       socket.off(AppConstants.eventLivePaused, _onLivePaused);
       socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
       socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -345,6 +383,72 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     });
   }
 
+  // ── Conexão entre criadores (tela dupla sem batalha) ─────────────────────
+
+  bool _linkIsMine(LinkState l) =>
+      l.a.roomId == widget.room.id || l.b.roomId == widget.room.id;
+
+  void _onLinkStarted(dynamic raw) {
+    if (!mounted) return;
+    final l = LinkState.tryParse(_parseSocketPayload(raw));
+    if (l == null || !_linkIsMine(l)) return;
+    setState(() => _link = l);
+  }
+
+  void _onLinkEnded(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['link_id'] != _link?.linkId) return;
+    setState(() => _link = null);
+  }
+
+  void _onLinkMute(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    final cur = _link;
+    if (data == null || cur == null || data['link_id'] != cur.linkId) return;
+    final m = data['muted'];
+    if (m is! Map) return;
+    setState(
+      () =>
+          _link = cur.copyWith(mutedA: m['a'] == true, mutedB: m['b'] == true),
+    );
+  }
+
+  /// Conexão já em curso quando o espectador entra.
+  Future<void> _checkActiveLink() async {
+    try {
+      final l = await ref.read(linkServiceProvider).getActive(widget.room.id);
+      if (l != null && l.isActive && mounted) setState(() => _link = l);
+    } on DioException catch (e) {
+      // 404: a conexão acabou enquanto estávamos offline → sai da tela dupla.
+      if (e.response?.statusCode == 404 && mounted && _link != null) {
+        setState(() => _link = null);
+      }
+    } catch (_) {
+      // 503: tempo real desligado.
+    }
+  }
+
+  /// Contagem 3·2·1 (um evento por segundo): abre o HUD já na contagem
+  /// (o VM da batalha nasce aqui, não só no `started`).
+  void _onBattleCountdown(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final battleId = data['battle_id'] as String?;
+    if (battleId == null || battleId.isEmpty) return;
+    if (!_isEventForThisRoom(data)) return;
+    if (_activeBattleId == battleId) {
+      // VM já existe e escuta o evento sozinho.
+      return;
+    }
+    setState(() {
+      _activeBattleId = battleId;
+      _countdownPayload = data;
+    });
+  }
+
   void _onBattleStarted(dynamic raw) {
     if (!mounted) return;
     // 🛡️ Parse defensivo: o socket pode entregar Map OU String JSON
@@ -356,6 +460,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (battleId == null || battleId.isEmpty) return;
     if (!_isEventForThisRoom(data)) return;
     // Overlay (não navega): mostra o HUD de batalha por cima da live atual.
+    if (_activeBattleId == battleId) return;
     setState(() => _activeBattleId = battleId);
   }
 
@@ -364,7 +469,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (!mounted) return;
     final data = _parseSocketPayload(raw);
     if (data == null || data['battle_id'] != _activeBattleId) return;
-    setState(() => _activeBattleId = null);
+    setState(() {
+      _activeBattleId = null;
+      _countdownPayload = null;
+    });
   }
 
   // ── Pausa do criador ("Já voltamos") ─────────────────────────────────
@@ -761,6 +869,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         receiverId: widget.room.streamerId,
         quantity: quantity,
         battleId: _activeBattleId,
+        // UUID v4 por requisição de rosa (idempotência do backend).
+        clientRequestId: const Uuid().v4(),
       );
     } catch (e) {
       if (!mounted) return;
@@ -883,7 +993,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F1A),
+      backgroundColor: const Color(0xFF0B0E14),
       // ⌨️ O vídeo NUNCA redimensiona com o teclado (antes o body inteiro
       // encolhia → vídeo dava zoom/pulo e o split da batalha estourava).
       // Só o `_ViewerChatDock` sobe acompanhando o teclado.
@@ -893,6 +1003,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         children: [
           // ── 1. Video / thumbnail background ──
           _buildVideoLayer(),
+
+          // Tela dupla: a área do chat tem fundo escuro sólido, separado do vídeo.
+          if (_split)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              top: battleLayoutOf(context).chat.top,
+              child: const ColoredBox(color: kBattleBg),
+            ),
 
           // ── 1.5 Criador pausou a live ──
           if (_pauseState != _StreamerPauseState.none)
@@ -916,7 +1036,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                 child: LiveTopBar(
                   room: widget.room,
                   viewerCount: commentsState.viewerCount,
@@ -936,53 +1056,77 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           // ── 4. Floating hearts (fullscreen, mas o overlay já posiciona
           // os corações na faixa direita ~80-95% da largura, subindo do
           // bottom até o topo). IgnorePointer para não bloquear toques.
-          Positioned.fill(
-            child: IgnorePointer(
-              child: FloatingHeartsOverlay(
-                key: _heartsKey,
-                roomId: widget.room.id,
+          // Em batalha: confinados à coluna estreita da direita (embaixo).
+          if (_split)
+            battleRegionWrap(
+              context,
+              Rect.fromLTRB(
+                MediaQuery.sizeOf(context).width - 64,
+                battleLayoutOf(context).chat.top,
+                MediaQuery.sizeOf(context).width,
+                MediaQuery.sizeOf(context).height -
+                    MediaQuery.paddingOf(context).bottom -
+                    84,
+              ),
+              IgnorePointer(
+                child: FloatingHeartsOverlay(
+                  key: _heartsKey,
+                  roomId: widget.room.id,
+                ),
+              ),
+            )
+          else
+            Positioned.fill(
+              child: IgnorePointer(
+                child: FloatingHeartsOverlay(
+                  key: _heartsKey,
+                  roomId: widget.room.id,
+                ),
               ),
             ),
-          ),
 
           // ── 4.5 Meta da live (barra fina sob o top bar) ──
-          if (_activeBattleId == null)
-            Positioned(
-              top: MediaQuery.paddingOf(context).top + 92,
-              left: 12,
-              right: 12,
-              // Metas do criador: pílula compacta; toque abre a sacola já
-              // no presente da meta (ou a lista, se houver mais de uma).
-              // Linha: metas à esquerda + faixa de notícia correndo ao lado.
-              child: Row(
-                children: [
-                  LiveEventChip(
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 70,
+            left: 12,
+            right: 12,
+            // Metas do criador: pílula compacta; toque abre a sacola já
+            // no presente da meta (ou a lista, se houver mais de uma).
+            // Linha: metas à esquerda + faixa de notícia correndo ao lado.
+            child: Row(
+              children: [
+                Expanded(
+                  child: LiveEventChip(
+                    expand: true,
                     roomId: widget.room.id,
                     initialEvent: widget.room.event,
-                    onTap: (_) => GifterRankingSheet.show(
+                    onTap: (event) => EventPageSheet.show(
                       context,
                       roomId: widget.room.id,
                       streamerId: widget.room.streamerId,
-                      ranking: ref
-                          .read(
-                            liveRoomCommentsViewModelProvider(widget.room.id),
-                          )
-                          .gifterRanking,
-                      openEventTab: true,
+                      event: event,
                     ),
                   ),
-                  LiveGoalsPill(
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: LiveGoalsPill(
+                    expand: true,
                     roomId: widget.room.id,
                     streamerId: widget.room.streamerId,
                     initialGoals: widget.room.goals,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: LiveGiftTicker(currentRoomId: widget.room.id),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: LiveGiftTicker(
+                    expand: true,
+                    currentRoomId: widget.room.id,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
           // ── 4.6 Gamificação: "Fulano subiu de nível" vira linha no chat.
           // Entradas VIP, meu level-up, "passou você", novo #1 e marcos de
@@ -992,69 +1136,104 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           // ── 5. Gift combos (canto inf. esq, acima do chat) ──
           GiftAnimationOverlay(roomId: widget.room.id),
           // ── 5.1 Efeito de entrada de viewer VIP (VAP/Lottie, fila própria)
-          EntranceEffectLayer(roomId: widget.room.id),
-          // ── 5.2 Degraus do combo (partículas/Lottie/VAP, prioridade < presente)
-          ComboTierLayer(roomId: widget.room.id),
+          // Em batalha ambos ficam na região de baixo (não cobrem os rostos).
+          if (_split) ...[
+            battleRegionWrap(
+              context,
+              battleLayoutOf(context).chat,
+              EntranceEffectLayer(roomId: widget.room.id),
+            ),
+            // ── 5.2 Degraus do combo (partículas/Lottie/VAP, prioridade < presente)
+            battleRegionWrap(
+              context,
+              battleLayoutOf(context).chat,
+              ComboTierLayer(roomId: widget.room.id),
+            ),
+          ] else ...[
+            EntranceEffectLayer(roomId: widget.room.id),
+            // ── 5.2 Degraus do combo (partículas/Lottie/VAP, prioridade < presente)
+            ComboTierLayer(roomId: widget.room.id),
+          ],
 
           // ── 6. Dock inferior: produto fixado + chat + input/ações ──
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _ViewerChatDock(
-              pinnedProduct: PinnedProductBar(roomId: widget.room.id),
-              notices: LiveNoticeLane(
-                roomId: widget.room.id,
-                streamerId: widget.room.streamerId,
-                battleIdGetter: () => _activeBattleId,
-              ),
-              tickerBuilder: (maxHeight) => PinnedAboveChat(
-                roomId: widget.room.id,
-                isHost:
-                    ref.read(authStateProvider).value?.id ==
-                    widget.room.streamerId,
-                child: ChatTicker(
-                  giftParts: commentsState.chatGiftParts,
-                  // Bloqueados (nos dois sentidos) não aparecem no chat da live.
-                  comments: commentsState.comments
-                      .where((c) => !hidden.isBlocked(c.userId))
-                      .toList(),
-                  gifts: commentsState.chatGifts
-                      .where((g) => !hidden.isBlocked(g.senderId))
-                      .toList(),
-                  hostUserId: widget.room.streamerId,
-                  myUserId: ref.watch(authStateProvider).value?.id,
-                  myUsername: commentsState.myUsername,
-                  onCommentTap: _onCommentTap,
-                  maxHeight: maxHeight,
-                ),
-              ),
-              bottomBar: ChatErrorAbove(
-                roomId: widget.room.id,
-                child: LiveBottomBar(
+            top: _split ? battleLayoutOf(context).chat.top : null,
+            child: _BattleDockClip(
+              enabled: _split,
+              child: _ViewerChatDock(
+                battleChatTop: _split ? battleLayoutOf(context).chat.top : null,
+                // Produto fixado/loja: exclusivos da live solo (somem na conexão/batalha).
+              pinnedProduct: _split
+                  ? const SizedBox.shrink()
+                  : PinnedProductBar(roomId: widget.room.id),
+                notices: LiveNoticeLane(
                   roomId: widget.room.id,
-                  controller: _chatCtrl,
-                  focusNode: _chatFocus,
-                  isSending: commentsState.isSending,
-                  isLiked: _isLiked,
-                  likesCount: max(_likesCount, commentsState.likeCount),
-                  onSend: _sendComment,
-                  onSendRose: _sendRose,
-                  onGifts: _openGifts,
-                  onLike: _onTapLike,
-                  onShare: _onTapShare,
-                  onSeguir: _openStreamerSheet,
-                  onShop: () {
-                    // TODO: navegar para vitrine do criador.
-                  },
-                  // ⚠️ MVP: enquanto o backend não expõe `hasStorefront`,
-                  // mantemos escondido — só quem tiver vitrine real verá o
-                  // botão "Loja" (espectador não vê vazio).
-                  hasStorefront: false,
+                  streamerId: widget.room.streamerId,
+                  battleIdGetter: () => _activeBattleId,
+                ),
+                tickerBuilder: (maxHeight) => PinnedAboveChat(
+                  roomId: widget.room.id,
+                  isHost:
+                      ref.read(authStateProvider).value?.id ==
+                      widget.room.streamerId,
+                  child: ChatTicker(
+                    giftParts: commentsState.chatGiftParts,
+                    // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                    comments: commentsState.comments
+                        .where((c) => !hidden.isBlocked(c.userId))
+                        .toList(),
+                    gifts: commentsState.chatGifts
+                        .where((g) => !hidden.isBlocked(g.senderId))
+                        .toList(),
+                    hostUserId: widget.room.streamerId,
+                    myUserId: ref.watch(authStateProvider).value?.id,
+                    myUsername: commentsState.myUsername,
+                    onCommentTap: _onCommentTap,
+                    maxHeight: maxHeight,
+                  ),
+                ),
+                bottomBar: ChatErrorAbove(
+                  roomId: widget.room.id,
+                  child: LiveBottomBar(
+                    roomId: widget.room.id,
+                    controller: _chatCtrl,
+                    focusNode: _chatFocus,
+                    isSending: commentsState.isSending,
+                    isLiked: _isLiked,
+                    likesCount: max(_likesCount, commentsState.likeCount),
+                    onSend: _sendComment,
+                    onSendRose: _sendRose,
+                    onGifts: _openGifts,
+                    onLike: _onTapLike,
+                    onShare: _onTapShare,
+                    onSeguir: _openStreamerSheet,
+                    onShop: () {
+                      // TODO: navegar para vitrine do criador.
+                    },
+                    // ⚠️ MVP: enquanto o backend não expõe `hasStorefront`,
+                    // mantemos escondido — só quem tiver vitrine real verá o
+                    // botão "Loja" (espectador não vê vazio).
+                    hasStorefront: false,
+                    onMore: () => MoreSheet.show(context, onShare: _onTapShare),
+                  ),
                 ),
               ),
             ),
           ),
+
+          // ── 7.8 Tela dupla da conexão (sem batalha) ──
+          if (_link != null && _activeBattleId == null)
+            Positioned.fill(
+              child: LinkHudOverlay(
+                link: _link!,
+                layout: battleLayoutOf(context),
+                ownSide: _link!.sideOf(roomId: widget.room.id) ?? 'a',
+                onOpenPartner: (id) => context.push('/live/$id'),
+              ),
+            ),
 
           // ── 8. Battle HUD (overlay) — só aparece em batalha ──
           // Camada LEVE por cima da live: placar dos 2 participantes + timer
@@ -1064,9 +1243,18 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           if (_activeBattleId != null)
             Positioned.fill(
               child: ViewerBattleHud(
+                key: ValueKey('viewer-hud-$_activeBattleId'),
                 battleId: _activeBattleId!,
+                initialCountdown: _countdownPayload,
+                roomId: widget.room.id,
+                streamerId: widget.room.streamerId,
                 onClose: () {
-                  if (mounted) setState(() => _activeBattleId = null);
+                  if (mounted) {
+                    setState(() {
+                      _activeBattleId = null;
+                      _countdownPayload = null;
+                    });
+                  }
                 },
               ),
             ),
@@ -1085,66 +1273,74 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     );
   }
 
-  Widget _buildVideoLayer() {
-    // 🎬 BATTLE MODE — renderiza split-screen 50/50 numa faixa central,
-    // exatamente como TikTok/Bigo PK: fundo preto total, vídeos entre o
-    // top bar e o chat (NÃO de fora a fora).
-    if (_activeBattleId != null) {
-      final asyncBattle = ref.watch(battleViewModelProvider(_activeBattleId!));
-      final battle = asyncBattle.value;
-      if (battle != null &&
-          (battle.streamUrlA != null || battle.streamUrlB != null)) {
-        _scheduleSoloPlayback(playing: false);
-
-        // TikTok PK layout: fundo preto ocupa 100% da tela; o DualHlsPlayer
-        // fica numa faixa vertical restrita entre o top bar e o bottom bar.
-        //
-        //  ┌─────────────────────────────────┐  ← topo da tela
-        //  │  SafeArea.top + LiveTopBar ~80px │  (preto / gradiente)
-        //  ├─────────────────────────────────┤
-        //  │  ← DualHlsPlayer (split 50/50)  │  ← videoH = ~55% da tela
-        //  ├─────────────────────────────────┤
-        //  │  Chat + ações  ~140px + bottom  │  (preto)
-        //  └─────────────────────────────────┘
-        //
-        // sizeOf/paddingOf: não reconstrói a cada frame do teclado, e como
-        // o Scaffold não redimensiona mais, a altura é sempre a da tela.
-        final screenH = MediaQuery.sizeOf(context).height;
-        final padding = MediaQuery.paddingOf(context);
-        const kTopBarH =
-            80.0; // altura estimada do LiveTopBar (abaixo SafeArea)
-        const kBottomBarH = 140.0; // LiveBottomBar + padding inferior
-        final topOffset = padding.top + kTopBarH;
-        final bottomOffset = padding.bottom + kBottomBarH;
-        final videoH = (screenH - topOffset - bottomOffset).clamp(
-          200.0,
-          screenH * 0.62,
-        );
-
-        return Container(
-          color: Colors.black,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: topOffset),
-              SizedBox(
-                height: videoH,
-                child: DualHlsPlayer(
-                  streamUrlA: battle.streamUrlA,
-                  streamUrlB: battle.streamUrlB,
-                  streamerAName: battle.streamerAName,
-                  streamerBName: battle.streamerBName,
+  /// HLS único da sala (frame 720×1280 já com a tela dividida montada).
+  Widget _compositeFrame(BattleLayout layout) {
+    return ColoredBox(
+      color: kBattleBg,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fromRect(
+            rect: layout.frame,
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                clipBehavior: Clip.hardEdge,
+                child: SizedBox(
+                  width: _controller!.value.size.width,
+                  height: _controller!.value.size.height,
+                  child: VideoPlayer(_controller!),
                 ),
               ),
-              // Espaço restante fica preto — chat e ações vivem aqui como
-              // overlay (camadas superiores do Stack pai).
-            ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoLayer() {
+    // Conexão entre criadores sem batalha: tela dupla no mesmo layout.
+    if (_activeBattleId == null &&
+        _link != null &&
+        _isInitialized &&
+        _controller != null) {
+      _scheduleSoloPlayback(playing: true);
+      return _compositeFrame(battleLayoutOf(context));
+    }
+    // 🎬 BATTLE MODE — o layout vem de [BattleLayout] (contrato §1): faixa do
+    // HUD no topo, faixa dividida (A esq / B dir) e região do chat embaixo.
+    if (_activeBattleId != null) {
+      BattleRoomScope.set(_activeBattleId!, widget.room.id);
+      final battle = ref.watch(battleViewModelProvider(_activeBattleId!)).value;
+      if (battle != null) {
+        final layout = battleLayoutOf(context);
+        // composite: a sala já entrega UM HLS com a tela dividida montada
+        // (preenche o frame 720×1280). dual_hls (fallback): 2 players dentro
+        // da mesma faixa dividida.
+        final dual =
+            !battle.isComposite &&
+            (battle.streamUrlA != null || battle.streamUrlB != null);
+        if (dual) {
+          _scheduleSoloPlayback(playing: false);
+          return ColoredBox(
+            color: kBattleBg,
+            child: DualHlsPlayer(
+              layout: layout,
+              streamUrlA: battle.streamUrlA,
+              streamUrlB: battle.streamUrlB,
+              streamerAName: battle.streamerAName,
+              streamerBName: battle.streamerBName,
+            ),
+          );
+        }
+        if (battle.isComposite && _isInitialized && _controller != null) {
+          _scheduleSoloPlayback(playing: true);
+          return _compositeFrame(layout);
+        }
       }
-      // Fallback: batalha ativa mas URLs ainda não chegaram (raríssimo —
-      // backend já envia tudo no `started`). Cai pro single-controller
-      // do streamer dono dessa sala enquanto o REST/socket sincroniza.
+      // Fallback: batalha ativa mas ainda sem dados/vídeo — cai no
+      // player solo enquanto o REST/socket sincroniza.
     }
     // Solo (ou fallback): garantir que o single-controller esteja tocando
     // com áudio (caso tenha sido pausado durante a batalha).
@@ -1393,11 +1589,16 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
 ///   o estado do pin).
 class _ViewerChatDock extends StatelessWidget {
   const _ViewerChatDock({
+    this.battleChatTop,
     required this.pinnedProduct,
     required this.notices,
     required this.tickerBuilder,
     required this.bottomBar,
   });
+
+  /// Em batalha: Y (na tela) onde começa a região do chat. O dock nunca
+  /// passa dali para cima — o chat não cobre o vídeo.
+  final double? battleChatTop;
 
   final Widget pinnedProduct;
 
@@ -1426,7 +1627,15 @@ class _ViewerChatDock extends StatelessWidget {
     // combo de presente (~124). Sem isso, chat cheio em tela pequena
     // empurrava os combos para baixo do topo.
     const aboveChatReserve = 184.0;
-    final tickerMax = typing
+    final battle = battleChatTop != null;
+    // Em batalha: espaço entre o fim da faixa dividida e o input (menos ~56
+    // reservados para o painel de avisos).
+    final battleFree = battle
+        ? size.height - battleChatTop! - _bottomBarH - bottomInset - 8 - 56
+        : 0.0;
+    final tickerMax = battle
+        ? battleFree.clamp(0.0, 260.0)
+        : typing
         ? (free * 0.75).clamp(60.0, 220.0)
         : (free - aboveChatReserve).clamp(80.0, 240.0);
 
@@ -1437,7 +1646,7 @@ class _ViewerChatDock extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Offstage(offstage: typing, child: pinnedProduct),
+            Offstage(offstage: typing || battle, child: pinnedProduct),
             const SizedBox(height: 8),
             // Some enquanto digita: o teclado já ocupa a metade de baixo.
             Offstage(
@@ -1447,7 +1656,9 @@ class _ViewerChatDock extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.bottomLeft,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: size.width * 0.86),
+                    constraints: BoxConstraints(
+                      maxWidth: size.width * (battle ? 0.78 : 0.86),
+                    ),
                     child: notices,
                   ),
                 ),
@@ -1646,4 +1857,19 @@ class _QualityTile extends StatelessWidget {
     StreamQuality.p720 => 'Boa qualidade, recomendado',
     StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
   };
+}
+
+/// Em batalha, recorta o dock à região do chat (nada sobe sobre o vídeo).
+class _BattleDockClip extends StatelessWidget {
+  const _BattleDockClip({required this.enabled, required this.child});
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return ClipRect(
+      child: Align(alignment: Alignment.bottomCenter, child: child),
+    );
+  }
 }

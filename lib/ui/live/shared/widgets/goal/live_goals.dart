@@ -59,8 +59,11 @@ class LiveGoalsPill extends ConsumerStatefulWidget {
     this.initialGoals = const [],
     this.isCreator = false,
     this.onEdit,
+    this.expand = false,
   });
 
+  /// Pílula de largura total (linha de 3 pílulas iguais), altura 30.
+  final bool expand;
   final String roomId;
   final String streamerId;
   final List<LiveGoal> initialGoals;
@@ -144,10 +147,15 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
         duration: const Duration(milliseconds: 260),
         curve: Curves.easeOutBack,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
+          height: widget.expand ? 30 : null,
+          width: widget.expand ? double.infinity : null,
+          alignment: widget.expand ? Alignment.centerLeft : null,
+          padding: widget.expand
+              ? const EdgeInsets.symmetric(horizontal: 10)
+              : const EdgeInsets.fromLTRB(8, 5, 10, 5),
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(widget.expand ? 15 : 16),
             border: Border.all(color: accent.withValues(alpha: _glow ? 0.95 : 0.45)),
             boxShadow: _glow ? [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 14)] : null,
           ),

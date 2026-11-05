@@ -35,6 +35,7 @@ class LiveBottomBar extends StatelessWidget {
     required this.onShop,
     required this.hasStorefront,
     this.roomId,
+    this.onMore,
   });
 
   final TextEditingController controller;
@@ -54,6 +55,9 @@ class LiveBottomBar extends StatelessWidget {
   final VoidCallback onSeguir;
   final VoidCallback onShop;
   final bool hasStorefront;
+
+  /// Menu "mais" (saiu do topo da live).
+  final VoidCallback? onMore;
 
   /// Sala do chat: com ela, o placeholder do input mostra o modo lento
   /// ("Modo lento: 3 s") sem reconstruir a barra inteira.
@@ -221,9 +225,16 @@ class LiveBottomBar extends StatelessWidget {
           _LiveActionButton(
             icon: Icons.card_giftcard_rounded,
             label: 'Presente',
+            solid: true,
             iconColor: AppColors.braweOrange,
             onTap: onGifts,
           ),
+          if (onMore != null)
+            _LiveActionButton(
+              icon: Icons.more_horiz_rounded,
+              label: 'Mais',
+              onTap: onMore!,
+            ),
           if (hasStorefront)
             _LiveActionButton(
               icon: Icons.shopping_bag_outlined,
@@ -248,7 +259,11 @@ class _LiveActionButton extends StatelessWidget {
     required this.onTap,
     this.iconColor = Colors.white,
     this.emoji,
+    this.solid = false,
   });
+
+  /// Botão de cor sólida (presentes): círculo laranja com ícone escuro.
+  final bool solid;
   final IconData icon;
   final String label;
   final VoidCallback onTap;
@@ -275,6 +290,16 @@ class _LiveActionButton extends StatelessWidget {
                         emoji!,
                         style: const TextStyle(fontSize: 22, height: 1.0),
                       )
+                    : solid
+                    ? Container(
+                        width: 28,
+                        height: 28,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFF8300),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: const Color(0xFF0B0E14), size: 17),
+                      )
                     : Icon(
                         icon,
                         color: iconColor,
@@ -288,6 +313,8 @@ class _LiveActionButton extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.92),
                 fontSize: 10,

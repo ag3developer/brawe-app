@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:uuid/uuid.dart';
 import '../../../data/repositories/gift_repository.dart';
 import '../../../domain/models/failure.dart';
 
@@ -35,6 +36,9 @@ class SendGiftViewModel extends _$SendGiftViewModel {
     // disposed" ao tentar `ref.read(giftRepositoryProvider)` depois do pop.
     final keepAliveLink = ref.keepAlive();
 
+    // UUID v4 por toque em "enviar" (idempotência do backend).
+    final clientRequestId = const Uuid().v4();
+
     state = const AsyncValue.loading();
     lastErrorMessage = null;
     lastErrorIsBalance = false;
@@ -48,6 +52,7 @@ class SendGiftViewModel extends _$SendGiftViewModel {
             receiverId: receiverId,
             quantity: quantity,
             battleId: battleId,
+            clientRequestId: clientRequestId,
           );
       state = const AsyncValue.data(null);
       return true;

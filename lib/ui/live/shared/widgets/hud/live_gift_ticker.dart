@@ -12,9 +12,12 @@ import '../../../../../gen/l10n/app_localizations.dart';
 /// Lendário) — não cobre o presente nem o rosto do criador. Notícia de outra
 /// live: toque leva até ela.
 class LiveGiftTicker extends ConsumerStatefulWidget {
-  const LiveGiftTicker({super.key, required this.currentRoomId});
+  const LiveGiftTicker({super.key, required this.currentRoomId, this.expand = false});
 
   final String currentRoomId;
+
+  /// Pílula de largura total (linha de 3 pílulas iguais), altura 30.
+  final bool expand;
 
   @override
   ConsumerState<LiveGiftTicker> createState() => _LiveGiftTickerState();
@@ -101,19 +104,26 @@ class _LiveGiftTickerState extends ConsumerState<LiveGiftTicker>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final width = box.maxWidth;
+        final width = widget.expand ? box.maxWidth - 20 : box.maxWidth;
         if (width != _boxWidth) {
           _boxWidth = width;
           WidgetsBinding.instance.addPostFrameCallback((_) => _next());
         }
         final e = _current;
-        if (e == null) return const SizedBox(height: 22);
+        if (e == null) return SizedBox(height: widget.expand ? 30 : 22);
         final text = _text(e);
         return GestureDetector(
           onTap: _onTap,
           behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            height: 22,
+          child: Container(
+            height: widget.expand ? 30 : 22,
+            padding: widget.expand ? const EdgeInsets.symmetric(horizontal: 10) : null,
+            decoration: widget.expand
+                ? BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(15),
+                  )
+                : null,
             child: ClipRect(
               child: AnimatedBuilder(
                 animation: _ctrl,

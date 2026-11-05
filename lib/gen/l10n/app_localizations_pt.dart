@@ -3368,9 +3368,6 @@ class SPt extends S {
   String get homeBattleWatchBet => 'ASSISTIR E APOSTAR';
 
   @override
-  String get homeBattleLabel => 'Batalha PK';
-
-  @override
   String get commonError => 'Erro';
 
   @override
@@ -3429,46 +3426,7 @@ class SPt extends S {
   String get battleTimer => 'Tempo restante';
 
   @override
-  String get battleSendGift => 'Enviar presente';
-
-  @override
-  String get battleSupport => 'Apoiar';
-
-  @override
-  String get battleWinner => 'Vencedor';
-
-  @override
-  String get battleDraw => 'Empate';
-
-  @override
-  String get battleEnded => 'Batalha encerrada';
-
-  @override
-  String get battleResultTitle => 'Resultado da batalha';
-
-  @override
-  String get battleResultShare => 'Compartilhar resultado';
-
-  @override
-  String get battleResultWatchAgain => 'Assistir outra batalha';
-
-  @override
-  String battleScoreLabel(String score) {
-    return '$score pts';
-  }
-
-  @override
   String get battleTopSupporters => 'Top apoiadores';
-
-  @override
-  String battleYouScore(String score) {
-    return 'Você: $score';
-  }
-
-  @override
-  String battleRivalScore(String score) {
-    return 'Rival: $score';
-  }
 
   @override
   String battleCountdownStarting(int count) {
@@ -3493,11 +3451,6 @@ class SPt extends S {
   String get battleError => 'Erro ao carregar batalha';
 
   @override
-  String battleGiftReceived(String sender, String gift) {
-    return '$sender enviou $gift';
-  }
-
-  @override
   String get battleMomentum => 'PEGANDO FOGO';
 
   @override
@@ -3505,12 +3458,6 @@ class SPt extends S {
 
   @override
   String get battleFinalStretch => 'RETA FINAL';
-
-  @override
-  String get battleSendToWin => 'Mande presentes pra decidir!';
-
-  @override
-  String get battleMvp => 'MVP';
 
   @override
   String get sharedPostReactionApplied => 'Reação enviada ✨';
@@ -7732,4 +7679,373 @@ class SPt extends S {
   @override
   String get settingsThemeAutoHint =>
       'Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer.';
+
+  @override
+  String get battleYou => 'Você';
+
+  @override
+  String get battleMuteOpponent => 'Silenciar adversário';
+
+  @override
+  String get battleUnmuteOpponent => 'Ouvir adversário';
+
+  @override
+  String battleListenTo(String name) {
+    return 'Ouvir $name';
+  }
+
+  @override
+  String get battleRematch => 'Pedir revanche';
+
+  @override
+  String get battleRematchSent => 'Convite de revanche enviado';
+
+  @override
+  String get battleClose => 'Fechar';
+
+  @override
+  String get battleFollowing => 'Seguindo';
+
+  @override
+  String get battleLeaveTitle => 'Sair da batalha?';
+
+  @override
+  String get battleLeaveConfirm => 'Sair';
+
+  @override
+  String get battleCancel => 'Cancelar';
+
+  @override
+  String get battleLeave => 'Sair da batalha';
+
+  @override
+  String get battleActionLabel => 'Batalha';
+
+  @override
+  String get battleActionActive => 'Em batalha';
+
+  @override
+  String get battleErrNetwork => 'Sem conexão. Verifique sua internet.';
+
+  @override
+  String get battleErrGeneric => 'Não foi possível concluir. Tente novamente.';
+
+  @override
+  String battleErrCooldown(int seconds) {
+    return 'Aguarde ${seconds}s para convidar este criador de novo.';
+  }
+
+  @override
+  String get battleErrBlocked => 'Não é possível convidar este criador.';
+
+  @override
+  String get battleErrBusy => 'Este criador está ocupado em outra batalha.';
+
+  @override
+  String get battleErrExpired => 'Este convite expirou.';
+
+  @override
+  String get battleErrAnswered => 'Este convite já foi respondido.';
+
+  @override
+  String get battleErrNotEligible => 'Você ainda não pode iniciar batalhas.';
+
+  @override
+  String get battleErrSendInvite => 'Não foi possível enviar o convite.';
+
+  @override
+  String get battleErrAccept => 'Não foi possível aceitar a batalha.';
+
+  @override
+  String get battleErrRematch => 'Não foi possível pedir a revanche.';
+
+  @override
+  String get battleErrEnd => 'Não foi possível sair da batalha.';
+
+  @override
+  String battleInviteExpiresIn(int seconds) {
+    return 'Expira em ${seconds}s';
+  }
+
+  @override
+  String battleInviteAccepted(String name) {
+    return '$name aceitou! Prepare-se';
+  }
+
+  @override
+  String battleInviteDeclined(String name) {
+    return '$name recusou o convite';
+  }
+
+  @override
+  String battleInviteNoReply(String name) {
+    return '$name não respondeu a tempo';
+  }
+
+  @override
+  String get battleInviteExpired => 'O convite de batalha expirou';
+
+  @override
+  String get battleInviteCancelled => 'O convite de batalha foi cancelado';
+
+  @override
+  String get battleCancelledMsg => 'A batalha foi cancelada';
+
+  @override
+  String get battleInviteNoAnswer => 'Sem resposta ao convite de batalha';
+
+  @override
+  String get battleInviteWait =>
+      'Aguarde a resposta do convite atual ou cancele-o';
+
+  @override
+  String get battleOpponentFallback => 'O oponente';
+
+  @override
+  String get battleSomeCreator => 'Um criador';
+
+  @override
+  String get battleRtcConnecting => 'Conectando com o adversário…';
+
+  @override
+  String get battleRtcFallback =>
+      'Sem tempo real: a batalha segue em modo normal.';
+
+  @override
+  String get battleOpponentCamera => 'Aguardando câmera do adversário';
+
+  @override
+  String get battleStartTitle => 'Iniciar Batalha';
+
+  @override
+  String get battleSheetSubtitle => 'Criadores ao vivo disponíveis agora';
+
+  @override
+  String get battleSearchHint => 'Buscar criador ao vivo...';
+
+  @override
+  String get battleLoadCandidatesFailed =>
+      'Não foi possível carregar criadores ao vivo';
+
+  @override
+  String get battleRetry => 'Tentar novamente';
+
+  @override
+  String battleNoCreatorQuery(String query) {
+    return 'Nenhum criador disponível com \"$query\"';
+  }
+
+  @override
+  String get battleNoCreator =>
+      'Nenhum criador disponível para batalha agora.\nPuxe para atualizar.';
+
+  @override
+  String battleInviteCreator(String name) {
+    return 'Convidar $name';
+  }
+
+  @override
+  String get battleSelectCreator => 'Selecione um criador';
+
+  @override
+  String get battleLiveBadge => 'AO VIVO';
+
+  @override
+  String battleViewLive(String name) {
+    return 'Ver a live de $name';
+  }
+
+  @override
+  String battleWaitingAccept(String name, int seconds) {
+    return 'Aguardando $name aceitar… ${seconds}s';
+  }
+
+  @override
+  String get linkConnect => 'Conectar';
+
+  @override
+  String get linkDisconnect => 'Desconectar';
+
+  @override
+  String get linkStartTitle => 'Conectar com um criador';
+
+  @override
+  String linkInviteCreator(String name) {
+    return 'Conectar com $name';
+  }
+
+  @override
+  String linkInviteReceived(String name) {
+    return '$name quer se conectar com você';
+  }
+
+  @override
+  String get linkInviteWithBattle => 'Com batalha';
+
+  @override
+  String linkInviteAccepted(String name) {
+    return '$name aceitou a conexão';
+  }
+
+  @override
+  String get linkEnded => 'A conexão foi encerrada';
+
+  @override
+  String get linkDisconnectTitle => 'Desconectar?';
+
+  @override
+  String linkDisconnectBody(String name) {
+    return 'A conexão com $name será encerrada. Se houver uma batalha em andamento, você desiste dela.';
+  }
+
+  @override
+  String get linkFollowAction => '+ Seguir';
+
+  @override
+  String get linkErrDisconnect => 'Não foi possível desconectar.';
+
+  @override
+  String get linkErrInvite => 'Não foi possível enviar o convite de conexão.';
+
+  @override
+  String get linkErrAccept => 'Não foi possível aceitar a conexão.';
+
+  @override
+  String battleFlashChallenge(int count, String gift, String time) {
+    return 'Envie $count $gift · $time';
+  }
+
+  @override
+  String battleFlashProgress(int done, int total) {
+    return '$done/$total';
+  }
+
+  @override
+  String battleFlashBoost(String mult, String time) {
+    return '${mult}X ativo · $time';
+  }
+
+  @override
+  String get battleSealWin => 'VITÓRIA';
+
+  @override
+  String get battleSealLose => 'DERROTA';
+
+  @override
+  String get battleSealDraw => 'EMPATE';
+
+  @override
+  String get battleEndLabel => 'FIM';
+
+  @override
+  String battleMvpPill(String name, String score) {
+    return 'MVP $name · $score';
+  }
+
+  @override
+  String get battleRuleHint => 'Envie presentes para pontuar';
+
+  @override
+  String get viewLiveAction => 'Ver a live';
+
+  @override
+  String eventPageGiftsWorth(String mult) {
+    return 'Presentes valem $mult pontos';
+  }
+
+  @override
+  String eventPageEndsIn(String time) {
+    return 'Termina em $time';
+  }
+
+  @override
+  String get eventPageYourPosition => 'Sua posição';
+
+  @override
+  String eventPageRankPoints(int rank, String points) {
+    return '#$rank · $points pts';
+  }
+
+  @override
+  String eventPageToTop10(String points) {
+    return 'faltam $points para o top 10';
+  }
+
+  @override
+  String get eventPageInTop10 => 'Você está no top 10';
+
+  @override
+  String get eventPageNoRank => 'Você ainda não pontuou';
+
+  @override
+  String get eventPagePrizes => 'Prêmios';
+
+  @override
+  String get eventPageRanking => 'Ranking do evento';
+
+  @override
+  String get eventPageSeeFull => 'Ver ranking completo';
+
+  @override
+  String get eventPageGifts => 'Presentes do evento';
+
+  @override
+  String get eventPageSend => 'Enviar presente';
+
+  @override
+  String get eventPageHow => 'Como funciona';
+
+  @override
+  String eventPagePrizeRank(int from, int to) {
+    return '$fromº–$toº';
+  }
+
+  @override
+  String eventPagePrizeOne(int rank) {
+    return '$rankº';
+  }
+
+  @override
+  String get battleEndedTitle => 'BATALHA ENCERRADA';
+
+  @override
+  String battleEndedLeft(String name) {
+    return '$name saiu da batalha';
+  }
+
+  @override
+  String battleEndedLive(String name) {
+    return 'A live de $name caiu';
+  }
+
+  @override
+  String get battleEndedRtc => 'A conexão caiu';
+
+  @override
+  String battleLeaveBodyStreak(int n) {
+    return 'Se você sair agora, ninguém vence e você perde sua sequência de $n vitórias.';
+  }
+
+  @override
+  String get battleLeaveBodyNoStreak => 'Se você sair agora, ninguém vence.';
+
+  @override
+  String battleMutedLine(String name) {
+    return 'Você e seu público não ouvem $name';
+  }
+
+  @override
+  String battleMutedByLine(String name) {
+    return '$name silenciou você';
+  }
+
+  @override
+  String get battlePauseUnavailable =>
+      'Pausar não está disponível durante a conexão ou a batalha';
+
+  @override
+  String get battleEndedLeftAnon => 'Um criador saiu da batalha';
+
+  @override
+  String get battleEndedLiveAnon => 'A live de um criador caiu';
 }

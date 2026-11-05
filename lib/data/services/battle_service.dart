@@ -36,12 +36,15 @@ class BattleService {
     roomId, // kept for compatibility (not sent — JWT identifies caller)
     required String targetRoomId,
     int durationSeconds = 300,
+    String? linkId,
   }) async {
     final response = await _dio.post(
       '/live/battle/invite',
       data: {
         'opponent_room_id': targetRoomId,
         'duration_seconds': durationSeconds,
+        // Batalha dentro de uma conexão (§8.2).
+        if (linkId != null) 'link_id': linkId,
       },
     );
     return _toMap(response.data);
@@ -120,10 +123,13 @@ class BattleService {
 
   /// Get live scores — usa o endpoint Redis de baixa latência.
   /// Fallback para o endpoint DB se o Redis não tiver dados ainda.
-  Future<Map<String, dynamic>> getLiveScores(String battleId) async {
+  Future<Map<String, dynamic>> getLiveScores(String battleId, {String? roomId}) async {
     // Tenta primeiro o endpoint Redis (baixa latência, tem time_remaining_seconds)
     try {
-      final response = await _dio.get('/live/battle/$battleId/live-scores');
+      final response = await _dio.get(
+        '/live/battle/$battleId/live-scores',
+        queryParameters: {if (roomId != null) 'room_id': roomId},
+      );
       final envelope = _toMap(response.data);
       final data = (envelope['data'] is Map)
           ? Map<String, dynamic>.from(envelope['data'] as Map)
@@ -133,13 +139,17 @@ class BattleService {
       return data;
     } catch (_) {
       // Fallback: endpoint DB (batalha recém-criada ainda não tem dados no Redis)
-      return getBattle(battleId);
+      return getBattle(battleId, roomId: roomId);
     }
   }
 
   /// Get full battle info.
-  Future<Map<String, dynamic>> getBattle(String battleId) async {
-    final response = await _dio.get('/live/battle/$battleId');
+  Future<Map<String, dynamic>> getBattle(String battleId, {String? roomId}) async {
+    // `room_id`: o servidor filtra pelo lado da sala (lado fechado, §9.3).
+    final response = await _dio.get(
+      '/live/battle/$battleId',
+      queryParameters: {if (roomId != null) 'room_id': roomId},
+    );
     return _toMap(response.data);
   }
 
@@ -156,25 +166,84 @@ class BattleService {
         : envelope;
   }
 
-  /// Mensagem amigável para erros de batalha: usa o `detail` do backend
-  /// (que explica o motivo: oponente ocupado, convite expirado, etc.) e
-  /// cai no [fallback] para erros de rede/desconhecidos.
-  static String errorMessage(Object error, String fallback) {
+  /// Credenciais do LiveKit para o criador entrar na sala `battle-{id}`.
+  /// Backend: `GET /live/battle/{id}/rtc` (409 fora de accepted/countdown/
+  /// active; 503 com o tempo real desligado).
+  Future<BattleRtcCredentials> getRtc(String battleId) async {
+    final response = await _dio.get(
+      '/live/battle/$battleId/rtc',
+      options: Options(receiveTimeout: const Duration(seconds: 6)),
+    );
+    final envelope = _toMap(response.data);
+    final data = envelope['data'] is Map
+        ? Map<String, dynamic>.from(envelope['data'] as Map)
+        : envelope;
+    return BattleRtcCredentials.fromJson(data);
+  }
+
+  /// Silencia/reativa o adversário NO MEU lado.
+  /// Backend: `POST /live/battle/{id}/mute {muted}` → `{muted:{a,b}}`.
+  Future<({bool a, bool b})?> setMute(String battleId, bool muted) async {
+    final response = await _dio.post(
+      '/live/battle/$battleId/mute',
+      data: {'muted': muted},
+    );
+    final envelope = _toMap(response.data);
+    final data = envelope['data'] is Map
+        ? Map<String, dynamic>.from(envelope['data'] as Map)
+        : envelope;
+    final m = data['muted'];
+    if (m is Map) return (a: m['a'] == true, b: m['b'] == true);
+    return null;
+  }
+
+  /// Classifica um erro de batalha (sem expor texto cru do servidor/exceção).
+  static BattleError classifyError(Object error) {
     if (error is DioException) {
+      final status = error.response?.statusCode;
       final data = error.response?.data;
+      String text = '';
+      String code = '';
+      int? retryAfter;
       if (data is Map) {
         final detail = data['detail'];
-        if (detail is String && detail.isNotEmpty) return detail;
-        if (detail is Map && detail['message'] is String) {
-          return detail['message'] as String;
+        if (detail is String) text = detail;
+        if (detail is Map) {
+          text = '${detail['message'] ?? ''}';
+          code = '${detail['code'] ?? detail['error'] ?? ''}';
+          retryAfter = (detail['retry_after'] as num?)?.toInt();
         }
+        code = code.isEmpty ? '${data['code'] ?? data['error_code'] ?? ''}' : code;
+        retryAfter ??= (data['retry_after'] as num?)?.toInt();
       }
+      retryAfter ??= int.tryParse(
+        error.response?.headers.value('retry-after') ?? '',
+      );
+      final lower = '$code $text'.toLowerCase();
       if (error.type == DioExceptionType.connectionError ||
-          error.type == DioExceptionType.connectionTimeout) {
-        return 'Sem conexão. Verifique sua internet.';
+          error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return const BattleError(BattleErrorKind.network);
       }
+      if (status == 429) {
+        return BattleError(BattleErrorKind.cooldown, retryAfter: retryAfter);
+      }
+      if (lower.contains('block') || lower.contains('bloque')) {
+        return const BattleError(BattleErrorKind.blocked);
+      }
+      if (lower.contains('eleg') || lower.contains('eligib')) {
+        return const BattleError(BattleErrorKind.notEligible);
+      }
+      if (lower.contains('expir') || status == 410) {
+        return const BattleError(BattleErrorKind.expired);
+      }
+      if (lower.contains('respondid') || lower.contains('already')) {
+        return const BattleError(BattleErrorKind.answered);
+      }
+      if (status == 403) return const BattleError(BattleErrorKind.blocked);
+      if (status == 409) return const BattleError(BattleErrorKind.busy);
     }
-    return fallback;
+    return const BattleError(BattleErrorKind.generic);
   }
 
   Map<String, dynamic> _toMap(dynamic data) {
@@ -182,4 +251,49 @@ class BattleService {
     if (data is Map) return Map<String, dynamic>.from(data);
     return {};
   }
+}
+
+enum BattleErrorKind {
+  network,
+  cooldown,
+  blocked,
+  notEligible,
+  expired,
+  answered,
+  busy,
+  generic,
+}
+
+class BattleError {
+  const BattleError(this.kind, {this.retryAfter});
+  final BattleErrorKind kind;
+
+  /// Segundos até poder convidar de novo (429).
+  final int? retryAfter;
+}
+
+/// Resposta de `GET /live/battle/{id}/rtc`.
+class BattleRtcCredentials {
+  const BattleRtcCredentials({
+    required this.url,
+    required this.token,
+    required this.room,
+    required this.side,
+  });
+
+  final String url;
+  final String token;
+  final String room;
+  final String side;
+
+  factory BattleRtcCredentials.fromJson(Map<String, dynamic> json) {
+    return BattleRtcCredentials(
+      url: json['url']?.toString() ?? '',
+      token: json['token']?.toString() ?? '',
+      room: json['room']?.toString() ?? '',
+      side: json['side']?.toString() ?? 'a',
+    );
+  }
+
+  bool get isValid => url.isNotEmpty && token.isNotEmpty;
 }

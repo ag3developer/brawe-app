@@ -43,19 +43,21 @@ class _FakeBattleService extends BattleService {
   };
 
   bool liveScoresThrows = false;
+  bool battleThrows = false;
   int liveScoresCalls = 0;
   int getBattleCalls = 0;
 
   @override
-  Future<Map<String, dynamic>> getLiveScores(String battleId) async {
+  Future<Map<String, dynamic>> getLiveScores(String battleId, {String? roomId}) async {
     liveScoresCalls++;
     if (liveScoresThrows) throw DioException(requestOptions: RequestOptions());
     return liveScoresResponse;
   }
 
   @override
-  Future<Map<String, dynamic>> getBattle(String battleId) async {
+  Future<Map<String, dynamic>> getBattle(String battleId, {String? roomId}) async {
     getBattleCalls++;
+    if (battleThrows) throw DioException(requestOptions: RequestOptions());
     return battleDetailResponse;
   }
 }
@@ -175,7 +177,9 @@ void main() {
     test(
       'transitions to AsyncError when service is completely unavailable',
       () async {
-        final svc = _FakeBattleService()..liveScoresThrows = true;
+        final svc = _FakeBattleService()
+          ..liveScoresThrows = true
+          ..battleThrows = true;
         final container = _makeContainer(battleSvc: svc);
         addTearDown(container.dispose);
 

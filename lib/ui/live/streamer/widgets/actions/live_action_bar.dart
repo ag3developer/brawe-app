@@ -19,6 +19,10 @@ class LiveActionBar extends StatelessWidget {
     required this.hasBattle,
     required this.onBattle,
     this.onCoHost,
+    this.coHostLabel,
+    this.coHostIcon,
+    this.battleLabel,
+    this.battleIcon,
     required this.onPauseResume,
     required this.onEnd,
     required this.onMoreOptions,
@@ -35,6 +39,14 @@ class LiveActionBar extends StatelessWidget {
 
   /// `null` esconde o botão (co-host ainda sem mídia em tempo real).
   final VoidCallback? onCoHost;
+
+  /// Rótulo/ícone do botão de conexão ("Conectar" ou "Desconectar").
+  final String? coHostLabel;
+  final IconData? coHostIcon;
+
+  /// Rótulo/ícone do botão de batalha ("Revanche" após o fim).
+  final String? battleLabel;
+  final IconData? battleIcon;
   final VoidCallback onPauseResume;
   final VoidCallback onEnd;
   final VoidCallback onMoreOptions;
@@ -72,8 +84,11 @@ class LiveActionBar extends StatelessWidget {
               ),
               // ⚔ Batalha — destaque especial
               ActionBtn(
-                icon: Icons.sports_kabaddi_rounded,
-                label: hasBattle ? 'Em batalha' : 'Batalha',
+                icon: battleIcon ?? Icons.sports_kabaddi_rounded,
+                label: battleLabel ??
+                    (hasBattle
+                        ? S.of(context).battleActionActive
+                        : S.of(context).battleActionLabel),
                 color: AppColors.braweBlue,
                 glow: !hasBattle,
                 badge: hasBattle ? '⚔' : null,
@@ -82,8 +97,8 @@ class LiveActionBar extends StatelessWidget {
               // 👥 Co-host
               if (onCoHost != null)
                 ActionBtn(
-                  icon: Icons.people_alt_rounded,
-                  label: 'Co-host',
+                  icon: coHostIcon ?? Icons.link_rounded,
+                  label: coHostLabel ?? S.of(context).linkConnect,
                   color: const Color(0xFF0EA5E9),
                   onTap: onCoHost,
                 ),

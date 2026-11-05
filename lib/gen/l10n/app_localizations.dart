@@ -6129,12 +6129,6 @@ abstract class S {
   /// **'ASSISTIR E APOSTAR'**
   String get homeBattleWatchBet;
 
-  /// No description provided for @homeBattleLabel.
-  ///
-  /// In pt, this message translates to:
-  /// **'Batalha PK'**
-  String get homeBattleLabel;
-
   /// No description provided for @commonError.
   ///
   /// In pt, this message translates to:
@@ -6243,77 +6237,11 @@ abstract class S {
   /// **'Tempo restante'**
   String get battleTimer;
 
-  /// No description provided for @battleSendGift.
-  ///
-  /// In pt, this message translates to:
-  /// **'Enviar presente'**
-  String get battleSendGift;
-
-  /// No description provided for @battleSupport.
-  ///
-  /// In pt, this message translates to:
-  /// **'Apoiar'**
-  String get battleSupport;
-
-  /// No description provided for @battleWinner.
-  ///
-  /// In pt, this message translates to:
-  /// **'Vencedor'**
-  String get battleWinner;
-
-  /// No description provided for @battleDraw.
-  ///
-  /// In pt, this message translates to:
-  /// **'Empate'**
-  String get battleDraw;
-
-  /// No description provided for @battleEnded.
-  ///
-  /// In pt, this message translates to:
-  /// **'Batalha encerrada'**
-  String get battleEnded;
-
-  /// No description provided for @battleResultTitle.
-  ///
-  /// In pt, this message translates to:
-  /// **'Resultado da batalha'**
-  String get battleResultTitle;
-
-  /// No description provided for @battleResultShare.
-  ///
-  /// In pt, this message translates to:
-  /// **'Compartilhar resultado'**
-  String get battleResultShare;
-
-  /// No description provided for @battleResultWatchAgain.
-  ///
-  /// In pt, this message translates to:
-  /// **'Assistir outra batalha'**
-  String get battleResultWatchAgain;
-
-  /// No description provided for @battleScoreLabel.
-  ///
-  /// In pt, this message translates to:
-  /// **'{score} pts'**
-  String battleScoreLabel(String score);
-
   /// No description provided for @battleTopSupporters.
   ///
   /// In pt, this message translates to:
   /// **'Top apoiadores'**
   String get battleTopSupporters;
-
-  /// No description provided for @battleYouScore.
-  ///
-  /// In pt, this message translates to:
-  /// **'Você: {score}'**
-  String battleYouScore(String score);
-
-  /// No description provided for @battleRivalScore.
-  ///
-  /// In pt, this message translates to:
-  /// **'Rival: {score}'**
-  String battleRivalScore(String score);
 
   /// No description provided for @battleCountdownStarting.
   ///
@@ -6351,12 +6279,6 @@ abstract class S {
   /// **'Erro ao carregar batalha'**
   String get battleError;
 
-  /// No description provided for @battleGiftReceived.
-  ///
-  /// In pt, this message translates to:
-  /// **'{sender} enviou {gift}'**
-  String battleGiftReceived(String sender, String gift);
-
   /// No description provided for @battleMomentum.
   ///
   /// In pt, this message translates to:
@@ -6374,18 +6296,6 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'RETA FINAL'**
   String get battleFinalStretch;
-
-  /// No description provided for @battleSendToWin.
-  ///
-  /// In pt, this message translates to:
-  /// **'Mande presentes pra decidir!'**
-  String get battleSendToWin;
-
-  /// No description provided for @battleMvp.
-  ///
-  /// In pt, this message translates to:
-  /// **'MVP'**
-  String get battleMvp;
 
   /// No description provided for @sharedPostReactionApplied.
   ///
@@ -13766,6 +13676,618 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer.'**
   String get settingsThemeAutoHint;
+
+  /// No description provided for @battleYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você'**
+  String get battleYou;
+
+  /// No description provided for @battleMuteOpponent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Silenciar adversário'**
+  String get battleMuteOpponent;
+
+  /// No description provided for @battleUnmuteOpponent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ouvir adversário'**
+  String get battleUnmuteOpponent;
+
+  /// No description provided for @battleListenTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ouvir {name}'**
+  String battleListenTo(String name);
+
+  /// No description provided for @battleRematch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir revanche'**
+  String get battleRematch;
+
+  /// No description provided for @battleRematchSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite de revanche enviado'**
+  String get battleRematchSent;
+
+  /// No description provided for @battleClose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get battleClose;
+
+  /// No description provided for @battleFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get battleFollowing;
+
+  /// No description provided for @battleLeaveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da batalha?'**
+  String get battleLeaveTitle;
+
+  /// No description provided for @battleLeaveConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair'**
+  String get battleLeaveConfirm;
+
+  /// No description provided for @battleCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get battleCancel;
+
+  /// No description provided for @battleLeave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da batalha'**
+  String get battleLeave;
+
+  /// No description provided for @battleActionLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha'**
+  String get battleActionLabel;
+
+  /// No description provided for @battleActionActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em batalha'**
+  String get battleActionActive;
+
+  /// No description provided for @battleErrNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão. Verifique sua internet.'**
+  String get battleErrNetwork;
+
+  /// No description provided for @battleErrGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir. Tente novamente.'**
+  String get battleErrGeneric;
+
+  /// No description provided for @battleErrCooldown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde {seconds}s para convidar este criador de novo.'**
+  String battleErrCooldown(int seconds);
+
+  /// No description provided for @battleErrBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não é possível convidar este criador.'**
+  String get battleErrBlocked;
+
+  /// No description provided for @battleErrBusy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este criador está ocupado em outra batalha.'**
+  String get battleErrBusy;
+
+  /// No description provided for @battleErrExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este convite expirou.'**
+  String get battleErrExpired;
+
+  /// No description provided for @battleErrAnswered.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este convite já foi respondido.'**
+  String get battleErrAnswered;
+
+  /// No description provided for @battleErrNotEligible.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não pode iniciar batalhas.'**
+  String get battleErrNotEligible;
+
+  /// No description provided for @battleErrSendInvite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o convite.'**
+  String get battleErrSendInvite;
+
+  /// No description provided for @battleErrAccept.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível aceitar a batalha.'**
+  String get battleErrAccept;
+
+  /// No description provided for @battleErrRematch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível pedir a revanche.'**
+  String get battleErrRematch;
+
+  /// No description provided for @battleErrEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível sair da batalha.'**
+  String get battleErrEnd;
+
+  /// No description provided for @battleInviteExpiresIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Expira em {seconds}s'**
+  String battleInviteExpiresIn(int seconds);
+
+  /// No description provided for @battleInviteAccepted.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} aceitou! Prepare-se'**
+  String battleInviteAccepted(String name);
+
+  /// No description provided for @battleInviteDeclined.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} recusou o convite'**
+  String battleInviteDeclined(String name);
+
+  /// No description provided for @battleInviteNoReply.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} não respondeu a tempo'**
+  String battleInviteNoReply(String name);
+
+  /// No description provided for @battleInviteExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'O convite de batalha expirou'**
+  String get battleInviteExpired;
+
+  /// No description provided for @battleInviteCancelled.
+  ///
+  /// In pt, this message translates to:
+  /// **'O convite de batalha foi cancelado'**
+  String get battleInviteCancelled;
+
+  /// No description provided for @battleCancelledMsg.
+  ///
+  /// In pt, this message translates to:
+  /// **'A batalha foi cancelada'**
+  String get battleCancelledMsg;
+
+  /// No description provided for @battleInviteNoAnswer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem resposta ao convite de batalha'**
+  String get battleInviteNoAnswer;
+
+  /// No description provided for @battleInviteWait.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde a resposta do convite atual ou cancele-o'**
+  String get battleInviteWait;
+
+  /// No description provided for @battleOpponentFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'O oponente'**
+  String get battleOpponentFallback;
+
+  /// No description provided for @battleSomeCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Um criador'**
+  String get battleSomeCreator;
+
+  /// No description provided for @battleRtcConnecting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectando com o adversário…'**
+  String get battleRtcConnecting;
+
+  /// No description provided for @battleRtcFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem tempo real: a batalha segue em modo normal.'**
+  String get battleRtcFallback;
+
+  /// No description provided for @battleOpponentCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando câmera do adversário'**
+  String get battleOpponentCamera;
+
+  /// No description provided for @battleStartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Iniciar Batalha'**
+  String get battleStartTitle;
+
+  /// No description provided for @battleSheetSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criadores ao vivo disponíveis agora'**
+  String get battleSheetSubtitle;
+
+  /// No description provided for @battleSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar criador ao vivo...'**
+  String get battleSearchHint;
+
+  /// No description provided for @battleLoadCandidatesFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar criadores ao vivo'**
+  String get battleLoadCandidatesFailed;
+
+  /// No description provided for @battleRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get battleRetry;
+
+  /// No description provided for @battleNoCreatorQuery.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum criador disponível com \"{query}\"'**
+  String battleNoCreatorQuery(String query);
+
+  /// No description provided for @battleNoCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum criador disponível para batalha agora.\nPuxe para atualizar.'**
+  String get battleNoCreator;
+
+  /// No description provided for @battleInviteCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convidar {name}'**
+  String battleInviteCreator(String name);
+
+  /// No description provided for @battleSelectCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione um criador'**
+  String get battleSelectCreator;
+
+  /// No description provided for @battleLiveBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'AO VIVO'**
+  String get battleLiveBadge;
+
+  /// No description provided for @battleViewLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver a live de {name}'**
+  String battleViewLive(String name);
+
+  /// No description provided for @battleWaitingAccept.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando {name} aceitar… {seconds}s'**
+  String battleWaitingAccept(String name, int seconds);
+
+  /// No description provided for @linkConnect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectar'**
+  String get linkConnect;
+
+  /// No description provided for @linkDisconnect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconectar'**
+  String get linkDisconnect;
+
+  /// No description provided for @linkStartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectar com um criador'**
+  String get linkStartTitle;
+
+  /// No description provided for @linkInviteCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectar com {name}'**
+  String linkInviteCreator(String name);
+
+  /// No description provided for @linkInviteReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} quer se conectar com você'**
+  String linkInviteReceived(String name);
+
+  /// No description provided for @linkInviteWithBattle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Com batalha'**
+  String get linkInviteWithBattle;
+
+  /// No description provided for @linkInviteAccepted.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} aceitou a conexão'**
+  String linkInviteAccepted(String name);
+
+  /// No description provided for @linkEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conexão foi encerrada'**
+  String get linkEnded;
+
+  /// No description provided for @linkDisconnectTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desconectar?'**
+  String get linkDisconnectTitle;
+
+  /// No description provided for @linkDisconnectBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conexão com {name} será encerrada. Se houver uma batalha em andamento, você desiste dela.'**
+  String linkDisconnectBody(String name);
+
+  /// No description provided for @linkFollowAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'+ Seguir'**
+  String get linkFollowAction;
+
+  /// No description provided for @linkErrDisconnect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível desconectar.'**
+  String get linkErrDisconnect;
+
+  /// No description provided for @linkErrInvite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar o convite de conexão.'**
+  String get linkErrInvite;
+
+  /// No description provided for @linkErrAccept.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível aceitar a conexão.'**
+  String get linkErrAccept;
+
+  /// No description provided for @battleFlashChallenge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie {count} {gift} · {time}'**
+  String battleFlashChallenge(int count, String gift, String time);
+
+  /// No description provided for @battleFlashProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{done}/{total}'**
+  String battleFlashProgress(int done, int total);
+
+  /// No description provided for @battleFlashBoost.
+  ///
+  /// In pt, this message translates to:
+  /// **'{mult}X ativo · {time}'**
+  String battleFlashBoost(String mult, String time);
+
+  /// No description provided for @battleSealWin.
+  ///
+  /// In pt, this message translates to:
+  /// **'VITÓRIA'**
+  String get battleSealWin;
+
+  /// No description provided for @battleSealLose.
+  ///
+  /// In pt, this message translates to:
+  /// **'DERROTA'**
+  String get battleSealLose;
+
+  /// No description provided for @battleSealDraw.
+  ///
+  /// In pt, this message translates to:
+  /// **'EMPATE'**
+  String get battleSealDraw;
+
+  /// No description provided for @battleEndLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'FIM'**
+  String get battleEndLabel;
+
+  /// No description provided for @battleMvpPill.
+  ///
+  /// In pt, this message translates to:
+  /// **'MVP {name} · {score}'**
+  String battleMvpPill(String name, String score);
+
+  /// No description provided for @battleRuleHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie presentes para pontuar'**
+  String get battleRuleHint;
+
+  /// No description provided for @viewLiveAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver a live'**
+  String get viewLiveAction;
+
+  /// No description provided for @eventPageGiftsWorth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes valem {mult} pontos'**
+  String eventPageGiftsWorth(String mult);
+
+  /// No description provided for @eventPageEndsIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termina em {time}'**
+  String eventPageEndsIn(String time);
+
+  /// No description provided for @eventPageYourPosition.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua posição'**
+  String get eventPageYourPosition;
+
+  /// No description provided for @eventPageRankPoints.
+  ///
+  /// In pt, this message translates to:
+  /// **'#{rank} · {points} pts'**
+  String eventPageRankPoints(int rank, String points);
+
+  /// No description provided for @eventPageToTop10.
+  ///
+  /// In pt, this message translates to:
+  /// **'faltam {points} para o top 10'**
+  String eventPageToTop10(String points);
+
+  /// No description provided for @eventPageInTop10.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você está no top 10'**
+  String get eventPageInTop10;
+
+  /// No description provided for @eventPageNoRank.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não pontuou'**
+  String get eventPageNoRank;
+
+  /// No description provided for @eventPagePrizes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmios'**
+  String get eventPagePrizes;
+
+  /// No description provided for @eventPageRanking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ranking do evento'**
+  String get eventPageRanking;
+
+  /// No description provided for @eventPageSeeFull.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver ranking completo'**
+  String get eventPageSeeFull;
+
+  /// No description provided for @eventPageGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes do evento'**
+  String get eventPageGifts;
+
+  /// No description provided for @eventPageSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar presente'**
+  String get eventPageSend;
+
+  /// No description provided for @eventPageHow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como funciona'**
+  String get eventPageHow;
+
+  /// No description provided for @eventPagePrizeRank.
+  ///
+  /// In pt, this message translates to:
+  /// **'{from}º–{to}º'**
+  String eventPagePrizeRank(int from, int to);
+
+  /// No description provided for @eventPagePrizeOne.
+  ///
+  /// In pt, this message translates to:
+  /// **'{rank}º'**
+  String eventPagePrizeOne(int rank);
+
+  /// No description provided for @battleEndedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'BATALHA ENCERRADA'**
+  String get battleEndedTitle;
+
+  /// No description provided for @battleEndedLeft.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} saiu da batalha'**
+  String battleEndedLeft(String name);
+
+  /// No description provided for @battleEndedLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'A live de {name} caiu'**
+  String battleEndedLive(String name);
+
+  /// No description provided for @battleEndedRtc.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conexão caiu'**
+  String get battleEndedRtc;
+
+  /// No description provided for @battleLeaveBodyStreak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se você sair agora, ninguém vence e você perde sua sequência de {n} vitórias.'**
+  String battleLeaveBodyStreak(int n);
+
+  /// No description provided for @battleLeaveBodyNoStreak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se você sair agora, ninguém vence.'**
+  String get battleLeaveBodyNoStreak;
+
+  /// No description provided for @battleMutedLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você e seu público não ouvem {name}'**
+  String battleMutedLine(String name);
+
+  /// No description provided for @battleMutedByLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} silenciou você'**
+  String battleMutedByLine(String name);
+
+  /// No description provided for @battlePauseUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausar não está disponível durante a conexão ou a batalha'**
+  String get battlePauseUnavailable;
+
+  /// No description provided for @battleEndedLeftAnon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Um criador saiu da batalha'**
+  String get battleEndedLeftAnon;
+
+  /// No description provided for @battleEndedLiveAnon.
+  ///
+  /// In pt, this message translates to:
+  /// **'A live de um criador caiu'**
+  String get battleEndedLiveAnon;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

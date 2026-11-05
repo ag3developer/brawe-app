@@ -1,103 +1,89 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/themes/app_colors.dart';
 import '../../../data/services/battle_service.dart';
 import '../../../domain/models/battle_state.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../battle/battle_errors.dart';
+import '../battle/battle_hud.dart';
+import '../battle/battle_hud_parts.dart';
+import '../battle/battle_layout.dart';
 import '../view_models/battle_view_model.dart';
-import 'battle_gift_alert.dart';
-import 'battle_score_bar.dart';
-import 'battle_timer.dart';
 
-// ─── Layout constants ─────────────────────────────────────────────────────
-// O `BroadcasterScreen` empilha o `BroadcasterTopBar` POR CIMA do
-// `StreamerBattleHud` (ordem do Stack), com:
-//   • Padding superior do container         10px
-//   • BroadcasterTopBar (1 linha)         ≈ 36px
-//   • SizedBox abaixo                        6px
-//   ───────────────────────────────────────────
-//   Total                                 ≈ 52px (abaixo do SafeArea)
-//
-// Se não respeitarmos isso, o painel da batalha fica VISUALMENTE escondido
-// atrás do top bar (badges, viewers, etc.) — exatamente o que o usuário
-// reportou. O spacer abaixo garante que o painel "encoste" na borda
-// inferior do top bar, mesmo padrão TikTok PK.
-const double _kBroadcasterTopBarHeight = 52;
-
-/// HUD compacto da batalha para o streamer.
-///
-/// O streamer continua vendo o preview da câmera (gerenciado pelo BroadcasterScreen).
-/// Este widget é sobreposto como um HUD — não bloqueia a câmera, não roda
-/// overlays pesados, não cobre a tela inteira.
-///
-/// Uso: sobreponha sobre o BroadcasterScreen via Stack.
+/// HUD da batalha para o CRIADOR (compartilha toda a UI com o espectador via
+/// [BattleHudOverlay]); aqui entram só as ações do criador:
+/// silenciar o adversário (+ indicadores), sair da batalha (desistência —
+/// o criador vê o resultado) e pedir revanche.
 class StreamerBattleHud extends ConsumerStatefulWidget {
   const StreamerBattleHud({
     super.key,
     required this.battleId,
     required this.myStreamerId,
+    required this.myRoomId,
     this.onBattleClosed,
+    this.initialCountdown,
   });
 
   final String battleId;
   final String myStreamerId;
+  final String myRoomId;
 
-  /// Chamado quando o HUD deve sair da tela (revanche aceita = novo battleId,
-  /// ou fechar resultado, ou desistir mid-battle). O broadcaster usa isso
-  /// pra zerar `_activeBattleId` e voltar pra live normal.
+  /// Fechar o resultado (volta para a live normal).
   final VoidCallback? onBattleClosed;
+
+  final Map<String, dynamic>? initialCountdown;
 
   @override
   ConsumerState<StreamerBattleHud> createState() => _StreamerBattleHudState();
 }
 
 class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
-  final List<_ToastAlert> _toasts = [];
-
-  /// Flag pra evitar duplo-clique nos botões Sair / Revanche. Como cada um
-  /// envolve uma chamada HTTP que pode demorar, o usuário ansioso aperta 2x
-  /// e dispara 2 requests → o 2º falha com 400. Gate simples + spinner.
   bool _isBusy = false;
+  bool _muteBusy = false;
 
-  @override
-  void dispose() {
-    super.dispose();
+  void _snack(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Future<void> _confirmAndEndBattle() async {
+  Future<void> _confirmAndLeave() async {
     if (_isBusy) return;
+    final l10n = S.of(context);
+    final cur = ref.read(battleViewModelProvider(widget.battleId)).value;
+    final mine = cur?.sideOf(userId: widget.myStreamerId, roomId: widget.myRoomId);
+    final streakNow = mine == null ? null : cur?.winStreakOf(mine);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1F),
-        title: const Text(
-          'Sair da batalha?',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          l10n.battleLeaveTitle,
+          style: const TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'A batalha será encerrada agora e o vencedor será definido pelo placar atual. Você continua na live normal.',
-          style: TextStyle(color: Colors.white70),
+        content: Text(
+          battleLeaveWarning(l10n, streakNow),
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Colors.white54),
+            child: Text(
+              l10n.battleCancel,
+              style: const TextStyle(color: Colors.white54),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Sair',
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
+            child: Text(
+              l10n.battleLeaveConfirm,
+              style: const TextStyle(
+                color: kBattleText,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -106,482 +92,203 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
     );
     if (confirmed != true || !mounted) return;
     setState(() => _isBusy = true);
+    final notifier = ref.read(
+      battleViewModelProvider(widget.battleId).notifier,
+    );
     try {
-      final svc = ref.read(battleServiceProvider);
-      await svc.endBattleEarly(widget.battleId);
-      // O broadcast `connect:battle:ended` (ou `cancelled`) vai chegar
-      // via socket e o BroadcasterScreen vai limpar `_activeBattleId`.
-      // Mas damos o sinal explícito também (mais responsivo).
-      if (mounted) widget.onBattleClosed?.call();
+      await ref.read(battleServiceProvider).endBattleEarly(widget.battleId);
     } on DioException catch (e) {
-      // receiveTimeout: o backend ainda está processando (fire-and-forget).
-      // O resultado chega via socket `connect:battle:ended` em < 2s.
-      // Tratar como sucesso — não mostrar erro ao usuário.
-      if (e.type == DioExceptionType.receiveTimeout ||
+      final timeout =
+          e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.connectionTimeout) {
-        if (mounted) widget.onBattleClosed?.call();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao encerrar batalha: ${e.message}')),
-          );
-        }
+          e.type == DioExceptionType.connectionTimeout;
+      if (!timeout) {
+        _snack(battleErrorText(l10n, e, fallback: l10n.battleErrEnd));
+        if (mounted) setState(() => _isBusy = false);
+        return;
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao encerrar batalha: $e')));
-      }
-    } finally {
+      _snack(battleErrorText(l10n, e, fallback: l10n.battleErrEnd));
       if (mounted) setState(() => _isBusy = false);
+      return;
     }
-  }
-
-  Future<void> _requestRematch() async {
-    if (_isBusy) return;
-    setState(() => _isBusy = true);
-    try {
-      final svc = ref.read(battleServiceProvider);
-      await svc.requestRematch(widget.battleId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Convite de revanche enviado 🔄')),
-        );
-        // Fecha o banner — o socket `connect:battle:invite` chega no
-        // oponente, e se ele aceitar, um novo `battle:started` chega
-        // aqui e o BroadcasterScreen abre o HUD com o novo battle_id.
-        widget.onBattleClosed?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao pedir revanche: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isBusy = false);
-    }
-  }
-
-  void _addToast(BattleState s) {
-    if (s.lastGiftSender == null || s.lastGiftName == null) return;
-    final toast = _ToastAlert(
-      sender: s.lastGiftSender!,
-      gift: s.lastGiftName!,
-      side: s.lastUpdatedSide ?? 'a',
+    // NÃO fecha: o `connect:battle:ended` (desistência) abre a tela de
+    // resultado. Se o evento se perder, busca o resultado por REST.
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 3), notifier.resync),
     );
-    setState(() => _toasts.add(toast));
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _toasts.remove(toast));
-    });
+    if (mounted) setState(() => _isBusy = false);
   }
 
-  String _formatScore(double v) {
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Future<void> _toggleMute(BattleState battle, String mySide) async {
+    if (_muteBusy) return;
     final l10n = S.of(context);
-    final asyncState = ref.watch(battleViewModelProvider(widget.battleId));
-
-    ref.listen<AsyncValue<BattleState>>(
-      battleViewModelProvider(widget.battleId),
-      (prev, next) {
-        next.whenData((s) {
-          final prevState = prev?.asData?.value;
-          if (prevState?.lastGiftSender != s.lastGiftSender ||
-              prevState?.lastGiftName != s.lastGiftName) {
-            _addToast(s);
-          }
-        });
-      },
+    final next = !battle.mutedOf(mySide);
+    final notifier = ref.read(
+      battleViewModelProvider(widget.battleId).notifier,
     );
+    setState(() => _muteBusy = true);
+    // Otimista: o ícone e o áudio respondem na hora.
+    notifier.applyMute(
+      a: mySide == 'a' ? next : battle.mutedA,
+      b: mySide == 'b' ? next : battle.mutedB,
+    );
+    try {
+      final res = await ref
+          .read(battleServiceProvider)
+          .setMute(widget.battleId, next);
+      if (res != null) notifier.applyMute(a: res.a, b: res.b);
+    } catch (e) {
+      notifier.applyMute(a: battle.mutedA, b: battle.mutedB);
+      _snack(battleErrorText(l10n, e));
+    } finally {
+      if (mounted) setState(() => _muteBusy = false);
+    }
+  }
 
-    return asyncState.when(
-      // Antes: loading/erro renderizavam nada, mas o broadcaster seguia
-      // "em batalha" (botão travado, sem como sair). Agora mostra o estado
-      // e permite fechar.
-      loading: () => const _HudStatusChip(label: 'Carregando batalha…'),
-      error: (_, _) => _HudStatusChip(
-        label: 'Não foi possível carregar a batalha',
-        actionLabel: 'Fechar',
-        onAction: widget.onBattleClosed,
-      ),
-      data: (battle) {
-        if (battle.isOver) {
-          return _ResultBanner(
-            battle: battle,
-            l10n: l10n,
-            isBusy: _isBusy,
-            onRematch: _requestRematch,
-            onClose: () => widget.onBattleClosed?.call(),
-          );
-        }
+  Widget _halfOverlays(
+    BuildContext context,
+    BattleState battle,
+    BattleLayout layout,
+  ) {
+    final mySide = battle.sideOf(
+      userId: widget.myStreamerId,
+      roomId: widget.myRoomId,
+    );
+    if (mySide == null) return const SizedBox.shrink();
+    final composite = battle.isComposite;
+    final l10n = S.of(context);
+    final opp = mySide == 'a' ? 'b' : 'a';
+    final iMuted = battle.mutedOf(mySide);
+    final oppMutedMe = battle.mutedOf(opp);
 
-        final iAmA = battle.streamerAId == widget.myStreamerId;
-        final myScore = iAmA ? battle.scoreA : battle.scoreB;
-        final rivalScore = iAmA ? battle.scoreB : battle.scoreA;
+    // Canto inferior INTERNO de uma metade: A → direita da metade; B → esquerda.
+    Widget innerBottom(String side, Widget child) {
+      final r = layout.half(side);
+      return Positioned(
+        left: side == 'b' ? r.left + 6 : null,
+        right: side == 'a' ? layout.screen.width - r.right + 6 : null,
+        bottom: layout.screen.height - r.bottom + 6,
+        child: child,
+      );
+    }
 
-        return SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ── Spacer pra ficar abaixo do BroadcasterTopBar (que é
-              // empilhado POR CIMA deste HUD no Stack do BroadcasterScreen).
-              // Sem isso, o painel ficaria escondido atrás do top bar.
-              const SizedBox(height: _kBroadcasterTopBarHeight),
-
-              // ── Top HUD bar ───────────────────────────────────────────
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.38),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Score row
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                l10n.battleYouScore(_formatScore(myScore)),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            BattleTimer(
-                              timeRemaining: battle.timeRemaining,
-                              compact: true,
-                            ),
-                            Expanded(
-                              child: Text(
-                                l10n.battleRivalScore(_formatScore(rivalScore)),
-                                textAlign: TextAlign.end,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        // Mini score bar
-                        BattleScoreBar(
-                          progressA: battle.progressA,
-                          scoreA: battle.scoreA,
-                          scoreB: battle.scoreB,
-                          compact: true,
-                        ),
-                        // ── Action row (Sair da batalha) ─────────────────
-                        // Subtle: text-only button alinhado à direita pra
-                        // não competir visualmente com o score, mas sempre
-                        // disponível pro streamer "fugir" da batalha sem
-                        // precisar finalizar a live inteira.
-                        const SizedBox(height: 4),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton.icon(
-                            onPressed: _isBusy ? null : _confirmAndEndBattle,
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 0,
-                              ),
-                              minimumSize: const Size(0, 28),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              foregroundColor: Colors.white60,
-                            ),
-                            icon: _isBusy
-                                ? const SizedBox(
-                                    width: 12,
-                                    height: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
-                                      color: Colors.white60,
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.exit_to_app_rounded,
-                                    size: 14,
-                                  ),
-                            label: const Text(
-                              'Sair da batalha',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+    return Stack(
+      children: [
+        // Silenciar o adversário: botão neutro na metade DELE.
+        if (composite)
+          innerBottom(
+            opp,
+            Semantics(
+              button: true,
+              label: iMuted ? l10n.battleUnmuteOpponent : l10n.battleMuteOpponent,
+              child: GestureDetector(
+                onTap: () => _toggleMute(battle, mySide),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: battleGlass(radius: 18),
+                  child: Icon(
+                    iMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                    size: 16,
+                    color: iMuted ? kBattleTextDim : kBattleText,
                   ),
                 ),
               ),
-
-              // ── Gift toasts ────────────────────────────────────────────
-              if (_toasts.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: _toasts
-                        .take(2)
-                        .map(
-                          (t) => Padding(
-                            padding: const EdgeInsets.only(bottom: 3),
-                            child: BattleGiftAlert(
-                              senderName: t.sender,
-                              giftName: t.gift,
-                              side: t.side,
-                              mode: GiftAlertMode.toast,
-                            ),
-                          ),
-                        )
-                        .toList(),
+            ),
+          ),
+        // Linha curta (sem caixa) quando silenciei o adversário.
+        if (composite && iMuted)
+          Positioned(
+            left: layout.half(opp).left + 6,
+            width: layout.half(opp).width - 12,
+            bottom: layout.screen.height - layout.half(opp).bottom + 40,
+            child: IgnorePointer(
+              child: Align(
+                alignment: opp == 'a' ? Alignment.bottomLeft : Alignment.bottomRight,
+                child: Text(
+                  l10n.battleMutedLine(battle.nameOf(opp)),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: opp == 'a' ? TextAlign.left : TextAlign.right,
+                  style: const TextStyle(
+                    color: kBattleText,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    shadows: [Shadow(blurRadius: 6, color: Colors.black87)],
+                    decoration: TextDecoration.none,
                   ),
                 ),
-
-              const Spacer(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-// ─── Result Banner (streamer) ─────────────────────────────────────────────────
-
-class _ResultBanner extends StatelessWidget {
-  const _ResultBanner({
-    required this.battle,
-    required this.l10n,
-    required this.isBusy,
-    required this.onRematch,
-    required this.onClose,
-  });
-  final BattleState battle;
-  final S l10n;
-  final bool isBusy;
-  final VoidCallback onRematch;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDraw = battle.isDraw;
-    final winnerName =
-        battle.winnerName ??
-        (battle.isLeadingA ? battle.streamerAName : battle.streamerBName);
-    final winnerColor = battle.isLeadingA
-        ? AppColors.braweBlue
-        : AppColors.hotPink;
-
-    return SafeArea(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDraw
-                    ? Colors.white24
-                    : winnerColor.withValues(alpha: 0.6),
               ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Linha do resultado ──────────────────────────
-                Row(
-                  children: [
-                    Icon(
-                      isDraw
-                          ? Icons.handshake_outlined
-                          : Icons.workspace_premium,
-                      color: isDraw ? Colors.white54 : winnerColor,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.battleEnded,
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
-                            ),
-                          ),
-                          Text(
-                            isDraw
-                                ? l10n.battleDraw
-                                : '${l10n.battleWinner}: $winnerName',
-                            style: TextStyle(
-                              color: isDraw ? Colors.white70 : winnerColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+          ),
+        // O adversário me silenciou: linha curta na MINHA metade.
+        if (composite && oppMutedMe)
+          Positioned(
+            left: layout.half(mySide).left + 6,
+            width: layout.half(mySide).width - 12,
+            bottom: layout.screen.height - layout.half(mySide).bottom + 8,
+            child: IgnorePointer(
+              child: Align(
+                alignment: mySide == 'a' ? Alignment.bottomLeft : Alignment.bottomRight,
+                child: Text(
+                  l10n.battleMutedByLine(battle.nameOf(opp)),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: kBattleTextDim,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    shadows: [Shadow(blurRadius: 6, color: Colors.black87)],
+                    decoration: TextDecoration.none,
+                  ),
                 ),
-                const SizedBox(height: 10),
-                // ── Botões de ação ──────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: isBusy ? null : onClose,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: const Text(
-                          'Fechar',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: FilledButton.icon(
-                        onPressed: isBusy ? null : onRematch,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: winnerColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                        ),
-                        icon: isBusy
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.replay_rounded, size: 18),
-                        label: const Text(
-                          'Pedir revanche',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Internal model ────────────────────────────────────────────────────────────
-
-class _ToastAlert {
-  _ToastAlert({required this.sender, required this.gift, required this.side});
-  final String sender;
-  final String gift;
-  final String side;
-}
-
-/// Chip no topo para estados de carregamento/erro do HUD.
-class _HudStatusChip extends StatelessWidget {
-  const _HudStatusChip({required this.label, this.actionLabel, this.onAction});
-
-  final String label;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 64),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(18),
+        // Sair da batalha (desistência): canto direito do topo da região do chat.
+        Positioned(
+          right: 8,
+          top: layout.chat.top + 44,
+          child: TextButton.icon(
+            onPressed: _isBusy ? null : _confirmAndLeave,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 28),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              foregroundColor: Colors.white70,
+              backgroundColor: const Color(0xB30B0E14),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (actionLabel == null) ...[
-                  const SizedBox(
+            icon: _isBusy
+                ? const SizedBox(
                     width: 12,
                     height: 12,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+                      strokeWidth: 1.5,
+                      color: Colors.white60,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  label,
-                  style: const TextStyle(color: Colors.white, fontSize: 12.5),
-                ),
-                if (actionLabel != null)
-                  TextButton(
-                    onPressed: onAction,
-                    child: Text(
-                      actionLabel!,
-                      style: const TextStyle(color: Color(0xFFFF6B6B)),
-                    ),
-                  ),
-              ],
+                  )
+                : const Icon(Icons.exit_to_app_rounded, size: 14),
+            label: Text(
+              l10n.battleLeave,
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
             ),
           ),
         ),
-      ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BattleHudOverlay(
+      key: ValueKey('streamer-hud-${widget.battleId}'),
+      battleId: widget.battleId,
+      splitTop: battleCreatorSplitTop(context),
+      myUserId: widget.myStreamerId,
+      myRoomId: widget.myRoomId,
+      initialCountdown: widget.initialCountdown,
+      onClose: () => widget.onBattleClosed?.call(),
+      halfOverlays: _halfOverlays,
     );
   }
 }

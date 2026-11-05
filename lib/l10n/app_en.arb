@@ -1540,7 +1540,6 @@
   "homeEmptyPastLives": "No past lives found",
   "homeEmptyStreamers": "No streamers yet",
   "homeBattleWatchBet": "WATCH & BET",
-  "homeBattleLabel": "PK battle",
   "commonError": "Error",
   "videoTooltipRepostStory": "Repost to Stories",
   "liveBattleTapToWatch": "Tap to watch live",
@@ -1573,39 +1572,7 @@
   "emojiCatObjects": "Objects",
   "battleVs": "VS",
   "battleTimer": "Time remaining",
-  "battleSendGift": "Send gift",
-  "battleSupport": "Support",
-  "battleWinner": "Winner",
-  "battleDraw": "Draw",
-  "battleEnded": "Battle ended",
-  "battleResultTitle": "Battle result",
-  "battleResultShare": "Share result",
-  "battleResultWatchAgain": "Watch another battle",
-  "battleScoreLabel": "{score} pts",
-  "@battleScoreLabel": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
   "battleTopSupporters": "Top supporters",
-  "battleYouScore": "You: {score}",
-  "@battleYouScore": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
-  "battleRivalScore": "Rival: {score}",
-  "@battleRivalScore": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
   "battleCountdownStarting": "Starting in {count}",
   "@battleCountdownStarting": {
     "placeholders": {
@@ -1626,22 +1593,9 @@
   "battleDecline": "Decline",
   "battleLoading": "Loading battle...",
   "battleError": "Error loading battle",
-  "battleGiftReceived": "{sender} sent {gift}",
-  "@battleGiftReceived": {
-    "placeholders": {
-      "sender": {
-        "type": "String"
-      },
-      "gift": {
-        "type": "String"
-      }
-    }
-  },
   "battleMomentum": "ON FIRE",
   "battleLeadChange": "LEAD CHANGE!",
   "battleFinalStretch": "FINAL STRETCH",
-  "battleSendToWin": "Send gifts to decide it!",
-  "battleMvp": "MVP",
   "sharedPostReactionApplied": "Reaction sent ✨",
   "sharedPostMinutesAgo": "{count}m ago",
   "@sharedPostMinutesAgo": {
@@ -3214,5 +3168,334 @@
   "codeSpamHint": "Didn't get it? Check your spam or promotions folder.",
   "codeError": "Couldn't send the code. Try again.",
   "codeTooManyRequests": "Too many attempts from this network. Try again in a few minutes.",
-  "settingsThemeAutoHint": "Follows your phone's light/dark mode. If your phone switches automatically, it changes at sunset and sunrise."
+  "settingsThemeAutoHint": "Follows your phone's light/dark mode. If your phone switches automatically, it changes at sunset and sunrise.",
+  "battleYou": "You",
+  "battleMuteOpponent": "Mute opponent",
+  "battleUnmuteOpponent": "Listen to opponent",
+  "battleListenTo": "Listen to {name}",
+  "@battleListenTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleRematch": "Request rematch",
+  "battleRematchSent": "Rematch invite sent",
+  "battleClose": "Close",
+  "battleFollowing": "Following",
+  "battleLeaveTitle": "Leave the battle?",
+  "battleLeaveConfirm": "Leave",
+  "battleCancel": "Cancel",
+  "battleLeave": "Leave battle",
+  "battleActionLabel": "Battle",
+  "battleActionActive": "In battle",
+  "battleErrNetwork": "No connection. Check your internet.",
+  "battleErrGeneric": "Something went wrong. Please try again.",
+  "battleErrCooldown": "Wait {seconds}s before inviting this creator again.",
+  "@battleErrCooldown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "battleErrBlocked": "You can't invite this creator.",
+  "battleErrBusy": "This creator is busy in another battle.",
+  "battleErrExpired": "This invite has expired.",
+  "battleErrAnswered": "This invite was already answered.",
+  "battleErrNotEligible": "You can't start battles yet.",
+  "battleErrSendInvite": "Couldn't send the invite.",
+  "battleErrAccept": "Couldn't accept the battle.",
+  "battleErrRematch": "Couldn't request the rematch.",
+  "battleErrEnd": "Couldn't leave the battle.",
+  "battleInviteExpiresIn": "Expires in {seconds}s",
+  "@battleInviteExpiresIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "battleInviteAccepted": "{name} accepted! Get ready",
+  "@battleInviteAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteDeclined": "{name} declined the invite",
+  "@battleInviteDeclined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteNoReply": "{name} didn't reply in time",
+  "@battleInviteNoReply": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteExpired": "The battle invite expired",
+  "battleInviteCancelled": "The battle invite was cancelled",
+  "battleCancelledMsg": "The battle was cancelled",
+  "battleInviteNoAnswer": "No reply to the battle invite",
+  "battleInviteWait": "Wait for the current invite or cancel it",
+  "battleOpponentFallback": "The opponent",
+  "battleSomeCreator": "A creator",
+  "battleRtcConnecting": "Connecting to your opponent…",
+  "battleRtcFallback": "No real-time link: the battle continues in normal mode.",
+  "battleOpponentCamera": "Waiting for opponent's camera",
+  "battleStartTitle": "Start Battle",
+  "battleSheetSubtitle": "Live creators available now",
+  "battleSearchHint": "Search live creator...",
+  "battleLoadCandidatesFailed": "Couldn't load live creators",
+  "battleRetry": "Try again",
+  "battleNoCreatorQuery": "No creator available for \"{query}\"",
+  "@battleNoCreatorQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "battleNoCreator": "No creator available for a battle right now.\nPull to refresh.",
+  "battleInviteCreator": "Invite {name}",
+  "@battleInviteCreator": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleSelectCreator": "Select a creator",
+  "battleLiveBadge": "LIVE",
+  "battleViewLive": "Watch {name}'s live",
+  "@battleViewLive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleWaitingAccept": "Waiting for {name} to accept… {seconds}s",
+  "@battleWaitingAccept": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "linkConnect": "Connect",
+  "linkDisconnect": "Disconnect",
+  "linkStartTitle": "Connect with a creator",
+  "linkInviteCreator": "Connect with {name}",
+  "@linkInviteCreator": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkInviteReceived": "{name} wants to connect with you",
+  "@linkInviteReceived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkInviteWithBattle": "With battle",
+  "linkInviteAccepted": "{name} accepted the connection",
+  "@linkInviteAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkEnded": "The connection ended",
+  "linkDisconnectTitle": "Disconnect?",
+  "linkDisconnectBody": "Your connection with {name} will end. If a battle is in progress, you forfeit it.",
+  "@linkDisconnectBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkFollowAction": "+ Follow",
+  "linkErrDisconnect": "Couldn't disconnect.",
+  "linkErrInvite": "Couldn't send the connection invite.",
+  "linkErrAccept": "Couldn't accept the connection.",
+  "battleFlashChallenge": "Send {count} {gift} · {time}",
+  "@battleFlashChallenge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "gift": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "battleFlashProgress": "{done}/{total}",
+  "@battleFlashProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "battleFlashBoost": "{mult}X active · {time}",
+  "@battleFlashBoost": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "battleSealWin": "VICTORY",
+  "battleSealLose": "DEFEAT",
+  "battleSealDraw": "DRAW",
+  "battleEndLabel": "END",
+  "battleMvpPill": "MVP {name} · {score}",
+  "@battleMvpPill": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "battleRuleHint": "Send gifts to score",
+  "viewLiveAction": "Watch live",
+  "eventPageGiftsWorth": "Gifts are worth {mult} points",
+  "@eventPageGiftsWorth": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageEndsIn": "Ends in {time}",
+  "@eventPageEndsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageYourPosition": "Your position",
+  "eventPageRankPoints": "#{rank} · {points} pts",
+  "@eventPageRankPoints": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageToTop10": "{points} to reach the top 10",
+  "@eventPageToTop10": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageInTop10": "You are in the top 10",
+  "eventPageNoRank": "You haven't scored yet",
+  "eventPagePrizes": "Prizes",
+  "eventPageRanking": "Event ranking",
+  "eventPageSeeFull": "See full ranking",
+  "eventPageGifts": "Event gifts",
+  "eventPageSend": "Send gift",
+  "eventPageHow": "How it works",
+  "eventPagePrizeRank": "{from}–{to}",
+  "@eventPagePrizeRank": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "eventPagePrizeOne": "{rank}",
+  "@eventPagePrizeOne": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "battleEndedTitle": "BATTLE ENDED",
+  "battleEndedLeft": "{name} left the battle",
+  "@battleEndedLeft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleEndedLive": "{name}'s live dropped",
+  "@battleEndedLive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleEndedRtc": "The connection dropped",
+  "battleLeaveBodyStreak": "If you leave now, nobody wins and you lose your {n}-win streak.",
+  "@battleLeaveBodyStreak": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "battleLeaveBodyNoStreak": "If you leave now, nobody wins.",
+  "battleMutedLine": "You and your audience can't hear {name}",
+  "@battleMutedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleMutedByLine": "{name} muted you",
+  "@battleMutedByLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battlePauseUnavailable": "Pause isn't available during a connection or battle",
+  "battleEndedLeftAnon": "A creator left the battle",
+  "battleEndedLiveAnon": "A creator's live dropped"
 }

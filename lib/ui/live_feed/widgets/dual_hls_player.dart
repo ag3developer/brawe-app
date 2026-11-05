@@ -2,41 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-import '../../core/themes/app_colors.dart';
+import '../../../gen/l10n/app_localizations.dart';
+import '../battle/battle_hud_parts.dart';
+import '../battle/battle_layout.dart';
 
-/// 🎬 Player dual (split-screen vertical 50/50) usado pelo viewer durante
-/// uma BATTLE — renderiza as 2 lives lado a lado, exatamente como TikTok/Bigo.
+/// Player dual (fallback `dual_hls` da Batalha v2): renderiza as 2 lives
+/// dentro da MESMA faixa dividida da composição (A à esquerda, B à direita,
+/// divisor de 4 px no frame), calculada por [BattleLayout].
 ///
-/// **Arquitetura:**
-/// - Cria 2 `VideoPlayerController` independentes (1 por streamer).
-/// - Cada metade ocupa exatamente 50% da tela com `BoxFit.cover`.
-/// - Apenas um lado emite áudio por vez (default: A) — o outro fica mudo
-///   pra não gerar eco. Um botão de speaker em cada metade alterna qual
-///   streamer emite áudio.
-/// - Quando os URLs mudam (ex.: batalha começa depois do init), os
-///   controllers velhos são descartados e recriados — evita memory leak.
-/// - Se um dos URLs for `null`, mostra placeholder (sala provisionando).
-///
-/// **Performance:**
-/// - Android usa o ExoPlayer nativo (decodificação em hardware e HLS
-///   adaptativo) — os 2 HLS simultâneos baixam de resolução sozinhos.
-/// - `mixWithOthers: true` permite SFX de gifts tocarem por cima.
-/// - `setLooping(false)` — HLS de live nunca deve loopar.
-///
-/// **Não trata:**
-/// - Pinch-to-zoom (overkill pra MVP).
-/// - Picture-in-picture (já existe em outra layer).
-/// - Reconexão automática em caso de queda do stream — o `VideoPlayer`
-///   tenta sozinho via HLS.js; perda de conexão completa cai pro
-///   placeholder no próximo frame inválido.
+/// - 2 `VideoPlayerController` (1 por criador), `BoxFit.cover` em cada metade.
+/// - Só um lado emite áudio por vez (padrão: A) para não criar eco; o botão
+///   de alto-falante no canto inferior EXTERNO de cada metade alterna.
+/// - Nome do criador em pílula no canto inferior INTERNO de cada metade.
+/// - URLs mudando recriam os controllers.
 class DualHlsPlayer extends StatefulWidget {
   const DualHlsPlayer({
     super.key,
+    required this.layout,
     required this.streamUrlA,
     required this.streamUrlB,
     this.streamerAName,
     this.streamerBName,
   });
+
+  final BattleLayout layout;
 
   /// HLS URL do streamer da esquerda. `null` enquanto não provisionado.
   final String? streamUrlA;
@@ -44,7 +33,6 @@ class DualHlsPlayer extends StatefulWidget {
   /// HLS URL do streamer da direita. `null` enquanto não provisionado.
   final String? streamUrlB;
 
-  /// Nome opcional para exibir no placeholder.
   final String? streamerAName;
   final String? streamerBName;
 
@@ -153,75 +141,42 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Fundo preto: aparece nos instantes de loading e nas bordas do
-      // vídeo (letterbox/pillarbox) antes do BoxFit.cover entrar.
-      color: Colors.black,
-      child: ClipRect(
-        // ClipRect garante que nada vaze pra fora da faixa do SizedBox pai.
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: _HalfStream(
-                controller: _controllerA,
-                isInitialized: _initializedA,
-                streamerName: widget.streamerAName,
-                audioActive: _audioSide == 'A',
-                onTapAudio: () => _toggleAudio('A'),
-                // Lado esquerdo: borda direita arredondada (divide do
-                // separador central).
-                cornerRadius: const BorderRadius.only(
-                  topRight: Radius.circular(6),
-                  bottomRight: Radius.circular(6),
-                ),
-              ),
-            ),
-            // ── Divisor central roxo↔rosa (Bigo PK style) ──
-            Container(
-              width: 3,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.braweBlue.withValues(alpha: 0.85),
-                    Colors.white.withValues(alpha: 0.95),
-                    AppColors.hotPink.withValues(alpha: 0.85),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.braweBlue.withValues(alpha: 0.45),
-                    blurRadius: 6,
-                    offset: const Offset(-1, 0),
-                  ),
-                  BoxShadow(
-                    color: AppColors.hotPink.withValues(alpha: 0.45),
-                    blurRadius: 6,
-                    offset: const Offset(1, 0),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _HalfStream(
-                controller: _controllerB,
-                isInitialized: _initializedB,
-                streamerName: widget.streamerBName,
-                audioActive: _audioSide == 'B',
-                onTapAudio: () => _toggleAudio('B'),
-                // Lado direito: borda esquerda arredondada.
-                cornerRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(6),
-                  bottomLeft: Radius.circular(6),
-                ),
-              ),
-            ),
-          ],
+    final l = widget.layout;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Positioned.fromRect(
+          rect: l.halfA,
+          child: _HalfStream(
+            controller: _controllerA,
+            isInitialized: _initializedA,
+            side: 'a',
+            streamerName: widget.streamerAName,
+            audioActive: _audioSide == 'A',
+            onTapAudio: () => _toggleAudio('A'),
+          ),
         ),
-      ),
+        Positioned.fromRect(
+          rect: l.halfB,
+          child: _HalfStream(
+            controller: _controllerB,
+            isInitialized: _initializedB,
+            side: 'b',
+            streamerName: widget.streamerBName,
+            audioActive: _audioSide == 'B',
+            onTapAudio: () => _toggleAudio('B'),
+          ),
+        ),
+        // Divisor central (4 px do frame).
+        Positioned.fromRect(
+          rect: l.divider,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Color(0x24FFFFFF),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -230,95 +185,112 @@ class _HalfStream extends StatelessWidget {
   const _HalfStream({
     required this.controller,
     required this.isInitialized,
+    required this.side,
     required this.streamerName,
     required this.audioActive,
     required this.onTapAudio,
-    required this.cornerRadius,
   });
 
   final VideoPlayerController? controller;
   final bool isInitialized;
+  final String side;
   final String? streamerName;
   final bool audioActive;
   final VoidCallback onTapAudio;
-  final BorderRadius cornerRadius;
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null || !isInitialized) {
-      return _Placeholder(streamerName: streamerName);
-    }
-
-    return ClipRRect(
-      borderRadius: cornerRadius,
+    final isA = side == 'a';
+    final ready = controller != null && isInitialized;
+    return ClipRect(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          FittedBox(
-            fit: BoxFit.cover,
-            child: SizedBox(
-              width: controller!.value.size.width,
-              height: controller!.value.size.height,
-              child: VideoPlayer(controller!),
-            ),
-          ),
-          // Ícone de áudio no canto superior interno — tocar alterna qual
-          // lado emite som. Tamanho compacto pra não competir com o HUD.
-          Positioned(
-            top: 12,
-            left: 12,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTapAudio,
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.45),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    audioActive ? Icons.volume_up : Icons.volume_off,
-                    color: Colors.white,
-                    size: 18,
+          if (ready)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: controller!.value.size.width,
+                height: controller!.value.size.height,
+                child: VideoPlayer(controller!),
+              ),
+            )
+          else
+            const ColoredBox(
+              color: Colors.black,
+              child: Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    color: Colors.white54,
+                    strokeWidth: 2,
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder({this.streamerName});
-  final String? streamerName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(
-            color: Colors.white54,
-            strokeWidth: 2,
-          ),
-          if (streamerName != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              streamerName!,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
+          // Nome: canto inferior INTERNO (junto ao divisor).
+          if (streamerName != null && streamerName!.isNotEmpty)
+            Positioned(
+              bottom: 8,
+              left: isA ? null : 6,
+              right: isA ? 6 : null,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: (MediaQuery.sizeOf(context).width / 2) - 70,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: kBattleBg.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    streamerName!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ],
+          // Alto-falante: canto inferior EXTERNO — alterna qual lado soa.
+          if (ready)
+            Positioned(
+              bottom: 6,
+              left: isA ? 6 : null,
+              right: isA ? null : 6,
+              child: Tooltip(
+                message: S.of(context).battleListenTo(streamerName ?? ''),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTapAudio,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: audioActive
+                            ? Colors.white.withValues(alpha: 0.22)
+                            : const Color(0xB30B0E14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        audioActive ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                        color: kBattleText,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

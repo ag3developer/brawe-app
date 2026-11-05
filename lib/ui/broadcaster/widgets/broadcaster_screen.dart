@@ -2,6 +2,7 @@ import 'dart:async';
 import '../../core/view_models/hidden_users_view_model.dart';
 import 'dart:io' show Platform;
 import 'dart:convert';
+import 'package:dio/dio.dart' show DioException, DioExceptionType;
 
 import 'package:flutter/material.dart';
 import '../../live/shared/widgets/overlays/combo_tier_layer.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rtmp_broadcaster/camera.dart';
+import 'package:livekit_client/livekit_client.dart' as lk show CameraPosition;
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
@@ -28,11 +30,22 @@ import '../../live/shared/widgets/chat/chat.dart';
 import '../../live/shared/widgets/sheets/moderators_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../live_feed/widgets/streamer_battle_hud.dart';
+import '../../live_feed/battle/battle_errors.dart';
+import '../../live_feed/battle/battle_hud.dart';
+import '../../live_feed/battle/battle_layout.dart';
+import '../../live_feed/view_models/battle_view_model.dart';
+import '../../../domain/models/battle_state.dart';
+import '../battle/battle_creator_stage.dart';
+import '../battle/battle_rtc_session.dart';
+import '../../../data/services/link_service.dart';
+import '../../../domain/models/battle_config.dart';
+import '../../../domain/models/link_state.dart';
+import '../../live_feed/battle/link_hud.dart';
 import 'share_live_sheet.dart';
 import '../../live/shared/widgets/goal/live_goals.dart';
 import '../../live/shared/widgets/hud/live_gift_ticker.dart';
 import '../../live/shared/widgets/hud/live_event_chip.dart';
-import '../../live/shared/widgets/sheets/gifter_ranking_sheet.dart';
+import '../../live/shared/widgets/sheets/event_page_sheet.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
 import '../../core/ui/app_snackbar.dart';
@@ -63,15 +76,21 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   BroadcastAudioMode _audioMode = BroadcastAudioMode.quality;
 
   late LiveRoom _room;
-  final GlobalKey<LiveGoalsPillState> _goalsKey = GlobalKey<LiveGoalsPillState>();
+  final GlobalKey<LiveGoalsPillState> _goalsKey =
+      GlobalKey<LiveGoalsPillState>();
 
   /// Editor de metas (botão Metas da barra de ações ou "Mais opções").
   Future<void> _openGoals() async {
-    final saved = await LiveGoalsEditorSheet.show(context, roomId: widget.room.id, current: _room.goals);
+    final saved = await LiveGoalsEditorSheet.show(
+      context,
+      roomId: widget.room.id,
+      current: _room.goals,
+    );
     if (saved == null || !mounted) return;
     setState(() => _room = _room.copyWith(goals: saved));
     _goalsKey.currentState?.apply(saved);
   }
+
   bool _isStreaming = false;
   bool _isPaused = false;
   bool _isInitialized = false;
@@ -98,6 +117,34 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   // Battle state
   String? _activeBattleId;
+
+  /// Batalha acabou (resultado na tela): a barra de ações volta ao normal.
+  bool _battleEnded = false;
+
+  /// Última batalha encerrada (alvo do botão "Revanche" da barra de ações).
+  String? _rematchId;
+  Timer? _rematchTimer;
+  bool _rematchBusy = false;
+  Map<String, dynamic>? _countdownPayload;
+
+  // ── Conexão entre criadores (§8) ──
+  LinkState? _link;
+  bool _linkEnabled = false;
+  bool _linkBusy = false;
+  bool get _split => _activeBattleId != null || _link != null;
+
+  /// Como (re)obter as credenciais do LiveKit da sessão atual.
+  Future<BattleRtcCredentials> Function()? _rtcLoader;
+
+  // ── Tempo real (LiveKit) da batalha `composite` ──
+  BattleRtcSession? _rtcSession;
+
+  /// Mídia do criador está no LiveKit (RTMP parado, câmera do plugin liberada).
+  bool _rtcActive = false;
+  bool _rtcSwitching = false;
+  bool _rtcRestoring = false;
+  bool _pendingRtmpRestore = false;
+  final Set<String> _rtcTried = <String>{};
   SocketService? _battleSocket;
   // Anti double-click: a UI do dialog de convite tem 2 botões grandes
   // e o usuário ansioso aperta "Aceitar" 2x rápido → 2 HTTP calls → o
@@ -398,6 +445,26 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     // Só `paused`/`hidden` (app realmente em segundo plano). `inactive`
     // dispara com Central de Controle, notificações e Face ID — antes isso
     // derrubava a câmera e pausava a live sem o criador sair do app.
+    // Tempo real da batalha: a câmera do LiveKit é liberada no background e
+    // reaberta ao voltar (sala reconectada se caiu); a live NÃO é pausada.
+    if (_rtcActive && _rtcSession != null) {
+      if (state == AppLifecycleState.paused ||
+          state == AppLifecycleState.hidden) {
+        unawaited(_rtcSession?.pauseCamera());
+      } else if (state == AppLifecycleState.resumed) {
+        final session = _rtcSession;
+        if (session != null && session.isDisconnected) {
+          unawaited(_reconnectRtc());
+        } else {
+          unawaited(session?.resumeCamera());
+        }
+      }
+      return;
+    }
+    if (state == AppLifecycleState.resumed && _pendingRtmpRestore) {
+      unawaited(_restoreRtmp());
+      return;
+    }
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       final CameraController? cameraController = _controller;
@@ -649,6 +716,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   }
 
   Future<void> _togglePause() async {
+    // Durante o tempo real da batalha a mídia está no LiveKit.
+    if (_rtcActive) {
+      AppSnackBar.showError(context, S.of(context).battlePauseUnavailable);
+      return;
+    }
     if (_isTogglingPause) return;
     setState(() => _isTogglingPause = true);
 
@@ -766,6 +838,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   /// é feita o mais rápido possível e SEMPRE reconecta (antes, se a nova
   /// câmera falhasse, o RTMP nunca voltava e o slate ficava para sempre).
   Future<void> _switchCamera() async {
+    if (_rtcActive) {
+      // Tempo real: vira a câmera do track local do LiveKit.
+      try {
+        await _rtcSession?.flipCamera();
+      } catch (e) {
+        debugPrint('Battle RTC: flipCamera falhou: $e');
+      }
+      return;
+    }
     if (_cameras.length < 2 || _controller == null || !_isInitialized) return;
     // Evita múltiplos taps enquanto troca
     if (_isSwitchingCamera) return;
@@ -846,8 +927,19 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (_) {}
   }
 
+  /// Aviso extra quando há batalha ativa (ninguém vence + perde a sequência).
+  String? _activeBattleWarning() {
+    final id = _activeBattleId;
+    if (id == null || _battleEnded) return null;
+    final st = ref.read(battleViewModelProvider(id)).value;
+    if (st == null || st.isOver) return null;
+    final side = st.sideOf(userId: _room.streamerId, roomId: _room.id);
+    return battleLeaveWarning(S.of(context), side == null ? null : st.winStreakOf(side));
+  }
+
   Future<bool> _confirmCloseDialog() async {
     final s = S.of(context);
+    final battleWarn = _activeBattleWarning();
     if (!_isStreaming && !_isPaused) {
       final discard = await showDialog<bool>(
         context: context,
@@ -888,7 +980,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          s.broadcasterEndMessage,
+          battleWarn == null
+              ? s.broadcasterEndMessage
+              : '${s.broadcasterEndMessage}\n\n$battleWarn',
           style: const TextStyle(color: AppColors.coolGray),
         ),
         actions: [
@@ -927,6 +1021,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     _stopHeartbeat();
     _stopLiveElapsedTicker();
     _countdownTimer?.cancel();
+
+    // Encerrar a live no meio da batalha: solta o LiveKit (sem religar RTMP).
+    await _stopRtc(restoreRtmp: false);
 
     try {
       await _controller?.stopVideoStreaming();
@@ -1023,6 +1120,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     // 4. Fallback REST: sincronizar batalha já em curso (idempotente)
     _checkExistingActiveBattle();
+    unawaited(_probeLink());
   }
 
   // ════════════════════════════════════════════════════════════════
@@ -1047,6 +1145,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (socket == null) return;
     _detachBattleHandlers();
     socket.on(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.on(AppConstants.eventLinkInvite, _onLinkInvite);
+    socket.on(AppConstants.eventLinkInviteStatus, _onLinkInviteStatus);
+    socket.on(AppConstants.eventLinkStarted, _onLinkStarted);
+    socket.on(AppConstants.eventLinkEnded, _onLinkEnded);
+    socket.on(AppConstants.eventLinkMute, _onLinkMute);
+    socket.on(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.on(AppConstants.eventBattleInviteStatus, _onBattleInviteStatus);
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
@@ -1056,6 +1160,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final socket = _battleSocket;
     if (socket == null) return;
     socket.off(AppConstants.eventBattleInvite, _onBattleInvite);
+    socket.off(AppConstants.eventLinkInvite, _onLinkInvite);
+    socket.off(AppConstants.eventLinkInviteStatus, _onLinkInviteStatus);
+    socket.off(AppConstants.eventLinkStarted, _onLinkStarted);
+    socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
+    socket.off(AppConstants.eventLinkMute, _onLinkMute);
+    socket.off(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.off(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.off(AppConstants.eventBattleInviteStatus, _onBattleInviteStatus);
     socket.off(AppConstants.eventBattleCancelled, _onBattleCancelled);
@@ -1094,7 +1204,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   void _enterBattle(String battleId) {
     if (!mounted) return;
+    BattleRoomScope.set(battleId, _room.id);
     setState(() {
+      if (_activeBattleId != battleId) {
+        _battleEnded = false;
+        _rematchId = null;
+      }
       _activeBattleId = battleId;
       if (_outgoingInvite?.battleId == battleId) _outgoingInvite = null;
       // Sincroniza liveType em memória — antes o app continuava achando
@@ -1103,13 +1218,67 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     });
   }
 
-  /// Volta para a live normal (fim, saída ou cancelamento da batalha).
+  /// Volta para a live normal (fechou o resultado ou a batalha foi cancelada).
   void _leaveBattle() {
     if (!mounted) return;
     setState(() {
       _activeBattleId = null;
+      _battleEnded = false;
+      _countdownPayload = null;
       _room = _room.copyWith(liveType: 'solo');
     });
+    // Garante o RTMP de volta (idempotente) — exceto dentro de uma conexão,
+    // onde a mídia continua no LiveKit.
+    if (_link == null) unawaited(_stopRtc(restoreRtmp: true));
+  }
+
+  /// Meu lado agora: conexão > batalha > token (só como último recurso).
+  String _mySideNow() {
+    final l = _link?.sideOf(userId: _room.streamerId, roomId: _room.id);
+    if (l != null) return l;
+    final id = _activeBattleId;
+    final b = id == null
+        ? null
+        : ref.read(battleViewModelProvider(id)).value?.sideOf(
+            userId: _room.streamerId,
+            roomId: _room.id,
+          );
+    return b ?? _rtcSession?.credentials.side ?? 'a';
+  }
+
+  /// Reaplica o mudo vigente (conexão ou batalha) a uma sessão recém-criada.
+  void _applyMuteTo(BattleRtcSession session) {
+    final side = _mySideNow();
+    final lk = _link;
+    if (lk != null) {
+      session.setOpponentMuted(lk.mutedOf(side));
+      return;
+    }
+    final id = _activeBattleId;
+    final st = id == null ? null : ref.read(battleViewModelProvider(id)).value;
+    if (st != null) session.setOpponentMuted(st.mutedOf(side));
+  }
+
+  bool _isMyBattleEvent(Map<String, dynamic> data) {
+    final roomA = data['room_a_id'] as String?;
+    final roomB = data['room_b_id'] as String?;
+    if (roomA == null && roomB == null) return true;
+    return roomA == _room.id || roomB == _room.id;
+  }
+
+  /// Contagem 3·2·1: abre o HUD e, se for `composite`, troca RTMP → LiveKit.
+  void _onBattleCountdown(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final battleId = data['battle_id'] as String?;
+    if (battleId == null || battleId.isEmpty) return;
+    if (!_isMyBattleEvent(data)) return;
+    if (_activeBattleId != battleId) {
+      _countdownPayload = data;
+      _enterBattle(battleId);
+    }
+    if (data['rtc_mode'] == 'composite') unawaited(_startRtc(battleId));
   }
 
   void _onBattleStarted(dynamic raw) {
@@ -1118,14 +1287,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (data == null) return;
     final battleId = data['battle_id'] as String?;
     if (battleId == null || battleId.isEmpty) return;
-    final roomA = data['room_a_id'] as String?;
-    final roomB = data['room_b_id'] as String?;
-    if ((roomA != null || roomB != null) &&
-        roomA != _room.id &&
-        roomB != _room.id) {
-      return; // batalha de outra sala
-    }
+    if (!_isMyBattleEvent(data)) return; // batalha de outra sala
     _enterBattle(battleId);
+    // Perdeu a contagem (entrou tarde)? Troca agora.
+    if (data['rtc_mode'] == 'composite') unawaited(_startRtc(battleId));
   }
 
   /// Batalha cancelada (ex.: oponente encerrou a live na contagem).
@@ -1134,7 +1299,210 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final data = _parseSocketPayload(raw);
     if (data == null || data['battle_id'] != _activeBattleId) return;
     _leaveBattle();
-    AppSnackBar.showError(context, 'A batalha foi cancelada');
+    AppSnackBar.showError(context, S.of(context).battleCancelledMsg);
+  }
+
+  /// Reage ao estado da batalha: sincroniza o "silenciar" com o áudio do
+  /// adversário e encerra o tempo real no fim / cancelamento / fallback.
+  void _onBattleStateChanged(BattleState s) {
+    if (!mounted) return;
+    final mySide = s.sideOf(userId: _room.streamerId, roomId: _room.id);
+    // Dentro de uma conexão o mudo é o da CONEXÃO (não o da batalha).
+    if (_link == null && mySide != null) {
+      _rtcSession?.setOpponentMuted(s.mutedOf(mySide));
+    }
+    if ((s.isOver || s.isCancelled) && !_battleEnded) {
+      setState(() {
+        _battleEnded = true;
+        if (s.isOver) _rematchId = s.battleId;
+      });
+      if (s.isOver) {
+        // O botão "Revanche" não fica preso: some em 30 s (o convite normal
+        // de batalha volta a ficar acessível).
+        _rematchTimer?.cancel();
+        _rematchTimer = Timer(const Duration(seconds: 30), () {
+          if (mounted) setState(() => _rematchId = null);
+        });
+      }
+    }
+    final rtcWanted = s.isComposite && !s.isOver && !s.isCancelled;
+    if (!rtcWanted && _link == null && (_rtcActive || _rtcSession != null)) {
+      final fallback = !s.isComposite && !s.isOver && !s.isCancelled;
+      unawaited(_stopRtc(restoreRtmp: true, showFallback: fallback));
+    } else if (rtcWanted &&
+        !_rtcActive &&
+        (s.phase == BattlePhase.countdown || s.phase == BattlePhase.active)) {
+      unawaited(_startRtc(s.battleId));
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // BATTLE — tempo real (LiveKit) no modo `composite`
+  // ════════════════════════════════════════════════════════════════
+  //
+  // Fluxo (contrato §4): GET /rtc → para o RTMP (o Mux segura a live pela
+  // janela de reconexão) → libera a câmera do plugin → conecta no LiveKit e
+  // publica câmera + microfone. No fim/cancelamento/fallback: desconecta,
+  // reabre a câmera e retoma o RTMP para o MESMO ingest. Se o LiveKit não
+  // conectar em 8 s, retoma o RTMP e a batalha segue (o backend faz fallback).
+
+  Future<void> _startRtc(String battleId) {
+    // Dentro de uma conexão a mídia já está no LiveKit.
+    if (_link != null) return Future.value();
+    return _startRtcCore(
+      key: battleId,
+      loader: () => ref.read(battleServiceProvider).getRtc(battleId),
+      wanted: () => _activeBattleId == battleId,
+    );
+  }
+
+  Future<void> _startRtcCore({
+    required String key,
+    required Future<BattleRtcCredentials> Function() loader,
+    required bool Function() wanted,
+  }) async {
+    if (!mounted ||
+        _rtcActive ||
+        _rtcSwitching ||
+        _isClosing ||
+        _rtcTried.contains(key)) {
+      return;
+    }
+    // Sem live no ar (nada para trocar) ou em pausa: segue como está.
+    if (!_isStreaming || _isPaused) return;
+    _rtcTried.add(key);
+    _rtcSwitching = true;
+    _rtcLoader = loader;
+    final l10n = S.of(context);
+    BattleRtcCredentials creds;
+    try {
+      creds = await loader();
+      if (!creds.isValid) throw StateError('rtc credentials invalid');
+    } catch (e) {
+      debugPrint('Battle RTC: sem credenciais ($e) — segue no RTMP');
+      _rtcSwitching = false;
+      return;
+    }
+    if (!mounted || !wanted() || _isClosing) {
+      _rtcSwitching = false;
+      return;
+    }
+    try {
+      // 1) Mostra o palco (tela de espera) e para o RTMP.
+      setState(() => _rtcActive = true);
+      try {
+        await _controller?.stopVideoStreaming();
+      } catch (_) {}
+      // 2) Libera a câmera/microfone do plugin RTMP.
+      final cam = _controller;
+      if (cam != null) {
+        if (mounted) setState(() => _controller = null);
+        try {
+          await cam.dispose();
+        } catch (_) {}
+      }
+      try {
+        await BroadcastAudioSession.deactivate();
+      } catch (_) {}
+      // 3) Conecta no LiveKit (até 8 s) e publica câmera + microfone.
+      // Corrida: a batalha/conexão pode ter acabado durante o GET /rtc ou a
+      // liberação da câmera — não cria sessão à toa.
+      if (!mounted || !wanted() || _isClosing) {
+        _rtcSwitching = false;
+        await _stopRtc(restoreRtmp: true);
+        return;
+      }
+      final session = BattleRtcSession(creds);
+      _rtcSession = session;
+      await session.connect(
+        timeout: const Duration(seconds: 8),
+        cameraPosition:
+            _cameras.isNotEmpty &&
+                _cameras[_currentCameraIndex].lensDirection ==
+                    CameraLensDirection.back
+            ? lk.CameraPosition.back
+            : lk.CameraPosition.front,
+      );
+      if (!mounted) return;
+      if (!wanted()) {
+        _rtcSwitching = false;
+        await _stopRtc(restoreRtmp: true);
+        return;
+      }
+      // Aplica o estado atual do "silenciar" (conexão > batalha).
+      _applyMuteTo(session);
+      setState(() {});
+    } catch (e) {
+      debugPrint('Battle RTC: falha ao conectar ($e) — voltando ao RTMP');
+      if (mounted) AppSnackBar.showError(context, l10n.battleRtcFallback);
+      _rtcSwitching = false;
+      await _stopRtc(restoreRtmp: true);
+      return;
+    }
+    _rtcSwitching = false;
+  }
+
+  Future<void> _stopRtc({
+    required bool restoreRtmp,
+    bool showFallback = false,
+  }) async {
+    final session = _rtcSession;
+    if (session == null && !_rtcActive) return;
+    _rtcSession = null;
+    await session?.dispose();
+    if (!mounted) return;
+    if (showFallback) {
+      AppSnackBar.showError(context, S.of(context).battleRtcFallback);
+    }
+    if (restoreRtmp && _isStreaming && !_isClosing && !_isPaused) {
+      final life = WidgetsBinding.instance.lifecycleState;
+      if (life != null && life != AppLifecycleState.resumed) {
+        // Em segundo plano o iOS não abre a câmera: restaura ao voltar.
+        _pendingRtmpRestore = true;
+        return;
+      }
+      await _restoreRtmp();
+      return;
+    }
+    if (mounted) setState(() => _rtcActive = false);
+  }
+
+  /// Reabre a câmera do plugin e retoma o RTMP para o mesmo ingest.
+  Future<void> _restoreRtmp() async {
+    if (!mounted || _cameras.isEmpty || _rtcRestoring) return;
+    _rtcRestoring = true;
+    _pendingRtmpRestore = false;
+    try {
+      // Mantém `_rtcActive` até a câmera voltar (evita spinner de tela cheia).
+      await _setupCameraController(_cameras[_currentCameraIndex]);
+      if (mounted && _controller != null) {
+        await _restartStreamAfterSwitch();
+      }
+    } finally {
+      _rtcRestoring = false;
+      if (mounted) setState(() => _rtcActive = false);
+    }
+  }
+
+  Future<void> _reconnectRtc() async {
+    final loader = _rtcLoader;
+    if (loader == null || _rtcSwitching) return;
+    _rtcSwitching = true;
+    try {
+      await _rtcSession?.dispose();
+      final creds = await loader();
+      final session = BattleRtcSession(creds);
+      _rtcSession = session;
+      await session.connect(timeout: const Duration(seconds: 8));
+      _applyMuteTo(session);
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('Battle RTC: reconexão falhou ($e)');
+      _rtcSwitching = false;
+      await _stopRtc(restoreRtmp: true);
+      return;
+    }
+    _rtcSwitching = false;
   }
 
   /// Converte o payload bruto do socket em Map.
@@ -1159,6 +1527,439 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   // BATTLE — convite RECEBIDO (sou o streamer B)
   // ════════════════════════════════════════════════════════════════
 
+  // ════════════════════════════════════════════════════════════════
+  // CONEXÃO entre criadores (§8)
+  // ════════════════════════════════════════════════════════════════
+
+  /// Sonda: `GET /link/candidates` responde 503 com o tempo real desligado
+  /// (então "Conectar" some e "Batalha" usa o fluxo antigo).
+  Future<void> _probeLink() async {
+    try {
+      await ref.read(linkServiceProvider).getCandidates(limit: 1);
+      if (!mounted) return;
+      setState(() => _linkEnabled = true);
+    } catch (_) {
+      if (mounted) setState(() => _linkEnabled = false);
+      return;
+    }
+    // Conexão já em curso (app reaberto)?
+    try {
+      final l = await ref.read(linkServiceProvider).getActive(_room.id);
+      if (l != null && l.isActive && mounted && _link == null) {
+        _beginLink(l);
+      }
+    } catch (_) {}
+  }
+
+  void _beginLink(LinkState l) {
+    setState(() {
+      _link = l;
+      _outgoingInvite = null;
+    });
+    unawaited(
+      _startRtcCore(
+        key: 'link-${l.linkId}',
+        loader: () => ref.read(linkServiceProvider).getRtc(l.linkId),
+        wanted: () => _link?.linkId == l.linkId,
+      ),
+    );
+  }
+
+  bool _isMyLink(LinkState l) =>
+      l.a.roomId == _room.id ||
+      l.b.roomId == _room.id ||
+      l.a.id == _room.streamerId ||
+      l.b.id == _room.streamerId;
+
+  void _onLinkStarted(dynamic raw) {
+    if (!mounted) return;
+    final l = LinkState.tryParse(_parseSocketPayload(raw));
+    if (l == null || !_isMyLink(l) || _link?.linkId == l.linkId) return;
+    _beginLink(l);
+  }
+
+  void _onLinkEnded(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['link_id'] != _link?.linkId) return;
+    _clearLink();
+  }
+
+  void _clearLink() {
+    if (_link == null) return;
+    setState(() {
+      _link = null;
+      _rematchId = null;
+    });
+    AppSnackBar.showError(context, S.of(context).linkEnded);
+    // Desconecta do LiveKit e volta ao RTMP (a batalha, se houver, termina
+    // sozinha por `live_ended`/`forfeit` e o resultado segue na tela).
+    unawaited(_stopRtc(restoreRtmp: true));
+  }
+
+  void _onLinkMute(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    final cur = _link;
+    if (data == null || cur == null || data['link_id'] != cur.linkId) return;
+    final m = data['muted'];
+    if (m is! Map) return;
+    final next = cur.copyWith(mutedA: m['a'] == true, mutedB: m['b'] == true);
+    setState(() => _link = next);
+    final side = next.sideOf(userId: _room.streamerId, roomId: _room.id);
+    if (side != null) _rtcSession?.setOpponentMuted(next.mutedOf(side));
+  }
+
+  Future<void> _toggleLinkMute() async {
+    final cur = _link;
+    if (cur == null || _linkBusy) return;
+    final side = cur.sideOf(userId: _room.streamerId, roomId: _room.id);
+    if (side == null) return;
+    final next = !cur.mutedOf(side);
+    setState(() {
+      _link = cur.copyWith(
+        mutedA: side == 'a' ? next : cur.mutedA,
+        mutedB: side == 'b' ? next : cur.mutedB,
+      );
+    });
+    _rtcSession?.setOpponentMuted(next);
+    try {
+      final res = await ref.read(linkServiceProvider).setMute(cur.linkId, next);
+      if (res != null && mounted && _link != null) {
+        setState(() => _link = _link!.copyWith(mutedA: res.a, mutedB: res.b));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _link = cur);
+      _rtcSession?.setOpponentMuted(cur.mutedOf(side));
+      AppSnackBar.showError(context, battleErrorText(S.of(context), e));
+    }
+  }
+
+  Future<void> _requestRematch() async {
+    final id = _rematchId;
+    if (id == null || _rematchBusy) return;
+    final l10n = S.of(context);
+    setState(() => _rematchBusy = true);
+    try {
+      await ref.read(battleServiceProvider).requestRematch(id);
+      if (!mounted) return;
+      AppSnackBar.showSuccess(context, l10n.battleRematchSent);
+      setState(() => _rematchId = null);
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          battleErrorText(l10n, e, fallback: l10n.battleErrRematch),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _rematchBusy = false);
+    }
+  }
+
+  Future<void> _confirmDisconnect() async {
+    final cur = _link;
+    if (cur == null || _linkBusy) return;
+    final l10n = S.of(context);
+    final side = cur.sideOf(userId: _room.streamerId, roomId: _room.id) ?? 'a';
+    final partner = cur.peer(side == 'a' ? 'b' : 'a').name;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1F),
+        title: Text(
+          l10n.linkDisconnectTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          _activeBattleWarning() == null
+              ? l10n.linkDisconnectBody(partner)
+              : '${l10n.linkDisconnectBody(partner)}\n\n${_activeBattleWarning()}',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              l10n.battleCancel,
+              style: const TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              l10n.linkDisconnect,
+              style: const TextStyle(
+                color: AppColors.braweOrange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _linkBusy = true);
+    var ended = false;
+    try {
+      await ref.read(linkServiceProvider).end(cur.linkId);
+      ended = true;
+    } on DioException catch (e) {
+      // Timeout de recebimento: o servidor segue processando (fire-and-forget).
+      ended = e.type == DioExceptionType.receiveTimeout;
+      if (!ended && mounted) {
+        AppSnackBar.showError(
+          context,
+          battleErrorText(S.of(context), e, fallback: S.of(context).linkErrDisconnect),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          battleErrorText(
+            S.of(context),
+            e,
+            fallback: S.of(context).linkErrDisconnect,
+          ),
+        );
+      }
+    }
+    if (mounted) setState(() => _linkBusy = false);
+    if (!ended) return; // falhou: o servidor segue conectado, não sai sozinho
+    // Rede de segurança: se o `link:ended` se perder, limpa localmente.
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (mounted && _link?.linkId == cur.linkId) _clearLink();
+    });
+  }
+
+  /// "Batalha" dentro da conexão: escolhe a duração e convida o parceiro
+  /// (o servidor recebe `link_id`; o vídeo não muda).
+  Future<void> _startBattleInLink() async {
+    final cur = _link;
+    if (cur == null || _activeBattleId != null) return;
+    if (_outgoingInvite != null) {
+      AppSnackBar.showError(context, S.of(context).battleInviteWait);
+      return;
+    }
+    final side = cur.sideOf(userId: _room.streamerId, roomId: _room.id) ?? 'a';
+    final partner = cur.peer(side == 'a' ? 'b' : 'a');
+    final roomId = partner.roomId;
+    if (roomId == null || roomId.isEmpty) return;
+    final l10n = S.of(context);
+    var durations = const [180, 300, 600];
+    var def = 300;
+    try {
+      final cfg = BattleConfig.tryParse(
+        await ref.read(battleServiceProvider).getBattleConfig(),
+      );
+      if (cfg != null && cfg.durationsS.isNotEmpty) {
+        durations = cfg.durationsS;
+        def = cfg.defaultDurationS;
+      }
+    } catch (_) {}
+    if (!mounted) return;
+    final seconds = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: const Color(0xFF0E0E14),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${l10n.battleStartTitle} · ${l10n.battleDurationLabel}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final d in durations)
+                    ChoiceChip(
+                      label: Text(
+                        d % 60 == 0
+                            ? l10n.battleDurationMinutes(d ~/ 60)
+                            : l10n.battleDurationSeconds(d),
+                      ),
+                      selected: d == def,
+                      onSelected: (_) => Navigator.pop(ctx, d),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (seconds == null || !mounted) return;
+    setState(() => _linkBusy = true);
+    try {
+      final resp = await ref
+          .read(battleServiceProvider)
+          .inviteBattle(
+            roomId: _room.id,
+            targetRoomId: roomId,
+            durationSeconds: seconds,
+            linkId: cur.linkId,
+          );
+      final id = _extractBattleId(resp);
+      if (id != null) _startOutgoingInvite(id, partner.name, 60);
+    } catch (e) {
+      if (mounted) {
+        AppSnackBar.showError(
+          context,
+          battleErrorText(
+            S.of(context),
+            e,
+            fallback: S.of(context).battleErrSendInvite,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _linkBusy = false);
+    }
+  }
+
+  Future<void> _showLinkSheet(BuildContext context) async {
+    if (_link != null || _activeBattleId != null) return;
+    if (_outgoingInvite != null) {
+      AppSnackBar.showError(context, S.of(context).battleInviteWait);
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    await showModalBottomSheet<void>(
+      context: this.context,
+      backgroundColor: const Color(0xFF0E0E14),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => ForceDarkTheme(
+        child: BattleInviteSheet(
+          myRoomId: _room.id,
+          linkMode: true,
+          loader: (q, cursor) => ref
+              .read(linkServiceProvider)
+              .getCandidates(query: q, cursor: cursor),
+          onInvite: (candidate, _) async {
+            try {
+              final resp = await ref
+                  .read(linkServiceProvider)
+                  .invite(opponentRoomId: candidate.roomId);
+              final id = resp['link_id']?.toString();
+              if (id != null) {
+                _startOutgoingInvite(
+                  id,
+                  candidate.displayName,
+                  60,
+                  isLink: true,
+                );
+              }
+              return null;
+            } catch (e) {
+              return battleErrorText(
+                S.of(this.context),
+                e,
+                fallback: S.of(this.context).linkErrInvite,
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  void _onLinkInvite(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final linkId = data['link_id']?.toString();
+    if (linkId == null || linkId.isEmpty || linkId == _incomingInviteId) return;
+    final fromName = (data['from_name'] as String?)?.trim();
+    if (_link != null ||
+        _activeBattleId != null ||
+        _incomingInviteId != null ||
+        _outgoingInvite != null) {
+      unawaited(
+        ref
+            .read(linkServiceProvider)
+            .decline(linkId)
+            .then((_) {}, onError: (_) {}),
+      );
+      return;
+    }
+    final expiresAt = DateTime.tryParse('${data['expires_at'] ?? ''}');
+    final serverNow = DateTime.tryParse('${data['server_now'] ?? ''}');
+    final seconds = (expiresAt != null && serverNow != null)
+        ? expiresAt.difference(serverNow).inSeconds - 2
+        : 55;
+    if (seconds < 3) return;
+    _showBattleInviteDialog(
+      linkId,
+      fromName == null || fromName.isEmpty
+          ? S.of(context).battleSomeCreator
+          : fromName,
+      seconds.clamp(3, 120),
+      avatarUrl: data['from_avatar_url'] as String?,
+      durationSeconds: (data['duration_seconds'] as num?)?.toInt(),
+      isLink: true,
+      withBattle: data['with_battle'] == true,
+    );
+  }
+
+  void _onLinkInviteStatus(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null) return;
+    final linkId = data['link_id']?.toString();
+    final status = data['status'] as String?;
+    if (linkId == null || status == null) return;
+    final l10n = S.of(context);
+    final out = _outgoingInvite;
+    final isMine = out != null && out.isLink && out.battleId == linkId;
+    final nameA = (data['streamer_a_name'] as String?)?.trim();
+    final nameB = (data['streamer_b_name'] as String?)?.trim();
+    // Quem convidou é A: o nome do outro é o oposto de mim.
+    final opponent = isMine
+        ? (nameB != null && nameB.isNotEmpty ? nameB : out.opponentName)
+        : (nameA ?? l10n.battleOpponentFallback);
+    switch (status) {
+      case 'accepted':
+        if (isMine) {
+          AppSnackBar.showSuccess(context, l10n.linkInviteAccepted(opponent));
+          setState(() => _outgoingInvite = null);
+        }
+      case 'declined':
+        if (isMine) {
+          setState(() => _outgoingInvite = null);
+          AppSnackBar.showError(context, l10n.battleInviteDeclined(opponent));
+        }
+      case 'expired':
+        if (isMine) {
+          setState(() => _outgoingInvite = null);
+          AppSnackBar.showError(context, l10n.battleInviteNoReply(opponent));
+        } else if (_incomingInviteId == linkId) {
+          _closeIncomingDialog();
+          AppSnackBar.showError(context, l10n.battleInviteExpired);
+        }
+      case 'cancelled':
+        if (isMine) {
+          setState(() => _outgoingInvite = null);
+        } else if (_incomingInviteId == linkId) {
+          _closeIncomingDialog();
+          AppSnackBar.showError(context, l10n.battleInviteCancelled);
+        }
+    }
+  }
+
   void _onBattleInvite(dynamic raw) {
     if (!mounted) return;
     final data = _parseSocketPayload(raw);
@@ -1167,6 +1968,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (battleId == null || battleId.isEmpty) return;
     if (battleId == _incomingInviteId) return; // evento duplicado
     final fromName = (data['from_streamer'] as String?)?.trim();
+    final avatar =
+        (data['from_avatar'] ??
+                data['from_avatar_url'] ??
+                data['streamer_a_avatar'])
+            as String?;
+    final durationSeconds = (data['duration_seconds'] as num?)?.toInt();
 
     // Ocupado (em batalha, com outro convite aberto ou aguardando resposta
     // de um convite meu): recusa na hora — quem convidou recebe o aviso
@@ -1183,20 +1990,37 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       return;
     }
 
-    final expiresIn = (data['expires_in_seconds'] as num?)?.toInt() ?? 60;
+    // Prazo pelo relógio do servidor (`expires_at − server_now`); sem os
+    // campos novos, cai no `expires_in_seconds` (com margem de 3 s).
+    final expiresAt = DateTime.tryParse('${data['expires_at'] ?? ''}');
+    final serverNow = DateTime.tryParse('${data['server_now'] ?? ''}');
+    int seconds;
+    if (expiresAt != null && serverNow != null) {
+      seconds = expiresAt.difference(serverNow).inSeconds - 2;
+    } else {
+      seconds = ((data['expires_in_seconds'] as num?)?.toInt() ?? 60) - 3;
+    }
+    if (seconds < 3) return; // já praticamente expirado
     _showBattleInviteDialog(
       battleId,
-      fromName == null || fromName.isEmpty ? 'Um criador' : fromName,
-      // Margem de 3s para a resposta chegar antes do backend expirar.
-      (expiresIn - 3).clamp(5, 60),
+      fromName == null || fromName.isEmpty
+          ? S.of(context).battleSomeCreator
+          : fromName,
+      seconds.clamp(3, 120),
+      avatarUrl: avatar,
+      durationSeconds: durationSeconds,
     );
   }
 
   Future<void> _showBattleInviteDialog(
     String battleId,
     String fromName,
-    int seconds,
-  ) async {
+    int seconds, {
+    String? avatarUrl,
+    int? durationSeconds,
+    bool isLink = false,
+    bool withBattle = false,
+  }) async {
     if (!mounted) return;
     FocusManager.instance.primaryFocus?.unfocus();
     final l10n = S.of(context);
@@ -1212,8 +2036,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       builder: (ctx) => _BattleInviteDialog(
         key: dialogKey,
         fromName: fromName,
+        avatarUrl: avatarUrl,
+        durationSeconds: durationSeconds,
         totalSeconds: seconds,
         l10n: l10n,
+        isLink: isLink,
+        withBattle: withBattle,
       ),
     );
 
@@ -1226,14 +2054,25 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       if (_isAcceptingBattle) return;
       _isAcceptingBattle = true;
       try {
-        await ref.read(battleServiceProvider).acceptBattle(battleId);
-        // HUD já abre em "contagem" — o `started` chega em seguida.
-        _enterBattle(battleId);
+        if (isLink) {
+          // A tela dupla abre no `connect:link:started`.
+          await ref.read(linkServiceProvider).accept(battleId);
+        } else {
+          await ref.read(battleServiceProvider).acceptBattle(battleId);
+          // HUD já abre em "contagem" — o `countdown`/`started` chegam em seguida.
+          _enterBattle(battleId);
+        }
       } catch (e) {
         if (mounted) {
           AppSnackBar.showError(
             context,
-            BattleService.errorMessage(e, 'Não foi possível aceitar a batalha'),
+            battleErrorText(
+              S.of(context),
+              e,
+              fallback: isLink
+                  ? S.of(context).linkErrAccept
+                  : S.of(context).battleErrAccept,
+            ),
           );
         }
       } finally {
@@ -1241,7 +2080,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       }
     } else {
       try {
-        await ref.read(battleServiceProvider).declineBattle(battleId);
+        if (isLink) {
+          await ref.read(linkServiceProvider).decline(battleId);
+        } else {
+          await ref.read(battleServiceProvider).declineBattle(battleId);
+        }
       } catch (_) {
         // Já expirado/cancelado no servidor — nada a fazer.
       }
@@ -1266,46 +2109,54 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final battleId = data['battle_id'] as String?;
     final status = data['status'] as String?;
     if (battleId == null || status == null) return;
+    final l10n = S.of(context);
 
     final iAmInviter = data['streamer_a_id'] == _room.streamerId;
     final outgoing = _outgoingInvite;
     final isMyOutgoing = outgoing?.battleId == battleId;
-    final opponent = outgoing?.opponentName ?? 'O criador';
+    // Nome do outro criador vem do próprio evento (v2).
+    final eventName =
+        (iAmInviter ? data['streamer_b_name'] : data['streamer_a_name'])
+            as String?;
+    final opponent = (eventName != null && eventName.trim().isNotEmpty)
+        ? eventName.trim()
+        : (outgoing?.opponentName ?? l10n.battleOpponentFallback);
 
     switch (status) {
       case 'pending':
         // Cobre convites criados fora do sheet (ex.: revanche).
         if (iAmInviter && !isMyOutgoing && _activeBattleId == null) {
-          _startOutgoingInvite(
-            battleId,
-            'o oponente',
-            (data['expires_in_seconds'] as num?)?.toInt() ?? 60,
-          );
+          final expiresAt = DateTime.tryParse('${data['expires_at'] ?? ''}');
+          final serverNow = DateTime.tryParse('${data['server_now'] ?? ''}');
+          final secs = (expiresAt != null && serverNow != null)
+              ? expiresAt.difference(serverNow).inSeconds
+              : ((data['expires_in_seconds'] as num?)?.toInt() ?? 60);
+          _startOutgoingInvite(battleId, opponent, secs.clamp(3, 120));
         }
       case 'accepted':
         if (isMyOutgoing) {
-          AppSnackBar.showSuccess(context, '$opponent aceitou! Prepare-se ⚔');
+          AppSnackBar.showSuccess(context, l10n.battleInviteAccepted(opponent));
           _enterBattle(battleId);
         }
       case 'declined':
         if (isMyOutgoing) {
           setState(() => _outgoingInvite = null);
-          AppSnackBar.showError(context, '$opponent recusou o convite');
+          AppSnackBar.showError(context, l10n.battleInviteDeclined(opponent));
         }
       case 'expired':
         if (isMyOutgoing) {
           setState(() => _outgoingInvite = null);
-          AppSnackBar.showError(context, '$opponent não respondeu a tempo');
+          AppSnackBar.showError(context, l10n.battleInviteNoReply(opponent));
         } else if (_incomingInviteId == battleId) {
           _closeIncomingDialog();
-          AppSnackBar.showError(context, 'O convite de batalha expirou');
+          AppSnackBar.showError(context, l10n.battleInviteExpired);
         }
       case 'cancelled':
         if (isMyOutgoing) {
           setState(() => _outgoingInvite = null);
         } else if (_incomingInviteId == battleId) {
           _closeIncomingDialog();
-          AppSnackBar.showError(context, 'O convite de batalha foi cancelado');
+          AppSnackBar.showError(context, l10n.battleInviteCancelled);
         }
         if (_activeBattleId == battleId) _leaveBattle();
     }
@@ -1315,10 +2166,16 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   // BATTLE — convite ENVIADO (sou o streamer A)
   // ════════════════════════════════════════════════════════════════
 
-  void _startOutgoingInvite(String battleId, String opponentName, int seconds) {
+  void _startOutgoingInvite(
+    String battleId,
+    String opponentName,
+    int seconds, {
+    bool isLink = false,
+  }) {
     if (!mounted) return;
     setState(() {
       _outgoingInvite = _OutgoingInvite(
+        isLink: isLink,
         battleId: battleId,
         opponentName: opponentName,
         expiresAt: DateTime.now().add(Duration(seconds: seconds)),
@@ -1331,7 +2188,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     if (invite == null) return;
     setState(() => _outgoingInvite = null);
     try {
-      await ref.read(battleServiceProvider).cancelInvite(invite.battleId);
+      if (invite.isLink) {
+        await ref.read(linkServiceProvider).cancel(invite.battleId);
+      } else {
+        await ref.read(battleServiceProvider).cancelInvite(invite.battleId);
+      }
     } catch (e) {
       // 409/410: já respondido/expirado — o evento de status resolve a UI.
       debugPrint('Broadcaster: cancel invite failed: $e');
@@ -1343,7 +2204,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   void _onOutgoingInviteTimeout(String battleId) {
     if (!mounted || _outgoingInvite?.battleId != battleId) return;
     setState(() => _outgoingInvite = null);
-    AppSnackBar.showError(context, 'Sem resposta ao convite de batalha');
+    AppSnackBar.showError(context, S.of(context).battleInviteNoAnswer);
   }
 
   static String? _extractBattleId(Map<String, dynamic> resp) {
@@ -1356,10 +2217,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   Future<void> _showBattleSheet(BuildContext context) async {
     if (_activeBattleId != null) return; // já em batalha
     if (_outgoingInvite != null) {
-      AppSnackBar.showError(
-        context,
-        'Aguarde a resposta do convite atual ou cancele-o',
-      );
+      AppSnackBar.showError(context, S.of(context).battleInviteWait);
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -1372,10 +2230,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           (data['battle'] as Map?)?.cast<String, dynamic>() ?? {};
       final eligible = battleData['eligible'] as bool? ?? true;
       if (!eligible && mounted) {
-        final reason =
-            battleData['reason'] as String? ??
-            'Você ainda não pode iniciar batalhas';
-        AppSnackBar.showError(this.context, reason);
+        AppSnackBar.showError(
+          this.context,
+          S.of(this.context).battleErrNotEligible,
+        );
         return;
       }
     } catch (_) {
@@ -1395,6 +2253,27 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
           myRoomId: _room.id,
           onInvite: (candidate, durationSeconds) async {
             try {
+              // Tempo real ligado: "Batalha" é o atalho que conecta E convida
+              // (POST /live/link/invite with_battle=true).
+              if (_linkEnabled) {
+                final lr = await ref
+                    .read(linkServiceProvider)
+                    .invite(
+                      opponentRoomId: candidate.roomId,
+                      withBattle: true,
+                      durationSeconds: durationSeconds,
+                    );
+                final lid = lr['link_id']?.toString();
+                if (lid != null) {
+                  _startOutgoingInvite(
+                    lid,
+                    candidate.displayName,
+                    60,
+                    isLink: true,
+                  );
+                }
+                return null;
+              }
               final resp = await ref
                   .read(battleServiceProvider)
                   .inviteBattle(
@@ -1404,13 +2283,26 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   );
               final battleId = _extractBattleId(resp);
               if (battleId != null) {
-                _startOutgoingInvite(battleId, candidate.displayName, 60);
+                final body = resp['data'] is Map
+                    ? Map<String, dynamic>.from(resp['data'] as Map)
+                    : resp;
+                final exp = DateTime.tryParse('${body['expires_at'] ?? ''}');
+                final now = DateTime.tryParse('${body['server_now'] ?? ''}');
+                final secs = (exp != null && now != null)
+                    ? exp.difference(now).inSeconds
+                    : ((body['expires_in_seconds'] as num?)?.toInt() ?? 60);
+                _startOutgoingInvite(
+                  battleId,
+                  candidate.displayName,
+                  secs.clamp(3, 120),
+                );
               }
               return null;
             } catch (e) {
-              return BattleService.errorMessage(
+              return battleErrorText(
+                S.of(this.context),
                 e,
-                'Não foi possível enviar o convite',
+                fallback: S.of(this.context).battleErrSendInvite,
               );
             }
           },
@@ -1490,6 +2382,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   @override
   void dispose() {
+    _rematchTimer?.cancel();
+    _rtcSession?.dispose();
+    _rtcSession = null;
     _unsubscribeFromBattleEvents();
     _resumeFeedbackTimer?.cancel();
     _pauseTicker?.cancel();
@@ -1525,9 +2420,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     return '$mm:$ss';
   }
 
+  /// Compacto e sem quebra: 1,2k / 3,4M (vírgula em pt/es).
   String _formatCount(int n) {
-    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    final comma = const ['pt', 'es'].contains(Localizations.localeOf(context).languageCode);
+    String f(double v) {
+      final t = v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+      return comma ? t.replaceAll('.', ',') : t;
+    }
+    if (n >= 1000000) return '${f(n / 1000000)}M';
+    if (n >= 1000) return '${f(n / 1000)}k';
     return '$n';
   }
 
@@ -1710,7 +2611,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     // Mantém a fila de animações viva (o overlay lê o mesmo provider).
     ref.watch(liveRoomGiftsViewModelProvider(widget.room.id));
-    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+    final hidden =
+        ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
 
     ref.listen<LiveRoomCommentsState>(
       liveRoomCommentsViewModelProvider(widget.room.id),
@@ -1728,13 +2630,23 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       },
     );
 
+    if (_activeBattleId != null) {
+      ref.listen<AsyncValue<BattleState>>(
+        battleViewModelProvider(_activeBattleId!),
+        (prev, next) {
+          final st = next.asData?.value;
+          if (st != null) _onBattleStateChanged(st);
+        },
+      );
+    }
+
     final controller = _controller;
     final cameraReady =
         controller != null && controller.value.isInitialized == true;
     // Spinner de tela cheia só na abertura. Durante a troca de câmera o
     // controller fica nulo por um instante — mantemos chat/HUD montados e
     // mostramos só um fundo preto no lugar do preview.
-    if (!cameraReady && !_isSwitchingCamera) {
+    if (!cameraReady && !_isSwitchingCamera && !_rtcActive) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
@@ -1768,7 +2680,23 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             fit: StackFit.expand,
             children: [
               // ===== Camera Preview =====
-              if (cameraReady)
+              // Batalha com tempo real: própria câmera + adversário (LiveKit)
+              // no layout do contrato (A esq / B dir).
+              if (_rtcActive && _rtcSession != null)
+                BattleCreatorStage(
+                  layout: battleLayoutOf(
+                    context,
+                    splitTop: battleCreatorSplitTop(context),
+                  ),
+                  session: _rtcSession!,
+                  mySide: _mySideNow(),
+                  battle: _activeBattleId == null
+                      ? null
+                      : ref
+                            .watch(battleViewModelProvider(_activeBattleId!))
+                            .value,
+                )
+              else if (cameraReady)
                 Center(
                   child: Transform.scale(
                     scale: scale,
@@ -1786,21 +2714,35 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ),
               // ===== Gradient overlay (top + bottom) =====
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black87,
-                      Colors.transparent,
-                      Colors.transparent,
-                      Colors.black87,
-                    ],
-                    stops: [0.0, 0.18, 0.55, 1.0],
+              if (!(_rtcActive && _rtcSession != null))
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black87,
+                        Colors.transparent,
+                        Colors.transparent,
+                        Colors.black87,
+                      ],
+                      stops: [0.0, 0.18, 0.55, 1.0],
+                    ),
                   ),
                 ),
-              ),
+
+              // Tela dupla: área do chat com fundo escuro sólido.
+              if (_split)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  top: battleLayoutOf(
+                    context,
+                    splitTop: battleCreatorSplitTop(context),
+                  ).chat.top,
+                  child: const ColoredBox(color: Color(0xFF0B0E14)),
+                ),
 
               // ===== Countdown =====
               if (_showCountdown)
@@ -1826,12 +2768,58 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
               // ===== Gift animations =====
               GiftAnimationOverlay(roomId: widget.room.id),
               // ===== Efeito de entrada de viewer (criador vê quem chega) =====
-              EntranceEffectLayer(
-                roomId: widget.room.id,
-                ignoreUserId: widget.room.streamerId,
-              ),
-              // ===== Degraus do combo =====
-              ComboTierLayer(roomId: widget.room.id),
+              // Em batalha: efeitos de entrada/combo ficam na região de baixo.
+              if (_split) ...[
+                battleRegionWrap(
+                  context,
+                  battleLayoutOf(
+                    context,
+                    splitTop: battleCreatorSplitTop(context),
+                  ).chat,
+                  EntranceEffectLayer(
+                    roomId: widget.room.id,
+                    ignoreUserId: widget.room.streamerId,
+                  ),
+                ),
+                battleRegionWrap(
+                  context,
+                  battleLayoutOf(
+                    context,
+                    splitTop: battleCreatorSplitTop(context),
+                  ).chat,
+                  ComboTierLayer(roomId: widget.room.id),
+                ),
+              ] else ...[
+                EntranceEffectLayer(
+                  roomId: widget.room.id,
+                  ignoreUserId: widget.room.streamerId,
+                ),
+                // ===== Degraus do combo =====
+                ComboTierLayer(roomId: widget.room.id),
+              ],
+
+              // ===== Conexão (tela dupla sem batalha) =====
+              if (_link != null && _activeBattleId == null)
+                Positioned.fill(
+                  child: LinkHudOverlay(
+                    link: _link!,
+                    layout: battleLayoutOf(
+                      context,
+                      splitTop: battleCreatorSplitTop(context),
+                    ),
+                    ownSide:
+                        _link!.sideOf(
+                          userId: _room.streamerId,
+                          roomId: _room.id,
+                        ) ??
+                        'a',
+                    isCreator: true,
+                    busy: _linkBusy,
+                    onToggleMute: _toggleLinkMute,
+                    onBattle: _startBattleInLink,
+                    onDisconnect: _confirmDisconnect,
+                  ),
+                ),
 
               // ===== Battle HUD (streamer) =====
               if (_activeBattleId != null)
@@ -1839,9 +2827,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   child: StreamerBattleHud(
                     battleId: _activeBattleId!,
                     myStreamerId: _room.streamerId,
-                    // Sair da batalha / fechar banner de resultado:
-                    // volta o broadcaster pra "live normal" (inclusive o
-                    // liveType) sem esperar o socket. Idempotente.
+                    myRoomId: _room.id,
+                    initialCountdown: _countdownPayload,
+                    // Fechar o resultado: volta para a "live normal"
+                    // (inclusive o liveType). Idempotente.
                     onBattleClosed: _leaveBattle,
                   ),
                 ),
@@ -1876,31 +2865,42 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            LiveEventChip(
-                              roomId: widget.room.id,
-                              initialEvent: _room.event,
-                              onTap: (_) => GifterRankingSheet.show(
-                                context,
+                            Expanded(
+                              child: LiveEventChip(
+                                expand: true,
                                 roomId: widget.room.id,
-                                streamerId: _room.streamerId,
-                                ranking: commentsState.gifterRanking,
-                                openEventTab: true,
+                                initialEvent: _room.event,
+                                onTap: (event) => EventPageSheet.show(
+                                  context,
+                                  roomId: widget.room.id,
+                                  streamerId: _room.streamerId,
+                                  event: event,
+                                ),
                               ),
                             ),
-                            LiveGoalsPill(
-                              key: _goalsKey,
-                              roomId: widget.room.id,
-                              streamerId: _room.streamerId,
-                              initialGoals: _room.goals,
-                              isCreator: true,
-                              onEdit: _openGoals,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: LiveGoalsPill(
+                                expand: true,
+                                key: _goalsKey,
+                                roomId: widget.room.id,
+                                streamerId: _room.streamerId,
+                                initialGoals: _room.goals,
+                                isCreator: true,
+                                onEdit: _openGoals,
+                              ),
                             ),
                             const SizedBox(width: 8),
-                            Expanded(child: LiveGiftTicker(currentRoomId: widget.room.id)),
+                            Expanded(
+                              child: LiveGiftTicker(
+                                expand: true,
+                                currentRoomId: widget.room.id,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 6),
-                        if (viewerEvent != null)
+                        if (viewerEvent != null && _activeBattleId == null)
                           ViewerJoinedToast(
                             event: viewerEvent,
                             controller: _toastAnimController!,
@@ -1933,7 +2933,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   left: 0,
                   right: 0,
                   top: MediaQuery.paddingOf(context).top + 96,
-                  child: Center(child: _ResumeFeedbackPill(state: _resumeFeedback)),
+                  child: Center(
+                    child: _ResumeFeedbackPill(state: _resumeFeedback),
+                  ),
                 ),
 
               // ===== Dock inferior: convite pendente + chat + input + ações =====
@@ -1943,6 +2945,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 right: 0,
                 bottom: 0,
                 child: _BroadcasterChatDock(
+                  battleChatTop: _split
+                      ? battleLayoutOf(
+                          context,
+                          splitTop: battleCreatorSplitTop(context),
+                        ).chat.top
+                      : null,
                   banner: _outgoingInvite == null
                       ? null
                       : _OutgoingInviteBanner(
@@ -1968,20 +2976,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         roomId: widget.room.id,
                         isHost: true,
                         child: ChatTicker(
-                giftParts: commentsState.chatGiftParts,
-                        // Bloqueados (nos dois sentidos) não aparecem no chat da live.
-                        comments: commentsState.comments
-                            .where((c) => !hidden.isBlocked(c.userId))
-                            .toList(),
-                        gifts: commentsState.chatGifts
-                            .where((g) => !hidden.isBlocked(g.senderId))
-                            .toList(),
-                        hostUserId: _room.streamerId,
-                        myUserId: _room.streamerId,
-                        myUsername: commentsState.myUsername,
-                        onCommentTap: _onCommentTap,
-                        maxHeight: maxHeight,
-                      ),
+                          giftParts: commentsState.chatGiftParts,
+                          // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                          comments: commentsState.comments
+                              .where((c) => !hidden.isBlocked(c.userId))
+                              .toList(),
+                          gifts: commentsState.chatGifts
+                              .where((g) => !hidden.isBlocked(g.senderId))
+                              .toList(),
+                          hostUserId: _room.streamerId,
+                          myUserId: _room.streamerId,
+                          myUsername: commentsState.myUsername,
+                          onCommentTap: _onCommentTap,
+                          maxHeight: maxHeight,
+                        ),
                       ),
                     ),
                   ),
@@ -2002,11 +3010,38 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           isPaused: _isPaused,
                           isTogglingPause: _isTogglingPause,
                           isTogglingStream: _isTogglingStream,
-                          hasBattle: _activeBattleId != null,
-                          onBattle: () => _showBattleSheet(context),
+                          hasBattle: _activeBattleId != null && !_battleEnded,
+                          // Após o fim: "Revanche" na barra de ações (sem cartão).
+                          battleLabel:
+                              (_rematchId != null &&
+                                  (_activeBattleId == null || _battleEnded))
+                              ? S.of(context).battleRematch
+                              : null,
+                          battleIcon:
+                              (_rematchId != null &&
+                                  (_activeBattleId == null || _battleEnded))
+                              ? Icons.replay_rounded
+                              : null,
+                          onBattle:
+                              (_rematchId != null &&
+                                  (_activeBattleId == null || _battleEnded))
+                              ? _requestRematch
+                              : _link != null
+                              ? _startBattleInLink
+                              : () => _showBattleSheet(context),
+                          coHostLabel: _link != null
+                              ? S.of(context).linkDisconnect
+                              : null,
+                          coHostIcon: _link != null
+                              ? Icons.link_off_rounded
+                              : null,
                           // Co-host desativado até existir mídia em tempo
                           // real (ver diagnóstico) — botão escondido.
-                          onCoHost: null,
+                          onCoHost: _link != null
+                              ? _confirmDisconnect
+                              : (_linkEnabled && _activeBattleId == null)
+                              ? () => _showLinkSheet(context)
+                              : null,
                           onPauseResume: _togglePause,
                           onEnd: _closeBroadcaster,
                           onMoreOptions: () => _showMoreOptions(context),
@@ -2036,11 +3071,19 @@ class _BattleInviteDialog extends StatefulWidget {
     required this.fromName,
     required this.totalSeconds,
     required this.l10n,
+    this.avatarUrl,
+    this.durationSeconds,
+    this.isLink = false,
+    this.withBattle = false,
   });
 
+  final bool isLink;
+  final bool withBattle;
   final String fromName;
+  final String? avatarUrl;
+  final int? durationSeconds;
 
-  /// Segundos até o convite expirar (vem do `expires_in_seconds` do evento).
+  /// Segundos até o convite expirar (relógio do servidor, `expires_at`).
   final int totalSeconds;
   final S l10n;
 
@@ -2049,21 +3092,31 @@ class _BattleInviteDialog extends StatefulWidget {
 }
 
 class _BattleInviteDialogState extends State<_BattleInviteDialog> {
+  late final DateTime _deadline = DateTime.now().add(
+    Duration(seconds: widget.totalSeconds),
+  );
   late int _remaining = widget.totalSeconds;
   Timer? _tick;
+
+  /// Evita 2 toques (aceitar/recusar) → 2 `pop` (o 2º fecharia outra rota).
+  bool _answered = false;
+
+  void _answer(bool accepted) {
+    if (_answered) return;
+    _answered = true;
+    _tick?.cancel();
+    Navigator.of(context).pop(accepted);
+  }
 
   @override
   void initState() {
     super.initState();
     _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
-      setState(() => _remaining--);
-      if (_remaining <= 0) {
-        _tick?.cancel();
-        // Fecha automaticamente como recusa quando expirar
-        if (mounted && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(false);
-        }
+      final left = _deadline.difference(DateTime.now()).inSeconds;
+      setState(() => _remaining = left < 0 ? 0 : left);
+      if (left <= 0) {
+        _answer(false); // expirou: conta como recusa
       }
     });
   }
@@ -2076,16 +3129,36 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final progress = _remaining / widget.totalSeconds;
+    final l10n = widget.l10n;
+    final progress = (_remaining / widget.totalSeconds).clamp(0.0, 1.0);
+    final minutes = widget.durationSeconds == null
+        ? null
+        : (widget.durationSeconds! / 60).round().clamp(1, 999);
     return AlertDialog(
       backgroundColor: AppColors.slate,
       title: Row(
         children: [
-          const Icon(Icons.sports_kabaddi, color: AppColors.braweBlue),
-          const SizedBox(width: 10),
+          if (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(widget.avatarUrl!),
+              ),
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.only(right: 10),
+              child: Icon(
+                Icons.sports_kabaddi,
+                color: AppColors.braweBlueBright,
+              ),
+            ),
           Expanded(
             child: Text(
-              widget.l10n.battleInviteReceived(widget.fromName),
+              widget.isLink
+                  ? l10n.linkInviteReceived(widget.fromName)
+                  : l10n.battleInviteReceived(widget.fromName),
               style: const TextStyle(color: Colors.white, fontSize: 15),
             ),
           ),
@@ -2093,26 +3166,42 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 4),
+          if (widget.isLink && widget.withBattle) ...[
+            Text(
+              l10n.linkInviteWithBattle,
+              style: const TextStyle(
+                color: AppColors.braweOrange,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+          if (minutes != null) ...[
+            Text(
+              '${l10n.battleDurationLabel}: ${l10n.battleDurationMinutes(minutes)}',
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+          ],
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: Colors.white12,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                _remaining > 15
-                    ? AppColors.braweBlue
-                    : const Color(0xFFEF4444),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                AppColors.braweBlueBright,
               ),
               minHeight: 5,
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'Expira em ${_remaining}s',
+            l10n.battleInviteExpiresIn(_remaining),
             style: TextStyle(
-              color: _remaining > 15 ? Colors.white38 : const Color(0xFFEF4444),
+              color: _remaining > 15 ? Colors.white38 : AppColors.braweOrange,
               fontSize: 11,
             ),
           ),
@@ -2120,32 +3209,35 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, false),
+          onPressed: _answered ? null : () => _answer(false),
           child: Text(
-            widget.l10n.battleDecline,
+            l10n.battleDecline,
             style: const TextStyle(color: Colors.white54),
           ),
         ),
         ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
+          onPressed: _answered ? null : () => _answer(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.braweBlue,
+            backgroundColor: AppColors.braweBlueBright,
+            foregroundColor: Colors.white,
           ),
-          child: Text(widget.l10n.battleAccept),
+          child: Text(l10n.battleAccept),
         ),
       ],
     );
   }
 }
 
-// ── Convite enviado (streamer A) ────────────────────────────────────────────
-
 class _OutgoingInvite {
   const _OutgoingInvite({
     required this.battleId,
     required this.opponentName,
     required this.expiresAt,
+    this.isLink = false,
   });
+
+  /// `true`: convite de CONEXÃO (`battleId` guarda o `link_id`).
+  final bool isLink;
 
   final String battleId;
   final String opponentName;
@@ -2206,9 +3298,7 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: AppColors.braweBlue.withValues(alpha: 0.6),
-        ),
+        border: Border.all(color: AppColors.braweBlue.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2224,7 +3314,9 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
           const SizedBox(width: 10),
           Flexible(
             child: Text(
-              'Aguardando ${widget.invite.opponentName} aceitar… ${remaining}s',
+              S
+                  .of(context)
+                  .battleWaitingAccept(widget.invite.opponentName, remaining),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -2241,10 +3333,10 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
               minimumSize: const Size(0, 30),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(
-                color: Color(0xFFFF6B6B),
+            child: Text(
+              S.of(context).battleCancel,
+              style: const TextStyle(
+                color: AppColors.braweOrange,
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
               ),
@@ -2265,12 +3357,15 @@ class _OutgoingInviteBannerState extends State<_OutgoingInviteBanner> {
 /// ações some e o chat encolhe para caber acima do input.
 class _BroadcasterChatDock extends StatelessWidget {
   const _BroadcasterChatDock({
+    this.battleChatTop,
     required this.tickerBuilder,
     this.banner,
     this.input,
     this.actionBar,
   });
 
+  /// Em batalha: Y onde começa a região do chat (nada sobe sobre o vídeo).
+  final double? battleChatTop;
   final Widget Function(double maxHeight) tickerBuilder;
   final Widget? banner;
   final Widget? input;
@@ -2290,7 +3385,12 @@ class _BroadcasterChatDock extends StatelessWidget {
     final below =
         (input != null ? 56.0 : 0) + (!typing && actionBar != null ? 84.0 : 0);
     final free = size.height - padding.top - _topReserved - below - bottomInset;
-    final tickerMax = typing
+    final battleFree = battleChatTop == null
+        ? 0.0
+        : size.height - battleChatTop! - below - bottomInset - 40;
+    final tickerMax = battleChatTop != null
+        ? battleFree.clamp(0.0, 220.0)
+        : typing
         ? (free * 0.75).clamp(60.0, 200.0)
         : free.clamp(80.0, 220.0);
 
@@ -2363,7 +3463,10 @@ class _CreatorChatInput extends StatelessWidget {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
+                hintStyle: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 14,
+                ),
                 // Sem isso o campo herdava o tema global (fundo cinza
                 // preenchido + borda azul ao focar).
                 border: InputBorder.none,
@@ -2429,11 +3532,19 @@ class _PausedPanel extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.pause_circle_filled_rounded, color: AppColors.braweOrange, size: 22),
+              const Icon(
+                Icons.pause_circle_filled_rounded,
+                color: AppColors.braweOrange,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 s.broadcasterPausedTitle,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
@@ -2441,7 +3552,10 @@ class _PausedPanel extends StatelessWidget {
           Text(
             s.broadcasterPausedHint,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 12),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.65),
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -2462,16 +3576,24 @@ class _PausedPanel extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF22C55E),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               icon: isBusy
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.play_arrow_rounded),
-              label: Text(s.broadcasterResumeButton, style: const TextStyle(fontWeight: FontWeight.w800)),
+              label: Text(
+                s.broadcasterResumeButton,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
             ),
           ),
         ],
@@ -2497,7 +3619,9 @@ class _ResumeFeedbackPill extends StatelessWidget {
       decoration: BoxDecoration(
         color: live ? const Color(0xF022C55E) : const Color(0xE6070B1A),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: live ? 0.3 : 0.12)),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: live ? 0.3 : 0.12),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2507,7 +3631,10 @@ class _ResumeFeedbackPill extends StatelessWidget {
               : const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
           const SizedBox(width: 10),
           Flexible(
@@ -2517,12 +3644,19 @@ class _ResumeFeedbackPill extends StatelessWidget {
               children: [
                 Text(
                   live ? s.broadcasterBackLive : s.broadcasterResumingTitle,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                  ),
                 ),
                 if (!live)
                   Text(
                     s.broadcasterResumingHint,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
                   ),
               ],
             ),

@@ -16,6 +16,7 @@ import '../../../../../domain/models/gift_display_type.dart';
 import '../../../../../domain/models/gift_presentation.dart';
 import '../../../../live_feed/view_models/live_room_gifts_view_model.dart';
 import '../../layout/live_dock_metrics.dart';
+import '../../../../live_feed/battle/battle_layout.dart';
 import '../award_badge.dart';
 import '../level_chip.dart';
 import 'gift_stage.dart';
@@ -223,6 +224,24 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     }
   }
 
+  /// Tela dupla (conexão/batalha), segundo o `display_type` do presente:
+  /// - center_large: ancorada EMBAIXO, largura total, até ~70% da altura da
+  ///   tela (por cima do chat e da parte de baixo dos vídeos);
+  /// - fullscreen: 100% da tela, inclusive os vídeos (igual à live solo);
+  /// - center_small: só o combo no canto da metade de quem recebeu.
+  /// Live solo (sem regiões publicadas): nada muda.
+  Widget _inReceiverHalf(BuildContext ctx, LiveGift gift, Widget effect) {
+    if (BattleGiftRegions.current.value == null) return effect;
+    if (gift.resolvedDisplayType != GiftDisplayType.centerLarge) return effect;
+    final size = MediaQuery.sizeOf(ctx);
+    final h = size.height * 0.7;
+    return battleRegionWrap(
+      ctx,
+      Rect.fromLTWH(0, size.height - h, size.width, h),
+      effect,
+    );
+  }
+
   /// Vídeo VAP (transparente, com som) por cima da live. Só toca se o
   /// arquivo já estiver no aparelho; senão baixa pra próxima vez e o
   /// presente usa o efeito padrão.
@@ -251,14 +270,18 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _VapGiftEffect(
-        file: vapFile,
-        gift: gift,
-        onDone: () {
-          try {
-            entry.remove();
-          } catch (_) {}
-        },
+      builder: (ctx) => _inReceiverHalf(
+        ctx,
+        gift,
+        _VapGiftEffect(
+          file: vapFile,
+          gift: gift,
+          onDone: () {
+            try {
+              entry.remove();
+            } catch (_) {}
+          },
+        ),
       ),
     );
     overlay.insert(entry);
@@ -357,13 +380,17 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _CenterLargeBurst(
-        gift: gift,
-        onDone: () {
-          try {
-            entry.remove();
-          } catch (_) {}
-        },
+      builder: (ctx) => _inReceiverHalf(
+        ctx,
+        gift,
+        _CenterLargeBurst(
+          gift: gift,
+          onDone: () {
+            try {
+              entry.remove();
+            } catch (_) {}
+          },
+        ),
       ),
     );
     overlay.insert(entry);
@@ -375,13 +402,17 @@ class _GiftAnimationOverlayState extends ConsumerState<GiftAnimationOverlay> {
     final overlay = Overlay.of(context, rootOverlay: true);
     late OverlayEntry entry;
     entry = OverlayEntry(
-      builder: (_) => _PremiumGiftBurst(
-        gift: gift,
-        onDone: () {
-          try {
-            entry.remove();
-          } catch (_) {}
-        },
+      builder: (ctx) => _inReceiverHalf(
+        ctx,
+        gift,
+        _PremiumGiftBurst(
+          gift: gift,
+          onDone: () {
+            try {
+              entry.remove();
+            } catch (_) {}
+          },
+        ),
       ),
     );
     overlay.insert(entry);
@@ -612,14 +643,24 @@ class _GiftToastState extends ConsumerState<_GiftToast>
     // default textStyle de erro do Flutter. Por isso embrulhamos o conteúdo
     // em Directionality + Material(transparency) + DefaultTextStyle DENTRO
     // do Positioned (o Positioned precisa ser filho direto do Overlay Stack).
+    // ⚔ Batalha: o combo fica na BASE da metade de quem recebeu (A esquerda,
+    // B direita), encolhido para caber na metade — nunca sobre os rostos.
+    final half = BattleGiftRegions.current.value?.half(widget.gift.battleSide);
+    final screenWidth = MediaQuery.sizeOf(context).width;
     return Positioned(
-      bottom: bottom,
+      bottom: half != null
+          ? screenHeight - half.bottom + 6 + widget.lane * _GiftToast.laneSpacing
+          : bottom,
       // 🎯 TikTok-style PK: o toast ancora no lado do streamer que recebeu
       // o gift. Sem isso (live solo) cai no canto esquerdo histórico.
       // Em batalha lado B mirror pra direita; lado A mantém esquerda.
-      left: _isRightSide ? null : 12,
-      right: _isRightSide ? 12 : null,
-      child: Directionality(
+      left: half != null ? half.left + 6 : (_isRightSide ? null : 12),
+      width: half != null ? half.width - 12 : null,
+      right: half != null ? null : (_isRightSide ? 12 : null),
+      child: _BattleHalfFit(
+        enabled: half != null && screenWidth > 0,
+        alignEnd: _isRightSide,
+        child: Directionality(
         textDirection: TextDirection.ltr,
         child: Material(
           type: MaterialType.transparency,
@@ -808,6 +849,32 @@ class _GiftToastState extends ConsumerState<_GiftToast>
             ),
           ),
         ),
+      ),
+      ),
+    );
+  }
+}
+
+/// Encolhe o combo para a largura da metade da batalha (quando [enabled]).
+class _BattleHalfFit extends StatelessWidget {
+  const _BattleHalfFit({
+    required this.enabled,
+    required this.alignEnd,
+    required this.child,
+  });
+  final bool enabled;
+  final bool alignEnd;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return Align(
+      alignment: alignEnd ? Alignment.bottomRight : Alignment.bottomLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignEnd ? Alignment.bottomRight : Alignment.bottomLeft,
+        child: child,
       ),
     );
   }

@@ -1803,7 +1803,6 @@
   "homeEmptyPastLives": "Nenhuma live anterior encontrada",
   "homeEmptyStreamers": "Nenhum streamer ainda",
   "homeBattleWatchBet": "ASSISTIR E APOSTAR",
-  "homeBattleLabel": "Batalha PK",
   "commonError": "Erro",
   "videoTooltipRepostStory": "Repostar nos Stories",
   "liveBattleTapToWatch": "Toque para assistir ao vivo",
@@ -1836,39 +1835,7 @@
   "emojiCatObjects": "Objetos",
   "battleVs": "VS",
   "battleTimer": "Tempo restante",
-  "battleSendGift": "Enviar presente",
-  "battleSupport": "Apoiar",
-  "battleWinner": "Vencedor",
-  "battleDraw": "Empate",
-  "battleEnded": "Batalha encerrada",
-  "battleResultTitle": "Resultado da batalha",
-  "battleResultShare": "Compartilhar resultado",
-  "battleResultWatchAgain": "Assistir outra batalha",
-  "battleScoreLabel": "{score} pts",
-  "@battleScoreLabel": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
   "battleTopSupporters": "Top apoiadores",
-  "battleYouScore": "Você: {score}",
-  "@battleYouScore": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
-  "battleRivalScore": "Rival: {score}",
-  "@battleRivalScore": {
-    "placeholders": {
-      "score": {
-        "type": "String"
-      }
-    }
-  },
   "battleCountdownStarting": "Começando em {count}",
   "@battleCountdownStarting": {
     "placeholders": {
@@ -1889,22 +1856,9 @@
   "battleDecline": "Recusar",
   "battleLoading": "Carregando batalha...",
   "battleError": "Erro ao carregar batalha",
-  "battleGiftReceived": "{sender} enviou {gift}",
-  "@battleGiftReceived": {
-    "placeholders": {
-      "sender": {
-        "type": "String"
-      },
-      "gift": {
-        "type": "String"
-      }
-    }
-  },
   "battleMomentum": "PEGANDO FOGO",
   "battleLeadChange": "VIROU!",
   "battleFinalStretch": "RETA FINAL",
-  "battleSendToWin": "Mande presentes pra decidir!",
-  "battleMvp": "MVP",
   "sharedPostReactionApplied": "Reação enviada ✨",
   "sharedPostMinutesAgo": "há {count} min",
   "@sharedPostMinutesAgo": {
@@ -3751,5 +3705,334 @@
   "codeSpamHint": "Não chegou? Confira a caixa de spam ou promoções.",
   "codeError": "Não foi possível enviar o código. Tente de novo.",
   "codeTooManyRequests": "Muitas tentativas a partir desta rede. Tente de novo em alguns minutos.",
-  "settingsThemeAutoHint": "Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer."
+  "settingsThemeAutoHint": "Segue o modo claro/escuro do seu celular. Com a troca automática do celular ligada, muda sozinho ao anoitecer e ao amanhecer.",
+  "battleYou": "Você",
+  "battleMuteOpponent": "Silenciar adversário",
+  "battleUnmuteOpponent": "Ouvir adversário",
+  "battleListenTo": "Ouvir {name}",
+  "@battleListenTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleRematch": "Pedir revanche",
+  "battleRematchSent": "Convite de revanche enviado",
+  "battleClose": "Fechar",
+  "battleFollowing": "Seguindo",
+  "battleLeaveTitle": "Sair da batalha?",
+  "battleLeaveConfirm": "Sair",
+  "battleCancel": "Cancelar",
+  "battleLeave": "Sair da batalha",
+  "battleActionLabel": "Batalha",
+  "battleActionActive": "Em batalha",
+  "battleErrNetwork": "Sem conexão. Verifique sua internet.",
+  "battleErrGeneric": "Não foi possível concluir. Tente novamente.",
+  "battleErrCooldown": "Aguarde {seconds}s para convidar este criador de novo.",
+  "@battleErrCooldown": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "battleErrBlocked": "Não é possível convidar este criador.",
+  "battleErrBusy": "Este criador está ocupado em outra batalha.",
+  "battleErrExpired": "Este convite expirou.",
+  "battleErrAnswered": "Este convite já foi respondido.",
+  "battleErrNotEligible": "Você ainda não pode iniciar batalhas.",
+  "battleErrSendInvite": "Não foi possível enviar o convite.",
+  "battleErrAccept": "Não foi possível aceitar a batalha.",
+  "battleErrRematch": "Não foi possível pedir a revanche.",
+  "battleErrEnd": "Não foi possível sair da batalha.",
+  "battleInviteExpiresIn": "Expira em {seconds}s",
+  "@battleInviteExpiresIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "battleInviteAccepted": "{name} aceitou! Prepare-se",
+  "@battleInviteAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteDeclined": "{name} recusou o convite",
+  "@battleInviteDeclined": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteNoReply": "{name} não respondeu a tempo",
+  "@battleInviteNoReply": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleInviteExpired": "O convite de batalha expirou",
+  "battleInviteCancelled": "O convite de batalha foi cancelado",
+  "battleCancelledMsg": "A batalha foi cancelada",
+  "battleInviteNoAnswer": "Sem resposta ao convite de batalha",
+  "battleInviteWait": "Aguarde a resposta do convite atual ou cancele-o",
+  "battleOpponentFallback": "O oponente",
+  "battleSomeCreator": "Um criador",
+  "battleRtcConnecting": "Conectando com o adversário…",
+  "battleRtcFallback": "Sem tempo real: a batalha segue em modo normal.",
+  "battleOpponentCamera": "Aguardando câmera do adversário",
+  "battleStartTitle": "Iniciar Batalha",
+  "battleSheetSubtitle": "Criadores ao vivo disponíveis agora",
+  "battleSearchHint": "Buscar criador ao vivo...",
+  "battleLoadCandidatesFailed": "Não foi possível carregar criadores ao vivo",
+  "battleRetry": "Tentar novamente",
+  "battleNoCreatorQuery": "Nenhum criador disponível com \"{query}\"",
+  "@battleNoCreatorQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "battleNoCreator": "Nenhum criador disponível para batalha agora.\nPuxe para atualizar.",
+  "battleInviteCreator": "Convidar {name}",
+  "@battleInviteCreator": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleSelectCreator": "Selecione um criador",
+  "battleLiveBadge": "AO VIVO",
+  "battleViewLive": "Ver a live de {name}",
+  "@battleViewLive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleWaitingAccept": "Aguardando {name} aceitar… {seconds}s",
+  "@battleWaitingAccept": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "linkConnect": "Conectar",
+  "linkDisconnect": "Desconectar",
+  "linkStartTitle": "Conectar com um criador",
+  "linkInviteCreator": "Conectar com {name}",
+  "@linkInviteCreator": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkInviteReceived": "{name} quer se conectar com você",
+  "@linkInviteReceived": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkInviteWithBattle": "Com batalha",
+  "linkInviteAccepted": "{name} aceitou a conexão",
+  "@linkInviteAccepted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkEnded": "A conexão foi encerrada",
+  "linkDisconnectTitle": "Desconectar?",
+  "linkDisconnectBody": "A conexão com {name} será encerrada. Se houver uma batalha em andamento, você desiste dela.",
+  "@linkDisconnectBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "linkFollowAction": "+ Seguir",
+  "linkErrDisconnect": "Não foi possível desconectar.",
+  "linkErrInvite": "Não foi possível enviar o convite de conexão.",
+  "linkErrAccept": "Não foi possível aceitar a conexão.",
+  "battleFlashChallenge": "Envie {count} {gift} · {time}",
+  "@battleFlashChallenge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "gift": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "battleFlashProgress": "{done}/{total}",
+  "@battleFlashProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "battleFlashBoost": "{mult}X ativo · {time}",
+  "@battleFlashBoost": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "battleSealWin": "VITÓRIA",
+  "battleSealLose": "DERROTA",
+  "battleSealDraw": "EMPATE",
+  "battleEndLabel": "FIM",
+  "battleMvpPill": "MVP {name} · {score}",
+  "@battleMvpPill": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "battleRuleHint": "Envie presentes para pontuar",
+  "viewLiveAction": "Ver a live",
+  "eventPageGiftsWorth": "Presentes valem {mult} pontos",
+  "@eventPageGiftsWorth": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageEndsIn": "Termina em {time}",
+  "@eventPageEndsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageYourPosition": "Sua posição",
+  "eventPageRankPoints": "#{rank} · {points} pts",
+  "@eventPageRankPoints": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageToTop10": "faltam {points} para o top 10",
+  "@eventPageToTop10": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "eventPageInTop10": "Você está no top 10",
+  "eventPageNoRank": "Você ainda não pontuou",
+  "eventPagePrizes": "Prêmios",
+  "eventPageRanking": "Ranking do evento",
+  "eventPageSeeFull": "Ver ranking completo",
+  "eventPageGifts": "Presentes do evento",
+  "eventPageSend": "Enviar presente",
+  "eventPageHow": "Como funciona",
+  "eventPagePrizeRank": "{from}º–{to}º",
+  "@eventPagePrizeRank": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
+  "eventPagePrizeOne": "{rank}º",
+  "@eventPagePrizeOne": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
+  "battleEndedTitle": "BATALHA ENCERRADA",
+  "battleEndedLeft": "{name} saiu da batalha",
+  "@battleEndedLeft": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleEndedLive": "A live de {name} caiu",
+  "@battleEndedLive": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleEndedRtc": "A conexão caiu",
+  "battleLeaveBodyStreak": "Se você sair agora, ninguém vence e você perde sua sequência de {n} vitórias.",
+  "@battleLeaveBodyStreak": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "battleLeaveBodyNoStreak": "Se você sair agora, ninguém vence.",
+  "battleMutedLine": "Você e seu público não ouvem {name}",
+  "@battleMutedLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battleMutedByLine": "{name} silenciou você",
+  "@battleMutedByLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "battlePauseUnavailable": "Pausar não está disponível durante a conexão ou a batalha",
+  "battleEndedLeftAnon": "Um criador saiu da batalha",
+  "battleEndedLiveAnon": "A live de um criador caiu"
 }

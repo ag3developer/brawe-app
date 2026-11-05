@@ -22,8 +22,11 @@ class LiveEventChip extends ConsumerStatefulWidget {
     required this.roomId,
     required this.initialEvent,
     required this.onTap,
+    this.expand = false,
   });
 
+  /// Pílula de largura total (linha de 3 pílulas iguais), altura 30.
+  final bool expand;
   final String roomId;
   final LiveEvent? initialEvent;
 
@@ -82,6 +85,41 @@ class _LiveEventChipState extends ConsumerState<LiveEventChip> {
     final s = S.of(context);
     final lang = Localizations.localeOf(context).languageCode;
     final maxW = (MediaQuery.sizeOf(context).width * 0.32).clamp(92.0, 150.0);
+    if (widget.expand) {
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => widget.onTap(e),
+        child: Container(
+          height: 30,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: _gold.withValues(alpha: 0.7)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.calendarDays, size: 14, color: _gold),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  e.localizedName(lang),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, size: 16, color: _gold),
+            ],
+          ),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: GestureDetector(
@@ -107,7 +145,7 @@ class _LiveEventChipState extends ConsumerState<LiveEventChip> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${e.localizedName(lang)} ${e.multiplierLabel}',
+                        e.localizedName(lang),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(

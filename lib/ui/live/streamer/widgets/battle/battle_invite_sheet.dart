@@ -7,6 +7,7 @@ import '../../../../../data/services/battle_service.dart';
 import '../../../../../domain/models/battle_candidate.dart';
 import '../../../../../domain/models/battle_config.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
+import '../../../../live_feed/battle/battle_errors.dart';
 import '../../../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -25,11 +26,23 @@ class BattleInviteSheet extends ConsumerStatefulWidget {
     super.key,
     required this.myRoomId,
     required this.onInvite,
+    this.loader,
+    this.linkMode = false,
   });
 
   final String myRoomId;
   final Future<String?> Function(BattleCandidate candidate, int durationSeconds)
   onInvite;
+
+  /// Fonte alternativa de candidatos (conexão: `/live/link/candidates`).
+  final Future<(List<BattleCandidate>, String?)> Function(
+    String query,
+    String? cursor,
+  )?
+  loader;
+
+  /// Convite de CONEXÃO (sem duração, textos de conexão).
+  final bool linkMode;
 
   @override
   ConsumerState<BattleInviteSheet> createState() => _BattleInviteSheetState();
@@ -116,9 +129,12 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
       }
     });
     try {
-      final (items, next) = await ref
-          .read(battleServiceProvider)
-          .getCandidates(query: _query, cursor: reset ? null : _nextCursor);
+      final cursor = reset ? null : _nextCursor;
+      final (items, next) = widget.loader != null
+          ? await widget.loader!(_query, cursor)
+          : await ref
+                .read(battleServiceProvider)
+                .getCandidates(query: _query, cursor: cursor);
       if (!mounted || requestId != _requestId) return;
       setState(() {
         final merged = reset ? items : [..._items, ...items];
@@ -142,9 +158,10 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
         _loading = false;
         _loadingMore = false;
         if (reset) {
-          _error = BattleService.errorMessage(
+          _error = battleErrorText(
+            S.of(context),
             e,
-            'Não foi possível carregar criadores ao vivo',
+            fallback: S.of(context).battleLoadCandidatesFailed,
           );
         }
       });
@@ -216,7 +233,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                 const SizedBox(height: 16),
                 _buildSearchField(),
                 const SizedBox(height: 12),
-                _buildDurationPicker(),
+                if (!widget.linkMode) _buildDurationPicker(),
                 const SizedBox(height: 4),
                 const Divider(color: Colors.white12, height: 20),
                 Expanded(child: _buildList(scrollCtrl)),
@@ -250,16 +267,18 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Iniciar Batalha',
-                style: TextStyle(
+              Text(
+                widget.linkMode
+                    ? S.of(context).linkStartTitle
+                    : S.of(context).battleStartTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                 ),
               ),
               Text(
-                'Criadores ao vivo disponíveis agora',
+                S.of(context).battleSheetSubtitle,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.5),
                   fontSize: 13,
@@ -282,7 +301,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           style: const TextStyle(color: Colors.white),
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: 'Buscar criador ao vivo...',
+            hintText: S.of(context).battleSearchHint,
             hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
             prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
             suffixIcon: value.text.isNotEmpty
@@ -387,7 +406,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
       return _CenteredMessage(
         icon: Icons.wifi_off_rounded,
         message: _error!,
-        actionLabel: 'Tentar novamente',
+        actionLabel: S.of(context).battleRetry,
         onAction: () => _load(reset: true),
       );
     }
@@ -404,9 +423,8 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
             _CenteredMessage(
               icon: Icons.live_tv_rounded,
               message: _query.isNotEmpty
-                  ? 'Nenhum criador disponível com "$_query"'
-                  : 'Nenhum criador disponível para batalha agora.\n'
-                        'Puxe para atualizar.',
+                  ? S.of(context).battleNoCreatorQuery(_query)
+                  : S.of(context).battleNoCreator,
             ),
           ],
         ),
@@ -532,8 +550,10 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                               Flexible(
                                 child: Text(
                                   _selected != null
-                                      ? 'Convidar ${_selected!.displayName}'
-                                      : 'Selecione um criador',
+                                      ? (widget.linkMode
+                                            ? S.of(context).linkInviteCreator(_selected!.displayName)
+                                            : S.of(context).battleInviteCreator(_selected!.displayName))
+                                      : S.of(context).battleSelectCreator,
                                   style: TextStyle(
                                     color: enabled
                                         ? Colors.white
@@ -637,9 +657,9 @@ class _CandidateTile extends StatelessWidget {
                           width: 1.5,
                         ),
                       ),
-                      child: const Text(
-                        'AO VIVO',
-                        style: TextStyle(
+                      child: Text(
+                        S.of(context).battleLiveBadge,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 7,
                           fontWeight: FontWeight.w900,
@@ -681,9 +701,9 @@ class _CandidateTile extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
-                            'Seguindo',
-                            style: TextStyle(
+                          child: Text(
+                            S.of(context).battleFollowing,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 9.5,
                               fontWeight: FontWeight.w700,

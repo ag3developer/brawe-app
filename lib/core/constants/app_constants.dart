@@ -94,6 +94,16 @@ class AppConstants {
   static const String eventBattleScoreUpdate = 'connect:battle:score_update';
   static const String eventBattleEnded = 'connect:battle:ended';
   static const String eventBattleCancelled = 'connect:battle:cancelled';
+  static const String eventBattleMute = 'connect:battle:mute';
+  static const String eventBattleFlash = 'connect:battle:flash';
+  static const String eventBattleRtcFallback = 'connect:battle:rtc_fallback';
+
+  // Socket Events — Conexão entre criadores (§8)
+  static const String eventLinkInvite = 'connect:link:invite';
+  static const String eventLinkInviteStatus = 'connect:link:invite_status';
+  static const String eventLinkStarted = 'connect:link:started';
+  static const String eventLinkEnded = 'connect:link:ended';
+  static const String eventLinkMute = 'connect:link:mute';
   /// Mudanças de estado do convite (pending/accepted/declined/expired/
   /// cancelled) — emitido para a sala `user:{id}` dos 2 streamers.
   static const String eventBattleInviteStatus = 'connect:battle:invite_status';
