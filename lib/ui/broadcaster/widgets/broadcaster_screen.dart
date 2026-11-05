@@ -1356,6 +1356,20 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     );
   }
 
+  /// Android 12+ exige BLUETOOTH_CONNECT em tempo de execução para o áudio
+  /// da conversa sair/entrar pelo fone Bluetooth. Pede uma única vez; se a
+  /// pessoa negar (ou já negou para sempre), segue pelo aparelho.
+  Future<void> _ensureBluetoothPermission() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final status = await Permission.bluetoothConnect.status;
+      if (status.isGranted || status.isPermanentlyDenied) return;
+      await Permission.bluetoothConnect.request();
+    } catch (e) {
+      debugPrint('Bluetooth: permissão não solicitada ($e)');
+    }
+  }
+
   Future<void> _startRtcCore({
     required String key,
     required Future<BattleRtcCredentials> Function() loader,
@@ -1383,6 +1397,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       _rtcSwitching = false;
       return;
     }
+    if (!mounted || !wanted() || _isClosing) {
+      _rtcSwitching = false;
+      return;
+    }
+    // Fone Bluetooth na conversa em tempo real (Android 12+): pede antes de
+    // parar o RTMP, com a live ainda no ar. Negar não impede a conexão.
+    await _ensureBluetoothPermission();
     if (!mounted || !wanted() || _isClosing) {
       _rtcSwitching = false;
       return;
