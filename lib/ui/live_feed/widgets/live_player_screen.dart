@@ -769,7 +769,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _stallLastPos = _controller?.value.position ?? Duration.zero;
     _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       final c = _controller;
-      if (!mounted || _ended || c == null || !c.value.isInitialized) return;
+      if (!mounted || _ended || _swapping) return;
+      if (c == null || !c.value.isInitialized) return;
       // Pausado de propósito (dual_hls usa outros players; pausa do criador).
       if (_soloPlaying == false ||
           !c.value.isPlaying ||
@@ -784,26 +785,94 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         _stallTicks = 0;
         return;
       }
-      if (++_stallTicks >= 4) {
-        debugPrint('LivePlayer: vídeo parado há ~8s — recriando o player');
+      _stallTicks++;
+      // Carregando (esperando dados): quase sempre é o envio do criador que
+      // atrasou — recarregar não ajuda e só apagava a tela. Espera ~30 s.
+      // Parado SEM carregar: o player travou de verdade → troca em ~8 s.
+      final limit = c.value.isBuffering ? 15 : 4;
+      if (_stallTicks >= limit) {
+        debugPrint(
+          'LivePlayer: vídeo parado há ~${_stallTicks * 2}s '
+          '(carregando=${c.value.isBuffering}) — trocando o player',
+        );
+        _stallTicks = 0;
         _restartPlayer();
       }
     });
   }
 
-  /// Descarta o player e cria outro no ponto ao vivo (mesma URL).
-  void _restartPlayer() {
-    _stallTimer?.cancel();
-    final c = _controller;
-    if (c != null) {
-      c.removeListener(_watchPlayerHealth);
+  /// Troca o player por um novo no ponto ao vivo SEM apagar a tela: o atual
+  /// continua visível até o novo estar pronto (sem "sem conexão" piscando).
+  /// Se o novo não abrir, mantém o atual.
+  bool _swapping = false;
+  int _swapRetries = 0;
+  Future<void> _restartPlayer() async {
+    final old = _controller;
+    if (old == null || !old.value.isInitialized) {
+      // Nada na tela: caminho normal (com retentativas).
+      _soloPlaying = null;
+      _playerAttempts = 0;
       _controller = null;
-      Future.microtask(c.dispose);
+      if (old != null) {
+        old.removeListener(_watchPlayerHealth);
+        Future.microtask(old.dispose);
+      }
+      if (mounted) setState(() => _isInitialized = false);
+      await _initializePlayer();
+      return;
     }
-    _soloPlaying = null;
-    if (mounted) setState(() => _isInitialized = false);
-    _playerAttempts = 0;
-    _initializePlayer();
+    if (_swapping) return;
+    _swapping = true;
+    try {
+      final url = _resolveStreamUrl(_quality);
+      if (url == null || url.isEmpty) return;
+      final next = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: true,
+          allowBackgroundPlayback: false,
+        ),
+        httpHeaders: const {'User-Agent': 'BraweApp/1.0 (HLS-Live)'},
+      );
+      try {
+        await next.initialize().timeout(const Duration(seconds: 12));
+        final d = next.value.duration;
+        if (d > Duration.zero) await next.seekTo(d);
+      } catch (e) {
+        debugPrint('LivePlayer: troca do player falhou ($e) — mantém o atual');
+        next.dispose();
+        // Endereço novo (ex.: vídeo de baixa latência ainda subindo): tenta
+        // de novo algumas vezes; depois `_resolveStreamUrl` cai na URL normal.
+        if (url != old.dataSource && _swapRetries < 6) {
+          _swapRetries++;
+          _playerAttempts++;
+          Timer(const Duration(seconds: 3), () {
+            if (mounted && !_ended && _controller == old) _restartPlayer();
+          });
+        }
+        return;
+      }
+      _swapRetries = 0;
+      if (!mounted || _ended || _controller != old) {
+        next.dispose();
+        return;
+      }
+      old.removeListener(_watchPlayerHealth);
+      _soloPlaying = null;
+      setState(() {
+        _controller = next;
+        _isInitialized = true;
+      });
+      next
+        ..addListener(_watchPlayerHealth)
+        ..play()
+        ..setLooping(false)
+        ..setVolume(1.0);
+      Future.delayed(const Duration(milliseconds: 300), old.dispose);
+      _startStallWatch();
+    } finally {
+      _swapping = false;
+    }
   }
 
   /// A origem do vídeo da sala muda (conexão/batalha começou ou acabou):
