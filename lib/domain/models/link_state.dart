@@ -40,6 +40,9 @@ class LinkState {
     this.rtcMode = 'composite',
     this.mutedA = false,
     this.mutedB = false,
+    this.playbackA,
+    this.playbackB,
+    this.ownerLeft = false,
   });
 
   final String linkId;
@@ -50,6 +53,15 @@ class LinkState {
   final LinkPeer b;
   final bool mutedA;
   final bool mutedB;
+
+  /// URLs LL-HLS de cada lado (§18.2); `null` = usar a URL normal da sala.
+  final String? playbackA;
+  final String? playbackB;
+
+  /// §18.1: servidor espelha a composição (dono à esquerda). Ausente = false.
+  final bool ownerLeft;
+
+  String? playbackOf(String side) => side == 'a' ? playbackA : playbackB;
 
   bool get isActive => status == 'active';
   bool mutedOf(String side) => side == 'a' ? mutedA : mutedB;
@@ -68,6 +80,26 @@ class LinkState {
     return null;
   }
 
+  /// Lê `{a, b}` de um `playback` (link view ou `connect:link:media`).
+  static (String?, String?) parsePlayback(dynamic raw) {
+    if (raw is! Map) return (null, null);
+    String? u(dynamic v) => v is String && v.isNotEmpty ? v : null;
+    return (u(raw['a']), u(raw['b']));
+  }
+
+  LinkState withPlayback(String? a, String? b) => LinkState(
+    linkId: linkId,
+    status: status,
+    a: this.a,
+    b: this.b,
+    rtcMode: rtcMode,
+    mutedA: mutedA,
+    mutedB: mutedB,
+    playbackA: a,
+    playbackB: b,
+    ownerLeft: ownerLeft,
+  );
+
   LinkState copyWith({bool? mutedA, bool? mutedB, String? status}) => LinkState(
     linkId: linkId,
     status: status ?? this.status,
@@ -76,6 +108,9 @@ class LinkState {
     rtcMode: rtcMode,
     mutedA: mutedA ?? this.mutedA,
     mutedB: mutedB ?? this.mutedB,
+    playbackA: playbackA,
+    playbackB: playbackB,
+    ownerLeft: ownerLeft,
   );
 
   static LinkState? tryParse(dynamic raw) {
@@ -84,6 +119,7 @@ class LinkState {
     final data = m['data'] is Map ? Map<String, dynamic>.from(m['data'] as Map) : m;
     final id = data['link_id']?.toString();
     if (id == null || id.isEmpty) return null;
+    final pb = parsePlayback(data['playback']);
     final muted = data['muted'] is Map ? data['muted'] as Map : const {};
     return LinkState(
       linkId: id,
@@ -93,6 +129,9 @@ class LinkState {
       b: LinkPeer.fromJson(data['streamer_b']),
       mutedA: muted['a'] == true,
       mutedB: muted['b'] == true,
+      playbackA: pb.$1,
+      playbackB: pb.$2,
+      ownerLeft: data['owner_left'] == true,
     );
   }
 }

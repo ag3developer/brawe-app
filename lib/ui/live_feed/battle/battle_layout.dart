@@ -9,7 +9,7 @@ const double kBattleFrameH = 1280;
 /// Faixa superior (HUD): y 0..208.
 const double kBattleSplitTop = 208;
 
-/// Faixa dividida: y 208..784 (A à esquerda, B à direita).
+/// Faixa dividida: y 208..784 (dono à esquerda, parceiro à direita — §18.1).
 const double kBattleSplitH = 576;
 
 /// Divisor central, em pixels do frame (x 358..362).
@@ -38,6 +38,7 @@ class BattleLayout {
     required this.halfB,
     required this.divider,
     required this.chat,
+    required this.ownSide,
   });
 
   /// [splitTop]: Y (na tela) onde começa a faixa dividida.
@@ -48,6 +49,7 @@ class BattleLayout {
     required double splitTop,
     double stripH = 24,
     double minChat = 250,
+    String ownSide = 'a',
   }) {
     final byWidth = screen.width / kBattleFrameW;
     final byHeight = (screen.height - splitTop - minChat) / kBattleSplitH;
@@ -63,13 +65,17 @@ class BattleLayout {
     final splitH = kBattleSplitH * scale;
     final split = Rect.fromLTWH(left, splitTop, fw, splitH);
     final halfW = kBattleHalfW * scale;
-    final halfA = Rect.fromLTWH(left, splitTop, halfW, splitH);
-    final halfB = Rect.fromLTWH(
+    final halfL = Rect.fromLTWH(left, splitTop, halfW, splitH);
+    final halfR = Rect.fromLTWH(
       left + (kBattleHalfW + kBattleDividerW) * scale,
       splitTop,
       halfW,
       splitH,
     );
+    // §18.1: o dono (ownSide) sempre à esquerda; os dados seguem em A/B.
+    final own = ownSide == 'b' ? 'b' : 'a';
+    final halfA = own == 'a' ? halfL : halfR;
+    final halfB = own == 'a' ? halfR : halfL;
     final divider = Rect.fromLTWH(
       left + kBattleHalfW * scale,
       splitTop,
@@ -87,6 +93,7 @@ class BattleLayout {
       halfB: halfB,
       divider: divider,
       chat: chat,
+      ownSide: own,
     );
   }
 
@@ -101,9 +108,18 @@ class BattleLayout {
 
   /// Faixa dividida (vídeo dos dois lados).
   final Rect split;
+
+  /// Retângulos POR LADO de dados (A/B): o do dono fica à esquerda e o do
+  /// parceiro à direita (§18.1). Use [half] / [isLeft] em vez de supor A=esquerda.
   final Rect halfA;
   final Rect halfB;
   final Rect divider;
+
+  /// Lado (de dados) mostrado à esquerda e em azul.
+  final String ownSide;
+
+  /// O lado [side] está desenhado na metade esquerda?
+  bool isLeft(String side) => side == ownSide;
 
   /// Região inferior (chat, avisos e ações), até o fim da tela.
   final Rect chat;
@@ -112,10 +128,13 @@ class BattleLayout {
 
   @override
   bool operator ==(Object other) =>
-      other is BattleLayout && other.screen == screen && other.frame == frame;
+      other is BattleLayout &&
+      other.screen == screen &&
+      other.frame == frame &&
+      other.ownSide == ownSide;
 
   @override
-  int get hashCode => Object.hash(screen, frame);
+  int get hashCode => Object.hash(screen, frame, ownSide);
 }
 
 /// Áreas das metades que os efeitos de presente da batalha devem usar

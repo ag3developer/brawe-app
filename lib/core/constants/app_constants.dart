@@ -104,6 +104,8 @@ class AppConstants {
   static const String eventLinkStarted = 'connect:link:started';
   static const String eventLinkEnded = 'connect:link:ended';
   static const String eventLinkMute = 'connect:link:mute';
+  /// §18.2: URLs de baixa latência (LL-HLS) da tela dupla.
+  static const String eventLinkMedia = 'connect:link:media';
   /// Mudanças de estado do convite (pending/accepted/declined/expired/
   /// cancelled) — emitido para a sala `user:{id}` dos 2 streamers.
   static const String eventBattleInviteStatus = 'connect:battle:invite_status';

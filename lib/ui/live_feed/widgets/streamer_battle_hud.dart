@@ -162,12 +162,14 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
     final iMuted = battle.mutedOf(mySide);
     final oppMutedMe = battle.mutedOf(opp);
 
-    // Canto inferior INTERNO de uma metade: A → direita da metade; B → esquerda.
+    // Canto inferior INTERNO de uma metade: metade esquerda → canto direito;
+    // metade direita → canto esquerdo (§18.1: o criador fica à esquerda).
     Widget innerBottom(String side, Widget child) {
       final r = layout.half(side);
+      final onLeft = layout.isLeft(side);
       return Positioned(
-        left: side == 'b' ? r.left + 6 : null,
-        right: side == 'a' ? layout.screen.width - r.right + 6 : null,
+        left: !onLeft ? r.left + 6 : null,
+        right: onLeft ? layout.screen.width - r.right + 6 : null,
         bottom: layout.screen.height - r.bottom + 6,
         child: child,
       );
@@ -204,12 +206,12 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
             bottom: layout.screen.height - layout.half(opp).bottom + 40,
             child: IgnorePointer(
               child: Align(
-                alignment: opp == 'a' ? Alignment.bottomLeft : Alignment.bottomRight,
+                alignment: layout.isLeft(opp) ? Alignment.bottomLeft : Alignment.bottomRight,
                 child: Text(
                   l10n.battleMutedLine(battle.nameOf(opp)),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: opp == 'a' ? TextAlign.left : TextAlign.right,
+                  textAlign: layout.isLeft(opp) ? TextAlign.left : TextAlign.right,
                   style: const TextStyle(
                     color: kBattleText,
                     fontSize: 10.5,
@@ -229,7 +231,7 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
             bottom: layout.screen.height - layout.half(mySide).bottom + 8,
             child: IgnorePointer(
               child: Align(
-                alignment: mySide == 'a' ? Alignment.bottomLeft : Alignment.bottomRight,
+                alignment: layout.isLeft(mySide) ? Alignment.bottomLeft : Alignment.bottomRight,
                 child: Text(
                   l10n.battleMutedByLine(battle.nameOf(opp)),
                   maxLines: 2,

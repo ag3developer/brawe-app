@@ -29,8 +29,13 @@ double battleCreatorSplitTop(BuildContext context) =>
     MediaQuery.paddingOf(context).top + 46 + 6 + 30 + 8 + kLinkControlBandH;
 
 /// Layout da batalha para a tela atual (mesma conta do vídeo e do HUD).
-BattleLayout battleLayoutOf(BuildContext context, {double? splitTop}) =>
+BattleLayout battleLayoutOf(
+  BuildContext context, {
+  double? splitTop,
+  String ownSide = 'a',
+}) =>
     BattleLayout.compute(
+      ownSide: ownSide,
       screen: MediaQuery.sizeOf(context),
       splitTop: splitTop ?? battleViewerSplitTop(context),
       stripH: kBattleStripH,
@@ -40,7 +45,7 @@ BattleLayout battleLayoutOf(BuildContext context, {double? splitTop}) =>
 ///
 /// Camadas (todas posicionadas pelo [BattleLayout]):
 /// - faixa superior: avatar+nome+placar | cronômetro | placar+nome+avatar,
-///   com a barra de vantagem logo abaixo (A à esquerda, B à direita);
+///   com a barra de vantagem logo abaixo (dono à esquerda, parceiro à direita);
 /// - apoiadores (top 3) sob cada metade, na região do chat;
 /// - toasts de presente dentro da metade que recebeu;
 /// - contagem 3·2·1 dirigida pelo servidor;
@@ -232,8 +237,8 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
         // Foto redonda do adversário na faixa escura ABAIXO da metade dele.
         Positioned(
           top: layout.chat.top + 2,
-          left: opp == 'a' ? h.left + 2 : null,
-          right: opp == 'b' ? layout.screen.width - h.right + 2 : null,
+          left: layout.isLeft(opp) ? h.left + 2 : null,
+          right: !layout.isLeft(opp) ? layout.screen.width - h.right + 2 : null,
           child: PartnerAvatarButton(
             name: name,
             avatarUrl: battle.avatarOf(opp),
@@ -289,7 +294,13 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
       }
     });
 
-    final layout = battleLayoutOf(context, splitTop: widget.splitTop);
+    // §18.1: com `owner_left`, o dono da sala assistida fica à esquerda (azul).
+    final cur = async.asData?.value;
+    final layout = battleLayoutOf(
+      context,
+      splitTop: widget.splitTop,
+      ownSide: (cur != null && cur.ownerLeft ? _ownSideOf(cur) : null) ?? 'a',
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) BattleGiftRegions.publish(layout);
     });
@@ -357,7 +368,11 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
         // ── Barra de vantagem (pontos dentro), colada no topo do vídeo ──
         Positioned.fromRect(
           rect: layout.strip,
-          child: BattleAdvantageBar(battle: battle, mySide: mySide),
+          child: BattleAdvantageBar(
+            battle: battle,
+            mySide: mySide,
+            ownSide: layout.ownSide,
+          ),
         ),
 
         // ── Cronômetro (ou FIM): pílula escura no alto do vídeo ──
@@ -380,7 +395,10 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
         // ── Selo de vitórias: canto superior EXTERNO de cada metade ──
         if ((battle.winStreakA ?? 0) > 0)
           Positioned(
-            left: layout.halfA.left + 6,
+            left: layout.isLeft('a') ? layout.halfA.left + 6 : null,
+            right: layout.isLeft('a')
+                ? null
+                : layout.screen.width - layout.halfA.right + 6,
             top: topY,
             child: IgnorePointer(
               child: BattleStreakBadge(side: 'a', streak: battle.winStreakA!),
@@ -388,7 +406,10 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
           ),
         if ((battle.winStreakB ?? 0) > 0)
           Positioned(
-            right: layout.screen.width - layout.halfB.right + 6,
+            left: layout.isLeft('b') ? layout.halfB.left + 6 : null,
+            right: layout.isLeft('b')
+                ? null
+                : layout.screen.width - layout.halfB.right + 6,
             top: topY,
             child: IgnorePointer(
               child: BattleStreakBadge(side: 'b', streak: battle.winStreakB!),
@@ -399,7 +420,10 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
         // metade dele) e, no meio, o desafio relâmpago. ──
         if (ownSide == 'a' && battle.topGiftersA.isNotEmpty)
           Positioned(
-            left: layout.halfA.left + 6,
+            left: layout.isLeft('a') ? layout.halfA.left + 6 : null,
+            right: layout.isLeft('a')
+                ? null
+                : layout.screen.width - layout.halfA.right + 6,
             top: layout.chat.top + 6,
             child: IgnorePointer(
               child: BattleSupporters(
@@ -411,7 +435,10 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
           ),
         if (ownSide == 'b' && battle.topGiftersB.isNotEmpty)
           Positioned(
-            right: layout.screen.width - layout.halfB.right + 6,
+            left: layout.isLeft('b') ? layout.halfB.left + 6 : null,
+            right: layout.isLeft('b')
+                ? null
+                : layout.screen.width - layout.halfB.right + 6,
             top: layout.chat.top + 6,
             child: IgnorePointer(
               child: BattleSupporters(
@@ -464,9 +491,11 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
         // ── Pegando fogo: abaixo do cronômetro, lado interno da metade quente ──
         if (momentumActive)
           Positioned(
-            left: _momentumSide == 'b' ? layout.halfB.left + 6 : null,
-            right: _momentumSide == 'a'
-                ? layout.screen.width - layout.halfA.right + 6
+            left: !layout.isLeft(_momentumSide!)
+                ? layout.half(_momentumSide!).left + 6
+                : null,
+            right: layout.isLeft(_momentumSide!)
+                ? layout.screen.width - layout.half(_momentumSide!).right + 6
                 : null,
             top: layout.split.top + kBattleBarH + 38,
             child: IgnorePointer(

@@ -27,10 +27,10 @@ class DualHlsPlayer extends StatefulWidget {
 
   final BattleLayout layout;
 
-  /// HLS URL do streamer da esquerda. `null` enquanto não provisionado.
+  /// HLS URL do lado A (desenhado à esquerda só se o dono for A; ver [BattleLayout.ownSide]). `null` enquanto não provisionado.
   final String? streamUrlA;
 
-  /// HLS URL do streamer da direita. `null` enquanto não provisionado.
+  /// HLS URL do lado B. `null` enquanto não provisionado.
   final String? streamUrlB;
 
   final String? streamerAName;
@@ -48,7 +48,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
 
   /// Qual lado está com áudio ativo: 'A' ou 'B'. Default 'A'.
   /// Em batalha NUNCA os 2 ficam com áudio simultâneo (cria eco horrendo).
-  String _audioSide = 'A';
+  late String _audioSide = widget.layout.ownSide.toUpperCase();
 
   @override
   void initState() {
@@ -151,6 +151,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
             controller: _controllerA,
             isInitialized: _initializedA,
             side: 'a',
+            onLeft: l.isLeft('a'),
             streamerName: widget.streamerAName,
             audioActive: _audioSide == 'A',
             onTapAudio: () => _toggleAudio('A'),
@@ -162,6 +163,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
             controller: _controllerB,
             isInitialized: _initializedB,
             side: 'b',
+            onLeft: l.isLeft('b'),
             streamerName: widget.streamerBName,
             audioActive: _audioSide == 'B',
             onTapAudio: () => _toggleAudio('B'),
@@ -186,6 +188,7 @@ class _HalfStream extends StatelessWidget {
     required this.controller,
     required this.isInitialized,
     required this.side,
+    required this.onLeft,
     required this.streamerName,
     required this.audioActive,
     required this.onTapAudio,
@@ -194,13 +197,16 @@ class _HalfStream extends StatelessWidget {
   final VideoPlayerController? controller;
   final bool isInitialized;
   final String side;
+
+  /// Metade desenhada à esquerda (dono, §18.1): o alto-falante vai no canto interno.
+  final bool onLeft;
   final String? streamerName;
   final bool audioActive;
   final VoidCallback onTapAudio;
 
   @override
   Widget build(BuildContext context) {
-    final isA = side == 'a';
+    final isA = onLeft;
     final ready = controller != null && isInitialized;
     return ClipRect(
       child: Stack(

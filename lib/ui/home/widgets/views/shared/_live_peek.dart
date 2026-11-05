@@ -104,6 +104,17 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
   @override
   void didUpdateWidget(covariant LivePeekBackground oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // URL trocou (ex.: entrou a versão de baixa latência da conexão, §18.2):
+    // recria o player com a nova fonte.
+    if (widget.streamUrl != oldWidget.streamUrl) {
+      _retryTimer?.cancel();
+      final old = _ctrl;
+      _ctrl = null;
+      _ready = false;
+      _attempts = 0;
+      if (old != null) Future.microtask(old.dispose);
+      if (_active) _bootPlayer();
+    }
     if (widget.isActive != oldWidget.isActive) {
       if (widget.isActive) {
         _attempts = 0;

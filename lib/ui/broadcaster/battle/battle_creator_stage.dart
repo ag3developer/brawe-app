@@ -9,8 +9,8 @@ import 'battle_rtc_session.dart';
 
 /// Camada de vídeo do CRIADOR com tempo real (`composite`): a própria
 /// câmera (pré-visualização local) na metade do próprio lado e o vídeo do
-/// adversário (LiveKit) na outra — mesmo layout da composição (§1), A à
-/// esquerda e B à direita.
+/// adversário (LiveKit) na outra — mesmo layout da composição (§1/§18.1):
+/// o criador à esquerda, o parceiro à direita (via [BattleLayout.half]).
 class BattleCreatorStage extends StatelessWidget {
   const BattleCreatorStage({
     super.key,

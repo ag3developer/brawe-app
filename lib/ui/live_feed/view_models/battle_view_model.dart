@@ -250,6 +250,7 @@ class BattleViewModel extends _$BattleViewModel {
           prev?.playbackIdB,
       phase: phase,
       rtcMode: _str(pick('rtc_mode')) ?? prev?.rtcMode ?? 'dual_hls',
+      ownerLeft: pick('owner_left') as bool? ?? prev?.ownerLeft ?? false,
       powerMoment: pick('power_moment') as bool? ?? prev?.powerMoment ?? false,
       multiplier:
           (pick('power_multiplier') as num?)?.toDouble() ??
@@ -389,6 +390,7 @@ class BattleViewModel extends _$BattleViewModel {
         durationSeconds: duration ?? s.durationSeconds,
         timeRemaining: _remainingFrom(endsAt),
         rtcMode: _str(json['rtc_mode']) ?? s.rtcMode,
+        ownerLeft: json['owner_left'] as bool? ?? s.ownerLeft,
         mutedA: muted is Map ? muted['a'] == true : s.mutedA,
         mutedB: muted is Map ? muted['b'] == true : s.mutedB,
         // 🎬 Atualiza URLs do split-screen — fallback caso o REST inicial
@@ -446,6 +448,7 @@ class BattleViewModel extends _$BattleViewModel {
       (s) => s.copyWith(
         phase: s.phase == BattlePhase.active ? s.phase : BattlePhase.countdown,
         rtcMode: rtc ?? s.rtcMode,
+        ownerLeft: json['owner_left'] as bool? ?? s.ownerLeft,
         countdown: hasNumber ? (value! > 0 ? value : null) : 3,
       ),
     );
@@ -626,7 +629,12 @@ class BattleViewModel extends _$BattleViewModel {
   void _onRtcFallback(dynamic raw) {
     final json = _parse(raw);
     if (json == null || json['battle_id'] != battleId) return;
-    _update((s) => s.copyWith(rtcMode: _str(json['rtc_mode']) ?? 'dual_hls'));
+    _update(
+      (s) => s.copyWith(
+        rtcMode: _str(json['rtc_mode']) ?? 'dual_hls',
+        ownerLeft: json['owner_left'] as bool? ?? s.ownerLeft,
+      ),
+    );
   }
 
   /// Mantém o desafio anterior só enquanto o prazo dele não passou.

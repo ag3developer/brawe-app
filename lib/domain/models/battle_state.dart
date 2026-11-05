@@ -131,6 +131,7 @@ class BattleState {
     this.topGiftersA = const [],
     this.topGiftersB = const [],
     this.rtcMode = 'dual_hls',
+    this.ownerLeft = false,
     this.endsAt,
     this.durationSeconds,
     this.mutedA = false,
@@ -212,6 +213,10 @@ class BattleState {
 
   /// 'composite' (LiveKit + composição) | 'dual_hls' (fallback).
   final String rtcMode;
+
+  /// §18.1: o servidor espelha a composição (dono à esquerda). `false` = A
+  /// à esquerda, como no app antigo.
+  final bool ownerLeft;
 
   /// Fim da batalha no relógio do servidor.
   final DateTime? endsAt;
@@ -345,6 +350,7 @@ class BattleState {
     Object? streamerAAvatarUrl = _unset,
     Object? streamerBAvatarUrl = _unset,
     String? rtcMode,
+    bool? ownerLeft,
     Object? endsAt = _unset,
     Object? durationSeconds = _unset,
     bool? mutedA,
@@ -428,6 +434,7 @@ class BattleState {
       topGiftersA: topGiftersA ?? this.topGiftersA,
       topGiftersB: topGiftersB ?? this.topGiftersB,
       rtcMode: rtcMode ?? this.rtcMode,
+      ownerLeft: ownerLeft ?? this.ownerLeft,
       endsAt: identical(endsAt, _unset) ? this.endsAt : endsAt as DateTime?,
       durationSeconds: identical(durationSeconds, _unset)
           ? this.durationSeconds

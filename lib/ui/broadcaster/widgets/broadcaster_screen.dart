@@ -1246,6 +1246,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     return b ?? _rtcSession?.credentials.side ?? 'a';
   }
 
+  /// Lado desenhado à esquerda (§18.1): o meu, só se o servidor sinalizou
+  /// `owner_left` (conexão ou batalha); senão A à esquerda como antes.
+  String _layoutSide() {
+    final id = _activeBattleId;
+    final b = id == null ? null : ref.read(battleViewModelProvider(id)).value;
+    final flag = b != null ? b.ownerLeft : (_link?.ownerLeft ?? false);
+    return flag ? _mySideNow() : 'a';
+  }
+
   /// Reaplica o mudo vigente (conexão ou batalha) a uma sessão recém-criada.
   void _applyMuteTo(BattleRtcSession session) {
     final side = _mySideNow();
@@ -2702,12 +2711,13 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
             children: [
               // ===== Camera Preview =====
               // Batalha com tempo real: própria câmera + adversário (LiveKit)
-              // no layout do contrato (A esq / B dir).
+              // no layout do contrato (eu à esq / parceiro à dir, §18.1).
               if (_rtcActive && _rtcSession != null)
                 BattleCreatorStage(
                   layout: battleLayoutOf(
                     context,
                     splitTop: battleCreatorSplitTop(context),
+                    ownSide: _layoutSide(),
                   ),
                   session: _rtcSession!,
                   mySide: _mySideNow(),
@@ -2761,6 +2771,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   top: battleLayoutOf(
                     context,
                     splitTop: battleCreatorSplitTop(context),
+                    ownSide: _layoutSide(),
                   ).chat.top,
                   child: const ColoredBox(color: Color(0xFF0B0E14)),
                 ),
@@ -2796,6 +2807,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   battleLayoutOf(
                     context,
                     splitTop: battleCreatorSplitTop(context),
+                    ownSide: _layoutSide(),
                   ).chat,
                   EntranceEffectLayer(
                     roomId: widget.room.id,
@@ -2807,6 +2819,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   battleLayoutOf(
                     context,
                     splitTop: battleCreatorSplitTop(context),
+                    ownSide: _layoutSide(),
                   ).chat,
                   ComboTierLayer(roomId: widget.room.id),
                 ),
@@ -2827,6 +2840,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                     layout: battleLayoutOf(
                       context,
                       splitTop: battleCreatorSplitTop(context),
+                      ownSide: _layoutSide(),
                     ),
                     ownSide:
                         _link!.sideOf(
@@ -2846,6 +2860,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                     final layout = battleLayoutOf(
                       context,
                       splitTop: battleCreatorSplitTop(context),
+                      ownSide: _layoutSide(),
                     );
                     final own =
                         _link!.sideOf(
@@ -2857,8 +2872,9 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                     final h = layout.half(partner);
                     return Positioned(
                       top: layout.split.top - kLinkControlBandH + 4,
-                      left: partner == 'a' ? h.left + 8 : null,
-                      right: partner == 'b'
+                      // §18.1: o parceiro fica à direita; o botão segue a metade dele.
+                      left: layout.isLeft(partner) ? h.left + 8 : null,
+                      right: !layout.isLeft(partner)
                           ? layout.screen.width - h.right + 8
                           : null,
                       child: LinkMuteButton(
@@ -2997,6 +3013,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                       ? battleLayoutOf(
                           context,
                           splitTop: battleCreatorSplitTop(context),
+                          ownSide: _layoutSide(),
                         ).chat.top
                       : null,
                   banner: _outgoingInvite == null

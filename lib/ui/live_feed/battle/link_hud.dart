@@ -64,8 +64,8 @@ class LinkHudOverlay extends ConsumerWidget {
           // (fora do vídeo, sem nome): o toque abre a gaveta Seguir / Ver a live.
           Positioned(
             top: layout.chat.top + 2,
-            left: partnerSide == 'a' ? half.left + 2 : null,
-            right: partnerSide == 'b'
+            left: layout.isLeft(partnerSide) ? half.left + 2 : null,
+            right: !layout.isLeft(partnerSide)
                 ? layout.screen.width - half.right + 2
                 : null,
             child: PartnerAvatarButton(

@@ -60,6 +60,16 @@ import '../../wallet/widgets/top_up_coins_sheet.dart';
 import '../../core/themes/app_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
+/// Extrai o playbackId de `https://stream.mux.com/<id>.m3u8` (ignora query).
+/// Retorna `null` para qualquer outra URL.
+String? muxPlaybackIdOf(String? url) {
+  if (url == null) return null;
+  final m = RegExp(
+    r'^https://stream\.mux\.com/([A-Za-z0-9]+)\.m3u8(?:\?.*)?$',
+  ).firstMatch(url.trim());
+  return m?.group(1);
+}
+
 // ── Qualidade de stream ───────────────────────────────────────────────────────
 
 enum StreamQuality {
@@ -277,6 +287,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.on(AppConstants.eventLinkStarted, _onLinkStarted);
     socket.on(AppConstants.eventLinkEnded, _onLinkEnded);
     socket.on(AppConstants.eventLinkMute, _onLinkMute);
+    socket.on(AppConstants.eventLinkMedia, _onLinkMedia);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -296,6 +307,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.off(AppConstants.eventLinkStarted, _onLinkStarted);
     socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
     socket.off(AppConstants.eventLinkMute, _onLinkMute);
+    socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
     socket.off(AppConstants.eventLivePaused, _onLivePaused);
     socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -305,6 +317,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.on(AppConstants.eventLinkStarted, _onLinkStarted);
     socket.on(AppConstants.eventLinkEnded, _onLinkEnded);
     socket.on(AppConstants.eventLinkMute, _onLinkMute);
+    socket.on(AppConstants.eventLinkMedia, _onLinkMedia);
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -327,6 +340,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       socket.off(AppConstants.eventLinkStarted, _onLinkStarted);
       socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
       socket.off(AppConstants.eventLinkMute, _onLinkMute);
+      socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
+    socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
       socket.off(AppConstants.eventLivePaused, _onLivePaused);
       socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
       socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -401,15 +416,37 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final l = LinkState.tryParse(_parseSocketPayload(raw));
     if (l == null || !_linkIsMine(l)) return;
     final wasLinked = _link != null;
+    final before = _llUrl;
     setState(() => _link = l);
-    if (!wasLinked) _reloadAfterSourceSwitch();
+    // §18.2: já veio a URL de baixa latência → troca na hora (a retentativa
+    // cobre o 404 dos primeiros segundos). Senão, recarrega o HLS normal.
+    if (_llUrl != null && _llUrl != before) {
+      _restartPlayer();
+    } else if (!wasLinked) {
+      _reloadAfterSourceSwitch();
+    }
+  }
+
+  /// `connect:link:media`: as streams LL ficaram prontas (ou mudaram).
+  void _onLinkMedia(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    final cur = _link;
+    if (data == null || cur == null || data['link_id'] != cur.linkId) return;
+    final pb = LinkState.parsePlayback(data['playback']);
+    final before = _llUrl;
+    setState(() => _link = cur.withPlayback(pb.$1, pb.$2));
+    if (_llUrl != before) _restartPlayer();
   }
 
   void _onLinkEnded(dynamic raw) {
     if (!mounted) return;
     final data = _parseSocketPayload(raw);
     if (data == null || data['link_id'] != _link?.linkId) return;
+    final hadLl = _llUrl != null;
     setState(() => _link = null);
+    // Streams LL apagadas no fim da conexão: volta já para a URL da sala.
+    if (hadLl) _restartPlayer();
     _reloadAfterSourceSwitch();
   }
 
@@ -430,7 +467,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   Future<void> _checkActiveLink() async {
     try {
       final l = await ref.read(linkServiceProvider).getActive(widget.room.id);
-      if (l != null && l.isActive && mounted) setState(() => _link = l);
+      if (l != null && l.isActive && mounted) {
+        final before = _llUrl;
+        setState(() => _link = l);
+        if (_llUrl != null && _llUrl != before && _controller != null) {
+          _restartPlayer();
+        }
+      }
     } on DioException catch (e) {
       // 404: a conexão acabou enquanto estávamos offline → sai da tela dupla.
       if (e.response?.statusCode == 404 && mounted && _link != null) {
@@ -580,18 +623,54 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     return null;
   }
 
+  /// URL de baixa latência do lado desta sala na conexão ativa (§18.2).
+  String? get _llUrl {
+    final l = _link;
+    if (l == null || !l.isActive) return null;
+    final side = l.sideOf(roomId: widget.room.id);
+    return side == null ? null : l.playbackOf(side);
+  }
+
+  /// Lado (A/B) da sala assistida: é o que fica à esquerda, em azul (§18.1).
+  /// Só espelha quando o servidor sinaliza `owner_left` (senão A à esquerda,
+  /// igual ao vídeo do app antigo).
+  String get _ownSide {
+    final id = _activeBattleId;
+    if (id != null) {
+      final b = ref.read(battleViewModelProvider(id)).value;
+      final s = b?.sideOf(roomId: widget.room.id);
+      if (b != null && s != null) return b.ownerLeft ? s : 'a';
+    }
+    final l = _link;
+    if (l != null && l.ownerLeft) {
+      return l.sideOf(roomId: widget.room.id) ?? 'a';
+    }
+    return 'a';
+  }
+
+  BattleLayout _layout() => battleLayoutOf(context, ownSide: _ownSide);
+
+  /// URL a tocar: LL da conexão (se houver) ou a normal da sala, com a
+  /// qualidade escolhida quando for Mux.
+  String? _resolveStreamUrl(StreamQuality q) {
+    // Se a LL falha várias vezes (não existe mais), cai na URL normal.
+    final ll = _playerAttempts >= 6 ? null : _llUrl;
+    final base = ll ?? _freshStreamUrl ?? widget.room.streamUrl;
+    final id = ll != null
+        ? muxPlaybackIdOf(ll)
+        : (_freshPlaybackId ?? widget.room.playbackId ?? muxPlaybackIdOf(base));
+    if (id != null) return q.buildUrl(id);
+    return base;
+  }
+
   Future<void> _initializePlayer({StreamQuality? quality}) async {
     if (_controller != null && quality == null) return;
     _playerRetryTimer?.cancel();
-    final playbackId = _freshPlaybackId ?? widget.room.playbackId;
     final q = quality ?? _quality;
 
-    // Determinar URL com base na qualidade selecionada.
-    // Se temos o playbackId, construímos a URL com o parâmetro correto.
-    // Caso contrário, usamos a streamUrl que já vem do DTO.
-    final String? streamUrl = playbackId != null
-        ? q.buildUrl(playbackId)
-        : (_freshStreamUrl ?? widget.room.streamUrl);
+    // URL conforme a qualidade escolhida. O servidor só manda a URL do Mux
+    // (sem playback_id): o id é extraído dela; URLs fora do Mux ficam como estão.
+    final String? streamUrl = _resolveStreamUrl(q);
 
     if (streamUrl == null || streamUrl.isEmpty) {
       // Sala vinda de uma lista sem o endereço do vídeo: busca de novo.
@@ -1075,7 +1154,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               left: 0,
               right: 0,
               bottom: 0,
-              top: battleLayoutOf(context).chat.top,
+              top: _layout().chat.top,
               child: const ColoredBox(color: kBattleBg),
             ),
 
@@ -1127,7 +1206,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               context,
               Rect.fromLTRB(
                 MediaQuery.sizeOf(context).width - 64,
-                battleLayoutOf(context).chat.top,
+                _layout().chat.top,
                 MediaQuery.sizeOf(context).width,
                 MediaQuery.sizeOf(context).height -
                     MediaQuery.paddingOf(context).bottom -
@@ -1205,13 +1284,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           if (_split) ...[
             battleRegionWrap(
               context,
-              battleLayoutOf(context).chat,
+              _layout().chat,
               EntranceEffectLayer(roomId: widget.room.id),
             ),
             // ── 5.2 Degraus do combo (partículas/Lottie/VAP, prioridade < presente)
             battleRegionWrap(
               context,
-              battleLayoutOf(context).chat,
+              _layout().chat,
               ComboTierLayer(roomId: widget.room.id),
             ),
           ] else ...[
@@ -1225,11 +1304,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            top: _split ? battleLayoutOf(context).chat.top : null,
+            top: _split ? _layout().chat.top : null,
             child: _BattleDockClip(
               enabled: _split,
               child: _ViewerChatDock(
-                battleChatTop: _split ? battleLayoutOf(context).chat.top : null,
+                battleChatTop: _split ? _layout().chat.top : null,
                 // Produto fixado/loja: exclusivos da live solo (somem na conexão/batalha).
               pinnedProduct: _split
                   ? const SizedBox.shrink()
@@ -1294,7 +1373,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             Positioned.fill(
               child: LinkHudOverlay(
                 link: _link!,
-                layout: battleLayoutOf(context),
+                layout: _layout(),
                 ownSide: _link!.sideOf(roomId: widget.room.id) ?? 'a',
                 onOpenPartner: (id) => context.push('/live/$id'),
               ),
@@ -1371,15 +1450,15 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         _isInitialized &&
         _controller != null) {
       _scheduleSoloPlayback(playing: true);
-      return _compositeFrame(battleLayoutOf(context));
+      return _compositeFrame(_layout());
     }
     // 🎬 BATTLE MODE — o layout vem de [BattleLayout] (contrato §1): faixa do
-    // HUD no topo, faixa dividida (A esq / B dir) e região do chat embaixo.
+    // HUD no topo, faixa dividida (dono esq / parceiro dir, §18.1) e região do chat embaixo.
     if (_activeBattleId != null) {
       BattleRoomScope.set(_activeBattleId!, widget.room.id);
       final battle = ref.watch(battleViewModelProvider(_activeBattleId!)).value;
       if (battle != null) {
-        final layout = battleLayoutOf(context);
+        final layout = _layout();
         // composite: a sala já entrega UM HLS com a tela dividida montada
         // (preenche o frame 720×1280). dual_hls (fallback): 2 players dentro
         // da mesma faixa dividida.
@@ -1413,7 +1492,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           _isInitialized &&
           _controller != null) {
         _scheduleSoloPlayback(playing: true);
-        return _compositeFrame(battleLayoutOf(context));
+        return _compositeFrame(_layout());
       }
       // Fallback: batalha ativa mas ainda sem dados/vídeo — cai no
       // player solo enquanto o REST/socket sincroniza.

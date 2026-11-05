@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/services/battle_service.dart';
+import '../../../../data/services/link_service.dart';
 import '../../../../domain/models/feed_item.dart';
 import '../../../../domain/models/live_room.dart';
 import '../../../../gen/l10n/app_localizations.dart';
@@ -39,6 +40,13 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
   /// Dados REAIS de `/battle/active`. `null` enquanto não carregou.
   int? _scoreA;
   int? _scoreB;
+
+  /// A sala do card é o lado B da batalha? (§18.1: o dono do card fica à
+  /// esquerda/azul; os dados continuam em A/B.)
+  bool _ownIsB = false;
+
+  /// URL de baixa latência da conexão (§18.2), se houver.
+  String? _llUrl;
   String? _rtcMode;
   DateTime? _endsAt;
   Duration _serverOffset = Duration.zero;
@@ -90,12 +98,17 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
       final b = d['streamer_b'] is Map ? d['streamer_b'] as Map : const {};
       final sa = (d['score_a'] as num?) ?? (a['score'] as num?);
       final sb = (d['score_b'] as num?) ?? (b['score'] as num?);
+      final roomB = d['room_b_id']?.toString() ?? b['room_id']?.toString();
+      final roomA = d['room_a_id']?.toString() ?? a['room_id']?.toString();
+      final ownIsB =
+          d['owner_left'] == true && roomB == item.id && roomA != item.id;
       final now = _ts(d['server_now']);
       final ends = _ts(d['ends_at']);
       final left = (d['time_remaining_seconds'] as num?)?.toInt();
       setState(() {
         _scoreA = (sa ?? 0).round();
         _scoreB = (sb ?? 0).round();
+        _ownIsB = ownIsB;
         _rtcMode = d['rtc_mode']?.toString();
         if (now != null) {
           _serverOffset = now.difference(DateTime.now().toUtc());
@@ -108,6 +121,7 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
                 : null);
       });
       _updateRemaining();
+      unawaited(_loadLink());
       _tick ??= _endsAt == null
           ? null
           : Timer.periodic(
@@ -116,6 +130,20 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
             );
     } catch (_) {
       // Sem dados reais (batalha acabou / rede): segue sem placar e timer.
+    }
+  }
+
+  /// Prefere a stream LL-HLS enquanto a sala está numa conexão (§18.2).
+  Future<void> _loadLink() async {
+    try {
+      final l = await ref.read(linkServiceProvider).getActive(item.id);
+      final side = l?.sideOf(roomId: item.id);
+      final url = (l != null && l.isActive && side != null)
+          ? l.playbackOf(side)
+          : null;
+      if (mounted && url != _llUrl) setState(() => _llUrl = url);
+    } catch (_) {
+      // Sem conexão / tempo real desligado: segue com a URL normal.
     }
   }
 
@@ -171,7 +199,7 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
             LivePeekBackground(
               roomId: item.id,
               thumbnailUrl: item.thumbnailUrlA,
-              streamUrl: item.streamUrl,
+              streamUrl: _llUrl ?? item.streamUrl,
               isActive: widget.isActive,
             )
           else
@@ -182,7 +210,7 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
                     child: LivePeekBackground(
                       roomId: item.id,
                       thumbnailUrl: item.thumbnailUrlA,
-                      streamUrl: item.streamUrl,
+                      streamUrl: _llUrl ?? item.streamUrl,
                       isActive: widget.isActive,
                     ),
                   ),
@@ -240,7 +268,10 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
                   _TimerPill(remaining: _remaining!),
                   const SizedBox(height: 8),
                 ],
-                _ScoreBar(scoreA: _scoreA, scoreB: _scoreB),
+                _ScoreBar(
+                  ownScore: _ownIsB ? _scoreB : _scoreA,
+                  partnerScore: _ownIsB ? _scoreA : _scoreB,
+                ),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -323,16 +354,17 @@ class _OpponentHalf extends StatelessWidget {
   }
 }
 
-/// Barra estilo TikTok: azul (A) × laranja (B), placar inteiro dentro.
+/// Barra estilo TikTok: dono do card (esquerda, azul) × parceiro (direita,
+/// laranja), placar inteiro dentro (§18.1).
 class _ScoreBar extends StatelessWidget {
-  const _ScoreBar({required this.scoreA, required this.scoreB});
-  final int? scoreA;
-  final int? scoreB;
+  const _ScoreBar({required this.ownScore, required this.partnerScore});
+  final int? ownScore;
+  final int? partnerScore;
 
   @override
   Widget build(BuildContext context) {
-    final a = scoreA ?? 0;
-    final b = scoreB ?? 0;
+    final a = ownScore ?? 0;
+    final b = partnerScore ?? 0;
     final total = a + b;
     final fracA = total == 0 ? 0.5 : (a / total).clamp(0.12, 0.88);
     const tab = [FontFeature.tabularFigures()];
@@ -349,7 +381,7 @@ class _ScoreBar extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(
-                  scoreA == null ? '' : '$a',
+                  ownScore == null ? '' : '$a',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -366,7 +398,7 @@ class _ScoreBar extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
-                  scoreB == null ? '' : '$b',
+                  partnerScore == null ? '' : '$b',
                   style: const TextStyle(
                     color: kBattleInk,
                     fontSize: 12,

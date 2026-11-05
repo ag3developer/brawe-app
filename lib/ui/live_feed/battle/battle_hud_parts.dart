@@ -31,12 +31,14 @@ BoxDecoration battleGlass({double radius = 14}) => BoxDecoration(
 
 const _tab = [FontFeature.tabularFigures()];
 
-/// Cor do lado: A = azul de ação, B = laranja da marca.
-Color battleSideColor(String side) =>
-    side == 'b' ? AppColors.braweOrange : AppColors.braweBlueBright;
+/// Cor do lado (§18.1): o dono ([ownSide], à esquerda) é azul de ação; o
+/// parceiro (à direita) é laranja da marca.
+Color battleSideColor(String side, String ownSide) =>
+    side == ownSide ? AppColors.braweBlueBright : AppColors.braweOrange;
 
 /// Cor de texto legível sobre [battleSideColor] (laranja não aceita branco).
-Color battleOnSide(String side) => side == 'b' ? kBattleInk : Colors.white;
+Color battleOnSide(String side, String ownSide) =>
+    side == ownSide ? Colors.white : kBattleInk;
 
 String formatBattleScore(double v) {
   if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
@@ -99,17 +101,29 @@ class BattleAvatar extends StatelessWidget {
 
 // ─── Barra de vantagem com os pontos DENTRO ─────────────────────────────────
 
-/// Barra de ponta a ponta colada no topo do vídeo (~24 px): A azul à esquerda
-/// (texto branco), B laranja à direita (texto escuro). Sem nomes/avatares.
+/// Barra de ponta a ponta colada no topo do vídeo (~24 px): dono azul à esquerda
+/// (texto branco), parceiro laranja à direita (texto escuro). Sem nomes/avatares.
 /// A fronteira "empurra" com mola (overshoot leve) a cada mudança de pontos,
 /// com a costura branca pulsando (o único brilho do HUD) e números que contam.
+/// Fração da barra ocupada pelo lado da esquerda (o dono).
+double _progressLeft(BattleState b, String ownSide) =>
+    ownSide == 'b' ? 1 - b.progressA : b.progressA;
+
 class BattleAdvantageBar extends StatefulWidget {
-  const BattleAdvantageBar({super.key, required this.battle, this.mySide});
+  const BattleAdvantageBar({
+    super.key,
+    required this.battle,
+    this.mySide,
+    this.ownSide = 'a',
+  });
 
   final BattleState battle;
 
   /// Lado do criador que está vendo (marca "Você"); `null` = espectador.
   final String? mySide;
+
+  /// Lado da sala assistida: desenhado à esquerda, em azul (§18.1).
+  final String ownSide;
 
   @override
   State<BattleAdvantageBar> createState() => _BattleAdvantageBarState();
@@ -119,7 +133,7 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
     with TickerProviderStateMixin {
   late final AnimationController _spring = AnimationController.unbounded(
     vsync: this,
-    value: widget.battle.progressA.clamp(0.04, 0.96),
+    value: _progressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96),
   );
   late final AnimationController _pulse = AnimationController(
     vsync: this,
@@ -129,8 +143,9 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
   @override
   void didUpdateWidget(covariant BattleAdvantageBar old) {
     super.didUpdateWidget(old);
-    final target = widget.battle.progressA.clamp(0.04, 0.96);
-    if ((target - old.battle.progressA.clamp(0.04, 0.96)).abs() > 0.0005) {
+    final target = _progressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96);
+    final before = _progressLeft(old.battle, old.ownSide).clamp(0.04, 0.96);
+    if ((target - before).abs() > 0.0005) {
       _spring.animateWith(
         SpringSimulation(
           const SpringDescription(mass: 1, stiffness: 190, damping: 13),
@@ -154,11 +169,11 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
     final battle = widget.battle;
     final you = S.of(context).battleYou;
     Widget label(String side) {
-      final isA = side == 'a';
+      final isLeft = side == widget.ownSide;
       final score = _CountUp(
         value: battle.scoreOf(side),
         style: TextStyle(
-          color: battleOnSide(side),
+          color: battleOnSide(side, widget.ownSide),
           fontSize: 13,
           fontWeight: FontWeight.w800,
           fontFeatures: _tab,
@@ -169,7 +184,7 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
           ? Text(
               you,
               style: TextStyle(
-                color: battleOnSide(side).withValues(alpha: 0.8),
+                color: battleOnSide(side, widget.ownSide).withValues(alpha: 0.8),
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 decoration: TextDecoration.none,
@@ -179,9 +194,9 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!isA && me != null) ...[me, const SizedBox(width: 4)],
+          if (!isLeft && me != null) ...[me, const SizedBox(width: 4)],
           score,
-          if (isA && me != null) ...[const SizedBox(width: 4), me],
+          if (isLeft && me != null) ...[const SizedBox(width: 4), me],
         ],
       );
     }
@@ -234,7 +249,10 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [label('a'), label('b')],
+                children: [
+                  label(widget.ownSide),
+                  label(widget.ownSide == 'a' ? 'b' : 'a'),
+                ],
               ),
             ),
           ],
