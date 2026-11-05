@@ -91,7 +91,7 @@ class LiveTopBar extends ConsumerWidget {
                       isFollowing: isFollowing,
                       onToggleFollow: () => ref
                           .read(followViewModelProvider(room.streamerId).notifier)
-                          .toggleFollow(),
+                          .toggleFollow(sourceRoomId: room.id),
                     ),
                   ),
                 ),
@@ -136,7 +136,7 @@ class LiveTopBar extends ConsumerWidget {
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () => ref
                                       .read(followViewModelProvider(room.streamerId).notifier)
-                                      .toggleFollow(),
+                                      .toggleFollow(sourceRoomId: room.id),
                                   child: Container(
                                     width: 18,
                                     height: 18,

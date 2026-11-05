@@ -14,8 +14,14 @@ class SocialService {
 
   SocialService(this._dio);
 
-  Future<void> followUser(String userId) async {
-    await _dio.post('/social/follow/$userId');
+  /// [sourceRoomId]: live em que a pessoa clicou em seguir (relatório de
+  /// "seguidores ganhos na live"). Opcional; o servidor ignora se inválido.
+  Future<void> followUser(String userId, {String? sourceRoomId}) async {
+    await _dio.post(
+      '/social/follow/$userId',
+      queryParameters:
+          sourceRoomId == null ? null : {'source_room_id': sourceRoomId},
+    );
   }
 
   Future<void> unfollowUser(String userId) async {

@@ -57,7 +57,7 @@ class StreamerIdentityBar extends ConsumerWidget {
           isFollowing: isFollowing,
           onToggleFollow: () => ref
               .read(followViewModelProvider(room.streamerId).notifier)
-              .toggleFollow(),
+              .toggleFollow(sourceRoomId: room.id),
         ),
       ),
     );

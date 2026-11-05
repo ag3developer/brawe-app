@@ -18,9 +18,9 @@ class SocialRepository {
 
   SocialRepository(this._socialService);
 
-  Future<void> followUser(String userId) async {
+  Future<void> followUser(String userId, {String? sourceRoomId}) async {
     try {
-      await _socialService.followUser(userId);
+      await _socialService.followUser(userId, sourceRoomId: sourceRoomId);
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {

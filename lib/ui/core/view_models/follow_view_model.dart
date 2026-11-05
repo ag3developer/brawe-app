@@ -20,7 +20,8 @@ class FollowViewModel extends _$FollowViewModel {
     }
   }
 
-  Future<void> toggleFollow() async {
+  /// [sourceRoomId]: id da live onde o follow aconteceu (só ao seguir).
+  Future<void> toggleFollow({String? sourceRoomId}) async {
     final isCurrentlyFollowing = state.value ?? false;
     
     // Optimistic UI update
@@ -30,7 +31,9 @@ class FollowViewModel extends _$FollowViewModel {
       if (isCurrentlyFollowing) {
         await ref.read(socialRepositoryProvider).unfollowUser(userId);
       } else {
-        await ref.read(socialRepositoryProvider).followUser(userId);
+        await ref
+            .read(socialRepositoryProvider)
+            .followUser(userId, sourceRoomId: sourceRoomId);
       }
     } catch (e) {
       // Revert on error

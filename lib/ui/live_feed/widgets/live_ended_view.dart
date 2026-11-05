@@ -217,7 +217,7 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                           ? null
                           : () {
                               _stopCountdown();
-                              ref.read(followViewModelProvider(room.streamerId).notifier).toggleFollow();
+                              ref.read(followViewModelProvider(room.streamerId).notifier).toggleFollow(sourceRoomId: room.id);
                             },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.braweBlue,
