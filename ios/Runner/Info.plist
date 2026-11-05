@@ -2,33 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>A Brawe precisa de acesso à sua galeria para você escolher fotos e vídeos nas suas publicações e stories.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>A Brawe precisa de permissão para salvar fotos e vídeos capturados na sua galeria.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa. Ela não é usada em segundo plano.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>A Brawe precisa de acesso à câmera para você tirar fotos, gravar vídeos e transmitir ao vivo.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>A Brawe precisa de acesso ao microfone para transmitir seu áudio durante lives e gravar vídeos.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -51,8 +24,31 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>A Brawe precisa de acesso à câmera para você tirar fotos, gravar vídeos e transmitir ao vivo.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>A Brawe não acessa seus contatos. Esta permissão nunca é solicitada; o texto existe porque uma biblioteca de permissões incluída no app contém esse recurso.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa. Ela não é usada em segundo plano.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A Brawe precisa de acesso ao microfone para transmitir seu áudio durante lives e gravar vídeos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>A Brawe precisa de permissão para salvar fotos e vídeos capturados na sua galeria.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>A Brawe precisa de acesso à sua galeria para você escolher fotos e vídeos nas suas publicações e stories.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -76,6 +72,12 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
