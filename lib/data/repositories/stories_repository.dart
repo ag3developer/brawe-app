@@ -225,6 +225,9 @@ class StoriesRepository {
     final hasUnviewed = (json['has_unviewed'] ?? false) as bool;
     final isLive = (json['is_live'] ?? false) as bool;
     final liveRoomId = json['live_room_id'] as String?;
+    final liveKind = json['live_kind'] as String?;
+    final livePartnerName = json['live_partner_name'] as String?;
+    final livePartnerAvatar = json['live_partner_avatar'] as String?;
     final stories = ((json['stories'] as List<dynamic>?) ?? [])
         .map(
           (s) => _storyFromJson(
@@ -246,6 +249,9 @@ class StoriesRepository {
       hasUnviewed: hasUnviewed,
       isLive: isLive,
       liveRoomId: liveRoomId,
+      liveKind: liveKind,
+      livePartnerName: livePartnerName,
+      livePartnerAvatarUrl: livePartnerAvatar,
       stories: stories,
     );
   }

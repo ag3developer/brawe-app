@@ -145,6 +145,9 @@ class UserStoriesGroup {
     this.hasUnviewed = false,
     this.isLive = false,
     this.liveRoomId,
+    this.liveKind,
+    this.livePartnerName,
+    this.livePartnerAvatarUrl,
     required this.stories,
   });
 
@@ -156,7 +159,16 @@ class UserStoriesGroup {
   final bool hasUnviewed;
   final bool isLive;
   final String? liveRoomId;
+
+  /// "solo" | "link" | "battle" — em conexão/batalha a barra mostra as duas
+  /// fotos entrelaçadas (com [livePartnerAvatarUrl]).
+  final String? liveKind;
+  final String? livePartnerName;
+  final String? livePartnerAvatarUrl;
   final List<Story> stories;
+
+  bool get hasLivePartner =>
+      isLive && (liveKind == 'link' || liveKind == 'battle');
 }
 
 /// Item retornado por GET /stories/{id}/viewers

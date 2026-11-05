@@ -57,6 +57,9 @@ class StoriesViewModel extends _$StoriesViewModel {
         hasUnviewed: stillUnviewed,
         isLive: g.isLive,
         liveRoomId: g.liveRoomId,
+        liveKind: g.liveKind,
+        livePartnerName: g.livePartnerName,
+        livePartnerAvatarUrl: g.livePartnerAvatarUrl,
         stories: newStories,
       );
     }).toList();

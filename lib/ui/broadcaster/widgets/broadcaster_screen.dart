@@ -2835,11 +2835,38 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         ) ??
                         'a',
                     isCreator: true,
-                    busy: _linkBusy,
-                    onToggleMute: _toggleLinkMute,
-                    onBattle: _startBattleInLink,
-                    onDisconnect: _confirmDisconnect,
                   ),
+                ),
+
+              // ===== Silenciar o parceiro: faixa escura do topo, acima da
+              // metade dele (conexão E batalha — a conversa continua). =====
+              if (_link != null)
+                Builder(
+                  builder: (context) {
+                    final layout = battleLayoutOf(
+                      context,
+                      splitTop: battleCreatorSplitTop(context),
+                    );
+                    final own =
+                        _link!.sideOf(
+                          userId: _room.streamerId,
+                          roomId: _room.id,
+                        ) ??
+                        'a';
+                    final partner = own == 'a' ? 'b' : 'a';
+                    final h = layout.half(partner);
+                    return Positioned(
+                      top: layout.split.top - kLinkControlBandH + 4,
+                      left: partner == 'a' ? h.left + 8 : null,
+                      right: partner == 'b'
+                          ? layout.screen.width - h.right + 8
+                          : null,
+                      child: LinkMuteButton(
+                        muted: _link!.mutedOf(own),
+                        onTap: _linkBusy ? null : _toggleLinkMute,
+                      ),
+                    );
+                  },
                 ),
 
               // ===== Battle HUD (streamer) =====
@@ -2886,7 +2913,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            Expanded(
+                            Flexible(
                               child: LiveEventChip(
                                 expand: true,
                                 roomId: widget.room.id,
@@ -2900,7 +2927,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Expanded(
+                            Flexible(
                               child: LiveGoalsPill(
                                 expand: true,
                                 key: _goalsKey,

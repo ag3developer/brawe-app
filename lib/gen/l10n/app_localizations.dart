@@ -1395,6 +1395,12 @@ abstract class S {
   /// **'Entrando na live…'**
   String get liveJoining;
 
+  /// No description provided for @liveStoryBattleBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'BATALHA'**
+  String get liveStoryBattleBadge;
+
   /// No description provided for @liveBadgeBattle.
   ///
   /// In pt, this message translates to:

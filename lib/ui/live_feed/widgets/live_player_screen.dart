@@ -155,6 +155,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   // Reconexão do vídeo: no começo da live o HLS ainda não existe, e a rede
   // oscila — sem nova tentativa a tela ficava presa na capa para sempre.
   Timer? _playerRetryTimer;
+
+  /// Vigia de vídeo parado: ao entrar/sair da conexão o criador troca a
+  /// origem do vídeo (RTMP ↔ montagem do servidor) e o HLS do Mux pode só
+  /// "estagnar" sem erro — o espectador ficaria no último quadro.
+  Timer? _stallTimer;
+  Duration _stallLastPos = Duration.zero;
+  int _stallTicks = 0;
   int _playerAttempts = 0;
   String? _freshPlaybackId;
   String? _freshStreamUrl;
@@ -242,6 +249,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _battleCheckDebounce?.cancel();
     _resumeOverlayTimer?.cancel();
     _playerRetryTimer?.cancel();
+    _stallTimer?.cancel();
     _chatCtrl.dispose();
     _chatFocus.dispose();
     _controller?.removeListener(_watchPlayerHealth);
@@ -392,7 +400,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     if (!mounted) return;
     final l = LinkState.tryParse(_parseSocketPayload(raw));
     if (l == null || !_linkIsMine(l)) return;
+    final wasLinked = _link != null;
     setState(() => _link = l);
+    if (!wasLinked) _reloadAfterSourceSwitch();
   }
 
   void _onLinkEnded(dynamic raw) {
@@ -400,6 +410,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final data = _parseSocketPayload(raw);
     if (data == null || data['link_id'] != _link?.linkId) return;
     setState(() => _link = null);
+    _reloadAfterSourceSwitch();
   }
 
   void _onLinkMute(dynamic raw) {
@@ -626,6 +637,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         ..setLooping(false)
         ..setVolume(1.0);
       WakelockPlus.enable();
+      _startStallWatch();
     } catch (e) {
       debugPrint(
         'LivePlayer: video init error (tentativa ${_playerAttempts + 1}): $e',
@@ -668,6 +680,59 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // Fora do listener: não descartar o controller dentro do próprio aviso.
     Future.microtask(c.dispose);
     _schedulePlayerRetry();
+  }
+
+  /// Verifica a cada 2s se o vídeo avança. Parado por ~8s enquanto deveria
+  /// tocar (solo ou tela dividida montada) → recria o player.
+  void _startStallWatch() {
+    _stallTimer?.cancel();
+    _stallTicks = 0;
+    _stallLastPos = _controller?.value.position ?? Duration.zero;
+    _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      final c = _controller;
+      if (!mounted || _ended || c == null || !c.value.isInitialized) return;
+      // Pausado de propósito (dual_hls usa outros players; pausa do criador).
+      if (_soloPlaying == false ||
+          !c.value.isPlaying ||
+          _pauseState == _StreamerPauseState.paused) {
+        _stallTicks = 0;
+        _stallLastPos = c.value.position;
+        return;
+      }
+      final pos = c.value.position;
+      if (pos != _stallLastPos) {
+        _stallLastPos = pos;
+        _stallTicks = 0;
+        return;
+      }
+      if (++_stallTicks >= 4) {
+        debugPrint('LivePlayer: vídeo parado há ~8s — recriando o player');
+        _restartPlayer();
+      }
+    });
+  }
+
+  /// Descarta o player e cria outro no ponto ao vivo (mesma URL).
+  void _restartPlayer() {
+    _stallTimer?.cancel();
+    final c = _controller;
+    if (c != null) {
+      c.removeListener(_watchPlayerHealth);
+      _controller = null;
+      Future.microtask(c.dispose);
+    }
+    _soloPlaying = null;
+    if (mounted) setState(() => _isInitialized = false);
+    _playerAttempts = 0;
+    _initializePlayer();
+  }
+
+  /// A origem do vídeo da sala muda (conexão/batalha começou ou acabou):
+  /// dá alguns segundos para o Mux receber o novo sinal e recarrega.
+  void _reloadAfterSourceSwitch() {
+    Timer(const Duration(seconds: 6), () {
+      if (mounted && !_ended) _restartPlayer();
+    });
   }
 
   /// Busca a sala de novo para pegar o endereço do vídeo atualizado.
@@ -1095,7 +1160,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             // Linha: metas à esquerda + faixa de notícia correndo ao lado.
             child: Row(
               children: [
-                Expanded(
+                Flexible(
                   child: LiveEventChip(
                     expand: true,
                     roomId: widget.room.id,
@@ -1109,7 +1174,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
+                Flexible(
                   child: LiveGoalsPill(
                     expand: true,
                     roomId: widget.room.id,
@@ -1334,10 +1399,21 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             ),
           );
         }
-        if (battle.isComposite && _isInitialized && _controller != null) {
+        if ((battle.isComposite || (_link != null && !dual)) &&
+            _isInitialized &&
+            _controller != null) {
           _scheduleSoloPlayback(playing: true);
           return _compositeFrame(layout);
         }
+      }
+      // Batalha dentro de uma conexão: o HLS já é a tela dividida montada
+      // — não espera o estado da batalha carregar para mostrá-la.
+      if (battle == null &&
+          _link != null &&
+          _isInitialized &&
+          _controller != null) {
+        _scheduleSoloPlayback(playing: true);
+        return _compositeFrame(battleLayoutOf(context));
       }
       // Fallback: batalha ativa mas ainda sem dados/vídeo — cai no
       // player solo enquanto o REST/socket sincroniza.

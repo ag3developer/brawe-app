@@ -833,7 +833,12 @@ class _ProfileHeader extends ConsumerWidget {
               frameUrl: UserAward.mostPrestigious(
                 profile.activeAwards.where((a) => a.frameUrl != null).toList(),
               )?.frameUrl,
-              onAvatarTap: hasStories
+              isLive: !isMe && profile.isLive,
+              onAvatarTap: !isMe &&
+                      profile.isLive &&
+                      (profile.liveRoomId ?? '').isNotEmpty
+                  ? () => context.push('/live/${profile.liveRoomId}')
+                  : hasStories
                   ? () => _openStoryViewer(context, ref, stories)
                   : null,
             );
@@ -1100,8 +1105,12 @@ class _BannerSection extends ConsumerStatefulWidget {
     this.hasUnviewedStories = false,
     this.onAvatarTap,
     this.frameUrl,
+    this.isLive = false,
   });
   final String? frameUrl;
+
+  /// Ao vivo agora: anel vermelho + selo "AO VIVO"; o toque abre a live.
+  final bool isLive;
   final String userId;
   final String? bannerUrl;
   final String? avatarUrl;
@@ -1212,14 +1221,16 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: hasUnviewedStories
+                    gradient: !widget.isLive && hasUnviewedStories
                         ? const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: AppColors.brandGradient,
                           )
                         : null,
-                    color: hasUnviewedStories
+                    color: widget.isLive
+                        ? AppColors.liveRed
+                        : hasUnviewedStories
                         ? null
                         : hasStories
                         ? context.colors.border
@@ -1243,7 +1254,41 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
                 ),
               ),
               // ── Indicador online (com dados reais do presenceCacheProvider) ──
-              _OnlineIndicator(userId: userId),
+              if (!widget.isLive) _OnlineIndicator(userId: userId),
+              // ── Selo AO VIVO na base da foto ──
+              if (widget.isLive)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: -6,
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.liveRed,
+                          borderRadius: BorderRadius.circular(5),
+                          border: Border.all(
+                            color: context.colors.background,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          S.of(context).liveBadge,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

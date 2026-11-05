@@ -698,6 +698,9 @@ class SPt extends S {
   String get liveJoining => 'Entrando na live…';
 
   @override
+  String get liveStoryBattleBadge => 'BATALHA';
+
+  @override
   String get liveBadgeBattle => 'AO VIVO · BATALHA';
 
   @override

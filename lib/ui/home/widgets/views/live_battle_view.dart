@@ -2,21 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../data/services/battle_service.dart';
 import '../../../../domain/models/feed_item.dart';
 import '../../../../domain/models/live_room.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/app_colors.dart';
+import '../../../live_feed/battle/battle_hud_parts.dart'
+    show kBattleText, kBattleTextDim, kBattleInk;
+import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'shared/_live_overlay.dart';
 import 'shared/_live_peek.dart';
-import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
-/// ⚔️ Preview de LiveBattle — split HORIZONTAL, tap para entrar na live.
-/// Só exibe: thumbnails lado a lado, placar VS, timer, tags dos streamers
-/// e o botão de presente misterioso. Sem likes/comentários/share.
+/// ⚔️ Card de batalha no For You — mostra a batalha AO VIVO, não uma prévia
+/// parada.
+///
+/// - Tempo real ligado (`rtc_mode == composite`): o HLS da sala já traz a
+///   tela dividida montada no servidor → toca em tela cheia (Live Peek).
+/// - Sem tempo real (`dual_hls`): metade A toca o stream da sala; metade B
+///   mostra a foto do adversário (dois áudios ao mesmo tempo atrapalham).
+/// - Estilo aprovado (contrato §16): base neutra; azul/laranja só na barra;
+///   placar inteiro dentro da barra; cronômetro em pílula sobre a divisória.
+/// - Tap em qualquer lugar entra na live.
 class LiveBattleView extends ConsumerStatefulWidget {
-  const LiveBattleView({super.key, required this.item});
+  const LiveBattleView({super.key, required this.item, this.isActive = true});
   final LiveBattleItem item;
+  final bool isActive;
 
   @override
   ConsumerState<LiveBattleView> createState() => _LiveBattleViewState();
@@ -25,25 +36,41 @@ class LiveBattleView extends ConsumerStatefulWidget {
 class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
   LiveBattleItem get item => widget.item;
 
-  /// Placar/tempo REAIS (do `/battle/active`). `null` enquanto não carregou —
-  /// nesse caso o card não mostra número nem cronômetro (antes aparecia
-  /// "0.0" e um relógio parado).
-  double? _scoreA;
-  double? _scoreB;
+  /// Dados REAIS de `/battle/active`. `null` enquanto não carregou.
+  int? _scoreA;
+  int? _scoreB;
+  String? _rtcMode;
   DateTime? _endsAt;
   Duration _serverOffset = Duration.zero;
   Duration? _remaining;
   Timer? _tick;
+  Timer? _poll;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _syncPolling();
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveBattleView old) {
+    super.didUpdateWidget(old);
+    if (old.isActive != widget.isActive) _syncPolling();
+  }
+
+  /// Placar atualiza a cada 5s só enquanto o card está na tela.
+  void _syncPolling() {
+    _poll?.cancel();
+    if (widget.isActive) {
+      _poll = Timer.periodic(const Duration(seconds: 5), (_) => _load());
+    }
   }
 
   @override
   void dispose() {
     _tick?.cancel();
+    _poll?.cancel();
     super.dispose();
   }
 
@@ -67,103 +94,132 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
       final ends = _ts(d['ends_at']);
       final left = (d['time_remaining_seconds'] as num?)?.toInt();
       setState(() {
-        _scoreA = sa?.toDouble();
-        _scoreB = sb?.toDouble();
-        if (now != null) _serverOffset = now.difference(DateTime.now().toUtc());
+        _scoreA = (sa ?? 0).round();
+        _scoreB = (sb ?? 0).round();
+        _rtcMode = d['rtc_mode']?.toString();
+        if (now != null) {
+          _serverOffset = now.difference(DateTime.now().toUtc());
+        }
         _endsAt = ends ??
             (left != null
-                ? DateTime.now().toUtc().add(_serverOffset + Duration(seconds: left))
+                ? DateTime.now().toUtc().add(
+                    _serverOffset + Duration(seconds: left),
+                  )
                 : null);
       });
       _updateRemaining();
-      _tick?.cancel();
-      if (_endsAt != null) {
-        _tick = Timer.periodic(const Duration(seconds: 1), (_) => _updateRemaining());
-      }
+      _tick ??= _endsAt == null
+          ? null
+          : Timer.periodic(
+              const Duration(seconds: 1),
+              (_) => _updateRemaining(),
+            );
     } catch (_) {
-      // Sem dados reais: o card segue sem placar/cronômetro.
+      // Sem dados reais (batalha acabou / rede): segue sem placar e timer.
     }
   }
 
   void _updateRemaining() {
     final e = _endsAt;
     if (e == null || !mounted) return;
-    final ms = e.difference(DateTime.now().toUtc().add(_serverOffset)).inMilliseconds;
-    setState(() => _remaining = ms <= 0 ? Duration.zero : Duration(seconds: (ms / 1000).ceil()));
+    final ms = e
+        .difference(DateTime.now().toUtc().add(_serverOffset))
+        .inMilliseconds;
+    setState(
+      () => _remaining = ms <= 0
+          ? Duration.zero
+          : Duration(seconds: (ms / 1000).ceil()),
+    );
+  }
+
+  void _enter() {
+    final room = LiveRoom(
+      id: item.id,
+      slug: item.slug ?? item.id,
+      title: item.caption,
+      liveType: 'battle',
+      isPrivate: false,
+      status: 'live',
+      viewerCount: item.viewerCount,
+      totalLikes: item.likesCount,
+      thumbnailUrl: item.thumbnailUrlA,
+      streamUrl: item.streamUrl,
+      streamerId: item.author.id,
+      streamerName: item.author.name,
+      streamerAvatarUrl: item.author.avatarUrl,
+      streamerUsername: item.author.username,
+      streamerVerified: item.author.isVerified,
+    );
+    openLiveRoom(context, item.id, room);
   }
 
   @override
   Widget build(BuildContext context) {
-    final leadA = (_scoreA ?? 0) > (_scoreB ?? 0);
-    final leadB = (_scoreB ?? 0) > (_scoreA ?? 0);
+    final composite = _rtcMode == 'composite';
+    final topPad = MediaQuery.paddingOf(context).top;
 
     return GestureDetector(
-      // Tap em qualquer lugar entra na live — passa LiveRoom com os dados do
-      // feed para navegação instantânea (sem request HTTP, igual TikTok).
-      onTap: () {
-        final room = LiveRoom(
-          id: item.id,
-          slug: item.id,
-          title: item.caption,
-          liveType: 'battle',
-          isPrivate: false,
-          status: 'live',
-          viewerCount: item.viewerCount,
-          totalLikes: item.likesCount,
-          thumbnailUrl: item.thumbnailUrlA,
-          streamerId: item.author.id,
-          streamerName: item.author.name,
-          streamerAvatarUrl: item.author.avatarUrl,
-          streamerUsername: item.author.username,
-          streamerVerified: item.author.isVerified,
-        );
-        openLiveRoom(context, item.id, room);
-      },
+      behavior: HitTestBehavior.opaque,
+      onTap: _enter,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Thumbnails lado a lado ──────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                child: _HalfPreview(
-                  imageUrl: item.thumbnailUrlA,
-                  isLeading: leadA,
-                  side: _Side.left,
-                ),
-              ),
-              // Divisória central de 2px
-              Container(width: 2, color: Colors.black),
-              Expanded(
-                child: _HalfPreview(
-                  imageUrl: item.thumbnailUrlB,
-                  isLeading: leadB,
-                  side: _Side.right,
-                ),
-              ),
-            ],
-          ),
+          const ColoredBox(color: Color(0xFF0B0E14)),
 
-          // ── Overlay escuro no rodapé para legibilidade ──────────────
-          Positioned(
+          // ── Vídeo ao vivo ─────────────────────────────────────────────
+          if (composite)
+            LivePeekBackground(
+              roomId: item.id,
+              thumbnailUrl: item.thumbnailUrlA,
+              streamUrl: item.streamUrl,
+              isActive: widget.isActive,
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRect(
+                    child: LivePeekBackground(
+                      roomId: item.id,
+                      thumbnailUrl: item.thumbnailUrlA,
+                      streamUrl: item.streamUrl,
+                      isActive: widget.isActive,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Expanded(
+                  child: _OpponentHalf(
+                    imageUrl: item.thumbnailUrlB,
+                    avatarUrl: item.opponent.avatarUrl,
+                    name: item.opponent.name,
+                  ),
+                ),
+              ],
+            ),
+
+          // ── Gradiente inferior para legibilidade ──────────────────────
+          const Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            height: 200,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black87],
+            height: 260,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Color(0xD90B0E14)],
+                  ),
                 ),
               ),
             ),
           ),
 
-          // ── LIVE badge + viewers (top-left) ─────────────────────────
+          // ── AO VIVO · BATALHA ─────────────────────────────────────────
           Positioned(
-            top: 52,
+            top: topPad + 56,
             left: 16,
             child: LiveBadge(
               viewerCount: item.viewerCount,
@@ -171,232 +227,56 @@ class _LiveBattleViewState extends ConsumerState<LiveBattleView> {
             ),
           ),
 
-          // ── Timer (top-right) ────────────────────────────────────────
-          if (_remaining != null)
-            Positioned(
-              top: 52,
-              right: 16,
-              child: _TimerPill(remaining: _remaining!),
-            ),
-
-          // ── Placar + VS + barra de progresso (centro) ───────────────
+          // ── Rodapé: barra de placar + nomes + entrar ──────────────────
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 130,
-            child: _BattleBar(scoreA: _scoreA, scoreB: _scoreB),
-          ),
-
-          // ── Tag streamer A (bottom-left) ─────────────────────────────
-          Positioned(
-            bottom: 72,
-            left: 12,
-            child: _StreamerTag(author: item.author, side: 'A'),
-          ),
-
-          // ── Tag streamer B (bottom-right) ────────────────────────────
-          Positioned(
-            bottom: 72,
-            right: 12,
-            child: _StreamerTag(author: item.opponent, side: 'B'),
-          ),
-
-          // ── "Toque para assistir" hint ───────────────────────────────
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  S.of(context).liveBattleTapToWatch,
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Enum interno ────────────────────────────────────────────────────────────
-enum _Side { left, right }
-
-// ── Metade da tela ──────────────────────────────────────────────────────────
-class _HalfPreview extends StatelessWidget {
-  const _HalfPreview({
-    required this.imageUrl,
-    required this.isLeading,
-    required this.side,
-  });
-  final String imageUrl;
-  final bool isLeading;
-  final _Side side;
-
-  @override
-  Widget build(BuildContext context) {
-    final glowColor = side == _Side.left
-        ? AppColors.braweBlue
-        : AppColors.braweOrange;
-
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.network(
-          cacheWidth: context.decodeScreenPx,
-          imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Container(
-            color: AppColors.slate,
-            child: const Icon(
-              Icons.videocam_off,
-              color: AppColors.coolGray,
-              size: 40,
-            ),
-          ),
-        ),
-        // Gradiente lateral suave
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: side == _Side.left
-                  ? Alignment.centerLeft
-                  : Alignment.centerRight,
-              end: side == _Side.left
-                  ? Alignment.centerRight
-                  : Alignment.centerLeft,
-              colors: [
-                Colors.black.withValues(alpha: 0.18),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-        // Borda de glow no líder
-        if (isLeading)
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: glowColor, width: 2),
-                  bottom: BorderSide(color: glowColor, width: 2),
-                  left: side == _Side.left
-                      ? BorderSide(color: glowColor, width: 2)
-                      : BorderSide.none,
-                  right: side == _Side.right
-                      ? BorderSide(color: glowColor, width: 2)
-                      : BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// ── Placar + VS + barra ─────────────────────────────────────────────────────
-class _BattleBar extends StatelessWidget {
-  const _BattleBar({required this.scoreA, required this.scoreB});
-  final double? scoreA;
-  final double? scoreB;
-
-  @override
-  Widget build(BuildContext context) {
-    final has = scoreA != null && scoreB != null;
-    final total = (scoreA ?? 0) + (scoreB ?? 0);
-    final progressA = total == 0 ? 0.5 : (scoreA ?? 0) / total;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              // Score A
-              Expanded(
-                child: Text(
-                  has ? '${scoreA!.round()}' : '',
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    color: AppColors.braweBlue,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
-                  ),
-                ),
-              ),
-              // VS pill
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.braweBlue, AppColors.braweOrange],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.braweBlue.withValues(alpha: 0.55),
-                      blurRadius: 14,
+            left: 16,
+            right: 88, // espaço do ActionRail
+            bottom: 18,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_remaining != null) ...[
+                  _TimerPill(remaining: _remaining!),
+                  const SizedBox(height: 8),
+                ],
+                _ScoreBar(scoreA: _scoreA, scoreB: _scoreB),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Name(
+                        name: item.author.name,
+                        avatarUrl: item.author.avatarUrl,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _Name(
+                        name: item.opponent.name,
+                        avatarUrl: item.opponent.avatarUrl,
+                        alignEnd: true,
+                      ),
                     ),
                   ],
                 ),
-                child: const Text(
-                  'VS',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              // Score B
-              Expanded(
-                child: Text(
-                  has ? '${scoreB!.round()}' : '',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    color: AppColors.braweOrange,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Barra de progresso
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
-              height: 6,
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: (progressA * 1000).round().clamp(1, 999),
-                    child: Container(color: AppColors.braweBlue),
-                  ),
-                  Expanded(
-                    flex: ((1 - progressA) * 1000).round().clamp(1, 999),
-                    child: Container(color: AppColors.braweOrange),
+                if (item.caption.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    item.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: kBattleText,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
+                    ),
                   ),
                 ],
-              ),
+                const SizedBox(height: 12),
+                WatchLiveButton(onTap: _enter),
+              ],
             ),
           ),
         ],
@@ -405,87 +285,167 @@ class _BattleBar extends StatelessWidget {
   }
 }
 
-// ── Timer ───────────────────────────────────────────────────────────────────
+/// Metade B sem vídeo (modo sem tempo real): foto do adversário.
+class _OpponentHalf extends StatelessWidget {
+  const _OpponentHalf({
+    required this.imageUrl,
+    required this.avatarUrl,
+    required this.name,
+  });
+  final String imageUrl;
+  final String? avatarUrl;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final img = imageUrl.isNotEmpty ? imageUrl : (avatarUrl ?? '');
+    if (img.isEmpty) {
+      return ColoredBox(
+        color: const Color(0xFF161B25),
+        child: Center(
+          child: Text(
+            name.isNotEmpty ? name.characters.first.toUpperCase() : '',
+            style: const TextStyle(
+              color: kBattleTextDim,
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
+    }
+    return Image.network(
+      img,
+      fit: BoxFit.cover,
+      cacheWidth: context.decodeScreenFracPx(0.5),
+      errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF161B25)),
+    );
+  }
+}
+
+/// Barra estilo TikTok: azul (A) × laranja (B), placar inteiro dentro.
+class _ScoreBar extends StatelessWidget {
+  const _ScoreBar({required this.scoreA, required this.scoreB});
+  final int? scoreA;
+  final int? scoreB;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = scoreA ?? 0;
+    final b = scoreB ?? 0;
+    final total = a + b;
+    final fracA = total == 0 ? 0.5 : (a / total).clamp(0.12, 0.88);
+    const tab = [FontFeature.tabularFigures()];
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        height: 22,
+        child: Row(
+          children: [
+            Expanded(
+              flex: (fracA * 1000).round(),
+              child: Container(
+                color: AppColors.braweBlue,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(
+                  scoreA == null ? '' : '$a',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: tab,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: ((1 - fracA) * 1000).round(),
+              child: Container(
+                color: AppColors.braweOrange,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  scoreB == null ? '' : '$b',
+                  style: const TextStyle(
+                    color: kBattleInk,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: tab,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TimerPill extends StatelessWidget {
   const _TimerPill({required this.remaining});
   final Duration remaining;
 
   @override
   Widget build(BuildContext context) {
-    final m = remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final m = remaining.inMinutes.toString().padLeft(2, '0');
+    final s = (remaining.inSeconds % 60).toString().padLeft(2, '0');
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xB30B0E14),
+        borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.timer_outlined, color: Colors.amber, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            '$m:$s',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ],
+      child: Text(
+        '$m:$s',
+        style: const TextStyle(
+          color: kBattleText,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          fontFeatures: [FontFeature.tabularFigures()],
+        ),
       ),
     );
   }
 }
 
-// ── Tag do streamer ──────────────────────────────────────────────────────────
-class _StreamerTag extends StatelessWidget {
-  const _StreamerTag({required this.author, required this.side});
-  final FeedAuthor author;
-  final String side;
+class _Name extends StatelessWidget {
+  const _Name({required this.name, this.avatarUrl, this.alignEnd = false});
+  final String name;
+  final String? avatarUrl;
+  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
-    final color = side == 'A' ? AppColors.braweBlue : AppColors.braweOrange;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(4, 4, 10, 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(20),
+    final avatar = CircleAvatar(
+      radius: 12,
+      backgroundColor: const Color(0xFF1C2230),
+      backgroundImage: (avatarUrl?.isNotEmpty ?? false)
+          ? NetworkImage(avatarUrl!)
+          : null,
+    );
+    final label = Flexible(
+      child: Text(
+        name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: alignEnd ? TextAlign.end : TextAlign.start,
+        style: const TextStyle(
+          color: kBattleText,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          shadows: [Shadow(color: Colors.black87, blurRadius: 6)],
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Avatar ou inicial
-          CircleAvatar(
-            radius: 13,
-            backgroundColor: color.withValues(alpha: 0.3),
-            backgroundImage: author.avatarUrl != null
-                ? ResizeImage(NetworkImage(author.avatarUrl!), width: context.decodePx(26))
-                : null,
-            child: author.avatarUrl == null
-                ? Text(
-                    author.name[0].toUpperCase(),
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            author.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+    );
+    return Row(
+      mainAxisAlignment: alignEnd
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
+      children: alignEnd
+          ? [label, const SizedBox(width: 6), avatar]
+          : [avatar, const SizedBox(width: 6), label],
     );
   }
 }

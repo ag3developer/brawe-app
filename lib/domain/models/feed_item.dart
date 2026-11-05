@@ -96,6 +96,8 @@ class LiveBattleItem extends FeedItem {
     required this.thumbnailUrlB,
     required this.viewerCount,
     required this.battleState,
+    this.slug,
+    this.streamUrl,
   });
 
   final FeedAuthor opponent;
@@ -103,6 +105,11 @@ class LiveBattleItem extends FeedItem {
   final String thumbnailUrlB;
   final int viewerCount;
   final BattleState battleState;
+  final String? slug;
+
+  /// HLS da sala A. Em batalha com tempo real (`rtc_mode == composite`) o
+  /// servidor já entrega a tela dividida montada neste mesmo stream.
+  final String? streamUrl;
 }
 
 /// 💬 Live de bate-papo.

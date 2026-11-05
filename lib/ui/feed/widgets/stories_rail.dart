@@ -139,6 +139,9 @@ class StoriesRail extends ConsumerWidget {
           avatarUrl: g.avatarUrl,
           name: name,
           verified: g.isVerified,
+          partnerAvatarUrl: g.hasLivePartner ? g.livePartnerAvatarUrl : null,
+          partnerName: g.hasLivePartner ? (g.livePartnerName ?? '') : null,
+          isBattle: g.liveKind == 'battle',
           ring: g.isLive
               ? _RingStyle.live
               : (g.hasUnviewed ? _RingStyle.unseen : _RingStyle.seen),
@@ -264,6 +267,64 @@ class _RingAvatar extends StatelessWidget {
   }
 }
 
+/// Duas fotos entrelaçadas como alianças: quem eu sigo (na frente, em cima à
+/// esquerda) e o parceiro da conexão/batalha (atrás, embaixo à direita),
+/// ambos com o anel vermelho de ao vivo.
+class _LivePairAvatar extends StatelessWidget {
+  const _LivePairAvatar({
+    required this.avatarUrl,
+    required this.name,
+    required this.partnerAvatarUrl,
+    required this.partnerName,
+  });
+
+  final String? avatarUrl;
+  final String name;
+  final String? partnerAvatarUrl;
+  final String partnerName;
+
+  static const double _d = 50; // diâmetro de cada anel
+
+  Widget _ring(BuildContext context, String? url, String n) {
+    const inner = _d - (StoriesRail._ring + StoriesRail._gap) * 2;
+    return Container(
+      width: _d,
+      height: _d,
+      padding: const EdgeInsets.all(StoriesRail._ring),
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.liveRed,
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(StoriesRail._gap),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: context.colors.background,
+        ),
+        child: BraweAvatar(avatarUrl: url, displayName: n, size: inner),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: StoriesRail._outer,
+      height: StoriesRail._outer,
+      child: Stack(
+        children: [
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: _ring(context, partnerAvatarUrl, partnerName),
+          ),
+          Positioned(left: 0, top: 0, child: _ring(context, avatarUrl, name)),
+        ],
+      ),
+    );
+  }
+}
+
 class _ItemLabel extends StatelessWidget {
   const _ItemLabel(this.text, {this.verified = false});
   final String text;
@@ -372,6 +433,9 @@ class _StoryItem extends StatelessWidget {
     required this.ring,
     required this.onTap,
     this.verified = false,
+    this.partnerAvatarUrl,
+    this.partnerName,
+    this.isBattle = false,
   });
 
   final String? avatarUrl;
@@ -379,6 +443,11 @@ class _StoryItem extends StatelessWidget {
   final bool verified;
   final _RingStyle ring;
   final VoidCallback onTap;
+
+  /// Ao vivo em conexão/batalha: foto do parceiro entrelaçada ("alianças").
+  final String? partnerAvatarUrl;
+  final String? partnerName;
+  final bool isBattle;
 
   @override
   Widget build(BuildContext context) {
@@ -395,7 +464,15 @@ class _StoryItem extends StatelessWidget {
               clipBehavior: Clip.none,
               alignment: Alignment.bottomCenter,
               children: [
-                _RingAvatar(avatarUrl: avatarUrl, name: name, ring: ring),
+                if (isLive && partnerName != null)
+                  _LivePairAvatar(
+                    avatarUrl: avatarUrl,
+                    name: name,
+                    partnerAvatarUrl: partnerAvatarUrl,
+                    partnerName: partnerName!,
+                  )
+                else
+                  _RingAvatar(avatarUrl: avatarUrl, name: name, ring: ring),
                 if (isLive)
                   Positioned(
                     bottom: -4,
@@ -414,7 +491,9 @@ class _StoryItem extends StatelessWidget {
                       ),
                       // Branco sobre o preenchimento vermelho (fixo).
                       child: Text(
-                        S.of(context).liveBadge,
+                        isBattle
+                            ? S.of(context).liveStoryBattleBadge
+                            : S.of(context).liveBadge,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 8.5,

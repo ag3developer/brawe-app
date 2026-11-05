@@ -33,6 +33,8 @@ _Profile _$ProfileFromJson(Map<String, dynamic> json) => _Profile(
   activeAwards: json['active_awards'] == null
       ? const <UserAward>[]
       : userAwardsFromJson(json['active_awards']),
+  isLive: json['is_live'] as bool? ?? false,
+  liveRoomId: json['live_room_id'] as String?,
 );
 
 Map<String, dynamic> _$ProfileToJson(_Profile instance) => <String, dynamic>{

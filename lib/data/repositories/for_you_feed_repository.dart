@@ -174,6 +174,8 @@ class ForYouFeedRepository {
         viewerCount: room.viewerCount,
         opponent: opponent,
         thumbnailUrlA: room.thumbnailUrl ?? '',
+        slug: room.slug,
+        streamUrl: room.streamUrl,
         thumbnailUrlB: hasOpponent
             ? (room.opponentThumbnailUrl ?? room.thumbnailUrl ?? '')
             : (room.thumbnailUrl ?? ''),

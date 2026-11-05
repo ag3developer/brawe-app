@@ -20,9 +20,13 @@ const double kBattleStripH = 24;
 double battleViewerSplitTop(BuildContext context) =>
     MediaQuery.paddingOf(context).top + 70 + 30 + 16;
 
-/// `splitTop` do CRIADOR: BroadcasterTopBar (~46) + linha de eventos (~30).
+/// Faixa escura acima do vídeo do criador para o "silenciar" do parceiro.
+const double kLinkControlBandH = 32;
+
+/// `splitTop` do CRIADOR: BroadcasterTopBar (~46) + linha de eventos (~30) +
+/// faixa de controle ([kLinkControlBandH]) acima do vídeo.
 double battleCreatorSplitTop(BuildContext context) =>
-    MediaQuery.paddingOf(context).top + 46 + 6 + 30 + 16;
+    MediaQuery.paddingOf(context).top + 46 + 6 + 30 + 8 + kLinkControlBandH;
 
 /// Layout da batalha para a tela atual (mesma conta do vídeo e do HUD).
 BattleLayout battleLayoutOf(BuildContext context, {double? splitTop}) =>
@@ -199,72 +203,44 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
     final roomId = battle.roomIdOf(opp);
     if (roomId == null || roomId.isEmpty) return const SizedBox.shrink();
     final name = battle.nameOf(opp);
-    // Deixa livre o canto inferior (alto-falante do dual_hls / controles):
-    // a área tocável termina 48 px acima da base da metade.
+    void open() => showPartnerSheet(
+      context,
+      ref,
+      userId: battle.sideOf(roomId: roomId) == null
+          ? ''
+          : (opp == 'a' ? battle.streamerAId : battle.streamerBId),
+      name: name,
+      avatarUrl: battle.avatarOf(opp),
+      roomId: roomId,
+      onViewLive: widget.onOpenOpponent == null
+          ? null
+          : () => widget.onOpenOpponent!(roomId, name),
+    );
+    // Toque na metade do adversário abre a gaveta (sem nada desenhado por
+    // cima do vídeo). A área termina 48 px acima da base: canto livre para o
+    // alto-falante do dual_hls.
     final h = layout.half(opp);
-    return Positioned.fromRect(
-      rect: Rect.fromLTRB(h.left, h.top, h.right, h.bottom - 48),
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => showPartnerSheet(
-          context,
-          ref,
-          userId: battle.sideOf(roomId: roomId) == null
-              ? ''
-              : (opp == 'a' ? battle.streamerAId : battle.streamerBId),
-          name: name,
-          avatarUrl: battle.avatarOf(opp),
-          roomId: roomId,
-          onViewLive: widget.onOpenOpponent == null
-              ? null
-              : () => widget.onOpenOpponent!(roomId, name),
-        ),
-        child: Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 6, left: 6, right: 6),
-            child: widget.onOpenOpponent == null
-                ? const SizedBox.shrink()
-                : Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: kBattleBg.withValues(alpha: 0.72),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: battleSideColor(opp).withValues(alpha: 0.7),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.open_in_new_rounded,
-                          size: 11,
-                          color: battleSideColor(opp),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            S.of(context).battleViewLive(name),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return Stack(
+      children: [
+        Positioned.fromRect(
+          rect: Rect.fromLTRB(h.left, h.top, h.right, h.bottom - 48),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: open,
           ),
         ),
-      ),
+        // Foto redonda do adversário na faixa escura ABAIXO da metade dele.
+        Positioned(
+          top: layout.chat.top + 2,
+          left: opp == 'a' ? h.left + 2 : null,
+          right: opp == 'b' ? layout.screen.width - h.right + 2 : null,
+          child: PartnerAvatarButton(
+            name: name,
+            avatarUrl: battle.avatarOf(opp),
+            onTap: open,
+          ),
+        ),
+      ],
     );
   }
 
@@ -480,7 +456,10 @@ class _BattleHudOverlayState extends ConsumerState<BattleHudOverlay> {
           ),
 
         // ── Metade do adversário: toque abre a live dele ──
-        if (ownSide != null) _opponentTap(context, battle, layout, ownSide),
+        if (ownSide != null)
+          Positioned.fill(
+            child: _opponentTap(context, battle, layout, ownSide),
+          ),
 
         // ── Pegando fogo: abaixo do cronômetro, lado interno da metade quente ──
         if (momentumActive)

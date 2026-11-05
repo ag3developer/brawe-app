@@ -697,6 +697,9 @@ class SEn extends S {
   String get liveJoining => 'Joining the live…';
 
   @override
+  String get liveStoryBattleBadge => 'BATTLE';
+
+  @override
   String get liveBadgeBattle => 'LIVE · BATTLE';
 
   @override

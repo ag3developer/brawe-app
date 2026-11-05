@@ -90,7 +90,7 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                   topic: '',
                 ),
               ),
-      LiveBattleItem() => LiveBattleView(item: item),
+      LiveBattleItem() => LiveBattleView(item: item, isActive: isActive),
       LiveChatItem() => LiveChatView(item: item, isActive: isActive),
       VideoFeedItem() => VideoView(item: item, isActive: isActive),
       PhotoPostFeedItem() => PhotoPostView(item: item),

@@ -697,6 +697,9 @@ class SEs extends S {
   String get liveJoining => 'Entrando a la live…';
 
   @override
+  String get liveStoryBattleBadge => 'BATALLA';
+
+  @override
   String get liveBadgeBattle => 'EN VIVO · BATALLA';
 
   @override

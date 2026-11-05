@@ -46,6 +46,9 @@ sealed class Profile with _$Profile {
     @JsonKey(name: 'active_awards', fromJson: userAwardsFromJson, includeToJson: false)
     @Default(<UserAward>[])
     List<UserAward> activeAwards,
+    // Live em andamento: anel vermelho + "AO VIVO" na foto do perfil.
+    @JsonKey(name: 'is_live', includeToJson: false) @Default(false) bool isLive,
+    @JsonKey(name: 'live_room_id', includeToJson: false) String? liveRoomId,
   }) = _Profile;
 
   factory Profile.fromJson(Map<String, dynamic> json) =>
