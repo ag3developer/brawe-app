@@ -11,7 +11,7 @@ import '../../../domain/models/live_viewer_event.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../live/shared/widgets/award_badge.dart';
 import '../../live/shared/widgets/level_chip.dart';
-import '../view_models/live_room_comments_view_model.dart';
+import '../battle/battle_notices.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
 /// 🎮 Camada de gamificação do viewer: efeitos de entrada (fila + throttle),
@@ -49,7 +49,7 @@ class _ViewerGamificationLayerState
     super.dispose();
   }
 
-  /// Outro viewer subiu de nível → linha de sistema no chat. Entradas VIP e o
+  /// Outro viewer subiu de nível → narrador (batalha) ou painel de avisos. Entradas VIP e o
   /// meu level-up aparecem no painel de avisos (`LiveNoticeLane`), acima do
   /// chat — onde o espectador está olhando.
   void _onRoomEvent(LiveRoomEvent e) {
@@ -59,9 +59,9 @@ class _ViewerGamificationLayerState
     final name = e.data['name']?.toString() ?? '';
     final level = int.tryParse('${e.data['new_level']}') ?? 0;
     if (name.isEmpty || level <= 0) return;
-    ref
-        .read(liveRoomCommentsViewModelProvider(widget.roomId).notifier)
-        .addSystemMessage(S.of(context).liveLevelUpPublic(name, level));
+    // Nunca no chat: narrador (em batalha) ou painel de avisos da live.
+    routeGameNotice(ref, context, 'level_up', {'nome': name, 'nivel': '$level'},
+        roomId: widget.roomId);
   }
 
   @override

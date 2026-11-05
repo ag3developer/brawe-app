@@ -160,7 +160,6 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
     final l10n = S.of(context);
     final opp = mySide == 'a' ? 'b' : 'a';
     final iMuted = battle.mutedOf(mySide);
-    final oppMutedMe = battle.mutedOf(opp);
 
     // Canto inferior INTERNO de uma metade: metade esquerda → canto direito;
     // metade direita → canto esquerdo (§18.1: o criador fica à esquerda).
@@ -198,59 +197,13 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
               ),
             ),
           ),
-        // Linha curta (sem caixa) quando silenciei o adversário.
-        if (composite && iMuted)
-          Positioned(
-            left: layout.half(opp).left + 6,
-            width: layout.half(opp).width - 12,
-            bottom: layout.screen.height - layout.half(opp).bottom + 40,
-            child: IgnorePointer(
-              child: Align(
-                alignment: layout.isLeft(opp) ? Alignment.bottomLeft : Alignment.bottomRight,
-                child: Text(
-                  l10n.battleMutedLine(battle.nameOf(opp)),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: layout.isLeft(opp) ? TextAlign.left : TextAlign.right,
-                  style: const TextStyle(
-                    color: kBattleText,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    shadows: [Shadow(blurRadius: 6, color: Colors.black87)],
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        // O adversário me silenciou: linha curta na MINHA metade.
-        if (composite && oppMutedMe)
-          Positioned(
-            left: layout.half(mySide).left + 6,
-            width: layout.half(mySide).width - 12,
-            bottom: layout.screen.height - layout.half(mySide).bottom + 8,
-            child: IgnorePointer(
-              child: Align(
-                alignment: layout.isLeft(mySide) ? Alignment.bottomLeft : Alignment.bottomRight,
-                child: Text(
-                  l10n.battleMutedByLine(battle.nameOf(opp)),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: kBattleTextDim,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    shadows: [Shadow(blurRadius: 6, color: Colors.black87)],
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        // Sair da batalha (desistência): canto direito do topo da região do chat.
+        // "Você silenciou X" / "X silenciou você": agora no NARRADOR (faixa
+        // do jogo abaixo do vídeo), nunca sobre o vídeo.
+        // Sair da batalha (desistência): canto direito, logo abaixo da faixa
+        // do jogo (fileira do time + narrador), onde o chat começa.
         Positioned(
           right: 8,
-          top: layout.chat.top + 44,
+          top: layout.rowsBottom + 2,
           child: TextButton.icon(
             onPressed: _isBusy ? null : _confirmAndLeave,
             style: TextButton.styleFrom(

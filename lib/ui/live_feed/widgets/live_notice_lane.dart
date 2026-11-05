@@ -20,6 +20,7 @@ import '../../live/shared/widgets/award_badge.dart';
 import '../../live/shared/widgets/level_chip.dart';
 import '../../live/shared/widgets/overlays/gifts_overlay.dart';
 import '../view_models/live_room_comments_view_model.dart';
+import '../battle/battle_notices.dart';
 import 'viewer_gamification_layer.dart' show ViewerEntranceToast;
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -50,7 +51,7 @@ class LiveNoticeLane extends ConsumerStatefulWidget {
   ConsumerState<LiveNoticeLane> createState() => _LiveNoticeLaneState();
 }
 
-enum _Kind { overtaken, levelUp, award, newTop, milestone }
+enum _Kind { overtaken, levelUp, award, newTop, milestone, info }
 
 class _Notice {
   _Notice(this.kind, this.payload);
@@ -68,6 +69,7 @@ class _Notice {
     _Kind.award => const Duration(seconds: 5),
     _Kind.newTop => const Duration(milliseconds: 3500),
     _Kind.milestone => const Duration(seconds: 3),
+    _Kind.info => const Duration(milliseconds: 3500),
   };
 }
 
@@ -98,6 +100,7 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
   StreamSubscription<LiveViewerEvent>? _viewerSub;
   StreamSubscription<LiveRoomEvent>? _roomSub;
   StreamSubscription? _giftSub;
+  late final LiveInfoFeed _infoFeed;
 
   String? get _myId => ref.read(authStateProvider).value?.id;
 
@@ -105,6 +108,9 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
   void initState() {
     super.initState();
     final repo = ref.read(liveRepositoryProvider);
+    // Avisos do jogo (meta atingida, outro viewer subiu de nível) fora de
+    // batalha: aqui, nunca no chat.
+    _infoFeed = ref.read(liveInfoFeedProvider)..notice.addListener(_onInfo);
     _viewerSub = repo.watchViewerEvents(widget.roomId).listen(_onViewer);
     _roomSub = repo.watchRoomEvents(widget.roomId).listen(_onRoomEvent);
     _giftSub = repo.watchGifts(widget.roomId).listen((gift) {
@@ -121,8 +127,15 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     });
   }
 
+  void _onInfo() {
+    final n = _infoFeed.notice.value;
+    if (n == null || (n.roomId != null && n.roomId != widget.roomId)) return;
+    _push(_Notice(_Kind.info, n.text));
+  }
+
   @override
   void dispose() {
+    _infoFeed.notice.removeListener(_onInfo);
     _noticeTimer?.cancel();
     _entranceTimer?.cancel();
     _viewerSub?.cancel();
@@ -414,6 +427,16 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
           ),
           title: s.noticeNewTopTitle,
           subtitle: e.name,
+        );
+      case _Kind.info:
+        return _NoticeCard(
+          accent: const Color(0xFFFFD166),
+          leading: const Icon(
+            Icons.emoji_events_rounded,
+            color: Color(0xFFFFD166),
+            size: 22,
+          ),
+          title: n.payload as String,
         );
       case _Kind.milestone:
         final e = n.payload as LikeMilestoneEvent;

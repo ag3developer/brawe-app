@@ -3008,13 +3008,24 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: _BroadcasterChatDock(
+                // Em batalha o dock começa ABAIXO da faixa do jogo (fileira do
+                // time + narrador) e é recortado: o chat nunca a cobre.
+                top: _split
+                    ? battleLayoutOf(
+                        context,
+                        splitTop: battleCreatorSplitTop(context),
+                        ownSide: _layoutSide(),
+                      ).rowsBottom
+                    : null,
+                child: BattleDockClip(
+                  enabled: _split,
+                  child: _BroadcasterChatDock(
                   battleChatTop: _split
                       ? battleLayoutOf(
                           context,
                           splitTop: battleCreatorSplitTop(context),
                           ownSide: _layoutSide(),
-                        ).chat.top
+                        ).rowsBottom
                       : null,
                   banner: _outgoingInvite == null
                       ? null
@@ -3115,6 +3126,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           onChatToggle: _toggleChatInput,
                         )
                       : null,
+                  ),
                 ),
               ),
             ],

@@ -14,7 +14,7 @@ import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../core/themes/brawe_colors.dart';
 import '../../../../core/widgets/gift_icon.dart';
 import '../../../../live_feed/view_models/gift_catalog_view_model.dart';
-import '../../../../live_feed/view_models/live_room_comments_view_model.dart';
+import '../../../../live_feed/battle/battle_notices.dart';
 import '../competition/medal_colors.dart';
 import '../overlays/gifts_overlay.dart';
 
@@ -106,9 +106,10 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
     HapticFeedback.mediumImpact();
     final s = S.of(context);
     for (final g in justReached) {
-      ref
-          .read(liveRoomCommentsViewModelProvider(widget.roomId).notifier)
-          .addSystemMessage(s.goalReachedChat(_goalLabel(s, g)));
+      // Meta atingida NÃO entra no chat: narrador (em batalha) ou painel
+      // de avisos da live.
+      routeGameNotice(ref, context, 'goal_reached', {'nome': _goalLabel(s, g)},
+          roomId: widget.roomId);
     }
     _glowTimer?.cancel();
     setState(() => _glow = true);

@@ -145,6 +145,7 @@ class BattleState {
     this.winStreakA,
     this.winStreakB,
     this.flash,
+    this.assetsVersion,
   });
 
   final String battleId;
@@ -242,6 +243,9 @@ class BattleState {
 
   /// Sequência de vitórias de cada criador (`null` = o servidor não enviou).
   final BattleFlash? flash;
+
+  /// Versão do manifesto de mídia (`assets_version`, Batalha v3).
+  final int? assetsVersion;
   final int? winStreakA;
   final int? winStreakB;
   int? winStreakOf(String side) => side == 'a' ? winStreakA : winStreakB;
@@ -364,6 +368,7 @@ class BattleState {
     Object? winStreakA = _unset,
     Object? winStreakB = _unset,
     Object? flash = _unset,
+    Object? assetsVersion = _unset,
   }) {
     return BattleState(
       battleId: battleId,
@@ -450,6 +455,9 @@ class BattleState {
       mvp: identical(mvp, _unset) ? this.mvp : mvp as BattleGifter?,
       mvpSide: identical(mvpSide, _unset) ? this.mvpSide : mvpSide as String?,
       flash: identical(flash, _unset) ? this.flash : flash as BattleFlash?,
+      assetsVersion: identical(assetsVersion, _unset)
+          ? this.assetsVersion
+          : assetsVersion as int?,
       winStreakA: identical(winStreakA, _unset) ? this.winStreakA : winStreakA as int?,
       winStreakB: identical(winStreakB, _unset) ? this.winStreakB : winStreakB as int?,
     );

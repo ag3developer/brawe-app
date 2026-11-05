@@ -14294,6 +14294,72 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'A live de um criador caiu'**
   String get battleEndedLiveAnon;
+
+  /// No description provided for @battleNarrStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'A batalha começou! Cada presente conta'**
+  String get battleNarrStart;
+
+  /// No description provided for @battleNarrLeadOwn.
+  ///
+  /// In pt, this message translates to:
+  /// **'VIROU! {team} passou na frente'**
+  String battleNarrLeadOwn(String team);
+
+  /// No description provided for @battleNarrLeadOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'{team} passou na frente. Bora virar!'**
+  String battleNarrLeadOther(String team);
+
+  /// No description provided for @battleNarrMomentum.
+  ///
+  /// In pt, this message translates to:
+  /// **'{team} está pegando fogo'**
+  String battleNarrMomentum(String team);
+
+  /// No description provided for @battleNarrFlashStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desafio relâmpago: envie {pontos} {nome} em {tempo}'**
+  String battleNarrFlashStart(String pontos, String nome, String tempo);
+
+  /// No description provided for @battleNarrFlashDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desafio feito! {mult} por {tempo}'**
+  String battleNarrFlashDone(String mult, String tempo);
+
+  /// No description provided for @battleNarrFinal10.
+  ///
+  /// In pt, this message translates to:
+  /// **'Últimos 10 segundos! Cada presente vale {mult}'**
+  String battleNarrFinal10(String mult);
+
+  /// No description provided for @battleNarrVictory.
+  ///
+  /// In pt, this message translates to:
+  /// **'VITÓRIA de {team}!'**
+  String battleNarrVictory(String team);
+
+  /// No description provided for @battleNarrDefeat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fim! {team} venceu desta vez'**
+  String battleNarrDefeat(String team);
+
+  /// No description provided for @battleNarrDraw.
+  ///
+  /// In pt, this message translates to:
+  /// **'EMPATE!'**
+  String get battleNarrDraw;
+
+  /// No description provided for @battleNarrEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha encerrada'**
+  String get battleNarrEnded;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

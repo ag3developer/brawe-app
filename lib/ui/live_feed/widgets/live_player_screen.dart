@@ -1341,7 +1341,8 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             ),
           ),
 
-          // ── 4.6 Gamificação: "Fulano subiu de nível" vira linha no chat.
+          // ── 4.6 Gamificação: "Fulano subiu de nível" vai ao narrador (batalha)
+          // ou ao painel de avisos — nunca ao chat.
           // Entradas VIP, meu level-up, "passou você", novo #1 e marcos de
           // curtidas ficam no painel de avisos, acima do chat (dock abaixo).
           ViewerGamificationLayer(roomId: widget.room.id),
@@ -1373,11 +1374,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            top: _split ? _layout().chat.top : null,
-            child: _BattleDockClip(
+            top: _split ? _layout().rowsBottom : null,
+            child: BattleDockClip(
               enabled: _split,
               child: _ViewerChatDock(
-                battleChatTop: _split ? _layout().chat.top : null,
+                battleChatTop: _split ? _layout().rowsBottom : null,
                 // Produto fixado/loja: exclusivos da live solo (somem na conexão/batalha).
               pinnedProduct: _split
                   ? const SizedBox.shrink()
@@ -2081,19 +2082,4 @@ class _QualityTile extends StatelessWidget {
     StreamQuality.p720 => 'Boa qualidade, recomendado',
     StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
   };
-}
-
-/// Em batalha, recorta o dock à região do chat (nada sobe sobre o vídeo).
-class _BattleDockClip extends StatelessWidget {
-  const _BattleDockClip({required this.enabled, required this.child});
-  final bool enabled;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!enabled) return child;
-    return ClipRect(
-      child: Align(alignment: Alignment.bottomCenter, child: child),
-    );
-  }
 }

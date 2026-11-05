@@ -106,7 +106,7 @@ class BattleAvatar extends StatelessWidget {
 /// A fronteira "empurra" com mola (overshoot leve) a cada mudança de pontos,
 /// com a costura branca pulsando (o único brilho do HUD) e números que contam.
 /// Fração da barra ocupada pelo lado da esquerda (o dono).
-double _progressLeft(BattleState b, String ownSide) =>
+double battleProgressLeft(BattleState b, String ownSide) =>
     ownSide == 'b' ? 1 - b.progressA : b.progressA;
 
 class BattleAdvantageBar extends StatefulWidget {
@@ -133,7 +133,7 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
     with TickerProviderStateMixin {
   late final AnimationController _spring = AnimationController.unbounded(
     vsync: this,
-    value: _progressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96),
+    value: battleProgressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96),
   );
   late final AnimationController _pulse = AnimationController(
     vsync: this,
@@ -143,8 +143,8 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
   @override
   void didUpdateWidget(covariant BattleAdvantageBar old) {
     super.didUpdateWidget(old);
-    final target = _progressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96);
-    final before = _progressLeft(old.battle, old.ownSide).clamp(0.04, 0.96);
+    final target = battleProgressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96);
+    final before = battleProgressLeft(old.battle, old.ownSide).clamp(0.04, 0.96);
     if ((target - before).abs() > 0.0005) {
       _spring.animateWith(
         SpringSimulation(
@@ -284,10 +284,21 @@ const double kBattleBarH = 24;
 // ─── Cronômetro (pílula escura no alto do vídeo) + selo 2X ──────────────────
 
 class BattleTimerOverlay extends StatelessWidget {
-  const BattleTimerOverlay({super.key, required this.battle, this.sealMultiplier});
+  const BattleTimerOverlay({
+    super.key,
+    required this.battle,
+    this.sealMultiplier,
+    this.onUrgentTick,
+  });
 
   final BattleState battle;
   final double? sealMultiplier;
+
+  /// Cada segundo da reta final (últimos 10 s).
+  final void Function(int secondsLeft)? onUrgentTick;
+
+  /// Últimos segundos em que o cronômetro fica laranja, pulsa e vibra.
+  static const int urgentSeconds = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -297,7 +308,8 @@ class BattleTimerOverlay extends StatelessWidget {
         BattleTimer(
           timeRemaining: battle.timeRemaining,
           compact: true,
-          urgentSeconds: battle.powerWindowSeconds,
+          urgentSeconds: battle.phase == BattlePhase.active ? urgentSeconds : 0,
+          onUrgentTick: onUrgentTick,
         ),
         if (sealMultiplier != null) ...[
           const SizedBox(width: 4),
@@ -589,208 +601,77 @@ const Color kBattleInfoGray = kBattleTextDim;
 
 // ─── Contagem 3·2·1 ─────────────────────────────────────────────────────────
 
+/// Contagem 3·2·1 NO PALCO: só o número grande (e, pequeno, "A VS B") sobre
+/// a área do vídeo — sem escurecer topo nem chat. [media] é o desenho do
+/// manifesto (Lottie/imagem) por trás do número, quando já baixado.
 class BattleCountdownOverlay extends StatelessWidget {
-  const BattleCountdownOverlay({super.key, required this.count, required this.battle});
+  const BattleCountdownOverlay({
+    super.key,
+    required this.count,
+    required this.battle,
+    this.media,
+  });
 
   final int count;
   final BattleState battle;
+  final Widget? media;
 
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
+    const shadow = [Shadow(blurRadius: 14, color: Colors.black87)];
     return IgnorePointer(
-      child: Container(
-        color: kBattleBg.withValues(alpha: 0.72),
+      child: Stack(
         alignment: Alignment.center,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Semantics(
-              liveRegion: true,
-              label: l10n.battleCountdownStarting(count),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, anim) => ScaleTransition(
-                  scale: Tween<double>(begin: 1.8, end: 1.0).animate(
-                    CurvedAnimation(parent: anim, curve: Curves.easeOut),
+        children: [
+          if (media != null)
+            Positioned.fill(
+              child: Padding(padding: const EdgeInsets.all(24), child: media),
+            ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Semantics(
+                liveRegion: true,
+                label: l10n.battleCountdownStarting(count),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, anim) => ScaleTransition(
+                    scale: Tween<double>(begin: 1.8, end: 1.0).animate(
+                      CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                    ),
+                    child: FadeTransition(opacity: anim, child: child),
                   ),
-                  child: FadeTransition(opacity: anim, child: child),
-                ),
-                child: Text(
-                  '$count',
-                  key: ValueKey(count),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 120,
-                    height: 1,
-                    fontWeight: FontWeight.w900,
-                    decoration: TextDecoration.none,
+                  child: Text(
+                    '$count',
+                    key: ValueKey(count),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 120,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      decoration: TextDecoration.none,
+                      shadows: shadow,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  battle.streamerAName,
-                  style: const TextStyle(
-                    color: kBattleText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    decoration: TextDecoration.none,
-                  ),
+              const SizedBox(height: 8),
+              Text(
+                '${battle.streamerAName} ${l10n.battleVs} ${battle.streamerBName}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  decoration: TextDecoration.none,
+                  shadows: shadow,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  l10n.battleVs,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 2,
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  battle.streamerBName,
-                  style: const TextStyle(
-                    color: kBattleText,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Momentum (rajada) ──────────────────────────────────────────────────────
-
-class BattleMomentumBadge extends StatefulWidget {
-  const BattleMomentumBadge({super.key, required this.count, required this.side});
-  final int count;
-  final String side;
-
-  @override
-  State<BattleMomentumBadge> createState() => _BattleMomentumBadgeState();
-}
-
-class _BattleMomentumBadgeState extends State<BattleMomentumBadge>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 700),
-  )..repeat(reverse: true);
-  late final Animation<double> _pulse = Tween<double>(begin: 1.0, end: 1.04)
-      .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _pulse,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: battleGlass(radius: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.local_fire_department_outlined, size: 13, color: kBattleTextDim),
-            const SizedBox(width: 3),
-            Text(
-              '${S.of(context).battleMomentum} x${widget.count}',
-              style: const TextStyle(
-                color: kBattleText,
-                fontWeight: FontWeight.w700,
-                fontFeatures: _tab,
-                fontSize: 10.5,
-                decoration: TextDecoration.none,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Virada de liderança ────────────────────────────────────────────────────
-
-class BattleLeadFlash extends StatefulWidget {
-  const BattleLeadFlash({super.key, required this.side});
-  final String side;
-
-  @override
-  State<BattleLeadFlash> createState() => _BattleLeadFlashState();
-}
-
-class _BattleLeadFlashState extends State<BattleLeadFlash>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  )..forward();
-  late final Animation<double> _fade = TweenSequence<double>([
-    TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 18),
-    TweenSequenceItem(tween: ConstantTween(1.0), weight: 52),
-    TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 30),
-  ]).animate(_ctrl);
-  late final Animation<double> _scale = TweenSequence<double>([
-    TweenSequenceItem(
-      tween: Tween(begin: 0.6, end: 1.08).chain(CurveTween(curve: Curves.easeOutBack)),
-      weight: 30,
-    ),
-    TweenSequenceItem(tween: ConstantTween(1.08), weight: 70),
-  ]).animate(_ctrl);
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: FadeTransition(
-        opacity: _fade,
-        child: ScaleTransition(
-          scale: _scale,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: battleGlass(radius: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.swap_vert_rounded, color: kBattleText, size: 20),
-                const SizedBox(width: 6),
-                Text(
-                  S.of(context).battleLeadChange,
-                  style: const TextStyle(
-                    color: kBattleText,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: 1,
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -867,129 +748,101 @@ class _SealPop extends StatelessWidget {
   }
 }
 
-/// Selo VITÓRIA (dourado, coroa, confete) ou DERROTA (apagado) sobre uma metade.
+/// Desenho de fim de uma metade, SEM texto (a palavra vai para o narrador):
+/// vencedora = coroa + confete; perdedora = escurecida. [media] é o desenho
+/// do manifesto (vitória/derrota), por cima do desenho padrão.
 class BattleEndSeal extends StatelessWidget {
-  const BattleEndSeal({super.key, required this.win});
+  const BattleEndSeal({super.key, required this.win, this.media});
   final bool win;
+  final Widget? media;
 
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
+    final label = win ? l10n.battleSealWin : l10n.battleSealLose;
     if (!win) {
-      return Container(
-        color: Colors.black.withValues(alpha: 0.45),
-        alignment: Alignment.center,
-        child: _SealPop(
-          child: Text(
-            l10n.battleSealLose,
-            style: const TextStyle(
-              color: kBattleTextDim,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1,
-              decoration: TextDecoration.none,
-            ),
-          ),
+      return Semantics(
+        label: label,
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.5),
+          alignment: Alignment.center,
+          child: media == null
+              ? null
+              : Padding(padding: const EdgeInsets.all(20), child: media),
         ),
       );
     }
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const _Confetti(),
-        Center(
-          child: _SealPop(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.workspace_premium_rounded, color: kBattleGold, size: 38),
-                Text(
-                  l10n.battleSealWin,
-                  style: const TextStyle(
-                    color: kBattleGold,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                    shadows: [Shadow(blurRadius: 8, color: Colors.black87)],
-                    decoration: TextDecoration.none,
-                  ),
-                ),
-              ],
+    return Semantics(
+      label: label,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const _Confetti(),
+          Center(
+            child: _SealPop(
+              child: const Icon(
+                Icons.workspace_premium_rounded,
+                color: kBattleGold,
+                size: 56,
+                shadows: [Shadow(blurRadius: 10, color: Colors.black87)],
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-/// EMPATE atravessando as duas metades.
-class BattleDrawSeal extends StatelessWidget {
-  const BattleDrawSeal({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: _SealPop(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          decoration: battleGlass(radius: 14),
-          child: Text(
-            S.of(context).battleSealDraw,
-            style: const TextStyle(
-              color: kBattleText,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-              decoration: TextDecoration.none,
-            ),
-          ),
-        ),
+          if (media != null)
+            Padding(padding: const EdgeInsets.all(20), child: media),
+        ],
       ),
     );
   }
 }
 
-/// §15: batalha encerrada SEM vencedor — selo neutro atravessando as duas
-/// metades + motivo. Sem VITÓRIA/DERROTA e sem coroa.
-class BattleEndedSeal extends StatelessWidget {
-  const BattleEndedSeal({super.key, required this.reason});
-  final String reason;
+/// Empate atravessando as duas metades: só o desenho (balança), sem texto.
+class BattleDrawSeal extends StatelessWidget {
+  const BattleDrawSeal({super.key, this.media});
+  final Widget? media;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: _SealPop(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          decoration: battleGlass(radius: 14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                S.of(context).battleEndedTitle,
-                style: const TextStyle(
-                  color: kBattleText,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                  decoration: TextDecoration.none,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                reason,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: kBattleTextDim,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  decoration: TextDecoration.none,
-                ),
-              ),
-            ],
+    return Semantics(
+      label: S.of(context).battleSealDraw,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const _SealPop(
+            child: Icon(
+              Icons.balance_rounded,
+              color: kBattleGold,
+              size: 52,
+              shadows: [Shadow(blurRadius: 10, color: Colors.black87)],
+            ),
           ),
-        ),
+          if (media != null)
+            Positioned.fill(
+              child: Padding(padding: const EdgeInsets.all(24), child: media),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// §15: batalha encerrada SEM vencedor — só escurece o vídeo (o motivo vai
+/// para o narrador). Sem VITÓRIA/DERROTA e sem coroa.
+class BattleEndedSeal extends StatelessWidget {
+  const BattleEndedSeal({super.key, required this.reason, this.media});
+  final String reason;
+  final Widget? media;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '${S.of(context).battleEndedTitle}. $reason',
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.35),
+        alignment: Alignment.center,
+        child: media == null
+            ? null
+            : Padding(padding: const EdgeInsets.all(24), child: media),
       ),
     );
   }

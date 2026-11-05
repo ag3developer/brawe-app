@@ -8013,4 +8013,53 @@ class SEn extends S {
 
   @override
   String get battleEndedLiveAnon => 'A creator\'s live dropped';
+
+  @override
+  String get battleNarrStart => 'The battle is on! Every gift counts';
+
+  @override
+  String battleNarrLeadOwn(String team) {
+    return 'TURNAROUND! $team took the lead';
+  }
+
+  @override
+  String battleNarrLeadOther(String team) {
+    return '$team took the lead. Time to turn it around!';
+  }
+
+  @override
+  String battleNarrMomentum(String team) {
+    return '$team is on fire';
+  }
+
+  @override
+  String battleNarrFlashStart(String pontos, String nome, String tempo) {
+    return 'Flash challenge: send $pontos $nome in $tempo';
+  }
+
+  @override
+  String battleNarrFlashDone(String mult, String tempo) {
+    return 'Challenge done! $mult for $tempo';
+  }
+
+  @override
+  String battleNarrFinal10(String mult) {
+    return 'Last 10 seconds! Every gift is worth $mult';
+  }
+
+  @override
+  String battleNarrVictory(String team) {
+    return '$team WINS!';
+  }
+
+  @override
+  String battleNarrDefeat(String team) {
+    return 'It\'s over! $team won this time';
+  }
+
+  @override
+  String get battleNarrDraw => 'DRAW!';
+
+  @override
+  String get battleNarrEnded => 'Battle ended';
 }

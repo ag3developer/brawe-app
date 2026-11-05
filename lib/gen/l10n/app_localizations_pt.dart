@@ -8051,4 +8051,53 @@ class SPt extends S {
 
   @override
   String get battleEndedLiveAnon => 'A live de um criador caiu';
+
+  @override
+  String get battleNarrStart => 'A batalha começou! Cada presente conta';
+
+  @override
+  String battleNarrLeadOwn(String team) {
+    return 'VIROU! $team passou na frente';
+  }
+
+  @override
+  String battleNarrLeadOther(String team) {
+    return '$team passou na frente. Bora virar!';
+  }
+
+  @override
+  String battleNarrMomentum(String team) {
+    return '$team está pegando fogo';
+  }
+
+  @override
+  String battleNarrFlashStart(String pontos, String nome, String tempo) {
+    return 'Desafio relâmpago: envie $pontos $nome em $tempo';
+  }
+
+  @override
+  String battleNarrFlashDone(String mult, String tempo) {
+    return 'Desafio feito! $mult por $tempo';
+  }
+
+  @override
+  String battleNarrFinal10(String mult) {
+    return 'Últimos 10 segundos! Cada presente vale $mult';
+  }
+
+  @override
+  String battleNarrVictory(String team) {
+    return 'VITÓRIA de $team!';
+  }
+
+  @override
+  String battleNarrDefeat(String team) {
+    return 'Fim! $team venceu desta vez';
+  }
+
+  @override
+  String get battleNarrDraw => 'EMPATE!';
+
+  @override
+  String get battleNarrEnded => 'Batalha encerrada';
 }

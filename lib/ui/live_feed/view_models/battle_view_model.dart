@@ -251,6 +251,7 @@ class BattleViewModel extends _$BattleViewModel {
       phase: phase,
       rtcMode: _str(pick('rtc_mode')) ?? prev?.rtcMode ?? 'dual_hls',
       ownerLeft: pick('owner_left') as bool? ?? prev?.ownerLeft ?? false,
+      assetsVersion: _int(pick('assets_version')) ?? prev?.assetsVersion,
       powerMoment: pick('power_moment') as bool? ?? prev?.powerMoment ?? false,
       multiplier:
           (pick('power_multiplier') as num?)?.toDouble() ??
@@ -391,6 +392,7 @@ class BattleViewModel extends _$BattleViewModel {
         timeRemaining: _remainingFrom(endsAt),
         rtcMode: _str(json['rtc_mode']) ?? s.rtcMode,
         ownerLeft: json['owner_left'] as bool? ?? s.ownerLeft,
+        assetsVersion: _int(json['assets_version']) ?? s.assetsVersion,
         mutedA: muted is Map ? muted['a'] == true : s.mutedA,
         mutedB: muted is Map ? muted['b'] == true : s.mutedB,
         // 🎬 Atualiza URLs do split-screen — fallback caso o REST inicial
@@ -449,6 +451,7 @@ class BattleViewModel extends _$BattleViewModel {
         phase: s.phase == BattlePhase.active ? s.phase : BattlePhase.countdown,
         rtcMode: rtc ?? s.rtcMode,
         ownerLeft: json['owner_left'] as bool? ?? s.ownerLeft,
+        assetsVersion: _int(json['assets_version']) ?? s.assetsVersion,
         countdown: hasNumber ? (value! > 0 ? value : null) : 3,
       ),
     );

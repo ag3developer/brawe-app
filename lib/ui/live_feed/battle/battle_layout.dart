@@ -18,6 +18,11 @@ const double kBattleDividerW = 4;
 /// Largura de cada metade no frame (358).
 const double kBattleHalfW = (kBattleFrameW - kBattleDividerW) / 2;
 
+/// Altura da faixa preta de "jogo" logo abaixo do vídeo (§19.1): fileira do
+/// time (top 3 / desafio relâmpago / MVP, ~44) + linha do narrador (~26) +
+/// respiro. O chat começa abaixo dela, no espectador e no criador.
+const double kBattleRowsH = 74;
+
 /// Posições (em coordenadas da tela) das faixas da batalha. Usado pelo
 /// espectador e pelo criador, nos modos `composite` e `dual_hls`.
 ///
@@ -48,7 +53,7 @@ class BattleLayout {
     required Size screen,
     required double splitTop,
     double stripH = 24,
-    double minChat = 250,
+    double minChat = 250 + 30,
     String ownSide = 'a',
   }) {
     final byWidth = screen.width / kBattleFrameW;
@@ -123,6 +128,13 @@ class BattleLayout {
 
   /// Região inferior (chat, avisos e ações), até o fim da tela.
   final Rect chat;
+
+  /// Y onde a faixa do jogo (fileira do time + narrador) termina e o chat
+  /// começa.
+  double get rowsBottom => chat.top + kBattleRowsH;
+
+  /// Y da linha do narrador (abaixo da fileira do time).
+  double get narratorTop => chat.top + 44;
 
   Rect half(String side) => side == 'b' ? halfB : halfA;
 
@@ -200,4 +212,21 @@ Widget battleRegionWrap(BuildContext context, Rect rect, Widget child) {
       ),
     ),
   );
+}
+
+/// Em batalha, recorta o dock do chat à sua região (abaixo da faixa do jogo):
+/// nada sobe sobre o vídeo, a fileira do time nem o narrador. Espectador e
+/// criador usam o mesmo recorte.
+class BattleDockClip extends StatelessWidget {
+  const BattleDockClip({super.key, required this.enabled, required this.child});
+  final bool enabled;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!enabled) return child;
+    return ClipRect(
+      child: Align(alignment: Alignment.bottomCenter, child: child),
+    );
+  }
 }

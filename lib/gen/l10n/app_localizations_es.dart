@@ -8056,4 +8056,53 @@ class SEs extends S {
 
   @override
   String get battleEndedLiveAnon => 'El directo de un creador se cayó';
+
+  @override
+  String get battleNarrStart => '¡Empezó la batalla! Cada regalo cuenta';
+
+  @override
+  String battleNarrLeadOwn(String team) {
+    return '¡VOLTEARON! $team pasó al frente';
+  }
+
+  @override
+  String battleNarrLeadOther(String team) {
+    return '$team pasó al frente. ¡A voltearlo!';
+  }
+
+  @override
+  String battleNarrMomentum(String team) {
+    return '$team está que arde';
+  }
+
+  @override
+  String battleNarrFlashStart(String pontos, String nome, String tempo) {
+    return 'Desafío relámpago: envía $pontos $nome en $tempo';
+  }
+
+  @override
+  String battleNarrFlashDone(String mult, String tempo) {
+    return '¡Desafío cumplido! $mult por $tempo';
+  }
+
+  @override
+  String battleNarrFinal10(String mult) {
+    return '¡Últimos 10 segundos! Cada regalo vale $mult';
+  }
+
+  @override
+  String battleNarrVictory(String team) {
+    return '¡VICTORIA de $team!';
+  }
+
+  @override
+  String battleNarrDefeat(String team) {
+    return '¡Fin! $team ganó esta vez';
+  }
+
+  @override
+  String get battleNarrDraw => '¡EMPATE!';
+
+  @override
+  String get battleNarrEnded => 'Batalla terminada';
 }
