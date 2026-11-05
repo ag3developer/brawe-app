@@ -8,6 +8,8 @@
 	<string>A Brawe precisa de permissão para salvar fotos e vídeos capturados na sua galeria.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa. Ela não é usada em segundo plano.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>A Brawe precisa de acesso à câmera para você tirar fotos, gravar vídeos e transmitir ao vivo.</string>
 	<key>NSMicrophoneUsageDescription</key>
