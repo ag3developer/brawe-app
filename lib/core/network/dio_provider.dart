@@ -20,6 +20,7 @@ Dio dio(Ref ref) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Brawe-Client': 'app',
       },
     ),
   );
