@@ -6,7 +6,10 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/widgets/brawe_logo.dart';
+import '../../../domain/models/user.dart';
 import '../view_models/login_view_model.dart';
+import 'common/session_ended_notice.dart';
+import 'step_up_screen.dart';
 import 'common/auth_action_button.dart';
 import 'common/auth_background.dart';
 import 'common/auth_input_field.dart';
@@ -41,6 +44,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           CurvedAnimation(parent: _entryController, curve: Curves.easeOutCubic),
         );
     _entryController.forward();
+    showSessionEndedNoticeIfPending(this);
   }
 
   @override
@@ -51,9 +55,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     super.dispose();
   }
 
+  /// Abre a tela do código e conclui o login com o resultado.
+  Future<void> _openStepUp(StepUpChallenge challenge) async {
+    final user = await Navigator.of(context).push<User>(
+      MaterialPageRoute(builder: (_) => StepUpScreen(challenge: challenge)),
+    );
+    if (!mounted) return;
+    ref.read(stepUpChallengeProvider.notifier).set(null);
+    if (user != null) {
+      ref.read(loginViewModelProvider.notifier).finishLogin(user);
+      AppSnackBar.showSuccess(context, S.of(context).authWelcomeBackSuccess);
+    }
+  }
+
   Future<void> _onSubmit() async {
     final success = await ref.read(loginViewModelProvider.notifier).submit();
     if (mounted) {
+      final challenge = ref.read(stepUpChallengeProvider);
+      if (!success && challenge != null) {
+        await _openStepUp(challenge);
+        return;
+      }
       if (success) {
         AppSnackBar.showSuccess(context, S.of(context).authWelcomeBackSuccess);
       } else {

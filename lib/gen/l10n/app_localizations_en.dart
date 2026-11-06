@@ -9219,4 +9219,256 @@ class SEn extends S {
 
   @override
   String get storyUpFailed => 'Failed to post the story';
+
+  @override
+  String get sessionEndedMessage =>
+      'Your session was ended. Please sign in again.';
+
+  @override
+  String get stepUpTitle => 'Confirm it\'s you';
+
+  @override
+  String stepUpSubtitle(String email) {
+    return 'We sent a code to $email';
+  }
+
+  @override
+  String get stepUpHint =>
+      'We noticed a sign-in from a new device. Enter the code to continue.';
+
+  @override
+  String get stepUpBack => 'Back to sign in';
+
+  @override
+  String stepUpTooMany(String time) {
+    return 'Too many attempts. Try again in $time.';
+  }
+
+  @override
+  String get secTitle => 'Security';
+
+  @override
+  String get secSettingsEntrySub =>
+      'Connected devices, sign-in history and account protection';
+
+  @override
+  String get secTabDevices => 'Devices';
+
+  @override
+  String get secTabHistory => 'History';
+
+  @override
+  String get secTabProtect => 'Protection';
+
+  @override
+  String get secDevicesTitle => 'Connected devices';
+
+  @override
+  String get secDevicesSubtitle =>
+      'These devices are signed in to your account.';
+
+  @override
+  String get secThisDevice => 'This device';
+
+  @override
+  String get secActiveNow => 'Active now';
+
+  @override
+  String secLastActive(String time) {
+    return 'Active $time';
+  }
+
+  @override
+  String secTimeMinutes(int n) {
+    return '$n min ago';
+  }
+
+  @override
+  String secTimeHours(int n) {
+    return '$n h ago';
+  }
+
+  @override
+  String secTimeDays(int n) {
+    return '$n d ago';
+  }
+
+  @override
+  String get secEndSession => 'End session';
+
+  @override
+  String get secEndSessionTitle => 'End the session on this device?';
+
+  @override
+  String secEndSessionBody(String device) {
+    return '$device will be signed out and will need to sign in again.';
+  }
+
+  @override
+  String get secEndedOk => 'Session ended.';
+
+  @override
+  String get secSignOutOthers => 'Sign out of all other devices';
+
+  @override
+  String get secSignOutOthersTitle => 'Sign out of other devices?';
+
+  @override
+  String get secSignOutOthersBody =>
+      'Every device except this one will be signed out.';
+
+  @override
+  String get secSignedOutOthersOk => 'Other devices were signed out.';
+
+  @override
+  String get secNoOtherDevices => 'No other devices connected.';
+
+  @override
+  String get secDevicesEmpty => 'No active sessions found.';
+
+  @override
+  String get secLoadError => 'Could not load right now.';
+
+  @override
+  String get secUnavailable =>
+      'This feature is not available yet. Please try again soon.';
+
+  @override
+  String get secActionError => 'Could not complete. Please try again.';
+
+  @override
+  String get secClientApp => 'Brawe app';
+
+  @override
+  String get secClientPartners => 'Brawe Partners';
+
+  @override
+  String get secClientWeb => 'Browser';
+
+  @override
+  String secAppVersion(String v) {
+    return 'version $v';
+  }
+
+  @override
+  String get secUnknownDevice => 'Unknown device';
+
+  @override
+  String get secUnknownPlace => 'Unknown location';
+
+  @override
+  String get secHistoryTitle => 'Sign-in history';
+
+  @override
+  String get secFilterAll => 'All';
+
+  @override
+  String get secFilterLogins => 'Sign-ins';
+
+  @override
+  String get secFilterFailures => 'Failures';
+
+  @override
+  String get secFilterChanges => 'Changes';
+
+  @override
+  String get secHistoryEmpty => 'No events for this filter.';
+
+  @override
+  String get secLoadMore => 'Load more';
+
+  @override
+  String get secEvLogin => 'Sign-in';
+
+  @override
+  String get secEvLoginFailed => 'Sign-in attempt failed';
+
+  @override
+  String get secEvLoginBlocked => 'Sign-in blocked';
+
+  @override
+  String get secEvLogout => 'Signed out';
+
+  @override
+  String get secEvSessionRevoked => 'Session ended';
+
+  @override
+  String get secEvSessionsRevokedAll => 'Other devices signed out';
+
+  @override
+  String get secEvPasswordChanged => 'Password changed';
+
+  @override
+  String get secEvPasswordResetRequested => 'Password reset requested';
+
+  @override
+  String get secEvPasswordReset => 'Password reset';
+
+  @override
+  String get secEvQrLogin => 'QR code sign-in';
+
+  @override
+  String get secEvLoginCode => 'Code sign-in';
+
+  @override
+  String get secEvStepUpRequired => 'Verification requested';
+
+  @override
+  String get secEvStepUpPassed => 'Verification passed';
+
+  @override
+  String get secEvNewDeviceAlert => 'New device alert';
+
+  @override
+  String get secEvUnknown => 'Security event';
+
+  @override
+  String get secProtectTitle => 'Don\'t recognize a sign-in?';
+
+  @override
+  String get secProtectBody =>
+      'If something looks off, protect your account now: we sign out every other device and you set a new password.';
+
+  @override
+  String get secProtectButton => 'Protect my account';
+
+  @override
+  String get secProtectSheetTitle => 'Protect your account';
+
+  @override
+  String get secProtectSheetIntro => 'We will do two things now:';
+
+  @override
+  String get secProtectStep1 =>
+      'Sign out of every other device. You stay signed in here.';
+
+  @override
+  String get secProtectStep2 =>
+      'Ask you to create a new password. This step is required.';
+
+  @override
+  String get secProtectConfirm => 'Protect now';
+
+  @override
+  String get secCancel => 'Cancel';
+
+  @override
+  String get secRetry => 'Try again';
+
+  @override
+  String get secProtectError =>
+      'Could not protect the account. Please try again.';
+
+  @override
+  String get secChangePasswordSub => 'Choose a new, strong password';
+
+  @override
+  String get secPasswordRequired =>
+      'For your security, set a new password to continue.';
+
+  @override
+  String get secGeoAttribution => 'IP Geolocation by DB-IP';
+
+  @override
+  String get secSettingsEntry => 'Security';
 }

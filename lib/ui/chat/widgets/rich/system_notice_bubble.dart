@@ -88,7 +88,9 @@ Color systemNoticeToneColor(BraweColors c, SystemNoticeTone tone) {
 /// Rotas de tela cheia (fora do ShellRoute) podem ser empilhadas com `push`;
 /// qualquer outra é do shell e, a partir de `/chat/:id` (fora do shell), só
 /// funciona com `go` — `push` quebra o Navigator (keyReservation).
-bool isTopLevelNoticeRoute(String route) => route.startsWith('/creator/agency/invite/');
+bool isTopLevelNoticeRoute(String route) =>
+    route.startsWith('/creator/agency/invite/') ||
+    route.startsWith('/settings/security');
 
 void openSystemNoticeRoute(BuildContext context, String route) {
   if (isTopLevelNoticeRoute(route)) {

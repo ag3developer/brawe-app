@@ -38,6 +38,7 @@ class AppConstants {
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'auth_user';
+  static const String deviceIdKey = 'device_id';
 
   // Timeouts
   static const Duration defaultTimeout = Duration(seconds: 30);

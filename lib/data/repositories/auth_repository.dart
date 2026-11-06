@@ -7,6 +7,67 @@ import '../services/storage_service.dart';
 
 part 'auth_repository.g.dart';
 
+/// Login arriscado (aparelho novo etc.): o servidor mandou um código por
+/// e-mail. Chega como 403 `{detail:{code:"step_up_required", challenge_id,
+/// email_masked}}` (ou os campos no topo).
+class StepUpRequiredException implements Exception {
+  const StepUpRequiredException({
+    required this.challengeId,
+    required this.emailMasked,
+    this.resendIn = 60,
+    this.expiresIn = 600,
+  });
+
+  final String challengeId;
+  final String emailMasked;
+
+  /// Segundos até poder reenviar o código (`resend_in` do servidor).
+  final int resendIn;
+  final int expiresIn;
+
+  static StepUpRequiredException? fromResponse(Response? res) {
+    if (res == null || res.statusCode != 403) return null;
+    final data = res.data;
+    if (data is! Map) return null;
+    final detail = data['detail'];
+    final src = detail is Map ? detail : data;
+    if (src['code'] != 'step_up_required') return null;
+    final id = src['challenge_id'];
+    if (id is! String || id.isEmpty) return null;
+    return StepUpRequiredException(
+      challengeId: id,
+      emailMasked: (src['email_masked'] as String?) ?? '',
+      resendIn: (src['resend_in'] as num?)?.toInt() ?? 60,
+      expiresIn: (src['expires_in'] as num?)?.toInt() ?? 600,
+    );
+  }
+}
+
+/// `retry_after` (segundos) de um 429 `{code:"too_many_attempts", retry_after}`
+/// — no topo, dentro de `detail` ou no cabeçalho Retry-After.
+int? retryAfterSeconds(Response? res) {
+  final data = res?.data;
+  num? v;
+  if (data is Map) {
+    v = data['retry_after'] as num?;
+    final d = data['detail'];
+    if (v == null && d is Map) v = d['retry_after'] as num?;
+  }
+  v ??= int.tryParse(res?.headers.value('retry-after') ?? '');
+  return v?.toInt();
+}
+
+/// "Muitas tentativas. Tente de novo em 2 min." (com contagem quando houver).
+String tooManyAttemptsMessage(int? seconds) {
+  if (seconds == null || seconds <= 0) {
+    return 'Muitas tentativas. Tente novamente em instantes.';
+  }
+  final text = seconds >= 90
+      ? '${(seconds / 60).ceil()} min'
+      : '$seconds s';
+  return 'Muitas tentativas. Tente novamente em $text.';
+}
+
 @riverpod
 AuthRepository authRepository(Ref ref) {
   return AuthRepository(
@@ -43,6 +104,8 @@ class AuthRepository {
       await _storageService.saveUser(user);
       return user;
     } on DioException catch (e) {
+      final stepUp = StepUpRequiredException.fromResponse(e.response);
+      if (stepUp != null) throw stepUp;
       // 401 during login attempt means invalid credentials (not an expired
       // session). Surface a clear message to the user instead of the generic
       // "Session expired" wording used for already-authenticated requests.
@@ -57,8 +120,9 @@ class AuthRepository {
         throw const Failure.validation('Conta não encontrada.');
       }
       if (e.response?.statusCode == 429) {
-        throw const Failure.validation(
-            'Muitas tentativas. Tente novamente em instantes.');
+        throw Failure.validation(
+          tooManyAttemptsMessage(retryAfterSeconds(e.response)),
+        );
       }
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
@@ -67,11 +131,38 @@ class AuthRepository {
         throw const Failure.network();
       }
       throw const Failure.server();
+    } on StepUpRequiredException {
+      rethrow;
     } on Failure {
       rethrow;
     } catch (_) {
       throw const Failure.unknown();
     }
+  }
+
+  /// Conclui um login que pediu verificação (`step_up_required`): troca o
+  /// código recebido por e-mail pela sessão normal.
+  Future<User> stepUp(String challengeId, String code) async {
+    final data = await _authService.loginStepUp(challengeId, code);
+    return _finishLogin(data);
+  }
+
+  /// Reenvia o código do mesmo desafio (`POST /auth/login/step-up/resend`),
+  /// sem repetir o login com senha. Devolve `resend_in` (segundos).
+  Future<int> resendStepUp(String challengeId) =>
+      _authService.loginStepUpResend(challengeId);
+
+  Future<User> _finishLogin(Map<String, dynamic> data) async {
+    final token = _extractToken(data);
+    if (token != null) await _storageService.saveToken(token);
+    User user;
+    try {
+      user = User.fromJson(data['user'] as Map<String, dynamic>);
+    } catch (_) {
+      user = await getCurrentUser();
+    }
+    await _storageService.saveUser(user);
+    return user;
   }
 
   Future<User> registerAffiliate({
@@ -158,6 +249,10 @@ class AuthRepository {
         final apiUser = await getCurrentUser();
         await _storageService.saveUser(apiUser);
         return apiUser;
+      } on UnauthorizedFailure {
+        // Token recusado (sessão revogada): não mantém um login fantasma.
+        await _storageService.clearAll();
+        return null;
       } catch (_) {
         // If API call fails, fallback to local storage
         return user;
@@ -181,8 +276,17 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    // Encerra a sessão também no servidor (melhor esforço: sem rede ou com
+    // servidor antigo, o logout local acontece do mesmo jeito).
+    try {
+      await _authService.logoutServer().timeout(const Duration(seconds: 4));
+    } catch (_) {}
     await _storageService.clearAll();
   }
+
+  /// Troca o token guardado (ex.: depois de "Proteger conta" ou de trocar a
+  /// senha, quando o servidor devolve um `access_token` novo).
+  Future<void> replaceToken(String token) => _storageService.saveToken(token);
 
   String? _extractToken(Map<String, dynamic> payload) {
     final directToken = payload['access_token'] ?? payload['token'];

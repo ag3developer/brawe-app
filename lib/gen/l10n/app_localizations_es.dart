@@ -9261,4 +9261,260 @@ class SEs extends S {
 
   @override
   String get storyUpFailed => 'Falló al publicar la historia';
+
+  @override
+  String get sessionEndedMessage =>
+      'Tu sesión fue cerrada. Inicia sesión de nuevo.';
+
+  @override
+  String get stepUpTitle => 'Confirma que eres tú';
+
+  @override
+  String stepUpSubtitle(String email) {
+    return 'Enviamos un código a $email';
+  }
+
+  @override
+  String get stepUpHint =>
+      'Detectamos un acceso desde un dispositivo nuevo. Ingresa el código para continuar.';
+
+  @override
+  String get stepUpBack => 'Volver al inicio de sesión';
+
+  @override
+  String stepUpTooMany(String time) {
+    return 'Demasiados intentos. Inténtalo de nuevo en $time.';
+  }
+
+  @override
+  String get secTitle => 'Seguridad';
+
+  @override
+  String get secSettingsEntrySub =>
+      'Dispositivos conectados, historial de accesos y protección de la cuenta';
+
+  @override
+  String get secTabDevices => 'Dispositivos';
+
+  @override
+  String get secTabHistory => 'Historial';
+
+  @override
+  String get secTabProtect => 'Protección';
+
+  @override
+  String get secDevicesTitle => 'Dispositivos conectados';
+
+  @override
+  String get secDevicesSubtitle =>
+      'Estos dispositivos tienen tu cuenta abierta.';
+
+  @override
+  String get secThisDevice => 'Este dispositivo';
+
+  @override
+  String get secActiveNow => 'Activo ahora';
+
+  @override
+  String secLastActive(String time) {
+    return 'Activo $time';
+  }
+
+  @override
+  String secTimeMinutes(int n) {
+    return 'hace $n min';
+  }
+
+  @override
+  String secTimeHours(int n) {
+    return 'hace $n h';
+  }
+
+  @override
+  String secTimeDays(int n) {
+    return 'hace $n d';
+  }
+
+  @override
+  String get secEndSession => 'Cerrar sesión';
+
+  @override
+  String get secEndSessionTitle => '¿Cerrar la sesión en este dispositivo?';
+
+  @override
+  String secEndSessionBody(String device) {
+    return '$device se desconectará y tendrá que iniciar sesión de nuevo.';
+  }
+
+  @override
+  String get secEndedOk => 'Sesión cerrada.';
+
+  @override
+  String get secSignOutOthers =>
+      'Cerrar sesión en todos los demás dispositivos';
+
+  @override
+  String get secSignOutOthersTitle =>
+      '¿Cerrar sesión en los demás dispositivos?';
+
+  @override
+  String get secSignOutOthersBody =>
+      'Todos los dispositivos, menos este, se desconectarán.';
+
+  @override
+  String get secSignedOutOthersOk =>
+      'Los demás dispositivos fueron desconectados.';
+
+  @override
+  String get secNoOtherDevices => 'Ningún otro dispositivo conectado.';
+
+  @override
+  String get secDevicesEmpty => 'No se encontraron sesiones activas.';
+
+  @override
+  String get secLoadError => 'No se pudo cargar ahora.';
+
+  @override
+  String get secUnavailable =>
+      'Esta función aún no está disponible. Inténtalo de nuevo pronto.';
+
+  @override
+  String get secActionError => 'No se pudo completar. Inténtalo de nuevo.';
+
+  @override
+  String get secClientApp => 'App Brawe';
+
+  @override
+  String get secClientPartners => 'Brawe Partners';
+
+  @override
+  String get secClientWeb => 'Navegador';
+
+  @override
+  String secAppVersion(String v) {
+    return 'versión $v';
+  }
+
+  @override
+  String get secUnknownDevice => 'Dispositivo desconocido';
+
+  @override
+  String get secUnknownPlace => 'Ubicación no identificada';
+
+  @override
+  String get secHistoryTitle => 'Historial de accesos';
+
+  @override
+  String get secFilterAll => 'Todos';
+
+  @override
+  String get secFilterLogins => 'Inicios de sesión';
+
+  @override
+  String get secFilterFailures => 'Fallos';
+
+  @override
+  String get secFilterChanges => 'Cambios';
+
+  @override
+  String get secHistoryEmpty => 'Ningún evento en este filtro.';
+
+  @override
+  String get secLoadMore => 'Cargar más';
+
+  @override
+  String get secEvLogin => 'Inicio de sesión';
+
+  @override
+  String get secEvLoginFailed => 'Intento de inicio de sesión fallido';
+
+  @override
+  String get secEvLoginBlocked => 'Inicio de sesión bloqueado';
+
+  @override
+  String get secEvLogout => 'Cierre de sesión';
+
+  @override
+  String get secEvSessionRevoked => 'Sesión cerrada';
+
+  @override
+  String get secEvSessionsRevokedAll => 'Otros dispositivos desconectados';
+
+  @override
+  String get secEvPasswordChanged => 'Contraseña cambiada';
+
+  @override
+  String get secEvPasswordResetRequested =>
+      'Restablecimiento de contraseña solicitado';
+
+  @override
+  String get secEvPasswordReset => 'Contraseña restablecida';
+
+  @override
+  String get secEvQrLogin => 'Inicio de sesión con QR';
+
+  @override
+  String get secEvLoginCode => 'Inicio de sesión con código';
+
+  @override
+  String get secEvStepUpRequired => 'Verificación solicitada';
+
+  @override
+  String get secEvStepUpPassed => 'Verificación completada';
+
+  @override
+  String get secEvNewDeviceAlert => 'Alerta de dispositivo nuevo';
+
+  @override
+  String get secEvUnknown => 'Evento de seguridad';
+
+  @override
+  String get secProtectTitle => '¿No reconoces un acceso?';
+
+  @override
+  String get secProtectBody =>
+      'Si viste algo extraño, protege tu cuenta ahora: cerramos sesión en todos los demás dispositivos y defines una contraseña nueva.';
+
+  @override
+  String get secProtectButton => 'Proteger mi cuenta';
+
+  @override
+  String get secProtectSheetTitle => 'Proteger tu cuenta';
+
+  @override
+  String get secProtectSheetIntro => 'Haremos dos cosas ahora:';
+
+  @override
+  String get secProtectStep1 =>
+      'Cerrar sesión en todos los demás dispositivos. Sigues conectado aquí.';
+
+  @override
+  String get secProtectStep2 =>
+      'Pedirte que crees una contraseña nueva. Este paso es obligatorio.';
+
+  @override
+  String get secProtectConfirm => 'Proteger ahora';
+
+  @override
+  String get secCancel => 'Cancelar';
+
+  @override
+  String get secRetry => 'Intentar de nuevo';
+
+  @override
+  String get secProtectError =>
+      'No se pudo proteger la cuenta. Inténtalo de nuevo.';
+
+  @override
+  String get secChangePasswordSub => 'Elige una contraseña nueva y segura';
+
+  @override
+  String get secPasswordRequired =>
+      'Por seguridad, define una contraseña nueva para continuar.';
+
+  @override
+  String get secGeoAttribution => 'IP Geolocation by DB-IP';
+
+  @override
+  String get secSettingsEntry => 'Seguridad';
 }

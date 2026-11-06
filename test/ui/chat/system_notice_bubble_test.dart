@@ -96,6 +96,7 @@ void main() {
 
   test('rotas: convite é de tela cheia (push); demais usam go', () {
     expect(isTopLevelNoticeRoute('/creator/agency/invite/abc'), isTrue);
+    expect(isTopLevelNoticeRoute('/settings/security?secure=1'), isTrue);
     expect(isTopLevelNoticeRoute('/creator/dashboard'), isFalse);
   });
 }

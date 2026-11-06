@@ -16112,6 +16112,456 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Falhou ao publicar o story'**
   String get storyUpFailed;
+
+  /// No description provided for @sessionEndedMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua sessão foi encerrada. Entre novamente.'**
+  String get sessionEndedMessage;
+
+  /// No description provided for @stepUpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme que é você'**
+  String get stepUpTitle;
+
+  /// No description provided for @stepUpSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviamos um código para {email}'**
+  String stepUpSubtitle(String email);
+
+  /// No description provided for @stepUpHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Detectamos um acesso de um aparelho novo. Digite o código para entrar.'**
+  String get stepUpHint;
+
+  /// No description provided for @stepUpBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar ao login'**
+  String get stepUpBack;
+
+  /// No description provided for @stepUpTooMany.
+  ///
+  /// In pt, this message translates to:
+  /// **'Muitas tentativas. Tente de novo em {time}.'**
+  String stepUpTooMany(String time);
+
+  /// No description provided for @secTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segurança'**
+  String get secTitle;
+
+  /// No description provided for @secSettingsEntrySub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparelhos conectados, histórico de acessos e proteção da conta'**
+  String get secSettingsEntrySub;
+
+  /// No description provided for @secTabDevices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparelhos'**
+  String get secTabDevices;
+
+  /// No description provided for @secTabHistory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico'**
+  String get secTabHistory;
+
+  /// No description provided for @secTabProtect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Proteção'**
+  String get secTabProtect;
+
+  /// No description provided for @secDevicesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparelhos conectados'**
+  String get secDevicesTitle;
+
+  /// No description provided for @secDevicesSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estes aparelhos estão com a sua conta aberta.'**
+  String get secDevicesSubtitle;
+
+  /// No description provided for @secThisDevice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este aparelho'**
+  String get secThisDevice;
+
+  /// No description provided for @secActiveNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativo agora'**
+  String get secActiveNow;
+
+  /// No description provided for @secLastActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativo {time}'**
+  String secLastActive(String time);
+
+  /// No description provided for @secTimeMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {n} min'**
+  String secTimeMinutes(int n);
+
+  /// No description provided for @secTimeHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {n} h'**
+  String secTimeHours(int n);
+
+  /// No description provided for @secTimeDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'há {n} d'**
+  String secTimeDays(int n);
+
+  /// No description provided for @secEndSession.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar sessão'**
+  String get secEndSession;
+
+  /// No description provided for @secEndSessionTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar a sessão neste aparelho?'**
+  String get secEndSessionTitle;
+
+  /// No description provided for @secEndSessionBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'{device} será desconectado e precisará entrar de novo.'**
+  String secEndSessionBody(String device);
+
+  /// No description provided for @secEndedOk.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sessão encerrada.'**
+  String get secEndedOk;
+
+  /// No description provided for @secSignOutOthers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair de todos os outros aparelhos'**
+  String get secSignOutOthers;
+
+  /// No description provided for @secSignOutOthersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair dos outros aparelhos?'**
+  String get secSignOutOthersTitle;
+
+  /// No description provided for @secSignOutOthersBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos os aparelhos, menos este, serão desconectados.'**
+  String get secSignOutOthersBody;
+
+  /// No description provided for @secSignedOutOthersOk.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os outros aparelhos foram desconectados.'**
+  String get secSignedOutOthersOk;
+
+  /// No description provided for @secNoOtherDevices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum outro aparelho conectado.'**
+  String get secNoOtherDevices;
+
+  /// No description provided for @secDevicesEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma sessão ativa encontrada.'**
+  String get secDevicesEmpty;
+
+  /// No description provided for @secLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar agora.'**
+  String get secLoadError;
+
+  /// No description provided for @secUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este recurso ainda não está disponível. Tente novamente em breve.'**
+  String get secUnavailable;
+
+  /// No description provided for @secActionError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir. Tente de novo.'**
+  String get secActionError;
+
+  /// No description provided for @secClientApp.
+  ///
+  /// In pt, this message translates to:
+  /// **'App Brawe'**
+  String get secClientApp;
+
+  /// No description provided for @secClientPartners.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe Partners'**
+  String get secClientPartners;
+
+  /// No description provided for @secClientWeb.
+  ///
+  /// In pt, this message translates to:
+  /// **'Navegador'**
+  String get secClientWeb;
+
+  /// No description provided for @secAppVersion.
+  ///
+  /// In pt, this message translates to:
+  /// **'versão {v}'**
+  String secAppVersion(String v);
+
+  /// No description provided for @secUnknownDevice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparelho desconhecido'**
+  String get secUnknownDevice;
+
+  /// No description provided for @secUnknownPlace.
+  ///
+  /// In pt, this message translates to:
+  /// **'Local não identificado'**
+  String get secUnknownPlace;
+
+  /// No description provided for @secHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de acessos'**
+  String get secHistoryTitle;
+
+  /// No description provided for @secFilterAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get secFilterAll;
+
+  /// No description provided for @secFilterLogins.
+  ///
+  /// In pt, this message translates to:
+  /// **'Logins'**
+  String get secFilterLogins;
+
+  /// No description provided for @secFilterFailures.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falhas'**
+  String get secFilterFailures;
+
+  /// No description provided for @secFilterChanges.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterações'**
+  String get secFilterChanges;
+
+  /// No description provided for @secHistoryEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum evento neste filtro.'**
+  String get secHistoryEmpty;
+
+  /// No description provided for @secLoadMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregar mais'**
+  String get secLoadMore;
+
+  /// No description provided for @secEvLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Login'**
+  String get secEvLogin;
+
+  /// No description provided for @secEvLoginFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentativa de login falhou'**
+  String get secEvLoginFailed;
+
+  /// No description provided for @secEvLoginBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Login bloqueado'**
+  String get secEvLoginBlocked;
+
+  /// No description provided for @secEvLogout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saída da conta'**
+  String get secEvLogout;
+
+  /// No description provided for @secEvSessionRevoked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sessão encerrada'**
+  String get secEvSessionRevoked;
+
+  /// No description provided for @secEvSessionsRevokedAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros aparelhos desconectados'**
+  String get secEvSessionsRevokedAll;
+
+  /// No description provided for @secEvPasswordChanged.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha alterada'**
+  String get secEvPasswordChanged;
+
+  /// No description provided for @secEvPasswordResetRequested.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redefinição de senha solicitada'**
+  String get secEvPasswordResetRequested;
+
+  /// No description provided for @secEvPasswordReset.
+  ///
+  /// In pt, this message translates to:
+  /// **'Senha redefinida'**
+  String get secEvPasswordReset;
+
+  /// No description provided for @secEvQrLogin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Login por QR code'**
+  String get secEvQrLogin;
+
+  /// No description provided for @secEvLoginCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Login por código'**
+  String get secEvLoginCode;
+
+  /// No description provided for @secEvStepUpRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificação pedida'**
+  String get secEvStepUpRequired;
+
+  /// No description provided for @secEvStepUpPassed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificação concluída'**
+  String get secEvStepUpPassed;
+
+  /// No description provided for @secEvNewDeviceAlert.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alerta de aparelho novo'**
+  String get secEvNewDeviceAlert;
+
+  /// No description provided for @secEvUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Evento de segurança'**
+  String get secEvUnknown;
+
+  /// No description provided for @secProtectTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não reconhece um acesso?'**
+  String get secProtectTitle;
+
+  /// No description provided for @secProtectBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se viu algo estranho, proteja sua conta agora: saímos de todos os outros aparelhos e você define uma senha nova.'**
+  String get secProtectBody;
+
+  /// No description provided for @secProtectButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Proteger minha conta'**
+  String get secProtectButton;
+
+  /// No description provided for @secProtectSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Proteger sua conta'**
+  String get secProtectSheetTitle;
+
+  /// No description provided for @secProtectSheetIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vamos fazer duas coisas agora:'**
+  String get secProtectSheetIntro;
+
+  /// No description provided for @secProtectStep1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair de todos os outros aparelhos. Você continua conectado aqui.'**
+  String get secProtectStep1;
+
+  /// No description provided for @secProtectStep2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir que você crie uma senha nova. Essa etapa é obrigatória.'**
+  String get secProtectStep2;
+
+  /// No description provided for @secProtectConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Proteger agora'**
+  String get secProtectConfirm;
+
+  /// No description provided for @secCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get secCancel;
+
+  /// No description provided for @secRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get secRetry;
+
+  /// No description provided for @secProtectError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível proteger a conta. Tente de novo.'**
+  String get secProtectError;
+
+  /// No description provided for @secChangePasswordSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha uma senha nova e forte'**
+  String get secChangePasswordSub;
+
+  /// No description provided for @secPasswordRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por segurança, defina uma senha nova para continuar.'**
+  String get secPasswordRequired;
+
+  /// No description provided for @secGeoAttribution.
+  ///
+  /// In pt, this message translates to:
+  /// **'IP Geolocation by DB-IP'**
+  String get secGeoAttribution;
+
+  /// No description provided for @secSettingsEntry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Segurança'**
+  String get secSettingsEntry;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

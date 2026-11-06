@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/services/auth_service.dart';
+import '../../../data/services/storage_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/themes/brawe_colors.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, this.required = false});
+
+  /// Depois de "Proteger conta": não dá para sair sem trocar a senha.
+  final bool required;
 
   @override
   ConsumerState<ChangePasswordScreen> createState() =>
@@ -49,13 +53,21 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     }
     setState(() => _loading = true);
     try {
-      await ref.read(authServiceProvider).changePassword(
+      final newToken = await ref.read(authServiceProvider).changePassword(
             currentPassword: current,
             newPassword: next,
           );
+      // A troca de senha encerra as outras sessões e renova esta.
+      if (newToken != null) {
+        await ref.read(storageServiceProvider).saveToken(newToken);
+      }
       if (!mounted) return;
       AppSnackBar.showSuccess(context, S.of(context).cpChangedSuccess);
-      context.pop();
+      if (widget.required) {
+        context.go('/settings/security');
+      } else {
+        context.pop();
+      }
     } on DioException catch (e) {
       if (!mounted) return;
       final fallback = S.of(context).cpChangeError;
@@ -74,16 +86,37 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return Scaffold(
+    return PopScope(
+      canPop: !widget.required,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(s.settingsChangePassword),
-        leading: const BackButton(),
+        automaticallyImplyLeading: false,
+        leading: widget.required ? null : const BackButton(),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (widget.required) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.colors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  s.secPasswordRequired,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 14,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             const SizedBox(height: 8),
             TextField(
               controller: _currentController,
@@ -136,6 +169,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

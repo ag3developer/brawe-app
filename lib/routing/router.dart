@@ -17,6 +17,7 @@ import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/auth/widgets/forgot_password_screen.dart';
 import '../ui/auth/widgets/reset_password_screen.dart';
 import '../ui/settings/widgets/change_password_screen.dart';
+import '../ui/settings/widgets/security_screen.dart';
 import '../ui/settings/widgets/account_suspended_screen.dart';
 import '../core/network/account_suspension.dart';
 import '../ui/settings/widgets/delete_account_screen.dart';
@@ -480,10 +481,6 @@ GoRouter router(Ref ref) {
             builder: (context, state) => const SettingsScreen(),
           ),
           GoRoute(
-            path: '/settings/change-password',
-            builder: (context, state) => const ChangePasswordScreen(),
-          ),
-          GoRoute(
             path: '/settings/delete-account',
             builder: (context, state) => const DeleteAccountScreen(),
           ),
@@ -756,6 +753,28 @@ GoRouter router(Ref ref) {
         pageBuilder: (context, state) => CupertinoPage(
           key: state.pageKey,
           child: AgencyInviteScreen(inviteId: state.pathParameters['id']!),
+        ),
+      ),
+      // Segurança da conta e troca de senha: fora do shell (tela cheia) porque
+      // `/settings/security?secure=1` é aberto a partir da conversa oficial
+      // (`/chat/:id`, fora do shell) — empilhar rota do shell por cima dela
+      // quebra o Navigator (keyReservation).
+      GoRoute(
+        path: '/settings/security',
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: SecurityScreen(
+            openProtect: state.uri.queryParameters['secure'] == '1',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/change-password',
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: ChangePasswordScreen(
+            required: state.uri.queryParameters['required'] == '1',
+          ),
         ),
       ),
       // A tela de conversa aberta é imersiva — nada de bottom nav atrapalhando.

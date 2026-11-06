@@ -48,7 +48,13 @@ class StorageService {
   }
 
   Future<void> clearAll() async {
+    // O id do aparelho sobrevive ao logout: é ele que o servidor usa para
+    // reconhecer "este aparelho" na lista de sessões.
+    final deviceId = await _storage.read(key: AppConstants.deviceIdKey);
     await _storage.deleteAll();
+    if (deviceId != null) {
+      await _storage.write(key: AppConstants.deviceIdKey, value: deviceId);
+    }
   }
 
   String? _normalizeToken(String? token) {

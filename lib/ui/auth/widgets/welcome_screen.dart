@@ -1,3 +1,4 @@
+import 'common/session_ended_notice.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -109,6 +110,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   void initState() {
     super.initState();
+    showSessionEndedNoticeIfPending(this);
     _orbitController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 28),

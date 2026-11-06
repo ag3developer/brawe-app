@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -206,6 +207,13 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             _SectionHeader(icon: Icons.logout, title: s.settingsAccount),
+            ListTile(
+              leading: const Icon(LucideIcons.shieldCheck),
+              title: Text(s.secSettingsEntry),
+              subtitle: Text(s.secSettingsEntrySub),
+              trailing: const Icon(Icons.chevron_right, size: 20),
+              onTap: () => context.push('/settings/security'),
+            ),
             ListTile(
               leading: const Icon(Icons.lock_reset_outlined),
               title: Text(s.settingsChangePassword),

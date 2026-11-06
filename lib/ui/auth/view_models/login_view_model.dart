@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show Notifier, NotifierProvider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/push_notification_service.dart';
@@ -27,6 +28,32 @@ sealed class LoginState with _$LoginState {
       status.whenOrNull(error: (e, _) => (e as Failure).toDisplayMessage());
 }
 
+/// Verificação pedida pelo servidor (login arriscado).
+class StepUpChallenge {
+  const StepUpChallenge({
+    required this.challengeId,
+    required this.emailMasked,
+    this.resendIn = 60,
+  });
+  final String challengeId;
+  final String emailMasked;
+
+  /// Segundos até liberar "Reenviar" (`resend_in` do 403 do servidor).
+  final int resendIn;
+}
+
+/// Desafio pendente: a tela de login observa e abre a tela do código.
+class StepUpChallengeNotifier extends Notifier<StepUpChallenge?> {
+  @override
+  StepUpChallenge? build() => null;
+  void set(StepUpChallenge? v) => state = v;
+}
+
+final stepUpChallengeProvider =
+    NotifierProvider<StepUpChallengeNotifier, StepUpChallenge?>(
+      StepUpChallengeNotifier.new,
+    );
+
 @riverpod
 class LoginViewModel extends _$LoginViewModel {
   @override
@@ -44,6 +71,15 @@ class LoginViewModel extends _$LoginViewModel {
       password: value,
       status: const AsyncValue.data(null),
     );
+  }
+
+  /// Conclui o login (direto ou depois do código de verificação).
+  void finishLogin(User user) {
+    state = state.copyWith(status: AsyncValue.data(user));
+    ref.read(stepUpChallengeProvider.notifier).set(null);
+    ref.read(authStateProvider.notifier).updateSession(user);
+    // Register FCM device token (best-effort, fails silently).
+    unawaited(ref.read(pushNotificationServiceProvider).registerWithBackend());
   }
 
   Future<bool> submit() async {
@@ -75,11 +111,21 @@ class LoginViewModel extends _$LoginViewModel {
       final user = await ref
           .read(authRepositoryProvider)
           .login(state.email, state.password);
-      state = state.copyWith(status: AsyncValue.data(user));
-      ref.read(authStateProvider.notifier).updateSession(user);
-      // Register FCM device token (best-effort, fails silently).
-      unawaited(ref.read(pushNotificationServiceProvider).registerWithBackend());
+      finishLogin(user);
       return true;
+    } on StepUpRequiredException catch (e) {
+      // Aparelho novo/risco: o servidor mandou um código por e-mail.
+      state = state.copyWith(status: const AsyncValue.data(null));
+      ref
+          .read(stepUpChallengeProvider.notifier)
+          .set(
+            StepUpChallenge(
+              challengeId: e.challengeId,
+              emailMasked: e.emailMasked,
+              resendIn: e.resendIn,
+            ),
+          );
+      return false;
     } on Failure catch (e, st) {
       state = state.copyWith(status: AsyncValue.error(e, st));
       return false;

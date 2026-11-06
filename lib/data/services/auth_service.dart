@@ -12,6 +12,11 @@ AuthService authService(Ref ref) {
 class AuthService {
   final Dio _dio;
 
+  /// POST /auth/logout — revoga a sessão atual no servidor.
+  Future<void> logoutServer() async {
+    await _dio.post<dynamic>('/auth/logout');
+  }
+
   AuthService(this._dio);
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -20,6 +25,28 @@ class AuthService {
       data: {'email': email, 'password': password},
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  /// Segundo passo do login arriscado: `{challenge_id, code}` → login normal.
+  Future<Map<String, dynamic>> loginStepUp(
+    String challengeId,
+    String code,
+  ) async {
+    final response = await _dio.post(
+      '/auth/login/step-up',
+      data: {'challenge_id': challengeId, 'code': code},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// Reenvia o código do desafio de step-up. Devolve `resend_in` (s).
+  Future<int> loginStepUpResend(String challengeId) async {
+    final response = await _dio.post(
+      '/auth/login/step-up/resend',
+      data: {'challenge_id': challengeId},
+    );
+    final d = response.data;
+    return d is Map ? (d['resend_in'] as num?)?.toInt() ?? 60 : 60;
   }
 
   Future<Map<String, dynamic>> registerAffiliate({
@@ -94,17 +121,22 @@ class AuthService {
   }
 
   /// Altera a senha do usuário autenticado.
-  Future<void> changePassword({
+  /// Devolve o `access_token` novo, se o servidor mandou (a troca de senha
+  /// encerra as outras sessões e renova a atual).
+  Future<String?> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
-    await _dio.put(
+    final response = await _dio.put(
       '/auth/me/password',
       data: {
         'current_password': currentPassword,
         'new_password': newPassword,
       },
     );
+    final data = response.data;
+    final token = data is Map ? data['access_token'] : null;
+    return token is String && token.trim().isNotEmpty ? token : null;
   }
 
   /// Exclui (soft delete + anonimização LGPD) a conta do usuário.

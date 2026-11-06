@@ -9252,4 +9252,256 @@ class SPt extends S {
 
   @override
   String get storyUpFailed => 'Falhou ao publicar o story';
+
+  @override
+  String get sessionEndedMessage =>
+      'Sua sessão foi encerrada. Entre novamente.';
+
+  @override
+  String get stepUpTitle => 'Confirme que é você';
+
+  @override
+  String stepUpSubtitle(String email) {
+    return 'Enviamos um código para $email';
+  }
+
+  @override
+  String get stepUpHint =>
+      'Detectamos um acesso de um aparelho novo. Digite o código para entrar.';
+
+  @override
+  String get stepUpBack => 'Voltar ao login';
+
+  @override
+  String stepUpTooMany(String time) {
+    return 'Muitas tentativas. Tente de novo em $time.';
+  }
+
+  @override
+  String get secTitle => 'Segurança';
+
+  @override
+  String get secSettingsEntrySub =>
+      'Aparelhos conectados, histórico de acessos e proteção da conta';
+
+  @override
+  String get secTabDevices => 'Aparelhos';
+
+  @override
+  String get secTabHistory => 'Histórico';
+
+  @override
+  String get secTabProtect => 'Proteção';
+
+  @override
+  String get secDevicesTitle => 'Aparelhos conectados';
+
+  @override
+  String get secDevicesSubtitle =>
+      'Estes aparelhos estão com a sua conta aberta.';
+
+  @override
+  String get secThisDevice => 'Este aparelho';
+
+  @override
+  String get secActiveNow => 'Ativo agora';
+
+  @override
+  String secLastActive(String time) {
+    return 'Ativo $time';
+  }
+
+  @override
+  String secTimeMinutes(int n) {
+    return 'há $n min';
+  }
+
+  @override
+  String secTimeHours(int n) {
+    return 'há $n h';
+  }
+
+  @override
+  String secTimeDays(int n) {
+    return 'há $n d';
+  }
+
+  @override
+  String get secEndSession => 'Encerrar sessão';
+
+  @override
+  String get secEndSessionTitle => 'Encerrar a sessão neste aparelho?';
+
+  @override
+  String secEndSessionBody(String device) {
+    return '$device será desconectado e precisará entrar de novo.';
+  }
+
+  @override
+  String get secEndedOk => 'Sessão encerrada.';
+
+  @override
+  String get secSignOutOthers => 'Sair de todos os outros aparelhos';
+
+  @override
+  String get secSignOutOthersTitle => 'Sair dos outros aparelhos?';
+
+  @override
+  String get secSignOutOthersBody =>
+      'Todos os aparelhos, menos este, serão desconectados.';
+
+  @override
+  String get secSignedOutOthersOk => 'Os outros aparelhos foram desconectados.';
+
+  @override
+  String get secNoOtherDevices => 'Nenhum outro aparelho conectado.';
+
+  @override
+  String get secDevicesEmpty => 'Nenhuma sessão ativa encontrada.';
+
+  @override
+  String get secLoadError => 'Não foi possível carregar agora.';
+
+  @override
+  String get secUnavailable =>
+      'Este recurso ainda não está disponível. Tente novamente em breve.';
+
+  @override
+  String get secActionError => 'Não foi possível concluir. Tente de novo.';
+
+  @override
+  String get secClientApp => 'App Brawe';
+
+  @override
+  String get secClientPartners => 'Brawe Partners';
+
+  @override
+  String get secClientWeb => 'Navegador';
+
+  @override
+  String secAppVersion(String v) {
+    return 'versão $v';
+  }
+
+  @override
+  String get secUnknownDevice => 'Aparelho desconhecido';
+
+  @override
+  String get secUnknownPlace => 'Local não identificado';
+
+  @override
+  String get secHistoryTitle => 'Histórico de acessos';
+
+  @override
+  String get secFilterAll => 'Todos';
+
+  @override
+  String get secFilterLogins => 'Logins';
+
+  @override
+  String get secFilterFailures => 'Falhas';
+
+  @override
+  String get secFilterChanges => 'Alterações';
+
+  @override
+  String get secHistoryEmpty => 'Nenhum evento neste filtro.';
+
+  @override
+  String get secLoadMore => 'Carregar mais';
+
+  @override
+  String get secEvLogin => 'Login';
+
+  @override
+  String get secEvLoginFailed => 'Tentativa de login falhou';
+
+  @override
+  String get secEvLoginBlocked => 'Login bloqueado';
+
+  @override
+  String get secEvLogout => 'Saída da conta';
+
+  @override
+  String get secEvSessionRevoked => 'Sessão encerrada';
+
+  @override
+  String get secEvSessionsRevokedAll => 'Outros aparelhos desconectados';
+
+  @override
+  String get secEvPasswordChanged => 'Senha alterada';
+
+  @override
+  String get secEvPasswordResetRequested => 'Redefinição de senha solicitada';
+
+  @override
+  String get secEvPasswordReset => 'Senha redefinida';
+
+  @override
+  String get secEvQrLogin => 'Login por QR code';
+
+  @override
+  String get secEvLoginCode => 'Login por código';
+
+  @override
+  String get secEvStepUpRequired => 'Verificação pedida';
+
+  @override
+  String get secEvStepUpPassed => 'Verificação concluída';
+
+  @override
+  String get secEvNewDeviceAlert => 'Alerta de aparelho novo';
+
+  @override
+  String get secEvUnknown => 'Evento de segurança';
+
+  @override
+  String get secProtectTitle => 'Não reconhece um acesso?';
+
+  @override
+  String get secProtectBody =>
+      'Se viu algo estranho, proteja sua conta agora: saímos de todos os outros aparelhos e você define uma senha nova.';
+
+  @override
+  String get secProtectButton => 'Proteger minha conta';
+
+  @override
+  String get secProtectSheetTitle => 'Proteger sua conta';
+
+  @override
+  String get secProtectSheetIntro => 'Vamos fazer duas coisas agora:';
+
+  @override
+  String get secProtectStep1 =>
+      'Sair de todos os outros aparelhos. Você continua conectado aqui.';
+
+  @override
+  String get secProtectStep2 =>
+      'Pedir que você crie uma senha nova. Essa etapa é obrigatória.';
+
+  @override
+  String get secProtectConfirm => 'Proteger agora';
+
+  @override
+  String get secCancel => 'Cancelar';
+
+  @override
+  String get secRetry => 'Tentar novamente';
+
+  @override
+  String get secProtectError =>
+      'Não foi possível proteger a conta. Tente de novo.';
+
+  @override
+  String get secChangePasswordSub => 'Escolha uma senha nova e forte';
+
+  @override
+  String get secPasswordRequired =>
+      'Por segurança, defina uma senha nova para continuar.';
+
+  @override
+  String get secGeoAttribution => 'IP Geolocation by DB-IP';
+
+  @override
+  String get secSettingsEntry => 'Segurança';
 }

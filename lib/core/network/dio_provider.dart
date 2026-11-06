@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'account_suspension.dart';
+import 'device_identity.dart';
+import 'session_ended.dart';
 import 'safe_log_interceptor.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -27,6 +29,12 @@ Dio dio(Ref ref) {
 
   // Conta suspensa pela moderação → tela /suspended.
   dio.interceptors.add(AccountSuspension.interceptor());
+
+  // 401 de sessão revogada → logout + aviso na tela de login.
+  dio.interceptors.add(SessionEnded.interceptor(storageService));
+
+  // X-Device-Id / X-Device-Name / X-Device-Platform / X-App-Version.
+  dio.interceptors.add(DeviceIdentity.instance.interceptor());
 
   dio.interceptors.add(
     InterceptorsWrapper(

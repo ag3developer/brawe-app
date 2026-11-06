@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.45+55
+version: 1.0.46+56
 
 environment:
   sdk: ^3.11.0
@@ -133,6 +133,7 @@ dependencies:
 
   # Versão do app (lida do pubspec/Info.plist/AndroidManifest em runtime).
   package_info_plus: ^8.0.0
+  device_info_plus: ^12.4.0
   lottie: ^3.5.1
   flutter_volume_controller: ^2.0.2
   flutter_vap_player: ^2.2.0
