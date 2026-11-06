@@ -4,13 +4,26 @@ const String kBraweSystemUserId = '00000000-0000-4000-8000-00000000b2a3';
 enum SystemNoticeTone { info, success, warning, danger }
 
 class SystemNoticeCta {
-  const SystemNoticeCta({required this.label, required this.route});
+  const SystemNoticeCta({required this.label, this.route, this.url});
   final String label;
-  final String route;
+
+  /// Rota interna do app (começa com `/`). Exclusivo com [url].
+  final String? route;
+
+  /// Link externo (ex.: portal Partners). Só https em hosts brawe.app/brawe.io (ver [isAllowedNoticeUrl]).
+  final String? url;
+}
+
+/// Só abre links https de domínios da Brawe (brawe.app / brawe.io e subdomínios), sem credenciais embutidas.
+bool isAllowedNoticeUrl(String? raw) {
+  final u = Uri.tryParse((raw ?? '').trim());
+  if (u == null || u.scheme != 'https' || u.userInfo.isNotEmpty || u.host.isEmpty) return false;
+  final h = u.host.toLowerCase();
+  return const ['brawe.app', 'brawe.io'].any((d) => h == d || h.endsWith('.$d'));
 }
 
 /// Aviso oficial da Brawe no chat (`message_type == "system_notice"`).
-/// Vem em `meta`: {type, event, title, body, icon, tone, cta:{label,route}|null,
+/// Vem em `meta`: {type, event, title, body, icon, tone, cta:{label,route|url}|null,
 /// ref:{kind,id}|null}. `content` é só o texto simples dos apps antigos.
 class SystemNotice {
   const SystemNotice({
@@ -57,8 +70,11 @@ class SystemNotice {
     if (c is Map) {
       final label = c['label']?.toString().trim() ?? '';
       final route = c['route']?.toString().trim() ?? '';
+      final url = c['url']?.toString().trim() ?? '';
       if (label.isNotEmpty && route.startsWith('/')) {
         cta = SystemNoticeCta(label: label, route: route);
+      } else if (label.isNotEmpty && isAllowedNoticeUrl(url)) {
+        cta = SystemNoticeCta(label: label, url: url);
       }
     }
     final r = j['ref'];

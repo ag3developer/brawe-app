@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../domain/models/conversation.dart';
 import '../../../../domain/models/system_notice.dart';
@@ -97,10 +98,19 @@ void openSystemNoticeRoute(BuildContext context, String route) {
   }
 }
 
+/// Abre o link externo do aviso no navegador (só https em brawe.app/brawe.io).
+Future<void> openSystemNoticeUrl(String url) async {
+  if (!isAllowedNoticeUrl(url)) return;
+  await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+}
+
 /// Cartão do aviso oficial da Brawe (`message_type == "system_notice"`).
 class SystemNoticeBubble extends StatelessWidget {
-  const SystemNoticeBubble({super.key, required this.message, this.onCta});
+  const SystemNoticeBubble({super.key, required this.message, this.onCta, this.onUrl});
   final ChatMessage message;
+
+  /// Para testes/overrides do link externo; por padrão abre no navegador.
+  final void Function(String url)? onUrl;
 
   /// Para testes/overrides; por padrão navega com go_router.
   final void Function(String route)? onCta;
@@ -171,7 +181,14 @@ class SystemNoticeBubble extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: tone, foregroundColor: c.textOnAccent),
-                  onPressed: () => onCta != null ? onCta!(n.cta!.route) : openSystemNoticeRoute(context, n.cta!.route),
+                  onPressed: () {
+                    final cta = n.cta!;
+                    if (cta.url != null) {
+                      onUrl != null ? onUrl!(cta.url!) : openSystemNoticeUrl(cta.url!);
+                    } else if (cta.route != null) {
+                      onCta != null ? onCta!(cta.route!) : openSystemNoticeRoute(context, cta.route!);
+                    }
+                  },
                   child: Text(n.cta!.label, maxLines: 1, overflow: TextOverflow.ellipsis),
                 ),
               ),

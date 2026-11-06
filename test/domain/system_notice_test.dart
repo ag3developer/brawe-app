@@ -54,4 +54,27 @@ void main() {
     expect(Conversation.fromApi({'id': 'c2', 'other_user_id': 'u'}).isSystem, isFalse);
     expect(Conversation.fromApi({'id': 'c3', 'other_user_id': 'u', 'is_system': true}).isSystem, isTrue);
   });
+
+  group('cta.url externo', () {
+    Map<String, dynamic> j(Object? cta) => {'title': 'T', 'cta': cta};
+    test('aceita https em brawe.app/brawe.io', () {
+      final n = SystemNotice.fromJson(j({'label': 'Aceitar', 'url': 'https://partners.brawe.app/team/invite/abc'}))!;
+      expect(n.cta!.url, 'https://partners.brawe.app/team/invite/abc');
+      expect(n.cta!.route, isNull);
+      expect(SystemNotice.fromJson(j({'label': 'x', 'url': 'https://brawe.io/x'}))!.cta, isNotNull);
+    });
+    test('recusa http, outros hosts, credenciais e hosts parecidos', () {
+      for (final u in [
+        'http://partners.brawe.app/x',
+        'https://evil.com/x',
+        'https://brawe.app.evil.com/x',
+        'https://notbrawe.app/x',
+        'https://user:pw@partners.brawe.app/x',
+        'javascript:alert(1)',
+        '',
+      ]) {
+        expect(SystemNotice.fromJson(j({'label': 'x', 'url': u}))!.cta, isNull, reason: u);
+      }
+    });
+  });
 }

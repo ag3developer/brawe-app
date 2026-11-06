@@ -63,6 +63,19 @@ void main() {
     expect(find.byType(FilledButton), findsNothing);
   });
 
+  testWidgets('CTA com url externa chama onUrl (não a rota)', (tester) async {
+    String? url;
+    String? route;
+    final m = ChatMessage(
+      id: 'm', conversationId: 'c', senderId: kBraweSystemUserIdForTest, content: 'x', timestamp: DateTime(2026), messageType: 'system_notice',
+      meta: {'title': 'Convite', 'body': 'b', 'cta': {'label': 'Aceitar convite', 'url': 'https://partners.brawe.app/team/invite/abc'}},
+    );
+    await tester.pumpWidget(_app(SystemNoticeBubble(message: m, onCta: (r) => route = r, onUrl: (u) => url = u)));
+    await tester.tap(find.byType(FilledButton));
+    expect(url, 'https://partners.brawe.app/team/invite/abc');
+    expect(route, isNull);
+  });
+
   testWidgets('sem meta mostra o texto simples', (tester) async {
     final m = ChatMessage(id: 'm', conversationId: 'c', senderId: 's', content: 'Texto antigo', timestamp: DateTime(2026), messageType: 'system_notice');
     await tester.pumpWidget(_app(SystemNoticeBubble(message: m)));
