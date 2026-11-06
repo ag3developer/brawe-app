@@ -10,7 +10,10 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/chat_sounds_service.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../domain/models/failure.dart';
+import '../../../domain/models/gif_item.dart';
 import '../../../domain/models/user.dart';
+import '../../../data/services/push_notification_service.dart';
+import 'unread_chats_provider.dart';
 
 part 'chat_detail_view_model.g.dart';
 
@@ -88,6 +91,24 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       } catch (_) {}
     });
 
+    // Conversa aberta: não conta como não lida e não gera banner/push local.
+    Future.microtask(() {
+      _unreadChats()?.setActive(conversationId);
+      try {
+        if (ref.mounted) {
+          ref
+              .read(pushNotificationServiceProvider)
+              .clearConversationNotifications(conversationId);
+        }
+      } catch (_) {}
+    });
+    final unread = ref.read(unreadChatsProvider.notifier);
+    ref.onDispose(() {
+      if (unread.activeConversationId == conversationId) {
+        unread.clearActive();
+      }
+    });
+
     _initialize(conversationId);
 
     return const ChatDetailState(isLoading: true);
@@ -126,7 +147,16 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
     try {
       await repo.markMessagesRead(conversationId: conversationId);
+      _unreadChats()?.markRead(conversationId);
     } catch (_) {}
+  }
+
+  UnreadChats? _unreadChats() {
+    try {
+      return ref.mounted ? ref.read(unreadChatsProvider.notifier) : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _loadInitial() async {
@@ -240,6 +270,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       await ref
           .read(chatRepositoryProvider)
           .markMessagesRead(conversationId: _conversationId);
+      _unreadChats()?.markRead(_conversationId);
     } catch (_) {}
   }
 
@@ -380,6 +411,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       await ref
           .read(chatRepositoryProvider)
           .markMessagesRead(conversationId: _conversationId);
+      _unreadChats()?.markRead(_conversationId);
     } catch (_) {}
   }
 
@@ -529,7 +561,10 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     }
   }
 
-  Future<void> _sendRich(String type, String content) async {
+  /// Envia um GIF (GIPHY): `content` = "GIF" (fallback p/ clientes antigos), dados em `meta`.
+  Future<void> sendGif(GifAttachment gif) => _sendRich('gif', 'GIF', gif: gif);
+
+  Future<void> _sendRich(String type, String content, {GifAttachment? gif}) async {
     final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
     final authState = ref.read(authStateProvider);
     final me = authState is AsyncData<User?> ? authState.value : null;
@@ -541,12 +576,14 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       timestamp: DateTime.now(),
       isPending: true,
       messageType: type,
+      meta: gif?.toJson(),
     ));
     try {
       final sent = await ref.read(chatRepositoryProvider).sendRaw(
             conversationId: _conversationId,
             content: content,
             messageType: type,
+            gif: gif,
           );
       _replaceMessage(optimisticId, sent);
       ref.read(chatSoundsServiceProvider).playSent();

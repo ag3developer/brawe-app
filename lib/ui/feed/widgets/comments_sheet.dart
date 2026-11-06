@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/services/comment_service.dart';
+import '../../../domain/models/gif_item.dart';
 import '../../../domain/models/post_comment.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../shared/widgets/gif/gif_bubble.dart';
+import '../../shared/widgets/gif/gif_picker_sheet.dart';
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
@@ -34,6 +38,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   PostComment? _replyingTo;
+
+  /// GIF escolhido no seletor, ainda não enviado (vai junto com o texto, se houver).
+  GifAttachment? _pendingGif;
 
   /// Controller da lista (vem do DraggableScrollableSheet). Guardado para
   /// rolar até o topo depois de enviar — o comentário novo entra no topo.
@@ -101,12 +108,14 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
 
   Future<void> _sendComment() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    final gif = _pendingGif;
+    if (text.isEmpty && gif == null) return;
     _controller.clear();
+    setState(() => _pendingGif = null);
     try {
       await ref
           .read(commentsViewModelProvider(widget.postId).notifier)
-          .addComment(text, parentId: _replyingTo?.id);
+          .addComment(text, parentId: _replyingTo?.id, gif: gif);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,6 +134,14 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  Future<void> _pickGif() async {
+    final gif = await showGifPicker(context);
+    if (gif != null && mounted) {
+      setState(() => _pendingGif = gif);
+      _focusNode.requestFocus();
     }
   }
 
@@ -361,6 +378,24 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                     ),
                   ),
 
+                // GIF escolhido (pré-visualização)
+                if (_pendingGif != null)
+                  Container(
+                    color: context.colors.surfaceElevated,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Row(
+                      children: [
+                        GifBubble(gif: _pendingGif!, maxWidth: 110, borderRadius: 10),
+                        const Spacer(),
+                        IconButton(
+                          tooltip: s.gifClearSearch,
+                          onPressed: () => setState(() => _pendingGif = null),
+                          icon: Icon(LucideIcons.x, size: 18, color: context.colors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Input
                 Container(
                   padding: EdgeInsets.fromLTRB(
@@ -416,7 +451,15 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           onSubmitted: (_) => _sendComment(),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        tooltip: s.gifButtonSemantics,
+                        constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                        padding: EdgeInsets.zero,
+                        onPressed: _pickGif,
+                        icon: Icon(LucideIcons.imagePlay, size: 22, color: context.colors.textSecondary),
+                      ),
+                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: _sendComment,
                         child: Container(
@@ -509,14 +552,20 @@ class _CommentTile extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 3),
-                      BraweRichText(
-                        comment.content,
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontSize: 14,
-                          height: 1.4,
+                      if (comment.content.isNotEmpty)
+                        BraweRichText(
+                          comment.content,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
+                      if (comment.gif != null)
+                        Padding(
+                          padding: EdgeInsets.only(top: comment.content.isEmpty ? 0 : 6),
+                          child: Align(alignment: Alignment.centerLeft, child: GifBubble(gif: comment.gif!)),
+                        ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -604,13 +653,19 @@ class _CommentTile extends StatelessWidget {
                                           const VerifiedBadge(size: 12, gap: 3),
                                       ],
                                     ),
-                                    Text(
-                                      reply.content,
-                                      style: TextStyle(
-                                        color: context.colors.textPrimary,
-                                        fontSize: 13,
+                                    if (reply.content.isNotEmpty)
+                                      Text(
+                                        reply.content,
+                                        style: TextStyle(
+                                          color: context.colors.textPrimary,
+                                          fontSize: 13,
+                                        ),
                                       ),
-                                    ),
+                                    if (reply.gif != null)
+                                      Padding(
+                                        padding: EdgeInsets.only(top: reply.content.isEmpty ? 0 : 4),
+                                        child: Align(alignment: Alignment.centerLeft, child: GifBubble(gif: reply.gif!, maxWidth: 180)),
+                                      ),
                                   ],
                                 ),
                               ),

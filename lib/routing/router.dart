@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../ui/feed/widgets/video_upload_pill.dart';
 
 import 'transitions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -41,6 +42,7 @@ import '../ui/edit_profile/widgets/artist_profile_screen.dart';
 import '../ui/edit_profile/widgets/business_profile_screen.dart';
 import '../ui/wallet/widgets/wallet_screen.dart';
 import '../ui/wallet/widgets/earnings_screen.dart';
+import '../ui/notifications/widgets/new_followers_screen.dart';
 import '../ui/notifications/widgets/notifications_screen.dart';
 import '../ui/find_friends/widgets/find_friends_screen.dart';
 import '../ui/find_friends/widgets/qr_scanner_screen.dart';
@@ -57,10 +59,10 @@ import '../ui/creator/widgets/creator_application_form_screen.dart';
 import '../ui/creator/widgets/creator_application_submitted_screen.dart';
 import '../ui/creator/widgets/creator_application_status_screen.dart';
 import '../ui/creator/widgets/creator_onboarding_screen.dart';
-import '../ui/creator/widgets/creator_profile_settings_screen.dart';
 import '../ui/sounds/widgets/sounds_catalog_screen.dart';
 import '../ui/creator/widgets/creator_badge_screen.dart';
 import '../ui/creator/widgets/creator_dashboard_screen.dart';
+import '../ui/creator/widgets/agency/agency_invite_screen.dart';
 import '../ui/creator/widgets/admin_creator_applications_screen.dart';
 import '../ui/creator/widgets/admin_creator_application_detail_screen.dart';
 import '../ui/creator/widgets/admin_creators_management_screen.dart';
@@ -335,7 +337,18 @@ GoRouter router(Ref ref) {
             backgroundColor: Colors.transparent,
             extendBody: false,
             resizeToAvoidBottomInset: false,
-            body: child,
+            body: Stack(
+              children: [
+                child,
+                // Progresso global do envio de vídeo (sobrevive às abas).
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: VideoUploadPill(),
+                ),
+              ],
+            ),
             bottomNavigationBar: const HomeBottomNav(),
           ),
         ),
@@ -502,6 +515,12 @@ GoRouter router(Ref ref) {
             builder: (context, state) => const NotificationsScreen(),
           ),
           GoRoute(
+            path: '/notifications/:id/followers',
+            builder: (context, state) => NewFollowersScreen(
+              notificationId: state.pathParameters['id'] ?? '',
+            ),
+          ),
+          GoRoute(
             path: '/find-friends',
             builder: (context, state) => const FindFriendsScreen(),
           ),
@@ -574,17 +593,26 @@ GoRouter router(Ref ref) {
             path: '/creator/onboarding',
             builder: (context, state) => const CreatorOnboardingScreen(),
           ),
+          // Rota antiga (tela placeholder removida): vai para Editar perfil.
           GoRoute(
             path: '/creator/profile-settings',
-            builder: (context, state) => const CreatorProfileSettingsScreen(),
+            redirect: (_, _) => '/edit-profile',
           ),
           GoRoute(
             path: '/creator/badge',
             builder: (context, state) => const CreatorBadgeScreen(),
           ),
+          // Brawe Partners: "Minha agência" (convites, contrato, desempenho).
+          // (mantida para links antigos e atalhos: abre o painel na aba Agência)
+          GoRoute(
+            path: '/creator/agency',
+            redirect: (_, _) => '/creator/dashboard?tab=agency',
+          ),
           GoRoute(
             path: '/creator/dashboard',
-            builder: (context, state) => const CreatorDashboardScreen(),
+            builder: (context, state) => CreatorDashboardScreen(
+              initialTab: state.uri.queryParameters['tab'],
+            ),
           ),
           // Hub de análises (período único + abas). As rotas antigas
           // redirecionam para a aba certa, preservando links existentes.
@@ -719,6 +747,16 @@ GoRouter router(Ref ref) {
             ),
           );
         },
+      ),
+      // Convite de agência: fora do shell (tela cheia) porque é aberto também
+      // a partir da conversa (/chat/:id), que fica fora do shell — empilhar
+      // uma rota do shell por cima dela quebra o Navigator (keyReservation).
+      GoRoute(
+        path: '/creator/agency/invite/:id',
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: AgencyInviteScreen(inviteId: state.pathParameters['id']!),
+        ),
       ),
       // A tela de conversa aberta é imersiva — nada de bottom nav atrapalhando.
       // Usa CupertinoPage para habilitar o swipe-back nativo do iOS.

@@ -7,6 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
 import '../../domain/models/conversation.dart';
 import '../../domain/models/failure.dart';
+import '../../domain/models/gif_item.dart';
 import '../services/messages_service.dart';
 import '../services/socket_service.dart';
 import '../services/storage_service.dart';
@@ -373,6 +374,17 @@ class ChatRepository {
     }
   }
 
+  /// Ids das conversas com mensagens não lidas (badge da aba Chat). `null` em
+  /// falha ou servidor antigo — o chamador mantém o estado atual.
+  Future<Set<String>?> getUnreadConversationIds() async {
+    try {
+      return await _messagesService.getUnreadConversationIds();
+    } on DioException catch (e) {
+      debugPrint('getUnreadConversationIds failed: $e');
+      return null;
+    }
+  }
+
   Future<String> startConversation({required String participantId}) async {
     try {
       return await _messagesService.startConversation(participantId);
@@ -437,6 +449,7 @@ class ChatRepository {
     required String content,
     required String messageType,
     bool isForwarded = false,
+    GifAttachment? gif,
   }) async {
     try {
       return await _messagesService.sendMessage(
@@ -444,6 +457,7 @@ class ChatRepository {
         content: content,
         messageType: messageType,
         isForwarded: isForwarded,
+        gif: gif,
       );
     } on DioException catch (e) {
       throw _toFailure(e);

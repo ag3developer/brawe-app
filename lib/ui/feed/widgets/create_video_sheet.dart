@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,17 +9,17 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/sound.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../home/view_models/for_you_feed_view_model.dart';
 import '../../shared/widgets/volume_mixer_sheet.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 import '../../core/themes/app_colors.dart';
-import '../view_models/feed_view_model.dart';
+import '../../core/themes/brawe_colors.dart';
 import 'story_video_trim_screen.dart';
+import '../view_models/video_upload_manager.dart';
+import 'video_composer_view.dart';
 import 'video_cover_picker_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -38,7 +38,6 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   VideoPlayerController? _videoCtrl;
   bool _isPublishing = false;
   File? _cover; // capa escolhida (null = frame automático do servidor)
-  VideoPublishStep? _step;
   bool _pickerOpened = false;
 
   // ── Brawe Sound: música anexada ao Reel/vídeo (opcional) ──────────
@@ -54,7 +53,6 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   late final AnimationController _pulseCtrl;
 
   static const Color _accent1 = AppColors.braweBlue;
-  static const Color _accent2 = AppColors.braweSky;
 
   static const int _maxBytes = 100 * 1024 * 1024;
   static const Duration _maxDuration = Duration(minutes: 3);
@@ -252,17 +250,26 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
     final ctrl = _videoCtrl;
     if (video == null || ctrl == null || _isPublishing) return;
     await ctrl.pause();
+    final resume = ctrl.value.position;
     if (!mounted) return;
     final ar = ctrl.value.aspectRatio;
-    final cover = await VideoCoverPickerSheet.show(
+    final result = await VideoCoverPickerSheet.show(
       context,
       videoPath: video.path,
       durationMs: ctrl.value.duration.inMilliseconds,
       aspectRatio: ar > 0 ? ar : 4 / 5,
+      initialMs: resume.inMilliseconds,
+      // Mesmo controller do preview: o seletor reposiciona o vídeo (pausado)
+      // no quadro escolhido, então o preview grande rola junto com a barra.
+      previewBuilder: (_) => VideoPlayer(ctrl),
+      onSeek: (ms) => ctrl.seekTo(Duration(milliseconds: ms)),
     );
-    if (!mounted) return;
-    if (cover != null) setState(() => _cover = cover);
-    await ctrl.play();
+    if (result != null && mounted) setState(() => _cover = result.file);
+    // Volta ao ponto em que o usuário estava antes de abrir o seletor.
+    try {
+      await ctrl.seekTo(resume);
+      if (mounted) await ctrl.play();
+    } catch (_) {}
   }
 
   void _togglePlay() {
@@ -287,57 +294,31 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       return;
     }
     FocusScope.of(context).unfocus();
-    setState(() {
-      _isPublishing = true;
-      _step = VideoPublishStep.uploadingVideo;
-    });
-    try {
-      final sz = ctrl?.value.size;
-      await ref
-          .read(postRepositoryProvider)
-          .createVideoPost(
-            videoLocalPath: video.path,
+    final sz = ctrl?.value.size;
+    setState(() => _isPublishing = true);
+    // Enfileira no gerenciador global e fecha o compositor na hora: o envio
+    // (com % real) continua no indicador acima da barra de navegação.
+    ref
+        .read(videoUploadManagerProvider.notifier)
+        .enqueue(
+          VideoUploadRequest(
+            videoPath: video.path,
             content: _captionCtrl.text.trim(),
+            coverPath: _cover?.path,
             soundId: _selectedSound?.id,
             soundTrimStartMs: _soundTrimStartMs,
             soundTrimEndMs: _soundTrimEndMs,
-            // Fase D: mix de volumes definido pelo usuário no
-            // `VolumeMixerSheet` (default 1.0/1.0 quando não ajustado).
             soundVolume: _soundVolume,
             originalAudioVolume: _originalAudioVolume,
-            coverLocalPath: _cover?.path,
-            fallbackWidth: (sz != null && sz.width > 0) ? sz.width.round() : null,
-            fallbackHeight:
-                (sz != null && sz.height > 0) ? sz.height.round() : null,
-            fallbackDurationSec: ctrl != null && ctrl.value.isInitialized
+            width: (sz != null && sz.width > 0) ? sz.width.round() : null,
+            height: (sz != null && sz.height > 0) ? sz.height.round() : null,
+            durationSec: ctrl != null && ctrl.value.isInitialized
                 ? ctrl.value.duration.inMilliseconds / 1000
                 : null,
-            onStep: (st) {
-              if (mounted) setState(() => _step = st);
-            },
-          );
-      ref.invalidate(forYouFeedViewModelProvider);
-      ref.invalidate(feedViewModelProvider);
-      if (!mounted) return;
-      final s = S.of(context);
-      Navigator.of(context).pop();
-      _snack(s.videoPublishedSuccess);
-    } on VideoCoverUploadFailure {
-      if (!mounted) return;
-      setState(() => _isPublishing = false);
-      _snack(S.of(context).videoPubCoverUploadError, isError: true);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _isPublishing = false);
-      _snack(S.of(context).videoPublishError, isError: true);
-    }
+          ),
+        );
+    Navigator.of(context).pop();
   }
-
-  String _stepLabel(S s) => switch (_step) {
-    VideoPublishStep.uploadingCover => s.videoPubStepCover,
-    VideoPublishStep.publishing => s.videoPubStepPost,
-    _ => s.videoPubStepVideo,
-  };
 
   void _snack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -353,346 +334,100 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     final hasVideo = _video != null && _videoCtrl?.value.isInitialized == true;
     final canPublish = hasVideo && !_isPublishing;
     final mq = MediaQuery.of(context);
+    final s = S.of(context);
+    final ctrl = _videoCtrl;
+    final avail = mq.size.height - mq.viewInsets.bottom - mq.padding.top;
+
+    // Se o compositor ainda estiver na tela, o botão mostra o % real.
+    final job = ref.watch(
+      videoUploadManagerProvider.select(
+        (jobs) => jobs.isEmpty ? null : jobs.last,
+      ),
+    );
+    final pubLabel = job == null
+        ? s.videoUpQueued
+        : switch (job.status) {
+            VideoUploadStatus.uploading => s.videoUpUploading(job.percent),
+            VideoUploadStatus.processing => s.videoUpProcessing,
+            _ => s.videoUpQueued,
+          };
 
     return AnimatedPadding(
       padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeOut,
       child: Container(
-        height: mq.size.height * 0.94,
-        decoration: const BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        height: math.min(mq.size.height * 0.94, avail),
+        decoration: BoxDecoration(
+          color: c.background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: hasVideo
-                    ? GestureDetector(
-                        onTap: _togglePlay,
-                        child: Container(
-                          color: Colors.black,
-                          child: Center(
-                            child: AspectRatio(
-                              aspectRatio: _videoCtrl!.value.aspectRatio,
-                              child: VideoPlayer(_videoCtrl!),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: Material(
+            color: Colors.transparent,
+            child: VideoComposerView(
+              hasVideo: hasVideo,
+              aspectRatio: hasVideo ? ctrl!.value.aspectRatio : 1,
+              preview: hasVideo
+                  ? Center(
+                      child: AspectRatio(
+                        aspectRatio: ctrl!.value.aspectRatio,
+                        child: VideoPlayer(ctrl),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+              playing: hasVideo ? ctrl!.value.isPlaying : true,
+              durationChip: hasVideo ? _DurationChip(controller: ctrl!) : null,
+              emptyState: _EmptyPickerState(
+                onTap: _pickVideo,
+                pulse: _pulseCtrl,
+              ),
+              captionController: _captionCtrl,
+              onClose: () => Navigator.of(context).pop(),
+              onSwap: _isPublishing ? () {} : _pickVideo,
+              onTrim: _isPublishing ? null : _trim,
+              onCover: _isPublishing ? null : _pickCover,
+              onSound: _isPublishing ? null : _pickSound,
+              soundActive: _selectedSound != null,
+              cover: _cover,
+              onClearCover: (_cover != null && !_isPublishing)
+                  ? () => setState(() => _cover = null)
+                  : null,
+              onTogglePlay: _togglePlay,
+              soundRow: _selectedSound == null
+                  ? null
+                  : Row(
+                      children: [
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: _editTrim,
+                            child: _VideoSoundChip(
+                              sound: _selectedSound!,
+                              onRemove: _removeSound,
                             ),
                           ),
                         ),
-                      )
-                    : _EmptyPickerState(
-                        accent1: _accent1,
-                        accent2: _accent2,
-                        onTap: _pickVideo,
-                        pulse: _pulseCtrl,
-                      ),
-              ),
-              if (hasVideo)
-                IgnorePointer(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.55),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.85),
-                        ],
-                        stops: const [0.0, 0.18, 0.55, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              if (hasVideo && !_videoCtrl!.value.isPlaying)
-                IgnorePointer(
-                  child: Center(
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.black.withValues(alpha: 0.4),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          width: 2,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 56,
-                      ),
-                    ),
-                  ),
-                ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                    child: Row(
-                      children: [
-                        _GlassIconButton(
-                          icon: LucideIcons.x,
-                          onTap: () => Navigator.of(context).pop(),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          S.of(context).videoSheetTitle,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 8,
-                                color: Colors.black54,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        if (hasVideo) ...[
-                          _GlassIconButton(
-                            icon: LucideIcons.music,
-                            iconColor: _selectedSound != null
-                                ? const Color(0xFFE11D48)
-                                : null,
-                            tooltip: S.of(context).createSoundsTitle,
-                            onTap: _pickSound,
-                          ),
-                          const SizedBox(width: 8),
-                          _GlassIconButton(
-                            icon: LucideIcons.refreshCw,
-                            tooltip: S.of(context).videoSwapTooltip,
-                            onTap: _pickVideo,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (hasVideo)
-                Positioned(
-                  top: mq.padding.top + 68,
-                  right: 16,
-                  child: _DurationChip(controller: _videoCtrl!),
-                ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (hasVideo) ...[
-                          Row(
-                            children: [
-                              _ActionPill(
-                                icon: LucideIcons.scissors,
-                                label: S.of(context).videoPubTrim,
-                                onTap: _isPublishing ? null : _trim,
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionPill(
-                                icon: LucideIcons.image,
-                                label: _cover != null
-                                    ? S.of(context).videoPubCoverCustom
-                                    : S.of(context).videoPubCoverAuto,
-                                thumb: _cover,
-                                onTap: _isPublishing ? null : _pickCover,
-                                onClear: (_cover != null && !_isPublishing)
-                                    ? () => setState(() => _cover = null)
-                                    : null,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                        // Chip do som selecionado (tap = ajustar o trecho)
-                        // + botão de mixer de volumes (música × áudio
-                        // original — Fase D do relatório de áudio).
-                        if (_selectedSound != null) ...[
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: _editTrim,
-                                child: _VideoSoundChip(
-                                  sound: _selectedSound!,
-                                  onRemove: _removeSound,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: _openVolumeMixer,
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.45),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.tune_rounded,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(18),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.12),
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 4,
-                              ),
-                              child: TextField(
-                                controller: _captionCtrl,
-                                maxLines: 3,
-                                minLines: 1,
-                                maxLength: 300,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  height: 1.3,
-                                ),
-                                cursorColor: _accent1,
-                                decoration: InputDecoration(
-                                  hintText: S.of(context).videoCaptionHint,
-                                  hintStyle: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.55),
-                                  ),
-                                  border: InputBorder.none,
-                                  isCollapsed: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  counterStyle: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 54,
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 200),
-                            opacity: canPublish ? 1.0 : 0.55,
-                            child: Material(
-                              color: Colors.transparent,
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [_accent1, _accent2],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(18),
-                                  boxShadow: canPublish
-                                      ? [
-                                          BoxShadow(
-                                            color: _accent1.withValues(
-                                              alpha: 0.45,
-                                            ),
-                                            blurRadius: 24,
-                                            spreadRadius: -4,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: InkWell(
-                                  onTap: canPublish ? _publish : null,
-                                  borderRadius: BorderRadius.circular(18),
-                                  child: Center(
-                                    child: _isPublishing
-                                        ? Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2.5,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                _stepLabel(S.of(context)),
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                        : Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(
-                                                LucideIcons.sparkles,
-                                                color: Colors.white,
-                                                size: 18,
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Text(
-                                                S
-                                                    .of(context)
-                                                    .videoPublishButton,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w800,
-                                                  letterSpacing: 0.2,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                  ),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: s.videoPubSound,
+                          child: Material(
+                            color: c.surfaceHighest,
+                            shape: CircleBorder(side: BorderSide(color: c.border)),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: _openVolumeMixer,
+                              child: SizedBox(
+                                width: 38,
+                                height: 38,
+                                child: Icon(
+                                  LucideIcons.slidersHorizontal,
+                                  color: c.textPrimary,
+                                  size: 18,
                                 ),
                               ),
                             ),
@@ -700,28 +435,11 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ),
-              if (hasVideo)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: IgnorePointer(
-                    child: VideoProgressIndicator(
-                      _videoCtrl!,
-                      allowScrubbing: false,
-                      padding: EdgeInsets.zero,
-                      colors: VideoProgressColors(
-                        playedColor: _accent1,
-                        bufferedColor: Colors.white.withValues(alpha: 0.2),
-                        backgroundColor: Colors.white.withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+              publishing: _isPublishing,
+              publishLabel: pubLabel,
+              progress: _isPublishing ? job?.progress : null,
+              onPublish: canPublish ? _publish : null,
+            ),
           ),
         ),
       ),
@@ -730,25 +448,20 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
 }
 
 class _EmptyPickerState extends StatelessWidget {
-  const _EmptyPickerState({
-    required this.accent1,
-    required this.accent2,
-    required this.onTap,
-    required this.pulse,
-  });
+  const _EmptyPickerState({required this.onTap, required this.pulse});
 
-  final Color accent1;
-  final Color accent2;
   final VoidCallback onTap;
   final AnimationController pulse;
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        color: Colors.black,
-        child: Center(
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -757,27 +470,27 @@ class _EmptyPickerState extends StatelessWidget {
                 builder: (_, _) {
                   final v = pulse.value;
                   return Container(
-                    width: 110,
-                    height: 110,
+                    width: 96,
+                    height: 96,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [accent1, accent2],
+                        colors: [c.accentPrimary, c.accentSecondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: accent1.withValues(alpha: 0.4 + v * 0.3),
-                          blurRadius: 32 + v * 16,
-                          spreadRadius: 2 + v * 6,
+                          color: c.accentPrimary.withValues(alpha: 0.3 + v * 0.25),
+                          blurRadius: 24 + v * 14,
+                          spreadRadius: 1 + v * 5,
                         ),
                       ],
                     ),
                     child: const Icon(
                       LucideIcons.video,
                       color: Colors.white,
-                      size: 48,
+                      size: 42,
                     ),
                   );
                 },
@@ -785,8 +498,9 @@ class _EmptyPickerState extends StatelessWidget {
               const SizedBox(height: 24),
               Text(
                 S.of(context).videoSelect,
-                style: const TextStyle(
-                  color: Colors.white,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: c.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.4,
@@ -795,8 +509,9 @@ class _EmptyPickerState extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 S.of(context).videoFormatsHint,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
+                  color: c.textSecondary,
                   fontSize: 12,
                   letterSpacing: 0.3,
                 ),
@@ -818,103 +533,57 @@ class _VideoSoundChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFE11D48).withValues(alpha: 0.4),
+    final c = context.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: c.surfaceHighest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.accentPink.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (sound.coverUrl != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.network(
+                cacheWidth: context.decodePx(28),
+                sound.coverUrl!,
+                width: 28,
+                height: 28,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) =>
+                    Icon(LucideIcons.music, color: c.textSecondary, size: 16),
+              ),
+            )
+          else
+            Icon(LucideIcons.music, color: c.textSecondary, size: 16),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              sound.title,
+              style: TextStyle(
+                color: c.textPrimary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (sound.coverUrl != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Image.network(
-                    cacheWidth: context.decodePx(28),
-                    sound.coverUrl!,
-                    width: 28,
-                    height: 28,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      LucideIcons.music,
-                      color: Colors.white70,
-                      size: 16,
-                    ),
-                  ),
-                )
-              else
-                const Icon(LucideIcons.music, color: Colors.white70, size: 16),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  sound.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: onRemove,
-                child: const Icon(Icons.close, color: Colors.white70, size: 15),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GlassIconButton extends StatelessWidget {
-  const _GlassIconButton({
-    required this.icon,
-    required this.onTap,
-    this.tooltip,
-    this.iconColor,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? tooltip;
-  final Color? iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final btn = ClipOval(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Material(
-          color: Colors.white.withValues(alpha: 0.12),
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-              ),
-              child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(LucideIcons.x, color: c.textSecondary, size: 14),
             ),
           ),
-        ),
+        ],
       ),
     );
-    return tooltip != null ? Tooltip(message: tooltip!, child: btn) : btn;
   }
 }
 
@@ -954,115 +623,20 @@ class _DurationChipState extends State<_DurationChip> {
     final v = widget.controller.value;
     final pos = v.position;
     final total = v.duration;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-          ),
-          child: Text(
-            '${_f(pos)} / ${_f(total)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
       ),
-    );
-  }
-}
-
-/// Pílula de ação (Cortar / Capa) sobre o vídeo, no mesmo estilo "glass"
-/// dos demais controles da tela.
-class _ActionPill extends StatelessWidget {
-  const _ActionPill({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.thumb,
-    this.onClear,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final File? thumb;
-  final VoidCallback? onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: onTap == null ? 0.5 : 1,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: onTap,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  thumb != null ? 4 : 12,
-                  6,
-                  onClear != null ? 6 : 12,
-                  6,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (thumb != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Image.file(
-                          thumb!,
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.cover,
-                          cacheWidth: 96,
-                        ),
-                      )
-                    else
-                      Icon(icon, color: Colors.white, size: 16),
-                    const SizedBox(width: 6),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (onClear != null)
-              GestureDetector(
-                onTap: onClear,
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: Icon(
-                    LucideIcons.x,
-                    color: Colors.white.withValues(alpha: 0.8),
-                    size: 14,
-                  ),
-                ),
-              ),
-          ],
+      child: Text(
+        '${_f(pos)} / ${_f(total)}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          fontFeatures: [FontFeature.tabularFigures()],
         ),
       ),
     );

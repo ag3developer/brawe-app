@@ -24,6 +24,18 @@ class NotificationsRepository {
     }
   }
 
+  Future<List<NotifActor>> actors(String id) async {
+    try {
+      final raw = await _service.actors(id);
+      return raw
+          .map(NotifActor.fromJson)
+          .where((a) => a.id.isNotEmpty)
+          .toList();
+    } catch (_) {
+      throw const Failure.network();
+    }
+  }
+
   Future<int> unreadCount() async {
     try {
       return await _service.unreadCount();

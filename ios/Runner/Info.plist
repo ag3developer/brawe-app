@@ -42,7 +42,7 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa. Ela não é usada em segundo plano.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa.</string>
+	<string>A Brawe usa sua localização apenas quando você escolhe enviá-la numa conversa ou marcar a cidade em uma publicação. Em publicações, só a cidade e o estado são compartilhados — nunca o endereço nem as coordenadas — e nada é coletado em segundo plano.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>A Brawe precisa de acesso ao microfone para transmitir seu áudio durante lives e gravar vídeos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

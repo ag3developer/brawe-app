@@ -15,7 +15,6 @@ import '../../core/themes/force_dark_theme.dart';
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../core/text/link_preview_card.dart';
 import '../../core/widgets/badge_count.dart';
-import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/sound_preview.dart';
@@ -32,6 +31,7 @@ import '../../sounds/view_models/sound_player_view_model.dart';
 import '../view_models/feed_view_model.dart';
 import '../view_models/stories_view_model.dart';
 import 'comments_sheet.dart';
+import 'post_image_viewer.dart';
 import 'reactions_bar.dart';
 import 'story_composer_screen.dart';
 import 'share_to_chat_sheet.dart';
@@ -43,6 +43,8 @@ import '../../core/widgets/report_sheet.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import 'package:brawe_app/core/media/media_utils.dart';
+import 'post_location_widgets.dart';
+import 'post_poll_card.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -788,6 +790,7 @@ class _PostCardState extends ConsumerState<PostCard>
       userReactionType: next.userReactionType,
       userReposted: next.userReposted,
       repostsCount: next.repostsCount,
+      commentsCount: next.commentsCount,
     );
     ref.read(feedViewModelProvider.notifier).patchPost(next.id, patch);
     ref.read(followingFeedViewModelProvider.notifier).patchPost(next.id, patch);
@@ -914,29 +917,27 @@ class _PostCardState extends ConsumerState<PostCard>
 
   void _openImageLightbox(BuildContext context, String imageUrl) {
     final post = _post;
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        opaque: false,
-        barrierColor: Colors.black,
-        transitionDuration: const Duration(milliseconds: 220),
-        pageBuilder: (_, _, _) => _ImageLightbox(
+    // Navigator raiz: cobre a barra de navegação e os sheets (comentários,
+    // compartilhar) abrem por cima sem empilhar rotas do ShellRoute.
+    Navigator.of(context, rootNavigator: true).push(
+      postImageViewerRoute(
+        PostImageViewer(
           imageUrl: imageUrl,
-          heroTag: 'post-image-${post.id}',
           postId: post.id,
           caption: post.content,
           authorName: post.author.name,
           authorUsername: post.author.username,
           authorAvatarUrl: post.author.avatarUrl,
-          // Brawe Sound: Fase C — preserva a música anexada ao abrir a
-          // imagem em fullscreen.
+          // Brawe Sound: preserva a música anexada ao abrir em fullscreen.
           sound: post.sound,
           soundVolume: post.soundVolume,
           initialLiked: post.userLiked,
           initialLikesCount: post.likesCount,
           commentsCount: post.commentsCount,
-          onLikeChanged: (liked, count) => _applyLocal(
-            _post.copyWith(userLiked: liked, likesCount: count),
-          ),
+          onLikeChanged: (liked, count) =>
+              _applyLocal(_post.copyWith(userLiked: liked, likesCount: count)),
+          onCommentsCountChanged: (count) =>
+              _applyLocal(_post.copyWith(commentsCount: count)),
         ),
       ),
     );
@@ -1016,6 +1017,8 @@ class _PostCardState extends ConsumerState<PostCard>
                         fontSize: 12,
                       ),
                     ),
+                    if (post.location != null)
+                      PostLocationRow(label: post.location!.label),
                   ],
                 ),
               ),
@@ -1067,6 +1070,16 @@ class _PostCardState extends ConsumerState<PostCard>
         // Link preview card — mostra preview de URLs (og:image, título, etc)
         if (post.content.isNotEmpty)
           _buildLinkPreviewCard(context, post.content),
+
+        // Enquete do post
+        if (post.poll != null)
+          PostPollCard(
+            postId: post.id,
+            poll: post.poll!,
+            onChanged: (p) {
+              if (mounted) setState(() => _local = _post.copyWith(poll: p));
+            },
+          ),
 
         // Mídia
         if (post.imageUrl != null)
@@ -1978,498 +1991,6 @@ class _ReportReasonTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// ─── Lightbox fullscreen para imagens de posts (estilo Instagram).
-class _ImageLightbox extends ConsumerStatefulWidget {
-  const _ImageLightbox({
-    required this.imageUrl,
-    required this.heroTag,
-    required this.postId,
-    required this.caption,
-    required this.authorName,
-    required this.authorUsername,
-    this.authorAvatarUrl,
-    this.sound,
-    this.soundVolume = 1.0,
-    required this.initialLiked,
-    required this.initialLikesCount,
-    required this.commentsCount,
-    required this.onLikeChanged,
-  });
-
-  final String imageUrl;
-  final bool initialLiked;
-  final int initialLikesCount;
-  final int commentsCount;
-
-  /// Avisa o cartão de origem para manter curtida/contador em sincronia.
-  final void Function(bool liked, int count) onLikeChanged;
-  final String heroTag;
-  final String postId;
-  final String caption;
-  final String authorName;
-  final String authorUsername;
-  final String? authorAvatarUrl;
-
-  /// Brawe Sound: música anexada ao post (opcional) — iniciada junto com
-  /// a imagem em fullscreen (Fase C do relatório de áudio).
-  final SoundPreview? sound;
-  final double soundVolume;
-
-  @override
-  ConsumerState<_ImageLightbox> createState() => _ImageLightboxState();
-}
-
-class _ImageLightboxState extends ConsumerState<_ImageLightbox>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
-  double _dragOffset = 0;
-  bool _chromeVisible = true;
-  late bool _liked = widget.initialLiked;
-  late int _likesCount = widget.initialLikesCount;
-  bool _busyLike = false;
-  late final AnimationController _heartCtrl;
-  late final Animation<double> _heartScale;
-  bool _showHeart = false;
-  final TransformationController _zoomCtrl = TransformationController();
-
-  /// `true` quando a música foi pausada automaticamente pelo lifecycle do
-  /// app (background) — nunca retomada por uma pausa manual do usuário
-  /// (aqui não há play/pause manual, mas o padrão é mantido por
-  /// consistência com StoryViewer/VideoFullscreenScreen).
-  bool _pausedByLifecycle = false;
-
-  String get _owner => 'fullscreen:image:${widget.postId}';
-
-  @override
-  void initState() {
-    super.initState();
-    _heartCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-    _heartScale = TweenSequence<double>([
-      TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 0.0,
-          end: 1.3,
-        ).chain(CurveTween(curve: Curves.easeOut)),
-        weight: 30,
-      ),
-      TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 1.3,
-          end: 1.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 20,
-      ),
-      TweenSequenceItem<double>(tween: ConstantTween<double>(1.0), weight: 30),
-      TweenSequenceItem<double>(
-        tween: Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).chain(CurveTween(curve: Curves.easeIn)),
-        weight: 20,
-      ),
-    ]).animate(_heartCtrl);
-
-    _heartCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted) {
-        setState(() => _showHeart = false);
-        _heartCtrl.reset();
-      }
-    });
-
-    WidgetsBinding.instance.addObserver(this);
-    // Brawe Sound (Fase C): inicia a música anexada junto com a imagem em
-    // fullscreen — antes esta tela não recebia/não tocava nenhuma faixa.
-    final sound = widget.sound;
-    if (sound != null) {
-      ref
-          .read(soundPlayerViewModelProvider.notifier)
-          .play(
-            sound.toPlayableSound(volume: widget.soundVolume),
-            owner: _owner,
-          );
-    }
-  }
-
-  /// Fase A: pausa a música quando o app sai de foreground e retoma ao
-  /// voltar (sem isso a faixa continuava tocando com o app em background).
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    final sound = widget.sound;
-    if (sound == null) return;
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.inactive:
-      case AppLifecycleState.hidden:
-        final playerState = ref.read(soundPlayerViewModelProvider);
-        if (playerState.isPlaying) {
-          _pausedByLifecycle = true;
-          ref.read(soundPlayerViewModelProvider.notifier).pause();
-        }
-        break;
-      case AppLifecycleState.resumed:
-        if (_pausedByLifecycle) {
-          _pausedByLifecycle = false;
-          ref
-              .read(soundPlayerViewModelProvider.notifier)
-              .play(
-                sound.toPlayableSound(volume: widget.soundVolume),
-                owner: _owner,
-              );
-        }
-        break;
-      case AppLifecycleState.detached:
-        break;
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _heartCtrl.dispose();
-    _zoomCtrl.dispose();
-    // Brawe Sound: para a música ao fechar a imagem em fullscreen — não
-    // deve continuar tocando em background. `stop()` é assíncrono;
-    // dispose() precisa continuar síncrono, por isso fire-and-forget com
-    // timeout de segurança (mesmo padrão usado em StoryViewer/Fullscreen).
-    if (widget.sound != null) {
-      unawaited(
-        ref
-            .read(soundPlayerViewModelProvider.notifier)
-            .stop()
-            .timeout(const Duration(seconds: 2))
-            .catchError((_) {}),
-      );
-    }
-    super.dispose();
-  }
-
-  /// Curtir/descurtir direto na API (funciona aberto de qualquer lugar, não
-  /// só do "Para você"), otimista e com reversão em erro.
-  Future<void> _toggleLike() async {
-    if (_busyLike) return;
-    _busyLike = true;
-    final was = _liked;
-    final count = (_likesCount + (was ? -1 : 1)).clamp(0, 1 << 30);
-    setState(() {
-      _liked = !was;
-      _likesCount = count;
-    });
-    widget.onLikeChanged(!was, count);
-    try {
-      await ref.read(postRepositoryProvider).toggleLike(widget.postId, was);
-    } catch (_) {
-      if (!mounted) return;
-      final back = (_likesCount + (was ? 1 : -1)).clamp(0, 1 << 30);
-      setState(() {
-        _liked = was;
-        _likesCount = back;
-      });
-      widget.onLikeChanged(was, back);
-    } finally {
-      _busyLike = false;
-    }
-  }
-
-  void _doubleTapLike() {
-    HapticFeedback.mediumImpact();
-    if (!_liked) _toggleLike();
-    setState(() => _showHeart = true);
-    _heartCtrl.forward(from: 0);
-  }
-
-  bool get _isZoomed => _zoomCtrl.value.getMaxScaleOnAxis() > 1.05;
-
-  @override
-  Widget build(BuildContext context) {
-    final userLiked = _liked;
-    final likesCount = _likesCount;
-    final commentsCount = widget.commentsCount;
-
-    final opacity = (1.0 - (_dragOffset.abs() / 300)).clamp(0.0, 1.0);
-
-    return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: opacity),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(
-            child: Transform.translate(
-              offset: Offset(0, _dragOffset),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _chromeVisible = !_chromeVisible),
-                onDoubleTap: _doubleTapLike,
-                onVerticalDragUpdate: _isZoomed
-                    ? null
-                    : (d) => setState(() => _dragOffset += d.delta.dy),
-                onVerticalDragEnd: _isZoomed
-                    ? null
-                    : (_) {
-                        if (_dragOffset.abs() > 100) {
-                          Navigator.of(context).pop();
-                        } else {
-                          setState(() => _dragOffset = 0);
-                        }
-                      },
-                child: InteractiveViewer(
-                  transformationController: _zoomCtrl,
-                  minScale: 1,
-                  maxScale: 5,
-                  child: SizedBox.expand(
-                    child: FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      child: CachedNetworkImage(
-                        memCacheWidth: context.decodeScreenPx,
-                        imageUrl: widget.imageUrl,
-                        fadeInDuration: const Duration(milliseconds: 150),
-                        placeholder: (_, _) => Container(
-                          width: 200,
-                          height: 200,
-                          color: Colors.transparent,
-                          alignment: Alignment.center,
-                          child: const SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (_, _, _) => Icon(
-                          Icons.broken_image_rounded,
-                          color: Colors.white38,
-                          size: 80,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          if (_showHeart)
-            IgnorePointer(
-              child: Center(
-                child: ScaleTransition(
-                  scale: _heartScale,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: _FeedTokens.likeRed.withValues(alpha: 0.6),
-                          blurRadius: 60,
-                          spreadRadius: 8,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.favorite_rounded,
-                      color: Colors.white,
-                      size: 160,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedOpacity(
-              opacity: _chromeVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 4,
-                  left: 8,
-                  right: 8,
-                  bottom: 8,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.black87, Colors.transparent],
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.close_rounded, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    BraweAvatar(
-                      avatarUrl: widget.authorAvatarUrl,
-                      displayName: widget.authorName,
-                      size: 32,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            widget.authorName,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            '@${widget.authorUsername}',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AnimatedOpacity(
-              opacity: _chromeVisible ? 1 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  16,
-                  16,
-                  MediaQuery.of(context).padding.bottom + 12,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black87],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.caption.isNotEmpty)
-                      Text(
-                        widget.caption,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          height: 1.4,
-                        ),
-                      ),
-                    if (widget.caption.isNotEmpty) const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _LightboxAction(
-                          icon: userLiked
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_outline_rounded,
-                          color: userLiked ? _FeedTokens.likeRed : Colors.white,
-                          label: _formatLightboxCount(likesCount),
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _toggleLike();
-                          },
-                        ),
-                        const SizedBox(width: 22),
-                        _LightboxAction(
-                          icon: Icons.mode_comment_outlined,
-                          color: Colors.white,
-                          label: _formatLightboxCount(commentsCount),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        const SizedBox(width: 22),
-                        _LightboxAction(
-                          icon: Icons.send_rounded,
-                          color: Colors.white,
-                          label: S.of(context).feedSend,
-                          onTap: () {
-                            ShareToChatSheet.show(
-                              context,
-                              postId: widget.postId,
-                              postCaption: widget.caption,
-                              postImageUrl: widget.imageUrl,
-                              authorName: widget.authorName,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _formatLightboxCount(int n) {
-  if (n < 1000) return '$n';
-  if (n < 1000000) return '${(n / 1000).toStringAsFixed(1)}K';
-  return '${(n / 1000000).toStringAsFixed(1)}M';
-}
-
-class _LightboxAction extends StatelessWidget {
-  const _LightboxAction({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.onTap,
-  });
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 26),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -123,6 +123,8 @@ class StoriesService {
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
     String? overlayPath,
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
   }) async {
     final hasSound = soundId != null && soundId.isNotEmpty;
     final formData = FormData.fromMap({
@@ -149,6 +151,8 @@ class StoriesService {
     final response = await _dio.post(
       '/stories/upload',
       data: formData,
+      onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
       options: Options(
         contentType: 'multipart/form-data',
         headers: {
@@ -161,6 +165,20 @@ class StoriesService {
         // e ao recarregar o feed o story está lá.
         sendTimeout: const Duration(minutes: 2),
         receiveTimeout: const Duration(minutes: 2),
+      ),
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
+  /// GET /stories/by-key/{key} — story do próprio usuário criado com essa
+  /// Idempotency-Key. 404 `story_not_found_for_key` = não gravou.
+  Future<Map<String, dynamic>> getStoryByKey(String key) async {
+    final response = await _dio.get(
+      '/stories/by-key/${Uri.encodeComponent(key)}',
+      options: Options(
+        contentType: 'application/json',
+        sendTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
       ),
     );
     return response.data as Map<String, dynamic>;

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'post_poll.dart';
 import 'sound_preview.dart';
 
 part 'post.freezed.dart';
@@ -49,6 +50,10 @@ sealed class Post with _$Post {
     String? thumbnailUrl,
     // 'image' | 'video' (null em servidor antigo → decide pela URL).
     String? mediaType,
+    // Enquete do post (null = post sem enquete).
+    PostPoll? poll,
+    // Cidade do post, ex.: "Recife, PE" (null = sem localização).
+    PostLocation? location,
   }) = _Post;
 
   const Post._();

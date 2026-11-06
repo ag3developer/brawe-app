@@ -21,6 +21,7 @@ import 'data/services/push_notification_service.dart';
 import 'gen/l10n/app_localizations.dart';
 import 'routing/router.dart';
 import 'ui/core/themes/app_theme.dart';
+import 'ui/chat/view_models/unread_chats_provider.dart';
 import 'ui/core/view_models/app_badge_controller.dart';
 import 'ui/settings/view_models/theme_view_model.dart';
 import 'ui/core/themes/app_colors.dart';
@@ -152,7 +153,10 @@ class _BraweAppState extends ConsumerState<BraweApp> {
   /// caso de pushes recebidos em background (que não passam pelo handler de
   /// foreground) e de notificações lidas em outro dispositivo.
   late final _AppLifecycleObserver _lifecycleObserver = _AppLifecycleObserver(
-    onResume: () => ref.read(appBadgeControllerProvider.notifier).refresh(),
+    onResume: () {
+      ref.read(appBadgeControllerProvider.notifier).refresh();
+      ref.read(unreadChatsProvider.notifier).refresh();
+    },
   );
 
   @override

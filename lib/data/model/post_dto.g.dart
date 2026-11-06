@@ -58,6 +58,8 @@ _PostResponseDto _$PostResponseDtoFromJson(
   durationSec: (json['duration_sec'] as num?)?.toDouble(),
   thumbnailUrl: json['thumbnail_url'] as String?,
   mediaType: json['media_type'] as String?,
+  poll: _pollFromJson(json['poll']),
+  location: _locationFromJson(json['location']),
 );
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
@@ -88,6 +90,8 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'duration_sec': instance.durationSec,
       'thumbnail_url': instance.thumbnailUrl,
       'media_type': instance.mediaType,
+      'poll': _pollToJson(instance.poll),
+      'location': _locationToJson(instance.location),
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>

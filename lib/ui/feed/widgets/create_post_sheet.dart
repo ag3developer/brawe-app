@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../data/repositories/auth_state_provider.dart';
+import '../../../data/services/city_location_service.dart';
+import '../../../domain/models/poll_draft.dart';
+import '../../../domain/models/post_poll.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../../../domain/models/sound.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -14,6 +18,8 @@ import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
+import 'post_location_widgets.dart';
+import 'post_poll_editor.dart';
 
 class CreatePostSheet extends ConsumerStatefulWidget {
   const CreatePostSheet({super.key});
@@ -23,10 +29,30 @@ class CreatePostSheet extends ConsumerStatefulWidget {
 }
 
 class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
+  /// Insere "#" na posição do cursor (com espaço antes, se preciso).
+  void _insertHashtag() {
+    final t = _textController.text;
+    final sel = _textController.selection;
+    final at = sel.isValid ? sel.start : t.length;
+    final needSpace = at > 0 && t[at - 1] != ' ' && t[at - 1] != '\n';
+    final ins = needSpace ? ' #' : '#';
+    final end = sel.isValid ? sel.end : t.length;
+    _textController.value = TextEditingValue(
+      text: t.replaceRange(at, end, ins),
+      selection: TextSelection.collapsed(offset: at + ins.length),
+    );
+    setState(() {});
+  }
+
   final TextEditingController _textController = TextEditingController();
   File? _selectedImage;
   Sound? _selectedSound;
   bool _isPosting = false;
+
+  // Enquete (exclusiva com foto) e cidade do post.
+  PollDraft? _poll;
+  PostLocation? _location;
+  bool _locating = false;
   String _audience = 'Todos';
 
   // Brawe Sound: trecho ESPECÍFICO escolhido para ESTE post (não o trim
@@ -47,6 +73,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
   Future<void> _post() async {
     if (_textController.text.trim().isEmpty) return;
+    if (_poll != null && !_poll!.isValid) return;
     setState(() => _isPosting = true);
     try {
       await ref
@@ -58,6 +85,8 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
             soundId: _selectedSound?.id,
             soundTrimStartMs: _soundTrimStartMs,
             soundTrimEndMs: _soundTrimEndMs,
+            poll: _poll?.toRequestJson(),
+            location: _location,
           );
       // Refresh feeds para o post novo aparecer imediatamente.
       ref.invalidate(feedViewModelProvider);
@@ -84,7 +113,63 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
     }
   }
 
+  void _snack(String msg, {SnackBarAction? action}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg), action: action));
+  }
+
+  void _togglePoll() {
+    if (_poll != null) {
+      setState(() => _poll = null);
+      return;
+    }
+    if (_selectedImage != null) {
+      _snack(S.of(context).pollBlockedByImage);
+      return;
+    }
+    setState(() => _poll = PollDraft());
+  }
+
+  Future<void> _toggleLocation() async {
+    if (_location != null) {
+      setState(() => _location = null);
+      return;
+    }
+    if (_locating) return;
+    setState(() => _locating = true);
+    final service = ref.read(cityLocationServiceProvider);
+    final result = await service.resolveCity();
+    if (!mounted) return;
+    setState(() {
+      _locating = false;
+      if (result.status == CityLocationStatus.ok) _location = result.location;
+    });
+    final s = S.of(context);
+    switch (result.status) {
+      case CityLocationStatus.ok:
+        break;
+      case CityLocationStatus.denied:
+      case CityLocationStatus.deniedForever:
+        _snack(
+          s.postLocationDenied,
+          action: SnackBarAction(
+            label: s.postLocationOpenSettings,
+            onPressed: service.openSettings,
+          ),
+        );
+      case CityLocationStatus.serviceDisabled:
+        _snack(s.postLocationServiceOff);
+      case CityLocationStatus.failed:
+        _snack(s.postLocationFailed);
+    }
+  }
+
   Future<void> _pickImage() async {
+    if (_poll != null) {
+      _snack(S.of(context).imageBlockedByPoll);
+      return;
+    }
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
@@ -158,7 +243,9 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   @override
   Widget build(BuildContext context) {
     final canPost =
-        _textController.text.trim().isNotEmpty && _charCount <= _maxChars;
+        _textController.text.trim().isNotEmpty &&
+        _charCount <= _maxChars &&
+        (_poll == null || _poll!.isValid);
     final s = S.of(context);
 
     return AnimatedPadding(
@@ -195,15 +282,18 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: context.colors.surfaceElevated,
-                    child: Icon(
-                      Icons.person,
-                      color: context.colors.textSecondary,
-                      size: 18,
-                    ),
-                  ),
+                  Builder(builder: (context) {
+                    final avatar = ref.watch(authStateProvider).value?.avatarUrl;
+                    final has = avatar != null && avatar.isNotEmpty;
+                    return CircleAvatar(
+                      radius: 18,
+                      backgroundColor: context.colors.surfaceHighest,
+                      backgroundImage: has ? NetworkImage(avatar) : null,
+                      child: has
+                          ? null
+                          : Icon(LucideIcons.user, color: context.colors.textSecondary, size: 18),
+                    );
+                  }),
                   const SizedBox(width: 12),
                   // Audience selector
                   GestureDetector(
@@ -234,7 +324,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                           ),
                           const SizedBox(width: 4),
                           Icon(
-                            Icons.keyboard_arrow_down,
+                            LucideIcons.chevronDown,
                             color: context.colors.accentPrimary,
                             size: 14,
                           ),
@@ -289,13 +379,24 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         fontSize: 16,
                         height: 1.5,
                       ),
+                      cursorColor: context.colors.accentPrimary,
+                      // Campo de escrever post, não de formulário: sem caixa,
+                      // sem fundo e sem borda azul do tema global.
                       decoration: InputDecoration(
                         hintText: s.postHintWhatsHappening,
                         hintStyle: TextStyle(
-                          color: context.colors.textSecondary,
+                          color: context.colors.textTertiary,
                           fontSize: 16,
                         ),
+                        filled: false,
+                        isCollapsed: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
                       ),
                       maxLines: null,
                       onChanged: (_) => setState(() {}),
@@ -339,6 +440,38 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                         ],
                       ),
 
+                    // Enquete: a pergunta é o texto do post (obrigatório).
+                    if (_poll != null) ...[
+                      PostPollEditor(
+                        draft: _poll!,
+                        onChanged: () => setState(() {}),
+                        onRemove: () => setState(() => _poll = null),
+                      ),
+                      if (_textController.text.trim().isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Text(
+                            s.pollNeedsQuestion,
+                            style: TextStyle(
+                              color: context.colors.danger,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+
+                    // Cidade do post (nunca coordenadas)
+                    if (_location != null) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: PostLocationChip(
+                          label: _location!.label,
+                          onRemove: () => setState(() => _location = null),
+                        ),
+                      ),
+                    ],
+
                     // Chip do som selecionado (tap = ajustar o trecho)
                     if (_selectedSound != null) ...[
                       const SizedBox(height: 10),
@@ -375,16 +508,30 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               ),
               child: Row(
                 children: [
-                  _ToolbarBtn(icon: Icons.image_outlined, onTap: _pickImage),
-                  _ToolbarBtn(icon: Icons.gif_outlined, onTap: () {}),
-                  _ToolbarBtn(icon: Icons.poll_outlined, onTap: () {}),
-                  _ToolbarBtn(icon: Icons.tag, onTap: () {}),
-                  _ToolbarBtn(icon: Icons.location_on_outlined, onTap: () {}),
+                  _ToolbarBtn(
+                    icon: LucideIcons.image,
+                    onTap: _pickImage,
+                    active: _selectedImage != null,
+                  ),
+                  _ToolbarBtn(icon: LucideIcons.hash, onTap: _insertHashtag),
                   _ToolbarBtn(
                     icon: LucideIcons.music,
                     onTap: _pickSound,
                     active: _selectedSound != null,
                     activeColor: const Color(0xFFE11D48),
+                  ),
+                  _ToolbarBtn(
+                    icon: LucideIcons.chartBar,
+                    tooltip: s.postAddPoll,
+                    onTap: _togglePoll,
+                    active: _poll != null,
+                  ),
+                  _ToolbarBtn(
+                    icon: LucideIcons.mapPin,
+                    tooltip: s.postAddLocation,
+                    onTap: _toggleLocation,
+                    active: _location != null,
+                    busy: _locating,
                   ),
                   const Spacer(),
                   // Char counter
@@ -400,7 +547,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                             strokeWidth: 2.5,
                             backgroundColor: context.colors.border,
                             color: _charCount > _maxChars * 0.9
-                                ? Colors.orange
+                                ? context.colors.warning
                                 : context.colors.accentPrimary,
                           ),
                           if (_charCount > _maxChars * 0.8)
@@ -408,7 +555,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                               '${_maxChars - _charCount}',
                               style: TextStyle(
                                 color: _charCount > _maxChars
-                                    ? Colors.red
+                                    ? context.colors.danger
                                     : context.colors.textSecondary,
                                 fontSize: 10,
                               ),
@@ -501,11 +648,15 @@ class _ToolbarBtn extends StatelessWidget {
     required this.onTap,
     this.active = false,
     this.activeColor,
+    this.tooltip,
+    this.busy = false,
   });
   final IconData icon;
   final VoidCallback onTap;
   final bool active;
   final Color? activeColor;
+  final String? tooltip;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -513,8 +664,15 @@ class _ToolbarBtn extends StatelessWidget {
         ? (activeColor ?? context.colors.accentPrimary)
         : context.colors.textSecondary;
     return IconButton(
-      icon: Icon(icon, color: color, size: 22),
-      onPressed: onTap,
+      tooltip: tooltip,
+      icon: busy
+          ? SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: color),
+            )
+          : Icon(icon, color: color, size: 22),
+      onPressed: busy ? null : onTap,
     );
   }
 }

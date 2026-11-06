@@ -16,7 +16,6 @@ import '../../../domain/models/story.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
-import '../../core/themes/force_dark_theme.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/brawe_story_media.dart';
 import '../../profile/widgets/profile_screen.dart' show userStoriesProvider;
@@ -25,6 +24,7 @@ import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../view_models/stories_view_model.dart';
 import 'story_gift_sheet.dart';
+import 'story_sheet_theme.dart';
 import 'gift_flight_overlay.dart';
 import '../../../core/network/media_headers.dart';
 import '../../core/widgets/report_sheet.dart';
@@ -523,7 +523,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (sheetCtx) => ForceDarkTheme(
+      builder: (sheetCtx) => StoryAppTheme(
         child: Container(
           decoration: BoxDecoration(
             color: sheetCtx.colors.surface,
@@ -619,32 +619,36 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false, // evita fechar por toque fora
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.slate,
-        title: Text(
-          S.of(context).viewerDeleteStory,
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: Text(
-          S.of(context).viewerDeleteConfirm,
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(
-              S.of(context).viewerCancel,
-              style: const TextStyle(color: Colors.white70),
+      builder: (dialogContext) => StoryAppTheme(
+        child: Builder(
+          builder: (ctx) => AlertDialog(
+            backgroundColor: ctx.colors.surfaceElevated,
+            title: Text(
+              S.of(ctx).viewerDeleteStory,
+              style: TextStyle(color: ctx.colors.textPrimary),
             ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(
-              S.of(context).viewerDelete,
-              style: const TextStyle(color: Colors.red),
+            content: Text(
+              S.of(ctx).viewerDeleteConfirm,
+              style: TextStyle(color: ctx.colors.textSecondary),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(
+                  S.of(ctx).viewerCancel,
+                  style: TextStyle(color: ctx.colors.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(
+                  S.of(ctx).viewerDelete,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
     if (confirmed != true) {
@@ -691,32 +695,36 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     final confirmed = await showDialog<bool>(
       context: context,
       useRootNavigator: true,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ctx.colors.surface,
-        title: Text(
-          S.of(ctx).viewerBlockUser,
-          style: TextStyle(color: ctx.colors.textPrimary),
-        ),
-        content: Text(
-          S.of(ctx).viewerBlockConfirm(_story.authorUsername),
-          style: TextStyle(color: ctx.colors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              S.of(ctx).viewerCancel,
+      builder: (_) => StoryAppTheme(
+        child: Builder(
+          builder: (ctx) => AlertDialog(
+            backgroundColor: ctx.colors.surface,
+            title: Text(
+              S.of(ctx).viewerBlockUser,
+              style: TextStyle(color: ctx.colors.textPrimary),
+            ),
+            content: Text(
+              S.of(ctx).viewerBlockConfirm(_story.authorUsername),
               style: TextStyle(color: ctx.colors.textSecondary),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  S.of(ctx).viewerCancel,
+                  style: TextStyle(color: ctx.colors.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  S.of(ctx).viewerBlock,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              S.of(ctx).viewerBlock,
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
+        ),
       ),
     );
     if (confirmed != true) {
@@ -756,7 +764,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (sheetCtx) => ForceDarkTheme(
+      builder: (sheetCtx) => StoryAppTheme(
         child: Container(
           decoration: BoxDecoration(
             color: sheetCtx.colors.surface,
@@ -1318,8 +1326,9 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     HapticFeedback.selectionClick();
     final result = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _StoryReactionPicker(),
+      builder: (ctx) => StoryAppTheme(child: _StoryReactionPicker()),
     );
     if (!mounted) return;
     _resume();
@@ -1356,11 +1365,10 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.nearBlack,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _StoryViewersSheet(storyId: _story.id),
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          StoryAppTheme(child: StoryViewersSheet(storyId: _story.id)),
     );
     if (mounted) _resume();
   }
@@ -1374,8 +1382,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => SoundPlayerBottomSheet(sound: sound.toPlayableSound()),
+      builder: (_) => StoryAppTheme(
+        child: SoundPlayerBottomSheet(sound: sound.toPlayableSound()),
+      ),
     );
     if (mounted) _resume();
   }
@@ -1511,28 +1522,52 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _openGiftSheet() async {
     _pause();
     final story = _story;
-    final result = await StoryGiftSheet.show(
+    // O sheet fica aberto (combo): cada envio toca a animação na hora e o
+    // aviso (toast) é um só, somando a sessão, quando o sheet fecha.
+    StoryGiftResult? last;
+    var sessionTotal = 0;
+    var sessionCount = 0;
+    await StoryGiftSheet.show(
       context,
       storyId: story.id,
       creatorName: story.authorUsername.isNotEmpty
           ? story.authorUsername
           : story.authorName,
       creatorAvatarUrl: story.authorAvatarUrl,
+      isVerified: story.isVerified,
+      onSent: (result) {
+        last = result;
+        sessionTotal += result.totalCredits;
+        sessionCount += result.quantity;
+        if (!mounted) return;
+        GiftFlightOverlay.play(
+          context,
+          label: result.giftName,
+          slug: result.giftSlug,
+          tier: result.giftTier,
+          emoji: result.giftEmoji,
+          iconUrl: result.iconUrl,
+          quantity: result.combo,
+          endKey: _creatorAvatarKey,
+        );
+      },
     );
     if (!mounted) return;
     _resume();
-    if (result != null) {
-      GiftFlightOverlay.play(
-        context,
-        label: result.giftName,
-        slug: result.giftSlug,
-        tier: result.giftTier,
-        emoji: result.giftEmoji,
-        iconUrl: result.iconUrl,
-        quantity: result.quantity,
-        endKey: _creatorAvatarKey,
+    final l = last;
+    if (l != null) {
+      _showGiftToast(
+        StoryGiftResult(
+          giftId: l.giftId,
+          giftName: l.giftName,
+          giftSlug: l.giftSlug,
+          giftTier: l.giftTier,
+          giftEmoji: l.giftEmoji,
+          iconUrl: l.iconUrl,
+          quantity: sessionCount,
+          totalCredits: sessionTotal,
+        ),
       );
-      _showGiftToast(result);
     }
   }
 
@@ -1570,14 +1605,15 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   }
 }
 
-class _StoryViewersSheet extends ConsumerStatefulWidget {
-  const _StoryViewersSheet({required this.storyId});
+/// Lista de visualizações (dono do story). Pública para teste de tema.
+class StoryViewersSheet extends ConsumerStatefulWidget {
+  const StoryViewersSheet({super.key, required this.storyId});
   final String storyId;
   @override
-  ConsumerState<_StoryViewersSheet> createState() => _StoryViewersSheetState();
+  ConsumerState<StoryViewersSheet> createState() => _StoryViewersSheetState();
 }
 
-class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
+class _StoryViewersSheetState extends ConsumerState<StoryViewersSheet> {
   bool _loading = true;
   String? _error;
   List<StoryViewerInfo> _viewers = const [];
@@ -1625,100 +1661,112 @@ class _StoryViewersSheetState extends ConsumerState<_StoryViewersSheet> {
       minChildSize: 0.4,
       maxChildSize: 0.95,
       expand: false,
-      builder: (_, controller) => Column(
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(2),
+      builder: (_, controller) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: context.colors.surfaceElevated,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: context.colors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                const Icon(Icons.visibility, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  _loading
-                      ? S.of(context).viewerLoading
-                      : S.of(context).viewerViewsCount(_total),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.visibility,
+                    color: context.colors.textPrimary,
+                    size: 18,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    _loading
+                        ? S.of(context).viewerLoading
+                        : S.of(context).viewerViewsCount(_total),
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Divider(color: Colors.white12, height: 1),
-          Expanded(
-            child: _loading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.braweBlue,
-                    ),
-                  )
-                : _error != null
-                ? Center(
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  )
-                : _viewers.isEmpty
-                ? Center(
-                    child: Text(
-                      S.of(context).viewerNoViewers,
-                      style: const TextStyle(color: Colors.white54),
-                    ),
-                  )
-                : ListView.builder(
-                    controller: controller,
-                    itemCount: _viewers.length,
-                    itemBuilder: (_, i) {
-                      final v = _viewers[i];
-                      return ListTile(
-                        leading: BraweAvatar(
-                          avatarUrl: v.avatarUrl,
-                          displayName: v.name,
-                          size: 40,
-                        ),
-                        title: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                v.name.isNotEmpty ? v.name : v.username,
-                                style: const TextStyle(color: Colors.white),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (v.isVerified)
-                              const VerifiedBadge(size: 14, gap: 4),
-                          ],
-                        ),
-                        subtitle: Text(
-                          '@${v.username} · ${_relative(context, v.viewedAt)}',
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 12,
+            Divider(color: context.colors.divider, height: 1),
+            Expanded(
+              child: _loading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: context.colors.accentPrimary,
+                      ),
+                    )
+                  : _error != null
+                  ? Center(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: context.colors.textSecondary),
+                      ),
+                    )
+                  : _viewers.isEmpty
+                  ? Center(
+                      child: Text(
+                        S.of(context).viewerNoViewers,
+                        style: TextStyle(color: context.colors.textSecondary),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: controller,
+                      itemCount: _viewers.length,
+                      itemBuilder: (_, i) {
+                        final v = _viewers[i];
+                        return ListTile(
+                          leading: BraweAvatar(
+                            avatarUrl: v.avatarUrl,
+                            displayName: v.name,
+                            size: 40,
                           ),
-                        ),
-                        trailing: v.reaction != null && v.reaction!.isNotEmpty
-                            ? Text(
-                                v.reaction!,
-                                style: const TextStyle(fontSize: 20),
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-          ),
-        ],
+                          title: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  v.name.isNotEmpty ? v.name : v.username,
+                                  style: TextStyle(
+                                    color: context.colors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (v.isVerified)
+                                const VerifiedBadge(size: 14, gap: 4),
+                            ],
+                          ),
+                          subtitle: Text(
+                            '@${v.username} · ${_relative(context, v.viewedAt)}',
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: v.reaction != null && v.reaction!.isNotEmpty
+                              ? Text(
+                                  v.reaction!,
+                                  style: const TextStyle(fontSize: 20),
+                                )
+                              : null,
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1778,12 +1826,9 @@ class _StoryReactionPicker extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.75),
+            color: context.colors.surfaceElevated,
             borderRadius: BorderRadius.circular(40),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
-            ),
+            border: Border.all(color: context.colors.border, width: 1),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

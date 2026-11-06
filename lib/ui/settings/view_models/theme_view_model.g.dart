@@ -47,7 +47,7 @@ final class ThemeControllerProvider
   }
 }
 
-String _$themeControllerHash() => r'07ca867c46b7e0f2728b5aa75579cecee5f52bdb';
+String _$themeControllerHash() => r'3fbc44f84d6a25819179536c9408aa507140f1b9';
 
 /// Theme mode controller. Persists user preference locally for instant boot.
 /// Backend sync happens via /settings endpoint.

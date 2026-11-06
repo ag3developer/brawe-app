@@ -34,7 +34,7 @@ final class NotificationsViewModelProvider
 }
 
 String _$notificationsViewModelHash() =>
-    r'96606b416e3697384281eef9b40078f7d7b03709';
+    r'e2cadf6d43be0e7d689b05f1cbe5777b2225bf27';
 
 abstract class _$NotificationsViewModel
     extends $AsyncNotifier<NotificationsPage> {

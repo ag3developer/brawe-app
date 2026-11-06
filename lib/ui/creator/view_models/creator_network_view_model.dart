@@ -64,58 +64,55 @@ class CreatorApplicationFormController
   @override
   AsyncValue<CreatorApplication?> build() => const AsyncValue.data(null);
 
+  /// Envia a inscrição. Dados de identidade (nome, @, e-mail) não são
+  /// enviados: o servidor completa a partir da conta logada.
+  ///
+  /// IMPORTANTE: depois que o POST responde com sucesso a inscrição JÁ está
+  /// salva. Nada que venha depois (atualizar estado, invalidar cache) pode
+  /// transformar isso em erro para o usuário. Este provider é autoDispose e
+  /// pode ser descartado durante o await de rede (ninguém o observa); mexer
+  /// em `state`/`ref` depois disso lança StateError e antes mostrava
+  /// "não foi possível enviar" mesmo com a inscrição já no painel do admin.
   Future<CreatorApplication> submit({
-    required String fullName,
-    required String username,
-    required String email,
-    String? phone,
     required String country,
-    String? city,
     required String language,
     required ContentNiche niche,
-    CreatorTier? requestedTier,
-    SocialLinks socialLinks = const SocialLinks(),
-    int followersCount = 0,
-    bool doesLive = false,
-    String? bio,
-    String? motivation,
-    String? goals,
-    String? portfolioUrl,
+    required String platform,
+    required String handle,
+    required int followersCount,
+    required bool doesLive,
+    required String motivation,
     required bool termsAccepted,
     String? termsVersion,
   }) async {
-    state = const AsyncValue.loading();
+    final repo = ref.read(creatorNetworkRepositoryProvider);
+    if (ref.mounted) state = const AsyncValue.loading();
+    final CreatorApplication app;
     try {
-      final app = await ref
-          .read(creatorNetworkRepositoryProvider)
-          .submitApplication(
-            fullName: fullName,
-            username: username,
-            email: email,
-            phone: phone,
-            country: country,
-            city: city,
-            language: language,
-            niche: niche,
-            requestedTier: requestedTier,
-            socialLinks: socialLinks,
-            followersCount: followersCount,
-            doesLive: doesLive,
-            bio: bio,
-            motivation: motivation,
-            goals: goals,
-            portfolioUrl: portfolioUrl,
-            termsAccepted: termsAccepted,
-            termsVersion: termsVersion,
-          );
-      state = AsyncValue.data(app);
-      // invalida cache para refletir nova inscrição na próxima leitura
-      ref.invalidate(myCreatorApplicationProvider);
-      return app;
+      app = await repo.submitApplication(
+        country: country,
+        language: language,
+        niche: niche,
+        platform: platform,
+        handle: handle,
+        followersCount: followersCount,
+        doesLive: doesLive,
+        motivation: motivation,
+        termsAccepted: termsAccepted,
+        termsVersion: termsVersion,
+      );
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      if (ref.mounted) state = AsyncValue.error(e, st);
       rethrow;
     }
+    // Pós-sucesso: melhor esforço, nunca lança.
+    try {
+      if (ref.mounted) {
+        state = AsyncValue.data(app);
+        ref.invalidate(myCreatorApplicationProvider);
+      }
+    } catch (_) {}
+    return app;
   }
 
   Future<CreatorApplication> updateMine(Map<String, dynamic> body) async {

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'system_notice.dart';
+
 class Conversation {
   const Conversation({
     required this.id,
@@ -16,6 +18,7 @@ class Conversation {
     this.participantIsVerified = false,
     this.isMuted = false,
     this.isPinned = false,
+    this.isSystem = false,
   });
 
   final String id;
@@ -37,6 +40,9 @@ class Conversation {
   /// Fixada no topo da lista (por mim).
   final bool isPinned;
 
+  /// Conversa oficial da Brawe (avisos do sistema): somente leitura, fixa no topo.
+  final bool isSystem;
+
   Conversation copyWith({
     String? id,
     String? participantId,
@@ -52,6 +58,7 @@ class Conversation {
     bool? participantIsVerified,
     bool? isMuted,
     bool? isPinned,
+    bool? isSystem,
   }) {
     return Conversation(
       id: id ?? this.id,
@@ -69,6 +76,7 @@ class Conversation {
           participantIsVerified ?? this.participantIsVerified,
       isMuted: isMuted ?? this.isMuted,
       isPinned: isPinned ?? this.isPinned,
+      isSystem: isSystem ?? this.isSystem,
     );
   }
 
@@ -105,6 +113,7 @@ class Conversation {
       participantIsVerified: json['other_user_is_verified'] == true,
       isMuted: json['is_muted'] == true,
       isPinned: json['is_pinned'] == true,
+      isSystem: json['is_system'] == true || otherUserId == kBraweSystemUserId,
     );
   }
 }
@@ -128,6 +137,7 @@ class ChatMessage {
     this.audioDuration,
     this.editedAt,
     this.isForwarded = false,
+    this.meta,
   });
 
   final String id;
@@ -160,9 +170,14 @@ class ChatMessage {
   /// Encaminhada de outra conversa.
   final bool isForwarded;
 
+  /// Dados estruturados (aviso do sistema); `content` é o texto simples de fallback.
+  final Map<String, dynamic>? meta;
+
   /// Tipos cujo `content` é um JSON (cartões ricos).
   static const richTypes = {
     'live_invite',
+    'agency_invite',
+    'system_notice',
     'story_reaction',
     'story_reply',
     'story_gift',
@@ -170,9 +185,14 @@ class ChatMessage {
     'file',
   };
 
+  /// Aviso do sistema decodificado (null se não for `system_notice` ou vier vazio).
+  SystemNotice? get systemNotice =>
+      messageType == 'system_notice' ? SystemNotice.fromJson(meta) : null;
+
   /// `content` decodificado quando a mensagem é de um tipo rico.
   Map<String, dynamic>? get payload {
     if (!richTypes.contains(messageType)) return null;
+    if (messageType == 'system_notice') return meta;
     try {
       final v = jsonDecode(content);
       return v is Map ? Map<String, dynamic>.from(v) : null;
@@ -199,6 +219,7 @@ class ChatMessage {
     int? audioDuration,
     DateTime? editedAt,
     bool? isForwarded,
+    Map<String, dynamic>? meta,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -218,6 +239,7 @@ class ChatMessage {
       audioDuration: audioDuration ?? this.audioDuration,
       editedAt: editedAt ?? this.editedAt,
       isForwarded: isForwarded ?? this.isForwarded,
+      meta: meta ?? this.meta,
     );
   }
 
@@ -266,6 +288,7 @@ class ChatMessage {
       audioDuration: json['audio_duration'] is int ? json['audio_duration'] as int : int.tryParse(json['audio_duration']?.toString() ?? ''),
       editedAt: _parseDateTime(json['edited_at']),
       isForwarded: json['is_forwarded'] == true,
+      meta: json['meta'] is Map ? Map<String, dynamic>.from(json['meta'] as Map) : null,
     );
   }
 }

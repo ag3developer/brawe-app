@@ -10,7 +10,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../core/network/live_dio_provider.dart';
 import '../../ui/core/view_models/app_badge_controller.dart';
+import '../../ui/chat/view_models/unread_chats_provider.dart';
 import 'notification_navigation_service.dart';
+import 'push_grouping.dart';
 
 part 'push_notification_service.g.dart';
 
@@ -148,11 +150,22 @@ class PushNotificationService {
     // Atualiza o badge do ícone (notificações + DMs) assim que o push chega
     // com o app aberto. O controller recalcula a partir das fontes existentes.
     _ref.read(appBadgeControllerProvider.notifier).refresh();
+    final chats = _ref.read(unreadChatsProvider.notifier);
+    chats.refresh();
+
+    // Já está na conversa: nada de banner (a mensagem aparece na tela).
+    if (PushGrouping.shouldSuppress(message.data, chats.activeConversationId)) {
+      return;
+    }
 
     final notification = message.notification;
     if (notification == null) return;
+    // Mesma conversa → mesmo id/tag: a notificação nova SUBSTITUI a anterior.
+    final group = PushGrouping.groupKey(message.data);
     await _local.show(
-      id: notification.hashCode,
+      id: group != null
+          ? PushGrouping.notificationId(group)
+          : notification.hashCode,
       title: notification.title,
       body: notification.body,
       notificationDetails: NotificationDetails(
@@ -161,13 +174,29 @@ class PushNotificationService {
           _androidChannel.name,
           channelDescription: _androidChannel.description,
           icon: '@mipmap/ic_launcher',
+          tag: group,
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(threadIdentifier: group),
       ),
       // Serializa o `data` em JSON para que o toque na notificação local
       // (foreground) consiga reconstruir o payload e navegar.
       payload: message.data.isEmpty ? null : jsonEncode(message.data),
     );
+  }
+
+  /// Remove as notificações dessa conversa (ao abri-la). Android: cancela pela
+  /// tag (a local e a do FCM, que usa id 0). iOS: o `apns-collapse-id` já
+  /// mantém só uma; o plugin não remove notificações remotas entregues.
+  Future<void> clearConversationNotifications(String conversationId) async {
+    try {
+      await _local.cancel(
+        id: PushGrouping.notificationId(conversationId),
+        tag: conversationId,
+      );
+      await _local.cancel(id: 0, tag: conversationId);
+    } catch (e) {
+      debugPrint('clearConversationNotifications falhou: $e');
+    }
   }
 
   /// App em foreground: usuário tocou na notificação local exibida acima.

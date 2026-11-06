@@ -28,13 +28,22 @@ class CreatorNetworkService {
   Future<CreatorApplication> submitApplication(
     Map<String, dynamic> body,
   ) async {
-    final r = await _dio.post<Map<String, dynamic>>(
+    final r = await _dio.post<dynamic>(
       '/creator/applications',
       data: body,
     );
-    // Backend pode responder com { "success": true, "data": {...} }
-    // ou diretamente com o objeto. _unwrap lida com ambos os casos.
-    return CreatorApplication.fromJson(_unwrap(r.data!));
+    // O POST já foi aceito (2xx): a inscrição está salva. Uma resposta
+    // vazia ou fora do formato não pode virar erro para o usuário.
+    final data = r.data;
+    if (data is Map<String, dynamic>) {
+      try {
+        return CreatorApplication.fromJson(_unwrap(data));
+      } catch (_) {}
+    }
+    return CreatorApplication.fromJson({
+      'status': 'pending_review',
+      'created_at': DateTime.now().toIso8601String(),
+    });
   }
 
   Future<String?> getCreatorTermsVersion() async {

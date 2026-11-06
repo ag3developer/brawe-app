@@ -41,45 +41,28 @@ class CreatorNetworkRepository {
   // USER — Applications
   // ──────────────────────────────────────────────────────────
   Future<CreatorApplication> submitApplication({
-    required String fullName,
-    required String username,
-    required String email,
-    String? phone,
     required String country,
-    String? city,
     required String language,
     required ContentNiche niche,
-    CreatorTier? requestedTier,
-    SocialLinks socialLinks = const SocialLinks(),
-    int followersCount = 0,
-    bool doesLive = false,
-    String? bio,
-    String? motivation,
-    String? goals,
-    String? portfolioUrl,
+    required String platform,
+    required String handle,
+    required int followersCount,
+    required bool doesLive,
+    required String motivation,
     // Aceite legal — obrigatório pelo backend.
     required bool termsAccepted,
     String? termsVersion,
   }) async {
     try {
       final body = <String, dynamic>{
-        'full_name': fullName,
-        'username': username,
-        'email': email,
-        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        // Nome, @ e e-mail vêm da conta logada (servidor).
         'country': country,
-        if (city != null && city.isNotEmpty) 'city': city,
         'language': language,
         'niche': niche.apiValue,
-        if (requestedTier != null) 'requested_tier': requestedTier.apiValue,
-        'social_links': socialLinks.toJson(),
+        'social_links': {platform: handle},
         'followers_count': followersCount,
         'does_live': doesLive,
-        if (bio != null && bio.isNotEmpty) 'bio': bio,
-        if (motivation != null && motivation.isNotEmpty) 'motivation': motivation,
-        if (goals != null && goals.isNotEmpty) 'goals': goals,
-        if (portfolioUrl != null && portfolioUrl.isNotEmpty)
-          'portfolio_url': portfolioUrl,
+        'motivation': motivation,
         'terms_accepted': termsAccepted,
         if (termsVersion != null && termsVersion.isNotEmpty)
           'terms_version': termsVersion,

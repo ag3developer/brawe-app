@@ -8,6 +8,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
+import '../../chat/view_models/unread_chats_provider.dart';
+import '../../chat/widgets/unread_badge.dart';
 import '../../feed/widgets/create_post_sheet.dart';
 import '../../feed/widgets/create_video_sheet.dart';
 import '../../feed/widgets/story_composer_screen.dart';
@@ -55,6 +57,7 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
     final colors = context.colors;
     final s = S.of(context);
     final destinations = _buildDestinations(s);
+    final unreadChats = ref.watch(unreadChatsProvider).length;
 
     return ClipRect(
       child: BackdropFilter(
@@ -129,6 +132,20 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
                             avatarUrl: user?.avatarUrl,
                             isSelected: isSelected,
                             accentColor: colors.accentPrimary,
+                          )
+                        else if (dest.route == '/chat')
+                          UnreadBadge(
+                            count: unreadChats,
+                            semanticsLabel: s.navChatUnreadSemantics(
+                              unreadChats,
+                            ),
+                            child: Icon(
+                              dest.icon,
+                              color: isSelected
+                                  ? colors.accentPrimary
+                                  : colors.textSecondary,
+                              size: 24,
+                            ),
                           )
                         else
                           Icon(

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/failure.dart';
+import '../../domain/models/gif_item.dart';
 import '../../domain/models/post_comment.dart';
 import '../services/comment_service.dart';
 
@@ -28,9 +29,9 @@ class CommentRepository {
   }
 
   Future<PostComment> addComment(String postId, String content,
-      {String? parentId}) async {
+      {String? parentId, GifAttachment? gif}) async {
     try {
-      final dto = await _service.addComment(postId, content, parentId: parentId);
+      final dto = await _service.addComment(postId, content, parentId: parentId, gif: gif);
       return _mapDto(dto);
     } on DioException catch (_) {
       throw const Failure.network();
@@ -66,6 +67,7 @@ class CommentRepository {
       createdAt: DateTime.tryParse(dto.createdAt) ?? DateTime.now(),
       parentId: dto.parentId,
       replies: dto.replies.map(_mapDto).toList(),
+      gif: dto.gif,
     );
   }
 }

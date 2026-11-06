@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/network/live_dio_provider.dart';
 import '../../domain/models/conversation.dart';
+import '../../domain/models/gif_item.dart';
 
 part 'messages_service.g.dart';
 
@@ -74,11 +75,13 @@ class MessagesService {
     String messageType = 'text',
     String? replyToMessageId,
     bool isForwarded = false,
+    GifAttachment? gif,
   }) async {
     final body = <String, dynamic>{
       'content': content,
       'message_type': messageType,
       if (isForwarded) 'is_forwarded': true,
+      if (gif != null) 'gif': gif.toJson(),
     };
     if (replyToMessageId != null && replyToMessageId.isNotEmpty) {
       body['reply_to_message_id'] = replyToMessageId;
@@ -128,6 +131,15 @@ class MessagesService {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse(value?.toString() ?? '0') ?? 0;
+  }
+
+  /// `GET /messages/unread-count` → ids das conversas com não lidas (já sem as
+  /// silenciadas/apagadas). `null` se o servidor for antigo (sem o campo).
+  Future<Set<String>?> getUnreadConversationIds() async {
+    final response = await _dio.get('/messages/unread-count');
+    final raw = response.data is Map ? response.data['conversation_ids'] : null;
+    if (raw is! List) return null;
+    return raw.map((e) => e.toString()).toSet();
   }
 
   /// `POST /messages/conversations` — inicia/retorna conversa por user_id (UUID ou username).

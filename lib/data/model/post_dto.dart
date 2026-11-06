@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/models/post.dart';
+import '../../domain/models/post_poll.dart';
 import '../../domain/models/sound_preview.dart';
 
 part 'post_dto.freezed.dart';
@@ -30,6 +31,13 @@ extension AuthorResponseDtoMapper on AuthorResponseDto {
     );
   }
 }
+
+PostPoll? _pollFromJson(Object? v) =>
+    v is Map ? PostPoll.fromJson(Map<String, dynamic>.from(v)) : null;
+Object? _pollToJson(PostPoll? v) => null;
+PostLocation? _locationFromJson(Object? v) =>
+    v is Map ? PostLocation.fromJson(Map<String, dynamic>.from(v)) : null;
+Object? _locationToJson(PostLocation? v) => null;
 
 @freezed
 sealed class PostResponseDto with _$PostResponseDto {
@@ -66,6 +74,10 @@ sealed class PostResponseDto with _$PostResponseDto {
     @JsonKey(name: 'duration_sec') double? durationSec,
     @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
     @JsonKey(name: 'media_type') String? mediaType,
+    // Enquete e cidade (ausentes em posts comuns e em servidor antigo).
+    @JsonKey(fromJson: _pollFromJson, toJson: _pollToJson) PostPoll? poll,
+    @JsonKey(fromJson: _locationFromJson, toJson: _locationToJson)
+    PostLocation? location,
   }) = _PostResponseDto;
 
   factory PostResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -102,6 +114,8 @@ extension PostResponseDtoMapper on PostResponseDto {
       durationSec: durationSec,
       thumbnailUrl: thumbnailUrl,
       mediaType: mediaType,
+      poll: poll,
+      location: location,
     );
   }
 }

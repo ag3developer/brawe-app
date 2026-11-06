@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
 import '../../domain/models/post_liker.dart';
+import '../../domain/models/post_poll.dart';
 import '../model/post_dto.dart';
 
 part 'post_service.g.dart';
@@ -130,8 +131,14 @@ class PostService {
     return PostFeedResponseDto.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<void> createPost({
+  /// Devolve o id do post criado quando o backend o informa (senão `null`).
+  /// [idempotencyKey] vai no header `Idempotency-Key`: o backend de posts
+  /// ainda NÃO garante deduplicação por ele (best effort) — a proteção
+  /// contra post duplicado no retry é feita no cliente (o `createPost` só
+  /// roda uma vez por job; reenvios reaproveitam as URLs já enviadas).
+  Future<String?> createPost({
     required String content,
+    String? idempotencyKey,
     String? imageUrl,
     String? audience, // mantido por compat — ignorado pelo backend atual
     String? soundId,
@@ -144,9 +151,14 @@ class PostService {
     int? height,
     double? durationSec,
     String? thumbnailUrl,
+    Map<String, dynamic>? poll,
+    Map<String, dynamic>? location,
   }) async {
-    await _dio.post(
+    final res = await _dio.post(
       '/posts',
+      options: idempotencyKey == null
+          ? null
+          : Options(headers: {'Idempotency-Key': idempotencyKey}),
       data: {
         'content': content,
         'image_url': ?imageUrl,
@@ -160,8 +172,26 @@ class PostService {
         'height': ?height,
         'duration_sec': ?durationSec,
         'thumbnail_url': ?thumbnailUrl,
+        'poll': ?poll,
+        'location': ?location,
       },
     );
+    final d = res.data;
+    if (d is Map) {
+      final id = d['id'] ?? (d['post'] is Map ? (d['post'] as Map)['id'] : null);
+      return id?.toString();
+    }
+    return null;
+  }
+
+  /// Vota na enquete do post. Backend: POST /posts/{id}/poll/vote
+  /// (409 já votou/encerrada, 404 sem enquete). Devolve a enquete atualizada.
+  Future<PostPoll> votePoll(String postId, String optionId) async {
+    final res = await _dio.post(
+      '/posts/$postId/poll/vote',
+      data: {'option_id': optionId},
+    );
+    return PostPoll.fromJson(Map<String, dynamic>.from(res.data as Map));
   }
 
   /// Upload de imagem para post.
@@ -180,7 +210,11 @@ class PostService {
   /// Backend: POST /posts/upload-video (multipart, field "file")
   /// Retorno: { url, width?, height?, duration_sec?, thumbnail_url? }
   /// Campos extras são opcionais (servidor antigo não os devolve).
-  Future<VideoUploadResult> uploadVideo(String filePath) async {
+  Future<VideoUploadResult> uploadVideo(
+    String filePath, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
         filePath,
@@ -190,9 +224,11 @@ class PostService {
     final response = await _dio.post(
       '/posts/upload-video',
       data: formData,
+      onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
       options: Options(
-        sendTimeout: const Duration(minutes: 3),
-        receiveTimeout: const Duration(minutes: 3),
+        sendTimeout: const Duration(minutes: 10),
+        receiveTimeout: const Duration(minutes: 5),
       ),
     );
     final d = response.data as Map<String, dynamic>;
@@ -207,7 +243,11 @@ class PostService {
 
   /// Upload de capa personalizada. Backend: POST /posts/upload-cover.
   /// Retorno: { url, width, height }. Devolve a URL.
-  Future<String> uploadCover(String filePath) async {
+  Future<String> uploadCover(
+    String filePath, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
     final ext = filePath.toLowerCase().endsWith('.png') ? 'png' : 'jpg';
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
@@ -215,7 +255,12 @@ class PostService {
         filename: _safeName(filePath, ext),
       ),
     });
-    final response = await _dio.post('/posts/upload-cover', data: formData);
+    final response = await _dio.post(
+      '/posts/upload-cover',
+      data: formData,
+      onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
+    );
     final d = response.data as Map<String, dynamic>;
     return d['url']?.toString() ?? '';
   }

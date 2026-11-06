@@ -14,6 +14,7 @@ import '../../../domain/models/profile.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../settings/view_models/settings_view_model.dart';
 import '../view_models/edit_profile_view_model.dart';
 import 'image_position_editor.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -61,6 +62,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   Timer? _usernameDebounce;
   bool _initialized = false;
 
+  /// Visibilidade do selo de creator (só creators). null = ainda não mexeu.
+  bool? _showBadge;
+
+  @override
+  void initState() {
+    super.initState();
+    // Preenche os campos assim que o perfil chega (e não só no primeiro
+    // build): evita telas com campos vazios se o dado vier depois.
+    ref.listenManual<AsyncValue<EditProfileState>>(
+      editProfileViewModelProvider,
+      (_, next) => next.whenData(_hydrate),
+      fireImmediately: true,
+    );
+  }
+
   @override
   void dispose() {
     _usernameDebounce?.cancel();
@@ -79,7 +95,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     if (_initialized || s.profile == null) return;
     final p = s.profile!;
     _usernameCtrl.text = p.username ?? '';
-    _nameCtrl.text = p.displayName ?? '';
+    // Sem nome no perfil, usa o da conta logada.
+    var name = (p.displayName ?? '').trim();
+    if (name.isEmpty) {
+      name = (ref.read(authStateProvider).value?.name ?? '').trim();
+    }
+    _nameCtrl.text = name;
     _bioCtrl.text = p.bio ?? '';
     final links = p.socialLinks ?? const <String, String>{};
     _instaCtrl.text = links['instagram'] ?? '';
@@ -137,6 +158,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
         }
       }
 
+      // Selo de creator (campo real: privacy_show_account_type).
+      final settings = ref.read(settingsViewModelProvider).value;
+      if (_showBadge != null &&
+          settings != null &&
+          _showBadge != settings.privacyShowAccountType) {
+        try {
+          await ref
+              .read(settingsViewModelProvider.notifier)
+              .setBool('privacy_show_account_type', _showBadge!);
+        } catch (_) {
+          if (!mounted) return;
+          _showSnack(S.of(context).editProfileCreatorBadgeSaveFailed,
+              isError: true);
+          return;
+        }
+        if (!mounted) return;
+      }
+
       if (ok) {
         final mf = musicianFieldsKey.currentState;
         if (mf != null) {
@@ -154,6 +193,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
         }
       }
 
+      if (!mounted) return;
       _showSnack(S.of(context).editProfileSaved);
 
       // ── Atualizar estado de autenticação e navegar para feed ─────────────────
@@ -181,6 +221,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
         debugPrint('Aviso: Falha ao atualizar sessão: $e');
       }
     }
+  }
+
+  Widget _creatorBadgeSwitch(S s) {
+    final settings = ref.watch(settingsViewModelProvider).value;
+    final value = _showBadge ?? settings?.privacyShowAccountType ?? true;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SwitchListTile(
+        key: const ValueKey('creator_badge_switch'),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+        value: value,
+        onChanged:
+            settings == null ? null : (v) => setState(() => _showBadge = v),
+        title: Text(
+          s.editProfileCreatorBadgeTitle,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: context.colors.textPrimary,
+          ),
+        ),
+        subtitle: Text(
+          s.editProfileCreatorBadgeHint,
+          style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
+        ),
+        activeThumbColor: AppColors.braweBlue,
+      ),
+    );
   }
 
   void _showSnack(String msg, {bool isError = false}) {
@@ -364,6 +432,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
 
             // Seção Tipo de Conta
             _AccountTypeCard(accountType: state.effectiveAccountType),
+
+            if (state.effectiveAccountType == AccountType.creator) ...[
+              const SizedBox(height: 12),
+              _creatorBadgeSwitch(s),
+            ],
 
             const SizedBox(height: 12),
 
@@ -654,7 +727,7 @@ class _AccountTypeCard extends StatelessWidget {
       case AccountType.business:
         return '/business-profile';
       case AccountType.creator:
-        return '/creator/profile-settings';
+        return '/creator/dashboard';
       case AccountType.consumer:
         return '/creator/intro';
     }

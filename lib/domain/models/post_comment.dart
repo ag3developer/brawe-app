@@ -1,3 +1,5 @@
+import 'gif_item.dart';
+
 class PostComment {
   const PostComment({
     required this.id,
@@ -13,6 +15,7 @@ class PostComment {
     required this.createdAt,
     this.parentId,
     this.replies = const [],
+    this.gif,
   });
 
   final String id;
@@ -28,6 +31,9 @@ class PostComment {
   final DateTime createdAt;
   final String? parentId;
   final List<PostComment> replies;
+
+  /// GIF (GIPHY) do comentário; `content` pode ser vazio quando há GIF.
+  final GifAttachment? gif;
 
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);

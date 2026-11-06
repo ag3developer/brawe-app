@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../data/repositories/creator_network_repository.dart';
 import '../../../data/services/legal_assets_service.dart';
 import '../../../domain/models/creator_network.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -14,9 +15,32 @@ import '../../core/widgets/simple_markdown_view.dart';
 import '../../settings/widgets/legal_webview_screen.dart';
 import '../../../domain/models/failure.dart';
 import '../utils/creator_l10n.dart';
+import '../view_models/creator_applicant_provider.dart';
 import '../view_models/creator_network_view_model.dart';
-import '../widgets/creator_tier_card.dart';
 
+/// Redes aceitas para análise do perfil (valor = chave em `social_links`).
+const kCreatorApplyPlatforms = <String, String>{
+  'instagram': 'Instagram',
+  'tiktok': 'TikTok',
+  'youtube': 'YouTube',
+  'twitch': 'Twitch',
+  'twitter': 'X',
+};
+
+/// Usuário/@ de rede social: letras, números, ponto, hífen e sublinhado.
+final _handleRe = RegExp(r'^[A-Za-z0-9._-]{2,50}$');
+
+/// Remove espaços e o @ inicial digitado/colado.
+String normalizeCreatorHandle(String raw) =>
+    raw.trim().replaceFirst(RegExp(r'^@+'), '');
+
+bool isValidCreatorHandle(String raw) =>
+    _handleRe.hasMatch(normalizeCreatorHandle(raw));
+
+const kCreatorMotivationMin = 20;
+
+/// Inscrição na Creator Network em 3 etapas curtas. Tudo é obrigatório.
+/// Nome, @, e-mail e foto vêm da conta logada e nunca são pedidos.
 class CreatorApplicationFormScreen extends ConsumerStatefulWidget {
   const CreatorApplicationFormScreen({super.key});
 
@@ -27,28 +51,18 @@ class CreatorApplicationFormScreen extends ConsumerStatefulWidget {
 
 class _CreatorApplicationFormScreenState
     extends ConsumerState<CreatorApplicationFormScreen> {
-  final _formKey = GlobalKey<FormState>();
+  static const _stepCount = 3;
 
-  final _fullName = TextEditingController();
-  final _username = TextEditingController();
-  final _email = TextEditingController();
-  final _phone = TextEditingController();
-  final _city = TextEditingController();
-  final _instagram = TextEditingController();
-  final _tiktok = TextEditingController();
-  final _youtube = TextEditingController();
-  final _followers = TextEditingController(text: '0');
-  final _bio = TextEditingController();
+  final _handle = TextEditingController();
+  final _followers = TextEditingController();
   final _motivation = TextEditingController();
-  final _goals = TextEditingController();
-  final _portfolio = TextEditingController();
 
-  ContentNiche _niche = ContentNiche.lifestyle;
-  CreatorTier? _requestedTier;
+  int _step = 0;
+  ContentNiche? _niche;
+  String _platform = 'instagram';
   bool _doesLive = false;
   bool _acceptedTerms = false;
   bool _submitting = false;
-  bool _termsError = false;
   Country? _selectedCountry;
 
   String _language = 'pt';
@@ -56,80 +70,94 @@ class _CreatorApplicationFormScreenState
   @override
   void initState() {
     super.initState();
+    for (final c in [_handle, _followers, _motivation]) {
+      c.addListener(_refresh);
+    }
+    // País pré-preenchido pela região do aparelho (pode trocar).
+    _selectedCountry = findCountryByCode(
+      WidgetsBinding.instance.platformDispatcher.locale.countryCode,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _language = Localizations.localeOf(context).languageCode;
       if (!{'pt', 'en', 'es'}.contains(_language)) _language = 'en';
       setState(() {});
     });
   }
 
+  void _refresh() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
-    for (final c in [
-      _fullName, _username, _email, _phone, _city,
-      _instagram, _tiktok, _youtube, _followers, _bio, _motivation,
-      _goals, _portfolio
-    ]) {
+    for (final c in [_handle, _followers, _motivation]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  /// Normaliza o link do portfólio: sem esquema vira https://.
-  String? _normalizeUrl(String raw) {
-    final t = raw.trim();
-    if (t.isEmpty) return null;
-    return RegExp(r'^https?://', caseSensitive: false).hasMatch(t)
-        ? t
-        : 'https://$t';
+  int get _followersValue => int.tryParse(_followers.text.trim()) ?? 0;
+
+  bool get _step0Valid => _niche != null && _selectedCountry != null;
+  bool get _step1Valid =>
+      isValidCreatorHandle(_handle.text) && _followersValue >= 1;
+  bool get _step2Valid =>
+      _motivation.text.trim().length >= kCreatorMotivationMin &&
+      _acceptedTerms;
+
+  bool get _currentStepValid => switch (_step) {
+        0 => _step0Valid,
+        1 => _step1Valid,
+        _ => _step2Valid,
+      };
+
+  bool get _allValid => _step0Valid && _step1Valid && _step2Valid;
+
+  /// A inscrição pode ter sido gravada mesmo que a resposta tenha falhado
+  /// (timeout, queda de rede após o servidor salvar). Confere no servidor.
+  Future<bool> _savedOnServer() async {
+    try {
+      final a =
+          await ref.read(creatorNetworkRepositoryProvider).getMyApplication();
+      if (a == null) return false;
+      final recent = DateTime.now().difference(a.createdAt).inMinutes.abs() < 15;
+      return recent && a.status == ApplicationStatus.pendingReview;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _goSubmitted() {
+    ref.invalidate(myCreatorApplicationProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.of(context).creatorFormSuccess)),
+    );
+    context.go('/creator/submitted');
   }
 
   Future<void> _submit() async {
     // Evita duplo envio (toque duplo antes do rebuild).
-    if (_submitting) return;
+    if (_submitting || !_allValid) return;
     FocusScope.of(context).unfocus();
-    final formOk = _formKey.currentState!.validate();
-    final termsOk = _acceptedTerms;
-    setState(() => _termsError = !termsOk);
-    if (!formOk || !termsOk) {
-      if (!termsOk && formOk) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).creatorFormTermsMustAccept)),
-        );
-      }
-      return;
-    }
     setState(() => _submitting = true);
     try {
       // Versão dos Termos vigente (cacheada). Se falhar, o backend usa a default.
       final termsVersion = await ref.read(creatorTermsVersionProvider.future);
       await ref.read(creatorApplicationFormControllerProvider.notifier).submit(
-            fullName: _fullName.text.trim(),
-            username: _username.text.trim().replaceFirst(RegExp(r'^@+'), ''),
-            email: _email.text.trim(),
-            phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
             country: _selectedCountry!.code,
-            city: _city.text.trim().isEmpty ? null : _city.text.trim(),
             language: _language,
-            niche: _niche,
-            requestedTier: _requestedTier,
-            socialLinks: SocialLinks(
-              instagram: _instagram.text.trim(),
-              tiktok: _tiktok.text.trim(),
-              youtube: _youtube.text.trim(),
-            ),
-            followersCount: int.tryParse(_followers.text.trim()) ?? 0,
+            niche: _niche!,
+            platform: _platform,
+            handle: normalizeCreatorHandle(_handle.text),
+            followersCount: _followersValue,
             doesLive: _doesLive,
-            bio: _bio.text.trim().isEmpty ? null : _bio.text.trim(),
-            motivation:
-                _motivation.text.trim().isEmpty ? null : _motivation.text.trim(),
-            goals: _goals.text.trim().isEmpty ? null : _goals.text.trim(),
-            portfolioUrl: _normalizeUrl(_portfolio.text),
+            motivation: _motivation.text.trim(),
             termsAccepted: _acceptedTerms,
             termsVersion: termsVersion,
           );
-      if (!mounted) return;
-      context.go('/creator/submitted');
+      _goSubmitted();
     } catch (e) {
       if (!mounted) return;
       final s = S.of(context);
@@ -141,7 +169,10 @@ class _CreatorApplicationFormScreenState
           SnackBar(content: Text(s.creatorFormAlreadyExists)),
         );
         context.go('/creator/status');
-      } else {
+      } else if (!_isRejection(e) && await _savedOnServer()) {
+        // O servidor guardou a inscrição; só a resposta se perdeu.
+        _goSubmitted();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
         );
@@ -150,6 +181,17 @@ class _CreatorApplicationFormScreenState
       if (mounted) setState(() => _submitting = false);
     }
   }
+
+  /// Recusa explícita do servidor (422/401): não há o que conferir.
+  bool _isRejection(Object e) =>
+      e is Failure &&
+      e.map(
+        network: (_) => false,
+        server: (_) => false,
+        unauthorized: (_) => true,
+        unknown: (_) => false,
+        validation: (_) => true,
+      );
 
   /// Converte o erro do repositório em mensagem traduzida.
   /// Retorna null quando a inscrição já existe (409).
@@ -178,28 +220,14 @@ class _CreatorApplicationFormScreenState
 
   String _fieldLabel(S s, String key) {
     switch (key) {
-      case 'full_name':
-        return s.creatorFormFullName;
-      case 'username':
-        return s.creatorFormUsername;
-      case 'email':
-        return s.creatorFormEmail;
-      case 'phone':
-        return s.creatorFormPhone;
       case 'country':
         return s.creatorFormCountry;
-      case 'city':
-        return s.creatorFormCity;
       case 'followers_count':
         return s.creatorFormFollowers;
-      case 'bio':
-        return s.creatorFormBio;
       case 'motivation':
         return s.creatorFormMotivation;
-      case 'goals':
-        return s.creatorFormGoals;
-      case 'portfolio_url':
-        return s.creatorFormPortfolio;
+      case 'social_links':
+        return s.creatorApplyHandleLabel;
       case 'terms_accepted':
         return s.creatorFormTermsLink;
       case 'niche':
@@ -293,7 +321,6 @@ class _CreatorApplicationFormScreenState
                         if (mounted) {
                           setState(() {
                             _acceptedTerms = true;
-                            _termsError = false;
                           });
                         }
                       },
@@ -315,6 +342,7 @@ class _CreatorApplicationFormScreenState
   Widget build(BuildContext context) {
     final s = S.of(context);
     final c = context.colors;
+    final last = _step == _stepCount - 1;
     return PopScope(
       canPop: !_submitting,
       child: Scaffold(
@@ -324,215 +352,287 @@ class _CreatorApplicationFormScreenState
           elevation: 0,
           scrolledUnderElevation: 0,
           title: Text(s.creatorFormTitle),
+          leading: IconButton(
+            icon: const Icon(LucideIcons.chevronLeft),
+            onPressed: _submitting
+                ? null
+                : () {
+                    if (_step > 0) {
+                      setState(() => _step--);
+                    } else {
+                      context.pop();
+                    }
+                  },
+          ),
         ),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-            children: [
-              Text(s.creatorFormSubtitle,
-                  style: TextStyle(
-                    color: c.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  )),
-              const SizedBox(height: 4),
-              Text(s.creatorFormDescription,
-                  style: TextStyle(
-                    color: c.textSecondary,
-                    fontSize: 13.5,
-                    height: 1.4,
-                  )),
-
-              _section(s.creatorFormSectionIdentity),
-              _field(_fullName, s.creatorFormFullName,
-                  required: true,
-                  maxLength: 120,
-                  capitalization: TextCapitalization.words,
-                  autofill: AutofillHints.name,
-                  validate: (v) => v.length < 2 || !v.contains(' ')
-                      ? s.creatorApplyErrName
-                      : null),
-              _field(_username, s.creatorFormUsername,
-                  required: true,
-                  maxLength: 50,
-                  prefix: '@',
-                  autofill: AutofillHints.username,
-                  formatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9._]')),
-                  ],
-                  validate: (v) =>
-                      v.replaceFirst('@', '').length < 2 ? s.creatorApplyErrUsername : null),
-              _field(_email, s.creatorFormEmail,
-                  required: true,
-                  keyboard: TextInputType.emailAddress,
-                  autofill: AutofillHints.email,
-                  formatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
-                  validate: (v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$')
-                          .hasMatch(v)
-                      ? null
-                      : s.creatorFormValidationEmail),
-              _field(_phone, s.creatorFormPhone,
-                  optional: true,
-                  keyboard: TextInputType.phone,
-                  maxLength: 32,
-                  autofill: AutofillHints.telephoneNumber,
-                  formatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+()\-\s]')),
-                  ],
-                  validate: (v) {
-                    if (v.isEmpty) return null;
-                    final digits = v.replaceAll(RegExp(r'\D'), '').length;
-                    return digits < 8 || digits > 15
-                        ? s.creatorApplyErrPhone
-                        : null;
-                  }),
-              _countryField(s),
-              _field(_city, s.creatorFormCity,
-                  optional: true,
-                  maxLength: 80,
-                  capitalization: TextCapitalization.words),
-
-              _section(s.creatorApplyTypeTitle),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Text(s.creatorApplyTypeHint,
-                    style: TextStyle(color: c.textSecondary, fontSize: 13)),
-              ),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                 children: [
-                  for (final n in ContentNiche.values) _nicheChip(s, n),
+                  _accountHeader(s),
+                  const SizedBox(height: 14),
+                  _progress(s),
+                  const SizedBox(height: 18),
+                  if (_step == 0) ..._stepContent(s),
+                  if (_step == 1) ..._stepNetwork(s),
+                  if (_step == 2) ..._stepAbout(s),
                 ],
               ),
-              const SizedBox(height: 18),
-              Text(s.creatorFormCategory,
-                  style: TextStyle(
-                    color: c.textPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  )),
-              const SizedBox(height: 2),
-              Text(s.creatorApplyCategoryHint,
-                  style: TextStyle(color: c.textSecondary, fontSize: 12.5)),
-              const SizedBox(height: 8),
-              ...kCreatorTiersOrder.reversed.map(
-                (t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: CreatorTierCard(
-                    tier: t,
-                    title: t.title(s),
-                    description: t.body(s),
-                    compact: true,
-                    selected: _requestedTier == t,
-                    onTap: () => setState(
-                        () => _requestedTier = _requestedTier == t ? null : t),
-                  ),
+            ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    if (_step > 0) ...[
+                      Expanded(
+                        flex: 2,
+                        child: OutlinedButton(
+                          onPressed:
+                              _submitting ? null : () => setState(() => _step--),
+                          style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(52)),
+                          child: Text(s.creatorApplyBack),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      flex: 3,
+                      child: FilledButton.icon(
+                        icon: _submitting
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: c.textOnAccent))
+                            : Icon(
+                                last ? LucideIcons.send : LucideIcons.arrowRight,
+                                size: 18),
+                        label: Text(_submitting
+                            ? s.creatorFormSubmitting
+                            : last
+                                ? s.creatorFormSubmit
+                                : s.creatorApplyNext),
+                        onPressed: _submitting || !_currentStepValid
+                            ? null
+                            : last
+                                ? _submit
+                                : () => setState(() => _step++),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(52),
+                          backgroundColor: c.accentPrimary,
+                          foregroundColor: c.textOnAccent,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-              _section(s.creatorFormSectionSocial),
-              _field(_instagram, 'Instagram',
-                  optional: true,
-                  prefix: '@',
-                  hint: s.creatorApplyInstagramHint,
-                  formatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))]),
-              _field(_tiktok, 'TikTok',
-                  optional: true,
-                  prefix: '@',
-                  formatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))]),
-              _field(_youtube, 'YouTube',
-                  optional: true,
-                  prefix: '@',
-                  formatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))]),
-              _field(_followers, s.creatorFormFollowers,
-                  keyboard: TextInputType.number,
-                  maxLength: 10,
-                  formatters: [FilteringTextInputFormatter.digitsOnly],
-                  validate: (v) => v.isNotEmpty && int.tryParse(v) == null
-                      ? s.creatorApplyErrFollowers
-                      : null),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _doesLive,
-                onChanged: (v) => setState(() => _doesLive = v),
-                title: Text(s.creatorFormDoesLive,
-                    style: TextStyle(color: c.textPrimary, fontSize: 14.5)),
-                activeThumbColor: c.accentPrimary,
-              ),
-
-              _section(s.creatorFormSectionAbout),
-              _field(_bio, s.creatorFormBio,
-                  hint: s.creatorFormBioPlaceholder,
-                  lines: 3,
-                  maxLength: 600,
-                  optional: true,
-                  capitalization: TextCapitalization.sentences),
-              _field(_motivation, s.creatorFormMotivation,
-                  hint: s.creatorFormMotivationPlaceholder,
-                  lines: 3,
-                  maxLength: 1000,
-                  optional: true,
-                  capitalization: TextCapitalization.sentences),
-              _field(_goals, s.creatorFormGoals,
-                  hint: s.creatorFormGoalsPlaceholder,
-                  lines: 3,
-                  maxLength: 1000,
-                  optional: true,
-                  capitalization: TextCapitalization.sentences),
-              _field(_portfolio, s.creatorFormPortfolio,
-                  keyboard: TextInputType.url,
-                  hint: 'https://',
-                  action: TextInputAction.done,
-                  formatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
-                  validate: (v) {
-                    if (v.isEmpty) return null;
-                    final u = Uri.tryParse(_normalizeUrl(v)!);
-                    final ok = u != null &&
-                        u.host.contains('.') &&
-                        (u.scheme == 'http' || u.scheme == 'https');
-                    return ok ? null : s.creatorApplyErrUrl;
-                  }),
-
-              const SizedBox(height: 8),
-              _termsBox(s),
-
-              const SizedBox(height: 18),
-              FilledButton.icon(
-                icon: _submitting
-                    ? SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: c.textOnAccent))
-                    : const Icon(LucideIcons.send, size: 18),
-                label: Text(
-                    _submitting ? s.creatorFormSubmitting : s.creatorFormSubmit),
-                onPressed: _submitting ? null : _submit,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                  backgroundColor: c.accentPrimary,
-                  foregroundColor: c.textOnAccent,
-                ),
-              ),
-              const SizedBox(height: 4),
-              TextButton(
-                onPressed: _submitting ? null : () => context.pop(),
-                child: Text(s.creatorFormCancel),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  /// Conta logada: mostrada, nunca pedida.
+  Widget _accountHeader(S s) {
+    final c = context.colors;
+    final me = ref.watch(creatorApplicantProvider).value;
+    final name = me?.name ?? '';
+    final user = (me?.username ?? '').isNotEmpty ? '@${me!.username}' : '';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.border),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: c.surfaceElevated,
+            backgroundImage: (me?.avatarUrl ?? '').isNotEmpty
+                ? NetworkImage(me!.avatarUrl!)
+                : null,
+            child: (me?.avatarUrl ?? '').isEmpty
+                ? Icon(LucideIcons.user, color: c.textSecondary)
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  [name, user].where((e) => e.isNotEmpty).join('  '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: c.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14.5),
+                ),
+                const SizedBox(height: 2),
+                Text(s.creatorApplyAsAccount,
+                    style: TextStyle(color: c.textSecondary, fontSize: 12.5)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _progress(S s) {
+    final c = context.colors;
+    final titles = [
+      s.creatorApplyStepContent,
+      s.creatorApplyStepNetwork,
+      s.creatorApplyStepAbout,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            for (var i = 0; i < _stepCount; i++) ...[
+              Expanded(
+                child: Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: i <= _step ? c.accentPrimary : c.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              if (i < _stepCount - 1) const SizedBox(width: 6),
+            ],
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '${s.creatorApplyStepOf(_step + 1, _stepCount)} · ${titles[_step]}',
+          style: TextStyle(
+              color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _stepContent(S s) {
+    final c = context.colors;
+    return [
+      Text(s.creatorApplyTypeHint,
+          style: TextStyle(color: c.textSecondary, fontSize: 13)),
+      const SizedBox(height: 12),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [for (final n in ContentNiche.values) _nicheChip(s, n)],
+      ),
+      const SizedBox(height: 20),
+      _countryField(s),
+    ];
+  }
+
+  List<Widget> _stepNetwork(S s) {
+    final c = context.colors;
+    return [
+      Text(s.creatorApplyHandleWhy,
+          style: TextStyle(color: c.textSecondary, fontSize: 13, height: 1.4)),
+      const SizedBox(height: 12),
+      Text(s.creatorApplyPlatformLabel,
+          style: TextStyle(
+              color: c.textPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final e in kCreatorApplyPlatforms.entries)
+            ChoiceChip(
+              key: ValueKey('platform_${e.key}'),
+              selected: _platform == e.key,
+              showCheckmark: false,
+              label: Text(e.value),
+              labelStyle: TextStyle(
+                color: _platform == e.key ? c.textOnAccent : c.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              selectedColor: c.accentPrimary,
+              backgroundColor: c.surface,
+              side: BorderSide(
+                  color: _platform == e.key ? c.accentPrimary : c.border),
+              onSelected: (_) => setState(() => _platform = e.key),
+            ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _field(
+        _handle,
+        s.creatorApplyHandleLabel,
+        fieldKey: const ValueKey('field_handle'),
+        prefix: '@',
+        hint: s.creatorApplyInstagramHint,
+        maxLength: 60,
+        validate: (v) => isValidCreatorHandle(v) ? null : s.creatorApplyErrHandle,
+      ),
+      _field(
+        _followers,
+        s.creatorFormFollowers,
+        fieldKey: const ValueKey('field_followers'),
+        keyboard: TextInputType.number,
+        maxLength: 10,
+        formatters: [FilteringTextInputFormatter.digitsOnly],
+        action: TextInputAction.done,
+        validate: (v) => (int.tryParse(v) ?? 0) >= 1
+            ? null
+            : s.creatorApplyErrFollowersMin,
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: _doesLive,
+        onChanged: _submitting ? null : (v) => setState(() => _doesLive = v),
+        title: Text(s.creatorFormDoesLive,
+            style: TextStyle(color: c.textPrimary, fontSize: 14.5)),
+        activeThumbColor: c.accentPrimary,
+      ),
+    ];
+  }
+
+  List<Widget> _stepAbout(S s) {
+    return [
+      _field(
+        _motivation,
+        s.creatorFormMotivation,
+        fieldKey: const ValueKey('field_motivation'),
+        hint: s.creatorFormMotivationPlaceholder,
+        lines: 5,
+        maxLength: 1000,
+        capitalization: TextCapitalization.sentences,
+        validate: (v) => v.length >= kCreatorMotivationMin
+            ? null
+            : s.creatorApplyErrMotivation(kCreatorMotivationMin),
+      ),
+      const SizedBox(height: 4),
+      _termsBox(s),
+    ];
   }
 
   Widget _nicheChip(S s, ContentNiche n) {
     final c = context.colors;
     final sel = _niche == n;
     return ChoiceChip(
+      key: ValueKey('niche_${n.name}'),
       selected: sel,
       showCheckmark: false,
       avatar: Icon(n.lucide,
@@ -563,9 +663,7 @@ class _CreatorApplicationFormScreenState
           ),
           recognizer: TapGestureRecognizer()..onTap = onTap,
         );
-    final borderColor = _termsError
-        ? c.danger
-        : _acceptedTerms
+    final borderColor = _acceptedTerms
             ? c.accentPrimary.withValues(alpha: 0.5)
             : c.border;
     return Column(
@@ -576,7 +674,7 @@ class _CreatorApplicationFormScreenState
           decoration: BoxDecoration(
             color: c.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: borderColor, width: _termsError ? 1.4 : 1),
+            border: Border.all(color: borderColor, width: 1),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -587,7 +685,6 @@ class _CreatorApplicationFormScreenState
                     ? null
                     : (v) => setState(() {
                           _acceptedTerms = v ?? false;
-                          if (_acceptedTerms) _termsError = false;
                         }),
                 activeColor: c.accentPrimary,
               ),
@@ -614,73 +711,46 @@ class _CreatorApplicationFormScreenState
             ],
           ),
         ),
-        if (_termsError)
-          Padding(
-            padding: const EdgeInsets.only(top: 6, left: 4),
-            child: Text(s.creatorFormTermsMustAccept,
-                style: TextStyle(color: c.danger, fontSize: 12.5)),
-          ),
       ],
     );
   }
 
-  Widget _section(String title) => Padding(
-        padding: const EdgeInsets.only(top: 26, bottom: 12),
-        child: Text(title.toUpperCase(),
-            style: TextStyle(
-              color: context.colors.textTertiary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.1,
-            )),
-      );
-
-  /// Campo de país com seletor (bandeira + nome + ISO). Envia ISO-2 ao backend.
+  /// País (bandeira + nome + ISO). Pré-preenchido pela região do aparelho.
   Widget _countryField(S s) {
     final c = context.colors;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: FormField<Country>(
-        initialValue: _selectedCountry,
-        validator: (_) =>
-            _selectedCountry == null ? s.creatorApplyErrCountry : null,
-        builder: (state) => InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            final picked = await showCountryPicker(
-              context,
-              selectedCode: _selectedCountry?.code,
-              title: s.creatorFormCountry,
-            );
-            if (picked != null) {
-              setState(() => _selectedCountry = picked);
-              state.didChange(picked);
-            }
-          },
-          child: InputDecorator(
-            decoration: _decoration(s.creatorFormCountry).copyWith(
-              errorText: state.errorText,
-              suffixIcon: Icon(LucideIcons.chevronDown,
-                  size: 18, color: c.textSecondary),
-            ),
-            child: _selectedCountry != null
-                ? Row(
-                    children: [
-                      Text(_selectedCountry!.flag,
-                          style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          '${_selectedCountry!.name} (${_selectedCountry!.code})',
-                          style:
-                              TextStyle(color: c.textPrimary, fontSize: 15),
-                        ),
-                      ),
-                    ],
-                  )
-                : const SizedBox(height: 22),
-          ),
+    return InkWell(
+      key: const ValueKey('field_country'),
+      borderRadius: BorderRadius.circular(12),
+      onTap: _submitting
+          ? null
+          : () async {
+              final picked = await showCountryPicker(
+                context,
+                selectedCode: _selectedCountry?.code,
+                title: s.creatorFormCountry,
+              );
+              if (picked != null) setState(() => _selectedCountry = picked);
+            },
+      child: InputDecorator(
+        decoration: _decoration(s.creatorFormCountry).copyWith(
+          suffixIcon:
+              Icon(LucideIcons.chevronDown, size: 18, color: c.textSecondary),
         ),
+        child: _selectedCountry != null
+            ? Row(
+                children: [
+                  Text(_selectedCountry!.flag,
+                      style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '${_selectedCountry!.name} (${_selectedCountry!.code})',
+                      style: TextStyle(color: c.textPrimary, fontSize: 15),
+                    ),
+                  ),
+                ],
+              )
+            : const SizedBox(height: 22),
       ),
     );
   }
@@ -688,29 +758,24 @@ class _CreatorApplicationFormScreenState
   Widget _field(
     TextEditingController ctrl,
     String label, {
+    Key? fieldKey,
     String? hint,
     String? prefix,
-    bool required = false,
-    bool optional = false,
     int lines = 1,
     int? maxLength,
     TextInputType? keyboard,
     TextInputAction? action,
     TextCapitalization capitalization = TextCapitalization.none,
-    String? autofill,
     List<TextInputFormatter>? formatters,
-    String? Function(String value)? validate,
+    required String? Function(String value) validate,
   }) {
-    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
+        key: fieldKey,
         controller: ctrl,
         enabled: !_submitting,
-        decoration: _decoration(
-          optional ? '$label (${s.creatorApplyOptional})' : label,
-          hint: hint,
-        ).copyWith(
+        decoration: _decoration(label, hint: hint).copyWith(
           prefixText: prefix,
           counterText: lines > 1 ? null : '',
         ),
@@ -722,13 +787,12 @@ class _CreatorApplicationFormScreenState
         textInputAction: action ??
             (lines > 1 ? TextInputAction.newline : TextInputAction.next),
         textCapitalization: capitalization,
-        autofillHints: autofill == null ? null : [autofill],
         inputFormatters: formatters,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (v) {
           final t = (v ?? '').trim();
-          if (required && t.isEmpty) return s.creatorFormValidationRequired;
-          return validate?.call(t);
+          if (t.isEmpty) return S.of(context).creatorFormValidationRequired;
+          return validate(t);
         },
       ),
     );

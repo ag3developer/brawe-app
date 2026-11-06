@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
+import '../../domain/models/gif_item.dart';
 
 part 'comment_service.g.dart';
 
@@ -18,6 +19,7 @@ class CommentDto {
   final String createdAt;
   final String? parentId;
   final List<CommentDto> replies;
+  final GifAttachment? gif;
 
   CommentDto({
     required this.id,
@@ -33,6 +35,7 @@ class CommentDto {
     required this.createdAt,
     this.parentId,
     this.replies = const [],
+    this.gif,
   });
 
   factory CommentDto.fromJson(Map<String, dynamic> json) {
@@ -63,6 +66,7 @@ class CommentDto {
       createdAt:
           json['created_at']?.toString() ?? DateTime.now().toIso8601String(),
       parentId: json['parent_id']?.toString(),
+      gif: GifAttachment.tryParse(json['gif']),
       replies: rawReplies
           .map((r) => CommentDto.fromJson(r as Map<String, dynamic>))
           .toList(),
@@ -101,8 +105,13 @@ class CommentService {
     String postId,
     String content, {
     String? parentId,
+    GifAttachment? gif,
   }) async {
-    final body = <String, dynamic>{'content': content, 'parent_id': ?parentId};
+    final body = <String, dynamic>{
+      'content': content,
+      'parent_id': ?parentId,
+      if (gif != null) 'gif': gif.toJson(),
+    };
     final response = await _dio.post('/posts/$postId/comments', data: body);
     final data = response.data as Map<String, dynamic>;
     return CommentDto.fromJson(

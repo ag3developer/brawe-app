@@ -35,7 +35,7 @@ class StoriesViewModel extends _$StoriesViewModel {
     );
   }
 
-  /// Marca story como visto otimisticamente + atualiza no servidor.
+  /// Marca story como visto no estado local (o StoryViewer registra no servidor).
   Future<void> markAsViewed(String storyId) async {
     final groups = state.value;
     if (groups == null) return;
@@ -64,9 +64,9 @@ class StoriesViewModel extends _$StoriesViewModel {
       );
     }).toList();
     state = AsyncData(updated);
-
-    // Fire-and-forget no servidor
-    await ref.read(storiesRepositoryProvider).markAsViewed(storyId);
+    // Só o estado local: quem registra a visualização no servidor é o
+    // StoryViewer (_notifyViewed). Chamar aqui também gerava dois POST /view
+    // simultâneos e a mesma pessoa aparecia duas vezes em "visualizações".
   }
 
   /// Exclui um story (próprio) e recarrega o feed.

@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/models/post.dart';
 import '../../domain/models/post_liker.dart';
+import '../../domain/models/post_poll.dart';
 import '../services/post_service.dart';
 import '../model/post_dto.dart';
 import '../../domain/models/failure.dart';
@@ -11,6 +12,15 @@ part 'post_repository.g.dart';
 @riverpod
 PostRepository postRepository(Ref ref) {
   return PostRepository(ref.watch(postServiceProvider));
+}
+
+/// Voto recusado pelo servidor (409/404). [code]: `already_voted`,
+/// `poll_ended`, `poll_not_found`, `option_not_found`.
+class PollVoteException implements Exception {
+  const PollVoteException(this.code);
+  final String code;
+  @override
+  String toString() => 'PollVoteException($code)';
 }
 
 class PostRepository {
@@ -124,6 +134,8 @@ class PostRepository {
     int? soundTrimEndMs,
     double soundVolume = 1.0,
     double originalAudioVolume = 1.0,
+    Map<String, dynamic>? poll,
+    PostLocation? location,
   }) async {
     try {
       String? imageUrl;
@@ -139,8 +151,28 @@ class PostRepository {
         soundTrimEndMs: soundTrimEndMs,
         soundVolume: soundVolume,
         originalAudioVolume: originalAudioVolume,
+        poll: poll,
+        location: location?.toRequestJson(),
       );
     } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
+  /// Vota na enquete. Lança [PollVoteException] com o código do servidor
+  /// (`already_voted`, `poll_ended`, ...) em 404/409.
+  Future<PostPoll> votePoll(String postId, String optionId) async {
+    try {
+      return await _postService.votePoll(postId, optionId);
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 404 || code == 409) {
+        final d = e.response?.data;
+        final detail = d is Map ? d['detail']?.toString() : null;
+        throw PollVoteException(detail ?? (code == 404 ? 'poll_not_found' : 'already_voted'));
+      }
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();
@@ -152,7 +184,7 @@ class PostRepository {
   /// 2. Cria post via POST /posts com image_url apontando pro vídeo
   /// O feed "Para Você" detecta vídeo pela extensão da URL (.mp4/.mov/.webm).
   /// [soundId] (opcional) anexa uma música do Brawe Sounds ao Reel.
-  Future<void> createVideoPost({
+  Future<String?> createVideoPost({
     required String videoLocalPath,
     String content = '',
     String? audience,
@@ -166,26 +198,59 @@ class PostRepository {
     int? fallbackHeight,
     double? fallbackDurationSec,
     void Function(VideoPublishStep step)? onStep,
+    // Progresso geral 0..1 (vídeo 0–90%, capa 90–97%) + `processing` quando
+    // os bytes já subiram e o servidor ainda responde.
+    void Function(double progress, bool processing)? onProgress,
+    CancelToken? cancelToken,
+    VideoPublishCheckpoint? checkpoint,
   }) async {
+    final cp = checkpoint ?? VideoPublishCheckpoint();
     try {
-      onStep?.call(VideoPublishStep.uploadingVideo);
-      final up = await _postService.uploadVideo(videoLocalPath);
-      if (up.url.isEmpty) {
-        throw const Failure.unknown();
+      var up = cp.video;
+      if (up == null) {
+        onStep?.call(VideoPublishStep.uploadingVideo);
+        up = await _postService.uploadVideo(
+          videoLocalPath,
+          cancelToken: cancelToken,
+          onSendProgress: (sent, total) {
+            if (total <= 0) return;
+            final f = sent / total;
+            onProgress?.call(0.9 * f, f >= 1);
+          },
+        );
+        if (up.url.isEmpty) {
+          throw const Failure.unknown();
+        }
+        cp.video = up;
       }
+      onProgress?.call(0.9, false);
       var thumbUrl = up.thumbnailUrl;
       if (coverLocalPath != null) {
-        onStep?.call(VideoPublishStep.uploadingCover);
-        try {
-          final c = await _postService.uploadCover(coverLocalPath);
-          if (c.isNotEmpty) thumbUrl = c;
-        } on DioException catch (_) {
-          throw const VideoCoverUploadFailure();
+        if (cp.coverUrl == null) {
+          onStep?.call(VideoPublishStep.uploadingCover);
+          try {
+            final c = await _postService.uploadCover(
+              coverLocalPath,
+              cancelToken: cancelToken,
+              onSendProgress: (sent, total) {
+                if (total <= 0) return;
+                final f = sent / total;
+                onProgress?.call(0.9 + 0.07 * f, f >= 1);
+              },
+            );
+            if (c.isNotEmpty) cp.coverUrl = c;
+          } on DioException catch (e) {
+            if (CancelToken.isCancel(e)) rethrow;
+            throw const VideoCoverUploadFailure();
+          }
         }
+        thumbUrl = cp.coverUrl ?? thumbUrl;
       }
       onStep?.call(VideoPublishStep.publishing);
-      await _postService.createPost(
+      onProgress?.call(0.97, true);
+      final id = await _postService.createPost(
         content: content,
+        idempotencyKey: cp.idempotencyKey,
         imageUrl: up.url,
         mediaType: 'video',
         width: up.width ?? fallbackWidth,
@@ -199,9 +264,12 @@ class PostRepository {
         soundVolume: soundVolume,
         originalAudioVolume: originalAudioVolume,
       );
+      onProgress?.call(1, false);
+      return id;
     } on VideoCoverUploadFailure {
       rethrow;
-    } on DioException catch (_) {
+    } on DioException catch (e) {
+      if (CancelToken.isCancel(e)) rethrow;
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();
@@ -284,6 +352,16 @@ class PostRepository {
 
 /// Etapas da publicação de vídeo (para mostrar progresso na UI).
 enum VideoPublishStep { uploadingVideo, uploadingCover, publishing }
+
+/// Estado já concluído de uma publicação de vídeo: no retry, etapas prontas
+/// (vídeo/capa enviados) não são refeitas e o post nunca é criado 2 vezes.
+class VideoPublishCheckpoint {
+  VideoPublishCheckpoint({String? key})
+    : idempotencyKey = key ?? DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+  final String idempotencyKey;
+  VideoUploadResult? video;
+  String? coverUrl;
+}
 
 /// Falha específica do envio da capa (para mensagem dedicada).
 class VideoCoverUploadFailure implements Exception {

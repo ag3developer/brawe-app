@@ -816,6 +816,132 @@ class SEn extends S {
   String get postHintWhatsHappening => 'What\'s happening?';
 
   @override
+  String get postAddPoll => 'Poll';
+
+  @override
+  String get postAddLocation => 'Location';
+
+  @override
+  String get pollEditorTitle => 'Poll';
+
+  @override
+  String pollOptionHint(int n) {
+    return 'Option $n';
+  }
+
+  @override
+  String get pollAddOption => 'Add option';
+
+  @override
+  String get pollRemoveOption => 'Remove option';
+
+  @override
+  String get pollRemove => 'Remove poll';
+
+  @override
+  String get pollDurationLabel => 'Duration';
+
+  @override
+  String pollDurationDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pollRulesHint =>
+      'All options are required: 2 to 4, up to 60 characters, no repeats. Votes can\'t be changed.';
+
+  @override
+  String get pollErrorEmpty => 'Fill in this option';
+
+  @override
+  String get pollErrorDuplicate => 'Repeated option';
+
+  @override
+  String get pollNeedsQuestion => 'Write the question in the post text';
+
+  @override
+  String get pollBlockedByImage =>
+      'A poll and a photo can\'t be used together. Remove the photo to create a poll.';
+
+  @override
+  String get imageBlockedByPoll =>
+      'A poll and a photo can\'t be used together. Remove the poll to attach a photo.';
+
+  @override
+  String pollVotesCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString votes',
+      one: '1 vote',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String pollEndsInDays(int count) {
+    return 'ends in $count d';
+  }
+
+  @override
+  String pollEndsInHours(int count) {
+    return 'ends in $count h';
+  }
+
+  @override
+  String pollEndsInMinutes(int count) {
+    return 'ends in $count min';
+  }
+
+  @override
+  String get pollEnded => 'Ended';
+
+  @override
+  String get pollVoteToSee => 'Vote to see the results';
+
+  @override
+  String get pollVoteError => 'Couldn\'t register your vote. Try again.';
+
+  @override
+  String get pollAlreadyVoted => 'You already voted in this poll.';
+
+  @override
+  String get pollEndedMessage => 'This poll has already ended.';
+
+  @override
+  String get pollMyVoteSemantics => 'Your vote';
+
+  @override
+  String get postLocationRemove => 'Remove location';
+
+  @override
+  String get postLocationLoading => 'Getting your city...';
+
+  @override
+  String get postLocationDenied =>
+      'Location permission denied. Allow it in Settings to tag your city.';
+
+  @override
+  String get postLocationServiceOff =>
+      'Location services are turned off on this device.';
+
+  @override
+  String get postLocationFailed => 'Couldn\'t find your city.';
+
+  @override
+  String get postLocationOpenSettings => 'Open Settings';
+
+  @override
   String get audiencePickerTitle => 'Who can see?';
 
   @override
@@ -846,7 +972,7 @@ class SEn extends S {
   String get videoSwapTooltip => 'Swap video';
 
   @override
-  String get videoCaptionHint => 'Write a caption (optional)…';
+  String get videoCaptionHint => 'Write a caption…';
 
   @override
   String get videoPublishButton => 'Publish video';
@@ -8062,4 +8188,1035 @@ class SEn extends S {
 
   @override
   String get battleNarrEnded => 'Battle ended';
+
+  @override
+  String get agencyTitle => 'My agency';
+
+  @override
+  String agencyPendingInvites(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count invites',
+      one: '1 invite',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get agencyEmptyBody =>
+      'Agencies help creators grow: they follow your results, organize events and support your live routine.';
+
+  @override
+  String get agencyInfoEarningsBody =>
+      'Brawe keeps paying your earnings directly to you. The agency commission is paid by Brawe and never deducted from you.';
+
+  @override
+  String get agencyInfoOneBody =>
+      'You can only be in one agency. When you accept an invite, the other pending ones are cancelled.';
+
+  @override
+  String get agencyOpenBody =>
+      'Agencies can find you in the creators directory and send invites. You decide whether to accept.';
+
+  @override
+  String get agencyInvitesTitle => 'Pending invites';
+
+  @override
+  String get agencyInviteTitle => 'Agency invite';
+
+  @override
+  String agencyContractMonths(int months) {
+    String _temp0 = intl.Intl.pluralLogic(
+      months,
+      locale: localeName,
+      other: '$months months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String agencyContractOf(String duration) {
+    return '$duration contract';
+  }
+
+  @override
+  String get agencyContractLength => 'Contract length';
+
+  @override
+  String get agencyInvitedByTitle => 'Invited by';
+
+  @override
+  String get agencyRoleOwner => 'Agency owner';
+
+  @override
+  String get agencyRoleManager => 'Agency manager (recruiter)';
+
+  @override
+  String get agencyRoleAnalyst => 'Agency team';
+
+  @override
+  String get agencyRoleUnknown => 'Agency representative';
+
+  @override
+  String agencyInvitedOn(String date) {
+    return 'Invite sent on $date';
+  }
+
+  @override
+  String get agencyMessageTitle => 'Message from the agency';
+
+  @override
+  String get agencyWhatChangesTitle => 'What changes for you';
+
+  @override
+  String get agencyTermsTitle => 'Terms and conditions';
+
+  @override
+  String agencyTermsVersion(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get agencyTermsStandard => 'Brawe standard terms';
+
+  @override
+  String get agencyTermsAddendum => 'Agency addendum';
+
+  @override
+  String get agencyTermsEmpty => 'Terms unavailable right now.';
+
+  @override
+  String agencyAcceptCheckbox(String version) {
+    return 'I have read and accept the terms and conditions (version $version)';
+  }
+
+  @override
+  String get agencyAcceptButton => 'Accept invite';
+
+  @override
+  String get agencyDeclineButton => 'Decline';
+
+  @override
+  String agencyAcceptConfirmTitle(String name) {
+    return 'Join $name?';
+  }
+
+  @override
+  String get agencyAcceptConfirmBody =>
+      'Your link starts today. Before the contract ends, leaving is done by agreement with the agency.';
+
+  @override
+  String get agencyDeclineConfirmTitle => 'Decline invite?';
+
+  @override
+  String get agencyDeclineConfirmBody =>
+      'Declining has no effect on your account. The agency will see that the invite was declined.';
+
+  @override
+  String agencyAcceptedSnack(String name) {
+    return 'You are now part of $name';
+  }
+
+  @override
+  String get agencyDeclinedSnack => 'Invite declined';
+
+  @override
+  String get agencyLeftSnack => 'You left the agency';
+
+  @override
+  String get agencyInviteUnavailable => 'This invite is no longer available.';
+
+  @override
+  String agencyCreatorsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count creators',
+      one: '1 creator',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String agencyPartnerSince(String date) {
+    return 'Partner since $date';
+  }
+
+  @override
+  String get agencyTrialBadge => 'On trial';
+
+  @override
+  String get agencyContractTitle => 'Contract';
+
+  @override
+  String agencyContractPeriod(String start, String end) {
+    return '$start to $end';
+  }
+
+  @override
+  String agencyDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: '1 day left',
+      zero: 'Ends today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String agencyContractProgress(int percent) {
+    return '$percent% of the contract';
+  }
+
+  @override
+  String get agencyHours => 'Live hours';
+
+  @override
+  String get agencyDaysLive => 'Days with live';
+
+  @override
+  String get agencyDiamonds => 'Diamonds';
+
+  @override
+  String get agencyFollowers => 'Followers';
+
+  @override
+  String agencyRankValue(int rank, int total) {
+    return '#$rank of $total';
+  }
+
+  @override
+  String get agencyGuidelinesNotMet =>
+      'Some goals are still missing this month';
+
+  @override
+  String agencyMissingHours(String value) {
+    return '$value h to go';
+  }
+
+  @override
+  String agencyMissingDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days to go',
+      one: '1 day to go',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get agencyNoIncidents => 'No incidents';
+
+  @override
+  String get agencyIncidentWarning => 'Warning';
+
+  @override
+  String get agencyIncidentSuspension => 'Suspension';
+
+  @override
+  String get agencyIncidentBan => 'Ban';
+
+  @override
+  String get agencyIncidentFraud => 'Fraud';
+
+  @override
+  String get agencyEventsHow => 'Go live during the event period to take part.';
+
+  @override
+  String get agencyEventLive => 'Live now';
+
+  @override
+  String get agencyEventScheduled => 'Upcoming';
+
+  @override
+  String get agencyEventEnded => 'Ended';
+
+  @override
+  String agencyEventMultiplier(String value) {
+    return 'Multiplier x$value';
+  }
+
+  @override
+  String get agencyLeaveTitle => 'Leave the agency';
+
+  @override
+  String get agencyLeaveAllowed =>
+      'You can leave now, with no penalty. Your earnings and account do not change.';
+
+  @override
+  String get agencyLeaveButton => 'Leave the agency';
+
+  @override
+  String agencyLeaveConfirmTitle(String name) {
+    return 'Leave $name?';
+  }
+
+  @override
+  String get agencyLeaveConfirmBody =>
+      'The link will end. This cannot be undone: to come back you will need a new invite.';
+
+  @override
+  String get agencyLeaveConfirmAction => 'Leave now';
+
+  @override
+  String get agencyExitRuleFree =>
+      'When the contract ends you can leave freely, in the app.';
+
+  @override
+  String get agencyExitRuleAbuse =>
+      'In case of abuse (fees, payments outside Brawe, pressure), ask Brawe for a review.';
+
+  @override
+  String get agencyLeaveSectionTitle => 'Leaving the agency';
+
+  @override
+  String agencyLeaveRequestBody(String date) {
+    return 'Your contract runs until $date. To leave earlier, request it by agreement with the agency. If it does not answer in time, you are automatically free.';
+  }
+
+  @override
+  String get agencyLeaveRequestBodyNoDate =>
+      'To leave before the contract ends, request it by agreement with the agency. If it does not answer in time, you are automatically free.';
+
+  @override
+  String get agencyLeaveRequestButton => 'Ask the agency to release me';
+
+  @override
+  String get agencyLeaveRequestSheetTitle => 'Request to leave';
+
+  @override
+  String get agencyLeaveRequestSheetBody =>
+      'The agency receives your request and answers. If it approves, the link ends right away. If it does not answer in time, you are automatically free.';
+
+  @override
+  String get agencyLeaveReasonLabel => 'Reason';
+
+  @override
+  String get agencyLeaveReasonHint => 'Tell the agency why you want to leave';
+
+  @override
+  String get agencyLeaveRequestSend => 'Send request';
+
+  @override
+  String get agencyLeaveRequestSentSnack => 'Request sent to the agency.';
+
+  @override
+  String get agencyLeavePendingTitle => 'Leave request sent';
+
+  @override
+  String agencyLeavePendingSent(String date) {
+    return 'Sent on $date. Waiting for the agency to answer.';
+  }
+
+  @override
+  String agencyLeavePendingDue(String date) {
+    return 'If the agency does not answer by $date, you are automatically free.';
+  }
+
+  @override
+  String get agencyLeavePendingBrawe => 'Your request is under Brawe review.';
+
+  @override
+  String get agencyReviewPendingTitle => 'Brawe review requested';
+
+  @override
+  String get agencyLeaveCancel => 'Cancel request';
+
+  @override
+  String get agencyLeaveCancelledSnack => 'Request cancelled.';
+
+  @override
+  String get agencyLeaveDeclinedTitle => 'Request declined';
+
+  @override
+  String get agencyLeaveDeclinedBody =>
+      'The agency did not approve your leaving for now.';
+
+  @override
+  String get agencyLeaveAgencyAnswer => 'Agency\'s answer';
+
+  @override
+  String agencyLeaveRetryAt(String date) {
+    return 'You can ask again from $date.';
+  }
+
+  @override
+  String get agencyReviewLink => 'Ask Brawe for a review';
+
+  @override
+  String get agencyReviewSheetTitle => 'Ask Brawe for a review';
+
+  @override
+  String get agencyReviewSheetBody =>
+      'Use only in case of abuse. Brawe reviews it directly, without going through the agency, and may end the link.';
+
+  @override
+  String get agencyReviewCategoryLabel => 'What is happening?';
+
+  @override
+  String get agencyReviewCatMoney => 'The agency charges me money';
+
+  @override
+  String get agencyReviewCatOffplatform =>
+      'They ask for payments outside Brawe';
+
+  @override
+  String get agencyReviewCatPressure => 'Pressure or harassment';
+
+  @override
+  String get agencyReviewCatSuspended => 'The agency was suspended or banned';
+
+  @override
+  String get agencyReviewCatOther => 'Something else';
+
+  @override
+  String get agencyReviewDetailLabel => 'Details';
+
+  @override
+  String get agencyReviewSend => 'Send to Brawe';
+
+  @override
+  String get agencyReviewSentSnack => 'Request sent. Brawe will review it.';
+
+  @override
+  String get agencyErrLeaveRequiresAgreement =>
+      'Before the contract ends, ask the agency to release you.';
+
+  @override
+  String get agencyErrLeaveRequestOpen => 'You already have an open request.';
+
+  @override
+  String agencyErrLeaveCooldown(String date) {
+    return 'You can ask again from $date.';
+  }
+
+  @override
+  String get agencyErrLeaveCooldownNoDate =>
+      'Please wait a bit before asking again.';
+
+  @override
+  String get agencyErrLeaveNotOpen =>
+      'This request was already answered or cancelled.';
+
+  @override
+  String get agencyErrReasonTooLong => 'The text is over 500 characters.';
+
+  @override
+  String get agencyReasonMinHint => 'At least 10 characters';
+
+  @override
+  String get agencyErrReasonTooShort => 'Write at least 10 characters.';
+
+  @override
+  String get agencyErrReasonRequired => 'Write the reason.';
+
+  @override
+  String get agencyErrLeaveIsFree =>
+      'The contract has ended: you can leave directly.';
+
+  @override
+  String get agencyLoadError => 'Could not load your agency';
+
+  @override
+  String get agencyErrTermsMismatch =>
+      'The terms were updated. Read the current version and try again.';
+
+  @override
+  String agencyErrCannotLeaveYet(String date) {
+    return 'You cannot leave yet. Available on $date.';
+  }
+
+  @override
+  String get agencyErrCannotLeaveYetNoDate =>
+      'You cannot leave the agency yet.';
+
+  @override
+  String get agencyErrAlreadyInAgency => 'You are already in an agency.';
+
+  @override
+  String get agencyErrNotApproved => 'This agency is not available right now.';
+
+  @override
+  String get agencyErrNotEligible => 'Your creator profile is not active.';
+
+  @override
+  String get agencyErrNotFound => 'Invite not found.';
+
+  @override
+  String get agencyErrNotInAgency => 'You are not in an agency.';
+
+  @override
+  String get agencyErrNetwork =>
+      'No connection. Check your internet and try again.';
+
+  @override
+  String get agencyErrGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get agencyChatInvitedYou => 'invited you to the agency';
+
+  @override
+  String get agencyChatInviteSent => 'Invite sent to the creator';
+
+  @override
+  String get agencyChatOpen => 'Open invite';
+
+  @override
+  String get agencyChatPreview => 'Agency invite';
+
+  @override
+  String get creatorPanelTabHome => 'Home';
+
+  @override
+  String get creatorPanelTabPerformance => 'Performance';
+
+  @override
+  String get creatorPanelTabAgency => 'Agency';
+
+  @override
+  String get creatorPanelTabBenefits => 'Benefits';
+
+  @override
+  String get creatorPanelEarnings30 => 'Earnings, last 30 days';
+
+  @override
+  String get creatorPanelNextLevel => 'Next level';
+
+  @override
+  String get creatorPanelAgenciesRow => 'Agencies';
+
+  @override
+  String get creatorPanelAgenciesOpen => 'Open to invitations';
+
+  @override
+  String get creatorPanelHowItWorks => 'How it works';
+
+  @override
+  String get creatorPanelHowTitle => 'How agencies work';
+
+  @override
+  String get creatorPanelAnalyticsTitle => 'Full analytics';
+
+  @override
+  String get creatorPanelAnalyticsBody =>
+      'Earnings, audience, followers and lives';
+
+  @override
+  String get creatorPanelProfileFallback => 'Creator';
+
+  @override
+  String get creatorPanelOpenError => 'Could not save. Try again.';
+
+  @override
+  String agencySince(String date) {
+    return 'With the agency since $date';
+  }
+
+  @override
+  String get agencyTalk => 'Message';
+
+  @override
+  String get agencyTalkError => 'Could not open the conversation.';
+
+  @override
+  String get agencySubSummary => 'Summary';
+
+  @override
+  String get agencySubGoals => 'Goals';
+
+  @override
+  String get agencySubEvents => 'Events';
+
+  @override
+  String get agencySubContract => 'Contract';
+
+  @override
+  String get agencyPeriodThisMonth => 'This month';
+
+  @override
+  String get agencyPeriodLabel => 'Period';
+
+  @override
+  String agencyRankUp(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Up $n places',
+      one: 'Up 1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String agencyRankDown(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'Down $n places',
+      one: 'Down 1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get agencyRankSame => 'Same place as last month';
+
+  @override
+  String get agencyPositionLabel => 'Place in the agency';
+
+  @override
+  String get agencyMonthGoalTitle => 'Monthly goal';
+
+  @override
+  String agencyMonthGoalPercent(String percent) {
+    return '$percent% of the goal';
+  }
+
+  @override
+  String get agencyMonthGoalMet => 'Goal reached';
+
+  @override
+  String get agencyMonthGoalNone => 'No goal set for this month';
+
+  @override
+  String get agencyChartTitle => 'Last 6 months';
+
+  @override
+  String get agencyChartEmpty => 'No data in recent months';
+
+  @override
+  String get agencyPerfError => 'Could not load performance';
+
+  @override
+  String get agencyGoalDone => 'Goal reached';
+
+  @override
+  String agencyGoalHoursValue(String have, String need) {
+    return '$have of $need h';
+  }
+
+  @override
+  String agencyGoalDaysValue(String have, String need) {
+    return '$have of $need days';
+  }
+
+  @override
+  String get agencyIncFilterMonth => 'This month';
+
+  @override
+  String get agencyIncFilter90 => 'Last 90 days';
+
+  @override
+  String agencyIncidentPoints(int points) {
+    String _temp0 = intl.Intl.pluralLogic(
+      points,
+      locale: localeName,
+      other: '$points points',
+      one: '1 point',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get agencyEventsFilterUpcoming => 'Upcoming';
+
+  @override
+  String get agencyEventsFilterLive => 'In progress';
+
+  @override
+  String get agencyEventsFilterEnded => 'Ended';
+
+  @override
+  String get agencyEventsEmptyUpcoming => 'No upcoming events.';
+
+  @override
+  String get agencyEventsEmptyLive => 'No events in progress right now.';
+
+  @override
+  String get agencyEventsEmptyEnded => 'No ended events.';
+
+  @override
+  String get agencyContractViewTerms => 'View terms';
+
+  @override
+  String get agencyContractUnknown => 'Contract with no end date';
+
+  @override
+  String get agencyLeaveRequestConfirmTitle => 'Send leave request?';
+
+  @override
+  String get agencyLeaveRequestConfirmBody =>
+      'The agency has to approve it. If it does not answer in time, you are automatically free.';
+
+  @override
+  String get agencyReviewConfirmTitle => 'Ask Brawe to review?';
+
+  @override
+  String get agencyReviewConfirmBody =>
+      'Use only in case of abuse. Brawe reviews it directly, without the agency.';
+
+  @override
+  String agencyLeaveSentOn(String date) {
+    return 'Sent on $date';
+  }
+
+  @override
+  String agencyInvitesBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You have $count agency invitations',
+      one: 'You have 1 agency invitation',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get agencyInvitesView => 'View';
+
+  @override
+  String agencyInviteRowBy(String name, String role) {
+    return '$name · $role';
+  }
+
+  @override
+  String get agencyInvitesEmpty => 'No pending invitations.';
+
+  @override
+  String get agencyPerkEarnings => 'Earnings paid by Brawe';
+
+  @override
+  String get agencyPerkNoCharges => 'No charges';
+
+  @override
+  String get agencyPerkAccount => 'You keep your account';
+
+  @override
+  String get agencyPerkExit =>
+      'Leave at contract end or by agreement; if the agency does not answer in time, you are free';
+
+  @override
+  String get agencyTermsRead => 'Read full terms';
+
+  @override
+  String get agencyTermsExpand => 'Terms and conditions';
+
+  @override
+  String get agencyIncidentsTitleShort => 'Incidents';
+
+  @override
+  String get creatorDashWeekSameShort => 'Same';
+
+  @override
+  String get agencyAcceptedLabel => 'Accepted on';
+
+  @override
+  String get agencyExitRuleAgreement =>
+      'Before the end, leaving is by agreement with the agency. If it does not answer in time (15 days), you are free and can join another agency.';
+
+  @override
+  String get creatorApplyBack => 'Back';
+
+  @override
+  String get creatorApplyNext => 'Continue';
+
+  @override
+  String get creatorApplyAsAccount => 'We will use your Brawe account details.';
+
+  @override
+  String get creatorApplyStepContent => 'Your content';
+
+  @override
+  String get creatorApplyStepNetwork => 'Your network';
+
+  @override
+  String get creatorApplyStepAbout => 'About you';
+
+  @override
+  String creatorApplyStepOf(int n, int total) {
+    return 'Step $n of $total';
+  }
+
+  @override
+  String get creatorApplyPlatformLabel => 'Main network';
+
+  @override
+  String get creatorApplyHandleLabel => 'Your username on that network';
+
+  @override
+  String get creatorApplyHandleWhy =>
+      'We need your profile on a social network to review your content and audience. Only the approval team sees it.';
+
+  @override
+  String get creatorApplyErrHandle =>
+      'Use only letters, numbers, dot, hyphen or underscore (min. 2)';
+
+  @override
+  String creatorApplyErrMotivation(int min) {
+    return 'Write at least $min characters';
+  }
+
+  @override
+  String get creatorApplyErrFollowersMin =>
+      'Enter how many followers you have (minimum 1)';
+
+  @override
+  String get editProfileCreatorBadgeTitle => 'Show creator badge';
+
+  @override
+  String get editProfileCreatorBadgeHint =>
+      'Shows the Creator Network badge on your profile.';
+
+  @override
+  String get editProfileCreatorBadgeSaveFailed =>
+      'Could not save badge visibility.';
+
+  @override
+  String get videoPubSound => 'Sound';
+
+  @override
+  String videoPubCoverAt(String time) {
+    return 'Cover at $time';
+  }
+
+  @override
+  String get videoUpQueued => 'Queued…';
+
+  @override
+  String videoUpUploading(int percent) {
+    return 'Publishing… $percent%';
+  }
+
+  @override
+  String get videoUpProcessing => 'Processing…';
+
+  @override
+  String get videoUpFailed => 'Upload failed';
+
+  @override
+  String get videoUpRetry => 'Try again';
+
+  @override
+  String get videoUpDone => 'Video published';
+
+  @override
+  String get videoUpView => 'View';
+
+  @override
+  String get videoUpCancel => 'Cancel upload';
+
+  @override
+  String get videoUpDismiss => 'Dismiss';
+
+  @override
+  String get chatSystemReadOnlyNote => 'Official Brawe messages';
+
+  @override
+  String get chatSystemOfficialLabel => 'Official account';
+
+  @override
+  String navChatUnreadSemantics(int count) {
+    return 'Chat, $count unread conversations';
+  }
+
+  @override
+  String get gifSearchHint => 'Search GIFs';
+
+  @override
+  String get gifClearSearch => 'Clear search';
+
+  @override
+  String get gifPoweredBy => 'Powered by GIPHY';
+
+  @override
+  String get gifUnavailable => 'GIFs are unavailable right now';
+
+  @override
+  String get gifErrorGeneric => 'Couldn\'t load GIFs.';
+
+  @override
+  String get gifRetry => 'Try again';
+
+  @override
+  String get gifEmptyTitle => 'No GIFs found';
+
+  @override
+  String get gifEmptyHint => 'Try another word.';
+
+  @override
+  String get gifSemantics => 'GIF';
+
+  @override
+  String get gifTapToPause => 'Tap to pause';
+
+  @override
+  String get gifTapToPlay => 'Tap to play';
+
+  @override
+  String get gifButtonSemantics => 'Send a GIF';
+
+  @override
+  String get notifFilterLikes => 'Likes';
+
+  @override
+  String get notifFilterComments => 'Comments';
+
+  @override
+  String get notifFilterFollowers => 'Followers';
+
+  @override
+  String get notifFilterMentions => 'Mentions';
+
+  @override
+  String get notifFilterBrawe => 'Brawe';
+
+  @override
+  String notifActorsTwo(String a, String b) {
+    return '$a and $b';
+  }
+
+  @override
+  String notifActorsThree(String a, String b, String c) {
+    return '$a, $b and $c';
+  }
+
+  @override
+  String notifActorsMore(String a, String b, int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'others',
+      one: 'other',
+    );
+    return '$a, $b and $n $_temp0';
+  }
+
+  @override
+  String notifVerbLike(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'liked your post',
+      one: 'liked your post',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbComment(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'commented on your post',
+      one: 'commented on your post',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbReply(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'replied to your comment',
+      one: 'replied to your comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbFollow(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'started following you',
+      one: 'started following you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbGift(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'sent gifts in your live',
+      one: 'sent gifts in your live',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbMention(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'mentioned you in comments',
+      one: 'mentioned you in a comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifVerbStoryReaction(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'reacted to your story',
+      one: 'reacted to your story',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifGiftDiamonds(int count, String value) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '($value diamonds)',
+      one: '($value diamond)',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notifNewFollowersTitle => 'New followers';
+
+  @override
+  String get notifNewFollowersEmpty => 'No new followers to show';
+
+  @override
+  String get notifUnreadLabel => 'Unread';
+
+  @override
+  String get storyGiftSend => 'Send';
+
+  @override
+  String storyGiftConfirmTitle(String gift, String price) {
+    return 'Send $gift for $price?';
+  }
+
+  @override
+  String storyGiftBalance(String balance) {
+    return 'Balance: $balance';
+  }
+
+  @override
+  String storyUpUploading(int percent) {
+    return 'Posting story… $percent%';
+  }
+
+  @override
+  String get storyUpProcessing => 'Posting story…';
+
+  @override
+  String get storyUpDone => 'Story posted';
+
+  @override
+  String get storyUpFailed => 'Failed to post the story';
 }

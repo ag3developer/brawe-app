@@ -11,6 +11,7 @@ import '../../../core/text/brawe_rich_text.dart';
 import '../view_models/presence_provider.dart';
 import '../../feed/widgets/story_ring_avatar.dart';
 import 'user_status_sheet.dart';
+import 'rich/system_notice_bubble.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import '../utils/chat_error_text.dart';
 
@@ -551,6 +552,9 @@ class _ConversationTile extends ConsumerWidget {
             ),
             child: Row(
               children: [
+                if (conversation.isSystem)
+                  const BraweOfficialAvatar(radius: 26)
+                else
                 StoryRingAvatar(
                   userId: conversation.participantId,
                   avatarUrl: conversation.participantAvatarUrl,
@@ -587,7 +591,7 @@ class _ConversationTile extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (conversation.participantIsVerified)
+                          if (conversation.participantIsVerified || conversation.isSystem)
                             const VerifiedBadge(size: 14),
                           if (conversation.isMuted)
                             Padding(
@@ -711,6 +715,7 @@ class _ConversationTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
+            if (!conversation.isSystem)
             ListTile(
               leading: Icon(
                 conversation.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
@@ -808,6 +813,9 @@ class _SwipeableConversationTile extends ConsumerWidget {
           ],
         ),
       ),
+      direction: conversation.isSystem
+          ? DismissDirection.startToEnd
+          : DismissDirection.horizontal,
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) return true;
         return await showDialog<bool>(

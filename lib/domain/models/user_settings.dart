@@ -13,6 +13,7 @@ class UserSettings {
   // Privacy
   final bool privacyShowEarnings;
   final bool privacyShowViewers;
+  final bool privacyShowAccountType;
   final String privacyAllowDm;
   // Appearance
   final String language;
@@ -29,6 +30,7 @@ class UserSettings {
     this.notificationsMessages = true,
     this.privacyShowEarnings = false,
     this.privacyShowViewers = true,
+    this.privacyShowAccountType = true,
     this.privacyAllowDm = 'everyone',
     this.language = 'pt',
     this.theme = 'system',
@@ -46,6 +48,8 @@ class UserSettings {
       notificationsMessages: json['notifications_messages'] as bool? ?? true,
       privacyShowEarnings: json['privacy_show_earnings'] as bool? ?? false,
       privacyShowViewers: json['privacy_show_viewers'] as bool? ?? true,
+      privacyShowAccountType:
+          json['privacy_show_account_type'] as bool? ?? true,
       privacyAllowDm: (json['privacy_allow_dm'] as String?) ?? 'everyone',
       language: (json['language'] as String?) ?? 'pt',
       theme: (json['theme'] as String?) ?? 'system',
@@ -63,6 +67,7 @@ class UserSettings {
     bool? notificationsMessages,
     bool? privacyShowEarnings,
     bool? privacyShowViewers,
+    bool? privacyShowAccountType,
     String? privacyAllowDm,
     String? language,
     String? theme,
@@ -81,6 +86,8 @@ class UserSettings {
           notificationsMessages ?? this.notificationsMessages,
       privacyShowEarnings: privacyShowEarnings ?? this.privacyShowEarnings,
       privacyShowViewers: privacyShowViewers ?? this.privacyShowViewers,
+      privacyShowAccountType:
+          privacyShowAccountType ?? this.privacyShowAccountType,
       privacyAllowDm: privacyAllowDm ?? this.privacyAllowDm,
       language: language ?? this.language,
       theme: theme ?? this.theme,

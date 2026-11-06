@@ -35,9 +35,15 @@ import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import '../view_models/chat_list_view_model.dart';
 import '../utils/chat_error_text.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'rich/agency_invite_bubble.dart';
+import 'rich/system_notice_bubble.dart';
+import '../../../domain/models/system_notice.dart';
 import 'rich/chat_rich_bubbles.dart';
 import 'rich/chat_extra_sheets.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../domain/models/gif_item.dart';
+import '../../shared/widgets/gif/gif_bubble.dart';
+import '../../shared/widgets/gif/gif_picker_sheet.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:brawe_app/core/media/media_utils.dart';
 
@@ -75,15 +81,29 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   String? _resolvedParticipantId;
 
   String get _participantName => _resolvedName ?? widget.participantName;
-  String? get _participantAvatarUrl => _resolvedAvatarUrl ?? widget.participantAvatarUrl;
+  String? get _participantAvatarUrl =>
+      _resolvedAvatarUrl ?? widget.participantAvatarUrl;
   String? get _participantId => _resolvedParticipantId ?? widget.participantId;
+
+  /// Conversa oficial da Brawe (avisos do sistema): somente leitura.
+  bool get _isSystem =>
+      _participantId == kBraweSystemUserId ||
+      ref
+          .read(chatListViewModelProvider)
+          .conversations
+          .any((c) => c.id == widget.conversationId && c.isSystem);
 
   Future<void> _resolveParticipant() async {
     final repo = ref.read(chatRepositoryProvider);
     for (final archived in [false, true]) {
       try {
-        final list = await repo.listConversations(limit: 100, archived: archived);
-        final match = list.where((c) => c.id == widget.conversationId).firstOrNull;
+        final list = await repo.listConversations(
+          limit: 100,
+          archived: archived,
+        );
+        final match = list
+            .where((c) => c.id == widget.conversationId)
+            .firstOrNull;
         if (match == null) continue;
         if (!mounted) return;
         setState(() {
@@ -262,9 +282,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            S.of(context).chatDetailBlocked(_participantName),
-          ),
+          content: Text(S.of(context).chatDetailBlocked(_participantName)),
           backgroundColor: context.colors.surfaceElevated,
         ),
       );
@@ -300,126 +318,138 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              _MoreMenuItem(
-                icon: Icons.person_outline,
-                label: S.of(context).chatDetailViewProfile,
-                onTap: () {
-                  final pid = _participantId;
-                  if (pid == null || pid.isEmpty) {
+              if (!_isSystem)
+                _MoreMenuItem(
+                  icon: Icons.person_outline,
+                  label: S.of(context).chatDetailViewProfile,
+                  onTap: () {
+                    final pid = _participantId;
+                    if (pid == null || pid.isEmpty) {
+                      Navigator.pop(sheetCtx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            S.of(context).chatDetailOpenProfileError,
+                          ),
+                          backgroundColor: context.colors.surfaceElevated,
+                        ),
+                      );
+                      return;
+                    }
+                    // IMPORTANTE: `/chat/:id` é uma rota FORA da ShellRoute
+                    // (fullscreen) e `/profile/:id` está DENTRO da ShellRoute.
+                    // Usar `push` daqui criaria uma segunda Shell no stack
+                    // com a mesma LocalKey da primeira, disparando o assert
+                    // `!keyReservation.contains(key)` no Navigator.
+                    // Usar `go` substitui a rota atual — sem conflito de keys.
+                    final router = GoRouter.of(context);
                     Navigator.pop(sheetCtx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(S.of(context).chatDetailOpenProfileError),
-                        backgroundColor: context.colors.surfaceElevated,
-                      ),
-                    );
-                    return;
-                  }
-                  // IMPORTANTE: `/chat/:id` é uma rota FORA da ShellRoute
-                  // (fullscreen) e `/profile/:id` está DENTRO da ShellRoute.
-                  // Usar `push` daqui criaria uma segunda Shell no stack
-                  // com a mesma LocalKey da primeira, disparando o assert
-                  // `!keyReservation.contains(key)` no Navigator.
-                  // Usar `go` substitui a rota atual — sem conflito de keys.
-                  final router = GoRouter.of(context);
-                  Navigator.pop(sheetCtx);
-                  Future.delayed(const Duration(milliseconds: 250), () {
-                    if (!mounted) return;
-                    router.go('/profile/$pid');
-                  });
-                },
-              ),
+                    Future.delayed(const Duration(milliseconds: 250), () {
+                      if (!mounted) return;
+                      router.go('/profile/$pid');
+                    });
+                  },
+                ),
               // Silenciar / Fixar / Buscar — estado vem da lista de conversas.
-              Builder(builder: (_) {
-                final conv = ref
-                    .read(chatListViewModelProvider)
-                    .conversations
-                    .where((c) => c.id == widget.conversationId)
-                    .firstOrNull;
-                final muted = conv?.isMuted ?? false;
-                final pinned = conv?.isPinned ?? false;
-                final s = S.of(context);
-                final messenger = ScaffoldMessenger.of(context);
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _MoreMenuItem(
-                      icon: Icons.search,
-                      label: s.chatDetailSearchInChat,
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        showChatSearchSheet(
-                          context,
-                          conversationId: widget.conversationId,
-                        );
-                      },
-                    ),
-                    _MoreMenuItem(
-                      icon: muted
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_off_outlined,
-                      label: muted ? s.chatUnmute : s.chatDetailMute,
-                      onTap: () async {
-                        Navigator.pop(sheetCtx);
-                        final v = await ref
-                            .read(chatListViewModelProvider.notifier)
-                            .setMuted(widget.conversationId, !muted);
-                        if (v == null) return;
-                        messenger.showSnackBar(SnackBar(
-                          content: Text(
-                            v ? s.chatMutedToast : s.chatUnmutedToast,
-                          ),
-                          duration: const Duration(seconds: 1),
-                        ));
-                      },
-                    ),
-                    _MoreMenuItem(
-                      icon: pinned
-                          ? Icons.push_pin
-                          : Icons.push_pin_outlined,
-                      label: pinned ? s.chatUnpin : s.chatPin,
-                      onTap: () async {
-                        Navigator.pop(sheetCtx);
-                        final v = await ref
-                            .read(chatListViewModelProvider.notifier)
-                            .setPinned(widget.conversationId, !pinned);
-                        messenger.showSnackBar(SnackBar(
-                          content: Text(
-                            v == null
-                                ? s.chatPinLimit
-                                : (v ? s.chatPinnedToast : s.chatUnpinnedToast),
-                          ),
-                          duration: const Duration(seconds: 2),
-                        ));
-                      },
-                    ),
-                  ],
-                );
-              }),
-              _MoreMenuItem(
-                icon: Icons.block,
-                label: S
-                    .of(context)
-                    .chatDetailBlockMenu(_participantName),
-                color: AppColors.mutedRed,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  _blockUser();
-                },
-              ),
-              _MoreMenuItem(
-                icon: Icons.flag_outlined,
-                label: S.of(context).chatDetailReport,
-                color: AppColors.mutedRed,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  showReportSheet(
-                    context,
-                    targetType: 'conversation',
-                    targetId: widget.conversationId,
+              Builder(
+                builder: (_) {
+                  final conv = ref
+                      .read(chatListViewModelProvider)
+                      .conversations
+                      .where((c) => c.id == widget.conversationId)
+                      .firstOrNull;
+                  final muted = conv?.isMuted ?? false;
+                  final pinned = conv?.isPinned ?? false;
+                  final s = S.of(context);
+                  final messenger = ScaffoldMessenger.of(context);
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _MoreMenuItem(
+                        icon: Icons.search,
+                        label: s.chatDetailSearchInChat,
+                        onTap: () {
+                          Navigator.pop(sheetCtx);
+                          showChatSearchSheet(
+                            context,
+                            conversationId: widget.conversationId,
+                          );
+                        },
+                      ),
+                      _MoreMenuItem(
+                        icon: muted
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_off_outlined,
+                        label: muted ? s.chatUnmute : s.chatDetailMute,
+                        onTap: () async {
+                          Navigator.pop(sheetCtx);
+                          final v = await ref
+                              .read(chatListViewModelProvider.notifier)
+                              .setMuted(widget.conversationId, !muted);
+                          if (v == null) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                v ? s.chatMutedToast : s.chatUnmutedToast,
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                      ),
+                      if (!_isSystem)
+                        _MoreMenuItem(
+                          icon: pinned
+                              ? Icons.push_pin
+                              : Icons.push_pin_outlined,
+                          label: pinned ? s.chatUnpin : s.chatPin,
+                          onTap: () async {
+                            Navigator.pop(sheetCtx);
+                            final v = await ref
+                                .read(chatListViewModelProvider.notifier)
+                                .setPinned(widget.conversationId, !pinned);
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  v == null
+                                      ? s.chatPinLimit
+                                      : (v
+                                            ? s.chatPinnedToast
+                                            : s.chatUnpinnedToast),
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
                   );
                 },
               ),
+              if (!_isSystem)
+                _MoreMenuItem(
+                  icon: Icons.block,
+                  label: S.of(context).chatDetailBlockMenu(_participantName),
+                  color: AppColors.mutedRed,
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    _blockUser();
+                  },
+                ),
+              if (!_isSystem)
+                _MoreMenuItem(
+                  icon: Icons.flag_outlined,
+                  label: S.of(context).chatDetailReport,
+                  color: AppColors.mutedRed,
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    showReportSheet(
+                      context,
+                      targetType: 'conversation',
+                      targetId: widget.conversationId,
+                    );
+                  },
+                ),
             ],
           ),
         ),
@@ -430,6 +460,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chatDetailViewModelProvider(widget.conversationId));
+    // Rebuild quando a lista de conversas revelar que esta é a oficial da Brawe.
+    ref.watch(
+      chatListViewModelProvider.select(
+        (st) => st.conversations.any(
+          (c) => c.id == widget.conversationId && c.isSystem,
+        ),
+      ),
+    );
+    final isSystem = _isSystem;
 
     if (state.messages.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
@@ -453,11 +492,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           name: _participantName,
           avatarUrl: _participantAvatarUrl,
           participantId: _participantId,
+          isSystem: isSystem,
           isTyping: state.isTyping,
           // Volta para quem abriu a conversa (perfil, loja, carteira…), igual
           // ao voltar do sistema/gesto; só cai na lista se não houver pilha.
-          onBack: () =>
-              context.canPop() ? context.pop() : context.go('/chat'),
+          onBack: () => context.canPop() ? context.pop() : context.go('/chat'),
           onMoreTap: () => _showMoreMenu(context),
         ),
         body: Container(
@@ -494,21 +533,25 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         onReact: _onReact,
                       ),
               ),
-              _Composer(
-                controller: _messageCtrl,
-                conversationId: widget.conversationId,
-                hasText: _hasText,
-                isSending: state.isSending,
-                viewOnce: _viewOnce,
-                replyingTo: _replyingTo,
-                onClearReply: _clearReply,
-                onToggleViewOnce: () => setState(() => _viewOnce = !_viewOnce),
-                onChanged: _onTextChanged,
-                onSend: _send,
-                onPickImage: _pickAndSendImage,
-                onSendGif: _sendGif,
-                onScrollToBottom: _scrollToBottom,
-              ),
+              if (isSystem)
+                const SystemReadOnlyFooter()
+              else
+                _Composer(
+                  controller: _messageCtrl,
+                  conversationId: widget.conversationId,
+                  hasText: _hasText,
+                  isSending: state.isSending,
+                  viewOnce: _viewOnce,
+                  replyingTo: _replyingTo,
+                  onClearReply: _clearReply,
+                  onToggleViewOnce: () =>
+                      setState(() => _viewOnce = !_viewOnce),
+                  onChanged: _onTextChanged,
+                  onSend: _send,
+                  onPickImage: _pickAndSendImage,
+                  onSendGif: _sendGif,
+                  onScrollToBottom: _scrollToBottom,
+                ),
             ],
           ),
         ),
@@ -525,7 +568,9 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
     required this.isTyping,
     required this.onBack,
     this.onMoreTap,
+    this.isSystem = false,
   });
+  final bool isSystem;
   final String name;
   final String? avatarUrl;
   final String? participantId;
@@ -545,7 +590,10 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     String statusText;
     Color statusColor;
-    if (isTyping) {
+    if (isSystem) {
+      statusText = S.of(context).chatSystemOfficialLabel;
+      statusColor = context.colors.accentPrimary;
+    } else if (isTyping) {
       statusText = S.of(context).chatDetailStatusTyping;
       statusColor = context.colors.accentPrimary;
     } else if (isOnline) {
@@ -571,25 +619,28 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
       titleSpacing: 0,
       title: Row(
         children: [
-          StoryRingAvatar(
-            userId: participantId ?? '',
-            avatarUrl: avatarUrl,
-            fallbackText: name,
-            radius: 18,
-            isOnline: isOnline,
-            showOnlineIndicator: true,
-            onTapWithoutStories:
-                (participantId != null && participantId!.isNotEmpty)
-                ? () {
-                    if (!context.mounted) return;
-                    // Usa `go` em vez de `push`: a rota /chat/:id está
-                    // fora da ShellRoute e /profile/:id está dentro
-                    // dela. Um `push` empilharia uma segunda Shell com
-                    // a mesma LocalKey → assert do Navigator.
-                    context.go('/profile/$participantId');
-                  }
-                : null,
-          ),
+          if (isSystem)
+            const BraweOfficialAvatar(radius: 18)
+          else
+            StoryRingAvatar(
+              userId: participantId ?? '',
+              avatarUrl: avatarUrl,
+              fallbackText: name,
+              radius: 18,
+              isOnline: isOnline,
+              showOnlineIndicator: true,
+              onTapWithoutStories:
+                  (participantId != null && participantId!.isNotEmpty)
+                  ? () {
+                      if (!context.mounted) return;
+                      // Usa `go` em vez de `push`: a rota /chat/:id está
+                      // fora da ShellRoute e /profile/:id está dentro
+                      // dela. Um `push` empilharia uma segunda Shell com
+                      // a mesma LocalKey → assert do Navigator.
+                      context.go('/profile/$participantId');
+                    }
+                  : null,
+            ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -610,14 +661,15 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                       ),
                     ),
-                    if (ref
-                        .watch(chatListViewModelProvider)
-                        .conversations
-                        .any(
-                          (c) =>
-                              c.participantId == participantId &&
-                              c.participantIsVerified,
-                        ))
+                    if (isSystem ||
+                        ref
+                            .watch(chatListViewModelProvider)
+                            .conversations
+                            .any(
+                              (c) =>
+                                  c.participantId == participantId &&
+                                  c.participantIsVerified,
+                            ))
                       const VerifiedBadge(size: 14),
                   ],
                 ),
@@ -673,9 +725,7 @@ class _AppBarAction extends StatelessWidget {
             height: 38,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: context.colors.border,
-              ),
+              border: Border.all(color: context.colors.border),
             ),
             child: Icon(icon, color: context.colors.textPrimary, size: 19),
           ),
@@ -985,9 +1035,7 @@ class _DateSeparator extends StatelessWidget {
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: context.colors.border,
-            ),
+            border: Border.all(color: context.colors.border),
             boxShadow: [
               BoxShadow(
                 color: AppColors.braweBlue.withValues(alpha: 0.12),
@@ -1031,15 +1079,20 @@ class _MessageBubble extends ConsumerWidget {
 
   /// Foto exibida "crua" (sem bolha colorida). Visualização única NÃO
   /// entra aqui: vira um cartão com texto e usa a bolha normal.
-  bool get _isImage =>
-      message.messageType == 'image' && !message.isViewOnce;
+  bool get _isImage => message.messageType == 'image' && !message.isViewOnce;
   bool get _isGif =>
       message.messageType == 'text' && message.content.startsWith('gif:');
+
+  /// GIF novo (GIPHY): `messageType == 'gif'` com {id,url,width,height} em `meta`.
+  GifAttachment? get _gifAttachment => message.messageType == 'gif'
+      ? GifAttachment.tryParse(message.meta)
+      : null;
 
   /// Conteúdo rico + hora embaixo (as bolhas ricas não desenham a hora).
   Widget _withTime(BuildContext context, Widget child) {
     final t = message.timestamp;
-    final hh = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    final hh =
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -1056,6 +1109,7 @@ class _MessageBubble extends ConsumerWidget {
       ],
     );
   }
+
   bool get _isAudio => message.messageType == 'audio';
 
   @override
@@ -1081,7 +1135,10 @@ class _MessageBubble extends ConsumerWidget {
                         radius: 14,
                         backgroundColor: context.colors.surfaceElevated,
                         backgroundImage: avatarUrl != null
-                            ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(28))
+                            ? ResizeImage(
+                                NetworkImage(avatarUrl!),
+                                width: context.decodePx(28),
+                              )
                             : null,
                         child: avatarUrl == null
                             ? Icon(
@@ -1101,12 +1158,111 @@ class _MessageBubble extends ConsumerWidget {
       );
     }
 
+    // Aviso oficial da Brawe: cartão com ícone, tom e botão opcional.
+    if (message.messageType == 'system_notice') {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            SizedBox(
+              width: 32,
+              child: showAvatar ? const BraweOfficialAvatar(radius: 14) : null,
+            ),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SystemNoticeBubble(message: message),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 3, left: 4),
+                    child: Text(
+                      MaterialLocalizations.of(context).formatTimeOfDay(
+                        TimeOfDay.fromDateTime(message.timestamp),
+                        alwaysUse24HourFormat: MediaQuery.of(
+                          context,
+                        ).alwaysUse24HourFormat,
+                      ),
+                      style: TextStyle(
+                        color: context.colors.textTertiary,
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Convite de agência (Brawe Partners): cartão rico com "Abrir convite".
+    if (message.messageType == 'agency_invite' && !message.isBurned) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: isMe
+              ? MainAxisAlignment.end
+              : MainAxisAlignment.start,
+          children: [
+            if (!isMe)
+              SizedBox(
+                width: 32,
+                child: showAvatar
+                    ? CircleAvatar(
+                        radius: 14,
+                        backgroundColor: context.colors.surfaceElevated,
+                        backgroundImage: avatarUrl != null
+                            ? ResizeImage(
+                                NetworkImage(avatarUrl!),
+                                width: context.decodePx(28),
+                              )
+                            : null,
+                        child: avatarUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 14,
+                                color: context.colors.textTertiary,
+                              )
+                            : null,
+                      )
+                    : null,
+              ),
+            Flexible(
+              child: AgencyInviteBubble(message: message, isMe: isMe),
+            ),
+          ],
+        ),
+      );
+    }
+
     Widget content;
     if (message.isBurned) {
       content = _BurnedPlaceholder(isMe: isMe);
     } else if (_isGif) {
       final gifUrl = message.content.substring(4); // strip 'gif:'
       content = _GifBubbleContent(gifUrl: gifUrl, isMe: isMe);
+    } else if (message.messageType == 'gif' && _gifAttachment != null) {
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GifBubble(gif: _gifAttachment!, borderRadius: 14),
+          const SizedBox(height: 3),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, right: 4, bottom: 1),
+            child: Text(
+              '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 10,
+              ),
+            ),
+          ),
+        ],
+      );
     } else if (message.messageType == 'image' && message.isViewOnce) {
       // Visualização única: a foto NUNCA aparece na conversa (nem para quem
       // enviou). Quem recebe toca para abrir uma vez; depois vira "Aberta".
@@ -1162,7 +1318,10 @@ class _MessageBubble extends ConsumerWidget {
       content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
-        children: [ForwardedLabel(isMe: isMe), content],
+        children: [
+          ForwardedLabel(isMe: isMe),
+          content,
+        ],
       );
     }
 
@@ -1179,22 +1338,36 @@ class _MessageBubble extends ConsumerWidget {
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: isMe && !_isImage && !message.isBurned
+            gradient:
+                isMe &&
+                    !(_isImage || _gifAttachment != null) &&
+                    !message.isBurned
                 ? const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [AppColors.braweBlue, AppColors.braweSky],
                   )
                 : null,
-            color: (!isMe || _isImage || message.isBurned)
+            color:
+                (!isMe ||
+                    _isImage ||
+                    _gifAttachment != null ||
+                    message.isBurned)
                 ? context.colors.surfaceHighest
                 : null,
-            border: (!isMe || _isImage || message.isBurned)
+            border:
+                (!isMe ||
+                    _isImage ||
+                    _gifAttachment != null ||
+                    message.isBurned)
                 ? Border.all(
                     color: context.colors.border.withValues(alpha: 0.15),
                   )
                 : null,
-            boxShadow: isMe && !_isImage && !message.isBurned
+            boxShadow:
+                isMe &&
+                    !(_isImage || _gifAttachment != null) &&
+                    !message.isBurned
                 ? [
                     BoxShadow(
                       color: AppColors.braweBlue.withValues(alpha: 0.35),
@@ -1204,7 +1377,7 @@ class _MessageBubble extends ConsumerWidget {
                   ]
                 : null,
           ),
-          padding: _isImage && !message.isBurned
+          padding: (_isImage || _gifAttachment != null) && !message.isBurned
               ? const EdgeInsets.all(3)
               : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: content,
@@ -1240,7 +1413,10 @@ class _MessageBubble extends ConsumerWidget {
                         radius: 14,
                         backgroundColor: context.colors.surfaceElevated,
                         backgroundImage: avatarUrl != null
-                            ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(28))
+                            ? ResizeImage(
+                                NetworkImage(avatarUrl!),
+                                width: context.decodePx(28),
+                              )
                             : null,
                         child: avatarUrl == null
                             ? Icon(
@@ -1314,9 +1490,7 @@ class _MessageBubble extends ConsumerWidget {
                       ],
                     ),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: context.colors.border,
-                    ),
+                    border: Border.all(color: context.colors.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1393,8 +1567,10 @@ class _MessageBubble extends ConsumerWidget {
                 ),
                 onTap: () async {
                   Navigator.pop(sheetCtx);
-                  final text =
-                      await showEditMessageSheet(context, message.content);
+                  final text = await showEditMessageSheet(
+                    context,
+                    message.content,
+                  );
                   if (text != null) {
                     await notifier.editMessage(message.id, text);
                   }
@@ -1595,9 +1771,7 @@ class _TextBubbleContent extends ConsumerWidget {
                   ? '${S.of(context).chatEdited} · ${_formatTime(message.timestamp)}'
                   : _formatTime(message.timestamp),
               style: TextStyle(
-                color: isMe
-                    ? Colors.white70
-                    : context.colors.textSecondary,
+                color: isMe ? Colors.white70 : context.colors.textSecondary,
                 fontSize: 10,
               ),
             ),
@@ -1729,7 +1903,7 @@ class _ImageBubbleContent extends StatelessWidget {
               child: _isLocal
                   ? Image.file(File(message.content), fit: BoxFit.cover)
                   : CachedNetworkImage(
-                    memCacheWidth: context.decodeScreenPx,
+                      memCacheWidth: context.decodeScreenPx,
                       imageUrl: message.content,
                       fit: BoxFit.cover,
                       placeholder: (_, _) => const Center(
@@ -1772,10 +1946,7 @@ class _ImageBubbleContent extends StatelessWidget {
                       SizedBox(width: 4),
                       Text(
                         S.of(context).chatDetailViewOnceBadge,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ],
                   ),
@@ -1884,10 +2055,7 @@ class _ViewOnceBubbleContent extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(color: sub, fontSize: 11.5),
-                  ),
+                  Text(subtitle, style: TextStyle(color: sub, fontSize: 11.5)),
                 ],
               ),
             ),
@@ -1963,7 +2131,7 @@ class _ImageViewerPage extends StatelessWidget {
           child: isLocal
               ? Image.file(File(message.content))
               : CachedNetworkImage(
-                memCacheWidth: context.decodeScreenPx,
+                  memCacheWidth: context.decodeScreenPx,
                   imageUrl: message.content,
                   fit: BoxFit.contain,
                   placeholder: (_, _) => const CircularProgressIndicator(
@@ -2119,9 +2287,9 @@ class _ComposerState extends ConsumerState<_Composer>
     final perm = await _recorder.hasPermission();
     if (!perm) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).chatMicDenied)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.of(context).chatMicDenied)));
       }
       return;
     }
@@ -2187,11 +2355,7 @@ class _ComposerState extends ConsumerState<_Composer>
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        border: Border(
-          top: BorderSide(
-            color: context.colors.border,
-          ),
-        ),
+        border: Border(top: BorderSide(color: context.colors.border)),
       ),
       child: SafeArea(
         top: false,
@@ -2211,9 +2375,7 @@ class _ComposerState extends ConsumerState<_Composer>
                         decoration: BoxDecoration(
                           color: context.colors.surfaceHighest,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: context.colors.border,
-                          ),
+                          border: Border.all(color: context.colors.border),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -2343,7 +2505,15 @@ class _ComposerState extends ConsumerState<_Composer>
                                         hintStyle: TextStyle(
                                           color: context.colors.textSecondary,
                                         ),
+                                        // A pílula do composer já é o fundo: anula o
+                                        // fill/bordas do inputDecorationTheme global.
+                                        filled: false,
                                         border: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        disabledBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        focusedErrorBorder: InputBorder.none,
                                         contentPadding:
                                             const EdgeInsets.symmetric(
                                               horizontal: 16,
@@ -2352,6 +2522,22 @@ class _ComposerState extends ConsumerState<_Composer>
                                       ),
                                     ),
                                   ),
+                                  // GIF (GIPHY): some enquanto há texto, para dar espaço ao campo.
+                                  if (!widget.hasText)
+                                    IconButton(
+                                      tooltip: S.of(context).gifButtonSemantics,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 36,
+                                        minHeight: 44,
+                                      ),
+                                      icon: Icon(
+                                        LucideIcons.imagePlay,
+                                        size: 22,
+                                        color: context.colors.textSecondary,
+                                      ),
+                                      onPressed: _pickGif,
+                                    ),
                                   // Emoji ⇄ teclado: o painel abre no
                                   // lugar do teclado e o texto continua
                                   // visível; o emoji entra no campo (não
@@ -2448,6 +2634,17 @@ class _ComposerState extends ConsumerState<_Composer>
     );
   }
 
+  /// Abre o seletor de GIFs e envia o escolhido como DM `gif`.
+  Future<void> _pickGif() async {
+    _focus.unfocus();
+    final gif = await showGifPicker(context);
+    if (gif == null || !mounted) return;
+    await ref
+        .read(chatDetailViewModelProvider(widget.conversationId).notifier)
+        .sendGif(gif);
+    widget.onScrollToBottom();
+  }
+
   /// Localização atual: confirma, pede permissão e envia.
   Future<void> _sendLocation() async {
     final s = S.of(context);
@@ -2479,10 +2676,12 @@ class _ComposerState extends ConsumerState<_Composer>
       messenger.showSnackBar(SnackBar(content: Text(s.chatLocationDenied)));
       return;
     }
-    messenger.showSnackBar(SnackBar(
-      content: Text(s.chatLocationGetting),
-      duration: const Duration(seconds: 2),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(s.chatLocationGetting),
+        duration: const Duration(seconds: 2),
+      ),
+    );
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -2503,8 +2702,17 @@ class _ComposerState extends ConsumerState<_Composer>
     final res = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const [
-        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
-        'txt', 'csv', 'zip', 'rar',
+        'pdf',
+        'doc',
+        'docx',
+        'xls',
+        'xlsx',
+        'ppt',
+        'pptx',
+        'txt',
+        'csv',
+        'zip',
+        'rar',
       ],
     );
     final f = res?.files.singleOrNull;
@@ -2521,46 +2729,65 @@ class _ComposerState extends ConsumerState<_Composer>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      // Largura total como as demais gavetas (sem isso a gaveta encolhia até a
+      // largura da fileira de botões e ficava estreita, centralizada).
+      constraints: const BoxConstraints(maxWidth: 640),
+      isScrollControlled: true,
       builder: (sheetCtx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _AttachOption(
-                icon: Icons.photo,
-                label: S.of(context).chatDetailAttachGallery,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  widget.onPickImage(ImageSource.gallery);
-                },
-              ),
-              _AttachOption(
-                icon: Icons.camera_alt,
-                label: S.of(context).chatDetailAttachCamera,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  widget.onPickImage(ImageSource.camera);
-                },
-              ),
-              _AttachOption(
-                icon: Icons.location_on,
-                label: S.of(context).chatDetailAttachLocation,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  _sendLocation();
-                },
-              ),
-              _AttachOption(
-                icon: Icons.insert_drive_file,
-                label: S.of(context).chatDetailAttachFile,
-                onTap: () {
-                  Navigator.pop(sheetCtx);
-                  _pickFile();
-                },
-              ),
-            ],
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: context.colors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Row(
+                  children: [
+                    _AttachOption(
+                      icon: LucideIcons.image,
+                      label: S.of(context).chatDetailAttachGallery,
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        widget.onPickImage(ImageSource.gallery);
+                      },
+                    ),
+                    _AttachOption(
+                      icon: LucideIcons.camera,
+                      label: S.of(context).chatDetailAttachCamera,
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        widget.onPickImage(ImageSource.camera);
+                      },
+                    ),
+                    _AttachOption(
+                      icon: LucideIcons.mapPin,
+                      label: S.of(context).chatDetailAttachLocation,
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        _sendLocation();
+                      },
+                    ),
+                    _AttachOption(
+                      icon: LucideIcons.fileText,
+                      label: S.of(context).chatDetailAttachFile,
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        _pickFile();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2679,11 +2906,7 @@ class _MicButton extends StatelessWidget {
 }
 
 class _IconRoundButton extends StatelessWidget {
-  const _IconRoundButton({
-    required this.icon,
-    required this.onTap,
-    this.tint,
-  });
+  const _IconRoundButton({required this.icon, required this.onTap, this.tint});
   final IconData icon;
   final VoidCallback onTap;
   final Color? tint;
@@ -2744,32 +2967,42 @@ class _AttachOption extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
+    return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: context.colors.background,
-                shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: context.colors.accentPrimary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: context.colors.accentPrimary,
+                  size: 24,
+                ),
               ),
-              child: Icon(icon, color: AppColors.braweBlue, size: 26),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: context.colors.textSecondary,
-                fontSize: 11,
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -2843,7 +3076,6 @@ String _relative(BuildContext context, DateTime dt) {
 // Shared post preview card (Instagram-like rich link preview inside DM)
 // ---------------------------------------------------------------------------
 
-
 /// Provider de busca de post para preview no chat (cacheado por postId).
 final sharedPostPreviewProvider = FutureProvider.autoDispose
     .family<Post, String>((ref, postId) async {
@@ -2864,9 +3096,7 @@ class _SharedPostPreview extends ConsumerWidget {
     final bg = isMe
         ? context.colors.surface
         : context.colors.background.withValues(alpha: 0.55);
-    final border = isMe
-        ? Colors.white24
-        : context.colors.border;
+    final border = isMe ? Colors.white24 : context.colors.border;
 
     return GestureDetector(
       onTap: () => _openPost(context),
@@ -2894,9 +3124,11 @@ class _SharedPostPreview extends ConsumerWidget {
       children: [
         if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
           AspectRatio(
-            aspectRatio: isVideoMedia(mediaType: post.mediaType, url: post.imageUrl)
+            aspectRatio:
+                isVideoMedia(mediaType: post.mediaType, url: post.imageUrl)
                 ? feedFrameAspect(
-                    post.aspectRatio ?? MediaAspectCache.get(post.imageUrl))
+                    post.aspectRatio ?? MediaAspectCache.get(post.imageUrl),
+                  )
                 : 1,
             child: isVideoMedia(mediaType: post.mediaType, url: post.imageUrl)
                 ? Container(
@@ -2959,7 +3191,7 @@ class _SharedPostPreview extends ConsumerWidget {
                     ),
                   )
                 : CachedNetworkImage(
-                  memCacheWidth: context.decodePx(280),
+                    memCacheWidth: context.decodePx(280),
                     imageUrl: post.imageUrl!,
                     fit: BoxFit.cover,
                     placeholder: (_, _) =>
@@ -2987,7 +3219,10 @@ class _SharedPostPreview extends ConsumerWidget {
                     backgroundImage:
                         (post.author.avatarUrl != null &&
                             post.author.avatarUrl!.isNotEmpty)
-                        ? ResizeImage(NetworkImage(post.author.avatarUrl!), width: context.decodePx(22))
+                        ? ResizeImage(
+                            NetworkImage(post.author.avatarUrl!),
+                            width: context.decodePx(22),
+                          )
                         : null,
                     child:
                         (post.author.avatarUrl == null ||
@@ -3012,7 +3247,8 @@ class _SharedPostPreview extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (post.author.isVerified) const VerifiedBadge(size: 13, gap: 3),
+                  if (post.author.isVerified)
+                    const VerifiedBadge(size: 13, gap: 3),
                 ],
               ),
               if (post.content.isNotEmpty) ...[
@@ -3251,9 +3487,9 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
     final perm = await _recorder.hasPermission();
     if (!perm) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).chatMicDenied)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(S.of(context).chatMicDenied)));
         Navigator.pop(context);
       }
       return;
@@ -3631,7 +3867,9 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: progressValue,
-                    backgroundColor: widget.isMe ? Colors.white.withValues(alpha: 0.2) : context.colors.border,
+                    backgroundColor: widget.isMe
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : context.colors.border,
                     valueColor: AlwaysStoppedAnimation(
                       widget.isMe ? Colors.white : context.colors.accentPrimary,
                     ),
@@ -3713,9 +3951,7 @@ class _ReplyQuote extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isMe
-                  ? Colors.white70
-                  : context.colors.textSecondary,
+              color: isMe ? Colors.white70 : context.colors.textSecondary,
               fontSize: 12,
               height: 1.2,
             ),
@@ -3754,9 +3990,7 @@ class _ReactionChips extends StatelessWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: context.colors.border,
-                  ),
+                  border: Border.all(color: context.colors.border),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -4245,9 +4479,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
     return SafeArea(
       top: false,
       child: SizedBox(
-        height: widget.inline
-            ? 280
-            : MediaQuery.of(context).size.height * 0.45,
+        height: widget.inline ? 280 : MediaQuery.of(context).size.height * 0.45,
         child: Column(
           children: [
             if (!widget.inline) ...[
@@ -4311,7 +4543,9 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                               children: [
                                 Icon(
                                   Icons.gif,
-                                  color: selected ? Colors.white : context.colors.accentPrimary,
+                                  color: selected
+                                      ? Colors.white
+                                      : context.colors.accentPrimary,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 4),
@@ -4569,10 +4803,7 @@ class _LiveInviteCard extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.braweBlue,
-                              AppColors.braweSky,
-                            ],
+                            colors: [AppColors.braweBlue, AppColors.braweSky],
                           ),
                         ),
                         child: Center(
@@ -4621,11 +4852,7 @@ class _LiveInviteCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.circle,
-                                color: Colors.white,
-                                size: 8,
-                              ),
+                              Icon(Icons.circle, color: Colors.white, size: 8),
                               SizedBox(width: 4),
                               Text(
                                 S.of(context).liveBadgeLive,
@@ -4665,7 +4892,10 @@ class _LiveInviteCard extends StatelessWidget {
                           backgroundImage:
                               (streamerAvatar != null &&
                                   streamerAvatar.isNotEmpty)
-                              ? ResizeImage(NetworkImage(streamerAvatar), width: context.decodePx(28))
+                              ? ResizeImage(
+                                  NetworkImage(streamerAvatar),
+                                  width: context.decodePx(28),
+                                )
                               : null,
                           child:
                               (streamerAvatar == null || streamerAvatar.isEmpty)
@@ -4762,7 +4992,6 @@ class _LiveInviteCard extends StatelessWidget {
   }
 }
 
-
 /// Rótulo curto para citar mensagens que não são texto (imagem, áudio,
 /// story, cofre, localização, arquivo). `null` = é texto, usar o conteúdo.
 String? _richPreviewLabel(S s, String type, String content) {
@@ -4771,6 +5000,8 @@ String? _richPreviewLabel(S s, String type, String content) {
       return s.chatDetailReplyImagePreview;
     case 'audio':
       return '🎤';
+    case 'agency_invite':
+      return '🤝 ${s.agencyChatPreview}';
     case 'location':
       return '📍 ${s.chatLocationTitle}';
     case 'story_gift':

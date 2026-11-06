@@ -78,6 +78,8 @@ class SettingsViewModel extends _$SettingsViewModel {
       'notifications_messages' => current.copyWith(notificationsMessages: value),
       'privacy_show_earnings' => current.copyWith(privacyShowEarnings: value),
       'privacy_show_viewers' => current.copyWith(privacyShowViewers: value),
+      'privacy_show_account_type' =>
+        current.copyWith(privacyShowAccountType: value),
       'sounds_enabled' => current.copyWith(soundsEnabled: value),
       _ => current,
     };

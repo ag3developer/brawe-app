@@ -33,7 +33,7 @@ final class QuestsViewModelProvider
   QuestsViewModel create() => QuestsViewModel();
 }
 
-String _$questsViewModelHash() => r'c7054de0d7fe83fc091aa19e268d884b5b17a227';
+String _$questsViewModelHash() => r'c89d7ab3ff0389ab2b7b00a4a4eef6a707689fa4';
 
 abstract class _$QuestsViewModel extends $AsyncNotifier<QuestsData> {
   FutureOr<QuestsData> build();

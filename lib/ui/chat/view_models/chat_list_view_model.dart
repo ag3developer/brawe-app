@@ -198,9 +198,11 @@ class ChatListViewModel extends _$ChatListViewModel {
   void _sortPinnedFirst() {
     final list = [...state.conversations];
     // Estável: fixadas primeiro, mantendo a ordem relativa.
-    final pinned = list.where((c) => c.isPinned).toList();
-    final rest = list.where((c) => !c.isPinned).toList();
-    state = state.copyWith(conversations: [...pinned, ...rest]);
+    // A conversa oficial da Brawe fica sempre no topo.
+    final system = list.where((c) => c.isSystem).toList();
+    final pinned = list.where((c) => c.isPinned && !c.isSystem).toList();
+    final rest = list.where((c) => !c.isPinned && !c.isSystem).toList();
+    state = state.copyWith(conversations: [...system, ...pinned, ...rest]);
   }
 
   Future<void> deleteConversation(String conversationId) async {

@@ -26,7 +26,8 @@ import '../../shared/widgets/volume_mixer_sheet.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
-import '../view_models/stories_view_model.dart';
+import '../view_models/video_upload_manager.dart';
+import 'story_rich_text.dart';
 import 'story_video_trim_screen.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -97,7 +98,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
   ///
   /// Gerada UMA VEZ por instância do composer (initState), usada em todos
   /// os segmentos do mesmo upload e descartada quando a tela é fechada.
-  final String _idempotencyKey = const Uuid().v4();
+  String _idempotencyKey = const Uuid().v4();
 
   // ── Brawe Sound: música anexada ao story (opcional) ───────────────
   Sound? _selectedSound;
@@ -805,16 +806,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
 
     setState(() => _isPublishing = true);
     try {
-      final notifier = ref.read(storiesViewModelProvider.notifier);
-
-      // Duração real do vídeo (em segundos), lida do VideoPlayerController.
-      // Backend (POST /stories/upload) aceita `duration_seconds` no range
-      // [1, 60]. Antes deixávamos NULL e o viewer detectava em runtime do
-      // <video> — funciona, mas perde a info útil pra UI (badge no thumb,
-      // analytics, throttle de bandwidth). Agora enviamos sempre que temos.
-      //
-      // Clampa em [1, 60] pra nunca rejeitar 422 do FastAPI: se o vídeo
-      // tem 60.4s por arredondamento do encoder, vai como 60.
+      // Duração real do vídeo (s), clampada em [1, 60] (limite do backend).
       int? videoDurSec() {
         if (!_isVideo) return null;
         final d = _videoCtrl?.value.duration;
@@ -822,114 +814,65 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
         return d.inSeconds.clamp(1, 60);
       }
 
-      // Publica multi-segmento (cada parte vira 1 story sequencial).
-      // IMPORTANTE: cada segmento usa uma idempotency key DERIVADA da
-      // master key (key + ":" + index). Assim, se a request do segmento
-      // 2 falhar e o usuário tentar novamente, o backend vê que segmento
-      // 0 e 1 já foram processados (mesma key:0 / key:1) e devolve esses
-      // registros sem duplicar — só cria o segmento 2 novo.
-      //
-      // No fluxo "Opção B" (vídeo único até 60s), `_videoSegments.length`
-      // é tipicamente 1 e cai no `else` abaixo. O `if` só executa em
-      // cenários legados (gravação multi-segmento, raro).
-      if (_isVideo && _videoSegments.length > 1) {
-        // Em multi-segmento NÃO temos a duração de cada segmento isolado
-        // (só do composto exibido no preview). Deixa NULL — viewer detecta.
-        for (int i = 0; i < _videoSegments.length; i++) {
-          await notifier.createStory(
-            localFilePath: _videoSegments[i].path,
-            // Caption e música apenas no primeiro segmento (padrão Instagram)
-            caption: i == 0 ? caption : null,
-            originPostId: widget.initialOriginPostId,
-            idempotencyKey: '$_idempotencyKey:$i',
-            soundId: i == 0 ? _selectedSound?.id : null,
-            soundTrimStartMs: i == 0 ? _soundTrimStartMs : 0,
-            soundTrimEndMs: i == 0 ? _soundTrimEndMs : null,
-            soundVolume: i == 0 ? _soundVolume : 1.0,
-            originalAudioVolume: i == 0 ? _originalAudioVolume : 1.0,
-            // Textos do editor (PNG transparente) — só no 1º segmento.
-            overlayPath: i == 0 ? overlayImage?.path : null,
+      // Tudo que depende de `ref`/`context` é lido ANTES de qualquer await e
+      // o envio sai da tela: o gerenciador global (não autoDispose) faz o
+      // POST, mostra o progresso na pílula e refaz o trilho de stories.
+      // Assim fechar/trocar de tela durante o upload nunca vira "erro" falso.
+      final manager = ref.read(videoUploadManagerProvider.notifier);
+      final since = DateTime.now();
+      final segments = _isVideo && _videoSegments.length > 1
+          ? _videoSegments
+          : const <File>[];
+
+      if (segments.isNotEmpty) {
+        // Multi-segmento legado: 1 job por parte, key derivada (key:i).
+        for (int i = 0; i < segments.length; i++) {
+          manager.enqueue(
+            VideoUploadRequest(
+              videoPath: segments[i].path,
+              content: i == 0 ? (caption ?? '') : '',
+              soundId: i == 0 ? _selectedSound?.id : null,
+              soundTrimStartMs: i == 0 ? _soundTrimStartMs : 0,
+              soundTrimEndMs: i == 0 ? _soundTrimEndMs : null,
+              soundVolume: i == 0 ? _soundVolume : 1.0,
+              originalAudioVolume: i == 0 ? _originalAudioVolume : 1.0,
+              storyKey: '$_idempotencyKey:$i',
+              storyOverlayPath: i == 0 ? overlayImage?.path : null,
+              storyOriginPostId: widget.initialOriginPostId,
+              storyIsVideo: true,
+              storySince: since,
+            ),
           );
         }
       } else {
-        // Foto: usa o PNG renderizado (com transform + textos) se disponível.
-        // Vídeo: arquivo único (do trim, gravação 60s, ou galeria).
+        // Foto: PNG renderizado (transform + textos). Vídeo: arquivo único.
         final pathToUpload = flattenedImage?.path ?? _file!.path;
-        await notifier.createStory(
-          localFilePath: pathToUpload,
-          caption: caption,
-          durationSeconds: videoDurSec(),
-          originPostId: widget.initialOriginPostId,
-          idempotencyKey: _idempotencyKey,
-          soundId: _selectedSound?.id,
-          soundTrimStartMs: _soundTrimStartMs,
-          soundTrimEndMs: _soundTrimEndMs,
-          // Fase D: mix de volumes definido pelo usuário no
-          // `VolumeMixerSheet` (default 1.0/1.0 quando não ajustado).
-          soundVolume: _soundVolume,
-          originalAudioVolume: _originalAudioVolume,
-          // Vídeo: camadas de texto como PNG transparente 9:16 que o
-          // viewer desenha por cima (null em foto/sem textos).
-          overlayPath: overlayImage?.path,
+        manager.enqueue(
+          VideoUploadRequest(
+            videoPath: pathToUpload,
+            content: caption ?? '',
+            coverPath: _isVideo ? null : pathToUpload,
+            durationSec: videoDurSec()?.toDouble(),
+            soundId: _selectedSound?.id,
+            soundTrimStartMs: _soundTrimStartMs,
+            soundTrimEndMs: _soundTrimEndMs,
+            soundVolume: _soundVolume,
+            originalAudioVolume: _originalAudioVolume,
+            storyKey: _idempotencyKey,
+            storyOverlayPath: overlayImage?.path,
+            storyOriginPostId: widget.initialOriginPostId,
+            storyIsVideo: _isVideo,
+            storySince: since,
+          ),
         );
       }
       if (!mounted) return;
-      AppSnackBar.showSuccess(
-        context,
-        _videoSegments.length > 1
-            ? S
-                  .of(context)
-                  .composerMultipleStoriesPublished(_videoSegments.length)
-            : S.of(context).composerStoryPublished,
-      );
       Navigator.of(context).pop(true);
-    } on DioException catch (e) {
-      // 🔍 Heurística importante:
-      // Mesmo recebendo DioException, o BACKEND pode ter persistido o
-      // story (timeout do TCP no upload de 50MB em 4G fraco é comum).
-      // Se for `connectionTimeout`/`receiveTimeout`/`sendTimeout` E for
-      // a primeira tentativa, mostramos um aviso AMBÍGUO (não "falha"
-      // explícita) e deixamos o usuário voltar pra tela de stories — o
-      // feed que recarrega vai mostrar se foi publicado ou não.
-      //
-      // Também tratamos 500 (`badResponse`) como AMBÍGUO: o endpoint
-      // POST /stories/upload faz o commit principal do story e SÓ DEPOIS
-      // roda passos "extra" (incrementar contagem de uso da música,
-      // buscar preview da faixa para a resposta). Se qualquer um desses
-      // passos pós-commit falhar no servidor, o cliente recebe 500 —
-      // mas o story JÁ ESTÁ publicado e visível no feed. Sem essa
-      // heurística, o usuário via "falha ao publicar" para um story que
-      // na verdade foi criado com sucesso (bug relatado: "story aparece
-      // como erro, mas já está publicado quando eu vou ver").
-      //
-      // Em todos os outros casos (4xx, sem rede, etc) é uma falha real
-      // e podemos liberar o lock pra ele tentar de novo (com a mesma
-      // idempotency key — backend deduplicará se já gravou).
-      if (!mounted) return;
-      final isTimeout =
-          e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout;
-      final isServerError =
-          e.type == DioExceptionType.badResponse &&
-          (e.response?.statusCode ?? 0) >= 500;
-      if (isTimeout || isServerError) {
-        AppSnackBar.showWarning(
-          context,
-          S.of(context).composerPublishTimeoutMaybe,
-        );
-        // Volta pro feed pra ele ver se chegou (o feed recarrega).
-        Navigator.of(context).pop(true);
-        return;
-      }
-      AppSnackBar.showError(context, S.of(context).composerPublishError);
     } catch (_) {
       if (!mounted) return;
       AppSnackBar.showError(context, S.of(context).composerPublishError);
     } finally {
       if (mounted) setState(() => _isPublishing = false);
-      // Libera o lock APENAS se a tela ainda está aberta — caso de erro.
-      // No caminho feliz a tela já foi pop'ada e o lock vai com ela.
       if (mounted) _publishInFlight = false;
     }
   }
@@ -1415,6 +1358,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
         }
         await _videoCtrl?.dispose();
         _videoCtrl = null;
+        // Novo rascunho = nova Idempotency-Key (senão o servidor devolveria
+        // o story anterior em vez de criar o novo).
+        _idempotencyKey = const Uuid().v4();
         // Reseta estado de captura para um próximo take.
         _videoSegments.clear();
         _previousSegmentsTotal = Duration.zero;
@@ -2036,7 +1982,9 @@ class _StoryEditorState extends State<_StoryEditor> {
 
   // ── Modo texto (compose) ─────────────────────────────────────────────
   bool _composing = false;
-  final TextEditingController _composeCtrl = TextEditingController();
+  final StoryRichTextController _composeCtrl = StoryRichTextController(
+    styleFor: (c) => TextStyle(color: c),
+  );
   Color _cColor = Colors.white;
   _TextBg _cBg = _TextBg.none;
   TextAlign _cAlign = TextAlign.center;
@@ -2112,10 +2060,7 @@ class _StoryEditorState extends State<_StoryEditor> {
 
   void _openCompose([_TextLayer? layer]) {
     if (widget.isPublishing || _exporting) return;
-    _composeCtrl.text = layer?.text ?? '';
-    _composeCtrl.selection = TextSelection.collapsed(
-      offset: _composeCtrl.text.length,
-    );
+    _composeCtrl.load(layer?.text ?? '', layer?.spans ?? const []);
     if (layer != null) {
       _cColor = layer.color;
       _cBg = layer.bg;
@@ -2130,9 +2075,22 @@ class _StoryEditorState extends State<_StoryEditor> {
     setState(() => _composing = true);
   }
 
+  /// Seleção → pinta só o trecho; cursor → cor de todo o texto (e das
+  /// próximas letras digitadas).
+  void _onPickColor(Color c) {
+    if (_composeCtrl.pickColor(c.toARGB32(), baseValue: _cColor.toARGB32())) {
+      return;
+    }
+    setState(() => _cColor = c);
+  }
+
   void _commitCompose() {
     if (!_composing) return;
-    final txt = _composeCtrl.text.trim();
+    final raw = _composeCtrl.text;
+    final txt = raw.trim();
+    // `trim` desloca o texto: reposiciona as faixas de cor junto.
+    final lead = raw.length - raw.trimLeft().length;
+    final spans = sliceSpans(_composeCtrl.spans, lead, lead + txt.length);
     final editing = _layerById(_store.editingId);
     if (editing != null) {
       final i = _store.indexOf(editing.id);
@@ -2142,6 +2100,7 @@ class _StoryEditorState extends State<_StoryEditor> {
       } else {
         _store.layers[i] = editing.copyWith(
           text: txt,
+          spans: spans,
           color: _cColor,
           bg: _cBg,
           align: _cAlign,
@@ -2154,6 +2113,7 @@ class _StoryEditorState extends State<_StoryEditor> {
         _TextLayer(
           id: 'l${_layerSeq++}',
           text: txt,
+          spans: spans,
           color: _cColor,
           bg: _cBg,
           align: _cAlign,
@@ -3001,10 +2961,26 @@ class _StoryEditorState extends State<_StoryEditor> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: absorb,
-                child: _InlineColorPalette(
-                  palette: _palette,
-                  selected: _cColor,
-                  onSelect: (c) => setState(() => _cColor = c),
+                child: ListenableBuilder(
+                  listenable: _composeCtrl,
+                  builder: (_, _) {
+                    final sel = _composeCtrl.value.selection;
+                    final ranged = sel.isValid && !sel.isCollapsed;
+                    final spanColor = ranged
+                        ? uniformSpanColor(
+                            _composeCtrl.spans,
+                            sel.start,
+                            sel.end,
+                          )
+                        : null;
+                    return _InlineColorPalette(
+                      palette: _palette,
+                      selected: ranged && spanColor != null
+                          ? Color(spanColor)
+                          : _cColor,
+                      onSelect: _onPickColor,
+                    );
+                  },
                 ),
               ),
             ),
@@ -3059,6 +3035,7 @@ class _TextLayer {
     required this.id,
     required this.text,
     required this.color,
+    this.spans = const [],
     this.center = const Offset(0.5, 0.5),
     this.scale = 1,
     this.rotation = 0,
@@ -3071,6 +3048,9 @@ class _TextLayer {
   final String id;
   final String text;
   final Color color;
+
+  /// Cores por trecho (rich text); vazio = tudo na cor base.
+  final List<StoryColorSpan> spans;
 
   /// Centro NORMALIZADO (0..1) no canvas 9:16 — independe da tela.
   final Offset center;
@@ -3089,6 +3069,7 @@ class _TextLayer {
 
   _TextLayer copyWith({
     String? text,
+    List<StoryColorSpan>? spans,
     Color? color,
     Offset? center,
     double? scale,
@@ -3100,6 +3081,7 @@ class _TextLayer {
   }) => _TextLayer(
     id: id,
     text: text ?? this.text,
+    spans: spans ?? this.spans,
     color: color ?? this.color,
     center: center ?? this.center,
     scale: scale ?? this.scale,
@@ -3187,6 +3169,26 @@ abstract final class _TextLook {
       ];
     }
     return baseFor(font, fontSize).copyWith(color: fg, shadows: shadows);
+  }
+
+  /// Estilo de um trecho colorido. Em fundo sólido, um trecho com a mesma cor
+  /// do fundo usa o contraste (senão sumiria).
+  static TextStyle spanStyle({
+    required Color spanColor,
+    required Color layerColor,
+    required _TextBg bg,
+    required _StoryFont font,
+    required double fontSize,
+  }) {
+    if (bg == _TextBg.solid && spanColor.toARGB32() != layerColor.toARGB32()) {
+      return style(
+        color: layerColor,
+        bg: bg,
+        font: font,
+        fontSize: fontSize,
+      ).copyWith(color: spanColor);
+    }
+    return style(color: spanColor, bg: bg, font: font, fontSize: fontSize);
   }
 
   static BoxDecoration? decoration(Color color, _TextBg bg, double fontSize) {
@@ -3414,16 +3416,27 @@ class _TextLayerView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fs = canvasWidth * _kBaseFontFactor * layer.fontScale;
-    Widget child = Text(
-      layer.text,
+    final baseStyle = _TextLook.style(
+      color: layer.color,
+      bg: layer.bg,
+      font: layer.font,
+      fontSize: fs,
+    );
+    Widget child = Text.rich(
+      buildStoryTextSpan(
+        text: layer.text,
+        spans: layer.spans,
+        baseStyle: baseStyle,
+        styleFor: (c) => _TextLook.spanStyle(
+          spanColor: c,
+          layerColor: layer.color,
+          bg: layer.bg,
+          font: layer.font,
+          fontSize: fs,
+        ),
+      ),
       textAlign: layer.align,
       textWidthBasis: TextWidthBasis.longestLine,
-      style: _TextLook.style(
-        color: layer.color,
-        bg: layer.bg,
-        font: layer.font,
-        fontSize: fs,
-      ),
     );
     final deco = _TextLook.decoration(layer.color, layer.bg, fs);
     if (deco != null) {
@@ -3452,7 +3465,7 @@ class _ComposeTextField extends StatelessWidget {
     required this.hint,
   });
 
-  final TextEditingController controller;
+  final StoryRichTextController controller;
   final Color color;
   final _TextBg bg;
   final TextAlign align;
@@ -3469,6 +3482,17 @@ class _ComposeTextField extends StatelessWidget {
       font: font,
       fontSize: fontSize,
     );
+    controller.styleFor = (c) => _TextLook.spanStyle(
+      spanColor: c,
+      layerColor: color,
+      bg: bg,
+      font: font,
+      fontSize: fontSize,
+    );
+    // Texto livre (padrão Instagram): o `inputDecorationTheme` global do app
+    // é `filled` + OutlineInputBorder — por isso TODOS os estados são
+    // neutralizados aqui, senão vaza a "cápsula" cinza com borda azul.
+    const none = InputBorder.none;
     Widget field = IntrinsicWidth(
       child: TextField(
         controller: controller,
@@ -3478,15 +3502,28 @@ class _ComposeTextField extends StatelessWidget {
         keyboardType: TextInputType.multiline,
         textInputAction: TextInputAction.newline,
         textCapitalization: TextCapitalization.sentences,
-        cursorColor: style.color,
+        cursorColor: Colors.white,
         style: style,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: style.copyWith(
-            color: (style.color ?? Colors.white).withValues(alpha: 0.45),
-            shadows: const [],
+            color: Colors.white.withValues(alpha: 0.6),
+            shadows: [
+              Shadow(
+                color: Colors.black.withValues(alpha: 0.55),
+                blurRadius: fontSize * 0.25,
+              ),
+            ],
           ),
-          border: InputBorder.none,
+          filled: false,
+          fillColor: Colors.transparent,
+          border: none,
+          enabledBorder: none,
+          focusedBorder: none,
+          disabledBorder: none,
+          errorBorder: none,
+          focusedErrorBorder: none,
+          isDense: true,
           isCollapsed: true,
           contentPadding: EdgeInsets.zero,
         ),
@@ -4012,7 +4049,9 @@ class _InlineColorPalette extends StatelessWidget {
       height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Folga à direita: botões flutuantes do sistema não cobrem as
+        // últimas cores — dá para rolar até elas.
+        padding: const EdgeInsets.fromLTRB(16, 0, 72, 0),
         itemCount: palette.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
@@ -4054,3 +4093,61 @@ const List<int> _kTransparentPngBytes = <int>[
   0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, //
   0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82, //
 ];
+
+// ─── Ganchos de teste (widgets privados do editor) ───────────────────────────
+
+@visibleForTesting
+Widget debugStoryComposeField({
+  required StoryRichTextController controller,
+  required Color color,
+  int bgIndex = 0,
+  int fontIndex = 0,
+  TextAlign align = TextAlign.center,
+  double fontSize = 28,
+  double maxWidth = 300,
+  String hint = 'Digite algo...',
+}) => _ComposeTextField(
+  controller: controller,
+  color: color,
+  bg: _TextBg.values[bgIndex],
+  align: align,
+  font: _StoryFont.values[fontIndex],
+  fontSize: fontSize,
+  maxWidth: maxWidth,
+  hint: hint,
+);
+
+@visibleForTesting
+Widget debugStoryTextLayer({
+  required String text,
+  required List<StoryColorSpan> spans,
+  required Color color,
+  int bgIndex = 0,
+  int fontIndex = 0,
+  TextAlign align = TextAlign.center,
+  double canvasWidth = 360,
+  double fontScale = 1,
+}) => _TextLayerView(
+  layer: _TextLayer(
+    id: 't',
+    text: text,
+    spans: spans,
+    color: color,
+    bg: _TextBg.values[bgIndex],
+    font: _StoryFont.values[fontIndex],
+    align: align,
+    fontScale: fontScale,
+  ),
+  canvasWidth: canvasWidth,
+);
+
+@visibleForTesting
+Widget debugStoryColorPalette({
+  required List<Color> palette,
+  required Color selected,
+  required ValueChanged<Color> onSelect,
+}) => _InlineColorPalette(
+  palette: palette,
+  selected: selected,
+  onSelect: onSelect,
+);

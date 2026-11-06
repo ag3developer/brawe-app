@@ -14,6 +14,15 @@ part of 'battle_view_model.dart';
 /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
 /// transmissor). Both receive the same socket events — only widget
 /// rendering differs.
+///
+/// Batalha v2 (BATTLE_V2_CONTRACT):
+/// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+///   ressincronizado ao voltar do background e ao reconectar o socket.
+/// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+/// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+///   `rtc_fallback` atualizam o modo de transmissão.
+/// - Tolerante a backend antigo (campos novos ausentes).
 
 @ProviderFor(BattleViewModel)
 final battleViewModelProvider = BattleViewModelFamily._();
@@ -24,6 +33,15 @@ final battleViewModelProvider = BattleViewModelFamily._();
 /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
 /// transmissor). Both receive the same socket events — only widget
 /// rendering differs.
+///
+/// Batalha v2 (BATTLE_V2_CONTRACT):
+/// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+///   ressincronizado ao voltar do background e ao reconectar o socket.
+/// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+/// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+///   `rtc_fallback` atualizam o modo de transmissão.
+/// - Tolerante a backend antigo (campos novos ausentes).
 final class BattleViewModelProvider
     extends $NotifierProvider<BattleViewModel, AsyncValue<BattleState>> {
   /// Drives all battle-related UI state: scores, timer, phase transitions.
@@ -32,6 +50,15 @@ final class BattleViewModelProvider
   /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
   /// transmissor). Both receive the same socket events — only widget
   /// rendering differs.
+  ///
+  /// Batalha v2 (BATTLE_V2_CONTRACT):
+  /// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+  ///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+  ///   ressincronizado ao voltar do background e ao reconectar o socket.
+  /// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+  /// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+  ///   `rtc_fallback` atualizam o modo de transmissão.
+  /// - Tolerante a backend antigo (campos novos ausentes).
   BattleViewModelProvider._({
     required BattleViewModelFamily super.from,
     required String super.argument,
@@ -76,7 +103,7 @@ final class BattleViewModelProvider
   }
 }
 
-String _$battleViewModelHash() => r'abe3db9a9a5ae7ef748d8e4954434f2c3398b74e';
+String _$battleViewModelHash() => r'18629d596d173f84aef4b8abe6ffaf9d4a8dcd71';
 
 /// Drives all battle-related UI state: scores, timer, phase transitions.
 ///
@@ -84,6 +111,15 @@ String _$battleViewModelHash() => r'abe3db9a9a5ae7ef748d8e4954434f2c3398b74e';
 /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
 /// transmissor). Both receive the same socket events — only widget
 /// rendering differs.
+///
+/// Batalha v2 (BATTLE_V2_CONTRACT):
+/// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+///   ressincronizado ao voltar do background e ao reconectar o socket.
+/// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+/// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+///   `rtc_fallback` atualizam o modo de transmissão.
+/// - Tolerante a backend antigo (campos novos ausentes).
 
 final class BattleViewModelFamily extends $Family
     with
@@ -109,6 +145,15 @@ final class BattleViewModelFamily extends $Family
   /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
   /// transmissor). Both receive the same socket events — only widget
   /// rendering differs.
+  ///
+  /// Batalha v2 (BATTLE_V2_CONTRACT):
+  /// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+  ///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+  ///   ressincronizado ao voltar do background e ao reconectar o socket.
+  /// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+  /// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+  ///   `rtc_fallback` atualizam o modo de transmissão.
+  /// - Tolerante a backend antigo (campos novos ausentes).
 
   BattleViewModelProvider call(String battleId) =>
       BattleViewModelProvider._(argument: battleId, from: this);
@@ -123,6 +168,15 @@ final class BattleViewModelFamily extends $Family
 /// (sobreposto à live do espectador) and `StreamerBattleHud` (HUD do
 /// transmissor). Both receive the same socket events — only widget
 /// rendering differs.
+///
+/// Batalha v2 (BATTLE_V2_CONTRACT):
+/// - Cronômetro pelo relógio do servidor: `offset = server_now − agora local`
+///   e `restante = ends_at − (agora + offset)`, recalculado a cada tick e
+///   ressincronizado ao voltar do background e ao reconectar o socket.
+/// - Contagem 3·2·1 dirigida por `connect:battle:countdown`.
+/// - `seq` descarta `score_update` fora de ordem; `connect:battle:mute`,
+///   `rtc_fallback` atualizam o modo de transmissão.
+/// - Tolerante a backend antigo (campos novos ausentes).
 
 abstract class _$BattleViewModel extends $Notifier<AsyncValue<BattleState>> {
   late final _$args = ref.$arg as String;

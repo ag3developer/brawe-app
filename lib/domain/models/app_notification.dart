@@ -1,4 +1,21 @@
+/// Ator de uma notificação agrupada (quem curtiu/comentou/seguiu…).
+class NotifActor {
+  final String id;
+  final String name;
+  final String? avatar;
+  const NotifActor({required this.id, required this.name, this.avatar});
+
+  factory NotifActor.fromJson(Map<String, dynamic> json) => NotifActor(
+    id: (json['id'] ?? '').toString(),
+    name: (json['name'] ?? json['display_name'] ?? '').toString(),
+    avatar: (json['avatar'] ?? json['avatar_url']) as String?,
+  );
+}
+
 /// Notification domain model. Mirrors brawe-connect GET /notifications response.
+///
+/// Campos de agrupamento (`group_key`, `actors`, `actors_count`, …) são
+/// opcionais: um backend antigo continua funcionando (1 ator = `actor_*`).
 class AppNotification {
   final String id;
   final String type;
@@ -13,6 +30,21 @@ class AppNotification {
   final DateTime? createdAt;
   final bool actorIsVerified;
 
+  /// Chave de agregação (`like:{post}`, `follow:{user}:{dia}`, `gift:{room}`…).
+  final String? groupKey;
+
+  /// Últimos atores (até 3), mais recente primeiro.
+  final List<NotifActor> actors;
+
+  /// Total de atores distintos do grupo (>= actors.length).
+  final int actorsCount;
+
+  /// Valor acumulado do grupo (ex.: diamantes dos presentes).
+  final int groupValue;
+
+  /// Miniatura do alvo (capa do post).
+  final String? thumbnailUrl;
+
   const AppNotification({
     required this.id,
     required this.type,
@@ -26,9 +58,31 @@ class AppNotification {
     this.linkUrl,
     this.createdAt,
     this.actorIsVerified = false,
+    this.groupKey,
+    this.actors = const [],
+    this.actorsCount = 0,
+    this.groupValue = 0,
+    this.thumbnailUrl,
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    final rawActors = (json['actors'] as List?)
+        ?.whereType<Map>()
+        .map((m) => NotifActor.fromJson(Map<String, dynamic>.from(m)))
+        .where((a) => a.id.isNotEmpty)
+        .toList();
+    final actorId = json['actor_id'] as String?;
+    final actors =
+        rawActors ??
+        [
+          if (actorId != null && actorId.isNotEmpty)
+            NotifActor(
+              id: actorId,
+              name: (json['actor_name'] ?? '').toString(),
+              avatar: json['actor_avatar'] as String?,
+            ),
+        ];
+    final count = (json['actors_count'] as num?)?.toInt() ?? actors.length;
     return AppNotification(
       id: (json['id'] ?? '').toString(),
       type: (json['type'] ?? 'system').toString(),
@@ -46,8 +100,16 @@ class AppNotification {
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
       actorIsVerified: json['actor_is_verified'] == true,
+      groupKey: json['group_key'] as String?,
+      actors: actors,
+      actorsCount: count < actors.length ? actors.length : count,
+      groupValue: (json['group_value'] as num?)?.toInt() ?? 0,
+      thumbnailUrl: json['thumbnail_url'] as String?,
     );
   }
+
+  /// Notificação agrupada de verdade (mais de um evento/ator ou com chave).
+  bool get isGrouped => groupKey != null && groupKey!.isNotEmpty;
 
   AppNotification copyWith({bool? isRead}) {
     return AppNotification(
@@ -63,6 +125,11 @@ class AppNotification {
       linkUrl: linkUrl,
       createdAt: createdAt,
       actorIsVerified: actorIsVerified,
+      groupKey: groupKey,
+      actors: actors,
+      actorsCount: actorsCount,
+      groupValue: groupValue,
+      thumbnailUrl: thumbnailUrl,
     );
   }
 }

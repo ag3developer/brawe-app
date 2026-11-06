@@ -152,6 +152,109 @@ class StoriesRepository {
     }
   }
 
+  /// Publica o story SEM nunca mostrar falso erro.
+  ///
+  /// Reusa [idempotencyKey] em toda tentativa. Se o POST falhar de forma
+  /// ambígua (timeout, queda de conexão, resposta ilegível, 5xx — o
+  /// servidor pode ter gravado antes de responder), confirma com
+  /// `GET /stories/by-key/{key}` (ou, em servidor antigo, procura nos meus
+  /// stories um criado a partir de [since]). Achou → sucesso (devolve o id).
+  /// Só relança o erro quando o servidor confirma que NÃO gravou ou o erro
+  /// é definitivo (4xx).
+  Future<String?> createStoryResilient({
+    required String localFilePath,
+    required String idempotencyKey,
+    required DateTime since,
+    String? myUserId,
+    String? mediaType,
+    String? caption,
+    int? durationSeconds,
+    String? originPostId,
+    String? soundId,
+    int soundTrimStartMs = 0,
+    int? soundTrimEndMs,
+    double soundVolume = 1.0,
+    double originalAudioVolume = 1.0,
+    String? overlayPath,
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final raw = await _service.createStory(
+        filePath: localFilePath,
+        caption: caption,
+        durationSeconds: durationSeconds,
+        originPostId: originPostId,
+        idempotencyKey: idempotencyKey,
+        soundId: soundId,
+        soundTrimStartMs: soundTrimStartMs,
+        soundTrimEndMs: soundTrimEndMs,
+        soundVolume: soundVolume,
+        originalAudioVolume: originalAudioVolume,
+        overlayPath: overlayPath,
+        onSendProgress: onSendProgress,
+        cancelToken: cancelToken,
+      );
+      return raw['id'] as String?;
+    } catch (e) {
+      if (e is DioException) {
+        if (CancelToken.isCancel(e)) rethrow;
+        final code = e.response?.statusCode ?? 0;
+        // 4xx (exceto timeout/conflito) = recusado de verdade.
+        if (code >= 400 && code < 500 && code != 408 && code != 409) {
+          rethrow;
+        }
+      }
+      final found = await findStoryByKey(
+        idempotencyKey,
+        since: since,
+        myUserId: myUserId,
+        mediaType: mediaType,
+        caption: caption,
+      );
+      if (found != null) return found;
+      rethrow;
+    }
+  }
+
+  /// Id do story criado com [key], ou null se (com certeza ou não) não existe.
+  Future<String?> findStoryByKey(
+    String key, {
+    required DateTime since,
+    String? myUserId,
+    String? mediaType,
+    String? caption,
+  }) async {
+    try {
+      final raw = await _service.getStoryByKey(key);
+      return raw['id'] as String?;
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (e.response?.statusCode == 404 &&
+          data is Map &&
+          data['detail'] == 'story_not_found_for_key') {
+        return null; // servidor novo: com certeza não gravou
+      }
+    } catch (_) {}
+    // Servidor sem o endpoint / consulta falhou: olha meus stories recentes.
+    if (myUserId == null || myUserId.isEmpty) return null;
+    try {
+      final groups = await getFeed();
+      final cap = (caption ?? '').trim();
+      final limit = since.subtract(const Duration(minutes: 1));
+      for (final g in groups) {
+        if (g.userId != myUserId) continue;
+        for (final s in g.stories) {
+          if (s.createdAt.isBefore(limit)) continue;
+          if (mediaType != null && s.mediaType != mediaType) continue;
+          if ((s.caption ?? '').trim() != cap) continue;
+          return s.id;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// Stories de um usuário específico (GET /stories/user/{user_id}).
   /// Retorna lista vazia se o usuário não tiver stories ativos.
   Future<List<Story>> getUserStories(String userId) async {

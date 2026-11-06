@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/comment_repository.dart';
+import '../../../domain/models/gif_item.dart';
 import '../../../domain/models/post_comment.dart';
 
 part 'comments_view_model.g.dart';
@@ -11,10 +12,10 @@ class CommentsViewModel extends _$CommentsViewModel {
     return ref.read(commentRepositoryProvider).getComments(postId);
   }
 
-  Future<void> addComment(String content, {String? parentId}) async {
+  Future<void> addComment(String content, {String? parentId, GifAttachment? gif}) async {
     final repo = ref.read(commentRepositoryProvider);
     final newComment =
-        await repo.addComment(postId, content, parentId: parentId);
+        await repo.addComment(postId, content, parentId: parentId, gif: gif);
     final current = state.value ?? [];
     if (parentId == null) {
       state = AsyncData([newComment, ...current]);
@@ -34,6 +35,7 @@ class CommentsViewModel extends _$CommentsViewModel {
             userLiked: c.userLiked,
             createdAt: c.createdAt,
             replies: [...c.replies, newComment],
+            gif: c.gif,
           );
         }
         return c;
@@ -69,6 +71,7 @@ class CommentsViewModel extends _$CommentsViewModel {
           userLiked: !comment.userLiked,
           createdAt: c.createdAt,
           replies: c.replies,
+          gif: c.gif,
         );
       }
       return c;

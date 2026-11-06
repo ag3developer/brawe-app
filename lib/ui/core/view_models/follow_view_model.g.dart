@@ -58,7 +58,7 @@ final class FollowViewModelProvider
   }
 }
 
-String _$followViewModelHash() => r'aa3bac7cd9520b1d15ea367c65e6efdcb9035f51';
+String _$followViewModelHash() => r'2742170b6d22973489626a84987ce490c6af0200';
 
 final class FollowViewModelFamily extends $Family
     with

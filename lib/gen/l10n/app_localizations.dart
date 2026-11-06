@@ -1623,6 +1623,192 @@ abstract class S {
   /// **'O que está acontecendo?'**
   String get postHintWhatsHappening;
 
+  /// No description provided for @postAddPoll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enquete'**
+  String get postAddPoll;
+
+  /// No description provided for @postAddLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Localização'**
+  String get postAddLocation;
+
+  /// No description provided for @pollEditorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enquete'**
+  String get pollEditorTitle;
+
+  /// No description provided for @pollOptionHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Opção {n}'**
+  String pollOptionHint(int n);
+
+  /// No description provided for @pollAddOption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar opção'**
+  String get pollAddOption;
+
+  /// No description provided for @pollRemoveOption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover opção'**
+  String get pollRemoveOption;
+
+  /// No description provided for @pollRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover enquete'**
+  String get pollRemove;
+
+  /// No description provided for @pollDurationLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração'**
+  String get pollDurationLabel;
+
+  /// No description provided for @pollDurationDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 dia} other{{count} dias}}'**
+  String pollDurationDays(int count);
+
+  /// No description provided for @pollRulesHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todas as opções são obrigatórias: de 2 a 4, até 60 caracteres, sem repetir. O voto não pode ser alterado.'**
+  String get pollRulesHint;
+
+  /// No description provided for @pollErrorEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preencha esta opção'**
+  String get pollErrorEmpty;
+
+  /// No description provided for @pollErrorDuplicate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Opção repetida'**
+  String get pollErrorDuplicate;
+
+  /// No description provided for @pollNeedsQuestion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva a pergunta no texto do post'**
+  String get pollNeedsQuestion;
+
+  /// No description provided for @pollBlockedByImage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enquete e foto não podem ser usadas juntas. Remova a foto para criar uma enquete.'**
+  String get pollBlockedByImage;
+
+  /// No description provided for @imageBlockedByPoll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enquete e foto não podem ser usadas juntas. Remova a enquete para anexar uma foto.'**
+  String get imageBlockedByPoll;
+
+  /// No description provided for @pollVotesCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 voto} other{{count} votos}}'**
+  String pollVotesCount(int count);
+
+  /// No description provided for @pollEndsInDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'termina em {count} d'**
+  String pollEndsInDays(int count);
+
+  /// No description provided for @pollEndsInHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'termina em {count} h'**
+  String pollEndsInHours(int count);
+
+  /// No description provided for @pollEndsInMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'termina em {count} min'**
+  String pollEndsInMinutes(int count);
+
+  /// No description provided for @pollEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrada'**
+  String get pollEnded;
+
+  /// No description provided for @pollVoteToSee.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vote para ver os resultados'**
+  String get pollVoteToSee;
+
+  /// No description provided for @pollVoteError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível registrar seu voto. Tente de novo.'**
+  String get pollVoteError;
+
+  /// No description provided for @pollAlreadyVoted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já votou nesta enquete.'**
+  String get pollAlreadyVoted;
+
+  /// No description provided for @pollEndedMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta enquete já foi encerrada.'**
+  String get pollEndedMessage;
+
+  /// No description provided for @pollMyVoteSemantics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu voto'**
+  String get pollMyVoteSemantics;
+
+  /// No description provided for @postLocationRemove.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover localização'**
+  String get postLocationRemove;
+
+  /// No description provided for @postLocationLoading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obtendo sua cidade...'**
+  String get postLocationLoading;
+
+  /// No description provided for @postLocationDenied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem permissão de localização. Libere nos Ajustes para marcar sua cidade.'**
+  String get postLocationDenied;
+
+  /// No description provided for @postLocationServiceOff.
+  ///
+  /// In pt, this message translates to:
+  /// **'A localização do aparelho está desligada.'**
+  String get postLocationServiceOff;
+
+  /// No description provided for @postLocationFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível descobrir sua cidade.'**
+  String get postLocationFailed;
+
+  /// No description provided for @postLocationOpenSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir Ajustes'**
+  String get postLocationOpenSettings;
+
   /// No description provided for @audiencePickerTitle.
   ///
   /// In pt, this message translates to:
@@ -1686,7 +1872,7 @@ abstract class S {
   /// No description provided for @videoCaptionHint.
   ///
   /// In pt, this message translates to:
-  /// **'Escreva uma legenda (opcional)…'**
+  /// **'Escreva uma legenda…'**
   String get videoCaptionHint;
 
   /// No description provided for @videoPublishButton.
@@ -12714,7 +12900,7 @@ abstract class S {
   /// No description provided for @notifFilterAll.
   ///
   /// In pt, this message translates to:
-  /// **'Todas'**
+  /// **'Tudo'**
   String get notifFilterAll;
 
   /// No description provided for @notifFilterLives.
@@ -14360,6 +14546,1572 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Batalha encerrada'**
   String get battleNarrEnded;
+
+  /// No description provided for @agencyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Minha agência'**
+  String get agencyTitle;
+
+  /// No description provided for @agencyPendingInvites.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 convite} other{{count} convites}}'**
+  String agencyPendingInvites(int count);
+
+  /// No description provided for @agencyEmptyBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agências ajudam criadores a crescer: acompanham seus resultados, organizam eventos e apoiam sua rotina de lives.'**
+  String get agencyEmptyBody;
+
+  /// No description provided for @agencyInfoEarningsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Brawe continua pagando seus ganhos diretamente a você. A comissão da agência é paga pela Brawe, nunca descontada de você.'**
+  String get agencyInfoEarningsBody;
+
+  /// No description provided for @agencyInfoOneBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você só pode estar em uma agência. Ao aceitar um convite, os outros pendentes são cancelados.'**
+  String get agencyInfoOneBody;
+
+  /// No description provided for @agencyOpenBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agências podem encontrar você no diretório de criadores e enviar convites. Você decide se aceita.'**
+  String get agencyOpenBody;
+
+  /// No description provided for @agencyInvitesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convites pendentes'**
+  String get agencyInvitesTitle;
+
+  /// No description provided for @agencyInviteTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite de agência'**
+  String get agencyInviteTitle;
+
+  /// No description provided for @agencyContractMonths.
+  ///
+  /// In pt, this message translates to:
+  /// **'{months, plural, =1{1 mês} other{{months} meses}}'**
+  String agencyContractMonths(int months);
+
+  /// No description provided for @agencyContractOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contrato de {duration}'**
+  String agencyContractOf(String duration);
+
+  /// No description provided for @agencyContractLength.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração do contrato'**
+  String get agencyContractLength;
+
+  /// No description provided for @agencyInvitedByTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem convidou'**
+  String get agencyInvitedByTitle;
+
+  /// No description provided for @agencyRoleOwner.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dono da agência'**
+  String get agencyRoleOwner;
+
+  /// No description provided for @agencyRoleManager.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gerente da agência (recrutador)'**
+  String get agencyRoleManager;
+
+  /// No description provided for @agencyRoleAnalyst.
+  ///
+  /// In pt, this message translates to:
+  /// **'Equipe da agência'**
+  String get agencyRoleAnalyst;
+
+  /// No description provided for @agencyRoleUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Representante da agência'**
+  String get agencyRoleUnknown;
+
+  /// No description provided for @agencyInvitedOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite enviado em {date}'**
+  String agencyInvitedOn(String date);
+
+  /// No description provided for @agencyMessageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem da agência'**
+  String get agencyMessageTitle;
+
+  /// No description provided for @agencyWhatChangesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que muda para você'**
+  String get agencyWhatChangesTitle;
+
+  /// No description provided for @agencyTermsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos e condições'**
+  String get agencyTermsTitle;
+
+  /// No description provided for @agencyTermsVersion.
+  ///
+  /// In pt, this message translates to:
+  /// **'Versão {version}'**
+  String agencyTermsVersion(String version);
+
+  /// No description provided for @agencyTermsStandard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos padrão Brawe'**
+  String get agencyTermsStandard;
+
+  /// No description provided for @agencyTermsAddendum.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adendo da agência'**
+  String get agencyTermsAddendum;
+
+  /// No description provided for @agencyTermsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos indisponíveis no momento.'**
+  String get agencyTermsEmpty;
+
+  /// No description provided for @agencyAcceptCheckbox.
+  ///
+  /// In pt, this message translates to:
+  /// **'Li e aceito os termos e condições (versão {version})'**
+  String agencyAcceptCheckbox(String version);
+
+  /// No description provided for @agencyAcceptButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aceitar convite'**
+  String get agencyAcceptButton;
+
+  /// No description provided for @agencyDeclineButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusar'**
+  String get agencyDeclineButton;
+
+  /// No description provided for @agencyAcceptConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entrar na {name}?'**
+  String agencyAcceptConfirmTitle(String name);
+
+  /// No description provided for @agencyAcceptConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu vínculo começa hoje. Antes do fim do contrato, a saída é feita em acordo com a agência.'**
+  String get agencyAcceptConfirmBody;
+
+  /// No description provided for @agencyDeclineConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusar convite?'**
+  String get agencyDeclineConfirmTitle;
+
+  /// No description provided for @agencyDeclineConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusar não tem nenhum efeito na sua conta. A agência verá que o convite foi recusado.'**
+  String get agencyDeclineConfirmBody;
+
+  /// No description provided for @agencyAcceptedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você agora faz parte de {name}'**
+  String agencyAcceptedSnack(String name);
+
+  /// No description provided for @agencyDeclinedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite recusado'**
+  String get agencyDeclinedSnack;
+
+  /// No description provided for @agencyLeftSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você saiu da agência'**
+  String get agencyLeftSnack;
+
+  /// No description provided for @agencyInviteUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este convite não está mais disponível.'**
+  String get agencyInviteUnavailable;
+
+  /// No description provided for @agencyCreatorsCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 criador} other{{count} criadores}}'**
+  String agencyCreatorsCount(int count);
+
+  /// No description provided for @agencyPartnerSince.
+  ///
+  /// In pt, this message translates to:
+  /// **'Parceira desde {date}'**
+  String agencyPartnerSince(String date);
+
+  /// No description provided for @agencyTrialBadge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em teste'**
+  String get agencyTrialBadge;
+
+  /// No description provided for @agencyContractTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contrato'**
+  String get agencyContractTitle;
+
+  /// No description provided for @agencyContractPeriod.
+  ///
+  /// In pt, this message translates to:
+  /// **'{start} a {end}'**
+  String agencyContractPeriod(String start, String end);
+
+  /// No description provided for @agencyDaysLeft.
+  ///
+  /// In pt, this message translates to:
+  /// **'{days, plural, =0{Termina hoje} =1{Falta 1 dia} other{Faltam {days} dias}}'**
+  String agencyDaysLeft(int days);
+
+  /// No description provided for @agencyContractProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'{percent}% do contrato'**
+  String agencyContractProgress(int percent);
+
+  /// No description provided for @agencyHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'Horas ao vivo'**
+  String get agencyHours;
+
+  /// No description provided for @agencyDaysLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dias com live'**
+  String get agencyDaysLive;
+
+  /// No description provided for @agencyDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes'**
+  String get agencyDiamonds;
+
+  /// No description provided for @agencyFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get agencyFollowers;
+
+  /// No description provided for @agencyRankValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'#{rank} de {total}'**
+  String agencyRankValue(int rank, int total);
+
+  /// No description provided for @agencyGuidelinesNotMet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda faltam metas neste mês'**
+  String get agencyGuidelinesNotMet;
+
+  /// No description provided for @agencyMissingHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {value} h'**
+  String agencyMissingHours(String value);
+
+  /// No description provided for @agencyMissingDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{days, plural, =1{Falta 1 dia} other{Faltam {days} dias}}'**
+  String agencyMissingDays(int days);
+
+  /// No description provided for @agencyNoIncidents.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma ocorrência'**
+  String get agencyNoIncidents;
+
+  /// No description provided for @agencyIncidentWarning.
+  ///
+  /// In pt, this message translates to:
+  /// **'Advertência'**
+  String get agencyIncidentWarning;
+
+  /// No description provided for @agencyIncidentSuspension.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suspensão'**
+  String get agencyIncidentSuspension;
+
+  /// No description provided for @agencyIncidentBan.
+  ///
+  /// In pt, this message translates to:
+  /// **'Banimento'**
+  String get agencyIncidentBan;
+
+  /// No description provided for @agencyIncidentFraud.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fraude'**
+  String get agencyIncidentFraud;
+
+  /// No description provided for @agencyEventsHow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entre ao vivo durante o período do evento para participar.'**
+  String get agencyEventsHow;
+
+  /// No description provided for @agencyEventLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao vivo'**
+  String get agencyEventLive;
+
+  /// No description provided for @agencyEventScheduled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em breve'**
+  String get agencyEventScheduled;
+
+  /// No description provided for @agencyEventEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrado'**
+  String get agencyEventEnded;
+
+  /// No description provided for @agencyEventMultiplier.
+  ///
+  /// In pt, this message translates to:
+  /// **'Multiplicador x{value}'**
+  String agencyEventMultiplier(String value);
+
+  /// No description provided for @agencyLeaveTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da agência'**
+  String get agencyLeaveTitle;
+
+  /// No description provided for @agencyLeaveAllowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode sair agora, sem multa. Seus ganhos e sua conta não mudam.'**
+  String get agencyLeaveAllowed;
+
+  /// No description provided for @agencyLeaveButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair da agência'**
+  String get agencyLeaveButton;
+
+  /// No description provided for @agencyLeaveConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair de {name}?'**
+  String agencyLeaveConfirmTitle(String name);
+
+  /// No description provided for @agencyLeaveConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'O vínculo será encerrado. Isso não pode ser desfeito: para voltar, você precisará receber um novo convite.'**
+  String get agencyLeaveConfirmBody;
+
+  /// No description provided for @agencyLeaveConfirmAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair agora'**
+  String get agencyLeaveConfirmAction;
+
+  /// No description provided for @agencyExitRuleFree.
+  ///
+  /// In pt, this message translates to:
+  /// **'No fim do contrato você sai livremente, pelo app.'**
+  String get agencyExitRuleFree;
+
+  /// No description provided for @agencyExitRuleAbuse.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em caso de abuso (cobranças, pagamentos fora da Brawe, pressão), peça uma análise da Brawe.'**
+  String get agencyExitRuleAbuse;
+
+  /// No description provided for @agencyLeaveSectionTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saída da agência'**
+  String get agencyLeaveSectionTitle;
+
+  /// No description provided for @agencyLeaveRequestBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu contrato vai até {date}. Para sair antes, você pede o desligamento em acordo com a agência. Se ela não responder no prazo, você fica livre automaticamente.'**
+  String agencyLeaveRequestBody(String date);
+
+  /// No description provided for @agencyLeaveRequestBodyNoDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para sair antes do fim do contrato, você pede o desligamento em acordo com a agência. Se ela não responder no prazo, você fica livre automaticamente.'**
+  String get agencyLeaveRequestBodyNoDate;
+
+  /// No description provided for @agencyLeaveRequestButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir desligamento à agência'**
+  String get agencyLeaveRequestButton;
+
+  /// No description provided for @agencyLeaveRequestSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir desligamento'**
+  String get agencyLeaveRequestSheetTitle;
+
+  /// No description provided for @agencyLeaveRequestSheetBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A agência recebe seu pedido e responde. Se aprovar, o vínculo termina na hora. Se não responder no prazo, você fica livre automaticamente.'**
+  String get agencyLeaveRequestSheetBody;
+
+  /// No description provided for @agencyLeaveReasonLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivo'**
+  String get agencyLeaveReasonLabel;
+
+  /// No description provided for @agencyLeaveReasonHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte à agência por que quer sair'**
+  String get agencyLeaveReasonHint;
+
+  /// No description provided for @agencyLeaveRequestSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar pedido'**
+  String get agencyLeaveRequestSend;
+
+  /// No description provided for @agencyLeaveRequestSentSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido enviado à agência.'**
+  String get agencyLeaveRequestSentSnack;
+
+  /// No description provided for @agencyLeavePendingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido de desligamento enviado'**
+  String get agencyLeavePendingTitle;
+
+  /// No description provided for @agencyLeavePendingSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviado em {date}. Aguardando a resposta da agência.'**
+  String agencyLeavePendingSent(String date);
+
+  /// No description provided for @agencyLeavePendingDue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Se a agência não responder até {date}, você fica livre automaticamente.'**
+  String agencyLeavePendingDue(String date);
+
+  /// No description provided for @agencyLeavePendingBrawe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu pedido está em análise da Brawe.'**
+  String get agencyLeavePendingBrawe;
+
+  /// No description provided for @agencyReviewPendingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análise da Brawe solicitada'**
+  String get agencyReviewPendingTitle;
+
+  /// No description provided for @agencyLeaveCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar pedido'**
+  String get agencyLeaveCancel;
+
+  /// No description provided for @agencyLeaveCancelledSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido cancelado.'**
+  String get agencyLeaveCancelledSnack;
+
+  /// No description provided for @agencyLeaveDeclinedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido recusado'**
+  String get agencyLeaveDeclinedTitle;
+
+  /// No description provided for @agencyLeaveDeclinedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A agência não aprovou a sua saída por enquanto.'**
+  String get agencyLeaveDeclinedBody;
+
+  /// No description provided for @agencyLeaveAgencyAnswer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resposta da agência'**
+  String get agencyLeaveAgencyAnswer;
+
+  /// No description provided for @agencyLeaveRetryAt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você poderá pedir de novo a partir de {date}.'**
+  String agencyLeaveRetryAt(String date);
+
+  /// No description provided for @agencyReviewLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir análise da Brawe'**
+  String get agencyReviewLink;
+
+  /// No description provided for @agencyReviewSheetTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir análise da Brawe'**
+  String get agencyReviewSheetTitle;
+
+  /// No description provided for @agencyReviewSheetBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use só se houver abuso. A Brawe analisa direto, sem passar pela agência, e pode encerrar o vínculo.'**
+  String get agencyReviewSheetBody;
+
+  /// No description provided for @agencyReviewCategoryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que está acontecendo?'**
+  String get agencyReviewCategoryLabel;
+
+  /// No description provided for @agencyReviewCatMoney.
+  ///
+  /// In pt, this message translates to:
+  /// **'A agência cobra dinheiro de mim'**
+  String get agencyReviewCatMoney;
+
+  /// No description provided for @agencyReviewCatOffplatform.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedem pagamentos fora da Brawe'**
+  String get agencyReviewCatOffplatform;
+
+  /// No description provided for @agencyReviewCatPressure.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pressão ou assédio'**
+  String get agencyReviewCatPressure;
+
+  /// No description provided for @agencyReviewCatSuspended.
+  ///
+  /// In pt, this message translates to:
+  /// **'A agência foi suspensa ou banida'**
+  String get agencyReviewCatSuspended;
+
+  /// No description provided for @agencyReviewCatOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro motivo'**
+  String get agencyReviewCatOther;
+
+  /// No description provided for @agencyReviewDetailLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Detalhes'**
+  String get agencyReviewDetailLabel;
+
+  /// No description provided for @agencyReviewSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar à Brawe'**
+  String get agencyReviewSend;
+
+  /// No description provided for @agencyReviewSentSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido enviado. A Brawe vai analisar.'**
+  String get agencyReviewSentSnack;
+
+  /// No description provided for @agencyErrLeaveRequiresAgreement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Antes do fim do contrato, peça o desligamento à agência.'**
+  String get agencyErrLeaveRequiresAgreement;
+
+  /// No description provided for @agencyErrLeaveRequestOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já tem um pedido em aberto.'**
+  String get agencyErrLeaveRequestOpen;
+
+  /// No description provided for @agencyErrLeaveCooldown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você poderá pedir de novo a partir de {date}.'**
+  String agencyErrLeaveCooldown(String date);
+
+  /// No description provided for @agencyErrLeaveCooldownNoDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde um pouco para pedir de novo.'**
+  String get agencyErrLeaveCooldownNoDate;
+
+  /// No description provided for @agencyErrLeaveNotOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este pedido já foi respondido ou cancelado.'**
+  String get agencyErrLeaveNotOpen;
+
+  /// No description provided for @agencyErrReasonTooLong.
+  ///
+  /// In pt, this message translates to:
+  /// **'O texto passa de 500 caracteres.'**
+  String get agencyErrReasonTooLong;
+
+  /// No description provided for @agencyReasonMinHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo de 10 caracteres'**
+  String get agencyReasonMinHint;
+
+  /// No description provided for @agencyErrReasonTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva pelo menos 10 caracteres.'**
+  String get agencyErrReasonTooShort;
+
+  /// No description provided for @agencyErrReasonRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva o motivo.'**
+  String get agencyErrReasonRequired;
+
+  /// No description provided for @agencyErrLeaveIsFree.
+  ///
+  /// In pt, this message translates to:
+  /// **'O contrato terminou: você já pode sair direto.'**
+  String get agencyErrLeaveIsFree;
+
+  /// No description provided for @agencyLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar sua agência'**
+  String get agencyLoadError;
+
+  /// No description provided for @agencyErrTermsMismatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os termos foram atualizados. Leia a versão atual e tente de novo.'**
+  String get agencyErrTermsMismatch;
+
+  /// No description provided for @agencyErrCannotLeaveYet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não pode sair. Liberado em {date}.'**
+  String agencyErrCannotLeaveYet(String date);
+
+  /// No description provided for @agencyErrCannotLeaveYetNoDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não pode sair da agência.'**
+  String get agencyErrCannotLeaveYetNoDate;
+
+  /// No description provided for @agencyErrAlreadyInAgency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já está em uma agência.'**
+  String get agencyErrAlreadyInAgency;
+
+  /// No description provided for @agencyErrNotApproved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta agência não está disponível no momento.'**
+  String get agencyErrNotApproved;
+
+  /// No description provided for @agencyErrNotEligible.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu perfil de criador não está ativo.'**
+  String get agencyErrNotEligible;
+
+  /// No description provided for @agencyErrNotFound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite não encontrado.'**
+  String get agencyErrNotFound;
+
+  /// No description provided for @agencyErrNotInAgency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você não está em uma agência.'**
+  String get agencyErrNotInAgency;
+
+  /// No description provided for @agencyErrNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão. Verifique sua internet e tente de novo.'**
+  String get agencyErrNetwork;
+
+  /// No description provided for @agencyErrGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Algo deu errado. Tente novamente.'**
+  String get agencyErrGeneric;
+
+  /// No description provided for @agencyChatInvitedYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'convidou você para a agência'**
+  String get agencyChatInvitedYou;
+
+  /// No description provided for @agencyChatInviteSent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite enviado ao criador'**
+  String get agencyChatInviteSent;
+
+  /// No description provided for @agencyChatOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir convite'**
+  String get agencyChatOpen;
+
+  /// No description provided for @agencyChatPreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convite de agência'**
+  String get agencyChatPreview;
+
+  /// No description provided for @creatorPanelTabHome.
+  ///
+  /// In pt, this message translates to:
+  /// **'Início'**
+  String get creatorPanelTabHome;
+
+  /// No description provided for @creatorPanelTabPerformance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desempenho'**
+  String get creatorPanelTabPerformance;
+
+  /// No description provided for @creatorPanelTabAgency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agência'**
+  String get creatorPanelTabAgency;
+
+  /// No description provided for @creatorPanelTabBenefits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Benefícios'**
+  String get creatorPanelTabBenefits;
+
+  /// No description provided for @creatorPanelEarnings30.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos em 30 dias'**
+  String get creatorPanelEarnings30;
+
+  /// No description provided for @creatorPanelNextLevel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximo nível'**
+  String get creatorPanelNextLevel;
+
+  /// No description provided for @creatorPanelAgenciesRow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agências'**
+  String get creatorPanelAgenciesRow;
+
+  /// No description provided for @creatorPanelAgenciesOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aberto a convites'**
+  String get creatorPanelAgenciesOpen;
+
+  /// No description provided for @creatorPanelHowItWorks.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como funciona'**
+  String get creatorPanelHowItWorks;
+
+  /// No description provided for @creatorPanelHowTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como funcionam as agências'**
+  String get creatorPanelHowTitle;
+
+  /// No description provided for @creatorPanelAnalyticsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Análises completas'**
+  String get creatorPanelAnalyticsTitle;
+
+  /// No description provided for @creatorPanelAnalyticsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos, público, seguidores e lives'**
+  String get creatorPanelAnalyticsBody;
+
+  /// No description provided for @creatorPanelProfileFallback.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criador'**
+  String get creatorPanelProfileFallback;
+
+  /// No description provided for @creatorPanelOpenError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar. Tente de novo.'**
+  String get creatorPanelOpenError;
+
+  /// No description provided for @agencySince.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agenciado desde {date}'**
+  String agencySince(String date);
+
+  /// No description provided for @agencyTalk.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falar'**
+  String get agencyTalk;
+
+  /// No description provided for @agencyTalkError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir a conversa.'**
+  String get agencyTalkError;
+
+  /// No description provided for @agencySubSummary.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resumo'**
+  String get agencySubSummary;
+
+  /// No description provided for @agencySubGoals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Metas'**
+  String get agencySubGoals;
+
+  /// No description provided for @agencySubEvents.
+  ///
+  /// In pt, this message translates to:
+  /// **'Eventos'**
+  String get agencySubEvents;
+
+  /// No description provided for @agencySubContract.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contrato'**
+  String get agencySubContract;
+
+  /// No description provided for @agencyPeriodThisMonth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este mês'**
+  String get agencyPeriodThisMonth;
+
+  /// No description provided for @agencyPeriodLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Período'**
+  String get agencyPeriodLabel;
+
+  /// No description provided for @agencyRankUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Subiu 1 posição} other{Subiu {n} posições}}'**
+  String agencyRankUp(int n);
+
+  /// No description provided for @agencyRankDown.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n, plural, =1{Caiu 1 posição} other{Caiu {n} posições}}'**
+  String agencyRankDown(int n);
+
+  /// No description provided for @agencyRankSame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mesma posição do mês anterior'**
+  String get agencyRankSame;
+
+  /// No description provided for @agencyPositionLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posição na agência'**
+  String get agencyPositionLabel;
+
+  /// No description provided for @agencyMonthGoalTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta do mês'**
+  String get agencyMonthGoalTitle;
+
+  /// No description provided for @agencyMonthGoalPercent.
+  ///
+  /// In pt, this message translates to:
+  /// **'{percent}% da meta'**
+  String agencyMonthGoalPercent(String percent);
+
+  /// No description provided for @agencyMonthGoalMet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta batida'**
+  String get agencyMonthGoalMet;
+
+  /// No description provided for @agencyMonthGoalNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem meta definida para este mês'**
+  String get agencyMonthGoalNone;
+
+  /// No description provided for @agencyChartTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Últimos 6 meses'**
+  String get agencyChartTitle;
+
+  /// No description provided for @agencyChartEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem dados nos últimos meses'**
+  String get agencyChartEmpty;
+
+  /// No description provided for @agencyPerfError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar o desempenho'**
+  String get agencyPerfError;
+
+  /// No description provided for @agencyGoalDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta cumprida'**
+  String get agencyGoalDone;
+
+  /// No description provided for @agencyGoalHoursValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'{have} de {need} h'**
+  String agencyGoalHoursValue(String have, String need);
+
+  /// No description provided for @agencyGoalDaysValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'{have} de {need} dias'**
+  String agencyGoalDaysValue(String have, String need);
+
+  /// No description provided for @agencyIncFilterMonth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Do mês'**
+  String get agencyIncFilterMonth;
+
+  /// No description provided for @agencyIncFilter90.
+  ///
+  /// In pt, this message translates to:
+  /// **'Últimos 90 dias'**
+  String get agencyIncFilter90;
+
+  /// No description provided for @agencyIncidentPoints.
+  ///
+  /// In pt, this message translates to:
+  /// **'{points, plural, =1{1 ponto} other{{points} pontos}}'**
+  String agencyIncidentPoints(int points);
+
+  /// No description provided for @agencyEventsFilterUpcoming.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próximos'**
+  String get agencyEventsFilterUpcoming;
+
+  /// No description provided for @agencyEventsFilterLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em andamento'**
+  String get agencyEventsFilterLive;
+
+  /// No description provided for @agencyEventsFilterEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrados'**
+  String get agencyEventsFilterEnded;
+
+  /// No description provided for @agencyEventsEmptyUpcoming.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum evento agendado.'**
+  String get agencyEventsEmptyUpcoming;
+
+  /// No description provided for @agencyEventsEmptyLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum evento em andamento agora.'**
+  String get agencyEventsEmptyLive;
+
+  /// No description provided for @agencyEventsEmptyEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum evento encerrado.'**
+  String get agencyEventsEmptyEnded;
+
+  /// No description provided for @agencyContractViewTerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver termos'**
+  String get agencyContractViewTerms;
+
+  /// No description provided for @agencyContractUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contrato sem data de término'**
+  String get agencyContractUnknown;
+
+  /// No description provided for @agencyLeaveRequestConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar pedido de desligamento?'**
+  String get agencyLeaveRequestConfirmTitle;
+
+  /// No description provided for @agencyLeaveRequestConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A agência precisa aprovar. Se ela não responder no prazo, você fica livre automaticamente.'**
+  String get agencyLeaveRequestConfirmBody;
+
+  /// No description provided for @agencyReviewConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedir análise da Brawe?'**
+  String get agencyReviewConfirmTitle;
+
+  /// No description provided for @agencyReviewConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use apenas em caso de abuso. A Brawe analisa direto, sem passar pela agência.'**
+  String get agencyReviewConfirmBody;
+
+  /// No description provided for @agencyLeaveSentOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviado em {date}'**
+  String agencyLeaveSentOn(String date);
+
+  /// No description provided for @agencyInvitesBanner.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Você tem 1 convite de agência} other{Você tem {count} convites de agência}}'**
+  String agencyInvitesBanner(int count);
+
+  /// No description provided for @agencyInvitesView.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver'**
+  String get agencyInvitesView;
+
+  /// No description provided for @agencyInviteRowBy.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} · {role}'**
+  String agencyInviteRowBy(String name, String role);
+
+  /// No description provided for @agencyInvitesEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum convite pendente.'**
+  String get agencyInvitesEmpty;
+
+  /// No description provided for @agencyPerkEarnings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganhos pagos pela Brawe'**
+  String get agencyPerkEarnings;
+
+  /// No description provided for @agencyPerkNoCharges.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma cobrança'**
+  String get agencyPerkNoCharges;
+
+  /// No description provided for @agencyPerkAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você mantém sua conta'**
+  String get agencyPerkAccount;
+
+  /// No description provided for @agencyPerkExit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saída no fim do contrato ou em acordo; sem resposta da agência no prazo, você fica livre'**
+  String get agencyPerkExit;
+
+  /// No description provided for @agencyTermsRead.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ler termos completos'**
+  String get agencyTermsRead;
+
+  /// No description provided for @agencyTermsExpand.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termos e condições'**
+  String get agencyTermsExpand;
+
+  /// No description provided for @agencyIncidentsTitleShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocorrências'**
+  String get agencyIncidentsTitleShort;
+
+  /// No description provided for @creatorDashWeekSameShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Igual'**
+  String get creatorDashWeekSameShort;
+
+  /// No description provided for @agencyAcceptedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aceito em'**
+  String get agencyAcceptedLabel;
+
+  /// No description provided for @agencyExitRuleAgreement.
+  ///
+  /// In pt, this message translates to:
+  /// **'Antes do fim, a saída é em acordo com a agência. Se ela não responder no prazo (15 dias), você fica livre e pode entrar em outra agência.'**
+  String get agencyExitRuleAgreement;
+
+  /// No description provided for @creatorApplyBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar'**
+  String get creatorApplyBack;
+
+  /// No description provided for @creatorApplyNext.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get creatorApplyNext;
+
+  /// No description provided for @creatorApplyAsAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vamos usar os dados da sua conta Brawe.'**
+  String get creatorApplyAsAccount;
+
+  /// No description provided for @creatorApplyStepContent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu conteúdo'**
+  String get creatorApplyStepContent;
+
+  /// No description provided for @creatorApplyStepNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua rede'**
+  String get creatorApplyStepNetwork;
+
+  /// No description provided for @creatorApplyStepAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre você'**
+  String get creatorApplyStepAbout;
+
+  /// No description provided for @creatorApplyStepOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Etapa {n} de {total}'**
+  String creatorApplyStepOf(int n, int total);
+
+  /// No description provided for @creatorApplyPlatformLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rede principal'**
+  String get creatorApplyPlatformLabel;
+
+  /// No description provided for @creatorApplyHandleLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu usuário nessa rede'**
+  String get creatorApplyHandleLabel;
+
+  /// No description provided for @creatorApplyHandleWhy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Precisamos do seu perfil em uma rede social para analisar seu conteúdo e sua audiência. Só a equipe de aprovação vê.'**
+  String get creatorApplyHandleWhy;
+
+  /// No description provided for @creatorApplyErrHandle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use apenas letras, números, ponto, hífen ou sublinhado (mín. 2)'**
+  String get creatorApplyErrHandle;
+
+  /// No description provided for @creatorApplyErrMotivation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva pelo menos {min} caracteres'**
+  String creatorApplyErrMotivation(int min);
+
+  /// No description provided for @creatorApplyErrFollowersMin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe quantos seguidores você tem (mínimo 1)'**
+  String get creatorApplyErrFollowersMin;
+
+  /// No description provided for @editProfileCreatorBadgeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar selo de creator'**
+  String get editProfileCreatorBadgeTitle;
+
+  /// No description provided for @editProfileCreatorBadgeHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Exibe o selo da Creator Network no seu perfil.'**
+  String get editProfileCreatorBadgeHint;
+
+  /// No description provided for @editProfileCreatorBadgeSaveFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar a visibilidade do selo.'**
+  String get editProfileCreatorBadgeSaveFailed;
+
+  /// No description provided for @videoPubSound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Som'**
+  String get videoPubSound;
+
+  /// No description provided for @videoPubCoverAt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa em {time}'**
+  String videoPubCoverAt(String time);
+
+  /// No description provided for @videoUpQueued.
+  ///
+  /// In pt, this message translates to:
+  /// **'Na fila…'**
+  String get videoUpQueued;
+
+  /// No description provided for @videoUpUploading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicando… {percent}%'**
+  String videoUpUploading(int percent);
+
+  /// No description provided for @videoUpProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Processando…'**
+  String get videoUpProcessing;
+
+  /// No description provided for @videoUpFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falhou no envio'**
+  String get videoUpFailed;
+
+  /// No description provided for @videoUpRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get videoUpRetry;
+
+  /// No description provided for @videoUpDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo publicado'**
+  String get videoUpDone;
+
+  /// No description provided for @videoUpView.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver'**
+  String get videoUpView;
+
+  /// No description provided for @videoUpCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar envio'**
+  String get videoUpCancel;
+
+  /// No description provided for @videoUpDismiss.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get videoUpDismiss;
+
+  /// No description provided for @chatSystemReadOnlyNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagens oficiais da Brawe'**
+  String get chatSystemReadOnlyNote;
+
+  /// No description provided for @chatSystemOfficialLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta oficial'**
+  String get chatSystemOfficialLabel;
+
+  /// No description provided for @navChatUnreadSemantics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat, {count} conversas não lidas'**
+  String navChatUnreadSemantics(int count);
+
+  /// No description provided for @gifSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar GIFs'**
+  String get gifSearchHint;
+
+  /// No description provided for @gifClearSearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar busca'**
+  String get gifClearSearch;
+
+  /// No description provided for @gifPoweredBy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Powered by GIPHY'**
+  String get gifPoweredBy;
+
+  /// No description provided for @gifUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'GIFs indisponíveis no momento'**
+  String get gifUnavailable;
+
+  /// No description provided for @gifErrorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os GIFs.'**
+  String get gifErrorGeneric;
+
+  /// No description provided for @gifRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get gifRetry;
+
+  /// No description provided for @gifEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum GIF encontrado'**
+  String get gifEmptyTitle;
+
+  /// No description provided for @gifEmptyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente outra palavra.'**
+  String get gifEmptyHint;
+
+  /// No description provided for @gifSemantics.
+  ///
+  /// In pt, this message translates to:
+  /// **'GIF'**
+  String get gifSemantics;
+
+  /// No description provided for @gifTapToPause.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para pausar'**
+  String get gifTapToPause;
+
+  /// No description provided for @gifTapToPlay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para reproduzir'**
+  String get gifTapToPlay;
+
+  /// No description provided for @gifButtonSemantics.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar um GIF'**
+  String get gifButtonSemantics;
+
+  /// No description provided for @notifFilterLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Curtidas'**
+  String get notifFilterLikes;
+
+  /// No description provided for @notifFilterComments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentários'**
+  String get notifFilterComments;
+
+  /// No description provided for @notifFilterFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguidores'**
+  String get notifFilterFollowers;
+
+  /// No description provided for @notifFilterMentions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Menções'**
+  String get notifFilterMentions;
+
+  /// No description provided for @notifFilterBrawe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brawe'**
+  String get notifFilterBrawe;
+
+  /// No description provided for @notifActorsTwo.
+  ///
+  /// In pt, this message translates to:
+  /// **'{a} e {b}'**
+  String notifActorsTwo(String a, String b);
+
+  /// No description provided for @notifActorsThree.
+  ///
+  /// In pt, this message translates to:
+  /// **'{a}, {b} e {c}'**
+  String notifActorsThree(String a, String b, String c);
+
+  /// No description provided for @notifActorsMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'{a}, {b} e mais {n}'**
+  String notifActorsMore(String a, String b, int n);
+
+  /// No description provided for @notifVerbLike.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{curtiu seu post} other{curtiram seu post}}'**
+  String notifVerbLike(int count);
+
+  /// No description provided for @notifVerbComment.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{comentou no seu post} other{comentaram no seu post}}'**
+  String notifVerbComment(int count);
+
+  /// No description provided for @notifVerbReply.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{respondeu seu comentário} other{responderam seu comentário}}'**
+  String notifVerbReply(int count);
+
+  /// No description provided for @notifVerbFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{começou a seguir você} other{começaram a seguir você}}'**
+  String notifVerbFollow(int count);
+
+  /// No description provided for @notifVerbGift.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{enviou presentes na sua live} other{enviaram presentes na sua live}}'**
+  String notifVerbGift(int count);
+
+  /// No description provided for @notifVerbMention.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{marcou você num comentário} other{marcaram você em comentários}}'**
+  String notifVerbMention(int count);
+
+  /// No description provided for @notifVerbStoryReaction.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{reagiu ao seu story} other{reagiram ao seu story}}'**
+  String notifVerbStoryReaction(int count);
+
+  /// No description provided for @notifGiftDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, one{({value} diamante)} other{({value} diamantes)}}'**
+  String notifGiftDiamonds(int count, String value);
+
+  /// No description provided for @notifNewFollowersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos seguidores'**
+  String get notifNewFollowersTitle;
+
+  /// No description provided for @notifNewFollowersEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum seguidor novo para mostrar'**
+  String get notifNewFollowersEmpty;
+
+  /// No description provided for @notifUnreadLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não lida'**
+  String get notifUnreadLabel;
+
+  /// No description provided for @storyGiftSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get storyGiftSend;
+
+  /// No description provided for @storyGiftConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar {gift} por {price}?'**
+  String storyGiftConfirmTitle(String gift, String price);
+
+  /// No description provided for @storyGiftBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo: {balance}'**
+  String storyGiftBalance(String balance);
+
+  /// No description provided for @storyUpUploading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicando story… {percent}%'**
+  String storyUpUploading(int percent);
+
+  /// No description provided for @storyUpProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicando story…'**
+  String get storyUpProcessing;
+
+  /// No description provided for @storyUpDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story publicado'**
+  String get storyUpDone;
+
+  /// No description provided for @storyUpFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falhou ao publicar o story'**
+  String get storyUpFailed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
