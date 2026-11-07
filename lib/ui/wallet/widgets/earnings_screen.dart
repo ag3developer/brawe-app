@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../config/feature_flags.dart';
 import '../../../core/utils/gift_names.dart';
@@ -266,6 +267,22 @@ class _BalanceCardState extends ConsumerState<_BalanceCard> {
               ],
             ],
           ),
+          // Só diamantes são sacáveis: o saque fica na aba Monetização do painel.
+          if (!_coins && kEnableMonetization) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.braweBlue,
+                ),
+                onPressed: () => context.push('/creator/dashboard?tab=monetization'),
+                icon: const Icon(Icons.account_balance_outlined, size: 18),
+                label: Text(s.payoutSeeMonetization),
+              ),
+            ),
+          ],
         ],
       ),
     );

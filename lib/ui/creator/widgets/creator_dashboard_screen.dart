@@ -18,14 +18,16 @@ import 'analytics/analytics_format.dart';
 import 'creator_panel_scope.dart';
 import 'creator_panel_tabs.dart';
 import 'creator_state_views.dart';
+import 'monetization/monetization_tab.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAINEL DO CREATOR
-// Cabeçalho compacto que recolhe + abas fixas: Início · Desempenho · Agência
-// (só com vínculo ou convites) · Benefícios.
+// Cabeçalho compacto que recolhe + abas fixas: Início · Monetização ·
+// Desempenho · Agência (só com vínculo ou convites) · Benefícios.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const _kTabHome = 'home';
+const _kTabMonetization = 'monetization';
 const _kTabPerformance = 'performance';
 const _kTabAgency = 'agency';
 const _kTabBenefits = 'benefits';
@@ -33,7 +35,7 @@ const _kTabBenefits = 'benefits';
 class CreatorDashboardScreen extends ConsumerWidget {
   const CreatorDashboardScreen({super.key, this.initialTab});
 
-  /// home | performance | agency | benefits
+  /// home | monetization | performance | agency | benefits
   final String? initialTab;
 
   @override
@@ -145,7 +147,13 @@ class _PanelBodyState extends ConsumerState<PanelBody> with TickerProviderStateM
     final state = agency.value;
     final pendingCount = state?.pendingInvites.length ?? 0;
     final hasAgencyTab = state != null && (state.link != null || pendingCount > 0);
-    final ids = [_kTabHome, _kTabPerformance, if (hasAgencyTab) _kTabAgency, _kTabBenefits];
+    final ids = [
+      _kTabHome,
+      if (kEnableMonetization) _kTabMonetization,
+      _kTabPerformance,
+      if (hasAgencyTab) _kTabAgency,
+      _kTabBenefits,
+    ];
     _sync(ids, agencyKnown: !agency.isLoading || state != null);
     final ctrl = _ctrl!;
 
@@ -153,6 +161,8 @@ class _PanelBodyState extends ConsumerState<PanelBody> with TickerProviderStateM
       switch (id) {
         case _kTabHome:
           return Tab(text: s.creatorPanelTabHome);
+        case _kTabMonetization:
+          return Tab(text: s.creatorPanelTabMonetization);
         case _kTabPerformance:
           return Tab(text: s.creatorPanelTabPerformance);
         case _kTabBenefits:
@@ -182,6 +192,8 @@ class _PanelBodyState extends ConsumerState<PanelBody> with TickerProviderStateM
       switch (id) {
         case _kTabHome:
           return const PanelHomeTab();
+        case _kTabMonetization:
+          return const PanelMonetizationTab();
         case _kTabPerformance:
           return const PanelPerformanceTab();
         case _kTabBenefits:
@@ -219,6 +231,12 @@ class _PanelBodyState extends ConsumerState<PanelBody> with TickerProviderStateM
       ],
       body: CreatorPanelScope(
         nested: true,
+        selectTab: (id) {
+          final i = _ids.indexOf(id);
+          if (i < 0 || _ctrl == null) return false;
+          _ctrl!.animateTo(i);
+          return true;
+        },
         child: TabBarView(
           controller: ctrl,
           children: [for (final id in ids) KeyedSubtree(key: ValueKey(id), child: page(id))],

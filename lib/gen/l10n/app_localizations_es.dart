@@ -9517,4 +9517,701 @@ class SEs extends S {
 
   @override
   String get secSettingsEntry => 'Seguridad';
+
+  @override
+  String get payoutBalanceAvailable => 'Disponible para retirar';
+
+  @override
+  String payoutBalanceApprox(String value) {
+    return 'Aproximadamente $value';
+  }
+
+  @override
+  String get payoutBalanceNoRate => 'Valor en moneda local no disponible ahora';
+
+  @override
+  String get payoutBalanceHolding => 'En espera de liberación';
+
+  @override
+  String get payoutBalanceInProgress => 'En retiro';
+
+  @override
+  String get payoutBalanceWithdrawn => 'Ya retirado';
+
+  @override
+  String payoutBalanceReleaseNote(String date, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días',
+      one: '$days día',
+    );
+    return 'Cada regalo queda $_temp0 en revisión. Próxima liberación: $date.';
+  }
+
+  @override
+  String get payoutBalanceWithdraw => 'Retirar';
+
+  @override
+  String get payoutBalanceAddAccountFirst => 'Registra una cuenta para retirar';
+
+  @override
+  String payoutBalanceMinimum(String amount, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días hábiles',
+      one: '$days día hábil',
+    );
+    return 'Retiro mínimo de $amount. Pago en hasta $_temp0.';
+  }
+
+  @override
+  String get payoutBalanceHowTitle => 'Cómo llegamos a este valor';
+
+  @override
+  String get payoutBalanceReceived => 'Recibido en regalos';
+
+  @override
+  String payoutBalanceFromLive(String value) {
+    return 'Lives $value';
+  }
+
+  @override
+  String payoutBalanceFromStory(String value) {
+    return 'Stories $value';
+  }
+
+  @override
+  String payoutBalanceFromOther(String value) {
+    return 'Otros $value';
+  }
+
+  @override
+  String payoutBalanceHoldingHint(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días',
+      one: '$days día',
+    );
+    return 'Cada regalo queda $_temp0 en revisión antes de liberarse.';
+  }
+
+  @override
+  String get payoutBalanceInProgressHint => 'Solicitudes esperando pago.';
+
+  @override
+  String get payoutBalanceAvailableShort => 'Disponible';
+
+  @override
+  String get payoutSoonTitle => 'Retiros próximamente';
+
+  @override
+  String get payoutSoonSubtitle =>
+      'Tus diamantes ya se están acumulando. Te avisaremos cuando se habiliten los retiros.';
+
+  @override
+  String get payoutOpenTitle => 'Retiro en curso';
+
+  @override
+  String payoutOpenDiamonds(String diamonds) {
+    return '$diamonds diamantes';
+  }
+
+  @override
+  String payoutOpenRequestedNote(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días hábiles',
+      one: '$days día hábil',
+    );
+    return 'Estamos revisando tu solicitud. El pago sale en hasta $_temp0 tras la aprobación.';
+  }
+
+  @override
+  String payoutOpenApprovedNote(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días hábiles',
+      one: '$days día hábil',
+    );
+    return 'Solicitud aprobada. El pago sale en hasta $_temp0.';
+  }
+
+  @override
+  String payoutOpenRequestedAt(String date) {
+    return 'Solicitado el $date';
+  }
+
+  @override
+  String get payoutOpenCancelConfirm =>
+      '¿Cancelar este retiro? Los diamantes vuelven a tu saldo.';
+
+  @override
+  String get payoutOpenKeep => 'Mantener';
+
+  @override
+  String get payoutOpenCancelYes => 'Cancelar retiro';
+
+  @override
+  String get payoutOpenCancel => 'Cancelar retiro';
+
+  @override
+  String get payoutStatusRequested => 'En revisión';
+
+  @override
+  String get payoutStatusApproved => 'Aprobado';
+
+  @override
+  String get payoutStatusPaid => 'Pagado';
+
+  @override
+  String get payoutStatusRejected => 'Rechazado';
+
+  @override
+  String get payoutStatusCanceled => 'Cancelado';
+
+  @override
+  String get payoutAccountTitle => 'Cuenta de cobro';
+
+  @override
+  String get payoutAccountStatusPendingReview => 'En verificación';
+
+  @override
+  String get payoutAccountStatusVerified => 'Verificada';
+
+  @override
+  String get payoutAccountStatusRejected => 'Rechazada';
+
+  @override
+  String get payoutAccountPendingNote =>
+      'Verificamos la cuenta en el primer pago. Ya puedes solicitar un retiro.';
+
+  @override
+  String payoutAccountRejectedNote(String reason) {
+    return 'Motivo: $reason. Registra otra cuenta para retirar.';
+  }
+
+  @override
+  String get payoutAccountNoReason => 'no informado';
+
+  @override
+  String get payoutAccountChange => 'Cambiar cuenta';
+
+  @override
+  String get payoutAccountEmpty =>
+      'Registra la cuenta donde quieres cobrar. Debe estar a tu nombre.';
+
+  @override
+  String get payoutAccountAdd => 'Registrar cuenta';
+
+  @override
+  String get payoutAccountFormTitle => 'Cuenta de cobro';
+
+  @override
+  String get payoutAccountFormIntro =>
+      'Indica dónde quieres cobrar. La cuenta debe ser tuya: nombre completo y documento del titular.';
+
+  @override
+  String get payoutAccountSelect => 'Selecciona';
+
+  @override
+  String get payoutAccountOtherCountry => 'Otro país';
+
+  @override
+  String get payoutAccountPaidInBrl =>
+      'Pago en reales (R\$), con la cotización PTAX del Banco Central de Brasil.';
+
+  @override
+  String get payoutAccountPaidInUsd => 'Pago en dólares (US\$).';
+
+  @override
+  String get payoutAccountDocBr => 'CPF o CNPJ del titular';
+
+  @override
+  String get payoutAccountDocOther =>
+      'Documento de identificación fiscal del titular';
+
+  @override
+  String get payoutAccountHolderTitle => 'Titular de la cuenta';
+
+  @override
+  String get payoutAccountHolderHint =>
+      'Debe ser la misma persona que crea el contenido en Brawe.';
+
+  @override
+  String get payoutAccountHolderNamePlaceholder =>
+      'Nombre completo, como en tu documento';
+
+  @override
+  String get payoutAccountSecurityNote =>
+      'Tus datos bancarios se guardan cifrados y solo se muestran enmascarados. Te enviaremos un correo de seguridad si cambian.';
+
+  @override
+  String get payoutAccountReviewNote =>
+      'La cuenta queda en verificación y Brawe la revisa en el primer pago.';
+
+  @override
+  String get payoutAccountSave => 'Guardar cuenta';
+
+  @override
+  String get payoutFieldsCountry => 'País de la cuenta';
+
+  @override
+  String get payoutFieldsMethod => 'Forma de cobro';
+
+  @override
+  String get payoutFieldsHolderName => 'Nombre completo del titular';
+
+  @override
+  String get payoutFieldsHolderTaxId => 'Documento del titular';
+
+  @override
+  String get payoutFieldsKeyType => 'Tipo de clave Pix';
+
+  @override
+  String get payoutFieldsKey => 'Clave Pix';
+
+  @override
+  String get payoutFieldsBankCode => 'Código del banco';
+
+  @override
+  String get payoutFieldsBranch => 'Agencia';
+
+  @override
+  String get payoutFieldsAccount => 'Cuenta';
+
+  @override
+  String get payoutFieldsAccountDigit => 'Dígito de la cuenta';
+
+  @override
+  String get payoutFieldsIban => 'IBAN';
+
+  @override
+  String get payoutFieldsRoutingNumber => 'Routing number (ABA)';
+
+  @override
+  String get payoutFieldsAccountNumber => 'Número de cuenta';
+
+  @override
+  String get payoutFieldsAccountType => 'Tipo de cuenta';
+
+  @override
+  String get payoutFieldsSwift => 'SWIFT/BIC';
+
+  @override
+  String get payoutFieldsBankName => 'Nombre del banco';
+
+  @override
+  String get payoutFieldsBankAddress => 'Dirección del banco';
+
+  @override
+  String get payoutFieldsTaxRegime => 'Régimen tributario de la empresa';
+
+  @override
+  String get payoutMethodsPix => 'Pix';
+
+  @override
+  String get payoutMethodsBankBr => 'Cuenta bancaria';
+
+  @override
+  String get payoutMethodsIban => 'IBAN';
+
+  @override
+  String get payoutMethodsUsAch => 'ACH (EE. UU.)';
+
+  @override
+  String get payoutMethodsSwift => 'Transferencia SWIFT';
+
+  @override
+  String get payoutPixKeyTypesCpf => 'CPF';
+
+  @override
+  String get payoutPixKeyTypesCnpj => 'CNPJ';
+
+  @override
+  String get payoutPixKeyTypesEmail => 'Correo electrónico';
+
+  @override
+  String get payoutPixKeyTypesPhone => 'Celular';
+
+  @override
+  String get payoutPixKeyTypesRandom => 'Clave aleatoria';
+
+  @override
+  String get payoutAccountTypesChecking => 'Corriente (checking)';
+
+  @override
+  String get payoutAccountTypesSavings => 'Ahorros (savings)';
+
+  @override
+  String get payoutKeyPlaceholderCpf => '000.000.000-00';
+
+  @override
+  String get payoutKeyPlaceholderCnpj => '00.000.000/0000-00';
+
+  @override
+  String get payoutKeyPlaceholderEmail => 'tu@correo.com';
+
+  @override
+  String get payoutKeyPlaceholderPhone => '(11) 91234-5678';
+
+  @override
+  String get payoutKeyPlaceholderRandom => 'Clave aleatoria';
+
+  @override
+  String get payoutKeyPlaceholderNone => 'Clave Pix';
+
+  @override
+  String get payoutHistoryTitle => 'Historial de retiros';
+
+  @override
+  String get payoutHistoryEmpty => 'Aún no has hecho ningún retiro.';
+
+  @override
+  String payoutHistoryRejectedNote(String reason) {
+    return 'Motivo: $reason. Los diamantes volvieron a tu saldo.';
+  }
+
+  @override
+  String payoutHistoryReference(String ref) {
+    return 'Comprobante: $ref';
+  }
+
+  @override
+  String payoutHistoryTotalReceived(String amount) {
+    return 'Total recibido hasta ahora: $amount';
+  }
+
+  @override
+  String get payoutWithdrawTitle => 'Retirar';
+
+  @override
+  String payoutWithdrawStepOf(String current, String total) {
+    return 'Paso $current de $total';
+  }
+
+  @override
+  String get payoutWithdrawAmountTitle => '¿Cuánto quieres retirar?';
+
+  @override
+  String payoutWithdrawAmountSubtitle(String available) {
+    return 'Tienes $available diamantes disponibles.';
+  }
+
+  @override
+  String get payoutWithdrawDiamondsLabel => 'Diamantes';
+
+  @override
+  String get payoutWithdrawAll => 'Todo';
+
+  @override
+  String payoutWithdrawMinHint(String amount, String diamonds) {
+    return 'Mínimo de $diamonds diamantes ($amount).';
+  }
+
+  @override
+  String get payoutWithdrawTypeToQuote =>
+      'Escribe la cantidad para ver cuánto recibes.';
+
+  @override
+  String get payoutWithdrawCalculating => 'Calculando…';
+
+  @override
+  String get payoutWithdrawYouReceive => 'Recibes';
+
+  @override
+  String payoutWithdrawAfterRetentions(String gross, String tax) {
+    return '$gross menos $tax de retenciones';
+  }
+
+  @override
+  String get payoutWithdrawContinue => 'Continuar';
+
+  @override
+  String get payoutWithdrawReviewTitle => 'Revisa el retiro';
+
+  @override
+  String get payoutWithdrawReviewSubtitle =>
+      'Mira el cálculo completo antes de confirmar.';
+
+  @override
+  String get payoutWithdrawDiamonds => 'Diamantes';
+
+  @override
+  String payoutWithdrawPtax(String date) {
+    return 'Cotización PTAX del $date';
+  }
+
+  @override
+  String get payoutWithdrawValueUsd => 'Valor en dólares';
+
+  @override
+  String get payoutWithdrawGross => 'Importe bruto';
+
+  @override
+  String get payoutWithdrawRetentions => 'Retenciones';
+
+  @override
+  String get payoutWithdrawNoRetentions => 'Ninguna';
+
+  @override
+  String get payoutWithdrawNet => 'Recibes';
+
+  @override
+  String payoutWithdrawPtaxNote(String bulletin, String side) {
+    return 'Cotización de $side del $bulletin (Banco Central de Brasil), del último boletín de cierre.';
+  }
+
+  @override
+  String get payoutWithdrawPaidTo => 'Pago a';
+
+  @override
+  String payoutWithdrawSla(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días hábiles',
+      one: '$days día hábil',
+    );
+    return 'Pago en hasta $_temp0 tras la aprobación.';
+  }
+
+  @override
+  String get payoutWithdrawFirstPaymentCheck =>
+      'Como es tu primer pago, Brawe verifica la cuenta antes de pagar.';
+
+  @override
+  String get payoutWithdrawSendCode => 'Enviar código por correo';
+
+  @override
+  String payoutWithdrawMonthPrior(String amount) {
+    return 'Las retenciones consideran los retiros que ya hiciste este mes ($amount).';
+  }
+
+  @override
+  String get payoutWithdrawRetentionsHelp =>
+      'Retenciones exigidas por ley, recaudadas por Brawe en tu nombre. Recibes el informe de rendimientos.';
+
+  @override
+  String get payoutCodeTitle => 'Confirma con el código';
+
+  @override
+  String payoutCodeSubtitle(String email) {
+    return 'Enviamos un código de 6 dígitos a $email.';
+  }
+
+  @override
+  String get payoutCodeLabel => 'Código de 6 dígitos';
+
+  @override
+  String get payoutCodeConfirm => 'Confirmar retiro';
+
+  @override
+  String get payoutCodeResend => 'Reenviar código';
+
+  @override
+  String payoutCodeResendIn(String seconds) {
+    return 'Reenviar código en ${seconds}s';
+  }
+
+  @override
+  String payoutCodeResent(String email) {
+    return 'Nuevo código enviado a $email.';
+  }
+
+  @override
+  String get payoutDoneTitle => 'Solicitud enviada';
+
+  @override
+  String payoutDoneSubtitle(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days días hábiles',
+      one: '$days día hábil',
+    );
+    return 'Tu retiro está en revisión. El pago sale en hasta $_temp0 tras la aprobación, y puedes seguir el estado aquí.';
+  }
+
+  @override
+  String get payoutDoneStatus => 'Estado';
+
+  @override
+  String get payoutDoneBack => 'Volver a Ganancias';
+
+  @override
+  String get payoutErrorsNetwork =>
+      'Sin conexión con el servidor. Revisa tu internet e inténtalo de nuevo.';
+
+  @override
+  String get payoutErrorsDisabled => 'Los retiros aún no están habilitados.';
+
+  @override
+  String get payoutErrorsAccountRequired =>
+      'Registra tu cuenta de cobro para retirar.';
+
+  @override
+  String get payoutErrorsAccountRejected =>
+      'Tu cuenta de cobro fue rechazada. Registra otra cuenta.';
+
+  @override
+  String get payoutErrorsInProgress =>
+      'Espera a que termine el retiro en curso para cambiar la cuenta.';
+
+  @override
+  String get payoutErrorsOpenLimit =>
+      'Ya tienes un retiro en curso. Espera a que termine o cancélalo.';
+
+  @override
+  String get payoutErrorsConflict =>
+      'Tu saldo cambió. Actualiza la página e inténtalo de nuevo.';
+
+  @override
+  String get payoutErrorsFxUnavailable =>
+      'La cotización del dólar no está disponible ahora. Inténtalo en unos instantes.';
+
+  @override
+  String get payoutErrorsNetNotPositive =>
+      'Tras las retenciones, el importe neto sería cero. Elige una cantidad mayor.';
+
+  @override
+  String get payoutErrorsInvalidAmount =>
+      'Indica una cantidad de diamantes válida.';
+
+  @override
+  String payoutErrorsBelowMinimum(String amount, String diamonds) {
+    return 'El retiro mínimo es de $diamonds diamantes ($amount).';
+  }
+
+  @override
+  String payoutErrorsInsufficient(String available) {
+    return 'Saldo insuficiente. Tienes $available diamantes disponibles.';
+  }
+
+  @override
+  String get payoutErrorsTooMany =>
+      'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+
+  @override
+  String get payoutErrorsSendFailed =>
+      'No pudimos enviar el correo ahora. Inténtalo de nuevo.';
+
+  @override
+  String payoutErrorsResendTooSoon(String seconds) {
+    return 'Espera ${seconds}s para reenviar el código.';
+  }
+
+  @override
+  String payoutErrorsCodeInvalid(int left) {
+    String _temp0 = intl.Intl.pluralLogic(
+      left,
+      locale: localeName,
+      other: 'Quedan $left intentos',
+      one: 'Queda $left intento',
+    );
+    return 'Código incorrecto. $_temp0.';
+  }
+
+  @override
+  String get payoutErrorsCodeExpired =>
+      'Este código expiró. Toca “Reenviar código”.';
+
+  @override
+  String get payoutErrorsTooManyAttempts =>
+      'Demasiados intentos fallidos. Vuelve y pide un nuevo código.';
+
+  @override
+  String get payoutErrorsHolderMismatch =>
+      'La clave Pix (CPF/CNPJ) debe ser del propio titular de la cuenta.';
+
+  @override
+  String get payoutErrorsInvalidMethod =>
+      'Esta forma de cobro no está disponible para el país elegido.';
+
+  @override
+  String payoutErrorsInvalidField(String field) {
+    return 'Revisa el campo “$field”.';
+  }
+
+  @override
+  String get payoutErrorsInvalidData => 'Revisa los datos informados.';
+
+  @override
+  String get payoutErrorsGeneric =>
+      'No fue posible completar ahora. Inténtalo de nuevo.';
+
+  @override
+  String get payoutErrorsFillAll =>
+      'Completa todos los campos, con el nombre completo del titular.';
+
+  @override
+  String get payoutErrorsPickMethod => 'Elige la forma de cobro.';
+
+  @override
+  String get payoutTaxRegimesSimples => 'Simples Nacional o MEI';
+
+  @override
+  String get payoutTaxRegimesNormal => 'Lucro Presumido o Real';
+
+  @override
+  String get payoutHolderTypesPf => 'Persona física';
+
+  @override
+  String get payoutHolderTypesPj => 'Empresa';
+
+  @override
+  String get payoutHolderTypesPjSimples => 'Empresa (Simples/MEI)';
+
+  @override
+  String get creatorPanelTabMonetization => 'Monetización';
+
+  @override
+  String get payoutOnlyGiftsNote =>
+      'Solo los diamantes de regalos recibidos en lives y stories se pueden retirar. Las Coins compradas son para usar dentro de Brawe y no se pueden retirar.';
+
+  @override
+  String get payoutLoadError => 'No se pudo cargar la monetización.';
+
+  @override
+  String get payoutCancelTitle => '¿Cancelar retiro?';
+
+  @override
+  String get payoutDoneBackMonetization => 'Volver a Monetización';
+
+  @override
+  String get payoutCountryBR => 'Brasil';
+
+  @override
+  String get payoutCountryUS => 'Estados Unidos';
+
+  @override
+  String get payoutCountryPT => 'Portugal';
+
+  @override
+  String get payoutCountryAR => 'Argentina';
+
+  @override
+  String get payoutCountryCL => 'Chile';
+
+  @override
+  String get payoutCountryCO => 'Colombia';
+
+  @override
+  String get payoutCountryMX => 'México';
+
+  @override
+  String get payoutCountryPE => 'Perú';
+
+  @override
+  String get payoutCountryUY => 'Uruguay';
+
+  @override
+  String get payoutCountryES => 'España';
+
+  @override
+  String get payoutSeeMonetization => 'Retirar en Monetización';
 }

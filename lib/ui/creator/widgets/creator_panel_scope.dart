@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 /// Informa às abas do painel se estão dentro do NestedScrollView (cabeçalho
 /// recolhível), para injetar a sobreposição da barra de abas fixa.
 class CreatorPanelScope extends InheritedWidget {
-  const CreatorPanelScope({super.key, required this.nested, required super.child});
+  const CreatorPanelScope({super.key, required this.nested, required super.child, this.selectTab});
   final bool nested;
+
+  /// Troca a aba do painel pelo id (home, monetization, ...). Retorna false se
+  /// a aba não existe. Null fora do painel.
+  final bool Function(String id)? selectTab;
 
   static bool nestedOf(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<CreatorPanelScope>()?.nested ?? false;
+
+  static bool Function(String id)? selectTabOf(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<CreatorPanelScope>()?.selectTab;
 
   @override
   bool updateShouldNotify(CreatorPanelScope old) => old.nested != nested;

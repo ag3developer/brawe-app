@@ -16562,6 +16562,1110 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Segurança'**
   String get secSettingsEntry;
+
+  /// No description provided for @payoutBalanceAvailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível para saque'**
+  String get payoutBalanceAvailable;
+
+  /// No description provided for @payoutBalanceApprox.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aproximadamente {value}'**
+  String payoutBalanceApprox(String value);
+
+  /// No description provided for @payoutBalanceNoRate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor em reais indisponível agora'**
+  String get payoutBalanceNoRate;
+
+  /// No description provided for @payoutBalanceHolding.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando liberação'**
+  String get payoutBalanceHolding;
+
+  /// No description provided for @payoutBalanceInProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em saque'**
+  String get payoutBalanceInProgress;
+
+  /// No description provided for @payoutBalanceWithdrawn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Já sacado'**
+  String get payoutBalanceWithdrawn;
+
+  /// No description provided for @payoutBalanceReleaseNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cada presente fica {days, plural, one {{days} dia} other {{days} dias}} em análise. Próxima liberação: {date}.'**
+  String payoutBalanceReleaseNote(String date, int days);
+
+  /// No description provided for @payoutBalanceWithdraw.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sacar'**
+  String get payoutBalanceWithdraw;
+
+  /// No description provided for @payoutBalanceAddAccountFirst.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar conta para sacar'**
+  String get payoutBalanceAddAccountFirst;
+
+  /// No description provided for @payoutBalanceMinimum.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saque mínimo de {amount}. Pagamento em até {days, plural, one {{days} dia útil} other {{days} dias úteis}}.'**
+  String payoutBalanceMinimum(String amount, int days);
+
+  /// No description provided for @payoutBalanceHowTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como chegamos nesse valor'**
+  String get payoutBalanceHowTitle;
+
+  /// No description provided for @payoutBalanceReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recebido em presentes'**
+  String get payoutBalanceReceived;
+
+  /// No description provided for @payoutBalanceFromLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives {value}'**
+  String payoutBalanceFromLive(String value);
+
+  /// No description provided for @payoutBalanceFromStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Stories {value}'**
+  String payoutBalanceFromStory(String value);
+
+  /// No description provided for @payoutBalanceFromOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros {value}'**
+  String payoutBalanceFromOther(String value);
+
+  /// No description provided for @payoutBalanceHoldingHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cada presente fica {days, plural, one {{days} dia} other {{days} dias}} em análise antes de liberar.'**
+  String payoutBalanceHoldingHint(int days);
+
+  /// No description provided for @payoutBalanceInProgressHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedidos aguardando pagamento.'**
+  String get payoutBalanceInProgressHint;
+
+  /// No description provided for @payoutBalanceAvailableShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível'**
+  String get payoutBalanceAvailableShort;
+
+  /// No description provided for @payoutSoonTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saques em breve'**
+  String get payoutSoonTitle;
+
+  /// No description provided for @payoutSoonSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus diamantes já estão acumulando. Avisaremos quando os saques forem liberados.'**
+  String get payoutSoonSubtitle;
+
+  /// No description provided for @payoutOpenTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saque em andamento'**
+  String get payoutOpenTitle;
+
+  /// No description provided for @payoutOpenDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'{diamonds} diamantes'**
+  String payoutOpenDiamonds(String diamonds);
+
+  /// No description provided for @payoutOpenRequestedNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estamos analisando seu pedido. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação.'**
+  String payoutOpenRequestedNote(int days);
+
+  /// No description provided for @payoutOpenApprovedNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido aprovado. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}}.'**
+  String payoutOpenApprovedNote(int days);
+
+  /// No description provided for @payoutOpenRequestedAt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido em {date}'**
+  String payoutOpenRequestedAt(String date);
+
+  /// No description provided for @payoutOpenCancelConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar este saque? Os diamantes voltam para o seu saldo.'**
+  String get payoutOpenCancelConfirm;
+
+  /// No description provided for @payoutOpenKeep.
+  ///
+  /// In pt, this message translates to:
+  /// **'Manter'**
+  String get payoutOpenKeep;
+
+  /// No description provided for @payoutOpenCancelYes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar saque'**
+  String get payoutOpenCancelYes;
+
+  /// No description provided for @payoutOpenCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar saque'**
+  String get payoutOpenCancel;
+
+  /// No description provided for @payoutStatusRequested.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em análise'**
+  String get payoutStatusRequested;
+
+  /// No description provided for @payoutStatusApproved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aprovado'**
+  String get payoutStatusApproved;
+
+  /// No description provided for @payoutStatusPaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pago'**
+  String get payoutStatusPaid;
+
+  /// No description provided for @payoutStatusRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusado'**
+  String get payoutStatusRejected;
+
+  /// No description provided for @payoutStatusCanceled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelado'**
+  String get payoutStatusCanceled;
+
+  /// No description provided for @payoutAccountTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta de recebimento'**
+  String get payoutAccountTitle;
+
+  /// No description provided for @payoutAccountStatusPendingReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em verificação'**
+  String get payoutAccountStatusPendingReview;
+
+  /// No description provided for @payoutAccountStatusVerified.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificada'**
+  String get payoutAccountStatusVerified;
+
+  /// No description provided for @payoutAccountStatusRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusada'**
+  String get payoutAccountStatusRejected;
+
+  /// No description provided for @payoutAccountPendingNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificamos a conta no primeiro pagamento. Você já pode pedir saque.'**
+  String get payoutAccountPendingNote;
+
+  /// No description provided for @payoutAccountRejectedNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivo: {reason}. Cadastre outra conta para sacar.'**
+  String payoutAccountRejectedNote(String reason);
+
+  /// No description provided for @payoutAccountNoReason.
+  ///
+  /// In pt, this message translates to:
+  /// **'não informado'**
+  String get payoutAccountNoReason;
+
+  /// No description provided for @payoutAccountChange.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar conta'**
+  String get payoutAccountChange;
+
+  /// No description provided for @payoutAccountEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastre a conta onde você quer receber. Ela precisa estar no seu nome.'**
+  String get payoutAccountEmpty;
+
+  /// No description provided for @payoutAccountAdd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastrar conta'**
+  String get payoutAccountAdd;
+
+  /// No description provided for @payoutAccountFormTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta de recebimento'**
+  String get payoutAccountFormTitle;
+
+  /// No description provided for @payoutAccountFormIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe onde quer receber. A conta precisa ser sua: nome completo e documento do titular.'**
+  String get payoutAccountFormIntro;
+
+  /// No description provided for @payoutAccountSelect.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione'**
+  String get payoutAccountSelect;
+
+  /// No description provided for @payoutAccountOtherCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro país'**
+  String get payoutAccountOtherCountry;
+
+  /// No description provided for @payoutAccountPaidInBrl.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento em reais (R\$), pela cotação PTAX do Banco Central.'**
+  String get payoutAccountPaidInBrl;
+
+  /// No description provided for @payoutAccountPaidInUsd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento em dólares (US\$).'**
+  String get payoutAccountPaidInUsd;
+
+  /// No description provided for @payoutAccountDocBr.
+  ///
+  /// In pt, this message translates to:
+  /// **'CPF ou CNPJ do titular'**
+  String get payoutAccountDocBr;
+
+  /// No description provided for @payoutAccountDocOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento de identificação fiscal do titular'**
+  String get payoutAccountDocOther;
+
+  /// No description provided for @payoutAccountHolderTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Titular da conta'**
+  String get payoutAccountHolderTitle;
+
+  /// No description provided for @payoutAccountHolderHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Deve ser a mesma pessoa que cria os conteúdos na Brawe.'**
+  String get payoutAccountHolderHint;
+
+  /// No description provided for @payoutAccountHolderNamePlaceholder.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo, como no documento'**
+  String get payoutAccountHolderNamePlaceholder;
+
+  /// No description provided for @payoutAccountSecurityNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus dados bancários são guardados criptografados e só aparecem mascarados. Enviaremos um e-mail de segurança avisando da alteração.'**
+  String get payoutAccountSecurityNote;
+
+  /// No description provided for @payoutAccountReviewNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conta fica em verificação e é conferida pela Brawe no primeiro pagamento.'**
+  String get payoutAccountReviewNote;
+
+  /// No description provided for @payoutAccountSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar conta'**
+  String get payoutAccountSave;
+
+  /// No description provided for @payoutFieldsCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País da conta'**
+  String get payoutFieldsCountry;
+
+  /// No description provided for @payoutFieldsMethod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Forma de recebimento'**
+  String get payoutFieldsMethod;
+
+  /// No description provided for @payoutFieldsHolderName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome completo do titular'**
+  String get payoutFieldsHolderName;
+
+  /// No description provided for @payoutFieldsHolderTaxId.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento do titular'**
+  String get payoutFieldsHolderTaxId;
+
+  /// No description provided for @payoutFieldsKeyType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo de chave Pix'**
+  String get payoutFieldsKeyType;
+
+  /// No description provided for @payoutFieldsKey.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave Pix'**
+  String get payoutFieldsKey;
+
+  /// No description provided for @payoutFieldsBankCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código do banco'**
+  String get payoutFieldsBankCode;
+
+  /// No description provided for @payoutFieldsBranch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agência'**
+  String get payoutFieldsBranch;
+
+  /// No description provided for @payoutFieldsAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get payoutFieldsAccount;
+
+  /// No description provided for @payoutFieldsAccountDigit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dígito da conta'**
+  String get payoutFieldsAccountDigit;
+
+  /// No description provided for @payoutFieldsIban.
+  ///
+  /// In pt, this message translates to:
+  /// **'IBAN'**
+  String get payoutFieldsIban;
+
+  /// No description provided for @payoutFieldsRoutingNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Routing number (ABA)'**
+  String get payoutFieldsRoutingNumber;
+
+  /// No description provided for @payoutFieldsAccountNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Número da conta'**
+  String get payoutFieldsAccountNumber;
+
+  /// No description provided for @payoutFieldsAccountType.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo de conta'**
+  String get payoutFieldsAccountType;
+
+  /// No description provided for @payoutFieldsSwift.
+  ///
+  /// In pt, this message translates to:
+  /// **'SWIFT/BIC'**
+  String get payoutFieldsSwift;
+
+  /// No description provided for @payoutFieldsBankName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome do banco'**
+  String get payoutFieldsBankName;
+
+  /// No description provided for @payoutFieldsBankAddress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço do banco'**
+  String get payoutFieldsBankAddress;
+
+  /// No description provided for @payoutFieldsTaxRegime.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regime tributário da empresa'**
+  String get payoutFieldsTaxRegime;
+
+  /// No description provided for @payoutMethodsPix.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pix'**
+  String get payoutMethodsPix;
+
+  /// No description provided for @payoutMethodsBankBr.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta bancária'**
+  String get payoutMethodsBankBr;
+
+  /// No description provided for @payoutMethodsIban.
+  ///
+  /// In pt, this message translates to:
+  /// **'IBAN'**
+  String get payoutMethodsIban;
+
+  /// No description provided for @payoutMethodsUsAch.
+  ///
+  /// In pt, this message translates to:
+  /// **'ACH (EUA)'**
+  String get payoutMethodsUsAch;
+
+  /// No description provided for @payoutMethodsSwift.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transferência SWIFT'**
+  String get payoutMethodsSwift;
+
+  /// No description provided for @payoutPixKeyTypesCpf.
+  ///
+  /// In pt, this message translates to:
+  /// **'CPF'**
+  String get payoutPixKeyTypesCpf;
+
+  /// No description provided for @payoutPixKeyTypesCnpj.
+  ///
+  /// In pt, this message translates to:
+  /// **'CNPJ'**
+  String get payoutPixKeyTypesCnpj;
+
+  /// No description provided for @payoutPixKeyTypesEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get payoutPixKeyTypesEmail;
+
+  /// No description provided for @payoutPixKeyTypesPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Celular'**
+  String get payoutPixKeyTypesPhone;
+
+  /// No description provided for @payoutPixKeyTypesRandom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave aleatória'**
+  String get payoutPixKeyTypesRandom;
+
+  /// No description provided for @payoutAccountTypesChecking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta corrente (checking)'**
+  String get payoutAccountTypesChecking;
+
+  /// No description provided for @payoutAccountTypesSavings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Poupança (savings)'**
+  String get payoutAccountTypesSavings;
+
+  /// No description provided for @payoutKeyPlaceholderCpf.
+  ///
+  /// In pt, this message translates to:
+  /// **'000.000.000-00'**
+  String get payoutKeyPlaceholderCpf;
+
+  /// No description provided for @payoutKeyPlaceholderCnpj.
+  ///
+  /// In pt, this message translates to:
+  /// **'00.000.000/0000-00'**
+  String get payoutKeyPlaceholderCnpj;
+
+  /// No description provided for @payoutKeyPlaceholderEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'voce@email.com'**
+  String get payoutKeyPlaceholderEmail;
+
+  /// No description provided for @payoutKeyPlaceholderPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'(11) 91234-5678'**
+  String get payoutKeyPlaceholderPhone;
+
+  /// No description provided for @payoutKeyPlaceholderRandom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave aleatória'**
+  String get payoutKeyPlaceholderRandom;
+
+  /// No description provided for @payoutKeyPlaceholderNone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave Pix'**
+  String get payoutKeyPlaceholderNone;
+
+  /// No description provided for @payoutHistoryTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Histórico de saques'**
+  String get payoutHistoryTitle;
+
+  /// No description provided for @payoutHistoryEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não fez nenhum saque.'**
+  String get payoutHistoryEmpty;
+
+  /// No description provided for @payoutHistoryRejectedNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Motivo: {reason}. Os diamantes voltaram para o seu saldo.'**
+  String payoutHistoryRejectedNote(String reason);
+
+  /// No description provided for @payoutHistoryReference.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprovante: {ref}'**
+  String payoutHistoryReference(String ref);
+
+  /// No description provided for @payoutHistoryTotalReceived.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total já recebido: {amount}'**
+  String payoutHistoryTotalReceived(String amount);
+
+  /// No description provided for @payoutWithdrawTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sacar'**
+  String get payoutWithdrawTitle;
+
+  /// No description provided for @payoutWithdrawStepOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Etapa {current} de {total}'**
+  String payoutWithdrawStepOf(String current, String total);
+
+  /// No description provided for @payoutWithdrawAmountTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quanto você quer sacar?'**
+  String get payoutWithdrawAmountTitle;
+
+  /// No description provided for @payoutWithdrawAmountSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você tem {available} diamantes disponíveis.'**
+  String payoutWithdrawAmountSubtitle(String available);
+
+  /// No description provided for @payoutWithdrawDiamondsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes'**
+  String get payoutWithdrawDiamondsLabel;
+
+  /// No description provided for @payoutWithdrawAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tudo'**
+  String get payoutWithdrawAll;
+
+  /// No description provided for @payoutWithdrawMinHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mínimo de {diamonds} diamantes ({amount}).'**
+  String payoutWithdrawMinHint(String amount, String diamonds);
+
+  /// No description provided for @payoutWithdrawTypeToQuote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite a quantidade para ver quanto você recebe.'**
+  String get payoutWithdrawTypeToQuote;
+
+  /// No description provided for @payoutWithdrawCalculating.
+  ///
+  /// In pt, this message translates to:
+  /// **'Calculando…'**
+  String get payoutWithdrawCalculating;
+
+  /// No description provided for @payoutWithdrawYouReceive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você recebe'**
+  String get payoutWithdrawYouReceive;
+
+  /// No description provided for @payoutWithdrawAfterRetentions.
+  ///
+  /// In pt, this message translates to:
+  /// **'{gross} menos {tax} de retenções'**
+  String payoutWithdrawAfterRetentions(String gross, String tax);
+
+  /// No description provided for @payoutWithdrawContinue.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get payoutWithdrawContinue;
+
+  /// No description provided for @payoutWithdrawReviewTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira o saque'**
+  String get payoutWithdrawReviewTitle;
+
+  /// No description provided for @payoutWithdrawReviewSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Veja o cálculo completo antes de confirmar.'**
+  String get payoutWithdrawReviewSubtitle;
+
+  /// No description provided for @payoutWithdrawDiamonds.
+  ///
+  /// In pt, this message translates to:
+  /// **'Diamantes'**
+  String get payoutWithdrawDiamonds;
+
+  /// No description provided for @payoutWithdrawPtax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cotação PTAX de {date}'**
+  String payoutWithdrawPtax(String date);
+
+  /// No description provided for @payoutWithdrawValueUsd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor em dólares'**
+  String get payoutWithdrawValueUsd;
+
+  /// No description provided for @payoutWithdrawGross.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor bruto'**
+  String get payoutWithdrawGross;
+
+  /// No description provided for @payoutWithdrawRetentions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções'**
+  String get payoutWithdrawRetentions;
+
+  /// No description provided for @payoutWithdrawNoRetentions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma'**
+  String get payoutWithdrawNoRetentions;
+
+  /// No description provided for @payoutWithdrawNet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você recebe'**
+  String get payoutWithdrawNet;
+
+  /// No description provided for @payoutWithdrawPtaxNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cotação de {side} do {bulletin} (Banco Central), do último boletim de fechamento.'**
+  String payoutWithdrawPtaxNote(String bulletin, String side);
+
+  /// No description provided for @payoutWithdrawPaidTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento para'**
+  String get payoutWithdrawPaidTo;
+
+  /// No description provided for @payoutWithdrawSla.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação.'**
+  String payoutWithdrawSla(int days);
+
+  /// No description provided for @payoutWithdrawFirstPaymentCheck.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como é seu primeiro pagamento, a Brawe confere a conta antes de pagar.'**
+  String get payoutWithdrawFirstPaymentCheck;
+
+  /// No description provided for @payoutWithdrawSendCode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar código por e-mail'**
+  String get payoutWithdrawSendCode;
+
+  /// No description provided for @payoutWithdrawMonthPrior.
+  ///
+  /// In pt, this message translates to:
+  /// **'As retenções consideram os saques que você já fez este mês ({amount}).'**
+  String payoutWithdrawMonthPrior(String amount);
+
+  /// No description provided for @payoutWithdrawRetentionsHelp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retenções exigidas por lei, recolhidas pela Brawe em seu nome. Você recebe o informe de rendimentos.'**
+  String get payoutWithdrawRetentionsHelp;
+
+  /// No description provided for @payoutCodeTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme com o código'**
+  String get payoutCodeTitle;
+
+  /// No description provided for @payoutCodeSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviamos um código de 6 dígitos para {email}.'**
+  String payoutCodeSubtitle(String email);
+
+  /// No description provided for @payoutCodeLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código de 6 dígitos'**
+  String get payoutCodeLabel;
+
+  /// No description provided for @payoutCodeConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar saque'**
+  String get payoutCodeConfirm;
+
+  /// No description provided for @payoutCodeResend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar código'**
+  String get payoutCodeResend;
+
+  /// No description provided for @payoutCodeResendIn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reenviar código em {seconds}s'**
+  String payoutCodeResendIn(String seconds);
+
+  /// No description provided for @payoutCodeResent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo código enviado para {email}.'**
+  String payoutCodeResent(String email);
+
+  /// No description provided for @payoutDoneTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido enviado'**
+  String get payoutDoneTitle;
+
+  /// No description provided for @payoutDoneSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu saque está em análise. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação, e você acompanha o status aqui.'**
+  String payoutDoneSubtitle(int days);
+
+  /// No description provided for @payoutDoneStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Situação'**
+  String get payoutDoneStatus;
+
+  /// No description provided for @payoutDoneBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar para Ganhos'**
+  String get payoutDoneBack;
+
+  /// No description provided for @payoutErrorsNetwork.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão com o servidor. Confira sua internet e tente de novo.'**
+  String get payoutErrorsNetwork;
+
+  /// No description provided for @payoutErrorsDisabled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os saques ainda não estão liberados.'**
+  String get payoutErrorsDisabled;
+
+  /// No description provided for @payoutErrorsAccountRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cadastre sua conta de recebimento para sacar.'**
+  String get payoutErrorsAccountRequired;
+
+  /// No description provided for @payoutErrorsAccountRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta de recebimento foi recusada. Cadastre outra conta.'**
+  String get payoutErrorsAccountRejected;
+
+  /// No description provided for @payoutErrorsInProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espere o saque em andamento terminar para trocar a conta.'**
+  String get payoutErrorsInProgress;
+
+  /// No description provided for @payoutErrorsOpenLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já tem um saque em andamento. Espere ele terminar ou cancele.'**
+  String get payoutErrorsOpenLimit;
+
+  /// No description provided for @payoutErrorsConflict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu saldo mudou. Atualize a página e tente de novo.'**
+  String get payoutErrorsConflict;
+
+  /// No description provided for @payoutErrorsFxUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'A cotação do dólar está indisponível agora. Tente de novo em instantes.'**
+  String get payoutErrorsFxUnavailable;
+
+  /// No description provided for @payoutErrorsNetNotPositive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Depois das retenções, o valor líquido ficaria zerado. Escolha uma quantia maior.'**
+  String get payoutErrorsNetNotPositive;
+
+  /// No description provided for @payoutErrorsInvalidAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Informe uma quantidade de diamantes válida.'**
+  String get payoutErrorsInvalidAmount;
+
+  /// No description provided for @payoutErrorsBelowMinimum.
+  ///
+  /// In pt, this message translates to:
+  /// **'O saque mínimo é de {diamonds} diamantes ({amount}).'**
+  String payoutErrorsBelowMinimum(String amount, String diamonds);
+
+  /// No description provided for @payoutErrorsInsufficient.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo insuficiente. Você tem {available} diamantes disponíveis.'**
+  String payoutErrorsInsufficient(String available);
+
+  /// No description provided for @payoutErrorsTooMany.
+  ///
+  /// In pt, this message translates to:
+  /// **'Muitas tentativas. Espere um pouco e tente de novo.'**
+  String get payoutErrorsTooMany;
+
+  /// No description provided for @payoutErrorsSendFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos enviar o e-mail agora. Tente de novo.'**
+  String get payoutErrorsSendFailed;
+
+  /// No description provided for @payoutErrorsResendTooSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguarde {seconds}s para reenviar o código.'**
+  String payoutErrorsResendTooSoon(String seconds);
+
+  /// No description provided for @payoutErrorsCodeInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código incorreto. {left, plural, one {Resta {left} tentativa} other {Restam {left} tentativas}}.'**
+  String payoutErrorsCodeInvalid(int left);
+
+  /// No description provided for @payoutErrorsCodeExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este código expirou. Toque em “Reenviar código”.'**
+  String get payoutErrorsCodeExpired;
+
+  /// No description provided for @payoutErrorsTooManyAttempts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Muitas tentativas erradas. Volte e peça um novo código.'**
+  String get payoutErrorsTooManyAttempts;
+
+  /// No description provided for @payoutErrorsHolderMismatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'A chave Pix (CPF/CNPJ) precisa ser do próprio titular da conta.'**
+  String get payoutErrorsHolderMismatch;
+
+  /// No description provided for @payoutErrorsInvalidMethod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta forma de recebimento não está disponível para o país escolhido.'**
+  String get payoutErrorsInvalidMethod;
+
+  /// No description provided for @payoutErrorsInvalidField.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira o campo “{field}”.'**
+  String payoutErrorsInvalidField(String field);
+
+  /// No description provided for @payoutErrorsInvalidData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira os dados informados.'**
+  String get payoutErrorsInvalidData;
+
+  /// No description provided for @payoutErrorsGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível concluir agora. Tente de novo.'**
+  String get payoutErrorsGeneric;
+
+  /// No description provided for @payoutErrorsFillAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preencha todos os campos, com o nome completo do titular.'**
+  String get payoutErrorsFillAll;
+
+  /// No description provided for @payoutErrorsPickMethod.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha a forma de recebimento.'**
+  String get payoutErrorsPickMethod;
+
+  /// No description provided for @payoutTaxRegimesSimples.
+  ///
+  /// In pt, this message translates to:
+  /// **'Simples Nacional ou MEI'**
+  String get payoutTaxRegimesSimples;
+
+  /// No description provided for @payoutTaxRegimesNormal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lucro Presumido ou Real'**
+  String get payoutTaxRegimesNormal;
+
+  /// No description provided for @payoutHolderTypesPf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pessoa física'**
+  String get payoutHolderTypesPf;
+
+  /// No description provided for @payoutHolderTypesPj.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa'**
+  String get payoutHolderTypesPj;
+
+  /// No description provided for @payoutHolderTypesPjSimples.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa (Simples/MEI)'**
+  String get payoutHolderTypesPjSimples;
+
+  /// No description provided for @creatorPanelTabMonetization.
+  ///
+  /// In pt, this message translates to:
+  /// **'Monetização'**
+  String get creatorPanelTabMonetization;
+
+  /// No description provided for @payoutOnlyGiftsNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só os diamantes de presentes recebidos em lives e stories podem ser sacados. Coins compradas servem para usar dentro da Brawe e não são sacáveis.'**
+  String get payoutOnlyGiftsNote;
+
+  /// No description provided for @payoutLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar a monetização.'**
+  String get payoutLoadError;
+
+  /// No description provided for @payoutCancelTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar saque?'**
+  String get payoutCancelTitle;
+
+  /// No description provided for @payoutDoneBackMonetization.
+  ///
+  /// In pt, this message translates to:
+  /// **'Voltar para Monetização'**
+  String get payoutDoneBackMonetization;
+
+  /// No description provided for @payoutCountryBR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brasil'**
+  String get payoutCountryBR;
+
+  /// No description provided for @payoutCountryUS.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estados Unidos'**
+  String get payoutCountryUS;
+
+  /// No description provided for @payoutCountryPT.
+  ///
+  /// In pt, this message translates to:
+  /// **'Portugal'**
+  String get payoutCountryPT;
+
+  /// No description provided for @payoutCountryAR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Argentina'**
+  String get payoutCountryAR;
+
+  /// No description provided for @payoutCountryCL.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chile'**
+  String get payoutCountryCL;
+
+  /// No description provided for @payoutCountryCO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Colômbia'**
+  String get payoutCountryCO;
+
+  /// No description provided for @payoutCountryMX.
+  ///
+  /// In pt, this message translates to:
+  /// **'México'**
+  String get payoutCountryMX;
+
+  /// No description provided for @payoutCountryPE.
+  ///
+  /// In pt, this message translates to:
+  /// **'Peru'**
+  String get payoutCountryPE;
+
+  /// No description provided for @payoutCountryUY.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uruguai'**
+  String get payoutCountryUY;
+
+  /// No description provided for @payoutCountryES.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espanha'**
+  String get payoutCountryES;
+
+  /// No description provided for @payoutSeeMonetization.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sacar em Monetização'**
+  String get payoutSeeMonetization;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

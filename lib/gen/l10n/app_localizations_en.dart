@@ -9471,4 +9471,700 @@ class SEn extends S {
 
   @override
   String get secSettingsEntry => 'Security';
+
+  @override
+  String get payoutBalanceAvailable => 'Available to withdraw';
+
+  @override
+  String payoutBalanceApprox(String value) {
+    return 'About $value';
+  }
+
+  @override
+  String get payoutBalanceNoRate =>
+      'Value in local currency unavailable right now';
+
+  @override
+  String get payoutBalanceHolding => 'Awaiting release';
+
+  @override
+  String get payoutBalanceInProgress => 'Being withdrawn';
+
+  @override
+  String get payoutBalanceWithdrawn => 'Withdrawn';
+
+  @override
+  String payoutBalanceReleaseNote(String date, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '$days day',
+    );
+    return 'Each gift is reviewed for $_temp0. Next release: $date.';
+  }
+
+  @override
+  String get payoutBalanceWithdraw => 'Withdraw';
+
+  @override
+  String get payoutBalanceAddAccountFirst => 'Add an account to withdraw';
+
+  @override
+  String payoutBalanceMinimum(String amount, int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days business days',
+      one: '$days business day',
+    );
+    return 'Minimum withdrawal of $amount. Paid within $_temp0.';
+  }
+
+  @override
+  String get payoutBalanceHowTitle => 'How we got this amount';
+
+  @override
+  String get payoutBalanceReceived => 'Received in gifts';
+
+  @override
+  String payoutBalanceFromLive(String value) {
+    return 'Lives $value';
+  }
+
+  @override
+  String payoutBalanceFromStory(String value) {
+    return 'Stories $value';
+  }
+
+  @override
+  String payoutBalanceFromOther(String value) {
+    return 'Other $value';
+  }
+
+  @override
+  String payoutBalanceHoldingHint(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '$days day',
+    );
+    return 'Each gift is reviewed for $_temp0 before release.';
+  }
+
+  @override
+  String get payoutBalanceInProgressHint => 'Requests awaiting payment.';
+
+  @override
+  String get payoutBalanceAvailableShort => 'Available';
+
+  @override
+  String get payoutSoonTitle => 'Withdrawals coming soon';
+
+  @override
+  String get payoutSoonSubtitle =>
+      'Your diamonds are already adding up. We will let you know when withdrawals open.';
+
+  @override
+  String get payoutOpenTitle => 'Withdrawal in progress';
+
+  @override
+  String payoutOpenDiamonds(String diamonds) {
+    return '$diamonds diamonds';
+  }
+
+  @override
+  String payoutOpenRequestedNote(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days business days',
+      one: '$days business day',
+    );
+    return 'We are reviewing your request. Payment goes out within $_temp0 after approval.';
+  }
+
+  @override
+  String payoutOpenApprovedNote(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days business days',
+      one: '$days business day',
+    );
+    return 'Request approved. Payment goes out within $_temp0.';
+  }
+
+  @override
+  String payoutOpenRequestedAt(String date) {
+    return 'Requested on $date';
+  }
+
+  @override
+  String get payoutOpenCancelConfirm =>
+      'Cancel this withdrawal? The diamonds return to your balance.';
+
+  @override
+  String get payoutOpenKeep => 'Keep it';
+
+  @override
+  String get payoutOpenCancelYes => 'Cancel withdrawal';
+
+  @override
+  String get payoutOpenCancel => 'Cancel withdrawal';
+
+  @override
+  String get payoutStatusRequested => 'Under review';
+
+  @override
+  String get payoutStatusApproved => 'Approved';
+
+  @override
+  String get payoutStatusPaid => 'Paid';
+
+  @override
+  String get payoutStatusRejected => 'Rejected';
+
+  @override
+  String get payoutStatusCanceled => 'Canceled';
+
+  @override
+  String get payoutAccountTitle => 'Payout account';
+
+  @override
+  String get payoutAccountStatusPendingReview => 'Being verified';
+
+  @override
+  String get payoutAccountStatusVerified => 'Verified';
+
+  @override
+  String get payoutAccountStatusRejected => 'Rejected';
+
+  @override
+  String get payoutAccountPendingNote =>
+      'We verify the account on the first payment. You can already request a withdrawal.';
+
+  @override
+  String payoutAccountRejectedNote(String reason) {
+    return 'Reason: $reason. Add another account to withdraw.';
+  }
+
+  @override
+  String get payoutAccountNoReason => 'not provided';
+
+  @override
+  String get payoutAccountChange => 'Change account';
+
+  @override
+  String get payoutAccountEmpty =>
+      'Add the account where you want to be paid. It must be in your own name.';
+
+  @override
+  String get payoutAccountAdd => 'Add account';
+
+  @override
+  String get payoutAccountFormTitle => 'Payout account';
+
+  @override
+  String get payoutAccountFormIntro =>
+      'Tell us where to pay you. The account must be yours: full legal name and tax ID of the holder.';
+
+  @override
+  String get payoutAccountSelect => 'Select';
+
+  @override
+  String get payoutAccountOtherCountry => 'Other country';
+
+  @override
+  String get payoutAccountPaidInBrl =>
+      'Paid in Brazilian reais (R\$) at the Central Bank PTAX rate.';
+
+  @override
+  String get payoutAccountPaidInUsd => 'Paid in US dollars (US\$).';
+
+  @override
+  String get payoutAccountDocBr => 'Holder CPF or CNPJ';
+
+  @override
+  String get payoutAccountDocOther => 'Holder tax ID';
+
+  @override
+  String get payoutAccountHolderTitle => 'Account holder';
+
+  @override
+  String get payoutAccountHolderHint =>
+      'Must be the same person who creates the content on Brawe.';
+
+  @override
+  String get payoutAccountHolderNamePlaceholder =>
+      'Full legal name, as on your ID';
+
+  @override
+  String get payoutAccountSecurityNote =>
+      'Your bank details are stored encrypted and only shown masked. We will email you a security notice when they change.';
+
+  @override
+  String get payoutAccountReviewNote =>
+      'The account stays under verification and Brawe checks it on the first payment.';
+
+  @override
+  String get payoutAccountSave => 'Save account';
+
+  @override
+  String get payoutFieldsCountry => 'Account country';
+
+  @override
+  String get payoutFieldsMethod => 'Payout method';
+
+  @override
+  String get payoutFieldsHolderName => 'Holder full name';
+
+  @override
+  String get payoutFieldsHolderTaxId => 'Holder tax ID';
+
+  @override
+  String get payoutFieldsKeyType => 'Pix key type';
+
+  @override
+  String get payoutFieldsKey => 'Pix key';
+
+  @override
+  String get payoutFieldsBankCode => 'Bank code';
+
+  @override
+  String get payoutFieldsBranch => 'Branch';
+
+  @override
+  String get payoutFieldsAccount => 'Account';
+
+  @override
+  String get payoutFieldsAccountDigit => 'Account digit';
+
+  @override
+  String get payoutFieldsIban => 'IBAN';
+
+  @override
+  String get payoutFieldsRoutingNumber => 'Routing number (ABA)';
+
+  @override
+  String get payoutFieldsAccountNumber => 'Account number';
+
+  @override
+  String get payoutFieldsAccountType => 'Account type';
+
+  @override
+  String get payoutFieldsSwift => 'SWIFT/BIC';
+
+  @override
+  String get payoutFieldsBankName => 'Bank name';
+
+  @override
+  String get payoutFieldsBankAddress => 'Bank address';
+
+  @override
+  String get payoutFieldsTaxRegime => 'Company tax regime';
+
+  @override
+  String get payoutMethodsPix => 'Pix';
+
+  @override
+  String get payoutMethodsBankBr => 'Bank account';
+
+  @override
+  String get payoutMethodsIban => 'IBAN';
+
+  @override
+  String get payoutMethodsUsAch => 'ACH (US)';
+
+  @override
+  String get payoutMethodsSwift => 'SWIFT transfer';
+
+  @override
+  String get payoutPixKeyTypesCpf => 'CPF';
+
+  @override
+  String get payoutPixKeyTypesCnpj => 'CNPJ';
+
+  @override
+  String get payoutPixKeyTypesEmail => 'Email';
+
+  @override
+  String get payoutPixKeyTypesPhone => 'Mobile phone';
+
+  @override
+  String get payoutPixKeyTypesRandom => 'Random key';
+
+  @override
+  String get payoutAccountTypesChecking => 'Checking';
+
+  @override
+  String get payoutAccountTypesSavings => 'Savings';
+
+  @override
+  String get payoutKeyPlaceholderCpf => '000.000.000-00';
+
+  @override
+  String get payoutKeyPlaceholderCnpj => '00.000.000/0000-00';
+
+  @override
+  String get payoutKeyPlaceholderEmail => 'you@email.com';
+
+  @override
+  String get payoutKeyPlaceholderPhone => '(11) 91234-5678';
+
+  @override
+  String get payoutKeyPlaceholderRandom => 'Random key';
+
+  @override
+  String get payoutKeyPlaceholderNone => 'Pix key';
+
+  @override
+  String get payoutHistoryTitle => 'Withdrawal history';
+
+  @override
+  String get payoutHistoryEmpty => 'You have not made any withdrawals yet.';
+
+  @override
+  String payoutHistoryRejectedNote(String reason) {
+    return 'Reason: $reason. The diamonds returned to your balance.';
+  }
+
+  @override
+  String payoutHistoryReference(String ref) {
+    return 'Receipt: $ref';
+  }
+
+  @override
+  String payoutHistoryTotalReceived(String amount) {
+    return 'Total received so far: $amount';
+  }
+
+  @override
+  String get payoutWithdrawTitle => 'Withdraw';
+
+  @override
+  String payoutWithdrawStepOf(String current, String total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get payoutWithdrawAmountTitle => 'How much do you want to withdraw?';
+
+  @override
+  String payoutWithdrawAmountSubtitle(String available) {
+    return 'You have $available diamonds available.';
+  }
+
+  @override
+  String get payoutWithdrawDiamondsLabel => 'Diamonds';
+
+  @override
+  String get payoutWithdrawAll => 'All';
+
+  @override
+  String payoutWithdrawMinHint(String amount, String diamonds) {
+    return 'Minimum of $diamonds diamonds ($amount).';
+  }
+
+  @override
+  String get payoutWithdrawTypeToQuote =>
+      'Enter an amount to see what you will receive.';
+
+  @override
+  String get payoutWithdrawCalculating => 'Calculating…';
+
+  @override
+  String get payoutWithdrawYouReceive => 'You receive';
+
+  @override
+  String payoutWithdrawAfterRetentions(String gross, String tax) {
+    return '$gross minus $tax in withholdings';
+  }
+
+  @override
+  String get payoutWithdrawContinue => 'Continue';
+
+  @override
+  String get payoutWithdrawReviewTitle => 'Review your withdrawal';
+
+  @override
+  String get payoutWithdrawReviewSubtitle =>
+      'See the full breakdown before confirming.';
+
+  @override
+  String get payoutWithdrawDiamonds => 'Diamonds';
+
+  @override
+  String payoutWithdrawPtax(String date) {
+    return 'PTAX rate of $date';
+  }
+
+  @override
+  String get payoutWithdrawValueUsd => 'Value in US dollars';
+
+  @override
+  String get payoutWithdrawGross => 'Gross amount';
+
+  @override
+  String get payoutWithdrawRetentions => 'Withholdings';
+
+  @override
+  String get payoutWithdrawNoRetentions => 'None';
+
+  @override
+  String get payoutWithdrawNet => 'You receive';
+
+  @override
+  String payoutWithdrawPtaxNote(String bulletin, String side) {
+    return '$side rate from the $bulletin (Central Bank of Brazil), latest closing bulletin.';
+  }
+
+  @override
+  String get payoutWithdrawPaidTo => 'Paid to';
+
+  @override
+  String payoutWithdrawSla(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days business days',
+      one: '$days business day',
+    );
+    return 'Paid within $_temp0 after approval.';
+  }
+
+  @override
+  String get payoutWithdrawFirstPaymentCheck =>
+      'Since this is your first payment, Brawe checks the account before paying.';
+
+  @override
+  String get payoutWithdrawSendCode => 'Send code by email';
+
+  @override
+  String payoutWithdrawMonthPrior(String amount) {
+    return 'Withholdings take into account the withdrawals you already made this month ($amount).';
+  }
+
+  @override
+  String get payoutWithdrawRetentionsHelp =>
+      'Withholdings required by law, paid by Brawe on your behalf. You receive the income statement.';
+
+  @override
+  String get payoutCodeTitle => 'Confirm with the code';
+
+  @override
+  String payoutCodeSubtitle(String email) {
+    return 'We sent a 6-digit code to $email.';
+  }
+
+  @override
+  String get payoutCodeLabel => '6-digit code';
+
+  @override
+  String get payoutCodeConfirm => 'Confirm withdrawal';
+
+  @override
+  String get payoutCodeResend => 'Resend code';
+
+  @override
+  String payoutCodeResendIn(String seconds) {
+    return 'Resend code in ${seconds}s';
+  }
+
+  @override
+  String payoutCodeResent(String email) {
+    return 'New code sent to $email.';
+  }
+
+  @override
+  String get payoutDoneTitle => 'Request sent';
+
+  @override
+  String payoutDoneSubtitle(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days business days',
+      one: '$days business day',
+    );
+    return 'Your withdrawal is under review. Payment goes out within $_temp0 after approval, and you can follow the status here.';
+  }
+
+  @override
+  String get payoutDoneStatus => 'Status';
+
+  @override
+  String get payoutDoneBack => 'Back to Earnings';
+
+  @override
+  String get payoutErrorsNetwork =>
+      'Can\'t reach the server. Check your connection and try again.';
+
+  @override
+  String get payoutErrorsDisabled => 'Withdrawals are not open yet.';
+
+  @override
+  String get payoutErrorsAccountRequired =>
+      'Add your payout account to withdraw.';
+
+  @override
+  String get payoutErrorsAccountRejected =>
+      'Your payout account was rejected. Add another account.';
+
+  @override
+  String get payoutErrorsInProgress =>
+      'Wait for the withdrawal in progress to finish before changing the account.';
+
+  @override
+  String get payoutErrorsOpenLimit =>
+      'You already have a withdrawal in progress. Wait for it to finish or cancel it.';
+
+  @override
+  String get payoutErrorsConflict =>
+      'Your balance changed. Refresh the page and try again.';
+
+  @override
+  String get payoutErrorsFxUnavailable =>
+      'The dollar rate is unavailable right now. Try again in a moment.';
+
+  @override
+  String get payoutErrorsNetNotPositive =>
+      'After withholdings the net amount would be zero. Choose a larger amount.';
+
+  @override
+  String get payoutErrorsInvalidAmount => 'Enter a valid number of diamonds.';
+
+  @override
+  String payoutErrorsBelowMinimum(String amount, String diamonds) {
+    return 'The minimum withdrawal is $diamonds diamonds ($amount).';
+  }
+
+  @override
+  String payoutErrorsInsufficient(String available) {
+    return 'Insufficient balance. You have $available diamonds available.';
+  }
+
+  @override
+  String get payoutErrorsTooMany =>
+      'Too many attempts. Wait a moment and try again.';
+
+  @override
+  String get payoutErrorsSendFailed =>
+      'We couldn\'t send the email right now. Try again.';
+
+  @override
+  String payoutErrorsResendTooSoon(String seconds) {
+    return 'Wait ${seconds}s to resend the code.';
+  }
+
+  @override
+  String payoutErrorsCodeInvalid(int left) {
+    String _temp0 = intl.Intl.pluralLogic(
+      left,
+      locale: localeName,
+      other: '$left attempts left',
+      one: '$left attempt left',
+    );
+    return 'Wrong code. $_temp0.';
+  }
+
+  @override
+  String get payoutErrorsCodeExpired =>
+      'This code has expired. Tap “Resend code”.';
+
+  @override
+  String get payoutErrorsTooManyAttempts =>
+      'Too many wrong attempts. Go back and request a new code.';
+
+  @override
+  String get payoutErrorsHolderMismatch =>
+      'The Pix key (CPF/CNPJ) must belong to the account holder.';
+
+  @override
+  String get payoutErrorsInvalidMethod =>
+      'This payout method is not available for the selected country.';
+
+  @override
+  String payoutErrorsInvalidField(String field) {
+    return 'Check the “$field” field.';
+  }
+
+  @override
+  String get payoutErrorsInvalidData => 'Check the information provided.';
+
+  @override
+  String get payoutErrorsGeneric =>
+      'We couldn\'t finish that right now. Try again.';
+
+  @override
+  String get payoutErrorsFillAll =>
+      'Fill in every field, with the holder\'s full name.';
+
+  @override
+  String get payoutErrorsPickMethod => 'Choose a payout method.';
+
+  @override
+  String get payoutTaxRegimesSimples => 'Simples Nacional or MEI';
+
+  @override
+  String get payoutTaxRegimesNormal => 'Lucro Presumido or Real';
+
+  @override
+  String get payoutHolderTypesPf => 'Individual';
+
+  @override
+  String get payoutHolderTypesPj => 'Company';
+
+  @override
+  String get payoutHolderTypesPjSimples => 'Company (Simples/MEI)';
+
+  @override
+  String get creatorPanelTabMonetization => 'Monetization';
+
+  @override
+  String get payoutOnlyGiftsNote =>
+      'Only diamonds from gifts received in lives and stories can be withdrawn. Purchased Coins are for use inside Brawe and can\'t be withdrawn.';
+
+  @override
+  String get payoutLoadError => 'Couldn\'t load monetization.';
+
+  @override
+  String get payoutCancelTitle => 'Cancel withdrawal?';
+
+  @override
+  String get payoutDoneBackMonetization => 'Back to Monetization';
+
+  @override
+  String get payoutCountryBR => 'Brazil';
+
+  @override
+  String get payoutCountryUS => 'United States';
+
+  @override
+  String get payoutCountryPT => 'Portugal';
+
+  @override
+  String get payoutCountryAR => 'Argentina';
+
+  @override
+  String get payoutCountryCL => 'Chile';
+
+  @override
+  String get payoutCountryCO => 'Colombia';
+
+  @override
+  String get payoutCountryMX => 'Mexico';
+
+  @override
+  String get payoutCountryPE => 'Peru';
+
+  @override
+  String get payoutCountryUY => 'Uruguay';
+
+  @override
+  String get payoutCountryES => 'Spain';
+
+  @override
+  String get payoutSeeMonetization => 'Withdraw in Monetization';
 }

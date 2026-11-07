@@ -89,7 +89,8 @@ class PanelShortcuts extends StatelessWidget {
     final items = <(IconData, String, String, Color)>[
       (LucideIcons.radio, s.creatorDashboardQuickGoLive, '/live/start', c.accentPink),
       (LucideIcons.squarePen, s.creatorDashboardQuickCreatePost, '/feed', c.accentGold),
-      if (kEnableMonetization) (LucideIcons.wallet, s.creatorShortcutEarnings, '/earnings', c.success),
+      // Monetização é uma aba deste mesmo painel: troca de aba em vez de abrir outra tela.
+      if (kEnableMonetization) (LucideIcons.gem, s.creatorPanelTabMonetization, '/creator/dashboard?tab=monetization', c.success),
       (LucideIcons.chartColumn, s.creatorDashShortcutAnalytics, '/creator/analytics', c.accentPrimary),
     ];
     return AgencyBox(
@@ -99,7 +100,12 @@ class PanelShortcuts extends StatelessWidget {
           Expanded(
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
-              onTap: () => context.push(it.$3),
+              onTap: () {
+                final tab = Uri.parse(it.$3).queryParameters['tab'];
+                final select = CreatorPanelScope.selectTabOf(context);
+                if (tab != null && select != null && select(tab)) return;
+                context.push(it.$3);
+              },
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
