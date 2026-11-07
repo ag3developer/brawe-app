@@ -3624,6 +3624,12 @@ class SPt extends S {
       'Pagamento seguro via Play Store / App Store';
 
   @override
+  String get topUpStoreDisclaimerApple => 'Pagamento seguro pela App Store';
+
+  @override
+  String get topUpStoreDisclaimerGoogle => 'Pagamento seguro pelo Google Play';
+
+  @override
   String get earningsNoPurchasesHint =>
       'Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.';
 

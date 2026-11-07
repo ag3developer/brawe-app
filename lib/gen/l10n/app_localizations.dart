@@ -6543,6 +6543,18 @@ abstract class S {
   /// **'Pagamento seguro via Play Store / App Store'**
   String get topUpStoreDisclaimer;
 
+  /// No description provided for @topUpStoreDisclaimerApple.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento seguro pela App Store'**
+  String get topUpStoreDisclaimerApple;
+
+  /// No description provided for @topUpStoreDisclaimerGoogle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento seguro pelo Google Play'**
+  String get topUpStoreDisclaimerGoogle;
+
   /// No description provided for @earningsNoPurchasesHint.
   ///
   /// In pt, this message translates to:

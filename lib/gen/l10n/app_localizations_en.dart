@@ -3610,6 +3610,13 @@ class SEn extends S {
       'Secure payment via Play Store / App Store';
 
   @override
+  String get topUpStoreDisclaimerApple =>
+      'Secure payment through the App Store';
+
+  @override
+  String get topUpStoreDisclaimerGoogle => 'Secure payment through Google Play';
+
+  @override
   String get earningsNoPurchasesHint =>
       'When you buy coins via App Store or Google Play, they\'ll show up here.';
 

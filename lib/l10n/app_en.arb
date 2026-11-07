@@ -1664,6 +1664,8 @@
   "topUpReasonGift": "Not enough balance for this gift",
   "topUpReasonBattle": "Stay in the battle! Recharge now",
   "topUpStoreDisclaimer": "Secure payment via Play Store / App Store",
+  "topUpStoreDisclaimerApple": "Secure payment through the App Store",
+  "topUpStoreDisclaimerGoogle": "Secure payment through Google Play",
   "earningsNoPurchasesHint": "When you buy coins via App Store or Google Play, they'll show up here.",
   "earningsNoGiftsHint": "Creator Program diamonds come from gifts you receive during live streams.",
   "creatorProgramTitle": "Brawe Creator Network",

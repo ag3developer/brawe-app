@@ -11,6 +11,8 @@
 //   4. Usuário volta exatamente onde estava (live, gifts, battle)
 // ============================================================================
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -325,7 +327,8 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    s.topUpStoreDisclaimer,
+                    // só a loja do aparelho (a Apple não aceita citar outra plataforma)
+                    Platform.isIOS ? s.topUpStoreDisclaimerApple : s.topUpStoreDisclaimerGoogle,
                     style: TextStyle(
                       color: context.colors.textTertiary,
                       fontSize: 10.5,

@@ -3628,6 +3628,12 @@ class SEs extends S {
   String get topUpStoreDisclaimer => 'Pago seguro vía Play Store / App Store';
 
   @override
+  String get topUpStoreDisclaimerApple => 'Pago seguro por App Store';
+
+  @override
+  String get topUpStoreDisclaimerGoogle => 'Pago seguro por Google Play';
+
+  @override
   String get earningsNoPurchasesHint =>
       'Cuando compres coins por App Store o Google Play, aparecerán aquí.';
 

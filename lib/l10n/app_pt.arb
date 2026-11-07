@@ -1927,6 +1927,8 @@
   "topUpReasonGift": "Saldo insuficiente para este presente",
   "topUpReasonBattle": "Continue na batalha! Recarregue agora",
   "topUpStoreDisclaimer": "Pagamento seguro via Play Store / App Store",
+  "topUpStoreDisclaimerApple": "Pagamento seguro pela App Store",
+  "topUpStoreDisclaimerGoogle": "Pagamento seguro pelo Google Play",
   "earningsNoPurchasesHint": "Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.",
   "earningsNoGiftsHint": "Os diamantes do Creator Program vêm dos gifts que você recebe em lives.",
   "creatorProgramTitle": "Brawe Creator Network",
