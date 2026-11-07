@@ -54,8 +54,8 @@ class EarningsScreen extends ConsumerWidget {
               _BalanceCard(data: data),
               const SizedBox(height: 24),
               const _GiftHistory(),
-              // Histórico de compras só existe com a compra de moedas ativa.
-              if (kCoinPurchaseEnabled) ...[
+              // Histórico de pedidos de compra (inclui pedidos fora do app): desligado.
+              if (kShowCoinPurchaseHistory) ...[
                 const SizedBox(height: 28),
                 _SectionHeader(
                   title: s.earningsPurchaseHistoryTitle,

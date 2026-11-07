@@ -87,6 +87,13 @@ class CreditsService {
   /// [productId] = ID do produto na loja (ex: "brawe_coins_2083")
   /// [purchaseId] = ID único da transação (Google: orderId; iOS: transactionId)
   /// [verificationData] = Android: purchase token; iOS: base64 receipt
+  /// Pacotes de Coins à venda na loja deste aparelho (definidos no admin).
+  /// `{enabled, packages: [{product_id, coins}], account_hash}`
+  Future<Map<String, dynamic>> getIapCatalog({required String platform}) async {
+    final response = await _dio.get('/credits/iap/catalog', queryParameters: {'platform': platform});
+    return Map<String, dynamic>.from(response.data as Map);
+  }
+
   Future<Map<String, dynamic>> verifyIapPurchase({
     required String platform,
     required String productId,

@@ -10,7 +10,7 @@ import '../../live/shared/widgets/overlays/combo_tier_layer.dart';
 import '../../live/shared/widgets/overlays/entrance_effect_layer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:brawe_app/config/feature_flags.dart';
+import 'package:brawe_app/data/services/iap_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -1099,7 +1099,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
           SnackBar(
             content: Text(message),
             duration: const Duration(seconds: 3),
-            action: isBalance && kCoinPurchaseEnabled
+            action: isBalance && ref.read(coinPurchaseOpenProvider)
                 ? SnackBarAction(
                     label: S.of(context).liveTopUpAction,
                     onPressed: () => TopUpCoinsSheet.show(

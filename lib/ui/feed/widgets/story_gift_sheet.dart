@@ -19,7 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../config/feature_flags.dart';
+import '../../../data/services/iap_service.dart';
 import '../../../core/utils/gift_tier_names.dart';
 import '../../../data/repositories/gift_repository.dart';
 import '../../../domain/models/gift.dart';
@@ -166,7 +166,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
       cb();
       return;
     }
-    if (!kCoinPurchaseEnabled) {
+    if (!ref.read(coinPurchaseOpenProvider)) {
       ScaffoldMessenger.maybeOf(context)
         ?..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(S.of(context).topUpReasonGift)));
@@ -300,6 +300,7 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
   Widget build(BuildContext context) {
     final c = context.colors;
     final catalog = ref.watch(giftCatalogViewModelProvider);
+    ref.watch(coinPurchaseOpenProvider); // mantém o catálogo da loja carregado enquanto aberto
     ref.listen(creditsViewModelProvider, (_, next) {
       final v = next.value;
       if (v != null && !next.isLoading && mounted) {

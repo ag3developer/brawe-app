@@ -17,8 +17,13 @@ const bool kEnableMonetization = true;
 
 /// 🪙 Compra de moedas (Apple/Google IAP).
 ///
-/// Enquanto o pagamento pela loja não estiver implementado, mantenha
-/// `false`: esconde a seção "Comprar moedas" da carteira, o histórico de
-/// compras e o sheet de recarga (`TopUpCoinsSheet.show` vira aviso).
-/// Para ligar depois, basta trocar para `true`.
-const bool kCoinPurchaseEnabled = false;
+/// Ligada no app; quem decide de verdade é o admin (Financeiro → Preço das
+/// moedas → "Vender Coins dentro do app"). Com a venda desligada lá, o app
+/// não mostra pacotes e `TopUpCoinsSheet.show` só avisa "em breve".
+const bool kCoinPurchaseEnabled = true;
+
+/// 🧾 Histórico de pedidos de compra de moedas na tela de ganhos.
+///
+/// Fica desligado: a lista inclui pedidos feitos fora do app, e o app não
+/// deve mostrar nem mencionar a compra fora da loja.
+const bool kShowCoinPurchaseHistory = false;

@@ -13,11 +13,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../config/feature_flags.dart';
 import '../../../data/services/iap_service.dart';
-import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -39,15 +37,27 @@ class TopUpCoinsSheet extends ConsumerStatefulWidget {
 
   const TopUpCoinsSheet({super.key, this.reason});
 
-  static Future<void> show(BuildContext context, {String? reason}) {
-    // Compra desligada: não abre pagamento, só avisa.
-    if (!kCoinPurchaseEnabled) {
-      ScaffoldMessenger.of(context)
+  static Future<void> show(BuildContext context, {String? reason}) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final disabledText = S.of(context).rewardsPurchaseDisabled;
+    // Venda aberta? (flag do app + venda ligada no admin + pacotes publicados nesta loja)
+    var open = false;
+    if (kCoinPurchaseEnabled) {
+      try {
+        // sempre consulta de novo: o admin pode ter ligado/desligado a venda
+        final catalog = await ProviderScope.containerOf(context, listen: false)
+            .refresh(iapCatalogProvider.future)
+            .timeout(const Duration(seconds: 6));
+        open = catalog.enabled;
+      } catch (_) {
+        open = false;
+      }
+    }
+    if (!open || !context.mounted) {
+      messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(content: Text(S.of(context).rewardsPurchaseDisabled)),
-        );
-      return Future.value();
+        ..showSnackBar(SnackBar(content: Text(disabledText)));
+      return;
     }
     return showModalBottomSheet<void>(
       context: context,
@@ -64,9 +74,9 @@ class TopUpCoinsSheet extends ConsumerStatefulWidget {
 class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
   bool _loadingProducts = true;
   bool _purchasing = false;
-  String? _purchasingPackageId;
+  String? _purchasingProductId;
   String? _error;
-  Map<String, ProductDetails> _productsByPackageId = {};
+  List<IapOffer> _offers = const [];
 
   @override
   void initState() {
@@ -93,40 +103,33 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
       });
       return;
     }
-    final products = await iap.loadProducts();
-    final byPackageId = <String, ProductDetails>{};
-    for (final entry in kPackageIdToIapProductId.entries) {
-      final found = products
-          .where((p) => p.id == entry.value)
-          .cast<ProductDetails?>()
-          .firstWhere((_) => true, orElse: () => null);
-      if (found != null) byPackageId[entry.key] = found;
+    List<IapOffer> offers = const [];
+    try {
+      offers = await iap.loadOffers();
+    } catch (e) {
+      debugPrint('❌ IAP loadOffers: $e');
     }
     if (!mounted) return;
     setState(() {
       _loadingProducts = false;
-      _productsByPackageId = byPackageId;
+      _offers = offers;
+      if (offers.isEmpty) _error = S.of(context).walletIapPackageUnavailable;
     });
   }
 
-  Future<void> _buy(CoinPackage pkg) async {
+  Future<void> _buy(IapOffer offer) async {
     if (_purchasing) return;
-    final productId = kPackageIdToIapProductId[pkg.id];
-    if (productId == null) {
-      setState(() => _error = S.of(context).walletIapPackageUnavailable);
-      return;
-    }
     setState(() {
       _purchasing = true;
-      _purchasingPackageId = pkg.id;
+      _purchasingProductId = offer.product.id;
       _error = null;
     });
     final iap = ref.read(iapServiceProvider);
-    final result = await iap.buy(productId);
+    final result = await iap.buy(offer.product.id);
     if (!mounted) return;
     setState(() {
       _purchasing = false;
-      _purchasingPackageId = null;
+      _purchasingProductId = null;
     });
 
     switch (result) {
@@ -137,7 +140,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              S.of(context).walletIapSuccess(_fmtInt(pkg.coins)),
+              S.of(context).walletIapSuccess(_fmtInt(offer.coins)),
             ),
             backgroundColor: AppColors.braweBlue,
           ),
@@ -252,35 +255,36 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                 ],
               ),
               const SizedBox(height: 14),
-              // Grid de packages (3 colunas, compacto)
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 8,
-                  crossAxisSpacing: 8,
-                  childAspectRatio: 0.82,
+              // Pacotes do admin, com o preço da própria loja (3 colunas, compacto)
+              if (_loadingProducts)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 28),
+                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
+                )
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.82,
+                  ),
+                  itemCount: _offers.length,
+                  itemBuilder: (_, i) {
+                    final offer = _offers[i];
+                    return _TopUpPackageCard(
+                      coins: offer.coins,
+                      // o pacote do meio ganha destaque
+                      highlight: _offers.length >= 3 && i == _offers.length ~/ 2,
+                      priceLabel: offer.product.price,
+                      enabled: !_purchasing,
+                      loading: _purchasing && _purchasingProductId == offer.product.id,
+                      onTap: () => _buy(offer),
+                    );
+                  },
                 ),
-                itemCount: kCoinPackages.length,
-                itemBuilder: (_, i) {
-                  final pkg = kCoinPackages[i];
-                  final product = _productsByPackageId[pkg.id];
-                  final isLoading = _purchasing &&
-                      _purchasingPackageId == pkg.id;
-                  return _TopUpPackageCard(
-                    package: pkg,
-                    priceLabel: product?.price ??
-                        s.walletPriceBRL(_fmtInt(pkg.priceBRL.round())),
-                    enabled: !_loadingProducts &&
-                        !_purchasing &&
-                        product != null,
-                    loading: isLoading,
-                    onTap: () => _buy(pkg),
-                  );
-                },
-              ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 Container(
@@ -338,14 +342,16 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
 }
 
 class _TopUpPackageCard extends StatelessWidget {
-  final CoinPackage package;
+  final int coins;
+  final bool highlight;
   final String priceLabel;
   final bool enabled;
   final bool loading;
   final VoidCallback onTap;
 
   const _TopUpPackageCard({
-    required this.package,
+    required this.coins,
+    required this.highlight,
     required this.priceLabel,
     required this.enabled,
     required this.loading,
@@ -354,7 +360,6 @@ class _TopUpPackageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final highlight = package.popular || package.bestValue;
     return Opacity(
       opacity: enabled || loading ? 1.0 : 0.5,
       child: Material(
@@ -378,29 +383,7 @@ class _TopUpPackageCard extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Badge
-                SizedBox(
-                  height: 14,
-                  child: package.label.isNotEmpty
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: AppColors.braweOrange,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            package.label,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w800,
-                              height: 1,
-                            ),
-                          ),
-                        )
-                      : null,
-                ),
+                const SizedBox(height: 14),
                 // Coin + valor
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -408,7 +391,7 @@ class _TopUpPackageCard extends StatelessWidget {
                     const BraweCoin(size: 22, glow: true),
                     const SizedBox(height: 3),
                     Text(
-                      _fmtInt(package.coins),
+                      _fmtInt(coins),
                       style: TextStyle(
                         color: context.colors.textPrimary,
                         fontSize: 14,

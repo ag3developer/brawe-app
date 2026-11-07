@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:brawe_app/config/feature_flags.dart';
+import 'package:brawe_app/data/services/iap_service.dart';
 import '../../../../core/themes/app_colors.dart';
 import '../../../../core/ui/app_spacing.dart';
 import '../../../../../core/utils/gift_tier_names.dart';
@@ -136,7 +136,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
       final balance = ref.read(creditsViewModelProvider).value?.toInt() ?? 0;
       final cost = gift.priceCredits.ceil();
       if (balance < cost) {
-        if (kCoinPurchaseEnabled) {
+        if (ref.read(coinPurchaseOpenProvider)) {
           await TopUpCoinsSheet.show(
             context,
             reason: widget.battleId != null ? 'battle' : 'gift',
@@ -201,7 +201,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         SnackBar(
           content: Text(message),
           backgroundColor: Colors.red.shade700,
-          action: kCoinPurchaseEnabled &&
+          action: ref.read(coinPurchaseOpenProvider) &&
                   sendNotifier.lastErrorIsBalance &&
                   gift.isMonetary
               ? SnackBarAction(
@@ -224,6 +224,7 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
   Widget build(BuildContext context) {
     final s = S.of(context);
     final catalogState = ref.watch(giftCatalogViewModelProvider);
+    ref.watch(coinPurchaseOpenProvider); // mantém o catálogo da loja carregado enquanto aberto
     final sendState = ref.watch(sendGiftViewModelProvider);
 
     return Container(
@@ -807,7 +808,7 @@ class _BalanceFooter extends ConsumerWidget {
           child: Row(
             children: [
               GestureDetector(
-                onTap: kCoinPurchaseEnabled
+                onTap: ref.watch(coinPurchaseOpenProvider)
                     ? () => TopUpCoinsSheet.show(context)
                     : null,
                 child: Row(
