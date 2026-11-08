@@ -303,13 +303,25 @@
   "postAddLocation": "Ubicación",
   "pollEditorTitle": "Encuesta",
   "pollOptionHint": "Opción {n}",
-  "@pollOptionHint": {"placeholders": {"n": {"type": "int"}}},
+  "@pollOptionHint": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "pollAddOption": "Añadir opción",
   "pollRemoveOption": "Quitar opción",
   "pollRemove": "Quitar encuesta",
   "pollDurationLabel": "Duración",
   "pollDurationDays": "{count, plural, =1{1 día} other{{count} días}}",
-  "@pollDurationDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollDurationDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollRulesHint": "Todas las opciones son obligatorias: de 2 a 4, hasta 60 caracteres, sin repetir. El voto no se puede cambiar.",
   "pollErrorEmpty": "Completa esta opción",
   "pollErrorDuplicate": "Opción repetida",
@@ -317,13 +329,38 @@
   "pollBlockedByImage": "Una encuesta y una foto no se pueden usar juntas. Quita la foto para crear una encuesta.",
   "imageBlockedByPoll": "Una encuesta y una foto no se pueden usar juntas. Quita la encuesta para adjuntar una foto.",
   "pollVotesCount": "{count, plural, =1{1 voto} other{{count} votos}}",
-  "@pollVotesCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@pollVotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "pollEndsInDays": "termina en {count} d",
-  "@pollEndsInDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInHours": "termina en {count} h",
-  "@pollEndsInHours": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInMinutes": "termina en {count} min",
-  "@pollEndsInMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEnded": "Finalizada",
   "pollVoteToSee": "Vota para ver los resultados",
   "pollVoteError": "No se pudo registrar tu voto. Inténtalo de nuevo.",
@@ -3540,26 +3577,89 @@
   "battleEndedLiveAnon": "El directo de un creador se cayó",
   "battleNarrStart": "¡Empezó la batalla! Cada regalo cuenta",
   "battleNarrLeadOwn": "¡VOLTEARON! {team} pasó al frente",
-  "@battleNarrLeadOwn": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOwn": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrLeadOther": "{team} pasó al frente. ¡A voltearlo!",
-  "@battleNarrLeadOther": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOther": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrMomentum": "{team} está que arde",
-  "@battleNarrMomentum": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrMomentum": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashStart": "Desafío relámpago: envía {pontos} {nome} en {tempo}",
-  "@battleNarrFlashStart": {"placeholders": {"pontos": {"type": "String"}, "nome": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashStart": {
+    "placeholders": {
+      "pontos": {
+        "type": "String"
+      },
+      "nome": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashDone": "¡Desafío cumplido! {mult} por {tempo}",
-  "@battleNarrFlashDone": {"placeholders": {"mult": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashDone": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFinal10": "¡Últimos 10 segundos! Cada regalo vale {mult}",
-  "@battleNarrFinal10": {"placeholders": {"mult": {"type": "String"}}},
+  "@battleNarrFinal10": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrVictory": "¡VICTORIA de {team}!",
-  "@battleNarrVictory": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrVictory": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDefeat": "¡Fin! {team} ganó esta vez",
-  "@battleNarrDefeat": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrDefeat": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDraw": "¡EMPATE!",
   "battleNarrEnded": "Batalla terminada",
   "agencyTitle": "Mi agencia",
   "agencyPendingInvites": "{count, plural, =1{1 invitación} other{{count} invitaciones}}",
-  "@agencyPendingInvites": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyPendingInvites": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEmptyBody": "Las agencias ayudan a los creadores a crecer: siguen tus resultados, organizan eventos y apoyan tu rutina de lives.",
   "agencyInfoEarningsBody": "Brawe sigue pagándote tus ganancias directamente. La comisión de la agencia la paga Brawe y nunca se descuenta de ti.",
   "agencyInfoOneBody": "Solo puedes estar en una agencia. Al aceptar una invitación, las demás pendientes se cancelan.",
@@ -3567,9 +3667,21 @@
   "agencyInvitesTitle": "Invitaciones pendientes",
   "agencyInviteTitle": "Invitación de agencia",
   "agencyContractMonths": "{months, plural, =1{1 mes} other{{months} meses}}",
-  "@agencyContractMonths": {"placeholders": {"months": {"type": "int"}}},
+  "@agencyContractMonths": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractOf": "Contrato de {duration}",
-  "@agencyContractOf": {"placeholders": {"duration": {"type": "String"}}},
+  "@agencyContractOf": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "agencyContractLength": "Duración del contrato",
   "agencyInvitedByTitle": "Quién te invitó",
   "agencyRoleOwner": "Dueño de la agencia",
@@ -3577,52 +3689,136 @@
   "agencyRoleAnalyst": "Equipo de la agencia",
   "agencyRoleUnknown": "Representante de la agencia",
   "agencyInvitedOn": "Invitación enviada el {date}",
-  "@agencyInvitedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyInvitedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMessageTitle": "Mensaje de la agencia",
   "agencyWhatChangesTitle": "Qué cambia para ti",
   "agencyTermsTitle": "Términos y condiciones",
   "agencyTermsVersion": "Versión {version}",
-  "@agencyTermsVersion": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyTermsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTermsStandard": "Términos estándar de Brawe",
   "agencyTermsAddendum": "Anexo de la agencia",
   "agencyTermsEmpty": "Términos no disponibles por ahora.",
   "agencyAcceptCheckbox": "He leído y acepto los términos y condiciones (versión {version})",
-  "@agencyAcceptCheckbox": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyAcceptCheckbox": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptButton": "Aceptar invitación",
   "agencyDeclineButton": "Rechazar",
   "agencyAcceptConfirmTitle": "¿Unirte a {name}?",
-  "@agencyAcceptConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptConfirmBody": "Tu vínculo empieza hoy. Antes del fin del contrato, la salida se hace de común acuerdo con la agencia.",
   "agencyDeclineConfirmTitle": "¿Rechazar invitación?",
   "agencyDeclineConfirmBody": "Rechazar no afecta tu cuenta. La agencia verá que la invitación fue rechazada.",
   "agencyAcceptedSnack": "Ahora formas parte de {name}",
-  "@agencyAcceptedSnack": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDeclinedSnack": "Invitación rechazada",
   "agencyLeftSnack": "Saliste de la agencia",
   "agencyInviteUnavailable": "Esta invitación ya no está disponible.",
   "agencyCreatorsCount": "{count, plural, =1{1 creador} other{{count} creadores}}",
-  "@agencyCreatorsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyCreatorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyPartnerSince": "Socia desde {date}",
-  "@agencyPartnerSince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyPartnerSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTrialBadge": "En prueba",
   "agencyContractTitle": "Contrato",
   "agencyContractPeriod": "{start} a {end}",
-  "@agencyContractPeriod": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "@agencyContractPeriod": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDaysLeft": "{days, plural, =0{Termina hoy} =1{Falta 1 día} other{Faltan {days} días}}",
-  "@agencyDaysLeft": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractProgress": "{percent}% del contrato",
-  "@agencyContractProgress": {"placeholders": {"percent": {"type": "int"}}},
+  "@agencyContractProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "agencyHours": "Horas en vivo",
   "agencyDaysLive": "Días con live",
   "agencyDiamonds": "Diamantes",
   "agencyFollowers": "Seguidores",
   "agencyRankValue": "#{rank} de {total}",
-  "@agencyRankValue": {"placeholders": {"rank": {"type": "int"}, "total": {"type": "int"}}},
+  "@agencyRankValue": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "agencyGuidelinesNotMet": "Aún faltan metas este mes",
   "agencyMissingHours": "Faltan {value} h",
-  "@agencyMissingHours": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyMissingHours": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMissingDays": "{days, plural, =1{Falta 1 día} other{Faltan {days} días}}",
-  "@agencyMissingDays": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyMissingDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyNoIncidents": "Ninguna incidencia",
   "agencyIncidentWarning": "Advertencia",
   "agencyIncidentSuspension": "Suspensión",
@@ -3633,19 +3829,37 @@
   "agencyEventScheduled": "Próximamente",
   "agencyEventEnded": "Finalizado",
   "agencyEventMultiplier": "Multiplicador x{value}",
-  "@agencyEventMultiplier": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyEventMultiplier": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveTitle": "Salir de la agencia",
   "agencyLeaveAllowed": "Puedes salir ahora, sin multa. Tus ganancias y tu cuenta no cambian.",
   "agencyLeaveButton": "Salir de la agencia",
   "agencyLeaveConfirmTitle": "¿Salir de {name}?",
-  "@agencyLeaveConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyLeaveConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveConfirmBody": "El vínculo terminará. No se puede deshacer: para volver necesitarás una nueva invitación.",
   "agencyLeaveConfirmAction": "Salir ahora",
   "agencyExitRuleFree": "Al terminar el contrato sales libremente, desde la app.",
   "agencyExitRuleAbuse": "En caso de abuso (cobros, pagos fuera de Brawe, presión), pide una revisión de Brawe.",
   "agencyLeaveSectionTitle": "Salida de la agencia",
   "agencyLeaveRequestBody": "Tu contrato dura hasta el {date}. Para salir antes, lo pides de acuerdo con la agencia. Si no responde a tiempo, quedas libre automáticamente.",
-  "@agencyLeaveRequestBody": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRequestBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveRequestBodyNoDate": "Para salir antes del fin del contrato, lo pides de acuerdo con la agencia. Si no responde a tiempo, quedas libre automáticamente.",
   "agencyLeaveRequestButton": "Pedir desvinculación a la agencia",
   "agencyLeaveRequestSheetTitle": "Pedir desvinculación",
@@ -3656,9 +3870,21 @@
   "agencyLeaveRequestSentSnack": "Solicitud enviada a la agencia.",
   "agencyLeavePendingTitle": "Solicitud de salida enviada",
   "agencyLeavePendingSent": "Enviada el {date}. Esperando la respuesta de la agencia.",
-  "@agencyLeavePendingSent": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingSent": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingDue": "Si la agencia no responde antes del {date}, quedas libre automáticamente.",
-  "@agencyLeavePendingDue": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingBrawe": "Tu solicitud está en revisión de Brawe.",
   "agencyReviewPendingTitle": "Revisión de Brawe solicitada",
   "agencyLeaveCancel": "Cancelar solicitud",
@@ -3667,7 +3893,13 @@
   "agencyLeaveDeclinedBody": "La agencia no aprobó tu salida por ahora.",
   "agencyLeaveAgencyAnswer": "Respuesta de la agencia",
   "agencyLeaveRetryAt": "Podrás pedir de nuevo desde el {date}.",
-  "@agencyLeaveRetryAt": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRetryAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyReviewLink": "Pedir revisión de Brawe",
   "agencyReviewSheetTitle": "Pedir revisión de Brawe",
   "agencyReviewSheetBody": "Úsalo solo si hay abuso. Brawe lo revisa directamente, sin pasar por la agencia, y puede terminar el vínculo.",
@@ -3683,7 +3915,13 @@
   "agencyErrLeaveRequiresAgreement": "Antes del fin del contrato, pide la desvinculación a la agencia.",
   "agencyErrLeaveRequestOpen": "Ya tienes una solicitud abierta.",
   "agencyErrLeaveCooldown": "Podrás pedir de nuevo desde el {date}.",
-  "@agencyErrLeaveCooldown": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrLeaveCooldown": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrLeaveCooldownNoDate": "Espera un poco para pedir de nuevo.",
   "agencyErrLeaveNotOpen": "Esta solicitud ya fue respondida o cancelada.",
   "agencyErrReasonTooLong": "El texto supera los 500 caracteres.",
@@ -3694,7 +3932,13 @@
   "agencyLoadError": "No se pudo cargar tu agencia",
   "agencyErrTermsMismatch": "Los términos se actualizaron. Lee la versión actual e inténtalo de nuevo.",
   "agencyErrCannotLeaveYet": "Aún no puedes salir. Disponible el {date}.",
-  "@agencyErrCannotLeaveYet": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrCannotLeaveYet": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrCannotLeaveYetNoDate": "Aún no puedes salir de la agencia.",
   "agencyErrAlreadyInAgency": "Ya estás en una agencia.",
   "agencyErrNotApproved": "Esta agencia no está disponible por ahora.",
@@ -3722,7 +3966,13 @@
   "creatorPanelProfileFallback": "Creador",
   "creatorPanelOpenError": "No se pudo guardar. Inténtalo de nuevo.",
   "agencySince": "En la agencia desde {date}",
-  "@agencySince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencySince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTalk": "Escribir",
   "agencyTalkError": "No se pudo abrir la conversación.",
   "agencySubSummary": "Resumen",
@@ -3732,14 +3982,32 @@
   "agencyPeriodThisMonth": "Este mes",
   "agencyPeriodLabel": "Período",
   "agencyRankUp": "{n, plural, =1{Subió 1 puesto} other{Subió {n} puestos}}",
-  "@agencyRankUp": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankUp": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankDown": "{n, plural, =1{Bajó 1 puesto} other{Bajó {n} puestos}}",
-  "@agencyRankDown": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankDown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankSame": "Mismo puesto que el mes anterior",
   "agencyPositionLabel": "Puesto en la agencia",
   "agencyMonthGoalTitle": "Meta del mes",
   "agencyMonthGoalPercent": "{percent}% de la meta",
-  "@agencyMonthGoalPercent": {"placeholders": {"percent": {"type": "String"}}},
+  "@agencyMonthGoalPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMonthGoalMet": "Meta alcanzada",
   "agencyMonthGoalNone": "Sin meta definida para este mes",
   "agencyChartTitle": "Últimos 6 meses",
@@ -3747,13 +4015,37 @@
   "agencyPerfError": "No se pudo cargar el rendimiento",
   "agencyGoalDone": "Meta cumplida",
   "agencyGoalHoursValue": "{have} de {need} h",
-  "@agencyGoalHoursValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalHoursValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyGoalDaysValue": "{have} de {need} días",
-  "@agencyGoalDaysValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalDaysValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyIncFilterMonth": "Del mes",
   "agencyIncFilter90": "Últimos 90 días",
   "agencyIncidentPoints": "{points, plural, =1{1 punto} other{{points} puntos}}",
-  "@agencyIncidentPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@agencyIncidentPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEventsFilterUpcoming": "Próximos",
   "agencyEventsFilterLive": "En curso",
   "agencyEventsFilterEnded": "Finalizados",
@@ -3767,12 +4059,33 @@
   "agencyReviewConfirmTitle": "¿Pedir revisión de Brawe?",
   "agencyReviewConfirmBody": "Úsalo solo en caso de abuso. Brawe lo revisa directamente, sin la agencia.",
   "agencyLeaveSentOn": "Enviado el {date}",
-  "@agencyLeaveSentOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveSentOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesBanner": "{count, plural, =1{Tienes 1 invitación de agencia} other{Tienes {count} invitaciones de agencia}}",
-  "@agencyInvitesBanner": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyInvitesBanner": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyInvitesView": "Ver",
   "agencyInviteRowBy": "{name} · {role}",
-  "@agencyInviteRowBy": {"placeholders": {"name": {"type": "String"}, "role": {"type": "String"}}},
+  "@agencyInviteRowBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesEmpty": "Ninguna invitación pendiente.",
   "agencyPerkEarnings": "Ganancias pagadas por Brawe",
   "agencyPerkNoCharges": "Sin cobros",
@@ -3791,13 +4104,28 @@
   "creatorApplyStepNetwork": "Tu red",
   "creatorApplyStepAbout": "Sobre ti",
   "creatorApplyStepOf": "Paso {n} de {total}",
-  "@creatorApplyStepOf": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@creatorApplyStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyPlatformLabel": "Red principal",
   "creatorApplyHandleLabel": "Tu usuario en esa red",
   "creatorApplyHandleWhy": "Necesitamos tu perfil en una red social para analizar tu contenido y tu audiencia. Solo lo ve el equipo de aprobación.",
   "creatorApplyErrHandle": "Usa solo letras, números, punto, guion o guion bajo (mín. 2)",
   "creatorApplyErrMotivation": "Escribe al menos {min} caracteres",
-  "@creatorApplyErrMotivation": {"placeholders": {"min": {"type": "int"}}},
+  "@creatorApplyErrMotivation": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyErrFollowersMin": "Indica cuántos seguidores tienes (mínimo 1)",
   "editProfileCreatorBadgeTitle": "Mostrar insignia de creador",
   "editProfileCreatorBadgeHint": "Muestra la insignia de Creator Network en tu perfil.",
@@ -3805,12 +4133,20 @@
   "videoPubSound": "Sonido",
   "videoPubCoverAt": "Portada en {time}",
   "@videoPubCoverAt": {
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "videoUpQueued": "En cola…",
   "videoUpUploading": "Publicando… {percent}%",
   "@videoUpUploading": {
-    "placeholders": { "percent": { "type": "int" } }
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
   },
   "videoUpProcessing": "Procesando…",
   "videoUpFailed": "Falló el envío",
@@ -3822,7 +4158,13 @@
   "chatSystemReadOnlyNote": "Mensajes oficiales de Brawe",
   "chatSystemOfficialLabel": "Cuenta oficial",
   "navChatUnreadSemantics": "Chat, {count} conversaciones sin leer",
-  "@navChatUnreadSemantics": {"placeholders": {"count": {"type": "int"}}},
+  "@navChatUnreadSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gifSearchHint": "Buscar GIFs",
   "gifClearSearch": "Borrar búsqueda",
   "gifPoweredBy": "Powered by GIPHY",
@@ -3856,22 +4198,55 @@
   "notifUnreadLabel": "Sin leer",
   "storyGiftSend": "Enviar",
   "storyGiftConfirmTitle": "¿Enviar {gift} por {price}?",
-  "@storyGiftConfirmTitle": {"placeholders": {"gift": {"type": "String"},"price": {"type": "String"}}},
+  "@storyGiftConfirmTitle": {
+    "placeholders": {
+      "gift": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "storyGiftBalance": "Saldo: {balance}",
-  "@storyGiftBalance": {"placeholders": {"balance": {"type": "String"}}},
+  "@storyGiftBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
   "storyUpUploading": "Publicando historia… {percent}%",
-  "@storyUpUploading": {"placeholders": {"percent": {"type": "int"}}},
+  "@storyUpUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "storyUpProcessing": "Publicando historia…",
   "storyUpDone": "Historia publicada",
   "storyUpFailed": "Falló al publicar la historia",
   "sessionEndedMessage": "Tu sesión fue cerrada. Inicia sesión de nuevo.",
   "stepUpTitle": "Confirma que eres tú",
   "stepUpSubtitle": "Enviamos un código a {email}",
-  "@stepUpSubtitle": {"placeholders": {"email": {"type": "String"}}},
+  "@stepUpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "stepUpHint": "Detectamos un acceso desde un dispositivo nuevo. Ingresa el código para continuar.",
   "stepUpBack": "Volver al inicio de sesión",
   "stepUpTooMany": "Demasiados intentos. Inténtalo de nuevo en {time}.",
-  "@stepUpTooMany": {"placeholders": {"time": {"type": "String"}}},
+  "@stepUpTooMany": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTitle": "Seguridad",
   "secSettingsEntrySub": "Dispositivos conectados, historial de accesos y protección de la cuenta",
   "secTabDevices": "Dispositivos",
@@ -3882,17 +4257,47 @@
   "secThisDevice": "Este dispositivo",
   "secActiveNow": "Activo ahora",
   "secLastActive": "Activo {time}",
-  "@secLastActive": {"placeholders": {"time": {"type": "String"}}},
+  "@secLastActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTimeMinutes": "hace {n} min",
-  "@secTimeMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeHours": "hace {n} h",
-  "@secTimeHours": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeDays": "hace {n} d",
-  "@secTimeDays": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secEndSession": "Cerrar sesión",
   "secEndSessionTitle": "¿Cerrar la sesión en este dispositivo?",
   "secEndSessionBody": "{device} se desconectará y tendrá que iniciar sesión de nuevo.",
-  "@secEndSessionBody": {"placeholders": {"device": {"type": "String"}}},
+  "@secEndSessionBody": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "secEndedOk": "Sesión cerrada.",
   "secSignOutOthers": "Cerrar sesión en todos los demás dispositivos",
   "secSignOutOthersTitle": "¿Cerrar sesión en los demás dispositivos?",
@@ -3907,7 +4312,13 @@
   "secClientPartners": "Brawe Partners",
   "secClientWeb": "Navegador",
   "secAppVersion": "versión {v}",
-  "@secAppVersion": {"placeholders": {"v": {"type": "String"}}},
+  "@secAppVersion": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
   "secUnknownDevice": "Dispositivo desconocido",
   "secUnknownPlace": "Ubicación no identificada",
   "secHistoryTitle": "Historial de accesos",
@@ -4130,5 +4541,180 @@
   "payoutCountryPE": "Perú",
   "payoutCountryUY": "Uruguay",
   "payoutCountryES": "España",
-  "payoutSeeMonetization": "Retirar en Monetización"
+  "payoutSeeMonetization": "Retirar en Monetización",
+  "adsSponsored": "Patrocinado",
+  "adsWhy": "¿Por qué veo esto?",
+  "adsWhyAdvertiser": "Este anuncio es de {name}.",
+  "adsWhyFooter": "Los anuncios en Brawe nunca usan tus mensajes ni se muestran a menores de 18 años.",
+  "adsHide": "Ocultar este anuncio",
+  "adsLessFrom": "Ver menos de {name}",
+  "adsReport": "Denunciar anuncio",
+  "adsHidden": "Anuncio ocultado",
+  "adsReportThanks": "Gracias. El equipo de Brawe revisará este anuncio.",
+  "adsReasonMisleading": "Engañoso o estafa",
+  "adsReasonOffensive": "Ofensivo",
+  "adsReasonAdult": "Contenido adulto",
+  "adsReasonProhibited": "Producto prohibido",
+  "adsReasonRepetitive": "Aparece demasiado",
+  "adsReasonOther": "Otro motivo",
+  "adsSeeProfile": "Ver perfil",
+  "adsWatchLive": "Ver el directo",
+  "postBoost": "Promocionar",
+  "postBoostHint": "Muéstralo a más personas",
+  "boostTitle": "Promocionar publicación",
+  "boostStepAudience": "Público",
+  "boostStepBudget": "Presupuesto",
+  "boostStepReview": "Revisar",
+  "boostAuto": "Automático",
+  "boostAutoHint": "Brawe elige a quienes tienen más probabilidad de interesarse, en todo Brasil.",
+  "boostCustom": "Personalizar",
+  "boostCustomHint": "Elige dónde, edad e intereses.",
+  "boostLocation": "Ubicación",
+  "boostAllBrazil": "Todo Brasil",
+  "boostPlaces": "Ciudades",
+  "boostRadius": "Radio",
+  "boostSearchCity": "Buscar ciudad",
+  "boostNoCity": "Ninguna ciudad encontrada",
+  "boostUseMyLocation": "Usar mi ubicación",
+  "boostCenter": "Centro del radio",
+  "boostKm": "{km} km",
+  "boostAge": "Edad",
+  "boostAgeRange": "{from} a {to} años",
+  "boostInterests": "Intereses",
+  "boostAnyInterest": "Cualquier interés",
+  "boostPerDay": "Por día",
+  "boostDuration": "Duración",
+  "boostDaysN": "{n} días",
+  "boostTotal": "Total",
+  "boostCoins": "{n} Coins",
+  "boostBalance": "Tu saldo: {n} Coins",
+  "boostInsufficient": "Saldo insuficiente para este presupuesto.",
+  "boostTopUp": "Recargar Coins",
+  "boostEstimate": "Público estimado",
+  "boostNext": "Continuar",
+  "boostPay": "Promocionar · {n} Coins",
+  "boostTerms": "Al promocionar, confirmas que la publicación sigue las reglas de anuncios de Brawe. Lo que no se gaste vuelve a ti.",
+  "boostDoneTitle": "Tu publicación se está promocionando",
+  "boostDoneHint": "Sigue alcance, clics y gastos en Mis anuncios.",
+  "boostSeeCampaigns": "Ver mis anuncios",
+  "boostError": "No se pudo promocionar. Inténtalo de nuevo.",
+  "boostCitiesInRadius": "≈ {n} ciudades en el radio",
+  "myAdsTitle": "Mis anuncios",
+  "myAdsEmpty": "Todavía no promocionaste ninguna publicación.",
+  "myAdsEmptyHint": "Toca Promocionar en una de tus publicaciones para empezar.",
+  "myAdsStatusDraft": "Borrador",
+  "myAdsStatusReview": "En revisión",
+  "myAdsStatusActive": "Activa",
+  "myAdsStatusPaused": "Pausada",
+  "myAdsStatusEnded": "Finalizada",
+  "myAdsStatusRejected": "Rechazada",
+  "myAdsImpressions": "Impresiones",
+  "myAdsReach": "Alcance",
+  "myAdsClicks": "Clics",
+  "myAdsViews": "Visualizaciones",
+  "myAdsNewFollowers": "Nuevos seguidores",
+  "myAdsProfileVisits": "Visitas al perfil",
+  "myAdsSpent": "Gastado",
+  "myAdsOf": "de {total}",
+  "myAdsEndsOn": "Termina el {date}",
+  "myAdsPause": "Pausar",
+  "myAdsResume": "Reanudar",
+  "myAdsCancel": "Finalizar",
+  "myAdsCancelConfirm": "¿Finalizar el anuncio ahora? Las Coins no gastadas vuelven a ti.",
+  "myAdsIncreaseDaily": "Aumentar por día",
+  "myAdsIncreaseCost": "Faltan {days} días: {coins} Coins más",
+  "myAdsOnlyUp": "El monto diario solo puede aumentar.",
+  "myAdsEditAudience": "Editar público",
+  "myAdsAudienceSaved": "Público actualizado",
+  "myAdsPausedByTeam": "Pausado por el equipo de Brawe.",
+  "myAdsSave": "Guardar",
+  "boostTapMap": "Toca el mapa para mover el centro.",
+  "boostInterestsNarrow": "Los intereses reducen el público. Si el alcance es bajo, quita algunos.",
+  "boostRetry": "Intentar de nuevo",
+  "boostPerDayShort": "por día",
+  "boostFinish": "Listo",
+  "myAdsAtMax": "Ya estás en el valor máximo por día.",
+  "myAdsEntry": "Anuncios e impulsos",
+  "adsRepEmpty": "Los resultados aparecen aquí en cuanto el anuncio empiece a mostrarse.",
+  "adsRepPeople": "personas",
+  "adsRepFrequency": "Frecuencia",
+  "adsRepCtr": "Tasa de clics",
+  "adsRepCpm": "Costo por mil",
+  "adsRepOverTime": "A lo largo de los días",
+  "adsRepVideo": "Video",
+  "adsRepAvgWatch": "Tiempo medio: {s} s",
+  "adsRepWatched25": "Vieron el 25%",
+  "adsRepWatched50": "Vieron la mitad",
+  "adsRepWatched100": "Vieron hasta el final",
+  "adsRepAudience": "Quién lo vio",
+  "adsRepAge": "Edad",
+  "adsRepCities": "Ciudades",
+  "adsRepStates": "Estados",
+  "adsRepRegions": "Regiones",
+  "adsRepInterests": "Intereses",
+  "adsRepOthers": "Otros",
+  "adsRepUnknown": "No informada",
+  "adsRepNoData": "Aún sin datos",
+  "adsRepPrivacy": "Solo totales. Los grupos con pocas personas se suman en \"Otros\" para que nadie sea identificado.",
+  "adsRepLoggedOut": "{n} personas lo vieron sin iniciar sesión",
+  "adsRepHours": "Mejores horarios",
+  "adsRepBestHour": "Más visto a las {h}h",
+  "adsRepWhere": "Dónde apareció",
+  "adsRepPlatforms": "Dispositivos",
+  "adsRepPlForyou": "Para ti",
+  "adsRepPlFollowing": "Siguiendo",
+  "adsRepPlStories": "Stories",
+  "adsRepPlLives": "Lives",
+  "adsRepPlExplore": "Explorar",
+  "adsRepPlWeb": "Inicio del sitio",
+  "adsRepLive": "Live",
+  "adsRepLiveFromAd": "Entraron por el anuncio",
+  "adsRepLivePeak": "Pico de espectadores",
+  "adsRepLiveGifts": "Regalos",
+  "adsRepLiveMinutes": "Minutos vistos",
+  "adsRepCoins": "Coins",
+  "adsRepCoinsPaid": "Pagadas",
+  "adsRepCoinsUsed": "Usadas",
+  "adsRepCoinsRefunded": "Devueltas",
+  "adsRepChanges": "Cambios",
+  "adsRepChangeDaily": "Valor por día",
+  "adsRepChangeTotal": "Presupuesto total",
+  "adsRepChangeEnd": "Fecha de fin",
+  "adsRepResults": "Resultados",
+  "boostStepGoal": "Objetivo",
+  "boostGoalTitle": "¿Qué quieres lograr con este impulso?",
+  "boostGoalViews": "Más visualizaciones",
+  "boostGoalViewsHint": "Muestra la publicación a más personas.",
+  "boostGoalFollowers": "Más seguidores",
+  "boostGoalFollowersHint": "Quien lo ve conoce tu perfil y puede seguirte.",
+  "boostGoalProfile": "Visitas al perfil",
+  "boostGoalProfileHint": "Más personas abriendo tu perfil.",
+  "boostGoalContacts": "Recibir mensajes",
+  "boostGoalContactsHint": "Un botón para que las personas hablen contigo.",
+  "boostContactVia": "¿Dónde quieres recibir los mensajes?",
+  "boostContactChat": "Chat de Brawe",
+  "boostContactChatHint": "Las conversaciones llegan a tu Chat, aquí en la app. Cada mensaje cuenta como contacto en el informe.",
+  "boostContactWhatsapp": "WhatsApp",
+  "boostContactWhatsappHint": "El botón abre tu WhatsApp con el mensaje listo. Cada toque cuenta como contacto en el informe.",
+  "boostWhatsappPhone": "Tu WhatsApp con código de área",
+  "boostWhatsappMessage": "Mensaje listo",
+  "boostWhatsappMessageDefault": "¡Hola! Vi tu publicación en Brawe y quiero saber más.",
+  "boostPreview": "Vista previa",
+  "boostPreviewHint": "Así aparece tu publicación en cada lugar de la app. Desliza para ver.",
+  "boostPlForYou": "Para ti",
+  "boostPlFeed": "Feed",
+  "boostPlStories": "Stories",
+  "boostPlTiles": "Lives y Explorar",
+  "boostAlreadyTitle": "Esta publicación ya se está impulsando",
+  "boostAlreadyHint": "Para llegar a más personas, aumenta el valor por día o edita el público de la campaña existente (hecha en la app o en el sitio).",
+  "boostSeeCampaign": "Ver campaña",
+  "adsCtaMessage": "Enviar mensaje",
+  "adsCtaWhatsapp": "Escribir por WhatsApp",
+  "myAdsKindBrand": "Anuncio de marca",
+  "myAdsKindBoost": "Impulso",
+  "myAdsLeadsChat": "Los mensajes de quienes vieron el anuncio llegan a tu Chat.",
+  "myAdsLeadsWhatsapp": "Los contactos de quienes vieron el anuncio llegan a tu WhatsApp.",
+  "myAdsOpenChat": "Abrir chat",
+  "myAdsBrandEditOnWeb": "Anuncio de marca: el creativo y el público se editan en el panel de anuncios, desde la computadora.",
+  "adsRepContacts": "Contactos recibidos"
 }

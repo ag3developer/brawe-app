@@ -10174,4 +10174,575 @@ class SEn extends S {
 
   @override
   String get payoutSeeMonetization => 'Withdraw in Monetization';
+
+  @override
+  String get adsSponsored => 'Sponsored';
+
+  @override
+  String get adsWhy => 'Why am I seeing this?';
+
+  @override
+  String adsWhyAdvertiser(String name) {
+    return 'This ad is from $name.';
+  }
+
+  @override
+  String get adsWhyFooter =>
+      'Ads on Brawe never use your messages and are never shown to people under 18.';
+
+  @override
+  String get adsHide => 'Hide this ad';
+
+  @override
+  String adsLessFrom(String name) {
+    return 'See less from $name';
+  }
+
+  @override
+  String get adsReport => 'Report ad';
+
+  @override
+  String get adsHidden => 'Ad hidden';
+
+  @override
+  String get adsReportThanks => 'Thanks. The Brawe team will review this ad.';
+
+  @override
+  String get adsReasonMisleading => 'Misleading or scam';
+
+  @override
+  String get adsReasonOffensive => 'Offensive';
+
+  @override
+  String get adsReasonAdult => 'Adult content';
+
+  @override
+  String get adsReasonProhibited => 'Prohibited product';
+
+  @override
+  String get adsReasonRepetitive => 'Shows too often';
+
+  @override
+  String get adsReasonOther => 'Other reason';
+
+  @override
+  String get adsSeeProfile => 'See profile';
+
+  @override
+  String get adsWatchLive => 'Watch live';
+
+  @override
+  String get postBoost => 'Boost';
+
+  @override
+  String get postBoostHint => 'Show it to more people';
+
+  @override
+  String get boostTitle => 'Boost post';
+
+  @override
+  String get boostStepAudience => 'Audience';
+
+  @override
+  String get boostStepBudget => 'Budget';
+
+  @override
+  String get boostStepReview => 'Review';
+
+  @override
+  String get boostAuto => 'Automatic';
+
+  @override
+  String get boostAutoHint =>
+      'Brawe picks the people most likely to be interested, across Brazil.';
+
+  @override
+  String get boostCustom => 'Customize';
+
+  @override
+  String get boostCustomHint => 'Choose where, age and interests.';
+
+  @override
+  String get boostLocation => 'Location';
+
+  @override
+  String get boostAllBrazil => 'All of Brazil';
+
+  @override
+  String get boostPlaces => 'Cities';
+
+  @override
+  String get boostRadius => 'Radius';
+
+  @override
+  String get boostSearchCity => 'Search city';
+
+  @override
+  String get boostNoCity => 'No city found';
+
+  @override
+  String get boostUseMyLocation => 'Use my location';
+
+  @override
+  String get boostCenter => 'Radius center';
+
+  @override
+  String boostKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String get boostAge => 'Age';
+
+  @override
+  String boostAgeRange(String from, String to) {
+    return '$from to $to years';
+  }
+
+  @override
+  String get boostInterests => 'Interests';
+
+  @override
+  String get boostAnyInterest => 'Any interest';
+
+  @override
+  String get boostPerDay => 'Per day';
+
+  @override
+  String get boostDuration => 'Duration';
+
+  @override
+  String boostDaysN(String n) {
+    return '$n days';
+  }
+
+  @override
+  String get boostTotal => 'Total';
+
+  @override
+  String boostCoins(String n) {
+    return '$n Coins';
+  }
+
+  @override
+  String boostBalance(String n) {
+    return 'Your balance: $n Coins';
+  }
+
+  @override
+  String get boostInsufficient => 'Not enough balance for this budget.';
+
+  @override
+  String get boostTopUp => 'Top up Coins';
+
+  @override
+  String get boostEstimate => 'Estimated audience';
+
+  @override
+  String get boostNext => 'Continue';
+
+  @override
+  String boostPay(String n) {
+    return 'Boost · $n Coins';
+  }
+
+  @override
+  String get boostTerms =>
+      'By boosting, you confirm the post follows Brawe ad rules. Anything not spent comes back to you.';
+
+  @override
+  String get boostDoneTitle => 'Your post is being boosted';
+
+  @override
+  String get boostDoneHint => 'Follow reach, clicks and spend in My ads.';
+
+  @override
+  String get boostSeeCampaigns => 'See my ads';
+
+  @override
+  String get boostError => 'Could not boost. Try again.';
+
+  @override
+  String boostCitiesInRadius(String n) {
+    return '≈ $n cities in radius';
+  }
+
+  @override
+  String get myAdsTitle => 'My ads';
+
+  @override
+  String get myAdsEmpty => 'You haven\'t boosted any post yet.';
+
+  @override
+  String get myAdsEmptyHint => 'Tap Boost on one of your posts to start.';
+
+  @override
+  String get myAdsStatusDraft => 'Draft';
+
+  @override
+  String get myAdsStatusReview => 'In review';
+
+  @override
+  String get myAdsStatusActive => 'Live';
+
+  @override
+  String get myAdsStatusPaused => 'Paused';
+
+  @override
+  String get myAdsStatusEnded => 'Ended';
+
+  @override
+  String get myAdsStatusRejected => 'Rejected';
+
+  @override
+  String get myAdsImpressions => 'Impressions';
+
+  @override
+  String get myAdsReach => 'Reach';
+
+  @override
+  String get myAdsClicks => 'Clicks';
+
+  @override
+  String get myAdsViews => 'Views';
+
+  @override
+  String get myAdsNewFollowers => 'New followers';
+
+  @override
+  String get myAdsProfileVisits => 'Profile visits';
+
+  @override
+  String get myAdsSpent => 'Spent';
+
+  @override
+  String myAdsOf(String total) {
+    return 'of $total';
+  }
+
+  @override
+  String myAdsEndsOn(String date) {
+    return 'Ends on $date';
+  }
+
+  @override
+  String get myAdsPause => 'Pause';
+
+  @override
+  String get myAdsResume => 'Resume';
+
+  @override
+  String get myAdsCancel => 'End';
+
+  @override
+  String get myAdsCancelConfirm =>
+      'End the ad now? Coins not spent come back to you.';
+
+  @override
+  String get myAdsIncreaseDaily => 'Increase per day';
+
+  @override
+  String myAdsIncreaseCost(String days, String coins) {
+    return '$days days left: $coins more Coins';
+  }
+
+  @override
+  String get myAdsOnlyUp => 'The daily amount can only go up.';
+
+  @override
+  String get myAdsEditAudience => 'Edit audience';
+
+  @override
+  String get myAdsAudienceSaved => 'Audience updated';
+
+  @override
+  String get myAdsPausedByTeam => 'Paused by the Brawe team.';
+
+  @override
+  String get myAdsSave => 'Save';
+
+  @override
+  String get boostTapMap => 'Tap the map to move the center.';
+
+  @override
+  String get boostInterestsNarrow =>
+      'Interests make the audience smaller. If reach is low, remove a few.';
+
+  @override
+  String get boostRetry => 'Try again';
+
+  @override
+  String get boostPerDayShort => 'per day';
+
+  @override
+  String get boostFinish => 'Done';
+
+  @override
+  String get myAdsAtMax => 'You\'re already at the maximum per day.';
+
+  @override
+  String get myAdsEntry => 'Ads and boosts';
+
+  @override
+  String get adsRepEmpty =>
+      'Results show up here as soon as your ad starts running.';
+
+  @override
+  String get adsRepPeople => 'people';
+
+  @override
+  String get adsRepFrequency => 'Frequency';
+
+  @override
+  String get adsRepCtr => 'Click rate';
+
+  @override
+  String get adsRepCpm => 'Cost per thousand';
+
+  @override
+  String get adsRepOverTime => 'Over time';
+
+  @override
+  String get adsRepVideo => 'Video';
+
+  @override
+  String adsRepAvgWatch(String s) {
+    return 'Avg. watch: $s s';
+  }
+
+  @override
+  String get adsRepWatched25 => 'Watched 25%';
+
+  @override
+  String get adsRepWatched50 => 'Watched half';
+
+  @override
+  String get adsRepWatched100 => 'Watched to the end';
+
+  @override
+  String get adsRepAudience => 'Who saw it';
+
+  @override
+  String get adsRepAge => 'Age';
+
+  @override
+  String get adsRepCities => 'Cities';
+
+  @override
+  String get adsRepStates => 'States';
+
+  @override
+  String get adsRepRegions => 'Regions';
+
+  @override
+  String get adsRepInterests => 'Interests';
+
+  @override
+  String get adsRepOthers => 'Others';
+
+  @override
+  String get adsRepUnknown => 'Not provided';
+
+  @override
+  String get adsRepNoData => 'No data yet';
+
+  @override
+  String get adsRepPrivacy =>
+      'Totals only. Small groups are counted as \"Others\" so no one can be identified.';
+
+  @override
+  String adsRepLoggedOut(String n) {
+    return '$n people saw it while logged out';
+  }
+
+  @override
+  String get adsRepHours => 'Best times';
+
+  @override
+  String adsRepBestHour(String h) {
+    return 'Most seen at ${h}h';
+  }
+
+  @override
+  String get adsRepWhere => 'Where it showed';
+
+  @override
+  String get adsRepPlatforms => 'Devices';
+
+  @override
+  String get adsRepPlForyou => 'For you';
+
+  @override
+  String get adsRepPlFollowing => 'Following';
+
+  @override
+  String get adsRepPlStories => 'Stories';
+
+  @override
+  String get adsRepPlLives => 'Lives';
+
+  @override
+  String get adsRepPlExplore => 'Explore';
+
+  @override
+  String get adsRepPlWeb => 'Website home';
+
+  @override
+  String get adsRepLive => 'Live';
+
+  @override
+  String get adsRepLiveFromAd => 'Joined from the ad';
+
+  @override
+  String get adsRepLivePeak => 'Peak viewers';
+
+  @override
+  String get adsRepLiveGifts => 'Gifts';
+
+  @override
+  String get adsRepLiveMinutes => 'Minutes watched';
+
+  @override
+  String get adsRepCoins => 'Coins';
+
+  @override
+  String get adsRepCoinsPaid => 'Paid';
+
+  @override
+  String get adsRepCoinsUsed => 'Used';
+
+  @override
+  String get adsRepCoinsRefunded => 'Refunded';
+
+  @override
+  String get adsRepChanges => 'Changes';
+
+  @override
+  String get adsRepChangeDaily => 'Daily amount';
+
+  @override
+  String get adsRepChangeTotal => 'Total budget';
+
+  @override
+  String get adsRepChangeEnd => 'End date';
+
+  @override
+  String get adsRepResults => 'Results';
+
+  @override
+  String get boostStepGoal => 'Goal';
+
+  @override
+  String get boostGoalTitle => 'What do you want from this boost?';
+
+  @override
+  String get boostGoalViews => 'More views';
+
+  @override
+  String get boostGoalViewsHint => 'Show your post to more people.';
+
+  @override
+  String get boostGoalFollowers => 'More followers';
+
+  @override
+  String get boostGoalFollowersHint =>
+      'People who see it discover your profile and can follow you.';
+
+  @override
+  String get boostGoalProfile => 'Profile visits';
+
+  @override
+  String get boostGoalProfileHint => 'More people opening your profile.';
+
+  @override
+  String get boostGoalContacts => 'Get messages';
+
+  @override
+  String get boostGoalContactsHint => 'A button for people to talk to you.';
+
+  @override
+  String get boostContactVia => 'Where do you want to get messages?';
+
+  @override
+  String get boostContactChat => 'Brawe chat';
+
+  @override
+  String get boostContactChatHint =>
+      'Conversations arrive in your Chat, right here in the app. Each message counts as a contact in the report.';
+
+  @override
+  String get boostContactWhatsapp => 'WhatsApp';
+
+  @override
+  String get boostContactWhatsappHint =>
+      'The button opens your WhatsApp with a ready message. Each tap counts as a contact in the report.';
+
+  @override
+  String get boostWhatsappPhone => 'Your WhatsApp with area code';
+
+  @override
+  String get boostWhatsappMessage => 'Ready message';
+
+  @override
+  String get boostWhatsappMessageDefault =>
+      'Hi! I saw your post on Brawe and want to know more.';
+
+  @override
+  String get boostPreview => 'Preview';
+
+  @override
+  String get boostPreviewHint =>
+      'This is how your post shows in each place of the app. Swipe to see.';
+
+  @override
+  String get boostPlForYou => 'For you';
+
+  @override
+  String get boostPlFeed => 'Feed';
+
+  @override
+  String get boostPlStories => 'Stories';
+
+  @override
+  String get boostPlTiles => 'Lives and Explore';
+
+  @override
+  String get boostAlreadyTitle => 'This post is already being boosted';
+
+  @override
+  String get boostAlreadyHint =>
+      'To reach more people, raise the daily amount or edit the audience of the existing campaign (made in the app or on the website).';
+
+  @override
+  String get boostSeeCampaign => 'See campaign';
+
+  @override
+  String get adsCtaMessage => 'Send message';
+
+  @override
+  String get adsCtaWhatsapp => 'Message on WhatsApp';
+
+  @override
+  String get myAdsKindBrand => 'Brand ad';
+
+  @override
+  String get myAdsKindBoost => 'Boost';
+
+  @override
+  String get myAdsLeadsChat =>
+      'Messages from people who saw the ad arrive in your Chat.';
+
+  @override
+  String get myAdsLeadsWhatsapp =>
+      'Contacts from people who saw the ad arrive on your WhatsApp.';
+
+  @override
+  String get myAdsOpenChat => 'Open chat';
+
+  @override
+  String get myAdsBrandEditOnWeb =>
+      'Brand ad: creative and audience are edited in the ads panel, on a computer.';
+
+  @override
+  String get adsRepContacts => 'Contacts received';
 }

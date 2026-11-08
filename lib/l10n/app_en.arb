@@ -303,13 +303,25 @@
   "postAddLocation": "Location",
   "pollEditorTitle": "Poll",
   "pollOptionHint": "Option {n}",
-  "@pollOptionHint": {"placeholders": {"n": {"type": "int"}}},
+  "@pollOptionHint": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "pollAddOption": "Add option",
   "pollRemoveOption": "Remove option",
   "pollRemove": "Remove poll",
   "pollDurationLabel": "Duration",
   "pollDurationDays": "{count, plural, =1{1 day} other{{count} days}}",
-  "@pollDurationDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollDurationDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollRulesHint": "All options are required: 2 to 4, up to 60 characters, no repeats. Votes can't be changed.",
   "pollErrorEmpty": "Fill in this option",
   "pollErrorDuplicate": "Repeated option",
@@ -317,13 +329,38 @@
   "pollBlockedByImage": "A poll and a photo can't be used together. Remove the photo to create a poll.",
   "imageBlockedByPoll": "A poll and a photo can't be used together. Remove the poll to attach a photo.",
   "pollVotesCount": "{count, plural, =1{1 vote} other{{count} votes}}",
-  "@pollVotesCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@pollVotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "pollEndsInDays": "ends in {count} d",
-  "@pollEndsInDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInHours": "ends in {count} h",
-  "@pollEndsInHours": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInMinutes": "ends in {count} min",
-  "@pollEndsInMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEnded": "Ended",
   "pollVoteToSee": "Vote to see the results",
   "pollVoteError": "Couldn't register your vote. Try again.",
@@ -3540,26 +3577,89 @@
   "battleEndedLiveAnon": "A creator's live dropped",
   "battleNarrStart": "The battle is on! Every gift counts",
   "battleNarrLeadOwn": "TURNAROUND! {team} took the lead",
-  "@battleNarrLeadOwn": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOwn": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrLeadOther": "{team} took the lead. Time to turn it around!",
-  "@battleNarrLeadOther": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOther": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrMomentum": "{team} is on fire",
-  "@battleNarrMomentum": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrMomentum": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashStart": "Flash challenge: send {pontos} {nome} in {tempo}",
-  "@battleNarrFlashStart": {"placeholders": {"pontos": {"type": "String"}, "nome": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashStart": {
+    "placeholders": {
+      "pontos": {
+        "type": "String"
+      },
+      "nome": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashDone": "Challenge done! {mult} for {tempo}",
-  "@battleNarrFlashDone": {"placeholders": {"mult": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashDone": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFinal10": "Last 10 seconds! Every gift is worth {mult}",
-  "@battleNarrFinal10": {"placeholders": {"mult": {"type": "String"}}},
+  "@battleNarrFinal10": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrVictory": "{team} WINS!",
-  "@battleNarrVictory": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrVictory": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDefeat": "It's over! {team} won this time",
-  "@battleNarrDefeat": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrDefeat": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDraw": "DRAW!",
   "battleNarrEnded": "Battle ended",
   "agencyTitle": "My agency",
   "agencyPendingInvites": "{count, plural, =1{1 invite} other{{count} invites}}",
-  "@agencyPendingInvites": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyPendingInvites": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEmptyBody": "Agencies help creators grow: they follow your results, organize events and support your live routine.",
   "agencyInfoEarningsBody": "Brawe keeps paying your earnings directly to you. The agency commission is paid by Brawe and never deducted from you.",
   "agencyInfoOneBody": "You can only be in one agency. When you accept an invite, the other pending ones are cancelled.",
@@ -3567,9 +3667,21 @@
   "agencyInvitesTitle": "Pending invites",
   "agencyInviteTitle": "Agency invite",
   "agencyContractMonths": "{months, plural, =1{1 month} other{{months} months}}",
-  "@agencyContractMonths": {"placeholders": {"months": {"type": "int"}}},
+  "@agencyContractMonths": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractOf": "{duration} contract",
-  "@agencyContractOf": {"placeholders": {"duration": {"type": "String"}}},
+  "@agencyContractOf": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "agencyContractLength": "Contract length",
   "agencyInvitedByTitle": "Invited by",
   "agencyRoleOwner": "Agency owner",
@@ -3577,52 +3689,136 @@
   "agencyRoleAnalyst": "Agency team",
   "agencyRoleUnknown": "Agency representative",
   "agencyInvitedOn": "Invite sent on {date}",
-  "@agencyInvitedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyInvitedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMessageTitle": "Message from the agency",
   "agencyWhatChangesTitle": "What changes for you",
   "agencyTermsTitle": "Terms and conditions",
   "agencyTermsVersion": "Version {version}",
-  "@agencyTermsVersion": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyTermsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTermsStandard": "Brawe standard terms",
   "agencyTermsAddendum": "Agency addendum",
   "agencyTermsEmpty": "Terms unavailable right now.",
   "agencyAcceptCheckbox": "I have read and accept the terms and conditions (version {version})",
-  "@agencyAcceptCheckbox": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyAcceptCheckbox": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptButton": "Accept invite",
   "agencyDeclineButton": "Decline",
   "agencyAcceptConfirmTitle": "Join {name}?",
-  "@agencyAcceptConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptConfirmBody": "Your link starts today. Before the contract ends, leaving is done by agreement with the agency.",
   "agencyDeclineConfirmTitle": "Decline invite?",
   "agencyDeclineConfirmBody": "Declining has no effect on your account. The agency will see that the invite was declined.",
   "agencyAcceptedSnack": "You are now part of {name}",
-  "@agencyAcceptedSnack": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDeclinedSnack": "Invite declined",
   "agencyLeftSnack": "You left the agency",
   "agencyInviteUnavailable": "This invite is no longer available.",
   "agencyCreatorsCount": "{count, plural, =1{1 creator} other{{count} creators}}",
-  "@agencyCreatorsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyCreatorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyPartnerSince": "Partner since {date}",
-  "@agencyPartnerSince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyPartnerSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTrialBadge": "On trial",
   "agencyContractTitle": "Contract",
   "agencyContractPeriod": "{start} to {end}",
-  "@agencyContractPeriod": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "@agencyContractPeriod": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDaysLeft": "{days, plural, =0{Ends today} =1{1 day left} other{{days} days left}}",
-  "@agencyDaysLeft": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractProgress": "{percent}% of the contract",
-  "@agencyContractProgress": {"placeholders": {"percent": {"type": "int"}}},
+  "@agencyContractProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "agencyHours": "Live hours",
   "agencyDaysLive": "Days with live",
   "agencyDiamonds": "Diamonds",
   "agencyFollowers": "Followers",
   "agencyRankValue": "#{rank} of {total}",
-  "@agencyRankValue": {"placeholders": {"rank": {"type": "int"}, "total": {"type": "int"}}},
+  "@agencyRankValue": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "agencyGuidelinesNotMet": "Some goals are still missing this month",
   "agencyMissingHours": "{value} h to go",
-  "@agencyMissingHours": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyMissingHours": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMissingDays": "{days, plural, =1{1 day to go} other{{days} days to go}}",
-  "@agencyMissingDays": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyMissingDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyNoIncidents": "No incidents",
   "agencyIncidentWarning": "Warning",
   "agencyIncidentSuspension": "Suspension",
@@ -3633,19 +3829,37 @@
   "agencyEventScheduled": "Upcoming",
   "agencyEventEnded": "Ended",
   "agencyEventMultiplier": "Multiplier x{value}",
-  "@agencyEventMultiplier": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyEventMultiplier": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveTitle": "Leave the agency",
   "agencyLeaveAllowed": "You can leave now, with no penalty. Your earnings and account do not change.",
   "agencyLeaveButton": "Leave the agency",
   "agencyLeaveConfirmTitle": "Leave {name}?",
-  "@agencyLeaveConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyLeaveConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveConfirmBody": "The link will end. This cannot be undone: to come back you will need a new invite.",
   "agencyLeaveConfirmAction": "Leave now",
   "agencyExitRuleFree": "When the contract ends you can leave freely, in the app.",
   "agencyExitRuleAbuse": "In case of abuse (fees, payments outside Brawe, pressure), ask Brawe for a review.",
   "agencyLeaveSectionTitle": "Leaving the agency",
   "agencyLeaveRequestBody": "Your contract runs until {date}. To leave earlier, request it by agreement with the agency. If it does not answer in time, you are automatically free.",
-  "@agencyLeaveRequestBody": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRequestBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveRequestBodyNoDate": "To leave before the contract ends, request it by agreement with the agency. If it does not answer in time, you are automatically free.",
   "agencyLeaveRequestButton": "Ask the agency to release me",
   "agencyLeaveRequestSheetTitle": "Request to leave",
@@ -3656,9 +3870,21 @@
   "agencyLeaveRequestSentSnack": "Request sent to the agency.",
   "agencyLeavePendingTitle": "Leave request sent",
   "agencyLeavePendingSent": "Sent on {date}. Waiting for the agency to answer.",
-  "@agencyLeavePendingSent": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingSent": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingDue": "If the agency does not answer by {date}, you are automatically free.",
-  "@agencyLeavePendingDue": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingBrawe": "Your request is under Brawe review.",
   "agencyReviewPendingTitle": "Brawe review requested",
   "agencyLeaveCancel": "Cancel request",
@@ -3667,7 +3893,13 @@
   "agencyLeaveDeclinedBody": "The agency did not approve your leaving for now.",
   "agencyLeaveAgencyAnswer": "Agency's answer",
   "agencyLeaveRetryAt": "You can ask again from {date}.",
-  "@agencyLeaveRetryAt": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRetryAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyReviewLink": "Ask Brawe for a review",
   "agencyReviewSheetTitle": "Ask Brawe for a review",
   "agencyReviewSheetBody": "Use only in case of abuse. Brawe reviews it directly, without going through the agency, and may end the link.",
@@ -3683,7 +3915,13 @@
   "agencyErrLeaveRequiresAgreement": "Before the contract ends, ask the agency to release you.",
   "agencyErrLeaveRequestOpen": "You already have an open request.",
   "agencyErrLeaveCooldown": "You can ask again from {date}.",
-  "@agencyErrLeaveCooldown": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrLeaveCooldown": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrLeaveCooldownNoDate": "Please wait a bit before asking again.",
   "agencyErrLeaveNotOpen": "This request was already answered or cancelled.",
   "agencyErrReasonTooLong": "The text is over 500 characters.",
@@ -3694,7 +3932,13 @@
   "agencyLoadError": "Could not load your agency",
   "agencyErrTermsMismatch": "The terms were updated. Read the current version and try again.",
   "agencyErrCannotLeaveYet": "You cannot leave yet. Available on {date}.",
-  "@agencyErrCannotLeaveYet": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrCannotLeaveYet": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrCannotLeaveYetNoDate": "You cannot leave the agency yet.",
   "agencyErrAlreadyInAgency": "You are already in an agency.",
   "agencyErrNotApproved": "This agency is not available right now.",
@@ -3722,7 +3966,13 @@
   "creatorPanelProfileFallback": "Creator",
   "creatorPanelOpenError": "Could not save. Try again.",
   "agencySince": "With the agency since {date}",
-  "@agencySince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencySince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTalk": "Message",
   "agencyTalkError": "Could not open the conversation.",
   "agencySubSummary": "Summary",
@@ -3732,14 +3982,32 @@
   "agencyPeriodThisMonth": "This month",
   "agencyPeriodLabel": "Period",
   "agencyRankUp": "{n, plural, =1{Up 1 place} other{Up {n} places}}",
-  "@agencyRankUp": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankUp": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankDown": "{n, plural, =1{Down 1 place} other{Down {n} places}}",
-  "@agencyRankDown": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankDown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankSame": "Same place as last month",
   "agencyPositionLabel": "Place in the agency",
   "agencyMonthGoalTitle": "Monthly goal",
   "agencyMonthGoalPercent": "{percent}% of the goal",
-  "@agencyMonthGoalPercent": {"placeholders": {"percent": {"type": "String"}}},
+  "@agencyMonthGoalPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMonthGoalMet": "Goal reached",
   "agencyMonthGoalNone": "No goal set for this month",
   "agencyChartTitle": "Last 6 months",
@@ -3747,13 +4015,37 @@
   "agencyPerfError": "Could not load performance",
   "agencyGoalDone": "Goal reached",
   "agencyGoalHoursValue": "{have} of {need} h",
-  "@agencyGoalHoursValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalHoursValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyGoalDaysValue": "{have} of {need} days",
-  "@agencyGoalDaysValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalDaysValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyIncFilterMonth": "This month",
   "agencyIncFilter90": "Last 90 days",
   "agencyIncidentPoints": "{points, plural, =1{1 point} other{{points} points}}",
-  "@agencyIncidentPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@agencyIncidentPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEventsFilterUpcoming": "Upcoming",
   "agencyEventsFilterLive": "In progress",
   "agencyEventsFilterEnded": "Ended",
@@ -3767,12 +4059,33 @@
   "agencyReviewConfirmTitle": "Ask Brawe to review?",
   "agencyReviewConfirmBody": "Use only in case of abuse. Brawe reviews it directly, without the agency.",
   "agencyLeaveSentOn": "Sent on {date}",
-  "@agencyLeaveSentOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveSentOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesBanner": "{count, plural, =1{You have 1 agency invitation} other{You have {count} agency invitations}}",
-  "@agencyInvitesBanner": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyInvitesBanner": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyInvitesView": "View",
   "agencyInviteRowBy": "{name} · {role}",
-  "@agencyInviteRowBy": {"placeholders": {"name": {"type": "String"}, "role": {"type": "String"}}},
+  "@agencyInviteRowBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesEmpty": "No pending invitations.",
   "agencyPerkEarnings": "Earnings paid by Brawe",
   "agencyPerkNoCharges": "No charges",
@@ -3791,13 +4104,28 @@
   "creatorApplyStepNetwork": "Your network",
   "creatorApplyStepAbout": "About you",
   "creatorApplyStepOf": "Step {n} of {total}",
-  "@creatorApplyStepOf": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@creatorApplyStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyPlatformLabel": "Main network",
   "creatorApplyHandleLabel": "Your username on that network",
   "creatorApplyHandleWhy": "We need your profile on a social network to review your content and audience. Only the approval team sees it.",
   "creatorApplyErrHandle": "Use only letters, numbers, dot, hyphen or underscore (min. 2)",
   "creatorApplyErrMotivation": "Write at least {min} characters",
-  "@creatorApplyErrMotivation": {"placeholders": {"min": {"type": "int"}}},
+  "@creatorApplyErrMotivation": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyErrFollowersMin": "Enter how many followers you have (minimum 1)",
   "editProfileCreatorBadgeTitle": "Show creator badge",
   "editProfileCreatorBadgeHint": "Shows the Creator Network badge on your profile.",
@@ -3805,12 +4133,20 @@
   "videoPubSound": "Sound",
   "videoPubCoverAt": "Cover at {time}",
   "@videoPubCoverAt": {
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "videoUpQueued": "Queued…",
   "videoUpUploading": "Publishing… {percent}%",
   "@videoUpUploading": {
-    "placeholders": { "percent": { "type": "int" } }
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
   },
   "videoUpProcessing": "Processing…",
   "videoUpFailed": "Upload failed",
@@ -3822,7 +4158,13 @@
   "chatSystemReadOnlyNote": "Official Brawe messages",
   "chatSystemOfficialLabel": "Official account",
   "navChatUnreadSemantics": "Chat, {count} unread conversations",
-  "@navChatUnreadSemantics": {"placeholders": {"count": {"type": "int"}}},
+  "@navChatUnreadSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gifSearchHint": "Search GIFs",
   "gifClearSearch": "Clear search",
   "gifPoweredBy": "Powered by GIPHY",
@@ -3856,22 +4198,55 @@
   "notifUnreadLabel": "Unread",
   "storyGiftSend": "Send",
   "storyGiftConfirmTitle": "Send {gift} for {price}?",
-  "@storyGiftConfirmTitle": {"placeholders": {"gift": {"type": "String"},"price": {"type": "String"}}},
+  "@storyGiftConfirmTitle": {
+    "placeholders": {
+      "gift": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "storyGiftBalance": "Balance: {balance}",
-  "@storyGiftBalance": {"placeholders": {"balance": {"type": "String"}}},
+  "@storyGiftBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
   "storyUpUploading": "Posting story… {percent}%",
-  "@storyUpUploading": {"placeholders": {"percent": {"type": "int"}}},
+  "@storyUpUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "storyUpProcessing": "Posting story…",
   "storyUpDone": "Story posted",
   "storyUpFailed": "Failed to post the story",
   "sessionEndedMessage": "Your session was ended. Please sign in again.",
   "stepUpTitle": "Confirm it's you",
   "stepUpSubtitle": "We sent a code to {email}",
-  "@stepUpSubtitle": {"placeholders": {"email": {"type": "String"}}},
+  "@stepUpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "stepUpHint": "We noticed a sign-in from a new device. Enter the code to continue.",
   "stepUpBack": "Back to sign in",
   "stepUpTooMany": "Too many attempts. Try again in {time}.",
-  "@stepUpTooMany": {"placeholders": {"time": {"type": "String"}}},
+  "@stepUpTooMany": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTitle": "Security",
   "secSettingsEntrySub": "Connected devices, sign-in history and account protection",
   "secTabDevices": "Devices",
@@ -3882,17 +4257,47 @@
   "secThisDevice": "This device",
   "secActiveNow": "Active now",
   "secLastActive": "Active {time}",
-  "@secLastActive": {"placeholders": {"time": {"type": "String"}}},
+  "@secLastActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTimeMinutes": "{n} min ago",
-  "@secTimeMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeHours": "{n} h ago",
-  "@secTimeHours": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeDays": "{n} d ago",
-  "@secTimeDays": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secEndSession": "End session",
   "secEndSessionTitle": "End the session on this device?",
   "secEndSessionBody": "{device} will be signed out and will need to sign in again.",
-  "@secEndSessionBody": {"placeholders": {"device": {"type": "String"}}},
+  "@secEndSessionBody": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "secEndedOk": "Session ended.",
   "secSignOutOthers": "Sign out of all other devices",
   "secSignOutOthersTitle": "Sign out of other devices?",
@@ -3907,7 +4312,13 @@
   "secClientPartners": "Brawe Partners",
   "secClientWeb": "Browser",
   "secAppVersion": "version {v}",
-  "@secAppVersion": {"placeholders": {"v": {"type": "String"}}},
+  "@secAppVersion": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
   "secUnknownDevice": "Unknown device",
   "secUnknownPlace": "Unknown location",
   "secHistoryTitle": "Sign-in history",
@@ -4130,5 +4541,180 @@
   "payoutCountryPE": "Peru",
   "payoutCountryUY": "Uruguay",
   "payoutCountryES": "Spain",
-  "payoutSeeMonetization": "Withdraw in Monetization"
+  "payoutSeeMonetization": "Withdraw in Monetization",
+  "adsSponsored": "Sponsored",
+  "adsWhy": "Why am I seeing this?",
+  "adsWhyAdvertiser": "This ad is from {name}.",
+  "adsWhyFooter": "Ads on Brawe never use your messages and are never shown to people under 18.",
+  "adsHide": "Hide this ad",
+  "adsLessFrom": "See less from {name}",
+  "adsReport": "Report ad",
+  "adsHidden": "Ad hidden",
+  "adsReportThanks": "Thanks. The Brawe team will review this ad.",
+  "adsReasonMisleading": "Misleading or scam",
+  "adsReasonOffensive": "Offensive",
+  "adsReasonAdult": "Adult content",
+  "adsReasonProhibited": "Prohibited product",
+  "adsReasonRepetitive": "Shows too often",
+  "adsReasonOther": "Other reason",
+  "adsSeeProfile": "See profile",
+  "adsWatchLive": "Watch live",
+  "postBoost": "Boost",
+  "postBoostHint": "Show it to more people",
+  "boostTitle": "Boost post",
+  "boostStepAudience": "Audience",
+  "boostStepBudget": "Budget",
+  "boostStepReview": "Review",
+  "boostAuto": "Automatic",
+  "boostAutoHint": "Brawe picks the people most likely to be interested, across Brazil.",
+  "boostCustom": "Customize",
+  "boostCustomHint": "Choose where, age and interests.",
+  "boostLocation": "Location",
+  "boostAllBrazil": "All of Brazil",
+  "boostPlaces": "Cities",
+  "boostRadius": "Radius",
+  "boostSearchCity": "Search city",
+  "boostNoCity": "No city found",
+  "boostUseMyLocation": "Use my location",
+  "boostCenter": "Radius center",
+  "boostKm": "{km} km",
+  "boostAge": "Age",
+  "boostAgeRange": "{from} to {to} years",
+  "boostInterests": "Interests",
+  "boostAnyInterest": "Any interest",
+  "boostPerDay": "Per day",
+  "boostDuration": "Duration",
+  "boostDaysN": "{n} days",
+  "boostTotal": "Total",
+  "boostCoins": "{n} Coins",
+  "boostBalance": "Your balance: {n} Coins",
+  "boostInsufficient": "Not enough balance for this budget.",
+  "boostTopUp": "Top up Coins",
+  "boostEstimate": "Estimated audience",
+  "boostNext": "Continue",
+  "boostPay": "Boost · {n} Coins",
+  "boostTerms": "By boosting, you confirm the post follows Brawe ad rules. Anything not spent comes back to you.",
+  "boostDoneTitle": "Your post is being boosted",
+  "boostDoneHint": "Follow reach, clicks and spend in My ads.",
+  "boostSeeCampaigns": "See my ads",
+  "boostError": "Could not boost. Try again.",
+  "boostCitiesInRadius": "≈ {n} cities in radius",
+  "myAdsTitle": "My ads",
+  "myAdsEmpty": "You haven't boosted any post yet.",
+  "myAdsEmptyHint": "Tap Boost on one of your posts to start.",
+  "myAdsStatusDraft": "Draft",
+  "myAdsStatusReview": "In review",
+  "myAdsStatusActive": "Live",
+  "myAdsStatusPaused": "Paused",
+  "myAdsStatusEnded": "Ended",
+  "myAdsStatusRejected": "Rejected",
+  "myAdsImpressions": "Impressions",
+  "myAdsReach": "Reach",
+  "myAdsClicks": "Clicks",
+  "myAdsViews": "Views",
+  "myAdsNewFollowers": "New followers",
+  "myAdsProfileVisits": "Profile visits",
+  "myAdsSpent": "Spent",
+  "myAdsOf": "of {total}",
+  "myAdsEndsOn": "Ends on {date}",
+  "myAdsPause": "Pause",
+  "myAdsResume": "Resume",
+  "myAdsCancel": "End",
+  "myAdsCancelConfirm": "End the ad now? Coins not spent come back to you.",
+  "myAdsIncreaseDaily": "Increase per day",
+  "myAdsIncreaseCost": "{days} days left: {coins} more Coins",
+  "myAdsOnlyUp": "The daily amount can only go up.",
+  "myAdsEditAudience": "Edit audience",
+  "myAdsAudienceSaved": "Audience updated",
+  "myAdsPausedByTeam": "Paused by the Brawe team.",
+  "myAdsSave": "Save",
+  "boostTapMap": "Tap the map to move the center.",
+  "boostInterestsNarrow": "Interests make the audience smaller. If reach is low, remove a few.",
+  "boostRetry": "Try again",
+  "boostPerDayShort": "per day",
+  "boostFinish": "Done",
+  "myAdsAtMax": "You're already at the maximum per day.",
+  "myAdsEntry": "Ads and boosts",
+  "adsRepEmpty": "Results show up here as soon as your ad starts running.",
+  "adsRepPeople": "people",
+  "adsRepFrequency": "Frequency",
+  "adsRepCtr": "Click rate",
+  "adsRepCpm": "Cost per thousand",
+  "adsRepOverTime": "Over time",
+  "adsRepVideo": "Video",
+  "adsRepAvgWatch": "Avg. watch: {s} s",
+  "adsRepWatched25": "Watched 25%",
+  "adsRepWatched50": "Watched half",
+  "adsRepWatched100": "Watched to the end",
+  "adsRepAudience": "Who saw it",
+  "adsRepAge": "Age",
+  "adsRepCities": "Cities",
+  "adsRepStates": "States",
+  "adsRepRegions": "Regions",
+  "adsRepInterests": "Interests",
+  "adsRepOthers": "Others",
+  "adsRepUnknown": "Not provided",
+  "adsRepNoData": "No data yet",
+  "adsRepPrivacy": "Totals only. Small groups are counted as \"Others\" so no one can be identified.",
+  "adsRepLoggedOut": "{n} people saw it while logged out",
+  "adsRepHours": "Best times",
+  "adsRepBestHour": "Most seen at {h}h",
+  "adsRepWhere": "Where it showed",
+  "adsRepPlatforms": "Devices",
+  "adsRepPlForyou": "For you",
+  "adsRepPlFollowing": "Following",
+  "adsRepPlStories": "Stories",
+  "adsRepPlLives": "Lives",
+  "adsRepPlExplore": "Explore",
+  "adsRepPlWeb": "Website home",
+  "adsRepLive": "Live",
+  "adsRepLiveFromAd": "Joined from the ad",
+  "adsRepLivePeak": "Peak viewers",
+  "adsRepLiveGifts": "Gifts",
+  "adsRepLiveMinutes": "Minutes watched",
+  "adsRepCoins": "Coins",
+  "adsRepCoinsPaid": "Paid",
+  "adsRepCoinsUsed": "Used",
+  "adsRepCoinsRefunded": "Refunded",
+  "adsRepChanges": "Changes",
+  "adsRepChangeDaily": "Daily amount",
+  "adsRepChangeTotal": "Total budget",
+  "adsRepChangeEnd": "End date",
+  "adsRepResults": "Results",
+  "boostStepGoal": "Goal",
+  "boostGoalTitle": "What do you want from this boost?",
+  "boostGoalViews": "More views",
+  "boostGoalViewsHint": "Show your post to more people.",
+  "boostGoalFollowers": "More followers",
+  "boostGoalFollowersHint": "People who see it discover your profile and can follow you.",
+  "boostGoalProfile": "Profile visits",
+  "boostGoalProfileHint": "More people opening your profile.",
+  "boostGoalContacts": "Get messages",
+  "boostGoalContactsHint": "A button for people to talk to you.",
+  "boostContactVia": "Where do you want to get messages?",
+  "boostContactChat": "Brawe chat",
+  "boostContactChatHint": "Conversations arrive in your Chat, right here in the app. Each message counts as a contact in the report.",
+  "boostContactWhatsapp": "WhatsApp",
+  "boostContactWhatsappHint": "The button opens your WhatsApp with a ready message. Each tap counts as a contact in the report.",
+  "boostWhatsappPhone": "Your WhatsApp with area code",
+  "boostWhatsappMessage": "Ready message",
+  "boostWhatsappMessageDefault": "Hi! I saw your post on Brawe and want to know more.",
+  "boostPreview": "Preview",
+  "boostPreviewHint": "This is how your post shows in each place of the app. Swipe to see.",
+  "boostPlForYou": "For you",
+  "boostPlFeed": "Feed",
+  "boostPlStories": "Stories",
+  "boostPlTiles": "Lives and Explore",
+  "boostAlreadyTitle": "This post is already being boosted",
+  "boostAlreadyHint": "To reach more people, raise the daily amount or edit the audience of the existing campaign (made in the app or on the website).",
+  "boostSeeCampaign": "See campaign",
+  "adsCtaMessage": "Send message",
+  "adsCtaWhatsapp": "Message on WhatsApp",
+  "myAdsKindBrand": "Brand ad",
+  "myAdsKindBoost": "Boost",
+  "myAdsLeadsChat": "Messages from people who saw the ad arrive in your Chat.",
+  "myAdsLeadsWhatsapp": "Contacts from people who saw the ad arrive on your WhatsApp.",
+  "myAdsOpenChat": "Open chat",
+  "myAdsBrandEditOnWeb": "Brand ad: creative and audience are edited in the ads panel, on a computer.",
+  "adsRepContacts": "Contacts received"
 }

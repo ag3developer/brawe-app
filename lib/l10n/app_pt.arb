@@ -366,13 +366,25 @@
   "postAddLocation": "Localização",
   "pollEditorTitle": "Enquete",
   "pollOptionHint": "Opção {n}",
-  "@pollOptionHint": {"placeholders": {"n": {"type": "int"}}},
+  "@pollOptionHint": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "pollAddOption": "Adicionar opção",
   "pollRemoveOption": "Remover opção",
   "pollRemove": "Remover enquete",
   "pollDurationLabel": "Duração",
   "pollDurationDays": "{count, plural, =1{1 dia} other{{count} dias}}",
-  "@pollDurationDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollDurationDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollRulesHint": "Todas as opções são obrigatórias: de 2 a 4, até 60 caracteres, sem repetir. O voto não pode ser alterado.",
   "pollErrorEmpty": "Preencha esta opção",
   "pollErrorDuplicate": "Opção repetida",
@@ -380,13 +392,38 @@
   "pollBlockedByImage": "Enquete e foto não podem ser usadas juntas. Remova a foto para criar uma enquete.",
   "imageBlockedByPoll": "Enquete e foto não podem ser usadas juntas. Remova a enquete para anexar uma foto.",
   "pollVotesCount": "{count, plural, =1{1 voto} other{{count} votos}}",
-  "@pollVotesCount": {"placeholders": {"count": {"type": "int", "format": "decimalPattern"}}},
+  "@pollVotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "pollEndsInDays": "termina em {count} d",
-  "@pollEndsInDays": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInHours": "termina em {count} h",
-  "@pollEndsInHours": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEndsInMinutes": "termina em {count} min",
-  "@pollEndsInMinutes": {"placeholders": {"count": {"type": "int"}}},
+  "@pollEndsInMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "pollEnded": "Encerrada",
   "pollVoteToSee": "Vote para ver os resultados",
   "pollVoteError": "Não foi possível registrar seu voto. Tente de novo.",
@@ -3166,7 +3203,13 @@
   "suspendedBody": "Sua conta no Brawe Connect foi suspensa por violar as nossas Diretrizes da Comunidade.",
   "suspendedReasonLabel": "Motivo",
   "suspendedUntil": "A suspensão termina em {date}.",
-  "@suspendedUntil": {"placeholders": {"date": {"type": "String"}}},
+  "@suspendedUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "suspendedPermanent": "Esta suspensão é permanente.",
   "suspendedAppeal": "Se você acredita que foi um engano, fale com o nosso suporte.",
   "suspendedContact": "Falar com o suporte",
@@ -3176,23 +3219,62 @@
   "questsTabAchievements": "Conquistas",
   "questsTabJourney": "Jornada",
   "questsResetsIn": "Novas missões em {time}",
-  "@questsResetsIn": {"placeholders": {"time": {"type": "String"}}},
+  "@questsResetsIn": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "questsDayProgress": "{done} de {total} concluídas",
-  "@questsDayProgress": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
+  "@questsDayProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "questsSectionDaily": "Missões diárias",
   "questsSectionWeekly": "Missões da semana",
   "questsSectionEvent": "Missões de evento",
   "questsAllDoneMascot": "Você completou todas as missões de hoje! Volte amanhã para manter a sequência.",
   "questsStreakMascot": "Sequência de {days} dias! Continue assim!",
-  "@questsStreakMascot": {"placeholders": {"days": {"type": "int"}}},
+  "@questsStreakMascot": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "questsStartMascot": "Complete todas as missões de hoje para começar uma sequência e ganhar emblemas.",
   "questsNextBadge": "Próximo emblema em {days} dias",
-  "@questsNextBadge": {"placeholders": {"days": {"type": "int"}}},
+  "@questsNextBadge": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "questsStreakBonus": "Bônus de sequência {label}",
-  "@questsStreakBonus": {"placeholders": {"label": {"type": "String"}}},
+  "@questsStreakBonus": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
   "questsLevelUpTitle": "Subiu de nível!",
   "questsLevelUpBody": "Você chegou ao nível {level}",
-  "@questsLevelUpBody": {"placeholders": {"level": {"type": "int"}}},
+  "@questsLevelUpBody": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "questsBadgeUnlockedTitle": "Emblema desbloqueado!",
   "questsContinue": "Continuar",
   "questsStatsTitle": "Seus números",
@@ -3202,15 +3284,45 @@
   "questsStatBestStreak": "Maior sequência",
   "questsBadgesTitle": "Emblemas",
   "questsBadgesCount": "{unlocked} de {total}",
-  "@questsBadgesCount": {"placeholders": {"unlocked": {"type": "int"}, "total": {"type": "int"}}},
+  "@questsBadgesCount": {
+    "placeholders": {
+      "unlocked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "questsBadgeLocked": "Bloqueado",
   "questsBadgeEarned": "Conquistado",
   "questsBadgeEarnedOn": "Conquistado em {date}",
-  "@questsBadgeEarnedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@questsBadgeEarnedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "questsBadgeRequirement": "Complete todas as missões do dia por {days} dias seguidos.",
-  "@questsBadgeRequirement": {"placeholders": {"days": {"type": "int"}}},
+  "@questsBadgeRequirement": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "questsBadgeProgress": "{current} de {target} dias",
-  "@questsBadgeProgress": {"placeholders": {"current": {"type": "int"}, "target": {"type": "int"}}},
+  "@questsBadgeProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
   "questBadgeStreak3": "Iniciante Dedicado",
   "questBadgeStreak7": "Guerreiro Semanal",
   "questBadgeStreak14": "Veterano",
@@ -3224,19 +3336,49 @@
   "questsAwardRevoked": "Revogado",
   "questsAwardScheduled": "Em breve",
   "questsAwardValidUntil": "Válido até {date}",
-  "@questsAwardValidUntil": {"placeholders": {"date": {"type": "String"}}},
+  "@questsAwardValidUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "questsAwardEndedOn": "Encerrado em {date}",
-  "@questsAwardEndedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@questsAwardEndedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "questsAwardStartsOn": "Começa em {date}",
-  "@questsAwardStartsOn": {"placeholders": {"date": {"type": "String"}}},
+  "@questsAwardStartsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "questsAwardSourceEvent": "Evento",
   "questsAwardSourceCreatorWeek": "Semana do criador",
   "questsAwardSourceLive": "Live",
   "questsAwardSourceBattle": "Batalha",
   "questsAwardRank": "{rank}º lugar",
-  "@questsAwardRank": {"placeholders": {"rank": {"type": "int"}}},
+  "@questsAwardRank": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  },
   "questsAwardCoins": "+{coins} moedas",
-  "@questsAwardCoins": {"placeholders": {"coins": {"type": "int"}}},
+  "@questsAwardCoins": {
+    "placeholders": {
+      "coins": {
+        "type": "int"
+      }
+    }
+  },
   "questsAwardFrame": "Moldura",
   "questsAwardEntry": "Entrada especial",
   "questsTimelineEmpty": "Sua jornada começa agora. Conclua missões para ver suas conquistas aqui.",
@@ -3246,13 +3388,31 @@
   "questsTimelineAward": "Prêmio recebido",
   "questsTimelineBadge": "Emblema conquistado",
   "questsTimelineLevel": "Nível {level} alcançado",
-  "@questsTimelineLevel": {"placeholders": {"level": {"type": "int"}}},
+  "@questsTimelineLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "questsJourneyError": "Não foi possível carregar sua jornada.",
   "questsLevelShort": "Nv. {level}",
-  "@questsLevelShort": {"placeholders": {"level": {"type": "int"}}},
+  "@questsLevelShort": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "findFriendsSearchHint": "Buscar por nome ou @usuário",
   "findFriendsSearchNoResults": "Nenhuma pessoa encontrada para \"{query}\"",
-  "@findFriendsSearchNoResults": {"placeholders": {"query": {"type": "String"}}},
+  "@findFriendsSearchNoResults": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "findFriendsSearchError": "Não foi possível buscar agora. Verifique sua conexão.",
   "findFriendsSuggestionsError": "Não foi possível carregar as sugestões.",
   "findFriendsRetry": "Tentar de novo",
@@ -3317,7 +3477,13 @@
   "creatorApplyErrServer": "Servidor indisponível no momento. Tente novamente em instantes.",
   "creatorApplyErrSession": "Sua sessão expirou. Entre novamente para se inscrever.",
   "creatorApplyErrFields": "Alguns dados não foram aceitos. Revise o formulário: {fields}.",
-  "@creatorApplyErrFields": {"placeholders": {"fields": {"type": "String"}}},
+  "@creatorApplyErrFields": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
   "creatorApplyOptional": "opcional",
   "creatorApplyInstagramHint": "usuario (sem @)",
   "creatorApplyCategoryHint": "Opcional: o nível que você pretende alcançar.",
@@ -3336,9 +3502,24 @@
   "rewardsPeriodTotalReceived": "Total recebido no período",
   "rewardsPeriodTotalSent": "Total enviado no período",
   "rewardsGiftsCount": "{n} presentes",
-  "@rewardsGiftsCount": {"placeholders": {"n": {"type": "int"}}},
+  "@rewardsGiftsCount": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "rewardsFromTo": "{label} {name}",
-  "@rewardsFromTo": {"placeholders": {"label": {"type": "String"}, "name": {"type": "String"}}},
+  "@rewardsFromTo": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "rewardsPurchaseDisabled": "A compra de moedas estará disponível em breve.",
   "liveTopUpAction": "Recarregar",
   "rewardsToggleCoins": "Moedas",
@@ -3346,10 +3527,25 @@
   "rewardsDiamondsAvailable": "Diamantes disponíveis",
   "rewardsPeriodLabel": "Período",
   "creatorDashSince": "Creator desde {date}",
-  "@creatorDashSince": {"placeholders": {"date": {"type": "String"}}},
+  "@creatorDashSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashCurrentLevel": "Seu nível",
   "creatorDashOverallProgress": "{percent}% do caminho até {tier}",
-  "@creatorDashOverallProgress": {"placeholders": {"percent": {"type": "int"}, "tier": {"type": "String"}}},
+  "@creatorDashOverallProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashInviteNext": "O próximo nível é por convite da equipe Brawe. Continue criando e brilhando!",
   "creatorDashTopLevel": "Você chegou ao topo da jornada. Obrigado por construir a Brawe!",
   "creatorDashTrailTitle": "Sua trilha",
@@ -3357,13 +3553,34 @@
   "creatorDashTrailLocked": "Bloqueado",
   "creatorDashTrailInviteOnly": "Por convite",
   "creatorDashTrailSince": "Desde {date}",
-  "@creatorDashTrailSince": {"placeholders": {"date": {"type": "String"}}},
+  "@creatorDashTrailSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashGoalsTitle": "Metas para {tier}",
-  "@creatorDashGoalsTitle": {"placeholders": {"tier": {"type": "String"}}},
+  "@creatorDashGoalsTitle": {
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashGoalsHint": "Cumpra as metas e mostre à equipe que você está pronto.",
   "creatorDashGoalsAllDone": "Metas cumpridas! A equipe Brawe vai avaliar seu perfil para o próximo nível.",
   "creatorDashGoalOf": "{current} de {target}",
-  "@creatorDashGoalOf": {"placeholders": {"current": {"type": "String"}, "target": {"type": "String"}}},
+  "@creatorDashGoalOf": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashGoalDone": "Meta cumprida",
   "creatorJourneyMetricFollowers": "Seguidores",
   "creatorJourneyMetricLives": "Lives realizadas",
@@ -3373,36 +3590,96 @@
   "creatorJourneyMetricActiveDays": "Dias como creator",
   "creatorJourneyMetricViewers": "Espectadores nas lives",
   "creatorJourneyRemainingFollowers": "{n, plural, =1{Falta 1 seguidor} other{Faltam {n} seguidores}}",
-  "@creatorJourneyRemainingFollowers": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingFollowers": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorJourneyRemainingLives": "{n, plural, =1{Falta 1 live} other{Faltam {n} lives}}",
-  "@creatorJourneyRemainingLives": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingLives": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorJourneyRemainingLiveMinutes": "{n, plural, =1{Falta 1 minuto ao vivo} other{Faltam {n} minutos ao vivo}}",
-  "@creatorJourneyRemainingLiveMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingLiveMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorJourneyRemainingPosts": "{n, plural, =1{Falta 1 post} other{Faltam {n} posts}}",
-  "@creatorJourneyRemainingPosts": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingPosts": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorJourneyRemainingGiftCredits": "{n, plural, =1{Falta 1 crédito em presentes} other{Faltam {n} créditos em presentes}}",
-  "@creatorJourneyRemainingGiftCredits": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingGiftCredits": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorJourneyRemainingActiveDays": "{n, plural, =1{Falta 1 dia} other{Faltam {n} dias}}",
-  "@creatorJourneyRemainingActiveDays": {"placeholders": {"n": {"type": "int"}}},
+  "@creatorJourneyRemainingActiveDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "creatorDashWeekTitle": "Sua semana",
   "creatorDashWeekSubtitle": "Últimos 7 dias comparados aos 7 anteriores",
   "creatorDashWeekNewFollowers": "Novos seguidores",
   "creatorDashWeekUp": "{n} a mais que na semana passada",
-  "@creatorDashWeekUp": {"placeholders": {"n": {"type": "String"}}},
+  "@creatorDashWeekUp": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashWeekDown": "{n} a menos que na semana passada",
-  "@creatorDashWeekDown": {"placeholders": {"n": {"type": "String"}}},
+  "@creatorDashWeekDown": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashWeekSame": "Igual à semana passada",
   "creatorDashWeekSeeMore": "Ver análise",
   "creatorDashBenefitsTitle": "Seus benefícios",
   "creatorDashBenefitsNextTitle": "Libera em {tier}",
-  "@creatorDashBenefitsNextTitle": {"placeholders": {"tier": {"type": "String"}}},
+  "@creatorDashBenefitsNextTitle": {
+    "placeholders": {
+      "tier": {
+        "type": "String"
+      }
+    }
+  },
   "creatorDashBenefitActive": "Ativo",
   "creatorDashShortcutAnalytics": "Análises",
   "creatorDashShortcutSettings": "Configurações",
   "creatorDashErrorTitle": "Não conseguimos carregar sua jornada. Puxe para tentar de novo.",
   "creatorJourneyBadgeGeneric": "Badge de creator",
   "creatorJourneyBadgeEarnedOn": "Conquistado em {date}",
-  "@creatorJourneyBadgeEarnedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@creatorJourneyBadgeEarnedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "creatorJourneyBadgeBenefitsTitle": "Benefícios ativos",
   "creatorJourneyBadgeNextTitle": "Próximo nível",
   "creatorJourneyBadgeAllTitle": "Seus badges",
@@ -3463,7 +3740,13 @@
   "analyticsTopGiftsEmpty": "Nenhum presente recebido neste período",
   "analyticsTopGiftsBest": "Mais valioso",
   "analyticsTopGiftsReceived": "{count} recebidos",
-  "@analyticsTopGiftsReceived": {"placeholders": {"count": {"type": "String"}}},
+  "@analyticsTopGiftsReceived": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEarningsLabel": "Ganhos",
   "analyticsGiftsLabel": "Presentes",
   "analyticsAvgPerGift": "Média por presente",
@@ -3474,33 +3757,90 @@
   "analyticsFollowersChartNew": "Novos por dia",
   "analyticsViewersKpiPeak": "Pico de audiência",
   "analyticsWeekOf": "Semana de {date}",
-  "@analyticsWeekOf": {"placeholders": {"date": {"type": "String"}}},
+  "@analyticsWeekOf": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsLivesMinutesLabel": "Tempo ao vivo",
   "analyticsLivesChartLives": "Lives por dia",
   "analyticsLivesChartMinutes": "Minutos ao vivo",
   "analyticsLivesHistoryTitle": "Histórico de lives",
   "analyticsLivesMetricEarned": "em presentes",
   "analyticsMinutesShort": "{n} min",
-  "@analyticsMinutesShort": {"placeholders": {"n": {"type": "String"}}},
+  "@analyticsMinutesShort": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsHoursMinutes": "{h}h {m}min",
-  "@analyticsHoursMinutes": {"placeholders": {"h": {"type": "String"}, "m": {"type": "String"}}},
+  "@analyticsHoursMinutes": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      },
+      "m": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsRange7d": "nos últimos 7 dias",
   "analyticsRange30d": "nos últimos 30 dias",
   "analyticsRange90d": "nos últimos 3 meses",
   "analyticsRange365d": "no último ano",
   "analyticsEmptyFollowersNew": "Nenhum seguidor novo {range}",
-  "@analyticsEmptyFollowersNew": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyFollowersNew": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEmptyFollowersTotal": "Você ainda não tem seguidores",
   "analyticsEmptyEarnings": "Nenhum ganho {range}",
-  "@analyticsEmptyEarnings": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyEarnings": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEmptyGifts": "Nenhum presente recebido {range}",
-  "@analyticsEmptyGifts": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyGifts": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEmptyViewers": "Nenhum espectador {range}",
-  "@analyticsEmptyViewers": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyViewers": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEmptyLives": "Nenhuma live {range}",
-  "@analyticsEmptyLives": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyLives": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsEmptyMinutes": "Nenhum minuto ao vivo {range}",
-  "@analyticsEmptyMinutes": {"placeholders": {"range": {"type": "String"}}},
+  "@analyticsEmptyMinutes": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
   "analyticsHubTitle": "Análises",
   "analyticsTabOverview": "Visão geral",
   "analyticsTabFollowers": "Seguidores",
@@ -3511,43 +3851,154 @@
   "analyticsOverviewSeeDetails": "Toque num indicador para ver os detalhes",
   "gifterLevelTitle": "Meu nível",
   "gifterLevelLevel": "Nível {level}",
-  "@gifterLevelLevel": {"placeholders": {"level": {"type": "int"}}},
+  "@gifterLevelLevel": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelXpProgress": "{current} / {total} XP",
-  "@gifterLevelXpProgress": {"placeholders": {"current": {"type": "String"}, "total": {"type": "String"}}},
+  "@gifterLevelXpProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelXpMissing": "Faltam {xp} XP para o nível {level}",
-  "@gifterLevelXpMissing": {"placeholders": {"xp": {"type": "String"}, "level": {"type": "int"}}},
+  "@gifterLevelXpMissing": {
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelMaxReached": "Nível máximo alcançado",
   "gifterLevelNextTier": "Próxima faixa",
   "gifterLevelNextTierLine": "{name} · nível {level} · faltam {xp} XP",
-  "@gifterLevelNextTierLine": {"placeholders": {"name": {"type": "String"}, "level": {"type": "int"}, "xp": {"type": "String"}}},
+  "@gifterLevelNextTierLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "level": {
+        "type": "int"
+      },
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelHowToEarn": "Como ganhar XP",
   "gifterLevelRuleGiftPerCoin": "Enviar presentes · {xp} XP por moeda (até {cap} por envio)",
-  "@gifterLevelRuleGiftPerCoin": {"placeholders": {"xp": {"type": "int"}, "cap": {"type": "String"}}},
+  "@gifterLevelRuleGiftPerCoin": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelRuleGiftPerCoinNoCap": "Enviar presentes · {xp} XP por moeda",
-  "@gifterLevelRuleGiftPerCoinNoCap": {"placeholders": {"xp": {"type": "int"}}},
+  "@gifterLevelRuleGiftPerCoinNoCap": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRuleGiftFlat": "Enviar presentes · +{xp} XP por presente",
-  "@gifterLevelRuleGiftFlat": {"placeholders": {"xp": {"type": "int"}}},
+  "@gifterLevelRuleGiftFlat": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRuleWatch": "Assistir lives · {xp} XP por minuto (até {cap} min)",
-  "@gifterLevelRuleWatch": {"placeholders": {"xp": {"type": "int"}, "cap": {"type": "int"}}},
+  "@gifterLevelRuleWatch": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      },
+      "cap": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRuleWatchNoCap": "Assistir lives · {xp} XP por minuto",
-  "@gifterLevelRuleWatchNoCap": {"placeholders": {"xp": {"type": "int"}}},
+  "@gifterLevelRuleWatchNoCap": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRuleJoin": "Entrar numa live · +{xp} XP",
-  "@gifterLevelRuleJoin": {"placeholders": {"xp": {"type": "int"}}},
+  "@gifterLevelRuleJoin": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRuleChat": "Comentar no chat · +{xp} XP",
-  "@gifterLevelRuleChat": {"placeholders": {"xp": {"type": "int"}}},
+  "@gifterLevelRuleChat": {
+    "placeholders": {
+      "xp": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelTiers": "Faixas",
   "gifterLevelRange": "Nível {from}–{to}",
-  "@gifterLevelRange": {"placeholders": {"from": {"type": "int"}, "to": {"type": "int"}}},
+  "@gifterLevelRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelRangeOpen": "Nível {from}",
-  "@gifterLevelRangeOpen": {"placeholders": {"from": {"type": "int"}}},
+  "@gifterLevelRangeOpen": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      }
+    }
+  },
   "gifterLevelXpRequired": "{xp} XP",
-  "@gifterLevelXpRequired": {"placeholders": {"xp": {"type": "String"}}},
+  "@gifterLevelXpRequired": {
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelBenefitVip": "Entrada VIP",
   "gifterLevelBenefitEntryEffect": "Efeito de entrada",
   "gifterLevelBenefitAnnounce": "Anúncio ao subir de nível",
   "gifterLevelYouAreHere": "Você está aqui",
   "gifterLevelTierXpMissing": "Faltam {xp} XP",
-  "@gifterLevelTierXpMissing": {"placeholders": {"xp": {"type": "String"}}},
+  "@gifterLevelTierXpMissing": {
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelLoadError": "Não foi possível carregar seu nível.",
   "gifterLevelRetry": "Tentar de novo",
   "gifterLevelSeeLevels": "Ver níveis",
@@ -3559,11 +4010,35 @@
   "gifterLevelNoBenefits": "Emblema exclusivo no chat",
   "gifterLevelSwipeHint": "Deslize para ver todas as faixas",
   "gifterLevelUnlockedAt": "Conquistada ao chegar em {xp} XP",
-  "@gifterLevelUnlockedAt": {"placeholders": {"xp": {"type": "String"}}},
+  "@gifterLevelUnlockedAt": {
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelTierProgress": "Você tem {current} de {total} XP",
-  "@gifterLevelTierProgress": {"placeholders": {"current": {"type": "String"}, "total": {"type": "String"}}},
+  "@gifterLevelTierProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "gifterLevelTiersCount": "{done} de {total} faixas",
-  "@gifterLevelTiersCount": {"placeholders": {"done": {"type": "int"}, "total": {"type": "int"}}},
+  "@gifterLevelTiersCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "menuSectionProgress": "Meu progresso",
   "menuSectionMoney": "Moedas e presentes",
   "menuSectionCreator": "Criador",
@@ -3657,7 +4132,13 @@
   "chatVaultOpenedBy": "Cofre aberto",
   "chatVaultYouGot": "Você ganhou",
   "chatVaultEarnings": "+{value} nas suas recompensas de criador",
-  "@chatVaultEarnings": {"placeholders": {"value": {"type": "String"}}},
+  "@chatVaultEarnings": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "chatVaultCollect": "Guardar",
   "chatVaultSeeRewards": "Ver recompensas",
   "chatVaultTapHint": "Toque no cofre!",
@@ -3667,7 +4148,16 @@
   "chatVaultTierLegendary": "Lendário",
   "chatVaultReplay": "Ver de novo",
   "onbStepOf": "Passo {current} de {total}",
-  "@onbStepOf": {"placeholders": {"current": {"type": "int"}, "total": {"type": "int"}}},
+  "@onbStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "onbContinue": "Continuar",
   "onbSkip": "Pular",
   "onbSignOut": "Sair da conta",
@@ -3697,13 +4187,25 @@
   "onbFollowing": "Seguindo",
   "onbFollowAll": "Seguir todos",
   "onbFollowers": "{count} seguidores",
-  "@onbFollowers": {"placeholders": {"count": {"type": "String"}}},
+  "@onbFollowers": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
   "onbFollowEmpty": "Ainda não temos sugestões. Você pode encontrar pessoas depois em \"Encontrar amigos\".",
   "onbFinish": "Começar",
   "onbInterestsTitle": "O que você curte?",
   "onbInterestsSubtitle": "Escolha os assuntos que você quer ver. Usamos isso para sugerir pessoas e conteúdos.",
   "onbInterestsCount": "{count} selecionados",
-  "@onbInterestsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@onbInterestsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "videoPubTrim": "Cortar",
   "videoPubCover": "Capa",
   "videoPubCoverAuto": "Capa automática",
@@ -3730,16 +4232,34 @@
   "signupSendingCode": "Enviando código…",
   "codeTitle": "Confirme seu e-mail",
   "codeSubtitle": "Enviamos um código de 6 dígitos para\n{email}",
-  "@codeSubtitle": {"placeholders": {"email": {"type": "String"}}},
+  "@codeSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "codeVerifying": "Verificando…",
   "codeInvalid": "Código incorreto. Restam {count} tentativas.",
-  "@codeInvalid": {"placeholders": {"count": {"type": "int"}}},
+  "@codeInvalid": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "codeInvalidSimple": "Código incorreto.",
   "codeExpired": "O código expirou. Peça um novo.",
   "codeTooMany": "Muitas tentativas. Peça um novo código.",
   "codeResend": "Reenviar código",
   "codeResendIn": "Reenviar em {seconds}s",
-  "@codeResendIn": {"placeholders": {"seconds": {"type": "int"}}},
+  "@codeResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "codeResent": "Enviamos um novo código.",
   "codeChangeEmail": "Trocar e-mail",
   "codeSpamHint": "Não chegou? Confira a caixa de spam ou promoções.",
@@ -4077,26 +4597,89 @@
   "battleEndedLiveAnon": "A live de um criador caiu",
   "battleNarrStart": "A batalha começou! Cada presente conta",
   "battleNarrLeadOwn": "VIROU! {team} passou na frente",
-  "@battleNarrLeadOwn": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOwn": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrLeadOther": "{team} passou na frente. Bora virar!",
-  "@battleNarrLeadOther": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrLeadOther": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrMomentum": "{team} está pegando fogo",
-  "@battleNarrMomentum": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrMomentum": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashStart": "Desafio relâmpago: envie {pontos} {nome} em {tempo}",
-  "@battleNarrFlashStart": {"placeholders": {"pontos": {"type": "String"}, "nome": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashStart": {
+    "placeholders": {
+      "pontos": {
+        "type": "String"
+      },
+      "nome": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFlashDone": "Desafio feito! {mult} por {tempo}",
-  "@battleNarrFlashDone": {"placeholders": {"mult": {"type": "String"}, "tempo": {"type": "String"}}},
+  "@battleNarrFlashDone": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      },
+      "tempo": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrFinal10": "Últimos 10 segundos! Cada presente vale {mult}",
-  "@battleNarrFinal10": {"placeholders": {"mult": {"type": "String"}}},
+  "@battleNarrFinal10": {
+    "placeholders": {
+      "mult": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrVictory": "VITÓRIA de {team}!",
-  "@battleNarrVictory": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrVictory": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDefeat": "Fim! {team} venceu desta vez",
-  "@battleNarrDefeat": {"placeholders": {"team": {"type": "String"}}},
+  "@battleNarrDefeat": {
+    "placeholders": {
+      "team": {
+        "type": "String"
+      }
+    }
+  },
   "battleNarrDraw": "EMPATE!",
   "battleNarrEnded": "Batalha encerrada",
   "agencyTitle": "Minha agência",
   "agencyPendingInvites": "{count, plural, =1{1 convite} other{{count} convites}}",
-  "@agencyPendingInvites": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyPendingInvites": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEmptyBody": "Agências ajudam criadores a crescer: acompanham seus resultados, organizam eventos e apoiam sua rotina de lives.",
   "agencyInfoEarningsBody": "A Brawe continua pagando seus ganhos diretamente a você. A comissão da agência é paga pela Brawe, nunca descontada de você.",
   "agencyInfoOneBody": "Você só pode estar em uma agência. Ao aceitar um convite, os outros pendentes são cancelados.",
@@ -4104,9 +4687,21 @@
   "agencyInvitesTitle": "Convites pendentes",
   "agencyInviteTitle": "Convite de agência",
   "agencyContractMonths": "{months, plural, =1{1 mês} other{{months} meses}}",
-  "@agencyContractMonths": {"placeholders": {"months": {"type": "int"}}},
+  "@agencyContractMonths": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractOf": "Contrato de {duration}",
-  "@agencyContractOf": {"placeholders": {"duration": {"type": "String"}}},
+  "@agencyContractOf": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
   "agencyContractLength": "Duração do contrato",
   "agencyInvitedByTitle": "Quem convidou",
   "agencyRoleOwner": "Dono da agência",
@@ -4114,52 +4709,136 @@
   "agencyRoleAnalyst": "Equipe da agência",
   "agencyRoleUnknown": "Representante da agência",
   "agencyInvitedOn": "Convite enviado em {date}",
-  "@agencyInvitedOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyInvitedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMessageTitle": "Mensagem da agência",
   "agencyWhatChangesTitle": "O que muda para você",
   "agencyTermsTitle": "Termos e condições",
   "agencyTermsVersion": "Versão {version}",
-  "@agencyTermsVersion": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyTermsVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTermsStandard": "Termos padrão Brawe",
   "agencyTermsAddendum": "Adendo da agência",
   "agencyTermsEmpty": "Termos indisponíveis no momento.",
   "agencyAcceptCheckbox": "Li e aceito os termos e condições (versão {version})",
-  "@agencyAcceptCheckbox": {"placeholders": {"version": {"type": "String"}}},
+  "@agencyAcceptCheckbox": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptButton": "Aceitar convite",
   "agencyDeclineButton": "Recusar",
   "agencyAcceptConfirmTitle": "Entrar na {name}?",
-  "@agencyAcceptConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyAcceptConfirmBody": "Seu vínculo começa hoje. Antes do fim do contrato, a saída é feita em acordo com a agência.",
   "agencyDeclineConfirmTitle": "Recusar convite?",
   "agencyDeclineConfirmBody": "Recusar não tem nenhum efeito na sua conta. A agência verá que o convite foi recusado.",
   "agencyAcceptedSnack": "Você agora faz parte de {name}",
-  "@agencyAcceptedSnack": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyAcceptedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDeclinedSnack": "Convite recusado",
   "agencyLeftSnack": "Você saiu da agência",
   "agencyInviteUnavailable": "Este convite não está mais disponível.",
   "agencyCreatorsCount": "{count, plural, =1{1 criador} other{{count} criadores}}",
-  "@agencyCreatorsCount": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyCreatorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyPartnerSince": "Parceira desde {date}",
-  "@agencyPartnerSince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyPartnerSince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTrialBadge": "Em teste",
   "agencyContractTitle": "Contrato",
   "agencyContractPeriod": "{start} a {end}",
-  "@agencyContractPeriod": {"placeholders": {"start": {"type": "String"}, "end": {"type": "String"}}},
+  "@agencyContractPeriod": {
+    "placeholders": {
+      "start": {
+        "type": "String"
+      },
+      "end": {
+        "type": "String"
+      }
+    }
+  },
   "agencyDaysLeft": "{days, plural, =0{Termina hoje} =1{Falta 1 dia} other{Faltam {days} dias}}",
-  "@agencyDaysLeft": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyContractProgress": "{percent}% do contrato",
-  "@agencyContractProgress": {"placeholders": {"percent": {"type": "int"}}},
+  "@agencyContractProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "agencyHours": "Horas ao vivo",
   "agencyDaysLive": "Dias com live",
   "agencyDiamonds": "Diamantes",
   "agencyFollowers": "Seguidores",
   "agencyRankValue": "#{rank} de {total}",
-  "@agencyRankValue": {"placeholders": {"rank": {"type": "int"}, "total": {"type": "int"}}},
+  "@agencyRankValue": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "agencyGuidelinesNotMet": "Ainda faltam metas neste mês",
   "agencyMissingHours": "Faltam {value} h",
-  "@agencyMissingHours": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyMissingHours": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMissingDays": "{days, plural, =1{Falta 1 dia} other{Faltam {days} dias}}",
-  "@agencyMissingDays": {"placeholders": {"days": {"type": "int"}}},
+  "@agencyMissingDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "agencyNoIncidents": "Nenhuma ocorrência",
   "agencyIncidentWarning": "Advertência",
   "agencyIncidentSuspension": "Suspensão",
@@ -4170,19 +4849,37 @@
   "agencyEventScheduled": "Em breve",
   "agencyEventEnded": "Encerrado",
   "agencyEventMultiplier": "Multiplicador x{value}",
-  "@agencyEventMultiplier": {"placeholders": {"value": {"type": "String"}}},
+  "@agencyEventMultiplier": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveTitle": "Sair da agência",
   "agencyLeaveAllowed": "Você pode sair agora, sem multa. Seus ganhos e sua conta não mudam.",
   "agencyLeaveButton": "Sair da agência",
   "agencyLeaveConfirmTitle": "Sair de {name}?",
-  "@agencyLeaveConfirmTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@agencyLeaveConfirmTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveConfirmBody": "O vínculo será encerrado. Isso não pode ser desfeito: para voltar, você precisará receber um novo convite.",
   "agencyLeaveConfirmAction": "Sair agora",
   "agencyExitRuleFree": "No fim do contrato você sai livremente, pelo app.",
   "agencyExitRuleAbuse": "Em caso de abuso (cobranças, pagamentos fora da Brawe, pressão), peça uma análise da Brawe.",
   "agencyLeaveSectionTitle": "Saída da agência",
   "agencyLeaveRequestBody": "Seu contrato vai até {date}. Para sair antes, você pede o desligamento em acordo com a agência. Se ela não responder no prazo, você fica livre automaticamente.",
-  "@agencyLeaveRequestBody": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRequestBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeaveRequestBodyNoDate": "Para sair antes do fim do contrato, você pede o desligamento em acordo com a agência. Se ela não responder no prazo, você fica livre automaticamente.",
   "agencyLeaveRequestButton": "Pedir desligamento à agência",
   "agencyLeaveRequestSheetTitle": "Pedir desligamento",
@@ -4193,9 +4890,21 @@
   "agencyLeaveRequestSentSnack": "Pedido enviado à agência.",
   "agencyLeavePendingTitle": "Pedido de desligamento enviado",
   "agencyLeavePendingSent": "Enviado em {date}. Aguardando a resposta da agência.",
-  "@agencyLeavePendingSent": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingSent": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingDue": "Se a agência não responder até {date}, você fica livre automaticamente.",
-  "@agencyLeavePendingDue": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeavePendingDue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyLeavePendingBrawe": "Seu pedido está em análise da Brawe.",
   "agencyReviewPendingTitle": "Análise da Brawe solicitada",
   "agencyLeaveCancel": "Cancelar pedido",
@@ -4204,7 +4913,13 @@
   "agencyLeaveDeclinedBody": "A agência não aprovou a sua saída por enquanto.",
   "agencyLeaveAgencyAnswer": "Resposta da agência",
   "agencyLeaveRetryAt": "Você poderá pedir de novo a partir de {date}.",
-  "@agencyLeaveRetryAt": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveRetryAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyReviewLink": "Pedir análise da Brawe",
   "agencyReviewSheetTitle": "Pedir análise da Brawe",
   "agencyReviewSheetBody": "Use só se houver abuso. A Brawe analisa direto, sem passar pela agência, e pode encerrar o vínculo.",
@@ -4220,7 +4935,13 @@
   "agencyErrLeaveRequiresAgreement": "Antes do fim do contrato, peça o desligamento à agência.",
   "agencyErrLeaveRequestOpen": "Você já tem um pedido em aberto.",
   "agencyErrLeaveCooldown": "Você poderá pedir de novo a partir de {date}.",
-  "@agencyErrLeaveCooldown": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrLeaveCooldown": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrLeaveCooldownNoDate": "Aguarde um pouco para pedir de novo.",
   "agencyErrLeaveNotOpen": "Este pedido já foi respondido ou cancelado.",
   "agencyErrReasonTooLong": "O texto passa de 500 caracteres.",
@@ -4231,7 +4952,13 @@
   "agencyLoadError": "Não foi possível carregar sua agência",
   "agencyErrTermsMismatch": "Os termos foram atualizados. Leia a versão atual e tente de novo.",
   "agencyErrCannotLeaveYet": "Você ainda não pode sair. Liberado em {date}.",
-  "@agencyErrCannotLeaveYet": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyErrCannotLeaveYet": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyErrCannotLeaveYetNoDate": "Você ainda não pode sair da agência.",
   "agencyErrAlreadyInAgency": "Você já está em uma agência.",
   "agencyErrNotApproved": "Esta agência não está disponível no momento.",
@@ -4259,7 +4986,13 @@
   "creatorPanelProfileFallback": "Criador",
   "creatorPanelOpenError": "Não foi possível salvar. Tente de novo.",
   "agencySince": "Agenciado desde {date}",
-  "@agencySince": {"placeholders": {"date": {"type": "String"}}},
+  "@agencySince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyTalk": "Falar",
   "agencyTalkError": "Não foi possível abrir a conversa.",
   "agencySubSummary": "Resumo",
@@ -4269,14 +5002,32 @@
   "agencyPeriodThisMonth": "Este mês",
   "agencyPeriodLabel": "Período",
   "agencyRankUp": "{n, plural, =1{Subiu 1 posição} other{Subiu {n} posições}}",
-  "@agencyRankUp": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankUp": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankDown": "{n, plural, =1{Caiu 1 posição} other{Caiu {n} posições}}",
-  "@agencyRankDown": {"placeholders": {"n": {"type": "int"}}},
+  "@agencyRankDown": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "agencyRankSame": "Mesma posição do mês anterior",
   "agencyPositionLabel": "Posição na agência",
   "agencyMonthGoalTitle": "Meta do mês",
   "agencyMonthGoalPercent": "{percent}% da meta",
-  "@agencyMonthGoalPercent": {"placeholders": {"percent": {"type": "String"}}},
+  "@agencyMonthGoalPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
   "agencyMonthGoalMet": "Meta batida",
   "agencyMonthGoalNone": "Sem meta definida para este mês",
   "agencyChartTitle": "Últimos 6 meses",
@@ -4284,13 +5035,37 @@
   "agencyPerfError": "Não foi possível carregar o desempenho",
   "agencyGoalDone": "Meta cumprida",
   "agencyGoalHoursValue": "{have} de {need} h",
-  "@agencyGoalHoursValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalHoursValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyGoalDaysValue": "{have} de {need} dias",
-  "@agencyGoalDaysValue": {"placeholders": {"have": {"type": "String"}, "need": {"type": "String"}}},
+  "@agencyGoalDaysValue": {
+    "placeholders": {
+      "have": {
+        "type": "String"
+      },
+      "need": {
+        "type": "String"
+      }
+    }
+  },
   "agencyIncFilterMonth": "Do mês",
   "agencyIncFilter90": "Últimos 90 dias",
   "agencyIncidentPoints": "{points, plural, =1{1 ponto} other{{points} pontos}}",
-  "@agencyIncidentPoints": {"placeholders": {"points": {"type": "int"}}},
+  "@agencyIncidentPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
   "agencyEventsFilterUpcoming": "Próximos",
   "agencyEventsFilterLive": "Em andamento",
   "agencyEventsFilterEnded": "Encerrados",
@@ -4304,12 +5079,33 @@
   "agencyReviewConfirmTitle": "Pedir análise da Brawe?",
   "agencyReviewConfirmBody": "Use apenas em caso de abuso. A Brawe analisa direto, sem passar pela agência.",
   "agencyLeaveSentOn": "Enviado em {date}",
-  "@agencyLeaveSentOn": {"placeholders": {"date": {"type": "String"}}},
+  "@agencyLeaveSentOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesBanner": "{count, plural, =1{Você tem 1 convite de agência} other{Você tem {count} convites de agência}}",
-  "@agencyInvitesBanner": {"placeholders": {"count": {"type": "int"}}},
+  "@agencyInvitesBanner": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "agencyInvitesView": "Ver",
   "agencyInviteRowBy": "{name} · {role}",
-  "@agencyInviteRowBy": {"placeholders": {"name": {"type": "String"}, "role": {"type": "String"}}},
+  "@agencyInviteRowBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "agencyInvitesEmpty": "Nenhum convite pendente.",
   "agencyPerkEarnings": "Ganhos pagos pela Brawe",
   "agencyPerkNoCharges": "Nenhuma cobrança",
@@ -4328,13 +5124,28 @@
   "creatorApplyStepNetwork": "Sua rede",
   "creatorApplyStepAbout": "Sobre você",
   "creatorApplyStepOf": "Etapa {n} de {total}",
-  "@creatorApplyStepOf": {"placeholders": {"n": {"type": "int"}, "total": {"type": "int"}}},
+  "@creatorApplyStepOf": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyPlatformLabel": "Rede principal",
   "creatorApplyHandleLabel": "Seu usuário nessa rede",
   "creatorApplyHandleWhy": "Precisamos do seu perfil em uma rede social para analisar seu conteúdo e sua audiência. Só a equipe de aprovação vê.",
   "creatorApplyErrHandle": "Use apenas letras, números, ponto, hífen ou sublinhado (mín. 2)",
   "creatorApplyErrMotivation": "Escreva pelo menos {min} caracteres",
-  "@creatorApplyErrMotivation": {"placeholders": {"min": {"type": "int"}}},
+  "@creatorApplyErrMotivation": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
   "creatorApplyErrFollowersMin": "Informe quantos seguidores você tem (mínimo 1)",
   "editProfileCreatorBadgeTitle": "Mostrar selo de creator",
   "editProfileCreatorBadgeHint": "Exibe o selo da Creator Network no seu perfil.",
@@ -4342,12 +5153,20 @@
   "videoPubSound": "Som",
   "videoPubCoverAt": "Capa em {time}",
   "@videoPubCoverAt": {
-    "placeholders": { "time": { "type": "String" } }
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
   },
   "videoUpQueued": "Na fila…",
   "videoUpUploading": "Publicando… {percent}%",
   "@videoUpUploading": {
-    "placeholders": { "percent": { "type": "int" } }
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
   },
   "videoUpProcessing": "Processando…",
   "videoUpFailed": "Falhou no envio",
@@ -4359,7 +5178,13 @@
   "chatSystemReadOnlyNote": "Mensagens oficiais da Brawe",
   "chatSystemOfficialLabel": "Conta oficial",
   "navChatUnreadSemantics": "Chat, {count} conversas não lidas",
-  "@navChatUnreadSemantics": {"placeholders": {"count": {"type": "int"}}},
+  "@navChatUnreadSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "gifSearchHint": "Buscar GIFs",
   "gifClearSearch": "Limpar busca",
   "gifPoweredBy": "Powered by GIPHY",
@@ -4378,48 +5203,165 @@
   "notifFilterMentions": "Menções",
   "notifFilterBrawe": "Brawe",
   "notifActorsTwo": "{a} e {b}",
-  "@notifActorsTwo": {"placeholders": {"a": {"type": "String"},"b": {"type": "String"}}},
+  "@notifActorsTwo": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
   "notifActorsThree": "{a}, {b} e {c}",
-  "@notifActorsThree": {"placeholders": {"a": {"type": "String"},"b": {"type": "String"},"c": {"type": "String"}}},
+  "@notifActorsThree": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "c": {
+        "type": "String"
+      }
+    }
+  },
   "notifActorsMore": "{a}, {b} e mais {n}",
-  "@notifActorsMore": {"placeholders": {"a": {"type": "String"},"b": {"type": "String"},"n": {"type": "int"}}},
+  "@notifActorsMore": {
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      },
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbLike": "{count, plural, one{curtiu seu post} other{curtiram seu post}}",
-  "@notifVerbLike": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbLike": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbComment": "{count, plural, one{comentou no seu post} other{comentaram no seu post}}",
-  "@notifVerbComment": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbComment": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbReply": "{count, plural, one{respondeu seu comentário} other{responderam seu comentário}}",
-  "@notifVerbReply": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbReply": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbFollow": "{count, plural, one{começou a seguir você} other{começaram a seguir você}}",
-  "@notifVerbFollow": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbFollow": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbGift": "{count, plural, one{enviou presentes na sua live} other{enviaram presentes na sua live}}",
-  "@notifVerbGift": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbGift": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbMention": "{count, plural, one{marcou você num comentário} other{marcaram você em comentários}}",
-  "@notifVerbMention": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbMention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifVerbStoryReaction": "{count, plural, one{reagiu ao seu story} other{reagiram ao seu story}}",
-  "@notifVerbStoryReaction": {"placeholders": {"count": {"type": "int"}}},
+  "@notifVerbStoryReaction": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "notifGiftDiamonds": "{count, plural, one{({value} diamante)} other{({value} diamantes)}}",
-  "@notifGiftDiamonds": {"placeholders": {"count": {"type": "int"},"value": {"type": "String"}}},
+  "@notifGiftDiamonds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "notifNewFollowersTitle": "Novos seguidores",
   "notifNewFollowersEmpty": "Nenhum seguidor novo para mostrar",
   "notifUnreadLabel": "Não lida",
   "storyGiftSend": "Enviar",
   "storyGiftConfirmTitle": "Enviar {gift} por {price}?",
-  "@storyGiftConfirmTitle": {"placeholders": {"gift": {"type": "String"},"price": {"type": "String"}}},
+  "@storyGiftConfirmTitle": {
+    "placeholders": {
+      "gift": {
+        "type": "String"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
   "storyGiftBalance": "Saldo: {balance}",
-  "@storyGiftBalance": {"placeholders": {"balance": {"type": "String"}}},
+  "@storyGiftBalance": {
+    "placeholders": {
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
   "storyUpUploading": "Publicando story… {percent}%",
-  "@storyUpUploading": {"placeholders": {"percent": {"type": "int"}}},
+  "@storyUpUploading": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "storyUpProcessing": "Publicando story…",
   "storyUpDone": "Story publicado",
   "storyUpFailed": "Falhou ao publicar o story",
   "sessionEndedMessage": "Sua sessão foi encerrada. Entre novamente.",
   "stepUpTitle": "Confirme que é você",
   "stepUpSubtitle": "Enviamos um código para {email}",
-  "@stepUpSubtitle": {"placeholders": {"email": {"type": "String"}}},
+  "@stepUpSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "stepUpHint": "Detectamos um acesso de um aparelho novo. Digite o código para entrar.",
   "stepUpBack": "Voltar ao login",
   "stepUpTooMany": "Muitas tentativas. Tente de novo em {time}.",
-  "@stepUpTooMany": {"placeholders": {"time": {"type": "String"}}},
+  "@stepUpTooMany": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTitle": "Segurança",
   "secSettingsEntrySub": "Aparelhos conectados, histórico de acessos e proteção da conta",
   "secTabDevices": "Aparelhos",
@@ -4430,17 +5372,47 @@
   "secThisDevice": "Este aparelho",
   "secActiveNow": "Ativo agora",
   "secLastActive": "Ativo {time}",
-  "@secLastActive": {"placeholders": {"time": {"type": "String"}}},
+  "@secLastActive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "secTimeMinutes": "há {n} min",
-  "@secTimeMinutes": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeMinutes": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeHours": "há {n} h",
-  "@secTimeHours": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeHours": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secTimeDays": "há {n} d",
-  "@secTimeDays": {"placeholders": {"n": {"type": "int"}}},
+  "@secTimeDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "secEndSession": "Encerrar sessão",
   "secEndSessionTitle": "Encerrar a sessão neste aparelho?",
   "secEndSessionBody": "{device} será desconectado e precisará entrar de novo.",
-  "@secEndSessionBody": {"placeholders": {"device": {"type": "String"}}},
+  "@secEndSessionBody": {
+    "placeholders": {
+      "device": {
+        "type": "String"
+      }
+    }
+  },
   "secEndedOk": "Sessão encerrada.",
   "secSignOutOthers": "Sair de todos os outros aparelhos",
   "secSignOutOthersTitle": "Sair dos outros aparelhos?",
@@ -4455,7 +5427,13 @@
   "secClientPartners": "Brawe Partners",
   "secClientWeb": "Navegador",
   "secAppVersion": "versão {v}",
-  "@secAppVersion": {"placeholders": {"v": {"type": "String"}}},
+  "@secAppVersion": {
+    "placeholders": {
+      "v": {
+        "type": "String"
+      }
+    }
+  },
   "secUnknownDevice": "Aparelho desconhecido",
   "secUnknownPlace": "Local não identificado",
   "secHistoryTitle": "Histórico de acessos",
@@ -4497,40 +5475,112 @@
   "secSettingsEntry": "Segurança",
   "payoutBalanceAvailable": "Disponível para saque",
   "payoutBalanceApprox": "Aproximadamente {value}",
-  "@payoutBalanceApprox": {"placeholders": {"value": {"type": "String"}}},
+  "@payoutBalanceApprox": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "payoutBalanceNoRate": "Valor em reais indisponível agora",
   "payoutBalanceHolding": "Aguardando liberação",
   "payoutBalanceInProgress": "Em saque",
   "payoutBalanceWithdrawn": "Já sacado",
   "payoutBalanceReleaseNote": "Cada presente fica {days, plural, one {{days} dia} other {{days} dias}} em análise. Próxima liberação: {date}.",
-  "@payoutBalanceReleaseNote": {"placeholders": {"date": {"type": "String"}, "days": {"type": "int"}}},
+  "@payoutBalanceReleaseNote": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutBalanceWithdraw": "Sacar",
   "payoutBalanceAddAccountFirst": "Cadastrar conta para sacar",
   "payoutBalanceMinimum": "Saque mínimo de {amount}. Pagamento em até {days, plural, one {{days} dia útil} other {{days} dias úteis}}.",
-  "@payoutBalanceMinimum": {"placeholders": {"amount": {"type": "String"}, "days": {"type": "int"}}},
+  "@payoutBalanceMinimum": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutBalanceHowTitle": "Como chegamos nesse valor",
   "payoutBalanceReceived": "Recebido em presentes",
   "payoutBalanceFromLive": "Lives {value}",
-  "@payoutBalanceFromLive": {"placeholders": {"value": {"type": "String"}}},
+  "@payoutBalanceFromLive": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "payoutBalanceFromStory": "Stories {value}",
-  "@payoutBalanceFromStory": {"placeholders": {"value": {"type": "String"}}},
+  "@payoutBalanceFromStory": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "payoutBalanceFromOther": "Outros {value}",
-  "@payoutBalanceFromOther": {"placeholders": {"value": {"type": "String"}}},
+  "@payoutBalanceFromOther": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
   "payoutBalanceHoldingHint": "Cada presente fica {days, plural, one {{days} dia} other {{days} dias}} em análise antes de liberar.",
-  "@payoutBalanceHoldingHint": {"placeholders": {"days": {"type": "int"}}},
+  "@payoutBalanceHoldingHint": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutBalanceInProgressHint": "Pedidos aguardando pagamento.",
   "payoutBalanceAvailableShort": "Disponível",
   "payoutSoonTitle": "Saques em breve",
   "payoutSoonSubtitle": "Seus diamantes já estão acumulando. Avisaremos quando os saques forem liberados.",
   "payoutOpenTitle": "Saque em andamento",
   "payoutOpenDiamonds": "{diamonds} diamantes",
-  "@payoutOpenDiamonds": {"placeholders": {"diamonds": {"type": "String"}}},
+  "@payoutOpenDiamonds": {
+    "placeholders": {
+      "diamonds": {
+        "type": "String"
+      }
+    }
+  },
   "payoutOpenRequestedNote": "Estamos analisando seu pedido. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação.",
-  "@payoutOpenRequestedNote": {"placeholders": {"days": {"type": "int"}}},
+  "@payoutOpenRequestedNote": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutOpenApprovedNote": "Pedido aprovado. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}}.",
-  "@payoutOpenApprovedNote": {"placeholders": {"days": {"type": "int"}}},
+  "@payoutOpenApprovedNote": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutOpenRequestedAt": "Pedido em {date}",
-  "@payoutOpenRequestedAt": {"placeholders": {"date": {"type": "String"}}},
+  "@payoutOpenRequestedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "payoutOpenCancelConfirm": "Cancelar este saque? Os diamantes voltam para o seu saldo.",
   "payoutOpenKeep": "Manter",
   "payoutOpenCancelYes": "Cancelar saque",
@@ -4546,7 +5596,13 @@
   "payoutAccountStatusRejected": "Recusada",
   "payoutAccountPendingNote": "Verificamos a conta no primeiro pagamento. Você já pode pedir saque.",
   "payoutAccountRejectedNote": "Motivo: {reason}. Cadastre outra conta para sacar.",
-  "@payoutAccountRejectedNote": {"placeholders": {"reason": {"type": "String"}}},
+  "@payoutAccountRejectedNote": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "payoutAccountNoReason": "não informado",
   "payoutAccountChange": "Trocar conta",
   "payoutAccountEmpty": "Cadastre a conta onde você quer receber. Ela precisa estar no seu nome.",
@@ -4604,60 +5660,162 @@
   "payoutHistoryTitle": "Histórico de saques",
   "payoutHistoryEmpty": "Você ainda não fez nenhum saque.",
   "payoutHistoryRejectedNote": "Motivo: {reason}. Os diamantes voltaram para o seu saldo.",
-  "@payoutHistoryRejectedNote": {"placeholders": {"reason": {"type": "String"}}},
+  "@payoutHistoryRejectedNote": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
   "payoutHistoryReference": "Comprovante: {ref}",
-  "@payoutHistoryReference": {"placeholders": {"ref": {"type": "String"}}},
+  "@payoutHistoryReference": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "payoutHistoryTotalReceived": "Total já recebido: {amount}",
-  "@payoutHistoryTotalReceived": {"placeholders": {"amount": {"type": "String"}}},
+  "@payoutHistoryTotalReceived": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawTitle": "Sacar",
   "payoutWithdrawStepOf": "Etapa {current} de {total}",
-  "@payoutWithdrawStepOf": {"placeholders": {"current": {"type": "String"}, "total": {"type": "String"}}},
+  "@payoutWithdrawStepOf": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawAmountTitle": "Quanto você quer sacar?",
   "payoutWithdrawAmountSubtitle": "Você tem {available} diamantes disponíveis.",
-  "@payoutWithdrawAmountSubtitle": {"placeholders": {"available": {"type": "String"}}},
+  "@payoutWithdrawAmountSubtitle": {
+    "placeholders": {
+      "available": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawDiamondsLabel": "Diamantes",
   "payoutWithdrawAll": "Tudo",
   "payoutWithdrawMinHint": "Mínimo de {diamonds} diamantes ({amount}).",
-  "@payoutWithdrawMinHint": {"placeholders": {"amount": {"type": "String"}, "diamonds": {"type": "String"}}},
+  "@payoutWithdrawMinHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "diamonds": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawTypeToQuote": "Digite a quantidade para ver quanto você recebe.",
   "payoutWithdrawCalculating": "Calculando…",
   "payoutWithdrawYouReceive": "Você recebe",
   "payoutWithdrawAfterRetentions": "{gross} menos {tax} de retenções",
-  "@payoutWithdrawAfterRetentions": {"placeholders": {"gross": {"type": "String"}, "tax": {"type": "String"}}},
+  "@payoutWithdrawAfterRetentions": {
+    "placeholders": {
+      "gross": {
+        "type": "String"
+      },
+      "tax": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawContinue": "Continuar",
   "payoutWithdrawReviewTitle": "Confira o saque",
   "payoutWithdrawReviewSubtitle": "Veja o cálculo completo antes de confirmar.",
   "payoutWithdrawDiamonds": "Diamantes",
   "payoutWithdrawPtax": "Cotação PTAX de {date}",
-  "@payoutWithdrawPtax": {"placeholders": {"date": {"type": "String"}}},
+  "@payoutWithdrawPtax": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawValueUsd": "Valor em dólares",
   "payoutWithdrawGross": "Valor bruto",
   "payoutWithdrawRetentions": "Retenções",
   "payoutWithdrawNoRetentions": "Nenhuma",
   "payoutWithdrawNet": "Você recebe",
   "payoutWithdrawPtaxNote": "Cotação de {side} do {bulletin} (Banco Central), do último boletim de fechamento.",
-  "@payoutWithdrawPtaxNote": {"placeholders": {"bulletin": {"type": "String"}, "side": {"type": "String"}}},
+  "@payoutWithdrawPtaxNote": {
+    "placeholders": {
+      "bulletin": {
+        "type": "String"
+      },
+      "side": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawPaidTo": "Pagamento para",
   "payoutWithdrawSla": "Pagamento em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação.",
-  "@payoutWithdrawSla": {"placeholders": {"days": {"type": "int"}}},
+  "@payoutWithdrawSla": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutWithdrawFirstPaymentCheck": "Como é seu primeiro pagamento, a Brawe confere a conta antes de pagar.",
   "payoutWithdrawSendCode": "Enviar código por e-mail",
   "payoutWithdrawMonthPrior": "As retenções consideram os saques que você já fez este mês ({amount}).",
-  "@payoutWithdrawMonthPrior": {"placeholders": {"amount": {"type": "String"}}},
+  "@payoutWithdrawMonthPrior": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "payoutWithdrawRetentionsHelp": "Retenções exigidas por lei, recolhidas pela Brawe em seu nome. Você recebe o informe de rendimentos.",
   "payoutCodeTitle": "Confirme com o código",
   "payoutCodeSubtitle": "Enviamos um código de 6 dígitos para {email}.",
-  "@payoutCodeSubtitle": {"placeholders": {"email": {"type": "String"}}},
+  "@payoutCodeSubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "payoutCodeLabel": "Código de 6 dígitos",
   "payoutCodeConfirm": "Confirmar saque",
   "payoutCodeResend": "Reenviar código",
   "payoutCodeResendIn": "Reenviar código em {seconds}s",
-  "@payoutCodeResendIn": {"placeholders": {"seconds": {"type": "String"}}},
+  "@payoutCodeResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
   "payoutCodeResent": "Novo código enviado para {email}.",
-  "@payoutCodeResent": {"placeholders": {"email": {"type": "String"}}},
+  "@payoutCodeResent": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "payoutDoneTitle": "Pedido enviado",
   "payoutDoneSubtitle": "Seu saque está em análise. O pagamento sai em até {days, plural, one {{days} dia útil} other {{days} dias úteis}} após a aprovação, e você acompanha o status aqui.",
-  "@payoutDoneSubtitle": {"placeholders": {"days": {"type": "int"}}},
+  "@payoutDoneSubtitle": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
   "payoutDoneStatus": "Situação",
   "payoutDoneBack": "Voltar para Ganhos",
   "payoutErrorsNetwork": "Sem conexão com o servidor. Confira sua internet e tente de novo.",
@@ -4671,21 +5829,54 @@
   "payoutErrorsNetNotPositive": "Depois das retenções, o valor líquido ficaria zerado. Escolha uma quantia maior.",
   "payoutErrorsInvalidAmount": "Informe uma quantidade de diamantes válida.",
   "payoutErrorsBelowMinimum": "O saque mínimo é de {diamonds} diamantes ({amount}).",
-  "@payoutErrorsBelowMinimum": {"placeholders": {"amount": {"type": "String"}, "diamonds": {"type": "String"}}},
+  "@payoutErrorsBelowMinimum": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "diamonds": {
+        "type": "String"
+      }
+    }
+  },
   "payoutErrorsInsufficient": "Saldo insuficiente. Você tem {available} diamantes disponíveis.",
-  "@payoutErrorsInsufficient": {"placeholders": {"available": {"type": "String"}}},
+  "@payoutErrorsInsufficient": {
+    "placeholders": {
+      "available": {
+        "type": "String"
+      }
+    }
+  },
   "payoutErrorsTooMany": "Muitas tentativas. Espere um pouco e tente de novo.",
   "payoutErrorsSendFailed": "Não conseguimos enviar o e-mail agora. Tente de novo.",
   "payoutErrorsResendTooSoon": "Aguarde {seconds}s para reenviar o código.",
-  "@payoutErrorsResendTooSoon": {"placeholders": {"seconds": {"type": "String"}}},
+  "@payoutErrorsResendTooSoon": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
   "payoutErrorsCodeInvalid": "Código incorreto. {left, plural, one {Resta {left} tentativa} other {Restam {left} tentativas}}.",
-  "@payoutErrorsCodeInvalid": {"placeholders": {"left": {"type": "int"}}},
+  "@payoutErrorsCodeInvalid": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      }
+    }
+  },
   "payoutErrorsCodeExpired": "Este código expirou. Toque em “Reenviar código”.",
   "payoutErrorsTooManyAttempts": "Muitas tentativas erradas. Volte e peça um novo código.",
   "payoutErrorsHolderMismatch": "A chave Pix (CPF/CNPJ) precisa ser do próprio titular da conta.",
   "payoutErrorsInvalidMethod": "Esta forma de recebimento não está disponível para o país escolhido.",
   "payoutErrorsInvalidField": "Confira o campo “{field}”.",
-  "@payoutErrorsInvalidField": {"placeholders": {"field": {"type": "String"}}},
+  "@payoutErrorsInvalidField": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
   "payoutErrorsInvalidData": "Confira os dados informados.",
   "payoutErrorsGeneric": "Não foi possível concluir agora. Tente de novo.",
   "payoutErrorsFillAll": "Preencha todos os campos, com o nome completo do titular.",
@@ -4710,5 +5901,291 @@
   "payoutCountryPE": "Peru",
   "payoutCountryUY": "Uruguai",
   "payoutCountryES": "Espanha",
-  "payoutSeeMonetization": "Sacar em Monetização"
+  "payoutSeeMonetization": "Sacar em Monetização",
+  "adsSponsored": "Patrocinado",
+  "adsWhy": "Por que estou vendo isto?",
+  "adsWhyAdvertiser": "Este anúncio é de {name}.",
+  "@adsWhyAdvertiser": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adsWhyFooter": "Anúncios na Brawe nunca usam suas mensagens nem aparecem para menores de 18 anos.",
+  "adsHide": "Ocultar este anúncio",
+  "adsLessFrom": "Ver menos de {name}",
+  "@adsLessFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "adsReport": "Denunciar anúncio",
+  "adsHidden": "Anúncio ocultado",
+  "adsReportThanks": "Obrigado. A equipe da Brawe vai revisar este anúncio.",
+  "adsReasonMisleading": "Enganoso ou golpe",
+  "adsReasonOffensive": "Ofensivo",
+  "adsReasonAdult": "Conteúdo adulto",
+  "adsReasonProhibited": "Produto proibido",
+  "adsReasonRepetitive": "Aparece demais",
+  "adsReasonOther": "Outro motivo",
+  "adsSeeProfile": "Ver perfil",
+  "adsWatchLive": "Assistir à live",
+  "postBoost": "Impulsionar",
+  "postBoostHint": "Mostre para mais pessoas",
+  "boostTitle": "Impulsionar post",
+  "boostStepAudience": "Público",
+  "boostStepBudget": "Orçamento",
+  "boostStepReview": "Revisar",
+  "boostAuto": "Automático",
+  "boostAutoHint": "A Brawe escolhe quem tem mais chance de se interessar, em todo o Brasil.",
+  "boostCustom": "Personalizar",
+  "boostCustomHint": "Escolha onde, idade e interesses.",
+  "boostLocation": "Localização",
+  "boostAllBrazil": "Brasil inteiro",
+  "boostPlaces": "Cidades",
+  "boostRadius": "Raio",
+  "boostSearchCity": "Buscar cidade",
+  "boostNoCity": "Nenhuma cidade encontrada",
+  "boostUseMyLocation": "Usar minha localização",
+  "boostCenter": "Centro do raio",
+  "boostKm": "{km} km",
+  "@boostKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "boostAge": "Idade",
+  "boostAgeRange": "{from} a {to} anos",
+  "@boostAgeRange": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "boostInterests": "Interesses",
+  "boostAnyInterest": "Qualquer interesse",
+  "boostPerDay": "Por dia",
+  "boostDuration": "Duração",
+  "boostDaysN": "{n} dias",
+  "@boostDaysN": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "boostTotal": "Total",
+  "boostCoins": "{n} Coins",
+  "@boostCoins": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "boostBalance": "Seu saldo: {n} Coins",
+  "@boostBalance": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "boostInsufficient": "Saldo insuficiente para este orçamento.",
+  "boostTopUp": "Recarregar Coins",
+  "boostEstimate": "Público estimado",
+  "boostNext": "Continuar",
+  "boostPay": "Impulsionar · {n} Coins",
+  "@boostPay": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "boostTerms": "Ao impulsionar, você confirma que o post segue as regras de anúncios da Brawe. O que não for gasto volta para você.",
+  "boostDoneTitle": "Seu post está sendo impulsionado",
+  "boostDoneHint": "Acompanhe alcance, cliques e gastos em Meus anúncios.",
+  "boostSeeCampaigns": "Ver meus anúncios",
+  "boostError": "Não foi possível impulsionar. Tente de novo.",
+  "boostCitiesInRadius": "≈ {n} cidades no raio",
+  "@boostCitiesInRadius": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "myAdsTitle": "Meus anúncios",
+  "myAdsEmpty": "Você ainda não impulsionou nenhum post.",
+  "myAdsEmptyHint": "Toque em Impulsionar em um post seu para começar.",
+  "myAdsStatusDraft": "Rascunho",
+  "myAdsStatusReview": "Em revisão",
+  "myAdsStatusActive": "No ar",
+  "myAdsStatusPaused": "Pausada",
+  "myAdsStatusEnded": "Encerrada",
+  "myAdsStatusRejected": "Recusada",
+  "myAdsImpressions": "Impressões",
+  "myAdsReach": "Alcance",
+  "myAdsClicks": "Cliques",
+  "myAdsViews": "Visualizações",
+  "myAdsNewFollowers": "Novos seguidores",
+  "myAdsProfileVisits": "Visitas ao perfil",
+  "myAdsSpent": "Gasto",
+  "myAdsOf": "de {total}",
+  "@myAdsOf": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "myAdsEndsOn": "Termina em {date}",
+  "@myAdsEndsOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "myAdsPause": "Pausar",
+  "myAdsResume": "Retomar",
+  "myAdsCancel": "Encerrar",
+  "myAdsCancelConfirm": "Encerrar o anúncio agora? As Coins do que não foi gasto voltam para você.",
+  "myAdsIncreaseDaily": "Aumentar por dia",
+  "myAdsIncreaseCost": "Faltam {days} dias: {coins} Coins a mais",
+  "@myAdsIncreaseCost": {
+    "placeholders": {
+      "days": {
+        "type": "String"
+      },
+      "coins": {
+        "type": "String"
+      }
+    }
+  },
+  "myAdsOnlyUp": "O valor por dia só pode aumentar.",
+  "myAdsEditAudience": "Editar público",
+  "myAdsAudienceSaved": "Público atualizado",
+  "myAdsPausedByTeam": "Pausado pela equipe da Brawe.",
+  "myAdsSave": "Salvar",
+  "boostTapMap": "Toque no mapa para mudar o centro.",
+  "boostInterestsNarrow": "Interesses deixam o público menor. Se o alcance ficar baixo, tire alguns.",
+  "boostRetry": "Tentar de novo",
+  "boostPerDayShort": "por dia",
+  "boostFinish": "Concluir",
+  "myAdsAtMax": "Você já está no valor máximo por dia.",
+  "myAdsEntry": "Anúncios e impulsionamentos",
+  "adsRepEmpty": "Os resultados aparecem aqui assim que o anúncio começar a ser exibido.",
+  "adsRepPeople": "pessoas",
+  "adsRepFrequency": "Frequência",
+  "adsRepCtr": "Taxa de cliques",
+  "adsRepCpm": "Custo por mil",
+  "adsRepOverTime": "Ao longo dos dias",
+  "adsRepVideo": "Vídeo",
+  "adsRepAvgWatch": "Tempo médio: {s} s",
+  "@adsRepAvgWatch": {
+    "placeholders": {
+      "s": {
+        "type": "String"
+      }
+    }
+  },
+  "adsRepWatched25": "Assistiram 25%",
+  "adsRepWatched50": "Assistiram metade",
+  "adsRepWatched100": "Assistiram até o fim",
+  "adsRepAudience": "Quem viu",
+  "adsRepAge": "Idade",
+  "adsRepCities": "Cidades",
+  "adsRepStates": "Estados",
+  "adsRepRegions": "Regiões",
+  "adsRepInterests": "Interesses",
+  "adsRepOthers": "Outros",
+  "adsRepUnknown": "Não informada",
+  "adsRepNoData": "Sem dados ainda",
+  "adsRepPrivacy": "Só números somados. Grupos com poucas pessoas entram em \"Outros\" para ninguém ser identificado.",
+  "adsRepLoggedOut": "{n} pessoas viram sem estar logadas",
+  "@adsRepLoggedOut": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "adsRepHours": "Melhores horários",
+  "adsRepBestHour": "Mais visto às {h}h",
+  "@adsRepBestHour": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      }
+    }
+  },
+  "adsRepWhere": "Onde apareceu",
+  "adsRepPlatforms": "Aparelhos",
+  "adsRepPlForyou": "Para você",
+  "adsRepPlFollowing": "Seguindo",
+  "adsRepPlStories": "Stories",
+  "adsRepPlLives": "Lives",
+  "adsRepPlExplore": "Explorar",
+  "adsRepPlWeb": "Início do site",
+  "adsRepLive": "Live",
+  "adsRepLiveFromAd": "Entraram pelo anúncio",
+  "adsRepLivePeak": "Pico de espectadores",
+  "adsRepLiveGifts": "Presentes",
+  "adsRepLiveMinutes": "Minutos assistidos",
+  "adsRepCoins": "Coins",
+  "adsRepCoinsPaid": "Pagas",
+  "adsRepCoinsUsed": "Usadas",
+  "adsRepCoinsRefunded": "Devolvidas",
+  "adsRepChanges": "Alterações",
+  "adsRepChangeDaily": "Valor por dia",
+  "adsRepChangeTotal": "Orçamento total",
+  "adsRepChangeEnd": "Data de término",
+  "adsRepResults": "Resultados",
+  "boostStepGoal": "Objetivo",
+  "boostGoalTitle": "O que você quer com esse impulsionamento?",
+  "boostGoalViews": "Mais visualizações",
+  "boostGoalViewsHint": "Mostra o post para mais gente.",
+  "boostGoalFollowers": "Mais seguidores",
+  "boostGoalFollowersHint": "Quem vê conhece seu perfil e pode seguir você.",
+  "boostGoalProfile": "Visitas ao perfil",
+  "boostGoalProfileHint": "Mais pessoas abrindo o seu perfil.",
+  "boostGoalContacts": "Receber mensagens",
+  "boostGoalContactsHint": "Um botão para as pessoas falarem com você.",
+  "boostContactVia": "Onde você quer receber as mensagens?",
+  "boostContactChat": "Chat da Brawe",
+  "boostContactChatHint": "As conversas chegam no seu Chat, aqui no app. Cada mensagem conta como contato no relatório.",
+  "boostContactWhatsapp": "WhatsApp",
+  "boostContactWhatsappHint": "O botão abre o seu WhatsApp com a mensagem pronta. Cada toque conta como contato no relatório.",
+  "boostWhatsappPhone": "Seu WhatsApp com DDD",
+  "boostWhatsappMessage": "Mensagem pronta",
+  "boostWhatsappMessageDefault": "Olá! Vi seu post na Brawe e quero saber mais.",
+  "boostPreview": "Prévia",
+  "boostPreviewHint": "Assim o seu post aparece em cada lugar do app. Deslize para ver.",
+  "boostPlForYou": "Para você",
+  "boostPlFeed": "Feed",
+  "boostPlStories": "Stories",
+  "boostPlTiles": "Lives e Explorar",
+  "boostAlreadyTitle": "Este post já está sendo impulsionado",
+  "boostAlreadyHint": "Para alcançar mais pessoas, aumente o valor por dia ou edite o público da campanha que já existe (feita no app ou no site).",
+  "boostSeeCampaign": "Ver campanha",
+  "adsCtaMessage": "Enviar mensagem",
+  "adsCtaWhatsapp": "Chamar no WhatsApp",
+  "myAdsKindBrand": "Anúncio da marca",
+  "myAdsKindBoost": "Impulsionamento",
+  "myAdsLeadsChat": "As mensagens de quem viu o anúncio chegam no seu Chat.",
+  "myAdsLeadsWhatsapp": "Os contatos de quem viu o anúncio chegam no seu WhatsApp.",
+  "myAdsOpenChat": "Abrir chat",
+  "myAdsBrandEditOnWeb": "Anúncio da marca: o criativo e o público se editam no painel de anúncios, pelo computador.",
+  "adsRepContacts": "Contatos recebidos"
 }

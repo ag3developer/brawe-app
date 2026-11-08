@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../config/feature_flags.dart';
 import '../../../core/constants/app_constants.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
@@ -207,6 +208,13 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             _SectionHeader(icon: Icons.logout, title: s.settingsAccount),
+            if (kEnableMonetization)
+              ListTile(
+                leading: const Icon(LucideIcons.trendingUp),
+                title: Text(s.myAdsEntry),
+                trailing: const Icon(Icons.chevron_right, size: 20),
+                onTap: () => context.push('/ads/campaigns'),
+              ),
             ListTile(
               leading: const Icon(LucideIcons.shieldCheck),
               title: Text(s.secSettingsEntry),

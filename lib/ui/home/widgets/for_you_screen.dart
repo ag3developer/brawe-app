@@ -7,6 +7,11 @@ import '../../../domain/models/feed_item.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../view_models/for_you_feed_view_model.dart';
+import '../../../data/repositories/ads_repository.dart';
+import '../../../domain/models/ad_models.dart';
+import '../../ads/ad_slots.dart';
+import '../../ads/widgets/ad_actions.dart';
+import '../../ads/widgets/sponsored_video_view.dart';
 import 'views/live_commerce_view.dart';
 import 'views/live_battle_view.dart';
 import 'views/live_chat_view.dart';
@@ -27,6 +32,15 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
   final _ctrl = PageController();
   String _tab = 'forYou';
   int _currentIndex = 0;
+
+  // Brawe Ads: 1 anúncio a cada N vídeos (Para você) / só impulsionados (Seguindo)
+  late final AdSlotLoader _adsForYou = AdSlotLoader(ref.read(adsRepositoryProvider), AdPlacement.forYou)..addListener(_onAds);
+  late final AdSlotLoader _adsFollowing =
+      AdSlotLoader(ref.read(adsRepositoryProvider), AdPlacement.following, defaultEvery: 5)..addListener(_onAds);
+
+  void _onAds() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void initState() {
@@ -63,6 +77,8 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _adsForYou.dispose();
+    _adsFollowing.dispose();
     _ctrl.dispose();
     super.dispose();
   }
@@ -105,9 +121,15 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
         ? ref.watch(followingForYouFeedViewModelProvider)
         : ref.watch(forYouFeedViewModelProvider);
 
-    void onRefresh() => isFollowing
-        ? ref.read(followingForYouFeedViewModelProvider.notifier).refresh()
-        : ref.read(forYouFeedViewModelProvider.notifier).refresh();
+    final adLoader = isFollowing ? _adsFollowing : _adsForYou;
+    final hidden = ref.watch(hiddenAdsProvider);
+
+    void onRefresh() {
+      adLoader.reset();
+      isFollowing
+          ? ref.read(followingForYouFeedViewModelProvider.notifier).refresh()
+          : ref.read(forYouFeedViewModelProvider.notifier).refresh();
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -196,6 +218,9 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                   ),
                 );
               }
+              adLoader.ensure(items.length);
+              final slots = adLoader.mix<FeedItem>(items,
+                  skip: (ad) => hidden.contains(ad.adId) || hidden.contains('owner:${ad.advertiser?.id}'));
               return RefreshIndicator(
                 color: AppColors.braweBlue,
                 onRefresh: () async => onRefresh(),
@@ -206,10 +231,19 @@ class _ForYouScreenState extends ConsumerState<ForYouScreen>
                   // inicializa e bufferiza (pausado) enquanto o atual toca —
                   // ao arrastar ele começa na hora, em vez de baixar do zero.
                   allowImplicitScrolling: true,
-                  itemCount: items.length,
-                  onPageChanged: (i) => setState(() => _currentIndex = i),
-                  itemBuilder: (_, i) =>
-                      _buildView(items[i], i == _currentIndex),
+                  itemCount: slots.length,
+                  onPageChanged: (i) {
+                    setState(() => _currentIndex = i);
+                    adLoader.ensure(items.length);
+                  },
+                  itemBuilder: (_, i) => switch (slots[i]) {
+                    ContentSlot<FeedItem>(:final item) => _buildView(item, i == _currentIndex),
+                    AdSlot<FeedItem>(:final ad) => SponsoredVideoView(
+                        key: ValueKey('ad-${ad.token}'),
+                        ad: ad,
+                        isActive: i == _currentIndex,
+                      ),
+                  },
                 ),
               );
             },

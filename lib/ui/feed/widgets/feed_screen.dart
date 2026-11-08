@@ -19,6 +19,9 @@ import '../../core/widgets/brawe_logo.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/sound_preview.dart';
 import '../../../data/repositories/auth_state_provider.dart';
+import '../../../config/feature_flags.dart';
+import '../../ads/boost/boost_preview.dart';
+import '../../../data/repositories/ads_repository.dart';
 import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/feedback_service.dart';
@@ -45,6 +48,10 @@ import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import 'package:brawe_app/core/media/media_utils.dart';
 import 'post_location_widgets.dart';
 import 'post_poll_card.dart';
+import '../../../domain/models/ad_models.dart';
+import '../../ads/ad_slots.dart';
+import '../../ads/widgets/ad_actions.dart';
+import '../../ads/widgets/sponsored_post_card.dart';
 
 /// ─── Design Tokens ────────────────────────────────────────────────────────
 /// O feed usa apenas tokens do tema (`context.colors.*`). O único valor
@@ -442,19 +449,47 @@ class _FeedTab extends ConsumerWidget {
               // "Para Você": sugestões intercaladas no feed
               if (!_isFollowing && posts.length < 3)
                 const SliverToBoxAdapter(child: SuggestedUsersRail()),
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  if (!_isFollowing && index == 2) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        PostCard(post: posts[index]),
-                        const SuggestedUsersRail(),
-                      ],
-                    );
-                  }
-                  return PostCard(post: posts[index]);
-                }, childCount: posts.length),
+              // Brawe Ads: 1 card patrocinado a cada N posts (só no Para você)
+              ListenableBuilder(
+                listenable: ref.watch(adLoaderProvider(AdPlacement.forYou)),
+                builder: (context, _) {
+                  final loader = ref.read(adLoaderProvider(AdPlacement.forYou));
+                  if (!_isFollowing) loader.ensure(posts.length);
+                  final hidden = ref.watch(hiddenAdsProvider);
+                  final slots = _isFollowing
+                      ? [
+                          for (var i = 0; i < posts.length; i++)
+                            ContentSlot(posts[i], i),
+                        ]
+                      : loader.mix(
+                          posts,
+                          skip: (ad) =>
+                              hidden.contains(ad.adId) ||
+                              hidden.contains('owner:${ad.advertiser?.id}'),
+                        );
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final slot = slots[index];
+                      if (slot case AdSlot(:final ad)) {
+                        return SponsoredPostCard(
+                          key: ValueKey('ad-${ad.token}'),
+                          ad: ad,
+                        );
+                      }
+                      final c = slot as ContentSlot;
+                      if (!_isFollowing && c.index == 2) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            PostCard(post: posts[c.index]),
+                            const SuggestedUsersRail(),
+                          ],
+                        );
+                      }
+                      return PostCard(post: posts[c.index]);
+                    }, childCount: slots.length),
+                  );
+                },
               ),
             ],
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -908,8 +943,10 @@ class _PostCardState extends ConsumerState<PostCard>
       onRepostChanged: (reposted) => _applyLocal(
         _post.copyWith(
           userReposted: reposted,
-          repostsCount: (_post.repostsCount + (reposted ? 1 : -1))
-              .clamp(0, 1 << 30),
+          repostsCount: (_post.repostsCount + (reposted ? 1 : -1)).clamp(
+            0,
+            1 << 30,
+          ),
         ),
       ),
     );
@@ -962,7 +999,8 @@ class _PostCardState extends ConsumerState<PostCard>
   @override
   Widget build(BuildContext context) {
     final post = _post;
-    final isVideo = post.imageUrl != null &&
+    final isVideo =
+        post.imageUrl != null &&
         isVideoMedia(mediaType: post.mediaType, url: post.imageUrl);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1004,7 +1042,8 @@ class _PostCardState extends ConsumerState<PostCard>
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (post.author.isVerified) const VerifiedBadge(size: 15, gap: 4),
+                        if (post.author.isVerified)
+                          const VerifiedBadge(size: 15, gap: 4),
                       ],
                     ),
                     const SizedBox(height: 1),
@@ -1101,30 +1140,37 @@ class _PostCardState extends ConsumerState<PostCard>
                     // ou da memória) — antes nascia 4:5 e mudava quando a
                     // mídia carregava/saía da tela ("estica e volta").
                     child: isVideo
-                          ? _FeedVideoTile(
-                              // Versão leve (HLS do Bunny) quando existe; senão o original.
-                              url: (post.hlsUrl?.isNotEmpty ?? false) ? post.hlsUrl! : post.imageUrl!,
-                              posterUrl: post.coverUrl,
-                              mediaAspect: post.aspectRatio ??
-                                  MediaAspectCache.get(post.imageUrl),
-                              cacheKey: post.imageUrl!,
-                              postId: post.id,
-                              sound: post.sound,
-                              soundVolume: post.soundVolume,
-                              originalAudioVolume: post.originalAudioVolume,
-                            )
-                          : _FeedPhoto(
-                              url: post.imageUrl!,
-                              mediaAspect: post.aspectRatio ??
-                                  MediaAspectCache.get(post.imageUrl),
-                              child: CachedNetworkImage(
+                        ? _FeedVideoTile(
+                            // Versão leve (HLS do Bunny) quando existe; senão o original.
+                            url: (post.hlsUrl?.isNotEmpty ?? false)
+                                ? post.hlsUrl!
+                                : post.imageUrl!,
+                            posterUrl: post.coverUrl,
+                            mediaAspect:
+                                post.aspectRatio ??
+                                MediaAspectCache.get(post.imageUrl),
+                            cacheKey: post.imageUrl!,
+                            postId: post.id,
+                            sound: post.sound,
+                            soundVolume: post.soundVolume,
+                            originalAudioVolume: post.originalAudioVolume,
+                          )
+                        : _FeedPhoto(
+                            url: post.imageUrl!,
+                            mediaAspect:
+                                post.aspectRatio ??
+                                MediaAspectCache.get(post.imageUrl),
+                            child: CachedNetworkImage(
                               imageUrl: post.imageUrl!,
                               width: double.infinity,
                               fit: BoxFit.cover,
                               // Decodifica na largura da tela, não na do arquivo.
-                              memCacheWidth: (MediaQuery.sizeOf(context).width *
-                                      MediaQuery.devicePixelRatioOf(context))
-                                  .round(),
+                              memCacheWidth:
+                                  (MediaQuery.sizeOf(context).width *
+                                          MediaQuery.devicePixelRatioOf(
+                                            context,
+                                          ))
+                                      .round(),
                               fadeInDuration: const Duration(milliseconds: 180),
                               placeholder: (ctx, _) => AspectRatio(
                                 aspectRatio: 4 / 5,
@@ -1217,6 +1263,15 @@ class _PostCardState extends ConsumerState<PostCard>
                     : context.colors.textSecondary,
                 onTap: _toggleSave,
               ),
+              // Impulsionar — só nos meus posts com foto/vídeo (mesmo foguete da web).
+              if (_canBoost(post))
+                _IconAction(
+                  icon: LucideIcons.rocket,
+                  color: _isBoosted(post)
+                      ? context.colors.accentPrimary
+                      : context.colors.textSecondary,
+                  onTap: () => _openBoost(post),
+                ),
               _IconAction(
                 icon: LucideIcons.send,
                 color: context.colors.textSecondary,
@@ -1260,6 +1315,32 @@ class _PostCardState extends ConsumerState<PostCard>
     );
   }
 
+  bool _canBoost(Post post) =>
+      kEnableMonetization &&
+      (post.imageUrl ?? '').isNotEmpty &&
+      ref.watch(authStateProvider).value?.id == post.author.id;
+
+  bool _isBoosted(Post post) =>
+      ref.watch(openBoostsProvider).value?.contains('post:${post.id}') ?? false;
+
+  void _openBoost(Post post) {
+    HapticFeedback.selectionClick();
+    final video = post.mediaType == 'video' || isVideoUrl(post.imageUrl);
+    context
+        .push(
+          '/ads/boost?type=post&id=${post.id}',
+          extra: BoostPreviewData(
+            name: post.author.name,
+            avatarUrl: post.author.avatarUrl,
+            imageUrl: video ? (post.coverUrl ?? post.imageUrl) : post.imageUrl,
+            text: post.content,
+            isVideo: video,
+          ),
+        )
+        // volta do fluxo: atualiza o foguete (pode ter impulsionado agora)
+        .then((_) => ref.invalidate(openBoostsProvider));
+  }
+
   void _showPostOptions(BuildContext context) {
     HapticFeedback.selectionClick();
     final post = _post;
@@ -1281,6 +1362,9 @@ class _PostCardState extends ConsumerState<PostCard>
       builder: (_) => _PostOptionsSheet(
         isOwn: isOwn,
         canShareStory: canShareStory,
+        onBoost: isOwn && kEnableMonetization && (imageUrl ?? '').isNotEmpty
+            ? () => _openBoost(post)
+            : null,
         onCopyLink: () async {
           await Clipboard.setData(
             ClipboardData(text: 'https://brawe.app/connect/p/${post.id}'),
@@ -1408,7 +1492,9 @@ class _PostCardState extends ConsumerState<PostCard>
     if (confirmed != true || !mounted) return;
     try {
       // Esconde a pessoa em todo o app na hora e recarrega os feeds.
-      await ref.read(hiddenUsersProvider.notifier).block(
+      await ref
+          .read(hiddenUsersProvider.notifier)
+          .block(
             slug: author.username.isNotEmpty ? author.username : author.id,
             userId: author.id,
           );
@@ -1779,7 +1865,9 @@ class _PostOptionsSheet extends StatelessWidget {
     required this.onMute,
     required this.onReport,
     required this.onDelete,
+    this.onBoost,
   });
+  final VoidCallback? onBoost;
   final bool isOwn;
   final bool canShareStory;
   final VoidCallback onCopyLink;
@@ -1804,6 +1892,13 @@ class _PostOptionsSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const _SheetHandle(),
+            if (onBoost != null)
+              _SheetTile(
+                icon: LucideIcons.rocket,
+                label: s.postBoost,
+                color: context.colors.accentPrimary,
+                onTap: onBoost!,
+              ),
             _SheetTile(
               icon: LucideIcons.link,
               label: s.feedCopyLink,
@@ -2043,9 +2138,8 @@ class _FeedVideoTileState extends ConsumerState<_FeedVideoTile> {
 
   /// Volume do áudio do VÍDEO com o som ligado (com música anexada o
   /// autor pode ter abaixado o áudio original).
-  double get _videoVolume => widget.sound != null
-      ? widget.originalAudioVolume.clamp(0.0, 1.0)
-      : 1.0;
+  double get _videoVolume =>
+      widget.sound != null ? widget.originalAudioVolume.clamp(0.0, 1.0) : 1.0;
 
   /// Música anexada: toca só com vídeo tocando E som ligado.
   void _syncMusic() {
@@ -2225,8 +2319,10 @@ class _FeedVideoTileState extends ConsumerState<_FeedVideoTile> {
               httpHeaders: mediaHeadersFor(poster),
               fit: BoxFit.cover,
               fadeInDuration: const Duration(milliseconds: 150),
-              placeholder: (_, _) => ColoredBox(color: context.colors.surfaceElevated),
-              errorWidget: (_, _, _) => ColoredBox(color: context.colors.surfaceElevated),
+              placeholder: (_, _) =>
+                  ColoredBox(color: context.colors.surfaceElevated),
+              errorWidget: (_, _, _) =>
+                  ColoredBox(color: context.colors.surfaceElevated),
             )
           else
             ColoredBox(color: context.colors.surfaceElevated),
@@ -2235,13 +2331,18 @@ class _FeedVideoTileState extends ConsumerState<_FeedVideoTile> {
                 ? const SizedBox(
                     width: 28,
                     height: 28,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Icon(
                     Icons.play_arrow_rounded,
                     size: 44,
                     color: Colors.white.withValues(alpha: 0.85),
-                    shadows: const [Shadow(color: Colors.black45, blurRadius: 8)],
+                    shadows: const [
+                      Shadow(color: Colors.black45, blurRadius: 8),
+                    ],
                   ),
           ),
         ],
@@ -2318,7 +2419,6 @@ class _FeedVideoTileState extends ConsumerState<_FeedVideoTile> {
   }
 }
 
-
 /// Foto do feed com quadro de proporção fixa. Sem tamanho do servidor (post
 /// antigo), descobre o tamanho da imagem UMA vez e guarda na memória.
 class _FeedPhoto extends StatefulWidget {
@@ -2348,8 +2448,9 @@ class _FeedPhotoState extends State<_FeedPhoto> {
   }
 
   void _measure() {
-    final stream = CachedNetworkImageProvider(widget.url)
-        .resolve(const ImageConfiguration());
+    final stream = CachedNetworkImageProvider(
+      widget.url,
+    ).resolve(const ImageConfiguration());
     _listener = ImageStreamListener((info, _) {
       final w = info.image.width, h = info.image.height;
       if (w > 0 && h > 0) {

@@ -14,6 +14,7 @@ import '../view_models/stories_view_model.dart';
 import 'story_composer_screen.dart';
 import 'story_viewer.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import '../../ads/widgets/sponsored_story_screen.dart';
 
 /// Fileira de stories — avatares circulares (padrão familiar).
 ///
@@ -197,6 +198,9 @@ class StoriesRail extends ConsumerWidget {
         reverseTransitionDuration: const Duration(milliseconds: 180),
       ),
     );
+
+    // Brawe Ads: 1 anúncio entre grupos de stories (a cada N grupos, ver servidor)
+    if (context.mounted) await maybeShowStoryAd(context, ref);
 
     // ── Restaura system UI ao voltar ──
     // Sem isso, ao fechar o viewer aberto a partir do stories_rail, a

@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '15.0'
+platform :ios, '15.5'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -37,13 +37,13 @@ target 'Runner' do
 end
 
 post_install do |installer|
-  # ── FORÇA: iOS 15.0 no target Runner ─────────────────────────────────────
+  # ── FORÇA: iOS 15.5 no target Runner (MapLibre exige 15.5) ─────────────────────────────────────
   # Alguns builds herdam iOS 13.0 do projeto original. Firebase exige 15.0+.
   # Isso garante que o Runner SEMPRE tenha iOS 15.0, mesmo se o Xcode não ler correto.
   runner_target = installer.pods_project.targets.find { |t| t.name == 'Runner' }
   if runner_target
     runner_target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
     end
   end
 
@@ -62,7 +62,7 @@ post_install do |installer|
     'Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage/Package.swift',
     __dir__
   )
-  ios_target = '15.0'
+  ios_target = '15.5' # MapLibre (mapas) exige 15.5
   if File.exist?(spm_package)
     content = File.read(spm_package)
     updated = content.gsub(/\.iOS\("[0-9]+\.[0-9]+"\)/, ".iOS(\"#{ios_target}\")")
@@ -133,7 +133,7 @@ post_install do |installer|
 
     target.build_configurations.each do |config|
       # Force minimum deployment target on every pod (alguns vêm com 9.0 e quebram no Xcode 16+).
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
 
       # Garante geração de dSYMs para todos os pods em Release/Profile,
       # evitando o aviso do Crashlytics sobre frameworks sem dSYM.

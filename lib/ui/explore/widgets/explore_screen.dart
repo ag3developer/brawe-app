@@ -10,6 +10,10 @@ import '../../core/themes/brawe_colors.dart';
 import '../view_models/explore_view_model.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import '../../../domain/models/ad_models.dart';
+import '../../ads/ad_slots.dart';
+import '../../ads/widgets/ad_actions.dart';
+import '../../ads/widgets/sponsored_tile.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -149,11 +153,25 @@ class _TrendingTab extends ConsumerWidget {
               const SizedBox(height: 12),
               SizedBox(
                 height: 200,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: data.lives.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) => _LiveCard(live: data.lives[i]),
+                child: ListenableBuilder(
+                  listenable: ref.watch(adLoaderProvider(AdPlacement.explore)),
+                  builder: (context, _) {
+                    final loader = ref.read(adLoaderProvider(AdPlacement.explore))..ensure(0);
+                    final hidden = ref.watch(hiddenAdsProvider);
+                    final ads = loader.ads.where((a) => !hidden.contains(a.adId) && !hidden.contains('owner:${a.advertiser?.id}')).toList();
+                    final ad = ads.isEmpty ? null : ads.first;
+                    final pos = data.lives.length >= 2 ? 1 : data.lives.length;
+                    final count = data.lives.length + (ad == null ? 0 : 1);
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: count,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (_, i) {
+                        if (ad != null && i == pos) return SponsoredTile(key: ValueKey('ad-${ad.token}'), ad: ad, width: 150);
+                        return _LiveCard(live: data.lives[ad != null && i > pos ? i - 1 : i]);
+                      },
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 24),

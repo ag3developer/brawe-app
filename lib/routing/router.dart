@@ -76,6 +76,9 @@ import '../ui/shop/pages/shop_payment_page.dart';
 import '../ui/onboarding/onboarding_gate.dart';
 import '../ui/onboarding/onboarding_screen.dart';
 import '../data/services/profile_service.dart';
+import '../ui/ads/boost/boost_flow_screen.dart';
+import '../ui/ads/boost/boost_preview.dart';
+import '../ui/ads/boost/my_ads_screen.dart';
 
 part 'router.g.dart';
 
@@ -88,10 +91,32 @@ const _kWebLocales = {'pt', 'es', 'en'};
 /// Primeiro segmento das páginas da rede social no endereço curto do site
 /// (`brawe.app/pt/u/:id` = `brawe.app/pt/connect/u/:id`).
 const _kConnectShortSegments = {
-  'u', 'p', 'profile', 'foryou', 'explore', 'lives', 'live', 'messages',
-  'notifications', 'settings', 'wallet', 'quests', 'battles', 'coins',
-  'saved', 'following', 'followers', 'favorites', 'analytics', 'shopping',
-  'go-live', 'help', 'mystery-gifts', 'shop', 'search', 'ranking',
+  'u',
+  'p',
+  'profile',
+  'foryou',
+  'explore',
+  'lives',
+  'live',
+  'messages',
+  'notifications',
+  'settings',
+  'wallet',
+  'quests',
+  'battles',
+  'coins',
+  'saved',
+  'following',
+  'followers',
+  'favorites',
+  'analytics',
+  'shopping',
+  'go-live',
+  'help',
+  'mystery-gifts',
+  'shop',
+  'search',
+  'ranking',
 };
 
 /// Páginas do site (já sem o prefixo de idioma) → rota equivalente no app.
@@ -166,7 +191,10 @@ String? _normalizeDeepLink(Uri uri) {
   //     hashtag no app; as demais buscas abrem o Explorar (alias abaixo).
   if (path == '/connect/search') {
     final q = (uri.queryParameters['q'] ?? '').trim();
-    final tag = RegExp(r'^#([\p{L}\p{N}_]+)$', unicode: true).firstMatch(q)?.group(1);
+    final tag = RegExp(
+      r'^#([\p{L}\p{N}_]+)$',
+      unicode: true,
+    ).firstMatch(q)?.group(1);
     if (tag != null) {
       return '/explore/hashtag/${Uri.encodeComponent(tag)}';
     }
@@ -196,8 +224,11 @@ String? _pendingAuthLocation;
 
 bool _isSharedContentPath(String path) =>
     (path.startsWith('/live/') &&
-        !const {'/live/start', '/live/summary', '/live/broadcast'}
-            .contains(path)) ||
+        !const {
+          '/live/start',
+          '/live/summary',
+          '/live/broadcast',
+        }.contains(path)) ||
     path.startsWith('/post/') ||
     path.startsWith('/profile/') ||
     path.startsWith('/connect/') ||
@@ -292,6 +323,26 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const WelcomeScreen(),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      // Anúncios (impulsionar e Meus anúncios): tela cheia, sem o menu de baixo.
+      GoRoute(
+        path: '/ads/boost',
+        builder: (context, state) => BoostFlowScreen(
+          contentType: state.uri.queryParameters['type'] ?? 'post',
+          contentId: state.uri.queryParameters['id'] ?? '',
+          preview: state.extra is BoostPreviewData
+              ? state.extra as BoostPreviewData
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: '/ads/campaigns',
+        builder: (context, state) => const MyAdsScreen(),
+      ),
+      GoRoute(
+        path: '/ads/campaigns/:id',
+        builder: (context, state) =>
+            MyAdDetailScreen(id: state.pathParameters['id']!),
+      ),
       GoRoute(
         path: '/suspended',
         builder: (context, state) => const AccountSuspendedScreen(),

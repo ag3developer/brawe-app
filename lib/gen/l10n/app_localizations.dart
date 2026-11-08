@@ -17678,6 +17678,1056 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Sacar em Monetização'**
   String get payoutSeeMonetization;
+
+  /// No description provided for @adsSponsored.
+  ///
+  /// In pt, this message translates to:
+  /// **'Patrocinado'**
+  String get adsSponsored;
+
+  /// No description provided for @adsWhy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por que estou vendo isto?'**
+  String get adsWhy;
+
+  /// No description provided for @adsWhyAdvertiser.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este anúncio é de {name}.'**
+  String adsWhyAdvertiser(String name);
+
+  /// No description provided for @adsWhyFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncios na Brawe nunca usam suas mensagens nem aparecem para menores de 18 anos.'**
+  String get adsWhyFooter;
+
+  /// No description provided for @adsHide.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocultar este anúncio'**
+  String get adsHide;
+
+  /// No description provided for @adsLessFrom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver menos de {name}'**
+  String adsLessFrom(String name);
+
+  /// No description provided for @adsReport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Denunciar anúncio'**
+  String get adsReport;
+
+  /// No description provided for @adsHidden.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio ocultado'**
+  String get adsHidden;
+
+  /// No description provided for @adsReportThanks.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigado. A equipe da Brawe vai revisar este anúncio.'**
+  String get adsReportThanks;
+
+  /// No description provided for @adsReasonMisleading.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enganoso ou golpe'**
+  String get adsReasonMisleading;
+
+  /// No description provided for @adsReasonOffensive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ofensivo'**
+  String get adsReasonOffensive;
+
+  /// No description provided for @adsReasonAdult.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conteúdo adulto'**
+  String get adsReasonAdult;
+
+  /// No description provided for @adsReasonProhibited.
+  ///
+  /// In pt, this message translates to:
+  /// **'Produto proibido'**
+  String get adsReasonProhibited;
+
+  /// No description provided for @adsReasonRepetitive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparece demais'**
+  String get adsReasonRepetitive;
+
+  /// No description provided for @adsReasonOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro motivo'**
+  String get adsReasonOther;
+
+  /// No description provided for @adsSeeProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver perfil'**
+  String get adsSeeProfile;
+
+  /// No description provided for @adsWatchLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir à live'**
+  String get adsWatchLive;
+
+  /// No description provided for @postBoost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impulsionar'**
+  String get postBoost;
+
+  /// No description provided for @postBoostHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostre para mais pessoas'**
+  String get postBoostHint;
+
+  /// No description provided for @boostTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impulsionar post'**
+  String get boostTitle;
+
+  /// No description provided for @boostStepAudience.
+  ///
+  /// In pt, this message translates to:
+  /// **'Público'**
+  String get boostStepAudience;
+
+  /// No description provided for @boostStepBudget.
+  ///
+  /// In pt, this message translates to:
+  /// **'Orçamento'**
+  String get boostStepBudget;
+
+  /// No description provided for @boostStepReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Revisar'**
+  String get boostStepReview;
+
+  /// No description provided for @boostAuto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Automático'**
+  String get boostAuto;
+
+  /// No description provided for @boostAutoHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'A Brawe escolhe quem tem mais chance de se interessar, em todo o Brasil.'**
+  String get boostAutoHint;
+
+  /// No description provided for @boostCustom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Personalizar'**
+  String get boostCustom;
+
+  /// No description provided for @boostCustomHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha onde, idade e interesses.'**
+  String get boostCustomHint;
+
+  /// No description provided for @boostLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Localização'**
+  String get boostLocation;
+
+  /// No description provided for @boostAllBrazil.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brasil inteiro'**
+  String get boostAllBrazil;
+
+  /// No description provided for @boostPlaces.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidades'**
+  String get boostPlaces;
+
+  /// No description provided for @boostRadius.
+  ///
+  /// In pt, this message translates to:
+  /// **'Raio'**
+  String get boostRadius;
+
+  /// No description provided for @boostSearchCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar cidade'**
+  String get boostSearchCity;
+
+  /// No description provided for @boostNoCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma cidade encontrada'**
+  String get boostNoCity;
+
+  /// No description provided for @boostUseMyLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usar minha localização'**
+  String get boostUseMyLocation;
+
+  /// No description provided for @boostCenter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Centro do raio'**
+  String get boostCenter;
+
+  /// No description provided for @boostKm.
+  ///
+  /// In pt, this message translates to:
+  /// **'{km} km'**
+  String boostKm(String km);
+
+  /// No description provided for @boostAge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idade'**
+  String get boostAge;
+
+  /// No description provided for @boostAgeRange.
+  ///
+  /// In pt, this message translates to:
+  /// **'{from} a {to} anos'**
+  String boostAgeRange(String from, String to);
+
+  /// No description provided for @boostInterests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Interesses'**
+  String get boostInterests;
+
+  /// No description provided for @boostAnyInterest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qualquer interesse'**
+  String get boostAnyInterest;
+
+  /// No description provided for @boostPerDay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Por dia'**
+  String get boostPerDay;
+
+  /// No description provided for @boostDuration.
+  ///
+  /// In pt, this message translates to:
+  /// **'Duração'**
+  String get boostDuration;
+
+  /// No description provided for @boostDaysN.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} dias'**
+  String boostDaysN(String n);
+
+  /// No description provided for @boostTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total'**
+  String get boostTotal;
+
+  /// No description provided for @boostCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} Coins'**
+  String boostCoins(String n);
+
+  /// No description provided for @boostBalance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu saldo: {n} Coins'**
+  String boostBalance(String n);
+
+  /// No description provided for @boostInsufficient.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saldo insuficiente para este orçamento.'**
+  String get boostInsufficient;
+
+  /// No description provided for @boostTopUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recarregar Coins'**
+  String get boostTopUp;
+
+  /// No description provided for @boostEstimate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Público estimado'**
+  String get boostEstimate;
+
+  /// No description provided for @boostNext.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get boostNext;
+
+  /// No description provided for @boostPay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impulsionar · {n} Coins'**
+  String boostPay(String n);
+
+  /// No description provided for @boostTerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao impulsionar, você confirma que o post segue as regras de anúncios da Brawe. O que não for gasto volta para você.'**
+  String get boostTerms;
+
+  /// No description provided for @boostDoneTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu post está sendo impulsionado'**
+  String get boostDoneTitle;
+
+  /// No description provided for @boostDoneHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Acompanhe alcance, cliques e gastos em Meus anúncios.'**
+  String get boostDoneHint;
+
+  /// No description provided for @boostSeeCampaigns.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver meus anúncios'**
+  String get boostSeeCampaigns;
+
+  /// No description provided for @boostError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível impulsionar. Tente de novo.'**
+  String get boostError;
+
+  /// No description provided for @boostCitiesInRadius.
+  ///
+  /// In pt, this message translates to:
+  /// **'≈ {n} cidades no raio'**
+  String boostCitiesInRadius(String n);
+
+  /// No description provided for @myAdsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meus anúncios'**
+  String get myAdsTitle;
+
+  /// No description provided for @myAdsEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não impulsionou nenhum post.'**
+  String get myAdsEmpty;
+
+  /// No description provided for @myAdsEmptyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque em Impulsionar em um post seu para começar.'**
+  String get myAdsEmptyHint;
+
+  /// No description provided for @myAdsStatusDraft.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rascunho'**
+  String get myAdsStatusDraft;
+
+  /// No description provided for @myAdsStatusReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em revisão'**
+  String get myAdsStatusReview;
+
+  /// No description provided for @myAdsStatusActive.
+  ///
+  /// In pt, this message translates to:
+  /// **'No ar'**
+  String get myAdsStatusActive;
+
+  /// No description provided for @myAdsStatusPaused.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausada'**
+  String get myAdsStatusPaused;
+
+  /// No description provided for @myAdsStatusEnded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrada'**
+  String get myAdsStatusEnded;
+
+  /// No description provided for @myAdsStatusRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusada'**
+  String get myAdsStatusRejected;
+
+  /// No description provided for @myAdsImpressions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impressões'**
+  String get myAdsImpressions;
+
+  /// No description provided for @myAdsReach.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alcance'**
+  String get myAdsReach;
+
+  /// No description provided for @myAdsClicks.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cliques'**
+  String get myAdsClicks;
+
+  /// No description provided for @myAdsViews.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visualizações'**
+  String get myAdsViews;
+
+  /// No description provided for @myAdsNewFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novos seguidores'**
+  String get myAdsNewFollowers;
+
+  /// No description provided for @myAdsProfileVisits.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visitas ao perfil'**
+  String get myAdsProfileVisits;
+
+  /// No description provided for @myAdsSpent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gasto'**
+  String get myAdsSpent;
+
+  /// No description provided for @myAdsOf.
+  ///
+  /// In pt, this message translates to:
+  /// **'de {total}'**
+  String myAdsOf(String total);
+
+  /// No description provided for @myAdsEndsOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Termina em {date}'**
+  String myAdsEndsOn(String date);
+
+  /// No description provided for @myAdsPause.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausar'**
+  String get myAdsPause;
+
+  /// No description provided for @myAdsResume.
+  ///
+  /// In pt, this message translates to:
+  /// **'Retomar'**
+  String get myAdsResume;
+
+  /// No description provided for @myAdsCancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar'**
+  String get myAdsCancel;
+
+  /// No description provided for @myAdsCancelConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encerrar o anúncio agora? As Coins do que não foi gasto voltam para você.'**
+  String get myAdsCancelConfirm;
+
+  /// No description provided for @myAdsIncreaseDaily.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aumentar por dia'**
+  String get myAdsIncreaseDaily;
+
+  /// No description provided for @myAdsIncreaseCost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Faltam {days} dias: {coins} Coins a mais'**
+  String myAdsIncreaseCost(String days, String coins);
+
+  /// No description provided for @myAdsOnlyUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'O valor por dia só pode aumentar.'**
+  String get myAdsOnlyUp;
+
+  /// No description provided for @myAdsEditAudience.
+  ///
+  /// In pt, this message translates to:
+  /// **'Editar público'**
+  String get myAdsEditAudience;
+
+  /// No description provided for @myAdsAudienceSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Público atualizado'**
+  String get myAdsAudienceSaved;
+
+  /// No description provided for @myAdsPausedByTeam.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pausado pela equipe da Brawe.'**
+  String get myAdsPausedByTeam;
+
+  /// No description provided for @myAdsSave.
+  ///
+  /// In pt, this message translates to:
+  /// **'Salvar'**
+  String get myAdsSave;
+
+  /// No description provided for @boostTapMap.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque no mapa para mudar o centro.'**
+  String get boostTapMap;
+
+  /// No description provided for @boostInterestsNarrow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Interesses deixam o público menor. Se o alcance ficar baixo, tire alguns.'**
+  String get boostInterestsNarrow;
+
+  /// No description provided for @boostRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get boostRetry;
+
+  /// No description provided for @boostPerDayShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'por dia'**
+  String get boostPerDayShort;
+
+  /// No description provided for @boostFinish.
+  ///
+  /// In pt, this message translates to:
+  /// **'Concluir'**
+  String get boostFinish;
+
+  /// No description provided for @myAdsAtMax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já está no valor máximo por dia.'**
+  String get myAdsAtMax;
+
+  /// No description provided for @myAdsEntry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncios e impulsionamentos'**
+  String get myAdsEntry;
+
+  /// No description provided for @adsRepEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os resultados aparecem aqui assim que o anúncio começar a ser exibido.'**
+  String get adsRepEmpty;
+
+  /// No description provided for @adsRepPeople.
+  ///
+  /// In pt, this message translates to:
+  /// **'pessoas'**
+  String get adsRepPeople;
+
+  /// No description provided for @adsRepFrequency.
+  ///
+  /// In pt, this message translates to:
+  /// **'Frequência'**
+  String get adsRepFrequency;
+
+  /// No description provided for @adsRepCtr.
+  ///
+  /// In pt, this message translates to:
+  /// **'Taxa de cliques'**
+  String get adsRepCtr;
+
+  /// No description provided for @adsRepCpm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Custo por mil'**
+  String get adsRepCpm;
+
+  /// No description provided for @adsRepOverTime.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ao longo dos dias'**
+  String get adsRepOverTime;
+
+  /// No description provided for @adsRepVideo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo'**
+  String get adsRepVideo;
+
+  /// No description provided for @adsRepAvgWatch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tempo médio: {s} s'**
+  String adsRepAvgWatch(String s);
+
+  /// No description provided for @adsRepWatched25.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistiram 25%'**
+  String get adsRepWatched25;
+
+  /// No description provided for @adsRepWatched50.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistiram metade'**
+  String get adsRepWatched50;
+
+  /// No description provided for @adsRepWatched100.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistiram até o fim'**
+  String get adsRepWatched100;
+
+  /// No description provided for @adsRepAudience.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem viu'**
+  String get adsRepAudience;
+
+  /// No description provided for @adsRepAge.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idade'**
+  String get adsRepAge;
+
+  /// No description provided for @adsRepCities.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidades'**
+  String get adsRepCities;
+
+  /// No description provided for @adsRepStates.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estados'**
+  String get adsRepStates;
+
+  /// No description provided for @adsRepRegions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regiões'**
+  String get adsRepRegions;
+
+  /// No description provided for @adsRepInterests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Interesses'**
+  String get adsRepInterests;
+
+  /// No description provided for @adsRepOthers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros'**
+  String get adsRepOthers;
+
+  /// No description provided for @adsRepUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não informada'**
+  String get adsRepUnknown;
+
+  /// No description provided for @adsRepNoData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem dados ainda'**
+  String get adsRepNoData;
+
+  /// No description provided for @adsRepPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só números somados. Grupos com poucas pessoas entram em \"Outros\" para ninguém ser identificado.'**
+  String get adsRepPrivacy;
+
+  /// No description provided for @adsRepLoggedOut.
+  ///
+  /// In pt, this message translates to:
+  /// **'{n} pessoas viram sem estar logadas'**
+  String adsRepLoggedOut(String n);
+
+  /// No description provided for @adsRepHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'Melhores horários'**
+  String get adsRepHours;
+
+  /// No description provided for @adsRepBestHour.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais visto às {h}h'**
+  String adsRepBestHour(String h);
+
+  /// No description provided for @adsRepWhere.
+  ///
+  /// In pt, this message translates to:
+  /// **'Onde apareceu'**
+  String get adsRepWhere;
+
+  /// No description provided for @adsRepPlatforms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparelhos'**
+  String get adsRepPlatforms;
+
+  /// No description provided for @adsRepPlForyou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para você'**
+  String get adsRepPlForyou;
+
+  /// No description provided for @adsRepPlFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get adsRepPlFollowing;
+
+  /// No description provided for @adsRepPlStories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Stories'**
+  String get adsRepPlStories;
+
+  /// No description provided for @adsRepPlLives.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives'**
+  String get adsRepPlLives;
+
+  /// No description provided for @adsRepPlExplore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Explorar'**
+  String get adsRepPlExplore;
+
+  /// No description provided for @adsRepPlWeb.
+  ///
+  /// In pt, this message translates to:
+  /// **'Início do site'**
+  String get adsRepPlWeb;
+
+  /// No description provided for @adsRepLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live'**
+  String get adsRepLive;
+
+  /// No description provided for @adsRepLiveFromAd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entraram pelo anúncio'**
+  String get adsRepLiveFromAd;
+
+  /// No description provided for @adsRepLivePeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pico de espectadores'**
+  String get adsRepLivePeak;
+
+  /// No description provided for @adsRepLiveGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get adsRepLiveGifts;
+
+  /// No description provided for @adsRepLiveMinutes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Minutos assistidos'**
+  String get adsRepLiveMinutes;
+
+  /// No description provided for @adsRepCoins.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coins'**
+  String get adsRepCoins;
+
+  /// No description provided for @adsRepCoinsPaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagas'**
+  String get adsRepCoinsPaid;
+
+  /// No description provided for @adsRepCoinsUsed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Usadas'**
+  String get adsRepCoinsUsed;
+
+  /// No description provided for @adsRepCoinsRefunded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Devolvidas'**
+  String get adsRepCoinsRefunded;
+
+  /// No description provided for @adsRepChanges.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterações'**
+  String get adsRepChanges;
+
+  /// No description provided for @adsRepChangeDaily.
+  ///
+  /// In pt, this message translates to:
+  /// **'Valor por dia'**
+  String get adsRepChangeDaily;
+
+  /// No description provided for @adsRepChangeTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Orçamento total'**
+  String get adsRepChangeTotal;
+
+  /// No description provided for @adsRepChangeEnd.
+  ///
+  /// In pt, this message translates to:
+  /// **'Data de término'**
+  String get adsRepChangeEnd;
+
+  /// No description provided for @adsRepResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resultados'**
+  String get adsRepResults;
+
+  /// No description provided for @boostStepGoal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Objetivo'**
+  String get boostStepGoal;
+
+  /// No description provided for @boostGoalTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que você quer com esse impulsionamento?'**
+  String get boostGoalTitle;
+
+  /// No description provided for @boostGoalViews.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais visualizações'**
+  String get boostGoalViews;
+
+  /// No description provided for @boostGoalViewsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostra o post para mais gente.'**
+  String get boostGoalViewsHint;
+
+  /// No description provided for @boostGoalFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais seguidores'**
+  String get boostGoalFollowers;
+
+  /// No description provided for @boostGoalFollowersHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem vê conhece seu perfil e pode seguir você.'**
+  String get boostGoalFollowersHint;
+
+  /// No description provided for @boostGoalProfile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Visitas ao perfil'**
+  String get boostGoalProfile;
+
+  /// No description provided for @boostGoalProfileHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais pessoas abrindo o seu perfil.'**
+  String get boostGoalProfileHint;
+
+  /// No description provided for @boostGoalContacts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Receber mensagens'**
+  String get boostGoalContacts;
+
+  /// No description provided for @boostGoalContactsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Um botão para as pessoas falarem com você.'**
+  String get boostGoalContactsHint;
+
+  /// No description provided for @boostContactVia.
+  ///
+  /// In pt, this message translates to:
+  /// **'Onde você quer receber as mensagens?'**
+  String get boostContactVia;
+
+  /// No description provided for @boostContactChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chat da Brawe'**
+  String get boostContactChat;
+
+  /// No description provided for @boostContactChatHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'As conversas chegam no seu Chat, aqui no app. Cada mensagem conta como contato no relatório.'**
+  String get boostContactChatHint;
+
+  /// No description provided for @boostContactWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'WhatsApp'**
+  String get boostContactWhatsapp;
+
+  /// No description provided for @boostContactWhatsappHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'O botão abre o seu WhatsApp com a mensagem pronta. Cada toque conta como contato no relatório.'**
+  String get boostContactWhatsappHint;
+
+  /// No description provided for @boostWhatsappPhone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu WhatsApp com DDD'**
+  String get boostWhatsappPhone;
+
+  /// No description provided for @boostWhatsappMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagem pronta'**
+  String get boostWhatsappMessage;
+
+  /// No description provided for @boostWhatsappMessageDefault.
+  ///
+  /// In pt, this message translates to:
+  /// **'Olá! Vi seu post na Brawe e quero saber mais.'**
+  String get boostWhatsappMessageDefault;
+
+  /// No description provided for @boostPreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prévia'**
+  String get boostPreview;
+
+  /// No description provided for @boostPreviewHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assim o seu post aparece em cada lugar do app. Deslize para ver.'**
+  String get boostPreviewHint;
+
+  /// No description provided for @boostPlForYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para você'**
+  String get boostPlForYou;
+
+  /// No description provided for @boostPlFeed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Feed'**
+  String get boostPlFeed;
+
+  /// No description provided for @boostPlStories.
+  ///
+  /// In pt, this message translates to:
+  /// **'Stories'**
+  String get boostPlStories;
+
+  /// No description provided for @boostPlTiles.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives e Explorar'**
+  String get boostPlTiles;
+
+  /// No description provided for @boostAlreadyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este post já está sendo impulsionado'**
+  String get boostAlreadyTitle;
+
+  /// No description provided for @boostAlreadyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para alcançar mais pessoas, aumente o valor por dia ou edite o público da campanha que já existe (feita no app ou no site).'**
+  String get boostAlreadyHint;
+
+  /// No description provided for @boostSeeCampaign.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver campanha'**
+  String get boostSeeCampaign;
+
+  /// No description provided for @adsCtaMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar mensagem'**
+  String get adsCtaMessage;
+
+  /// No description provided for @adsCtaWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chamar no WhatsApp'**
+  String get adsCtaWhatsapp;
+
+  /// No description provided for @myAdsKindBrand.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio da marca'**
+  String get myAdsKindBrand;
+
+  /// No description provided for @myAdsKindBoost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impulsionamento'**
+  String get myAdsKindBoost;
+
+  /// No description provided for @myAdsLeadsChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'As mensagens de quem viu o anúncio chegam no seu Chat.'**
+  String get myAdsLeadsChat;
+
+  /// No description provided for @myAdsLeadsWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os contatos de quem viu o anúncio chegam no seu WhatsApp.'**
+  String get myAdsLeadsWhatsapp;
+
+  /// No description provided for @myAdsOpenChat.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir chat'**
+  String get myAdsOpenChat;
+
+  /// No description provided for @myAdsBrandEditOnWeb.
+  ///
+  /// In pt, this message translates to:
+  /// **'Anúncio da marca: o criativo e o público se editam no painel de anúncios, pelo computador.'**
+  String get myAdsBrandEditOnWeb;
+
+  /// No description provided for @adsRepContacts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contatos recebidos'**
+  String get adsRepContacts;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

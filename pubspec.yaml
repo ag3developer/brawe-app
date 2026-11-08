@@ -145,6 +145,8 @@ dependencies:
   file_picker: ^11.0.3
   get_thumbnail_video: ^0.7.3
   livekit_client: 2.11.0
+  maplibre_gl: ^0.28.0
+  visibility_detector: ^0.4.0+2
 
 # ── Overrides ──────────────────────────────────────────────────────────────
 # path_provider_foundation 2.6.0+ migrou para FFI usando `objective_c`, que

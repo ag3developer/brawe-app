@@ -8,6 +8,10 @@ import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
+import '../../../domain/models/ad_models.dart';
+import '../../ads/ad_slots.dart';
+import '../../ads/widgets/ad_actions.dart';
+import '../../ads/widgets/sponsored_tile.dart';
 
 class ForYouLiveListScreen extends ConsumerStatefulWidget {
   const ForYouLiveListScreen({super.key});
@@ -100,23 +104,38 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
             );
           }
 
+          // Brawe Ads: 1 quadro patrocinado a cada N lives; colunas conforme a largura (celular, tablet)
+          final loader = ref.watch(adLoaderProvider(AdPlacement.lives));
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(liveFeedViewModelProvider.notifier).refresh(),
-            child: GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-              ),
-              itemCount: rooms.length,
-              itemBuilder: (context, index) {
-                final room = rooms[index];
-                return _LiveThumbnailCard(
-                  room: room,
-                  onTap: () => context.push('/live/${room.id}', extra: room),
+            onRefresh: () {
+              loader.reset();
+              return ref.read(liveFeedViewModelProvider.notifier).refresh();
+            },
+            child: ListenableBuilder(
+              listenable: loader,
+              builder: (context, _) {
+                loader.ensure(rooms.length);
+                final hidden = ref.watch(hiddenAdsProvider);
+                final slots = loader.mix(rooms, skip: (ad) => hidden.contains(ad.adId) || hidden.contains('owner:${ad.advertiser?.id}'));
+                final cols = (MediaQuery.sizeOf(context).width / 200).floor().clamp(2, 6);
+                return GridView.builder(
+                  padding: const EdgeInsets.all(8),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: cols,
+                    childAspectRatio: 0.75,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: slots.length,
+                  itemBuilder: (context, index) {
+                    final slot = slots[index];
+                    if (slot case AdSlot(:final ad)) return SponsoredTile(key: ValueKey('ad-${ad.token}'), ad: ad);
+                    final room = (slot as ContentSlot).item;
+                    return _LiveThumbnailCard(
+                      room: room,
+                      onTap: () => context.push('/live/${room.id}', extra: room),
+                    );
+                  },
                 );
               },
             ),
