@@ -377,7 +377,6 @@
   "audienceAll": "Everyone",
   "audienceFollowers": "Followers",
   "audienceOnlyMe": "Only me",
-  "videoTooLarge": "Video too large. Max 100 MB.",
   "videoOpenError": "Couldn't open the video.",
   "videoPublishedSuccess": "Video published! 🎬",
   "videoPublishError": "Failed to publish video. Try again.",
@@ -386,7 +385,6 @@
   "videoCaptionHint": "Write a caption…",
   "videoPublishButton": "Publish video",
   "videoSelect": "Select video",
-  "videoFormatsHint": "MP4 · MOV · WebM   ·   up to 3 min   ·   100 MB",
   "storySheetTitle": "New story",
   "storyPublish": "Publish",
   "storyPublishedSuccess": "Story published!",
@@ -3223,7 +3221,6 @@
   "videoPubStepCover": "Uploading cover...",
   "videoPubStepPost": "Publishing...",
   "videoPubCoverUploadError": "Failed to upload the cover. Check your connection and try again.",
-  "videoPubTooLong": "The video is longer than 3 minutes. Trim it to publish.",
   "videoPubTrimPrepareError": "Could not prepare the trimmed video. Please try again.",
   "signupErrName": "Enter your name (at least 2 letters).",
   "signupErrEmail": "Enter a valid email.",
@@ -4940,5 +4937,66 @@
   "boostGenderAll": "Everyone",
   "boostGenderFemale": "Women",
   "boostGenderMale": "Men",
-  "adsRepGenderOther": "Other / not said"
+  "adsRepGenderOther": "Other / not said",
+  "videoFormatsHintLimits": "MP4 · MOV · WebM   ·   up to {duration}   ·   {size}",
+  "@videoFormatsHintLimits": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueTooBig": "This video is {size}. The limit is {max}. Pick a shorter video or trim it.",
+  "@videoIssueTooBig": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueTooLong": "This video is {duration} long. The limit is {max}. Trim it to publish.",
+  "@videoIssueTooLong": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueUnsupported": "This format isn't supported. Use an MP4, MOV or WebM video.",
+  "videoIssueCannotOpen": "We couldn't open this video. It may be corrupted or still downloading from iCloud. Try another.",
+  "videoIssueTrim": "Trim video",
+  "videoIssuePickOther": "Pick another",
+  "videoUpDiscard": "Discard",
+  "videoErrNoConnection": "No internet connection. Your video is still saved: tap Try again when you're back online.",
+  "videoErrTimeout": "The connection is slow and the upload took too long. Try again, preferably on Wi-Fi.",
+  "videoErrTooLargeServer": "The video is over the {max} limit. Pick a shorter video or trim it.",
+  "@videoErrTooLargeServer": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoErrTooLongServer": "The video is longer than {max}. Trim it and publish again.",
+  "@videoErrTooLongServer": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoErrUnsupported": "This video format isn't supported. Use MP4, MOV or WebM.",
+  "videoErrServer": "Our server had a problem. Try again in a moment.",
+  "videoErrSession": "Your session expired. Sign in again and try publishing once more.",
+  "videoErrProcessing": "We couldn't process this video. Try again or pick another file.",
+  "videoErrUnknown": "Something went wrong while publishing. Try again."
 }

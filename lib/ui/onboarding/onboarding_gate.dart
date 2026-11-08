@@ -63,6 +63,14 @@ class OnboardingGate extends ValueNotifier<OnboardingNeeds?> {
 
   String? _userId;
   bool _loading = false;
+  bool _done = false;
+
+  /// Onboarding concluído nesta sessão (o router deixa passar mesmo antes do perfil recarregar).
+  bool get done => _done;
+
+  /// Libera o app SEM avisar o router (quem chama já está navegando). Evita duas
+  /// navegações no mesmo quadro, que quebravam a tela ("_lifecycleState == inactive").
+  void finish() => _done = true;
 
   /// Garante que o estado do usuário [userId] foi (ou está sendo) carregado.
   void ensureFor(
@@ -70,7 +78,10 @@ class OnboardingGate extends ValueNotifier<OnboardingNeeds?> {
     Future<Map<String, dynamic>> Function() loadProfile,
   ) {
     if (_userId == userId && (value != null || _loading)) return;
-    if (_userId != userId) value = null;
+    if (_userId != userId) {
+      value = null;
+      _done = false;
+    }
     _userId = userId;
     _loading = true;
     loadProfile()
@@ -100,6 +111,7 @@ class OnboardingGate extends ValueNotifier<OnboardingNeeds?> {
 
   /// Logout / troca de conta.
   void reset() {
+    _done = false;
     _userId = null;
     _loading = false;
     value = null;

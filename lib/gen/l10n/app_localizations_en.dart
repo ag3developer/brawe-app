@@ -954,9 +954,6 @@ class SEn extends S {
   String get audienceOnlyMe => 'Only me';
 
   @override
-  String get videoTooLarge => 'Video too large. Max 100 MB.';
-
-  @override
   String get videoOpenError => 'Couldn\'t open the video.';
 
   @override
@@ -979,10 +976,6 @@ class SEn extends S {
 
   @override
   String get videoSelect => 'Select video';
-
-  @override
-  String get videoFormatsHint =>
-      'MP4 · MOV · WebM   ·   up to 3 min   ·   100 MB';
 
   @override
   String get storySheetTitle => 'New story';
@@ -7699,10 +7692,6 @@ class SEn extends S {
       'Failed to upload the cover. Check your connection and try again.';
 
   @override
-  String get videoPubTooLong =>
-      'The video is longer than 3 minutes. Trim it to publish.';
-
-  @override
   String get videoPubTrimPrepareError =>
       'Could not prepare the trimmed video. Please try again.';
 
@@ -11455,4 +11444,74 @@ class SEn extends S {
 
   @override
   String get adsRepGenderOther => 'Other / not said';
+
+  @override
+  String videoFormatsHintLimits(String duration, String size) {
+    return 'MP4 · MOV · WebM   ·   up to $duration   ·   $size';
+  }
+
+  @override
+  String videoIssueTooBig(String size, String max) {
+    return 'This video is $size. The limit is $max. Pick a shorter video or trim it.';
+  }
+
+  @override
+  String videoIssueTooLong(String duration, String max) {
+    return 'This video is $duration long. The limit is $max. Trim it to publish.';
+  }
+
+  @override
+  String get videoIssueUnsupported =>
+      'This format isn\'t supported. Use an MP4, MOV or WebM video.';
+
+  @override
+  String get videoIssueCannotOpen =>
+      'We couldn\'t open this video. It may be corrupted or still downloading from iCloud. Try another.';
+
+  @override
+  String get videoIssueTrim => 'Trim video';
+
+  @override
+  String get videoIssuePickOther => 'Pick another';
+
+  @override
+  String get videoUpDiscard => 'Discard';
+
+  @override
+  String get videoErrNoConnection =>
+      'No internet connection. Your video is still saved: tap Try again when you\'re back online.';
+
+  @override
+  String get videoErrTimeout =>
+      'The connection is slow and the upload took too long. Try again, preferably on Wi-Fi.';
+
+  @override
+  String videoErrTooLargeServer(String max) {
+    return 'The video is over the $max limit. Pick a shorter video or trim it.';
+  }
+
+  @override
+  String videoErrTooLongServer(String max) {
+    return 'The video is longer than $max. Trim it and publish again.';
+  }
+
+  @override
+  String get videoErrUnsupported =>
+      'This video format isn\'t supported. Use MP4, MOV or WebM.';
+
+  @override
+  String get videoErrServer =>
+      'Our server had a problem. Try again in a moment.';
+
+  @override
+  String get videoErrSession =>
+      'Your session expired. Sign in again and try publishing once more.';
+
+  @override
+  String get videoErrProcessing =>
+      'We couldn\'t process this video. Try again or pick another file.';
+
+  @override
+  String get videoErrUnknown =>
+      'Something went wrong while publishing. Try again.';
 }

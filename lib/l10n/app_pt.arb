@@ -440,7 +440,6 @@
   "audienceAll": "Todos",
   "audienceFollowers": "Seguidores",
   "audienceOnlyMe": "Apenas eu",
-  "videoTooLarge": "Vídeo muito grande. Máximo 100 MB.",
   "videoOpenError": "Não foi possível abrir o vídeo.",
   "videoPublishedSuccess": "Vídeo publicado! 🎬",
   "videoPublishError": "Erro ao publicar vídeo. Tente novamente.",
@@ -449,7 +448,6 @@
   "videoCaptionHint": "Escreva uma legenda…",
   "videoPublishButton": "Publicar vídeo",
   "videoSelect": "Selecionar vídeo",
-  "videoFormatsHint": "MP4 · MOV · WebM   ·   até 3 min   ·   100 MB",
   "storySheetTitle": "Novo story",
   "storyPublish": "Publicar",
   "storyPublishedSuccess": "Story publicado!",
@@ -4222,7 +4220,6 @@
   "videoPubStepCover": "Enviando capa...",
   "videoPubStepPost": "Publicando...",
   "videoPubCoverUploadError": "Falha ao enviar a capa. Verifique sua conexão e tente de novo.",
-  "videoPubTooLong": "O vídeo passa de 3 minutos. Corte o vídeo para publicar.",
   "videoPubTrimPrepareError": "Não foi possível preparar o vídeo cortado. Tente novamente.",
   "signupErrName": "Digite seu nome (mínimo 2 letras).",
   "signupErrEmail": "Digite um e-mail válido.",
@@ -6476,5 +6473,66 @@
   "boostGenderAll": "Todos",
   "boostGenderFemale": "Mulheres",
   "boostGenderMale": "Homens",
-  "adsRepGenderOther": "Outro / não disse"
+  "adsRepGenderOther": "Outro / não disse",
+  "videoFormatsHintLimits": "MP4 · MOV · WebM   ·   até {duration}   ·   {size}",
+  "@videoFormatsHintLimits": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueTooBig": "Este vídeo tem {size}. O limite é {max}. Escolha um vídeo mais curto ou corte o trecho.",
+  "@videoIssueTooBig": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueTooLong": "Este vídeo tem {duration}. O limite é {max}. Corte o trecho para publicar.",
+  "@videoIssueTooLong": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoIssueUnsupported": "Esse formato não é aceito. Use um vídeo MP4, MOV ou WebM.",
+  "videoIssueCannotOpen": "Não conseguimos abrir esse vídeo. Ele pode estar corrompido ou ainda baixando do iCloud. Tente outro.",
+  "videoIssueTrim": "Cortar trecho",
+  "videoIssuePickOther": "Escolher outro",
+  "videoUpDiscard": "Descartar",
+  "videoErrNoConnection": "Sem conexão com a internet. Seu vídeo continua guardado: toque em Tentar de novo quando a conexão voltar.",
+  "videoErrTimeout": "A conexão está lenta e o envio demorou demais. Tente de novo, de preferência no Wi-Fi.",
+  "videoErrTooLargeServer": "O vídeo passou do limite de {max}. Escolha um vídeo mais curto ou corte o trecho.",
+  "@videoErrTooLargeServer": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoErrTooLongServer": "O vídeo passou de {max}. Corte o trecho e publique de novo.",
+  "@videoErrTooLongServer": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "videoErrUnsupported": "Esse formato de vídeo não é aceito. Use MP4, MOV ou WebM.",
+  "videoErrServer": "Nosso servidor teve um problema. Tente de novo em instantes.",
+  "videoErrSession": "Sua sessão expirou. Entre de novo e tente publicar outra vez.",
+  "videoErrProcessing": "Não conseguimos processar esse vídeo. Tente de novo ou escolha outro arquivo.",
+  "videoErrUnknown": "Algo deu errado ao publicar. Tente de novo."
 }

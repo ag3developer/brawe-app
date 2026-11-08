@@ -105,6 +105,7 @@ class VideoComposerView extends StatelessWidget {
     this.publishing = false,
     this.publishLabel,
     this.progress,
+    this.banner,
   });
 
   final bool hasVideo;
@@ -128,6 +129,9 @@ class VideoComposerView extends StatelessWidget {
   final bool publishing;
   final String? publishLabel;
   final double? progress;
+
+  /// Aviso inline (ex.: vídeo grande demais) logo abaixo do cabeçalho.
+  final Widget? banner;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +187,11 @@ class VideoComposerView extends StatelessWidget {
                 ],
               ),
             ),
+            if (banner != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: banner!,
+              ),
             Expanded(
               child: hasVideo
                   ? LayoutBuilder(

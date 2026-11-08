@@ -1833,12 +1833,6 @@ abstract class S {
   /// **'Apenas eu'**
   String get audienceOnlyMe;
 
-  /// No description provided for @videoTooLarge.
-  ///
-  /// In pt, this message translates to:
-  /// **'Vídeo muito grande. Máximo 100 MB.'**
-  String get videoTooLarge;
-
   /// No description provided for @videoOpenError.
   ///
   /// In pt, this message translates to:
@@ -1886,12 +1880,6 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Selecionar vídeo'**
   String get videoSelect;
-
-  /// No description provided for @videoFormatsHint.
-  ///
-  /// In pt, this message translates to:
-  /// **'MP4 · MOV · WebM   ·   até 3 min   ·   100 MB'**
-  String get videoFormatsHint;
 
   /// No description provided for @storySheetTitle.
   ///
@@ -13743,12 +13731,6 @@ abstract class S {
   /// **'Falha ao enviar a capa. Verifique sua conexão e tente de novo.'**
   String get videoPubCoverUploadError;
 
-  /// No description provided for @videoPubTooLong.
-  ///
-  /// In pt, this message translates to:
-  /// **'O vídeo passa de 3 minutos. Corte o vídeo para publicar.'**
-  String get videoPubTooLong;
-
   /// No description provided for @videoPubTrimPrepareError.
   ///
   /// In pt, this message translates to:
@@ -20072,6 +20054,108 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Outro / não disse'**
   String get adsRepGenderOther;
+
+  /// No description provided for @videoFormatsHintLimits.
+  ///
+  /// In pt, this message translates to:
+  /// **'MP4 · MOV · WebM   ·   até {duration}   ·   {size}'**
+  String videoFormatsHintLimits(String duration, String size);
+
+  /// No description provided for @videoIssueTooBig.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este vídeo tem {size}. O limite é {max}. Escolha um vídeo mais curto ou corte o trecho.'**
+  String videoIssueTooBig(String size, String max);
+
+  /// No description provided for @videoIssueTooLong.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este vídeo tem {duration}. O limite é {max}. Corte o trecho para publicar.'**
+  String videoIssueTooLong(String duration, String max);
+
+  /// No description provided for @videoIssueUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esse formato não é aceito. Use um vídeo MP4, MOV ou WebM.'**
+  String get videoIssueUnsupported;
+
+  /// No description provided for @videoIssueCannotOpen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos abrir esse vídeo. Ele pode estar corrompido ou ainda baixando do iCloud. Tente outro.'**
+  String get videoIssueCannotOpen;
+
+  /// No description provided for @videoIssueTrim.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cortar trecho'**
+  String get videoIssueTrim;
+
+  /// No description provided for @videoIssuePickOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher outro'**
+  String get videoIssuePickOther;
+
+  /// No description provided for @videoUpDiscard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descartar'**
+  String get videoUpDiscard;
+
+  /// No description provided for @videoErrNoConnection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sem conexão com a internet. Seu vídeo continua guardado: toque em Tentar de novo quando a conexão voltar.'**
+  String get videoErrNoConnection;
+
+  /// No description provided for @videoErrTimeout.
+  ///
+  /// In pt, this message translates to:
+  /// **'A conexão está lenta e o envio demorou demais. Tente de novo, de preferência no Wi-Fi.'**
+  String get videoErrTimeout;
+
+  /// No description provided for @videoErrTooLargeServer.
+  ///
+  /// In pt, this message translates to:
+  /// **'O vídeo passou do limite de {max}. Escolha um vídeo mais curto ou corte o trecho.'**
+  String videoErrTooLargeServer(String max);
+
+  /// No description provided for @videoErrTooLongServer.
+  ///
+  /// In pt, this message translates to:
+  /// **'O vídeo passou de {max}. Corte o trecho e publique de novo.'**
+  String videoErrTooLongServer(String max);
+
+  /// No description provided for @videoErrUnsupported.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esse formato de vídeo não é aceito. Use MP4, MOV ou WebM.'**
+  String get videoErrUnsupported;
+
+  /// No description provided for @videoErrServer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nosso servidor teve um problema. Tente de novo em instantes.'**
+  String get videoErrServer;
+
+  /// No description provided for @videoErrSession.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua sessão expirou. Entre de novo e tente publicar outra vez.'**
+  String get videoErrSession;
+
+  /// No description provided for @videoErrProcessing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não conseguimos processar esse vídeo. Tente de novo ou escolha outro arquivo.'**
+  String get videoErrProcessing;
+
+  /// No description provided for @videoErrUnknown.
+  ///
+  /// In pt, this message translates to:
+  /// **'Algo deu errado ao publicar. Tente de novo.'**
+  String get videoErrUnknown;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

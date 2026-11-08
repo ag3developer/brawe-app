@@ -203,21 +203,31 @@ class PostRepository {
     void Function(double progress, bool processing)? onProgress,
     CancelToken? cancelToken,
     VideoPublishCheckpoint? checkpoint,
+    // Envio direto ao storage (sem o teto de corpo da Cloudflare/Nginx).
+    bool directUpload = false,
   }) async {
     final cp = checkpoint ?? VideoPublishCheckpoint();
     try {
       var up = cp.video;
       if (up == null) {
         onStep?.call(VideoPublishStep.uploadingVideo);
-        up = await _postService.uploadVideo(
-          videoLocalPath,
-          cancelToken: cancelToken,
-          onSendProgress: (sent, total) {
-            if (total <= 0) return;
-            final f = sent / total;
-            onProgress?.call(0.9 * f, f >= 1);
-          },
-        );
+        void sendProgress(int sent, int total) {
+          if (total <= 0) return;
+          final f = sent / total;
+          onProgress?.call(0.9 * f, f >= 1);
+        }
+
+        up = directUpload
+            ? await _postService.uploadVideoDirect(
+                videoLocalPath,
+                cancelToken: cancelToken,
+                onSendProgress: sendProgress,
+              )
+            : await _postService.uploadVideo(
+                videoLocalPath,
+                cancelToken: cancelToken,
+                onSendProgress: sendProgress,
+              );
         if (up.url.isEmpty) {
           throw const Failure.unknown();
         }
@@ -268,9 +278,12 @@ class PostRepository {
       return id;
     } on VideoCoverUploadFailure {
       rethrow;
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e)) rethrow;
-      throw const Failure.network();
+    } on VideoProcessingFailure {
+      rethrow;
+    } on DioException {
+      // Mantém o DioException (status/detalhe do servidor): quem publica
+      // (VideoUploadManager) traduz para uma mensagem clara.
+      rethrow;
     } catch (_) {
       throw const Failure.unknown();
     }

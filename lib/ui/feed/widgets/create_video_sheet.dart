@@ -9,13 +9,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../data/repositories/video_limits_provider.dart';
 import '../../../domain/models/sound.dart';
+import '../../../domain/models/video_limits.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../shared/widgets/volume_mixer_sheet.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_trim_screen.dart';
 import '../../sounds/widgets/sounds_catalog_screen.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'story_video_trim_screen.dart';
 import '../view_models/video_upload_manager.dart';
@@ -52,10 +53,16 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   double _originalAudioVolume = 1.0;
   late final AnimationController _pulseCtrl;
 
-  static const Color _accent1 = AppColors.braweBlue;
+  // Limites vêm do servidor (fonte única); até chegarem vale o padrão antigo.
+  VideoLimits _limits = VideoLimits.fallback;
+  Future<VideoLimits>? _limitsFuture;
 
-  static const int _maxBytes = 100 * 1024 * 1024;
-  static const Duration _maxDuration = Duration(minutes: 3);
+  /// Problema com o vídeo escolhido, mostrado em banner NESTA tela (nunca em
+  /// SnackBar: o ScaffoldMessenger da tela de baixo fica atrás do sheet e o
+  /// aviso só aparecia ao fechar tudo).
+  _PickIssue? _issue;
+
+  static const Set<String> _okExts = {'mp4', 'mov', 'm4v', 'webm', '3gp'};
 
   @override
   void initState() {
@@ -64,6 +71,13 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
+    _limitsFuture = ref
+        .read(videoLimitsProvider.future)
+        .then((l) {
+          if (mounted) setState(() => _limits = l);
+          return l;
+        })
+        .catchError((_) => VideoLimits.fallback);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_pickerOpened) {
         _pickerOpened = true;
@@ -165,36 +179,53 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
   }
 
   Future<void> _pickVideo() async {
+    if (_isPublishing) return;
     try {
-      final picker = ImagePicker();
-      final picked = await picker.pickVideo(
-        source: ImageSource.gallery,
-        maxDuration: _maxDuration,
-      );
+      final picked = await ImagePicker().pickVideo(source: ImageSource.gallery);
+      if (!mounted) return;
       if (picked == null) {
-        if (mounted && _video == null) {
-          Navigator.of(context).pop();
-        }
+        // Cancelou o seletor: sem vídeo e sem aviso na tela, fecha o sheet.
+        if (_video == null && _issue == null) Navigator.of(context).pop();
         return;
       }
-      final file = File(picked.path);
-      final size = await file.length();
-      if (size > _maxBytes) {
-        if (!mounted) return;
-        _snack(S.of(context).videoTooLarge, isError: true);
-        return;
-      }
-      final ok = await _loadFile(file);
-      if (!ok || !mounted) return;
-      // Acima do limite de 3 min: obriga o corte.
-      if (_videoCtrl!.value.duration > _maxDuration) {
-        _snack(S.of(context).videoPubTooLong, isError: true);
-        await _trim();
-      }
+      await _accept(File(picked.path));
     } catch (_) {
       if (!mounted) return;
-      _snack(S.of(context).videoOpenError, isError: true);
+      _setIssue(_PickIssue(_PickIssueKind.cannotOpen));
     }
+  }
+
+  /// Valida (formato, tamanho, duração) e carrega [file]. Qualquer problema
+  /// vira banner aqui mesmo, com a saída (cortar / escolher outro).
+  Future<void> _accept(File file) async {
+    final limits = await (_limitsFuture ?? Future.value(_limits));
+    if (!mounted) return;
+    final dot = file.path.lastIndexOf('.');
+    final ext = dot < 0 ? '' : file.path.substring(dot + 1).toLowerCase();
+    if (ext.isNotEmpty && !_okExts.contains(ext)) {
+      _setIssue(_PickIssue(_PickIssueKind.unsupported));
+      return;
+    }
+    final size = await file.length();
+    if (!mounted) return;
+    if (size > limits.maxBytes) {
+      _setIssue(_PickIssue(_PickIssueKind.tooBig, file: file, bytes: size));
+      return;
+    }
+    final ok = await _loadFile(file);
+    if (!ok || !mounted) return;
+    final d = _videoCtrl!.value.duration;
+    if (d > limits.maxDuration + const Duration(seconds: 1)) {
+      _setIssue(_PickIssue(_PickIssueKind.tooLong, file: file, duration: d));
+    } else {
+      setState(() => _issue = null);
+    }
+  }
+
+  void _setIssue(_PickIssue issue) {
+    HapticFeedback.mediumImpact();
+    _videoCtrl?.pause();
+    setState(() => _issue = issue);
   }
 
   /// Inicializa o player com [file] e o torna o vídeo atual (zera a capa).
@@ -222,26 +253,48 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
     return true;
   }
 
+  /// Tamanho máximo do trecho: o limite de duração e, se o arquivo estourou o
+  /// tamanho, a fração do vídeo que cabe nele (com folga de 10%).
+  Future<Duration> _trimWindow(File target) async {
+    var w = _limits.maxDuration;
+    final size = await target.length();
+    if (size <= _limits.maxBytes) return w;
+    final probe = VideoPlayerController.file(target);
+    try {
+      await probe.initialize();
+      final est =
+          probe.value.duration.inMilliseconds * (_limits.maxBytes / size) * 0.9;
+      w = Duration(milliseconds: math.min(w.inMilliseconds, math.max(3000, est.floor())));
+    } catch (_) {
+      // sem duração: mantém o limite de tempo
+    } finally {
+      await probe.dispose();
+    }
+    return w;
+  }
+
   Future<void> _trim() async {
-    final video = _video;
-    if (video == null || _isPublishing) return;
+    final target = _issue?.file ?? _video;
+    if (target == null || _isPublishing) return;
     await _videoCtrl?.pause();
+    if (!mounted) return;
+    final window = await _trimWindow(target);
     if (!mounted) return;
     final trimmed = await StoryVideoTrimScreen.push(
       context,
-      file: video,
-      maxDuration: _maxDuration,
+      file: target,
+      maxDuration: window,
     );
     if (!mounted) return;
     if (trimmed == null) {
-      await _videoCtrl?.play();
+      if (_issue == null) await _videoCtrl?.play();
       return;
     }
     try {
-      await _loadFile(trimmed);
+      await _accept(trimmed);
     } catch (_) {
       if (!mounted) return;
-      _snack(S.of(context).videoPubTrimPrepareError, isError: true);
+      _setIssue(_PickIssue(_PickIssueKind.trimFailed));
     }
   }
 
@@ -289,8 +342,14 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
     if (video == null) return;
     final ctrl = _videoCtrl;
     if (ctrl != null &&
-        ctrl.value.duration > _maxDuration + const Duration(seconds: 1)) {
-      _snack(S.of(context).videoPubTooLong, isError: true);
+        ctrl.value.duration > _limits.maxDuration + const Duration(seconds: 1)) {
+      _setIssue(
+        _PickIssue(
+          _PickIssueKind.tooLong,
+          file: video,
+          duration: ctrl.value.duration,
+        ),
+      );
       return;
     }
     FocusScope.of(context).unfocus();
@@ -320,23 +379,11 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
     Navigator.of(context).pop();
   }
 
-  void _snack(String msg, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: isError ? Colors.red.shade700 : _accent1,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final hasVideo = _video != null && _videoCtrl?.value.isInitialized == true;
-    final canPublish = hasVideo && !_isPublishing;
+    final canPublish = hasVideo && !_isPublishing && _issue == null;
     final mq = MediaQuery.of(context);
     final s = S.of(context);
     final ctrl = _videoCtrl;
@@ -383,9 +430,25 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
                   : const SizedBox.shrink(),
               playing: hasVideo ? ctrl!.value.isPlaying : true,
               durationChip: hasVideo ? _DurationChip(controller: ctrl!) : null,
+              banner: _issue == null
+                  ? null
+                  : _IssueBanner(
+                      issue: _issue!,
+                      limits: _limits,
+                      onTrim: _isPublishing ? null : _trim,
+                      onPickOther: _pickVideo,
+                      // Com um vídeo válido antes, dá para voltar a ele.
+                      onClose: _video != null && _issue!.file != _video
+                          ? () => setState(() => _issue = null)
+                          : null,
+                    ),
               emptyState: _EmptyPickerState(
                 onTap: _pickVideo,
                 pulse: _pulseCtrl,
+                hint: s.videoFormatsHintLimits(
+                  _limits.maxDurationLabel,
+                  _limits.maxBytesLabel,
+                ),
               ),
               captionController: _captionCtrl,
               onClose: () => Navigator.of(context).pop(),
@@ -448,10 +511,15 @@ class _CreateVideoSheetState extends ConsumerState<CreateVideoSheet>
 }
 
 class _EmptyPickerState extends StatelessWidget {
-  const _EmptyPickerState({required this.onTap, required this.pulse});
+  const _EmptyPickerState({
+    required this.onTap,
+    required this.pulse,
+    required this.hint,
+  });
 
   final VoidCallback onTap;
   final AnimationController pulse;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +576,7 @@ class _EmptyPickerState extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                S.of(context).videoFormatsHint,
+                hint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: c.textSecondary,
@@ -637,6 +705,141 @@ class _DurationChipState extends State<_DurationChip> {
           fontSize: 11.5,
           fontWeight: FontWeight.w600,
           fontFeatures: [FontFeature.tabularFigures()],
+        ),
+      ),
+    );
+  }
+}
+
+enum _PickIssueKind { tooBig, tooLong, unsupported, cannotOpen, trimFailed }
+
+class _PickIssue {
+  _PickIssue(this.kind, {this.file, this.bytes, this.duration});
+  final _PickIssueKind kind;
+  final File? file;
+  final int? bytes;
+  final Duration? duration;
+
+  /// Dá para resolver cortando um trecho.
+  bool get canTrim =>
+      file != null && (kind == _PickIssueKind.tooBig || kind == _PickIssueKind.tooLong);
+}
+
+/// Aviso inline do problema com o vídeo escolhido: o que houve, o limite e a
+/// saída ("Cortar trecho" / "Escolher outro").
+class _IssueBanner extends StatelessWidget {
+  const _IssueBanner({
+    required this.issue,
+    required this.limits,
+    required this.onTrim,
+    required this.onPickOther,
+    this.onClose,
+  });
+
+  final _PickIssue issue;
+  final VideoLimits limits;
+  final VoidCallback? onTrim;
+  final VoidCallback onPickOther;
+  final VoidCallback? onClose;
+
+  static String _clock(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return h > 0 ? '$h:$m:$s' : '${d.inMinutes}:$s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final s = S.of(context);
+    final text = switch (issue.kind) {
+      _PickIssueKind.tooBig => s.videoIssueTooBig(
+        VideoLimits.formatBytes(issue.bytes ?? 0),
+        limits.maxBytesLabel,
+      ),
+      _PickIssueKind.tooLong => s.videoIssueTooLong(
+        _clock(issue.duration ?? Duration.zero),
+        limits.maxDurationLabel,
+      ),
+      _PickIssueKind.unsupported => s.videoIssueUnsupported,
+      _PickIssueKind.cannotOpen => s.videoIssueCannotOpen,
+      _PickIssueKind.trimFailed => s.videoPubTrimPrepareError,
+    };
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 8, 6),
+        decoration: BoxDecoration(
+          color: c.danger.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.danger.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(LucideIcons.triangleAlert, size: 18, color: c.danger),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      color: c.textPrimary,
+                      fontSize: 13.5,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (onClose != null)
+                  GestureDetector(
+                    onTap: onClose,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(LucideIcons.x, size: 16, color: c.textSecondary),
+                    ),
+                  ),
+              ],
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 4,
+                children: [
+                  if (issue.canTrim && onTrim != null)
+                    TextButton(
+                      onPressed: onTrim,
+                      style: TextButton.styleFrom(
+                        foregroundColor: c.accentPrimary,
+                        minimumSize: const Size(44, 40),
+                      ),
+                      child: Text(
+                        s.videoIssueTrim,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  TextButton(
+                    onPressed: onPickOther,
+                    style: TextButton.styleFrom(
+                      foregroundColor: c.textPrimary,
+                      minimumSize: const Size(44, 40),
+                    ),
+                    child: Text(
+                      s.videoIssuePickOther,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

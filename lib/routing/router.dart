@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../ui/feed/widgets/video_upload_pill.dart';
 
 import 'transitions.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -316,7 +315,7 @@ GoRouter router(Ref ref) {
         () => ref.read(profileServiceProvider).getMyProfile(),
       );
       final needsAvatar = (user.avatarUrl?.trim() ?? '').isEmpty;
-      if (needsAvatar || (gate.value?.blocking ?? false)) {
+      if (needsAvatar || (!gate.done && (gate.value?.blocking ?? false))) {
         return '/onboarding';
       }
 
@@ -400,18 +399,9 @@ GoRouter router(Ref ref) {
             backgroundColor: Colors.transparent,
             extendBody: false,
             resizeToAvoidBottomInset: false,
-            body: Stack(
-              children: [
-                child,
-                // Progresso global do envio de vídeo (sobrevive às abas).
-                const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: VideoUploadPill(),
-                ),
-              ],
-            ),
+            // O indicador de envio de vídeo vive no nível do app
+            // (MaterialApp.builder em main.dart), visível em qualquer tela.
+            body: child,
             bottomNavigationBar: const HomeBottomNav(),
           ),
         ),

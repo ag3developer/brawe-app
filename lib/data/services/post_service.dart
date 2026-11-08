@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/live_dio_provider.dart';
 import '../../domain/models/post_liker.dart';
 import '../../domain/models/post_poll.dart';
+import '../../domain/models/video_limits.dart';
 import '../model/post_dto.dart';
 
 part 'post_service.g.dart';
@@ -241,6 +244,134 @@ class PostService {
     );
   }
 
+  /// Limites de vídeo de post vindos do servidor (fonte única). `null` =
+  /// servidor antigo (sem o endpoint) ou sem rede: o app usa o padrão antigo.
+  Future<VideoLimits?> getVideoLimits() async {
+    try {
+      final r = await _dio.get(
+        '/posts/video-limits',
+        options: Options(
+          receiveTimeout: const Duration(seconds: 6),
+          sendTimeout: const Duration(seconds: 6),
+        ),
+      );
+      final d = r.data;
+      if (d is! Map) return null;
+      final bytes = _asInt(d['max_bytes']);
+      final secs = _asInt(d['max_seconds']);
+      if (bytes == null || bytes <= 0 || secs == null || secs <= 0) return null;
+      return VideoLimits(
+        maxBytes: bytes,
+        maxSeconds: secs,
+        directUpload: d['direct_upload'] == true,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Envio DIRETO ao storage (URL assinada): o vídeo não passa pela
+  /// Cloudflare/Nginx/API, então o limite de corpo deles não vale.
+  /// 1) POST /posts/video-upload-url  2) PUT no bucket  3) POST
+  /// /posts/video-upload-complete (confere, gera capa/metadados).
+  /// Servidor sem o endpoint (404/405) cai no envio multipart antigo.
+  Future<VideoUploadResult> uploadVideoDirect(
+    String filePath, {
+    void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
+  }) async {
+    final file = File(filePath);
+    final length = await file.length();
+    final contentType = videoContentTypeFor(filePath);
+
+    Map<String, dynamic> ticket;
+    try {
+      final r = await _dio.post(
+        '/posts/video-upload-url',
+        data: {
+          'filename': _safeName(filePath, 'mp4'),
+          'content_type': contentType,
+          'size': length,
+        },
+        cancelToken: cancelToken,
+      );
+      ticket = Map<String, dynamic>.from(r.data as Map);
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      if (code == 404 || code == 405) {
+        return uploadVideo(
+          filePath,
+          onSendProgress: onSendProgress,
+          cancelToken: cancelToken,
+        );
+      }
+      rethrow;
+    }
+
+    // Dio "limpo": sem Authorization/X-* (a assinatura do bucket não aceita
+    // cabeçalhos a mais) e sem timeout de envio (arquivo grande, rede lenta).
+    final storage = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(minutes: 2),
+      ),
+    );
+    try {
+      await storage.put(
+        ticket['upload_url'] as String,
+        data: file.openRead(),
+        cancelToken: cancelToken,
+        onSendProgress: onSendProgress,
+        options: Options(
+          headers: {
+            Headers.contentLengthHeader: length,
+            Headers.contentTypeHeader: contentType,
+          },
+        ),
+      );
+    } finally {
+      storage.close();
+    }
+
+    try {
+      final r = await _dio.post(
+        '/posts/video-upload-complete',
+        data: {'key': ticket['key']},
+        cancelToken: cancelToken,
+        options: Options(
+          sendTimeout: const Duration(minutes: 2),
+          receiveTimeout: const Duration(minutes: 5),
+        ),
+      );
+      final d = r.data as Map<String, dynamic>;
+      return VideoUploadResult(
+        url: d['url']?.toString() ?? '',
+        width: _asInt(d['width']),
+        height: _asInt(d['height']),
+        durationSec: _asDouble(d['duration_sec']),
+        thumbnailUrl: d['thumbnail_url']?.toString(),
+      );
+    } on DioException catch (e) {
+      final code = e.response?.statusCode;
+      // 413 (grande/longo demais) segue para a mensagem própria; os demais
+      // 4xx aqui significam "o servidor não conseguiu ler esse vídeo".
+      if (code == 400 || code == 404 || code == 422) {
+        throw const VideoProcessingFailure();
+      }
+      rethrow;
+    }
+  }
+
+  /// Content-Type do vídeo pela extensão (o bucket assina o tipo).
+  static String videoContentTypeFor(String path) {
+    final p = path.toLowerCase();
+    if (p.endsWith('.mov')) return 'video/quicktime';
+    if (p.endsWith('.webm')) return 'video/webm';
+    if (p.endsWith('.m4v')) return 'video/x-m4v';
+    if (p.endsWith('.3gp')) return 'video/3gpp';
+    return 'video/mp4';
+  }
+
   /// Upload de capa personalizada. Backend: POST /posts/upload-cover.
   /// Retorno: { url, width, height }. Devolve a URL.
   Future<String> uploadCover(
@@ -275,6 +406,11 @@ class PostService {
       v is num ? v.round() : int.tryParse('${v ?? ''}');
   static double? _asDouble(dynamic v) =>
       v is num ? v.toDouble() : double.tryParse('${v ?? ''}');
+}
+
+/// O servidor recebeu o vídeo mas não conseguiu lê-lo/processá-lo.
+class VideoProcessingFailure implements Exception {
+  const VideoProcessingFailure();
 }
 
 /// Resultado do upload de vídeo (campos além de [url] são opcionais).

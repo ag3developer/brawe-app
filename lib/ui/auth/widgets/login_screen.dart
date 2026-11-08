@@ -69,19 +69,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _onSubmit() async {
+    // pega o messenger antes: depois do login o router já trocou de tela
+    final messenger = ScaffoldMessenger.of(context);
+    final welcome = S.of(context).authWelcomeBackSuccess;
     final success = await ref.read(loginViewModelProvider.notifier).submit();
+    if (success) {
+      messenger.showSnackBar(SnackBar(content: Text(welcome), behavior: SnackBarBehavior.floating));
+      return;
+    }
     if (mounted) {
       final challenge = ref.read(stepUpChallengeProvider);
       if (!success && challenge != null) {
         await _openStepUp(challenge);
         return;
       }
-      if (success) {
-        AppSnackBar.showSuccess(context, S.of(context).authWelcomeBackSuccess);
-      } else {
-        final error = ref.read(loginViewModelProvider).errorMessage;
-        if (error != null) AppSnackBar.showError(context, error);
-      }
+      final error = ref.read(loginViewModelProvider).errorMessage;
+      if (error != null) AppSnackBar.showError(context, error);
     }
   }
 

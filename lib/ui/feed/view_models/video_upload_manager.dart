@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/post_repository.dart';
+import '../../../data/repositories/video_limits_provider.dart';
+import '../../../data/services/post_service.dart' show VideoProcessingFailure;
+import '../../../domain/models/failure.dart';
 import '../../../data/repositories/stories_repository.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import 'stories_view_model.dart';
@@ -56,7 +60,85 @@ class VideoUploadRequest {
   final double? durationSec;
 }
 
-enum VideoUploadError { none, cover, network, other }
+/// Motivo (já classificado) da falha de uma publicação: a UI traduz cada um
+/// em uma mensagem em português e decide se "Tentar de novo" faz sentido.
+enum VideoUploadError {
+  none,
+  cover,
+
+  /// Sem internet / conexão caiu.
+  network,
+
+  /// A conexão está lenta e o envio estourou o tempo.
+  timeout,
+  tooLarge,
+  tooLong,
+  unsupported,
+  server,
+  sessionExpired,
+
+  /// O servidor recebeu o vídeo mas não conseguiu processá-lo.
+  processing,
+  other;
+
+  /// Tentar de novo só adianta se o problema não é o próprio arquivo.
+  bool get retryable =>
+      this != VideoUploadError.tooLarge &&
+      this != VideoUploadError.tooLong &&
+      this != VideoUploadError.unsupported;
+}
+
+String _detailOf(DioException e) {
+  final d = e.response?.data;
+  if (d is Map && d['detail'] != null) return d['detail'].toString().toLowerCase();
+  return '';
+}
+
+/// Traduz qualquer erro do envio em um [VideoUploadError].
+VideoUploadError classifyVideoUploadError(Object e) {
+  if (e is VideoCoverUploadFailure) return VideoUploadError.cover;
+  if (e is VideoProcessingFailure) return VideoUploadError.processing;
+  if (e is Failure) {
+    return e.when(
+      network: () => VideoUploadError.network,
+      server: () => VideoUploadError.server,
+      unauthorized: () => VideoUploadError.sessionExpired,
+      validation: (_) => VideoUploadError.other,
+      unknown: () => VideoUploadError.other,
+    );
+  }
+  if (e is DioException) {
+    final code = e.response?.statusCode;
+    final detail = _detailOf(e);
+    if (code != null) {
+      if (code == 401) return VideoUploadError.sessionExpired;
+      if (code == 413 || detail.contains('muito grande') || detail.contains('grande demais')) {
+        return detail.contains('longo') ? VideoUploadError.tooLong : VideoUploadError.tooLarge;
+      }
+      if (detail.contains('longo demais')) return VideoUploadError.tooLong;
+      if (code == 415 || detail.contains('tipo não permitido') || detail.contains('não suportado')) {
+        return VideoUploadError.unsupported;
+      }
+      if (code == 408 || code == 504) return VideoUploadError.timeout;
+      if (code >= 500) return VideoUploadError.server;
+      return VideoUploadError.other;
+    }
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return VideoUploadError.timeout;
+      case DioExceptionType.connectionError:
+        return VideoUploadError.network;
+      default:
+        return e.error is SocketException
+            ? VideoUploadError.network
+            : VideoUploadError.other;
+    }
+  }
+  if (e is SocketException) return VideoUploadError.network;
+  return VideoUploadError.other;
+}
 
 class VideoUploadJob {
   const VideoUploadJob({
@@ -147,8 +229,10 @@ final storyUploadRunnerProvider = Provider<StoryUploadRunner>((ref) {
 
 final videoUploadRunnerProvider = Provider<VideoUploadRunner>((ref) {
   final repo = ref.watch(postRepositoryProvider);
-  return (r, {required checkpoint, required cancelToken, required onProgress}) =>
-      repo.createVideoPost(
+  return (r, {required checkpoint, required cancelToken, required onProgress}) async {
+    // Limites vêm do servidor; com servidor antigo/sem rede = padrão antigo.
+    final limits = await ref.read(videoLimitsProvider.future);
+    return repo.createVideoPost(
         videoLocalPath: r.videoPath,
         content: r.content,
         soundId: r.soundId,
@@ -163,7 +247,9 @@ final videoUploadRunnerProvider = Provider<VideoUploadRunner>((ref) {
         onProgress: onProgress,
         cancelToken: cancelToken,
         checkpoint: checkpoint,
+        directUpload: limits.directUpload,
       );
+  };
 });
 
 /// Gerenciador global de publicação de vídeo: o compositor só ENFILEIRA e
@@ -294,9 +380,7 @@ class VideoUploadManager extends Notifier<List<VideoUploadJob>>
       if (token.isCancelled || _job(id) == null) {
         // cancelado pelo usuário: já removido da lista
       } else {
-        final err = e is VideoCoverUploadFailure
-            ? VideoUploadError.cover
-            : VideoUploadError.network;
+        final err = classifyVideoUploadError(e);
         _update(
           id,
           (j) => j.copyWith(status: VideoUploadStatus.failed, error: err),
@@ -315,6 +399,7 @@ class VideoUploadManager extends Notifier<List<VideoUploadJob>>
   void retry(int id) {
     final j = _job(id);
     if (j == null || j.status != VideoUploadStatus.failed) return;
+    if (!j.error.retryable) return;
     _update(
       id,
       (x) => x.copyWith(
@@ -348,6 +433,7 @@ class VideoUploadManager extends Notifier<List<VideoUploadJob>>
         for (final j in state) {
           if (j.status == VideoUploadStatus.failed &&
               j.error != VideoUploadError.none &&
+              j.error.retryable &&
               j.attempts <= maxAutoRetries) {
             retry(j.id);
           }

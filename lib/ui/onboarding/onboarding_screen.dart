@@ -95,8 +95,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   void _finish() {
-    OnboardingGate.instance.markDone();
-    context.go('/feed');
+    // Navega primeiro e libera a trava no quadro seguinte: as duas coisas no mesmo
+    // quadro (go + aviso ao router) davam a tela vermelha "_lifecycleState == inactive".
+    final gate = OnboardingGate.instance..finish();
+    GoRouter.of(context).go('/feed');
+    WidgetsBinding.instance.addPostFrameCallback((_) => gate.markDone());
   }
 
   Future<void> _signOut() async {

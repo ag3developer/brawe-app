@@ -20,6 +20,7 @@ import 'data/services/notification_navigation_service.dart';
 import 'data/services/push_notification_service.dart';
 import 'gen/l10n/app_localizations.dart';
 import 'routing/router.dart';
+import 'ui/feed/widgets/video_upload_pill.dart';
 import 'ui/core/themes/app_theme.dart';
 import 'ui/chat/view_models/unread_chats_provider.dart';
 import 'ui/core/view_models/app_badge_controller.dart';
@@ -222,7 +223,25 @@ class _BraweAppState extends ConsumerState<BraweApp> {
                   systemNavigationBarIconBrightness: Brightness.dark,
                   systemNavigationBarDividerColor: Colors.transparent,
                 ),
-          child: child!,
+          // Indicador global do envio de vídeo/story: no topo, acima de
+          // qualquer tela (abas, telas empilhadas, modais não — o sheet de
+          // criação fecha ao publicar). Sem Tooltip/Overlay dentro dele.
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              child!,
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  minimum: const EdgeInsets.only(top: 4),
+                  child: const VideoUploadPill(),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
