@@ -75,6 +75,7 @@ class _EditSheetState extends State<_EditSheet> {
                 children: [
                   Expanded(
                     child: TextField(
+                      textCapitalization: TextCapitalization.sentences,
                       controller: _c,
                       autofocus: true,
                       minLines: 1,

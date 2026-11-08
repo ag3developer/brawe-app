@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/sound_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -44,34 +43,34 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   bool _saving = false;
   bool _loaded = false;
 
-  // Países disponíveis (ISO 3166-1 alpha-2)
+  // Países disponíveis (ISO 3166-1 alpha-2) + bandeira
   static const _countries = [
-    ('BR', '🇧🇷 Brasil'),
-    ('PT', '🇵🇹 Portugal'),
-    ('US', '🇺🇸 Estados Unidos'),
-    ('AR', '🇦🇷 Argentina'),
-    ('MX', '🇲🇽 México'),
-    ('CO', '🇨🇴 Colômbia'),
-    ('CL', '🇨🇱 Chile'),
-    ('PE', '🇵🇪 Peru'),
-    ('UY', '🇺🇾 Uruguai'),
-    ('PY', '🇵🇾 Paraguai'),
-    ('BO', '🇧🇴 Bolívia'),
-    ('EC', '🇪🇨 Equador'),
-    ('VE', '🇻🇪 Venezuela'),
-    ('ES', '🇪🇸 Espanha'),
-    ('FR', '🇫🇷 França'),
-    ('DE', '🇩🇪 Alemanha'),
-    ('IT', '🇮🇹 Itália'),
-    ('GB', '🇬🇧 Reino Unido'),
-    ('JP', '🇯🇵 Japão'),
-    ('KR', '🇰🇷 Coreia do Sul'),
-    ('NG', '🇳🇬 Nigéria'),
-    ('GH', '🇬🇭 Gana'),
-    ('ZA', '🇿🇦 África do Sul'),
-    ('AO', '🇦🇴 Angola'),
-    ('MZ', '🇲🇿 Moçambique'),
-    ('CV', '🇨🇻 Cabo Verde'),
+    ('BR', '🇧🇷'),
+    ('PT', '🇵🇹'),
+    ('US', '🇺🇸'),
+    ('AR', '🇦🇷'),
+    ('MX', '🇲🇽'),
+    ('CO', '🇨🇴'),
+    ('CL', '🇨🇱'),
+    ('PE', '🇵🇪'),
+    ('UY', '🇺🇾'),
+    ('PY', '🇵🇾'),
+    ('BO', '🇧🇴'),
+    ('EC', '🇪🇨'),
+    ('VE', '🇻🇪'),
+    ('ES', '🇪🇸'),
+    ('FR', '🇫🇷'),
+    ('DE', '🇩🇪'),
+    ('IT', '🇮🇹'),
+    ('GB', '🇬🇧'),
+    ('JP', '🇯🇵'),
+    ('KR', '🇰🇷'),
+    ('NG', '🇳🇬'),
+    ('GH', '🇬🇭'),
+    ('ZA', '🇿🇦'),
+    ('AO', '🇦🇴'),
+    ('MZ', '🇲🇿'),
+    ('CV', '🇨🇻'),
   ];
 
   // Idiomas (BCP-47)
@@ -197,16 +196,19 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(
+              Icon(
                 LucideIcons.checkCircle,
-                color: Colors.white,
+                color: context.colors.textOnAccent,
                 size: 16,
               ),
               const SizedBox(width: 8),
-              Text(S.of(context).editProfileSaved),
+              Text(
+                S.of(context).editProfileSaved,
+                style: TextStyle(color: context.colors.textOnAccent),
+              ),
             ],
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: context.colors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -218,8 +220,11 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao salvar: $e'),
-          backgroundColor: Colors.red.shade700,
+          content: Text(
+            S.of(context).artistProfSaveError(e.toString()),
+            style: TextStyle(color: context.colors.textOnAccent),
+          ),
+          backgroundColor: context.colors.danger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -234,7 +239,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final c = context.colors;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -256,7 +261,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.music, size: 18, color: AppColors.braweBlue),
+            Icon(LucideIcons.music, size: 18, color: c.accentPrimary),
             const SizedBox(width: 8),
             Text(
               'Brawe Sounds',
@@ -275,7 +280,8 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
             child: FilledButton(
               onPressed: _saving ? null : _onSave,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.braweBlue,
+                backgroundColor: c.accentPrimary,
+                foregroundColor: c.textOnAccent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -286,12 +292,12 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                 minimumSize: Size.zero,
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: c.textOnAccent,
                       ),
                     )
                   : Text(
@@ -306,9 +312,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         ],
       ),
       body: !_loaded
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.braweBlue),
-            )
+          ? Center(child: CircularProgressIndicator(color: c.accentPrimary))
           : Form(
               key: _formKey,
               child: ListView(
@@ -321,20 +325,18 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                   // Identidade
                   _section(
                     context: context,
-                    isDark: isDark,
-                    icon: LucideIcons.user,
-                    color: AppColors.braweBlue,
-                    title: 'Identidade artística',
+                    title: s.artistProfSectionIdentity,
                     children: [
                       _field(
                         context: context,
                         icon: LucideIcons.mic,
-                        label: 'Nome artístico',
+                        label: s.artistProfArtistName,
                         child: _textField(
+                          context: context,
                           ctrl: _artistNameCtrl,
-                          hint: 'Como você é conhecido',
+                          hint: s.artistProfArtistNameHint,
                           validator: (v) => (v == null || v.trim().isEmpty)
-                              ? 'Obrigatório'
+                              ? s.artistProfRequired
                               : null,
                         ),
                       ),
@@ -342,43 +344,40 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _field(
                         context: context,
                         icon: LucideIcons.alignLeft,
-                        label: 'Bio do artista',
+                        label: s.artistProfBio,
                         child: _textField(
+                          context: context,
                           ctrl: _bioCtrl,
-                          hint: 'Conte sua história musical...',
+                          hint: s.artistProfBioHint,
                           maxLines: 3,
                           maxLength: 300,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
                   // Localização
                   _section(
                     context: context,
-                    isDark: isDark,
-                    icon: LucideIcons.mapPin,
-                    color: AppColors.braweBlue,
-                    title: 'Localização',
+                    title: s.artistProfSectionLocation,
                     children: [
                       _field(
                         context: context,
                         icon: LucideIcons.globe,
-                        label: 'País',
+                        label: s.artistProfCountry,
                         child: _dropdownField<String>(
                           context: context,
-                          isDark: isDark,
                           value: _selectedCountry,
                           items: _countries
                               .map(
-                                (c) => DropdownMenuItem(
-                                  value: c.$1,
+                                (e) => DropdownMenuItem(
+                                  value: e.$1,
                                   child: Text(
-                                    c.$2,
+                                    '${e.$2} ${_countryName(s, e.$1)}',
                                     style: TextStyle(
                                       fontSize: 15,
-                                      color: context.colors.textPrimary,
+                                      color: c.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -386,24 +385,27 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                               .toList(),
                           onChanged: (v) =>
                               setState(() => _selectedCountry = v),
-                          hint: 'Selecione seu país',
+                          hint: s.artistProfCountryHint,
                         ),
                       ),
                       _divider(context),
                       _field(
                         context: context,
                         icon: LucideIcons.building,
-                        label: 'Cidade',
-                        child: _textField(ctrl: _cityCtrl, hint: 'Sua cidade'),
+                        label: s.artistProfCity,
+                        child: _textField(
+                          context: context,
+                          ctrl: _cityCtrl,
+                          hint: s.artistProfCityHint,
+                        ),
                       ),
                       _divider(context),
                       _field(
                         context: context,
                         icon: LucideIcons.languages,
-                        label: 'Idioma nativo',
+                        label: s.artistProfLanguage,
                         child: _dropdownField<String>(
                           context: context,
-                          isDark: isDark,
                           value: _selectedLanguage,
                           items: _languages
                               .map(
@@ -413,7 +415,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                                     l.$2,
                                     style: TextStyle(
                                       fontSize: 15,
-                                      color: context.colors.textPrimary,
+                                      color: c.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -421,88 +423,82 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                               .toList(),
                           onChanged: (v) =>
                               setState(() => _selectedLanguage = v),
-                          hint: 'Idioma principal',
+                          hint: s.artistProfLanguageHint,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
                   // Gêneros musicais
-                  _sectionWithContent(
+                  _section(
                     context: context,
-                    isDark: isDark,
-                    icon: LucideIcons.music2,
-                    color: AppColors.braweBlue,
-                    title: 'Gêneros musicais',
-                    subtitle: 'Selecione até 5 gêneros',
-                    content: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _genres.map((genre) {
-                          final selected = _selectedGenres.contains(genre);
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                if (selected) {
-                                  _selectedGenres.remove(genre);
-                                } else if (_selectedGenres.length < 5) {
-                                  _selectedGenres.add(genre);
-                                }
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? AppColors.braweBlue.withValues(alpha: 0.15)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
+                    title: s.artistProfSectionGenres,
+                    subtitle: s.artistProfGenresHint,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _genres.map((genre) {
+                            final selected = _selectedGenres.contains(genre);
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedGenres.remove(genre);
+                                  } else if (_selectedGenres.length < 5) {
+                                    _selectedGenres.add(genre);
+                                  }
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
                                   color: selected
-                                      ? AppColors.braweBlue
-                                      : context.colors.divider,
-                                  width: selected ? 1.5 : 1,
+                                      ? c.accentPrimary.withValues(alpha: 0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: selected
+                                        ? c.accentPrimary
+                                        : c.divider,
+                                  ),
+                                ),
+                                child: Text(
+                                  genre,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w400,
+                                    color: selected
+                                        ? c.accentPrimary
+                                        : c.textSecondary,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                genre,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: selected
-                                      ? FontWeight.w700
-                                      : FontWeight.w400,
-                                  color: selected
-                                      ? AppColors.braweBlue
-                                      : context.colors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
                   // Plataformas de streaming
                   _section(
                     context: context,
-                    isDark: isDark,
-                    icon: LucideIcons.headphones,
-                    color: AppColors.braweBlue,
-                    title: 'Plataformas de streaming',
+                    title: s.artistProfSectionPlatforms,
                     children: [
                       _platformRow(
                         context: context,
                         icon: LucideIcons.music,
-                        color: const Color(0xFF1DB954),
                         label: 'Spotify',
                         ctrl: _spotifyCtrl,
                         hint: 'spotify.com/artist/...',
@@ -511,7 +507,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _platformRow(
                         context: context,
                         icon: LucideIcons.apple,
-                        color: const Color(0xFFFC3C44),
                         label: 'Apple Music',
                         ctrl: _appleMusicCtrl,
                         hint: 'music.apple.com/...',
@@ -520,7 +515,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _platformRow(
                         context: context,
                         icon: LucideIcons.globe,
-                        color: const Color(0xFFFF0000),
                         label: 'YouTube Music',
                         ctrl: _youtubeCtrl,
                         hint: 'youtube.com/@...',
@@ -529,7 +523,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _platformRow(
                         context: context,
                         icon: LucideIcons.cloud,
-                        color: const Color(0xFFFF5500),
                         label: 'SoundCloud',
                         ctrl: _soundcloudCtrl,
                         hint: 'soundcloud.com/...',
@@ -538,7 +531,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _platformRow(
                         context: context,
                         icon: LucideIcons.music2,
-                        color: const Color(0xFF00C7F2),
                         label: 'Deezer',
                         ctrl: _deezerCtrl,
                         hint: 'deezer.com/artist/...',
@@ -555,65 +547,72 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  Widget _section({
-    required BuildContext context,
-    required bool isDark,
-    required IconData icon,
-    required Color color,
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                Icon(icon, size: 13, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: context.colors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.07)
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
-            ),
-            child: Column(children: children),
-          ),
-        ],
-      ),
-    );
+  String _countryName(S s, String code) {
+    switch (code) {
+      case 'BR':
+        return s.artistProfCountryBR;
+      case 'PT':
+        return s.artistProfCountryPT;
+      case 'US':
+        return s.artistProfCountryUS;
+      case 'AR':
+        return s.artistProfCountryAR;
+      case 'MX':
+        return s.artistProfCountryMX;
+      case 'CO':
+        return s.artistProfCountryCO;
+      case 'CL':
+        return s.artistProfCountryCL;
+      case 'PE':
+        return s.artistProfCountryPE;
+      case 'UY':
+        return s.artistProfCountryUY;
+      case 'PY':
+        return s.artistProfCountryPY;
+      case 'BO':
+        return s.artistProfCountryBO;
+      case 'EC':
+        return s.artistProfCountryEC;
+      case 'VE':
+        return s.artistProfCountryVE;
+      case 'ES':
+        return s.artistProfCountryES;
+      case 'FR':
+        return s.artistProfCountryFR;
+      case 'DE':
+        return s.artistProfCountryDE;
+      case 'IT':
+        return s.artistProfCountryIT;
+      case 'GB':
+        return s.artistProfCountryGB;
+      case 'JP':
+        return s.artistProfCountryJP;
+      case 'KR':
+        return s.artistProfCountryKR;
+      case 'NG':
+        return s.artistProfCountryNG;
+      case 'GH':
+        return s.artistProfCountryGH;
+      case 'ZA':
+        return s.artistProfCountryZA;
+      case 'AO':
+        return s.artistProfCountryAO;
+      case 'MZ':
+        return s.artistProfCountryMZ;
+      case 'CV':
+        return s.artistProfCountryCV;
+      default:
+        return code;
+    }
   }
 
-  Widget _sectionWithContent({
+  Widget _section({
     required BuildContext context,
-    required bool isDark,
-    required IconData icon,
-    required Color color,
     required String title,
     String? subtitle,
-    required Widget content,
+    required List<Widget> children,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -621,45 +620,33 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                Icon(icon, size: 13, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: context.colors.textTertiary,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    '· $subtitle',
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: title.toUpperCase(),
                     style: TextStyle(
                       fontSize: 11,
-                      color: context.colors.textTertiary,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: c.textTertiary,
                     ),
                   ),
+                  if (subtitle != null)
+                    TextSpan(
+                      text: '  ·  $subtitle',
+                      style: TextStyle(fontSize: 11, color: c.textTertiary),
+                    ),
                 ],
-              ],
+              ),
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
+              color: c.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.07)
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
             ),
-            child: content,
+            child: Column(children: children),
           ),
         ],
       ),
@@ -672,6 +659,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     required String label,
     required Widget child,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -679,7 +667,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Icon(icon, size: 16, color: context.colors.textTertiary),
+            child: Icon(icon, size: 16, color: c.textSecondary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -689,10 +677,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: context.colors.textTertiary,
-                    letterSpacing: 0.2,
+                    color: c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -708,7 +695,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   Widget _platformRow({
     required BuildContext context,
     required IconData icon,
-    required Color color,
     required String label,
     required TextEditingController ctrl,
     required String hint,
@@ -717,18 +703,15 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 15, color: color),
-          ),
+          Icon(icon, size: 16, color: context.colors.textSecondary),
           const SizedBox(width: 12),
           Expanded(
-            child: _textField(ctrl: ctrl, hint: hint, prefixText: '$label · '),
+            child: _textField(
+              context: context,
+              ctrl: ctrl,
+              hint: hint,
+              prefixText: '$label · ',
+            ),
           ),
         ],
       ),
@@ -736,6 +719,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   }
 
   Widget _textField({
+    required BuildContext context,
     required TextEditingController ctrl,
     required String hint,
     int maxLines = 1,
@@ -743,63 +727,60 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     String? prefixText,
     String? Function(String?)? validator,
   }) {
-    return Builder(
-      builder: (context) {
-        return TextFormField(
-          controller: ctrl,
-          maxLines: maxLines,
-          maxLength: maxLength,
-          validator: validator,
-          style: TextStyle(
-            fontSize: 15,
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.w400,
-          ),
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixText: prefixText,
-            prefixStyle: TextStyle(
-              fontSize: 14,
-              color: context.colors.textTertiary,
-              fontWeight: FontWeight.w500,
-            ),
-            hintStyle: TextStyle(
-              fontSize: 15,
-              color: context.colors.textTertiary.withValues(alpha: 0.5),
-            ),
-            counterText: '',
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            errorStyle: const TextStyle(fontSize: 11),
-          ),
-        );
-      },
+    final c = context.colors;
+    return TextFormField(
+      // maiúscula automática só em texto livre; links ficam como digitados
+      textCapitalization: prefixText == null
+          ? TextCapitalization.sentences
+          : TextCapitalization.none,
+      controller: ctrl,
+      maxLines: maxLines,
+      maxLength: maxLength,
+      validator: validator,
+      style: TextStyle(fontSize: 15, color: c.textPrimary),
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixText: prefixText,
+        prefixStyle: TextStyle(
+          fontSize: 14,
+          color: c.textTertiary,
+          fontWeight: FontWeight.w500,
+        ),
+        hintStyle: TextStyle(
+          fontSize: 15,
+          color: c.textTertiary.withValues(alpha: 0.6),
+        ),
+        counterText: '',
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        errorStyle: const TextStyle(fontSize: 11),
+      ),
     );
   }
 
   Widget _dropdownField<T>({
     required BuildContext context,
-    required bool isDark,
     required T? value,
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
     required String hint,
   }) {
+    final c = context.colors;
     return DropdownButtonFormField<T>(
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: context.colors.surfaceElevated,
-      style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
+      dropdownColor: c.surfaceElevated,
+      style: TextStyle(fontSize: 15, color: c.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
           fontSize: 15,
-          color: context.colors.textTertiary.withValues(alpha: 0.5),
+          color: c.textTertiary.withValues(alpha: 0.6),
         ),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -807,17 +788,10 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      icon: Icon(
-        LucideIcons.chevronDown,
-        size: 16,
-        color: context.colors.textTertiary,
-      ),
+      icon: Icon(LucideIcons.chevronDown, size: 16, color: c.textSecondary),
     );
   }
 
-  Widget _divider(BuildContext context) => Divider(
-    height: 1,
-    indent: 42,
-    color: context.colors.divider.withValues(alpha: 0.5),
-  );
+  Widget _divider(BuildContext context) =>
+      Divider(height: 1, indent: 42, color: context.colors.divider);
 }

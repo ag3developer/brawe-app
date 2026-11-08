@@ -338,7 +338,7 @@ class _SponsoredStoryScreenState extends ConsumerState<SponsoredStoryScreen>
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        adCtaLabel(context, ad),
+                        adCtaLabel(context, ref, ad),
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14.5,

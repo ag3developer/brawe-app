@@ -1240,6 +1240,7 @@ class _TikTokBottomArea extends StatelessWidget {
                       children: [
                         Expanded(
                           child: TextField(
+                            textCapitalization: TextCapitalization.sentences,
                             controller: titleController,
                             onChanged: onTitleChanged,
                             enabled: !isLoading,

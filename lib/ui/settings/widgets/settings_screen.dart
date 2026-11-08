@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../config/feature_flags.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/network/media_headers.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/push_notification_service.dart';
@@ -26,6 +28,11 @@ final _appVersionProvider = FutureProvider<String>((ref) async {
   return '${info.version}+${info.buildNumber}';
 });
 
+/// Configurações — organizada como os Ajustes do iOS/Instagram:
+/// cartões agrupados, legenda discreta por grupo, valor atual à direita,
+/// detalhes (notificações, privacidade) em subpáginas e a versão no rodapé.
+///
+/// Ordem: você → conta → preferências → ajuda → sobre → sair.
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -34,12 +41,28 @@ class SettingsScreen extends ConsumerWidget {
     final s = S.of(context);
     final asyncSettings = ref.watch(settingsViewModelProvider);
     final themeMode = ref.watch(themeControllerProvider);
+    final colors = context.colors;
+    final user = ref.watch(authStateProvider).value;
+
+    final themeLabel = switch (themeMode) {
+      ThemeMode.light => s.settingsThemeLight,
+      ThemeMode.dark => s.settingsThemeDark,
+      ThemeMode.system => s.settingsThemeAuto,
+    };
+    final langLabel = switch (Localizations.localeOf(context).languageCode) {
+      'en' => 'English',
+      'es' => 'Español',
+      _ => 'Português',
+    };
 
     return Scaffold(
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(s.settingsTitle),
         centerTitle: true,
         leading: const BackButton(),
+        backgroundColor: colors.background,
+        surfaceTintColor: Colors.transparent,
       ),
       body: asyncSettings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -47,210 +70,226 @@ class SettingsScreen extends ConsumerWidget {
           message: s.settingsLoadError,
           onRetry: () => ref.invalidate(settingsViewModelProvider),
         ),
-        data: (settings) => ListView(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        data: (settings) => _SettingsBody(
           children: [
-            _SectionHeader(
-              icon: Icons.palette_outlined,
-              title: s.settingsAppearance,
+            // ── você ─────────────────────────────────────────────
+            if (user != null)
+              _Group(
+                children: [
+                  _ProfileRow(
+                    name: user.name,
+                    subtitle: user.email,
+                    avatarUrl: user.avatarUrl,
+                    onTap: () => context.push('/edit-profile'),
+                  ),
+                ],
+              ),
+
+            // ── conta ────────────────────────────────────────────
+            _Group(
+              caption: s.settingsAccount,
+              children: [
+                _Row(
+                  icon: LucideIcons.shieldCheck,
+                  title: s.secSettingsEntry,
+                  onTap: () => context.push('/settings/security'),
+                ),
+                _Row(
+                  icon: LucideIcons.keyRound,
+                  title: s.settingsChangePassword,
+                  onTap: () => context.push('/settings/change-password'),
+                ),
+                if (kEnableMonetization)
+                  _Row(
+                    icon: LucideIcons.rocket,
+                    title: s.myAdsTitle,
+                    onTap: () => context.push('/ads/campaigns'),
+                  ),
+              ],
             ),
-            _ThemeSelector(
-              themeMode: themeMode,
-              onSelect: (mode) async {
-                final backendValue = switch (mode) {
-                  ThemeMode.light => 'light',
-                  ThemeMode.system => 'system',
-                  ThemeMode.dark => 'dark',
-                };
-                await ref
-                    .read(settingsViewModelProvider.notifier)
-                    .setTheme(backendValue);
+
+            // ── preferências ─────────────────────────────────────
+            _Group(
+              caption: s.settingsGroupPreferences,
+              children: [
+                _Row(
+                  icon: LucideIcons.bell,
+                  title: s.settingsNotifications,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const _NotificationsPage(),
+                    ),
+                  ),
+                ),
+                _Row(
+                  icon: LucideIcons.lock,
+                  title: s.settingsPrivacy,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const _PrivacyPage()),
+                  ),
+                ),
+                _Row(
+                  icon: LucideIcons.sunMoon,
+                  title: s.settingsAppearance,
+                  value: themeLabel,
+                  onTap: () => _showThemeSheet(context, ref),
+                ),
+                _Row(
+                  icon: LucideIcons.languages,
+                  title: s.settingsLanguage,
+                  value: langLabel,
+                  onTap: () => LanguagePickerSheet.show(context),
+                ),
+                _Row(
+                  icon: LucideIcons.volume2,
+                  title: s.settingsSoundsEnabled,
+                  trailing: Switch.adaptive(
+                    value: settings.soundsEnabled,
+                    activeTrackColor: colors.accentPrimary,
+                    onChanged: (v) => ref
+                        .read(settingsViewModelProvider.notifier)
+                        .setBool('sounds_enabled', v),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── ajuda ────────────────────────────────────────────
+            _Group(
+              caption: s.settingsGroupHelp,
+              children: [
+                _Row(
+                  icon: LucideIcons.lifeBuoy,
+                  title: s.settingsSupport,
+                  onTap: () => _showSupportSheet(context, ref),
+                ),
+                _Row(
+                  icon: LucideIcons.messageSquareText,
+                  title: s.settingsSendFeedback,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── sobre ────────────────────────────────────────────
+            _Group(
+              caption: s.settingsGroupAbout,
+              children: [
+                _Row(
+                  icon: LucideIcons.fileText,
+                  title: s.settingsTermsOfUse,
+                  onTap: () =>
+                      LegalWebViewScreen.openLegal(context, privacy: false),
+                ),
+                _Row(
+                  icon: LucideIcons.shield,
+                  title: s.settingsPrivacyPolicy,
+                  onTap: () =>
+                      LegalWebViewScreen.openLegal(context, privacy: true),
+                ),
+                _Row(
+                  icon: LucideIcons.baby,
+                  title: s.settingsChildSafety,
+                  onTap: () => LegalWebViewScreen.openChildSafety(context),
+                ),
+              ],
+            ),
+
+            // ── sair ─────────────────────────────────────────────
+            _Group(
+              children: [
+                _Row(
+                  title: s.settingsLogout,
+                  danger: true,
+                  centered: true,
+                  onTap: () => _confirmLogout(context, ref),
+                ),
+              ],
+            ),
+            Center(
+              child: TextButton(
+                onPressed: () => context.push('/settings/delete-account'),
+                style: TextButton.styleFrom(
+                  foregroundColor: colors.textTertiary,
+                ),
+                child: Text(
+                  s.settingsDeleteAccount,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ),
+            ),
+            Consumer(
+              builder: (_, ref, _) {
+                final v = ref.watch(_appVersionProvider);
+                return Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 24),
+                  child: Text(
+                    'Brawe ${v.maybeWhen(data: (v) => v, orElse: () => '')}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colors.textTertiary, fontSize: 12),
+                  ),
+                );
               },
             ),
-            // Explica o "Automático": segue a aparência do celular.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 200),
-              child: themeMode == ThemeMode.system
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showThemeSheet(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) {
+          final mode = ref.watch(themeControllerProvider);
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 0, 4, 14),
+                    child: Text(
+                      s.settingsAppearance,
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  _ThemeSelector(
+                    themeMode: mode,
+                    onSelect: (m) => ref
+                        .read(settingsViewModelProvider.notifier)
+                        .setTheme(switch (m) {
+                          ThemeMode.light => 'light',
+                          ThemeMode.system => 'system',
+                          ThemeMode.dark => 'dark',
+                        }),
+                  ),
+                  if (mode == ThemeMode.system)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 12, 4, 0),
                       child: Text(
                         s.settingsThemeAutoHint,
                         style: TextStyle(
-                          color: context.colors.textSecondary,
+                          color: ctx.colors.textSecondary,
                           fontSize: 12.5,
                           height: 1.35,
                         ),
                       ),
-                    )
-                  : const SizedBox(width: double.infinity),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.language_outlined,
-              title: s.settingsLanguage,
-            ),
-            ListTile(
-              leading: const Icon(Icons.translate_rounded),
-              title: Text(s.settingsAppLanguage),
-              subtitle: Text(s.settingsLanguageSubtitle),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => LanguagePickerSheet.show(context),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.notifications_outlined,
-              title: s.settingsNotifications,
-            ),
-            _SwitchTile(
-              title: s.settingsNotifLiveStart,
-              subtitle: s.settingsNotifLiveStartHint,
-              value: settings.notificationsLiveStart,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('notifications_live_start', v),
-            ),
-            _SwitchTile(
-              title: s.settingsNotifGifts,
-              subtitle: s.settingsNotifGiftsHint,
-              value: settings.notificationsGifts,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('notifications_gifts', v),
-            ),
-            _SwitchTile(
-              title: s.settingsNotifFollowers,
-              value: settings.notificationsFollowers,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('notifications_followers', v),
-            ),
-            _SwitchTile(
-              title: s.settingsNotifMessages,
-              value: settings.notificationsMessages,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('notifications_messages', v),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(icon: Icons.lock_outline, title: s.settingsPrivacy),
-            _SwitchTile(
-              title: s.settingsPrivacyShowViewers,
-              subtitle: s.settingsPrivacyShowViewersHint,
-              value: settings.privacyShowViewers,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('privacy_show_viewers', v),
-            ),
-            _SwitchTile(
-              title: s.settingsPrivacyShowEarnings,
-              subtitle: s.settingsPrivacyShowEarningsHint,
-              value: settings.privacyShowEarnings,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('privacy_show_earnings', v),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(
-              icon: Icons.volume_up_outlined,
-              title: s.settingsSounds,
-            ),
-            _SwitchTile(
-              title: s.settingsSoundsEnabled,
-              subtitle: s.settingsSoundsHint,
-              value: settings.soundsEnabled,
-              onChanged: (v) => ref
-                  .read(settingsViewModelProvider.notifier)
-                  .setBool('sounds_enabled', v),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(icon: Icons.info_outline, title: s.settingsAbout),
-            ListTile(
-              leading: const Icon(Icons.description_outlined),
-              title: Text(s.settingsTermsOfUse),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => LegalWebViewScreen.openLegal(context, privacy: false),
-            ),
-            ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: Text(s.settingsPrivacyPolicy),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => LegalWebViewScreen.openLegal(context, privacy: true),
-            ),
-            ListTile(
-              leading: const Icon(Icons.feedback_outlined),
-              title: Text(s.settingsSendFeedback),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+                    ),
+                ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.shield_outlined),
-              title: Text(s.settingsChildSafety),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => LegalWebViewScreen.openChildSafety(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.support_agent_outlined),
-              title: Text(s.settingsSupport),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => _showSupportSheet(context, ref),
-            ),
-            ListTile(
-              leading: const Icon(Icons.tag_outlined),
-              title: Text(s.settingsVersion),
-              trailing: Consumer(
-                builder: (_, ref, _) {
-                  final v = ref.watch(_appVersionProvider);
-                  return Text(v.maybeWhen(data: (v) => v, orElse: () => '…'));
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(icon: Icons.logout, title: s.settingsAccount),
-            if (kEnableMonetization)
-              ListTile(
-                leading: const Icon(LucideIcons.trendingUp),
-                title: Text(s.myAdsEntry),
-                trailing: const Icon(Icons.chevron_right, size: 20),
-                onTap: () => context.push('/ads/campaigns'),
-              ),
-            ListTile(
-              leading: const Icon(LucideIcons.shieldCheck),
-              title: Text(s.secSettingsEntry),
-              subtitle: Text(s.secSettingsEntrySub),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => context.push('/settings/security'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock_reset_outlined),
-              title: Text(s.settingsChangePassword),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => context.push('/settings/change-password'),
-            ),
-            ListTile(
-              leading: Icon(Icons.logout, color: context.colors.danger),
-              title: Text(
-                s.settingsLogout,
-                style: TextStyle(color: context.colors.danger),
-              ),
-              onTap: () => _confirmLogout(context, ref),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.delete_forever_outlined,
-                color: context.colors.danger,
-              ),
-              title: Text(
-                s.settingsDeleteAccount,
-                style: TextStyle(color: context.colors.danger),
-              ),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => context.push('/settings/delete-account'),
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -373,32 +412,6 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  const _SectionHeader({required this.icon, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _SwitchTile extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -419,7 +432,7 @@ class _SwitchTile extends StatelessWidget {
       value: value,
       onChanged: onChanged,
       activeThumbColor: context.colors.accentPrimary,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
   }
 }
@@ -438,7 +451,7 @@ class _ThemeSelector extends StatelessWidget {
       (ThemeMode.system, Icons.brightness_auto_outlined, s.settingsThemeAuto),
     ];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.zero,
       child: Row(
         children: options
             .map(
@@ -537,6 +550,331 @@ class _ErrorView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── peças do layout agrupado ─────────────────────────────────────────────
+
+/// Lista centralizada (até 640 px em tablet) com espaço entre os grupos.
+class _SettingsBody extends StatelessWidget {
+  const _SettingsBody({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 640),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        children: children,
+      ),
+    ),
+  );
+}
+
+/// Grupo em cartão com legenda pequena acima (sem ícone, sem título duplicado).
+class _Group extends StatelessWidget {
+  const _Group({required this.children, this.caption});
+  final String? caption;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final rows = <Widget>[];
+    for (var i = 0; i < children.length; i++) {
+      if (i > 0) {
+        rows.add(
+          Divider(
+            height: 0.5,
+            thickness: 0.5,
+            indent: 52,
+            color: colors.divider,
+          ),
+        );
+      }
+      rows.add(children[i]);
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (caption != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 7),
+              child: Text(
+                caption!.toUpperCase(),
+                style: TextStyle(
+                  color: colors.textTertiary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Material(
+              color: colors.surface,
+              child: Column(children: rows),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Linha: ícone discreto · título · valor atual (cinza) · seta (ou um interruptor).
+class _Row extends StatelessWidget {
+  const _Row({
+    required this.title,
+    this.icon,
+    this.value,
+    this.trailing,
+    this.onTap,
+    this.danger = false,
+    this.centered = false,
+  });
+  final IconData? icon;
+  final String title;
+  final String? value;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool danger;
+  final bool centered;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final fg = danger ? colors.danger : colors.textPrimary;
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 50),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 20,
+                  color: danger ? colors.danger : colors.textSecondary,
+                ),
+                const SizedBox(width: 16),
+              ],
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: centered ? TextAlign.center : TextAlign.start,
+                  style: TextStyle(
+                    color: fg,
+                    fontSize: 15.5,
+                    fontWeight: centered ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (value != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  value!,
+                  style: TextStyle(color: colors.textSecondary, fontSize: 14.5),
+                ),
+              ],
+              if (trailing != null)
+                trailing!
+              else if (onTap != null && !centered) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  LucideIcons.chevronRight,
+                  size: 18,
+                  color: colors.textTertiary,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Cabeçalho "você": foto, nome e e-mail → editar perfil.
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({
+    required this.name,
+    required this.subtitle,
+    required this.avatarUrl,
+    required this.onTap,
+  });
+  final String name;
+  final String subtitle;
+  final String? avatarUrl;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: colors.surfaceHighest,
+              backgroundImage: (avatarUrl ?? '').isNotEmpty
+                  ? CachedNetworkImageProvider(
+                      avatarUrl!,
+                      headers: mediaHeadersFor(avatarUrl),
+                    )
+                  : null,
+              child: (avatarUrl ?? '').isEmpty
+                  ? Icon(LucideIcons.user, color: colors.textSecondary)
+                  : null,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: colors.textTertiary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Subpágina de notificações (interruptores com explicação curta).
+class _NotificationsPage extends ConsumerWidget {
+  const _NotificationsPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    final settings = ref.watch(settingsViewModelProvider).value;
+    final vm = ref.read(settingsViewModelProvider.notifier);
+    return _SubPage(
+      title: s.settingsNotifications,
+      children: settings == null
+          ? const []
+          : [
+              _Group(
+                children: [
+                  _SwitchTile(
+                    title: s.settingsNotifLiveStart,
+                    subtitle: s.settingsNotifLiveStartHint,
+                    value: settings.notificationsLiveStart,
+                    onChanged: (v) => vm.setBool('notifications_live_start', v),
+                  ),
+                  _SwitchTile(
+                    title: s.settingsNotifGifts,
+                    subtitle: s.settingsNotifGiftsHint,
+                    value: settings.notificationsGifts,
+                    onChanged: (v) => vm.setBool('notifications_gifts', v),
+                  ),
+                  _SwitchTile(
+                    title: s.settingsNotifFollowers,
+                    value: settings.notificationsFollowers,
+                    onChanged: (v) => vm.setBool('notifications_followers', v),
+                  ),
+                  _SwitchTile(
+                    title: s.settingsNotifMessages,
+                    value: settings.notificationsMessages,
+                    onChanged: (v) => vm.setBool('notifications_messages', v),
+                  ),
+                ],
+              ),
+            ],
+    );
+  }
+}
+
+/// Subpágina de privacidade.
+class _PrivacyPage extends ConsumerWidget {
+  const _PrivacyPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    final settings = ref.watch(settingsViewModelProvider).value;
+    final vm = ref.read(settingsViewModelProvider.notifier);
+    return _SubPage(
+      title: s.settingsPrivacy,
+      children: settings == null
+          ? const []
+          : [
+              _Group(
+                children: [
+                  _SwitchTile(
+                    title: s.settingsPrivacyShowViewers,
+                    subtitle: s.settingsPrivacyShowViewersHint,
+                    value: settings.privacyShowViewers,
+                    onChanged: (v) => vm.setBool('privacy_show_viewers', v),
+                  ),
+                  _SwitchTile(
+                    title: s.settingsPrivacyShowEarnings,
+                    subtitle: s.settingsPrivacyShowEarningsHint,
+                    value: settings.privacyShowEarnings,
+                    onChanged: (v) => vm.setBool('privacy_show_earnings', v),
+                  ),
+                ],
+              ),
+            ],
+    );
+  }
+}
+
+class _SubPage extends StatelessWidget {
+  const _SubPage({required this.title, required this.children});
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(
+        title: Text(title),
+        centerTitle: true,
+        backgroundColor: colors.background,
+        surfaceTintColor: Colors.transparent,
+      ),
+      body: _SettingsBody(children: [const SizedBox(height: 8), ...children]),
     );
   }
 }

@@ -43,6 +43,7 @@ class AdAdvertiser {
 /// Anúncio entregue para um espaço (GET /ads/serve). `token` volta em cada evento.
 class FeedAd {
   const FeedAd({
+    this.objective = 'views',
     required this.adId,
     required this.token,
     required this.kind,
@@ -92,6 +93,10 @@ class FeedAd {
 
   bool get isVideo => mediaType == 'video';
   bool get isLive => mediaType == 'live';
+
+  /// Objetivo de quem impulsionou: views · followers · profile_visits · contacts (marca: link_clicks…)
+  final String objective;
+
   bool get isBoost => kind == 'boost';
 
   /// Botão de contato (chat da Brawe ou WhatsApp) — também em impulsionamentos com objetivo "mensagens".
@@ -127,6 +132,7 @@ class FeedAd {
     }
     return FeedAd(
       adId: _s(j['ad_id']),
+      objective: _s(j['objective'], 'views'),
       token: _s(j['token']),
       kind: _s(j['kind'], 'brand'),
       placement: _s(j['placement']),

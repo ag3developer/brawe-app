@@ -18728,6 +18728,1254 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Contatos recebidos'**
   String get adsRepContacts;
+
+  /// No description provided for @adsFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir'**
+  String get adsFollow;
+
+  /// No description provided for @adsFollowingNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguindo'**
+  String get adsFollowingNow;
+
+  /// No description provided for @adsSeePost.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver publicação'**
+  String get adsSeePost;
+
+  /// No description provided for @adsWatchVideo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistir vídeo'**
+  String get adsWatchVideo;
+
+  /// No description provided for @adsLearnMore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saiba mais'**
+  String get adsLearnMore;
+
+  /// No description provided for @settingsGroupPreferences.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preferências'**
+  String get settingsGroupPreferences;
+
+  /// No description provided for @settingsGroupHelp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuda'**
+  String get settingsGroupHelp;
+
+  /// No description provided for @settingsGroupAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre'**
+  String get settingsGroupAbout;
+
+  /// No description provided for @artistProfSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao salvar: {error}'**
+  String artistProfSaveError(String error);
+
+  /// No description provided for @artistProfRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigatório'**
+  String get artistProfRequired;
+
+  /// No description provided for @artistProfSectionIdentity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Identidade artística'**
+  String get artistProfSectionIdentity;
+
+  /// No description provided for @artistProfArtistName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome artístico'**
+  String get artistProfArtistName;
+
+  /// No description provided for @artistProfArtistNameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como você é conhecido'**
+  String get artistProfArtistNameHint;
+
+  /// No description provided for @artistProfBio.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bio do artista'**
+  String get artistProfBio;
+
+  /// No description provided for @artistProfBioHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conte sua história musical...'**
+  String get artistProfBioHint;
+
+  /// No description provided for @artistProfSectionLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Localização'**
+  String get artistProfSectionLocation;
+
+  /// No description provided for @artistProfCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País'**
+  String get artistProfCountry;
+
+  /// No description provided for @artistProfCountryHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione seu país'**
+  String get artistProfCountryHint;
+
+  /// No description provided for @artistProfCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get artistProfCity;
+
+  /// No description provided for @artistProfCityHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua cidade'**
+  String get artistProfCityHint;
+
+  /// No description provided for @artistProfLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma nativo'**
+  String get artistProfLanguage;
+
+  /// No description provided for @artistProfLanguageHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma principal'**
+  String get artistProfLanguageHint;
+
+  /// No description provided for @artistProfSectionGenres.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gêneros musicais'**
+  String get artistProfSectionGenres;
+
+  /// No description provided for @artistProfGenresHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione até 5 gêneros'**
+  String get artistProfGenresHint;
+
+  /// No description provided for @artistProfSectionPlatforms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Plataformas de streaming'**
+  String get artistProfSectionPlatforms;
+
+  /// No description provided for @artistProfCountryBR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brasil'**
+  String get artistProfCountryBR;
+
+  /// No description provided for @artistProfCountryPT.
+  ///
+  /// In pt, this message translates to:
+  /// **'Portugal'**
+  String get artistProfCountryPT;
+
+  /// No description provided for @artistProfCountryUS.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estados Unidos'**
+  String get artistProfCountryUS;
+
+  /// No description provided for @artistProfCountryAR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Argentina'**
+  String get artistProfCountryAR;
+
+  /// No description provided for @artistProfCountryMX.
+  ///
+  /// In pt, this message translates to:
+  /// **'México'**
+  String get artistProfCountryMX;
+
+  /// No description provided for @artistProfCountryCO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Colômbia'**
+  String get artistProfCountryCO;
+
+  /// No description provided for @artistProfCountryCL.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chile'**
+  String get artistProfCountryCL;
+
+  /// No description provided for @artistProfCountryPE.
+  ///
+  /// In pt, this message translates to:
+  /// **'Peru'**
+  String get artistProfCountryPE;
+
+  /// No description provided for @artistProfCountryUY.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uruguai'**
+  String get artistProfCountryUY;
+
+  /// No description provided for @artistProfCountryPY.
+  ///
+  /// In pt, this message translates to:
+  /// **'Paraguai'**
+  String get artistProfCountryPY;
+
+  /// No description provided for @artistProfCountryBO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bolívia'**
+  String get artistProfCountryBO;
+
+  /// No description provided for @artistProfCountryEC.
+  ///
+  /// In pt, this message translates to:
+  /// **'Equador'**
+  String get artistProfCountryEC;
+
+  /// No description provided for @artistProfCountryVE.
+  ///
+  /// In pt, this message translates to:
+  /// **'Venezuela'**
+  String get artistProfCountryVE;
+
+  /// No description provided for @artistProfCountryES.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espanha'**
+  String get artistProfCountryES;
+
+  /// No description provided for @artistProfCountryFR.
+  ///
+  /// In pt, this message translates to:
+  /// **'França'**
+  String get artistProfCountryFR;
+
+  /// No description provided for @artistProfCountryDE.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alemanha'**
+  String get artistProfCountryDE;
+
+  /// No description provided for @artistProfCountryIT.
+  ///
+  /// In pt, this message translates to:
+  /// **'Itália'**
+  String get artistProfCountryIT;
+
+  /// No description provided for @artistProfCountryGB.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reino Unido'**
+  String get artistProfCountryGB;
+
+  /// No description provided for @artistProfCountryJP.
+  ///
+  /// In pt, this message translates to:
+  /// **'Japão'**
+  String get artistProfCountryJP;
+
+  /// No description provided for @artistProfCountryKR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Coreia do Sul'**
+  String get artistProfCountryKR;
+
+  /// No description provided for @artistProfCountryNG.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nigéria'**
+  String get artistProfCountryNG;
+
+  /// No description provided for @artistProfCountryGH.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gana'**
+  String get artistProfCountryGH;
+
+  /// No description provided for @artistProfCountryZA.
+  ///
+  /// In pt, this message translates to:
+  /// **'África do Sul'**
+  String get artistProfCountryZA;
+
+  /// No description provided for @artistProfCountryAO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Angola'**
+  String get artistProfCountryAO;
+
+  /// No description provided for @artistProfCountryMZ.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moçambique'**
+  String get artistProfCountryMZ;
+
+  /// No description provided for @artistProfCountryCV.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cabo Verde'**
+  String get artistProfCountryCV;
+
+  /// No description provided for @bizProfSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao salvar: {error}'**
+  String bizProfSaveError(String error);
+
+  /// No description provided for @bizProfRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigatório'**
+  String get bizProfRequired;
+
+  /// No description provided for @bizProfSectionCompany.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa / Marca'**
+  String get bizProfSectionCompany;
+
+  /// No description provided for @bizProfCompanyName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome da empresa ou marca'**
+  String get bizProfCompanyName;
+
+  /// No description provided for @bizProfCompanyNameHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ex: Minha Empresa S.A.'**
+  String get bizProfCompanyNameHint;
+
+  /// No description provided for @bizProfAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre a empresa'**
+  String get bizProfAbout;
+
+  /// No description provided for @bizProfAboutHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Descreva sua empresa ou marca...'**
+  String get bizProfAboutHint;
+
+  /// No description provided for @bizProfSector.
+  ///
+  /// In pt, this message translates to:
+  /// **'Setor de atuação'**
+  String get bizProfSector;
+
+  /// No description provided for @bizProfSectorHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione um setor'**
+  String get bizProfSectorHint;
+
+  /// No description provided for @bizProfSectionLocation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Localização'**
+  String get bizProfSectionLocation;
+
+  /// No description provided for @bizProfCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País de operação'**
+  String get bizProfCountry;
+
+  /// No description provided for @bizProfCountryHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Selecione o país'**
+  String get bizProfCountryHint;
+
+  /// No description provided for @bizProfCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get bizProfCity;
+
+  /// No description provided for @bizProfCityHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade sede'**
+  String get bizProfCityHint;
+
+  /// No description provided for @bizProfLanguage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma principal'**
+  String get bizProfLanguage;
+
+  /// No description provided for @bizProfLanguageHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma de operação'**
+  String get bizProfLanguageHint;
+
+  /// No description provided for @bizProfSectionFiscal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados fiscais'**
+  String get bizProfSectionFiscal;
+
+  /// No description provided for @bizProfFiscalRow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados fiscais e CNPJ'**
+  String get bizProfFiscalRow;
+
+  /// No description provided for @bizProfFiscalRowHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para verificação'**
+  String get bizProfFiscalRowHint;
+
+  /// No description provided for @bizProfSectionLinks.
+  ///
+  /// In pt, this message translates to:
+  /// **'Links'**
+  String get bizProfSectionLinks;
+
+  /// No description provided for @bizProfWebsite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Website'**
+  String get bizProfWebsite;
+
+  /// No description provided for @bizProfWebsiteHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'https://suaempresa.com'**
+  String get bizProfWebsiteHint;
+
+  /// No description provided for @bizProfInstagramHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'@suaempresa'**
+  String get bizProfInstagramHint;
+
+  /// No description provided for @bizProfWhatsappHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'+55 11 99999-9999'**
+  String get bizProfWhatsappHint;
+
+  /// No description provided for @bizProfSectorFashionBeauty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moda & Beleza'**
+  String get bizProfSectorFashionBeauty;
+
+  /// No description provided for @bizProfSectorTech.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tecnologia'**
+  String get bizProfSectorTech;
+
+  /// No description provided for @bizProfSectorFood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alimentação & Bebidas'**
+  String get bizProfSectorFood;
+
+  /// No description provided for @bizProfSectorEntertainment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entretenimento'**
+  String get bizProfSectorEntertainment;
+
+  /// No description provided for @bizProfSectorEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação'**
+  String get bizProfSectorEducation;
+
+  /// No description provided for @bizProfSectorHealth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saúde & Bem-estar'**
+  String get bizProfSectorHealth;
+
+  /// No description provided for @bizProfSectorFinance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Finanças & Investimentos'**
+  String get bizProfSectorFinance;
+
+  /// No description provided for @bizProfSectorRetail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Varejo & E-commerce'**
+  String get bizProfSectorRetail;
+
+  /// No description provided for @bizProfSectorMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música & Áudio'**
+  String get bizProfSectorMusic;
+
+  /// No description provided for @bizProfSectorGames.
+  ///
+  /// In pt, this message translates to:
+  /// **'Games'**
+  String get bizProfSectorGames;
+
+  /// No description provided for @bizProfSectorSports.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esportes'**
+  String get bizProfSectorSports;
+
+  /// No description provided for @bizProfSectorRealEstate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Imóveis'**
+  String get bizProfSectorRealEstate;
+
+  /// No description provided for @bizProfSectorAgro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agro & Sustentabilidade'**
+  String get bizProfSectorAgro;
+
+  /// No description provided for @bizProfSectorServices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serviços Profissionais'**
+  String get bizProfSectorServices;
+
+  /// No description provided for @bizProfSectorNgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'ONG & Social'**
+  String get bizProfSectorNgo;
+
+  /// No description provided for @bizProfSectorOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get bizProfSectorOther;
+
+  /// No description provided for @bizProfCountryBR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Brasil'**
+  String get bizProfCountryBR;
+
+  /// No description provided for @bizProfCountryPT.
+  ///
+  /// In pt, this message translates to:
+  /// **'Portugal'**
+  String get bizProfCountryPT;
+
+  /// No description provided for @bizProfCountryUS.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estados Unidos'**
+  String get bizProfCountryUS;
+
+  /// No description provided for @bizProfCountryAR.
+  ///
+  /// In pt, this message translates to:
+  /// **'Argentina'**
+  String get bizProfCountryAR;
+
+  /// No description provided for @bizProfCountryMX.
+  ///
+  /// In pt, this message translates to:
+  /// **'México'**
+  String get bizProfCountryMX;
+
+  /// No description provided for @bizProfCountryCO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Colômbia'**
+  String get bizProfCountryCO;
+
+  /// No description provided for @bizProfCountryCL.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chile'**
+  String get bizProfCountryCL;
+
+  /// No description provided for @bizProfCountryES.
+  ///
+  /// In pt, this message translates to:
+  /// **'Espanha'**
+  String get bizProfCountryES;
+
+  /// No description provided for @bizProfCountryDE.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alemanha'**
+  String get bizProfCountryDE;
+
+  /// No description provided for @bizProfCountryGB.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reino Unido'**
+  String get bizProfCountryGB;
+
+  /// No description provided for @bizProfCountryAO.
+  ///
+  /// In pt, this message translates to:
+  /// **'Angola'**
+  String get bizProfCountryAO;
+
+  /// No description provided for @bizProfCountryMZ.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moçambique'**
+  String get bizProfCountryMZ;
+
+  /// No description provided for @acctTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo de conta'**
+  String get acctTitle;
+
+  /// No description provided for @acctPersonal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pessoal'**
+  String get acctPersonal;
+
+  /// No description provided for @acctPersonalHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para seguir, assistir, conversar e publicar.'**
+  String get acctPersonalHint;
+
+  /// No description provided for @acctCreator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criador'**
+  String get acctCreator;
+
+  /// No description provided for @acctCreatorHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para quem faz lives e conteúdo e quer crescer e ganhar com isso.'**
+  String get acctCreatorHint;
+
+  /// No description provided for @acctArtist.
+  ///
+  /// In pt, this message translates to:
+  /// **'Artista'**
+  String get acctArtist;
+
+  /// No description provided for @acctArtistHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Músicos, bandas e DJs: perfil artístico com seus links de música.'**
+  String get acctArtistHint;
+
+  /// No description provided for @acctBusiness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa'**
+  String get acctBusiness;
+
+  /// No description provided for @acctBusinessHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcas e negócios. Exige identidade verificada e CNPJ aprovado.'**
+  String get acctBusinessHint;
+
+  /// No description provided for @acctFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode trocar entre Pessoal, Criador e Artista quando quiser. Seus posts, seguidores e Coins continuam iguais.'**
+  String get acctFooter;
+
+  /// No description provided for @acctConfirmTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mudar para {name}?'**
+  String acctConfirmTitle(String name);
+
+  /// No description provided for @acctConfirmBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu perfil passa a mostrar este tipo de conta. Dá para voltar depois.'**
+  String get acctConfirmBody;
+
+  /// No description provided for @acctConfirmAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mudar'**
+  String get acctConfirmAction;
+
+  /// No description provided for @acctChanged.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agora sua conta é {name}'**
+  String acctChanged(String name);
+
+  /// No description provided for @acctChangeFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível trocar o tipo de conta.'**
+  String get acctChangeFailed;
+
+  /// No description provided for @acctBusinessStepsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para virar Empresa'**
+  String get acctBusinessStepsTitle;
+
+  /// No description provided for @acctBusinessStepsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Para proteger quem compra e anuncia, contas de empresa passam por dois passos.'**
+  String get acctBusinessStepsBody;
+
+  /// No description provided for @acctStepIdentity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar sua identidade'**
+  String get acctStepIdentity;
+
+  /// No description provided for @acctStepBusiness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar CNPJ e dados fiscais'**
+  String get acctStepBusiness;
+
+  /// No description provided for @acctStepIdentityAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar identidade'**
+  String get acctStepIdentityAction;
+
+  /// No description provided for @acctStepBusinessAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar dados da empresa'**
+  String get acctStepBusinessAction;
+
+  /// No description provided for @editProfileCreatorPanel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Painel do criador'**
+  String get editProfileCreatorPanel;
+
+  /// No description provided for @editProfileArtistPage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil de artista'**
+  String get editProfileArtistPage;
+
+  /// No description provided for @editProfileBusinessPage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil da empresa'**
+  String get editProfileBusinessPage;
+
+  /// No description provided for @editProfileWebsite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Site'**
+  String get editProfileWebsite;
+
+  /// No description provided for @kycTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificação'**
+  String get kycTitle;
+
+  /// No description provided for @kycApproved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificada'**
+  String get kycApproved;
+
+  /// No description provided for @kycInReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Em análise'**
+  String get kycInReview;
+
+  /// No description provided for @kycRejected.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusada'**
+  String get kycRejected;
+
+  /// No description provided for @kycNotStarted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não verificada'**
+  String get kycNotStarted;
+
+  /// No description provided for @kycLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar a verificação.'**
+  String get kycLoadError;
+
+  /// No description provided for @kycError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Algo deu errado. Tente de novo.'**
+  String get kycError;
+
+  /// No description provided for @kycHeaderTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique sua conta'**
+  String get kycHeaderTitle;
+
+  /// No description provided for @kycHeaderDone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua conta é verificada'**
+  String get kycHeaderDone;
+
+  /// No description provided for @kycHeaderBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta verificada ganha o selo azul, mais confiança de quem te segue e pode virar Empresa.'**
+  String get kycHeaderBody;
+
+  /// No description provided for @kycIdentityCaption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Identidade'**
+  String get kycIdentityCaption;
+
+  /// No description provided for @kycIdentityRow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar identidade'**
+  String get kycIdentityRow;
+
+  /// No description provided for @kycIdentityRowHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento + vídeo rápido'**
+  String get kycIdentityRowHint;
+
+  /// No description provided for @kycIdentityFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Leva uns 2 minutos. No Brasil: CNH Digital do dia. Outros países: passaporte.'**
+  String get kycIdentityFooter;
+
+  /// No description provided for @kycRejectedReason.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recusada: {reason}. Você pode enviar de novo.'**
+  String kycRejectedReason(String reason);
+
+  /// No description provided for @kycBusinessCaption.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa'**
+  String get kycBusinessCaption;
+
+  /// No description provided for @kycBusinessRow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dados da empresa'**
+  String get kycBusinessRow;
+
+  /// No description provided for @kycBusinessRowHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'CNPJ e dados fiscais'**
+  String get kycBusinessRowHint;
+
+  /// No description provided for @kycBusinessFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Com o CNPJ aprovado, sua conta vira Empresa.'**
+  String get kycBusinessFooter;
+
+  /// No description provided for @kycBusinessLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível depois da identidade verificada.'**
+  String get kycBusinessLocked;
+
+  /// No description provided for @kycPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus documentos e o vídeo ficam cifrados, só a equipe de verificação vê, e são apagados assim que a análise termina.'**
+  String get kycPrivacy;
+
+  /// No description provided for @kycStepDocument.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento'**
+  String get kycStepDocument;
+
+  /// No description provided for @kycStepLiveness.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo'**
+  String get kycStepLiveness;
+
+  /// No description provided for @kycStepSend.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar'**
+  String get kycStepSend;
+
+  /// No description provided for @kycCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'País do documento'**
+  String get kycCountry;
+
+  /// No description provided for @kycCountrySearch.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar país'**
+  String get kycCountrySearch;
+
+  /// No description provided for @kycCountryChoose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher país'**
+  String get kycCountryChoose;
+
+  /// No description provided for @kycDocument.
+  ///
+  /// In pt, this message translates to:
+  /// **'Documento'**
+  String get kycDocument;
+
+  /// No description provided for @kycDocCnh.
+  ///
+  /// In pt, this message translates to:
+  /// **'CNH Digital'**
+  String get kycDocCnh;
+
+  /// No description provided for @kycDocCnhHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'PDF exportado hoje no app CNH do Brasil'**
+  String get kycDocCnhHint;
+
+  /// No description provided for @kycDocPassport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Passaporte'**
+  String get kycDocPassport;
+
+  /// No description provided for @kycDocPassportHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Página com foto, legível e dentro da validade'**
+  String get kycDocPassportHint;
+
+  /// No description provided for @kycCnhHowTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'No app CNH do Brasil (gov.br): abra sua CNH, toque em Compartilhar › Exportar e salve o PDF. Precisa ser gerado hoje.'**
+  String get kycCnhHowTo;
+
+  /// No description provided for @kycPassportHowTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie a página com sua foto, sem reflexos e com os quatro cantos visíveis.'**
+  String get kycPassportHowTo;
+
+  /// No description provided for @kycPickFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher arquivo'**
+  String get kycPickFile;
+
+  /// No description provided for @kycChangeFile.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para trocar'**
+  String get kycChangeFile;
+
+  /// No description provided for @kycTakePhoto.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tirar foto do passaporte'**
+  String get kycTakePhoto;
+
+  /// No description provided for @kycLivenessIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agora um vídeo curto para mostrar que é você mesmo. A câmera da frente abre e mostra o que você vai falar.'**
+  String get kycLivenessIntro;
+
+  /// No description provided for @kycTipLight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fique num lugar bem iluminado'**
+  String get kycTipLight;
+
+  /// No description provided for @kycTipFace.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rosto livre: sem óculos escuros, boné ou máscara'**
+  String get kycTipFace;
+
+  /// No description provided for @kycTipTurn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vire devagar o rosto para um lado e para o outro'**
+  String get kycTipTurn;
+
+  /// No description provided for @kycTipSpeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fale em voz alta o texto que aparece na tela'**
+  String get kycTipSpeak;
+
+  /// No description provided for @kycRecord.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gravar vídeo'**
+  String get kycRecord;
+
+  /// No description provided for @kycRecorded.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vídeo gravado'**
+  String get kycRecorded;
+
+  /// No description provided for @kycRecordAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque para gravar de novo'**
+  String get kycRecordAgain;
+
+  /// No description provided for @kycReview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira'**
+  String get kycReview;
+
+  /// No description provided for @kycConsent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Autorizo a Brawe a usar este documento e o vídeo apenas para verificar minha identidade, conforme a LGPD.'**
+  String get kycConsent;
+
+  /// No description provided for @kycSubmit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para análise'**
+  String get kycSubmit;
+
+  /// No description provided for @kycSentTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviado para análise'**
+  String get kycSentTitle;
+
+  /// No description provided for @kycSentBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nossa equipe confere em até 2 dias úteis. Quando aprovar, o selo azul aparece no seu perfil.'**
+  String get kycSentBody;
+
+  /// No description provided for @kycBizSentBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nossa equipe confere em até 2 dias úteis. Quando aprovar, sua conta vira Empresa.'**
+  String get kycBizSentBody;
+
+  /// No description provided for @kycSay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fale em voz alta:'**
+  String get kycSay;
+
+  /// No description provided for @kycScript.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meu nome é {name}. Hoje é {date}, {time}. Código {code}.'**
+  String kycScript(String name, String date, String time, String code);
+
+  /// No description provided for @kycCamReady.
+  ///
+  /// In pt, this message translates to:
+  /// **'Encaixe o rosto e toque para gravar'**
+  String get kycCamReady;
+
+  /// No description provided for @kycCamLook.
+  ///
+  /// In pt, this message translates to:
+  /// **'Olhe para a câmera'**
+  String get kycCamLook;
+
+  /// No description provided for @kycCamLeft.
+  ///
+  /// In pt, this message translates to:
+  /// **'Vire devagar para a esquerda'**
+  String get kycCamLeft;
+
+  /// No description provided for @kycCamRight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agora para a direita'**
+  String get kycCamRight;
+
+  /// No description provided for @kycCamSpeak.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fale o texto e toque para parar'**
+  String get kycCamSpeak;
+
+  /// No description provided for @kycCamError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir a câmera. Permita o acesso à câmera e ao microfone nos Ajustes.'**
+  String get kycCamError;
+
+  /// No description provided for @kycTooShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Grave pelo menos 5 segundos'**
+  String get kycTooShort;
+
+  /// No description provided for @kycBizCompany.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa'**
+  String get kycBizCompany;
+
+  /// No description provided for @kycBizCnpjHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite o CNPJ: nome e endereço vêm da Receita Federal.'**
+  String get kycBizCnpjHint;
+
+  /// No description provided for @kycBizSituation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Situação na Receita: {status}'**
+  String kycBizSituation(String status);
+
+  /// No description provided for @kycBizLegalName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Razão social'**
+  String get kycBizLegalName;
+
+  /// No description provided for @kycBizTradeName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome fantasia'**
+  String get kycBizTradeName;
+
+  /// No description provided for @kycBizTax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fiscal'**
+  String get kycBizTax;
+
+  /// No description provided for @kycBizRegime.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regime tributário'**
+  String get kycBizRegime;
+
+  /// No description provided for @kycRegimeSimples.
+  ///
+  /// In pt, this message translates to:
+  /// **'Simples Nacional'**
+  String get kycRegimeSimples;
+
+  /// No description provided for @kycRegimePresumido.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lucro Presumido'**
+  String get kycRegimePresumido;
+
+  /// No description provided for @kycRegimeReal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lucro Real'**
+  String get kycRegimeReal;
+
+  /// No description provided for @kycBizIe.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrição estadual'**
+  String get kycBizIe;
+
+  /// No description provided for @kycBizIeExempt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Isento de inscrição estadual'**
+  String get kycBizIeExempt;
+
+  /// No description provided for @kycBizAddress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço'**
+  String get kycBizAddress;
+
+  /// No description provided for @kycBizZip.
+  ///
+  /// In pt, this message translates to:
+  /// **'CEP'**
+  String get kycBizZip;
+
+  /// No description provided for @kycBizStreet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rua'**
+  String get kycBizStreet;
+
+  /// No description provided for @kycBizNumber.
+  ///
+  /// In pt, this message translates to:
+  /// **'Número'**
+  String get kycBizNumber;
+
+  /// No description provided for @kycBizDistrict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Bairro'**
+  String get kycBizDistrict;
+
+  /// No description provided for @kycBizCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade'**
+  String get kycBizCity;
+
+  /// No description provided for @kycBizCard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cartão CNPJ'**
+  String get kycBizCard;
+
+  /// No description provided for @kycBizCardHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida.'**
+  String get kycBizCardHint;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

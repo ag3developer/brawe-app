@@ -1335,6 +1335,7 @@ class _PostCardState extends ConsumerState<PostCard>
             imageUrl: video ? (post.coverUrl ?? post.imageUrl) : post.imageUrl,
             text: post.content,
             isVideo: video,
+            verified: post.author.isVerified,
           ),
         )
         // volta do fluxo: atualiza o foguete (pode ter impulsionado agora)

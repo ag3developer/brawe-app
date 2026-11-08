@@ -372,6 +372,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
+                      textCapitalization: TextCapitalization.sentences,
                       controller: _textController,
                       autofocus: true,
                       style: TextStyle(

@@ -456,6 +456,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: TextField(
+        textCapitalization: TextCapitalization.sentences,
         controller: _noteCtrl,
         style: const TextStyle(color: Colors.white),
         maxLines: 2,

@@ -377,6 +377,7 @@ class _SignupCardState extends State<_SignupCard> {
                 label: s.signupNameLabel,
                 hintText: s.signupNameHint,
                 onChanged: widget.notifier.updateName,
+                keyboardType: TextInputType.name,
                 prefixIcon: LucideIcons.user,
               ),
               const SizedBox(height: AppSpacing.md),

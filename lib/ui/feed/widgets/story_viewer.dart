@@ -1440,6 +1440,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   ),
                 ),
                 child: TextField(
+                  textCapitalization: TextCapitalization.sentences,
                   controller: _replyController,
                   focusNode: _replyFocus,
                   cursorColor: AppColors.braweBlue,

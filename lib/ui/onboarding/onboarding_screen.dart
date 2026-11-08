@@ -795,6 +795,7 @@ class _BioStepState extends ConsumerState<_BioStep> {
       onPrimary: _save,
       onSkip: widget.onDone,
       child: TextField(
+        textCapitalization: TextCapitalization.sentences,
         controller: _ctrl,
         maxLength: 150,
         maxLines: 3,

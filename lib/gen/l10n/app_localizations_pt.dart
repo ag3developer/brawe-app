@@ -10782,4 +10782,662 @@ class SPt extends S {
 
   @override
   String get adsRepContacts => 'Contatos recebidos';
+
+  @override
+  String get adsFollow => 'Seguir';
+
+  @override
+  String get adsFollowingNow => 'Seguindo';
+
+  @override
+  String get adsSeePost => 'Ver publicação';
+
+  @override
+  String get adsWatchVideo => 'Assistir vídeo';
+
+  @override
+  String get adsLearnMore => 'Saiba mais';
+
+  @override
+  String get settingsGroupPreferences => 'Preferências';
+
+  @override
+  String get settingsGroupHelp => 'Ajuda';
+
+  @override
+  String get settingsGroupAbout => 'Sobre';
+
+  @override
+  String artistProfSaveError(String error) {
+    return 'Erro ao salvar: $error';
+  }
+
+  @override
+  String get artistProfRequired => 'Obrigatório';
+
+  @override
+  String get artistProfSectionIdentity => 'Identidade artística';
+
+  @override
+  String get artistProfArtistName => 'Nome artístico';
+
+  @override
+  String get artistProfArtistNameHint => 'Como você é conhecido';
+
+  @override
+  String get artistProfBio => 'Bio do artista';
+
+  @override
+  String get artistProfBioHint => 'Conte sua história musical...';
+
+  @override
+  String get artistProfSectionLocation => 'Localização';
+
+  @override
+  String get artistProfCountry => 'País';
+
+  @override
+  String get artistProfCountryHint => 'Selecione seu país';
+
+  @override
+  String get artistProfCity => 'Cidade';
+
+  @override
+  String get artistProfCityHint => 'Sua cidade';
+
+  @override
+  String get artistProfLanguage => 'Idioma nativo';
+
+  @override
+  String get artistProfLanguageHint => 'Idioma principal';
+
+  @override
+  String get artistProfSectionGenres => 'Gêneros musicais';
+
+  @override
+  String get artistProfGenresHint => 'Selecione até 5 gêneros';
+
+  @override
+  String get artistProfSectionPlatforms => 'Plataformas de streaming';
+
+  @override
+  String get artistProfCountryBR => 'Brasil';
+
+  @override
+  String get artistProfCountryPT => 'Portugal';
+
+  @override
+  String get artistProfCountryUS => 'Estados Unidos';
+
+  @override
+  String get artistProfCountryAR => 'Argentina';
+
+  @override
+  String get artistProfCountryMX => 'México';
+
+  @override
+  String get artistProfCountryCO => 'Colômbia';
+
+  @override
+  String get artistProfCountryCL => 'Chile';
+
+  @override
+  String get artistProfCountryPE => 'Peru';
+
+  @override
+  String get artistProfCountryUY => 'Uruguai';
+
+  @override
+  String get artistProfCountryPY => 'Paraguai';
+
+  @override
+  String get artistProfCountryBO => 'Bolívia';
+
+  @override
+  String get artistProfCountryEC => 'Equador';
+
+  @override
+  String get artistProfCountryVE => 'Venezuela';
+
+  @override
+  String get artistProfCountryES => 'Espanha';
+
+  @override
+  String get artistProfCountryFR => 'França';
+
+  @override
+  String get artistProfCountryDE => 'Alemanha';
+
+  @override
+  String get artistProfCountryIT => 'Itália';
+
+  @override
+  String get artistProfCountryGB => 'Reino Unido';
+
+  @override
+  String get artistProfCountryJP => 'Japão';
+
+  @override
+  String get artistProfCountryKR => 'Coreia do Sul';
+
+  @override
+  String get artistProfCountryNG => 'Nigéria';
+
+  @override
+  String get artistProfCountryGH => 'Gana';
+
+  @override
+  String get artistProfCountryZA => 'África do Sul';
+
+  @override
+  String get artistProfCountryAO => 'Angola';
+
+  @override
+  String get artistProfCountryMZ => 'Moçambique';
+
+  @override
+  String get artistProfCountryCV => 'Cabo Verde';
+
+  @override
+  String bizProfSaveError(String error) {
+    return 'Erro ao salvar: $error';
+  }
+
+  @override
+  String get bizProfRequired => 'Obrigatório';
+
+  @override
+  String get bizProfSectionCompany => 'Empresa / Marca';
+
+  @override
+  String get bizProfCompanyName => 'Nome da empresa ou marca';
+
+  @override
+  String get bizProfCompanyNameHint => 'Ex: Minha Empresa S.A.';
+
+  @override
+  String get bizProfAbout => 'Sobre a empresa';
+
+  @override
+  String get bizProfAboutHint => 'Descreva sua empresa ou marca...';
+
+  @override
+  String get bizProfSector => 'Setor de atuação';
+
+  @override
+  String get bizProfSectorHint => 'Selecione um setor';
+
+  @override
+  String get bizProfSectionLocation => 'Localização';
+
+  @override
+  String get bizProfCountry => 'País de operação';
+
+  @override
+  String get bizProfCountryHint => 'Selecione o país';
+
+  @override
+  String get bizProfCity => 'Cidade';
+
+  @override
+  String get bizProfCityHint => 'Cidade sede';
+
+  @override
+  String get bizProfLanguage => 'Idioma principal';
+
+  @override
+  String get bizProfLanguageHint => 'Idioma de operação';
+
+  @override
+  String get bizProfSectionFiscal => 'Dados fiscais';
+
+  @override
+  String get bizProfFiscalRow => 'Dados fiscais e CNPJ';
+
+  @override
+  String get bizProfFiscalRowHint => 'Enviar para verificação';
+
+  @override
+  String get bizProfSectionLinks => 'Links';
+
+  @override
+  String get bizProfWebsite => 'Website';
+
+  @override
+  String get bizProfWebsiteHint => 'https://suaempresa.com';
+
+  @override
+  String get bizProfInstagramHint => '@suaempresa';
+
+  @override
+  String get bizProfWhatsappHint => '+55 11 99999-9999';
+
+  @override
+  String get bizProfSectorFashionBeauty => 'Moda & Beleza';
+
+  @override
+  String get bizProfSectorTech => 'Tecnologia';
+
+  @override
+  String get bizProfSectorFood => 'Alimentação & Bebidas';
+
+  @override
+  String get bizProfSectorEntertainment => 'Entretenimento';
+
+  @override
+  String get bizProfSectorEducation => 'Educação';
+
+  @override
+  String get bizProfSectorHealth => 'Saúde & Bem-estar';
+
+  @override
+  String get bizProfSectorFinance => 'Finanças & Investimentos';
+
+  @override
+  String get bizProfSectorRetail => 'Varejo & E-commerce';
+
+  @override
+  String get bizProfSectorMusic => 'Música & Áudio';
+
+  @override
+  String get bizProfSectorGames => 'Games';
+
+  @override
+  String get bizProfSectorSports => 'Esportes';
+
+  @override
+  String get bizProfSectorRealEstate => 'Imóveis';
+
+  @override
+  String get bizProfSectorAgro => 'Agro & Sustentabilidade';
+
+  @override
+  String get bizProfSectorServices => 'Serviços Profissionais';
+
+  @override
+  String get bizProfSectorNgo => 'ONG & Social';
+
+  @override
+  String get bizProfSectorOther => 'Outro';
+
+  @override
+  String get bizProfCountryBR => 'Brasil';
+
+  @override
+  String get bizProfCountryPT => 'Portugal';
+
+  @override
+  String get bizProfCountryUS => 'Estados Unidos';
+
+  @override
+  String get bizProfCountryAR => 'Argentina';
+
+  @override
+  String get bizProfCountryMX => 'México';
+
+  @override
+  String get bizProfCountryCO => 'Colômbia';
+
+  @override
+  String get bizProfCountryCL => 'Chile';
+
+  @override
+  String get bizProfCountryES => 'Espanha';
+
+  @override
+  String get bizProfCountryDE => 'Alemanha';
+
+  @override
+  String get bizProfCountryGB => 'Reino Unido';
+
+  @override
+  String get bizProfCountryAO => 'Angola';
+
+  @override
+  String get bizProfCountryMZ => 'Moçambique';
+
+  @override
+  String get acctTitle => 'Tipo de conta';
+
+  @override
+  String get acctPersonal => 'Pessoal';
+
+  @override
+  String get acctPersonalHint => 'Para seguir, assistir, conversar e publicar.';
+
+  @override
+  String get acctCreator => 'Criador';
+
+  @override
+  String get acctCreatorHint =>
+      'Para quem faz lives e conteúdo e quer crescer e ganhar com isso.';
+
+  @override
+  String get acctArtist => 'Artista';
+
+  @override
+  String get acctArtistHint =>
+      'Músicos, bandas e DJs: perfil artístico com seus links de música.';
+
+  @override
+  String get acctBusiness => 'Empresa';
+
+  @override
+  String get acctBusinessHint =>
+      'Marcas e negócios. Exige identidade verificada e CNPJ aprovado.';
+
+  @override
+  String get acctFooter =>
+      'Você pode trocar entre Pessoal, Criador e Artista quando quiser. Seus posts, seguidores e Coins continuam iguais.';
+
+  @override
+  String acctConfirmTitle(String name) {
+    return 'Mudar para $name?';
+  }
+
+  @override
+  String get acctConfirmBody =>
+      'Seu perfil passa a mostrar este tipo de conta. Dá para voltar depois.';
+
+  @override
+  String get acctConfirmAction => 'Mudar';
+
+  @override
+  String acctChanged(String name) {
+    return 'Agora sua conta é $name';
+  }
+
+  @override
+  String get acctChangeFailed => 'Não foi possível trocar o tipo de conta.';
+
+  @override
+  String get acctBusinessStepsTitle => 'Para virar Empresa';
+
+  @override
+  String get acctBusinessStepsBody =>
+      'Para proteger quem compra e anuncia, contas de empresa passam por dois passos.';
+
+  @override
+  String get acctStepIdentity => 'Verificar sua identidade';
+
+  @override
+  String get acctStepBusiness => 'Enviar CNPJ e dados fiscais';
+
+  @override
+  String get acctStepIdentityAction => 'Verificar identidade';
+
+  @override
+  String get acctStepBusinessAction => 'Enviar dados da empresa';
+
+  @override
+  String get editProfileCreatorPanel => 'Painel do criador';
+
+  @override
+  String get editProfileArtistPage => 'Perfil de artista';
+
+  @override
+  String get editProfileBusinessPage => 'Perfil da empresa';
+
+  @override
+  String get editProfileWebsite => 'Site';
+
+  @override
+  String get kycTitle => 'Verificação';
+
+  @override
+  String get kycApproved => 'Verificada';
+
+  @override
+  String get kycInReview => 'Em análise';
+
+  @override
+  String get kycRejected => 'Recusada';
+
+  @override
+  String get kycNotStarted => 'Não verificada';
+
+  @override
+  String get kycLoadError => 'Não foi possível carregar a verificação.';
+
+  @override
+  String get kycError => 'Algo deu errado. Tente de novo.';
+
+  @override
+  String get kycHeaderTitle => 'Verifique sua conta';
+
+  @override
+  String get kycHeaderDone => 'Sua conta é verificada';
+
+  @override
+  String get kycHeaderBody =>
+      'Conta verificada ganha o selo azul, mais confiança de quem te segue e pode virar Empresa.';
+
+  @override
+  String get kycIdentityCaption => 'Identidade';
+
+  @override
+  String get kycIdentityRow => 'Verificar identidade';
+
+  @override
+  String get kycIdentityRowHint => 'Documento + vídeo rápido';
+
+  @override
+  String get kycIdentityFooter =>
+      'Leva uns 2 minutos. No Brasil: CNH Digital do dia. Outros países: passaporte.';
+
+  @override
+  String kycRejectedReason(String reason) {
+    return 'Recusada: $reason. Você pode enviar de novo.';
+  }
+
+  @override
+  String get kycBusinessCaption => 'Empresa';
+
+  @override
+  String get kycBusinessRow => 'Dados da empresa';
+
+  @override
+  String get kycBusinessRowHint => 'CNPJ e dados fiscais';
+
+  @override
+  String get kycBusinessFooter =>
+      'Com o CNPJ aprovado, sua conta vira Empresa.';
+
+  @override
+  String get kycBusinessLocked => 'Disponível depois da identidade verificada.';
+
+  @override
+  String get kycPrivacy =>
+      'Seus documentos e o vídeo ficam cifrados, só a equipe de verificação vê, e são apagados assim que a análise termina.';
+
+  @override
+  String get kycStepDocument => 'Documento';
+
+  @override
+  String get kycStepLiveness => 'Vídeo';
+
+  @override
+  String get kycStepSend => 'Enviar';
+
+  @override
+  String get kycCountry => 'País do documento';
+
+  @override
+  String get kycCountrySearch => 'Buscar país';
+
+  @override
+  String get kycCountryChoose => 'Escolher país';
+
+  @override
+  String get kycDocument => 'Documento';
+
+  @override
+  String get kycDocCnh => 'CNH Digital';
+
+  @override
+  String get kycDocCnhHint => 'PDF exportado hoje no app CNH do Brasil';
+
+  @override
+  String get kycDocPassport => 'Passaporte';
+
+  @override
+  String get kycDocPassportHint =>
+      'Página com foto, legível e dentro da validade';
+
+  @override
+  String get kycCnhHowTo =>
+      'No app CNH do Brasil (gov.br): abra sua CNH, toque em Compartilhar › Exportar e salve o PDF. Precisa ser gerado hoje.';
+
+  @override
+  String get kycPassportHowTo =>
+      'Envie a página com sua foto, sem reflexos e com os quatro cantos visíveis.';
+
+  @override
+  String get kycPickFile => 'Escolher arquivo';
+
+  @override
+  String get kycChangeFile => 'Toque para trocar';
+
+  @override
+  String get kycTakePhoto => 'Tirar foto do passaporte';
+
+  @override
+  String get kycLivenessIntro =>
+      'Agora um vídeo curto para mostrar que é você mesmo. A câmera da frente abre e mostra o que você vai falar.';
+
+  @override
+  String get kycTipLight => 'Fique num lugar bem iluminado';
+
+  @override
+  String get kycTipFace => 'Rosto livre: sem óculos escuros, boné ou máscara';
+
+  @override
+  String get kycTipTurn => 'Vire devagar o rosto para um lado e para o outro';
+
+  @override
+  String get kycTipSpeak => 'Fale em voz alta o texto que aparece na tela';
+
+  @override
+  String get kycRecord => 'Gravar vídeo';
+
+  @override
+  String get kycRecorded => 'Vídeo gravado';
+
+  @override
+  String get kycRecordAgain => 'Toque para gravar de novo';
+
+  @override
+  String get kycReview => 'Confira';
+
+  @override
+  String get kycConsent =>
+      'Autorizo a Brawe a usar este documento e o vídeo apenas para verificar minha identidade, conforme a LGPD.';
+
+  @override
+  String get kycSubmit => 'Enviar para análise';
+
+  @override
+  String get kycSentTitle => 'Enviado para análise';
+
+  @override
+  String get kycSentBody =>
+      'Nossa equipe confere em até 2 dias úteis. Quando aprovar, o selo azul aparece no seu perfil.';
+
+  @override
+  String get kycBizSentBody =>
+      'Nossa equipe confere em até 2 dias úteis. Quando aprovar, sua conta vira Empresa.';
+
+  @override
+  String get kycSay => 'Fale em voz alta:';
+
+  @override
+  String kycScript(String name, String date, String time, String code) {
+    return 'Meu nome é $name. Hoje é $date, $time. Código $code.';
+  }
+
+  @override
+  String get kycCamReady => 'Encaixe o rosto e toque para gravar';
+
+  @override
+  String get kycCamLook => 'Olhe para a câmera';
+
+  @override
+  String get kycCamLeft => 'Vire devagar para a esquerda';
+
+  @override
+  String get kycCamRight => 'Agora para a direita';
+
+  @override
+  String get kycCamSpeak => 'Fale o texto e toque para parar';
+
+  @override
+  String get kycCamError =>
+      'Não foi possível abrir a câmera. Permita o acesso à câmera e ao microfone nos Ajustes.';
+
+  @override
+  String get kycTooShort => 'Grave pelo menos 5 segundos';
+
+  @override
+  String get kycBizCompany => 'Empresa';
+
+  @override
+  String get kycBizCnpjHint =>
+      'Digite o CNPJ: nome e endereço vêm da Receita Federal.';
+
+  @override
+  String kycBizSituation(String status) {
+    return 'Situação na Receita: $status';
+  }
+
+  @override
+  String get kycBizLegalName => 'Razão social';
+
+  @override
+  String get kycBizTradeName => 'Nome fantasia';
+
+  @override
+  String get kycBizTax => 'Fiscal';
+
+  @override
+  String get kycBizRegime => 'Regime tributário';
+
+  @override
+  String get kycRegimeSimples => 'Simples Nacional';
+
+  @override
+  String get kycRegimePresumido => 'Lucro Presumido';
+
+  @override
+  String get kycRegimeReal => 'Lucro Real';
+
+  @override
+  String get kycBizIe => 'Inscrição estadual';
+
+  @override
+  String get kycBizIeExempt => 'Isento de inscrição estadual';
+
+  @override
+  String get kycBizAddress => 'Endereço';
+
+  @override
+  String get kycBizZip => 'CEP';
+
+  @override
+  String get kycBizStreet => 'Rua';
+
+  @override
+  String get kycBizNumber => 'Número';
+
+  @override
+  String get kycBizDistrict => 'Bairro';
+
+  @override
+  String get kycBizCity => 'Cidade';
+
+  @override
+  String get kycBizCard => 'Cartão CNPJ';
+
+  @override
+  String get kycBizCardHint =>
+      'Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida.';
 }

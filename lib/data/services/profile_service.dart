@@ -80,7 +80,7 @@ class ProfileService {
     if (displayName != null) body['display_name'] = displayName;
     if (bio != null) body['bio'] = bio;
     if (socialLinks != null) body['social_links'] = socialLinks;
-    if (accountType != null) body['account_type'] = accountType;
+    // tipo de conta não vai mais aqui: troca pelo POST /profile/me/account-type (com regras)
     final response = await _dio.put('/profile/me', data: body);
     return response.data['data'] ?? response.data;
   }

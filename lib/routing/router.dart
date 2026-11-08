@@ -76,6 +76,10 @@ import '../ui/shop/pages/shop_payment_page.dart';
 import '../ui/onboarding/onboarding_gate.dart';
 import '../ui/onboarding/onboarding_screen.dart';
 import '../data/services/profile_service.dart';
+import '../ui/account/account_type_screen.dart';
+import '../ui/account/verify_account_screen.dart';
+import '../ui/account/verify_business_screen.dart';
+import '../ui/account/verify_identity_screen.dart';
 import '../ui/ads/boost/boost_flow_screen.dart';
 import '../ui/ads/boost/boost_preview.dart';
 import '../ui/ads/boost/my_ads_screen.dart';
@@ -323,6 +327,11 @@ GoRouter router(Ref ref) {
         builder: (context, state) => const WelcomeScreen(),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      // Conta: tipo de conta e verificação (tela cheia).
+      GoRoute(path: '/account/type', builder: (context, state) => const AccountTypeScreen()),
+      GoRoute(path: '/account/verify', builder: (context, state) => const VerifyAccountScreen()),
+      GoRoute(path: '/account/verify/identity', builder: (context, state) => const VerifyIdentityScreen()),
+      GoRoute(path: '/account/verify/business', builder: (context, state) => const VerifyBusinessScreen()),
       // Anúncios (impulsionar e Meus anúncios): tela cheia, sem o menu de baixo.
       GoRoute(
         path: '/ads/boost',

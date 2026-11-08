@@ -2484,6 +2484,8 @@ class _ComposerState extends ConsumerState<_Composer>
                                 children: [
                                   Expanded(
                                     child: TextField(
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
                                       controller: widget.controller,
                                       focusNode: _focus,
                                       onTap: () {

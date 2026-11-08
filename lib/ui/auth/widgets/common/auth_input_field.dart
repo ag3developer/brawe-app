@@ -55,6 +55,10 @@ class _AuthInputFieldState extends State<AuthInputField> {
         TextField(
           controller: widget.controller,
           keyboardType: widget.keyboardType,
+          // nome: iniciais maiúsculas; e-mail, senha e código ficam como digitados
+          textCapitalization: widget.keyboardType == TextInputType.name
+              ? TextCapitalization.words
+              : TextCapitalization.none,
           obscureText: widget.obscureText ? _obscure : false,
           onChanged: widget.onChanged,
           style: TextStyle(

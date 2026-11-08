@@ -423,6 +423,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
+                          textCapitalization: TextCapitalization.sentences,
                           controller: _controller,
                           focusNode: _focusNode,
                           style: TextStyle(color: context.colors.textPrimary),

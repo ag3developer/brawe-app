@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/network/media_headers.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/verified_badge.dart';
 
 /// O que aparece na prévia (vem do post que está sendo impulsionado).
 class BoostPreviewData {
@@ -284,12 +285,15 @@ class _ForYouMock extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  d.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+                _Name(
+                  d,
+                  Text(
+                    d.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -388,7 +392,7 @@ class _FeedMock extends StatelessWidget {
           Divider(height: 1, color: c.divider),
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 _avatar(d, 18, bg: c.surfaceHighest),
@@ -397,14 +401,17 @@ class _FeedMock extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        d.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: c.textPrimary,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
+                      _Name(
+                        d,
+                        Text(
+                          d.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: c.textPrimary,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Text(
@@ -420,7 +427,7 @@ class _FeedMock extends StatelessWidget {
           ),
           if ((d.text ?? '').trim().isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
               child: Text(
                 d.text!.trim(),
                 maxLines: 3,
@@ -434,28 +441,45 @@ class _FeedMock extends StatelessWidget {
             )
           else
             const SizedBox(height: 10),
-          AspectRatio(aspectRatio: 4 / 5, child: _media(d)),
-          Container(
-            color: c.surfaceHighest,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    cta,
-                    style: TextStyle(
-                      color: c.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Column(
+                children: [
+                  AspectRatio(aspectRatio: 4 / 5, child: _media(d)),
+                  Container(
+                    color: c.surfaceHighest,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            cta,
+                            style: TextStyle(
+                              color: c.textPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 18,
+                          color: c.textPrimary,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                Icon(LucideIcons.chevronRight, size: 18, color: c.textPrimary),
-              ],
+                ],
+              ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(
               children: [
                 Icon(LucideIcons.heart, size: 22, color: c.textSecondary),
@@ -539,14 +563,17 @@ class _StoryMock extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            d.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                          _Name(
+                            d,
+                            Text(
+                              d.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           Text(
@@ -714,14 +741,17 @@ class _TilesMock extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              d.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                            _Name(
+                              d,
+                              Text(
+                                d.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -759,6 +789,28 @@ class _TilesMock extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Nome + selo de verificado (quando a conta tem), igual aos anúncios reais.
+class _Name extends StatelessWidget {
+  const _Name(this.d, this.text);
+  final BoostPreviewData d;
+  final Text text;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!d.verified) return text;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: text),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: VerifiedBadge(size: (text.style?.fontSize ?? 14) * 0.9),
+        ),
+      ],
     );
   }
 }

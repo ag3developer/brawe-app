@@ -10,6 +10,10 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/grouped_list.dart';
+import '../../account/account_type_screen.dart' show accountTypeInfo;
+import '../../account/verify_account_screen.dart' show kycStateLabel;
+import '../../../data/repositories/kyc_repository.dart';
 import '../../../domain/models/profile.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -133,10 +137,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
           displayName: _nameCtrl.text,
           bio: _bioCtrl.text,
           socialLinks: socialLinks,
-          accountType: ref
-              .read(editProfileViewModelProvider)
-              .value
-              ?.effectiveAccountType,
         );
     if (!mounted) return;
 
@@ -169,8 +169,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
               .setBool('privacy_show_account_type', _showBadge!);
         } catch (_) {
           if (!mounted) return;
-          _showSnack(S.of(context).editProfileCreatorBadgeSaveFailed,
-              isError: true);
+          _showSnack(
+            S.of(context).editProfileCreatorBadgeSaveFailed,
+            isError: true,
+          );
           return;
         }
         if (!mounted) return;
@@ -212,7 +214,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
 
         // Navegar para o feed (novo usuário completa onboarding → feed)
         if (mounted) {
-          context.go('/home');
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
         }
       } catch (e) {
         // Log silencioso: perfil principal já foi salvo
@@ -226,27 +232,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   Widget _creatorBadgeSwitch(S s) {
     final settings = ref.watch(settingsViewModelProvider).value;
     final value = _showBadge ?? settings?.privacyShowAccountType ?? true;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: SwitchListTile(
-        key: const ValueKey('creator_badge_switch'),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+    return GroupedRow(
+      key: const ValueKey('creator_badge_switch'),
+      icon: LucideIcons.sparkles,
+      title: s.editProfileCreatorBadgeTitle,
+      subtitle: s.editProfileCreatorBadgeHint,
+      trailing: Switch.adaptive(
         value: value,
-        onChanged:
-            settings == null ? null : (v) => setState(() => _showBadge = v),
-        title: Text(
-          s.editProfileCreatorBadgeTitle,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: context.colors.textPrimary,
-          ),
-        ),
-        subtitle: Text(
-          s.editProfileCreatorBadgeHint,
-          style: TextStyle(fontSize: 12, color: context.colors.textSecondary),
-        ),
-        activeThumbColor: AppColors.braweBlue,
+        activeTrackColor: context.colors.accentPrimary,
+        onChanged: settings == null
+            ? null
+            : (v) => setState(() => _showBadge = v),
       ),
     );
   }
@@ -266,7 +262,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
             Expanded(child: Text(msg)),
           ],
         ),
-        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        backgroundColor: isError
+            ? context.colors.danger
+            : context.colors.success,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 3),
@@ -364,8 +362,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
   }
 
   Widget _buildBody(EditProfileState state, S s, bool isDark) {
+    final type = state.profile?.accountType ?? AccountType.consumer;
+    final (typeName, _, typeIcon) = accountTypeInfo(s, type);
+    final kyc = ref.watch(kycStatusProvider).value;
+    final (kycLabel, kycColor) = kycStateLabel(
+      context,
+      kyc?.identity ?? 'none',
+    );
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Form(
         key: _formKey,
         child: Column(
@@ -375,122 +381,203 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
             const SizedBox(height: 20),
             if (state.error != null)
               _ErrorBanner(message: state.error!.label(s)),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // ── perfil ──────────────────────────────────
+                      GroupedSection(
+                        caption: s.editProfileSectionInfo,
+                        indent: 16,
+                        children: [
+                          GroupedField(
+                            label: s.editProfileFieldName,
+                            child: _CompactTextField(
+                              controller: _nameCtrl,
+                              hint: s.editProfileFieldName,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? s.editProfileFieldNameRequired
+                                  : null,
+                            ),
+                          ),
+                          GroupedField(
+                            label: s.editProfileUsernameLabel,
+                            child: _UsernameField(
+                              controller: _usernameCtrl,
+                              state: state,
+                              onChanged: (val) {
+                                _usernameDebounce?.cancel();
+                                _usernameDebounce = Timer(
+                                  const Duration(milliseconds: 600),
+                                  () {
+                                    if (val.length >= 3) {
+                                      ref
+                                          .read(
+                                            editProfileViewModelProvider
+                                                .notifier,
+                                          )
+                                          .checkUsername(val.trim());
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          GroupedField(
+                            label: s.editProfileFieldBio,
+                            child: _CompactTextField(
+                              controller: _bioCtrl,
+                              hint: s.editProfileFieldBioHint,
+                              maxLines: 4,
+                              maxLength: 160,
+                            ),
+                          ),
+                        ],
+                      ),
 
-            // Seção Informações
-            _SectionCard(
-              icon: LucideIcons.user,
-              title: s.editProfileSectionInfo,
-              children: [
-                _FieldRow(
-                  icon: LucideIcons.atSign,
-                  label: s.editProfileUsernameLabel,
-                  child: _UsernameField(
-                    controller: _usernameCtrl,
-                    state: state,
-                    onChanged: (val) {
-                      _usernameDebounce?.cancel();
-                      _usernameDebounce = Timer(
-                        const Duration(milliseconds: 600),
-                        () {
-                          if (val.length >= 3) {
-                            ref
-                                .read(editProfileViewModelProvider.notifier)
-                                .checkUsername(val.trim());
-                          }
-                        },
-                      );
-                    },
+                      // ── conta ───────────────────────────────────
+                      GroupedSection(
+                        caption: s.settingsAccount,
+                        children: [
+                          GroupedRow(
+                            icon: typeIcon,
+                            title: s.acctTitle,
+                            value: typeName,
+                            onTap: () => context.push('/account/type'),
+                          ),
+                          GroupedRow(
+                            icon: LucideIcons.badgeCheck,
+                            title: s.kycTitle,
+                            value: kycLabel,
+                            valueColor: kycColor,
+                            onTap: () => context.push('/account/verify'),
+                          ),
+                          if (type == AccountType.creator)
+                            GroupedRow(
+                              icon: LucideIcons.layoutDashboard,
+                              title: s.editProfileCreatorPanel,
+                              onTap: () => context.push('/creator/dashboard'),
+                            ),
+                          if (type == AccountType.musician)
+                            GroupedRow(
+                              icon: LucideIcons.mic,
+                              title: s.editProfileArtistPage,
+                              onTap: () => context.push('/artist-profile'),
+                            ),
+                          if (type == AccountType.business)
+                            GroupedRow(
+                              icon: LucideIcons.building2,
+                              title: s.editProfileBusinessPage,
+                              onTap: () => context.push('/business-profile'),
+                            ),
+                          if (type == AccountType.creator)
+                            _creatorBadgeSwitch(s),
+                        ],
+                      ),
+
+                      // ── redes ───────────────────────────────────
+                      GroupedSection(
+                        caption: s.editProfileSectionSocial,
+                        children: [
+                          _SocialField(
+                            icon: LucideIcons.camera,
+                            label: 'Instagram',
+                            controller: _instaCtrl,
+                            hint: s.editProfileSocialUserHint,
+                          ),
+                          _SocialField(
+                            icon: LucideIcons.atSign,
+                            label: 'X',
+                            controller: _twitterCtrl,
+                            hint: s.editProfileSocialUserHint,
+                          ),
+                          _SocialField(
+                            icon: LucideIcons.music2,
+                            label: 'TikTok',
+                            controller: _tiktokCtrl,
+                            hint: s.editProfileSocialUserHint,
+                          ),
+                          _SocialField(
+                            icon: LucideIcons.circlePlay,
+                            label: 'YouTube',
+                            controller: _ytCtrl,
+                            hint: s.editProfileSocialChannelHint,
+                          ),
+                          _SocialField(
+                            icon: LucideIcons.globe,
+                            label: s.editProfileWebsite,
+                            controller: _siteCtrl,
+                            hint: s.editProfileSocialUrlHint,
+                            url: true,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                _RowDivider(),
-                _FieldRow(
-                  icon: LucideIcons.type,
-                  label: s.editProfileFieldName,
-                  child: _CompactTextField(
-                    controller: _nameCtrl,
-                    hint: s.editProfileFieldName,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? s.editProfileFieldNameRequired
-                        : null,
-                  ),
-                ),
-                _RowDivider(),
-                _FieldRow(
-                  icon: LucideIcons.alignLeft,
-                  label: s.editProfileFieldBio,
-                  child: _CompactTextField(
-                    controller: _bioCtrl,
-                    hint: s.editProfileFieldBioHint,
-                    maxLines: 3,
-                    maxLength: 160,
-                  ),
-                ),
-              ],
+              ),
             ),
-
-            const SizedBox(height: 12),
-
-            // Seção Tipo de Conta
-            _AccountTypeCard(accountType: state.effectiveAccountType),
-
-            if (state.effectiveAccountType == AccountType.creator) ...[
-              const SizedBox(height: 12),
-              _creatorBadgeSwitch(s),
-            ],
-
-            const SizedBox(height: 12),
-
-            // Seção Links Sociais
-            _SectionCard(
-              icon: LucideIcons.link,
-              title: s.editProfileSectionSocial,
-              children: [
-                _SocialRow(
-                  icon: LucideIcons.globe,
-                  color: const Color(0xFFE1306C),
-                  label: 'Instagram',
-                  controller: _instaCtrl,
-                  hint: s.editProfileSocialUserHint,
-                ),
-                _RowDivider(),
-                _SocialRow(
-                  icon: LucideIcons.globe,
-                  color: const Color(0xFF1DA1F2),
-                  label: 'X / Twitter',
-                  controller: _twitterCtrl,
-                  hint: s.editProfileSocialUserHint,
-                ),
-                _RowDivider(),
-                _SocialRow(
-                  icon: LucideIcons.music2,
-                  color: const Color(0xFF010101),
-                  label: 'TikTok',
-                  controller: _tiktokCtrl,
-                  hint: s.editProfileSocialUserHint,
-                ),
-                _RowDivider(),
-                _SocialRow(
-                  icon: LucideIcons.globe,
-                  color: const Color(0xFFFF0000),
-                  label: 'YouTube',
-                  controller: _ytCtrl,
-                  hint: s.editProfileSocialChannelHint,
-                ),
-                _RowDivider(),
-                _SocialRow(
-                  icon: LucideIcons.globe,
-                  color: AppColors.braweBlue,
-                  label: 'Website',
-                  controller: _siteCtrl,
-                  hint: s.editProfileSocialUrlHint,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 24),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Rede social: ícone discreto, nome à esquerda e o @ / link à direita (como digitado, sem maiúscula).
+class _SocialField extends StatelessWidget {
+  const _SocialField({
+    required this.icon,
+    required this.label,
+    required this.controller,
+    required this.hint,
+    this.url = false,
+  });
+  final IconData icon;
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+  final bool url;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: colors.textSecondary),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: 88,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              keyboardType: url ? TextInputType.url : TextInputType.text,
+              textCapitalization: TextCapitalization.none,
+              autocorrect: false,
+              style: TextStyle(color: colors.textPrimary, fontSize: 15),
+              decoration: groupedInput(context, hint: hint).copyWith(
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -564,7 +651,7 @@ class _HeroMediaEditor extends ConsumerWidget {
               color: context.colors.divider,
               child: bannerUrl != null && bannerUrl.isNotEmpty
                   ? CachedNetworkImage(
-                    memCacheWidth: context.decodeScreenPx,
+                      memCacheWidth: context.decodeScreenPx,
                       imageUrl: bannerUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
@@ -669,7 +756,7 @@ class _HeroMediaEditor extends ConsumerWidget {
                         )
                       : (avatarUrl != null && avatarUrl.isNotEmpty
                             ? CachedNetworkImage(
-                              memCacheWidth: context.decodePx(88),
+                                memCacheWidth: context.decodePx(88),
                                 imageUrl: avatarUrl,
                                 fit: BoxFit.cover,
                                 width: 88,
@@ -699,359 +786,6 @@ class _HeroMediaEditor extends ConsumerWidget {
                 onTap: () => _pickAvatar(context, ref),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// ACCOUNT TYPE CARD
-// ══════════════════════════════════════════════════════════
-//
-// UX Decision: o tipo de conta é uma IDENTIDADE, não uma configuração.
-// Por isso fica no EditProfile (próximo ao nome/bio) como indicador de
-// status, não em Settings (que é para preferências técnicas).
-//
-// Consumer → incentivo de upgrade com CTA
-// Creator / Musician / Business → badge de conquista com descrição
-
-class _AccountTypeCard extends StatelessWidget {
-  final AccountType accountType;
-  const _AccountTypeCard({required this.accountType});
-
-  String? _routeFor(AccountType type) {
-    switch (type) {
-      case AccountType.musician:
-        return '/artist-profile';
-      case AccountType.business:
-        return '/business-profile';
-      case AccountType.creator:
-        return '/creator/dashboard';
-      case AccountType.consumer:
-        return '/creator/intro';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final config = _accountConfig(accountType, s);
-    final route = _routeFor(accountType);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Label da seção
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                Icon(LucideIcons.shieldCheck, size: 13, color: config.color),
-                const SizedBox(width: 6),
-                Text(
-                  'CONTA'.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: context.colors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Card
-          GestureDetector(
-            onTap: route != null ? () => context.push(route) : null,
-            child: Container(
-              decoration: BoxDecoration(
-                color: config.color.withValues(alpha: isDark ? 0.12 : 0.07),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: config.color.withValues(alpha: isDark ? 0.3 : 0.2),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    // Ícone com fundo
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: config.color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(config.icon, size: 20, color: config.color),
-                    ),
-                    const SizedBox(width: 12),
-                    // Textos
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                config.title,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.colors.textPrimary,
-                                ),
-                              ),
-                              if (accountType != AccountType.consumer) ...[
-                                const SizedBox(width: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: config.color.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'Ativo',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: config.color,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            config.subtitle,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: context.colors.textSecondary,
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Chevron para todos — consumer=upgrade, outros=editar perfil
-                    Icon(
-                      LucideIcons.chevronRight,
-                      size: 18,
-                      color: config.color,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  _AccountTypeConfig _accountConfig(AccountType type, S s) {
-    switch (type) {
-      case AccountType.creator:
-        return _AccountTypeConfig(
-          icon: LucideIcons.award,
-          color: AppColors.braweBlue,
-          title: s.creatorProgramTitle,
-          subtitle: 'Lives, monetização e ferramentas de criador.',
-        );
-      case AccountType.musician:
-        return _AccountTypeConfig(
-          icon: LucideIcons.music,
-          color: const Color(0xFFEC4899), // pink
-          title: 'Artista · Brawe Sounds',
-          subtitle: 'Perfil musical, distribuição e royalties.',
-        );
-      case AccountType.business:
-        return _AccountTypeConfig(
-          icon: LucideIcons.briefcase,
-          color: const Color(0xFF3B82F6), // azul
-          title: 'Business',
-          subtitle: 'Ferramentas para marcas e empresas.',
-        );
-      case AccountType.consumer:
-        return _AccountTypeConfig(
-          icon: LucideIcons.user,
-          color: const Color(0xFF6B7280), // cinza
-          title: 'Conta básica',
-          subtitle:
-              'Faça upgrade para o Creator Network e comece a transmitir ao vivo.',
-        );
-    }
-  }
-}
-
-class _AccountTypeConfig {
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-
-  const _AccountTypeConfig({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-  });
-}
-
-// ══════════════════════════════════════════════════════════
-// SECTION CARD
-// ══════════════════════════════════════════════════════════
-
-class _SectionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final List<Widget> children;
-
-  const _SectionCard({
-    required this.icon,
-    required this.title,
-    required this.children,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                Icon(icon, size: 13, color: AppColors.braweBlue),
-                const SizedBox(width: 6),
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: context.colors.textTertiary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.07)
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
-            ),
-            child: Column(children: children),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FieldRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Widget child;
-
-  const _FieldRow({
-    required this.icon,
-    required this.label,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Icon(icon, size: 16, color: context.colors.textTertiary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: context.colors.textTertiary,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                child,
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SocialRow extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final TextEditingController controller;
-  final String hint;
-
-  const _SocialRow({
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.controller,
-    required this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 15, color: color),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _CompactTextField(
-              controller: controller,
-              hint: hint,
-              prefixText: label == 'Website' ? null : '$label · ',
-            ),
-          ),
         ],
       ),
     );
@@ -1107,7 +841,7 @@ class _UsernameField extends StatelessWidget {
             child: Icon(
               LucideIcons.checkCircle,
               size: 16,
-              color: Colors.green.shade500,
+              color: context.colors.success,
             ),
           )
         else if (state.usernameAvailable == false)
@@ -1116,7 +850,7 @@ class _UsernameField extends StatelessWidget {
             child: Icon(
               LucideIcons.xCircle,
               size: 16,
-              color: Colors.red.shade400,
+              color: context.colors.danger,
             ),
           ),
       ],
@@ -1129,7 +863,6 @@ class _CompactTextField extends StatelessWidget {
   final String hint;
   final int maxLines;
   final int? maxLength;
-  final String? prefixText;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
@@ -1139,7 +872,6 @@ class _CompactTextField extends StatelessWidget {
     required this.hint,
     this.maxLines = 1,
     this.maxLength,
-    this.prefixText,
     this.validator,
     this.onChanged,
     this.inputFormatters,
@@ -1148,6 +880,10 @@ class _CompactTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      // maiúscula automática só em texto livre (nome, bio); @usuário e links ficam como digitados
+      textCapitalization: inputFormatters == null
+          ? TextCapitalization.sentences
+          : TextCapitalization.none,
       controller: controller,
       maxLines: maxLines,
       maxLength: maxLength,
@@ -1161,12 +897,6 @@ class _CompactTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: hint,
-        prefixText: prefixText,
-        prefixStyle: TextStyle(
-          fontSize: 14,
-          color: context.colors.textTertiary,
-          fontWeight: FontWeight.w500,
-        ),
         hintStyle: TextStyle(
           fontSize: 15,
           color: context.colors.textTertiary.withValues(alpha: 0.5),
@@ -1180,17 +910,6 @@ class _CompactTextField extends StatelessWidget {
         errorBorder: InputBorder.none,
         errorStyle: const TextStyle(fontSize: 11),
       ),
-    );
-  }
-}
-
-class _RowDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 42,
-      color: context.colors.divider.withValues(alpha: 0.5),
     );
   }
 }

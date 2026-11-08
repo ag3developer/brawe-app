@@ -13,6 +13,7 @@ import '../../../core/network/media_headers.dart';
 import '../../../data/repositories/ads_repository.dart';
 import '../../../domain/models/ad_models.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/ui/verified_badge.dart';
 import 'ad_actions.dart';
 
 class SponsoredTile extends ConsumerStatefulWidget {
@@ -58,7 +59,7 @@ class _SponsoredTileState extends ConsumerState<SponsoredTile> {
       child: SizedBox(
         width: widget.width,
         child: GestureDetector(
-          onTap: () => openAdCta(context, ref, ad),
+          onTap: () => openAdMedia(context, ref, ad),
           onLongPress: () => showAdMenu(context, ref, ad),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -126,15 +127,26 @@ class _SponsoredTileState extends ConsumerState<SponsoredTile> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        adv?.displayName ?? '',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              adv?.displayName ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          if (adv?.isVerified == true)
+                            const Padding(
+                              padding: EdgeInsets.only(left: 3),
+                              child: VerifiedBadge(size: 12),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Container(
@@ -146,7 +158,7 @@ class _SponsoredTileState extends ConsumerState<SponsoredTile> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          adCtaLabel(context, ad),
+                          adCtaLabel(context, ref, ad),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

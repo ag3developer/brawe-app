@@ -85,6 +85,14 @@ class AdSlotLoader extends ChangeNotifier {
         if (a < _ads.length) out.add(AdSlot<T>(_ads[a++]));
       }
     }
+    // Lista curta (ou fim da lista): se sobraram pelo menos 3 itens depois do último anúncio,
+    // o próximo entra no fim — senão quem tem poucos vídeos nunca veria anúncio.
+    if (items.length % every >= 3) {
+      while (a < _ads.length && (skip?.call(_ads[a]) ?? false)) {
+        a++;
+      }
+      if (a < _ads.length) out.add(AdSlot<T>(_ads[a]));
+    }
     return out;
   }
 }

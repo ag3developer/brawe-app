@@ -154,6 +154,7 @@ class _AdminCreatorApplicationDetailScreenState
               Text(s.adminCreatorSectionNotes, style: _labelStyle(context)),
               const SizedBox(height: 6),
               TextField(
+                textCapitalization: TextCapitalization.sentences,
                 controller: _notes,
                 minLines: 3, maxLines: 6,
                 style: TextStyle(color: context.colors.textPrimary),

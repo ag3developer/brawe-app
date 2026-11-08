@@ -1,13 +1,12 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/profile_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -16,7 +15,7 @@ import '../../core/themes/brawe_colors.dart';
 //  • Nome da empresa / marca
 //  • Setor de atuação (seletor)
 //  • País + cidade
-//  • CNPJ / Tax ID (opcional)
+//  • Dados fiscais / CNPJ (fluxo de verificação separado)
 //  • Links: site, LinkedIn, WhatsApp Business, Instagram
 //  • Idioma de operação
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +33,6 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   final _companyCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
-  final _cnpjCtrl = TextEditingController();
   final _websiteCtrl = TextEditingController();
   final _linkedinCtrl = TextEditingController();
   final _whatsappCtrl = TextEditingController();
@@ -46,18 +44,18 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   bool _saving = false;
 
   static const _countries = [
-    ('BR', '🇧🇷 Brasil'),
-    ('PT', '🇵🇹 Portugal'),
-    ('US', '🇺🇸 Estados Unidos'),
-    ('AR', '🇦🇷 Argentina'),
-    ('MX', '🇲🇽 México'),
-    ('CO', '🇨🇴 Colômbia'),
-    ('CL', '🇨🇱 Chile'),
-    ('ES', '🇪🇸 Espanha'),
-    ('DE', '🇩🇪 Alemanha'),
-    ('GB', '🇬🇧 Reino Unido'),
-    ('AO', '🇦🇴 Angola'),
-    ('MZ', '🇲🇿 Moçambique'),
+    ('BR', '🇧🇷'),
+    ('PT', '🇵🇹'),
+    ('US', '🇺🇸'),
+    ('AR', '🇦🇷'),
+    ('MX', '🇲🇽'),
+    ('CO', '🇨🇴'),
+    ('CL', '🇨🇱'),
+    ('ES', '🇪🇸'),
+    ('DE', '🇩🇪'),
+    ('GB', '🇬🇧'),
+    ('AO', '🇦🇴'),
+    ('MZ', '🇲🇿'),
   ];
 
   static const _languages = [
@@ -69,22 +67,22 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   ];
 
   static const _sectors = [
-    'Moda & Beleza',
-    'Tecnologia',
-    'Alimentação & Bebidas',
-    'Entretenimento',
-    'Educação',
-    'Saúde & Bem-estar',
-    'Finanças & Investimentos',
-    'Varejo & E-commerce',
-    'Música & Áudio',
+    'FashionBeauty',
+    'Tech',
+    'Food',
+    'Entertainment',
+    'Education',
+    'Health',
+    'Finance',
+    'Retail',
+    'Music',
     'Games',
-    'Esportes',
-    'Imóveis',
-    'Agro & Sustentabilidade',
-    'Serviços Profissionais',
-    'ONG & Social',
-    'Outro',
+    'Sports',
+    'RealEstate',
+    'Agro',
+    'Services',
+    'Ngo',
+    'Other',
   ];
 
   @override
@@ -99,7 +97,6 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
     _companyCtrl.dispose();
     _bioCtrl.dispose();
     _cityCtrl.dispose();
-    _cnpjCtrl.dispose();
     _websiteCtrl.dispose();
     _linkedinCtrl.dispose();
     _whatsappCtrl.dispose();
@@ -139,16 +136,19 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(
+              Icon(
                 LucideIcons.checkCircle,
-                color: Colors.white,
+                color: context.colors.textOnAccent,
                 size: 16,
               ),
               const SizedBox(width: 8),
-              Text(S.of(context).editProfileSaved),
+              Text(
+                S.of(context).editProfileSaved,
+                style: TextStyle(color: context.colors.textOnAccent),
+              ),
             ],
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: context.colors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -160,8 +160,11 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro ao salvar: $e'),
-          backgroundColor: Colors.red.shade700,
+          content: Text(
+            S.of(context).bizProfSaveError(e.toString()),
+            style: TextStyle(color: context.colors.textOnAccent),
+          ),
+          backgroundColor: context.colors.danger,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -176,8 +179,8 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const accent = AppColors.braweBlue;
+    final c = context.colors;
+    final accent = c.accentPrimary;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -199,7 +202,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.briefcase, size: 18, color: accent),
+            Icon(LucideIcons.briefcase, size: 18, color: accent),
             const SizedBox(width: 8),
             Text(
               'Business',
@@ -219,6 +222,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
               onPressed: _saving ? null : _onSave,
               style: FilledButton.styleFrom(
                 backgroundColor: accent,
+                foregroundColor: c.textOnAccent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -229,12 +233,12 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 minimumSize: Size.zero,
               ),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: c.textOnAccent,
                       ),
                     )
                   : Text(
@@ -260,32 +264,30 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
             // Identidade da empresa
             _section(
               context: context,
-              isDark: isDark,
-              icon: LucideIcons.building2,
-              color: accent,
-              title: 'Empresa / Marca',
+              title: s.bizProfSectionCompany,
               children: [
                 _field(
                   context: context,
                   icon: LucideIcons.building,
-                  label: 'Nome da empresa ou marca',
+                  label: s.bizProfCompanyName,
                   child: _textField(
                     context: context,
                     ctrl: _companyCtrl,
-                    hint: 'Ex: Minha Empresa S.A.',
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Obrigatório' : null,
+                    hint: s.bizProfCompanyNameHint,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? s.bizProfRequired
+                        : null,
                   ),
                 ),
                 _divider(context),
                 _field(
                   context: context,
                   icon: LucideIcons.alignLeft,
-                  label: 'Sobre a empresa',
+                  label: s.bizProfAbout,
                   child: _textField(
                     context: context,
                     ctrl: _bioCtrl,
-                    hint: 'Descreva sua empresa ou marca...',
+                    hint: s.bizProfAboutHint,
                     maxLines: 3,
                     maxLength: 300,
                   ),
@@ -294,21 +296,20 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 _field(
                   context: context,
                   icon: LucideIcons.layoutGrid,
-                  label: 'Setor de atuação',
+                  label: s.bizProfSector,
                   child: _dropdown<String>(
                     context: context,
-                    isDark: isDark,
                     value: _selectedSector,
-                    hint: 'Selecione um setor',
+                    hint: s.bizProfSectorHint,
                     items: _sectors
                         .map(
-                          (s) => DropdownMenuItem(
-                            value: s,
+                          (k) => DropdownMenuItem(
+                            value: k,
                             child: Text(
-                              s,
+                              _sectorName(s, k),
                               style: TextStyle(
                                 fontSize: 15,
-                                color: context.colors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -319,34 +320,30 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
             // Localização
             _section(
               context: context,
-              isDark: isDark,
-              icon: LucideIcons.mapPin,
-              color: accent,
-              title: 'Localização',
+              title: s.bizProfSectionLocation,
               children: [
                 _field(
                   context: context,
                   icon: LucideIcons.globe,
-                  label: 'País de operação',
+                  label: s.bizProfCountry,
                   child: _dropdown<String>(
                     context: context,
-                    isDark: isDark,
                     value: _selectedCountry,
-                    hint: 'Selecione o país',
+                    hint: s.bizProfCountryHint,
                     items: _countries
                         .map(
-                          (c) => DropdownMenuItem(
-                            value: c.$1,
+                          (e) => DropdownMenuItem(
+                            value: e.$1,
                             child: Text(
-                              c.$2,
+                              '${e.$2} ${_countryName(s, e.$1)}',
                               style: TextStyle(
                                 fontSize: 15,
-                                color: context.colors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -358,24 +355,23 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 _divider(context),
                 _field(
                   context: context,
-                  icon: LucideIcons.building,
-                  label: 'Cidade',
+                  icon: LucideIcons.building2,
+                  label: s.bizProfCity,
                   child: _textField(
                     context: context,
                     ctrl: _cityCtrl,
-                    hint: 'Cidade sede',
+                    hint: s.bizProfCityHint,
                   ),
                 ),
                 _divider(context),
                 _field(
                   context: context,
                   icon: LucideIcons.languages,
-                  label: 'Idioma principal',
+                  label: s.bizProfLanguage,
                   child: _dropdown<String>(
                     context: context,
-                    isDark: isDark,
                     value: _selectedLanguage,
-                    hint: 'Idioma de operação',
+                    hint: s.bizProfLanguageHint,
                     items: _languages
                         .map(
                           (l) => DropdownMenuItem(
@@ -384,7 +380,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                               l.$2,
                               style: TextStyle(
                                 fontSize: 15,
-                                color: context.colors.textPrimary,
+                                color: c.textPrimary,
                               ),
                             ),
                           ),
@@ -393,45 +389,82 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                     onChanged: (v) => setState(() => _selectedLanguage = v),
                   ),
                 ),
-                _divider(context),
-                _field(
-                  context: context,
-                  icon: LucideIcons.hash,
-                  label: 'CNPJ / Tax ID (opcional)',
-                  child: _textField(
-                    context: context,
-                    ctrl: _cnpjCtrl,
-                    hint: '00.000.000/0001-00',
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9./\-]')),
-                    ],
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Dados fiscais (CNPJ fica no fluxo de verificação)
+            _section(
+              context: context,
+              title: s.bizProfSectionFiscal,
+              children: [
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => context.push('/account/verify/business'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.fileText,
+                          size: 16,
+                          color: c.textSecondary,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.bizProfFiscalRow,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: c.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                s.bizProfFiscalRowHint,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: c.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 16,
+                          color: c.textSecondary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
             // Links
             _section(
               context: context,
-              isDark: isDark,
-              icon: LucideIcons.link,
-              color: accent,
-              title: 'Links',
+              title: s.bizProfSectionLinks,
               children: [
                 _platformRow(
                   context: context,
                   icon: LucideIcons.globe,
-                  color: accent,
-                  label: 'Website',
+                  label: s.bizProfWebsite,
                   ctrl: _websiteCtrl,
-                  hint: 'https://suaempresa.com',
+                  hint: s.bizProfWebsiteHint,
                 ),
                 _divider(context),
                 _platformRow(
                   context: context,
-                  icon: LucideIcons.globe,
-                  color: const Color(0xFF0A66C2),
+                  icon: LucideIcons.link,
                   label: 'LinkedIn',
                   ctrl: _linkedinCtrl,
                   hint: 'linkedin.com/company/...',
@@ -439,20 +472,18 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 _divider(context),
                 _platformRow(
                   context: context,
-                  icon: LucideIcons.globe,
-                  color: const Color(0xFFE1306C),
+                  icon: LucideIcons.atSign,
                   label: 'Instagram',
                   ctrl: _instagramCtrl,
-                  hint: '@suaempresa',
+                  hint: s.bizProfInstagramHint,
                 ),
                 _divider(context),
                 _platformRow(
                   context: context,
                   icon: LucideIcons.messageCircle,
-                  color: const Color(0xFF25D366),
                   label: 'WhatsApp Business',
                   ctrl: _whatsappCtrl,
-                  hint: '+55 11 99999-9999',
+                  hint: s.bizProfWhatsappHint,
                 ),
               ],
             ),
@@ -464,14 +495,84 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   }
 
   // Helpers
+
+  String _countryName(S s, String code) {
+    switch (code) {
+      case 'BR':
+        return s.bizProfCountryBR;
+      case 'PT':
+        return s.bizProfCountryPT;
+      case 'US':
+        return s.bizProfCountryUS;
+      case 'AR':
+        return s.bizProfCountryAR;
+      case 'MX':
+        return s.bizProfCountryMX;
+      case 'CO':
+        return s.bizProfCountryCO;
+      case 'CL':
+        return s.bizProfCountryCL;
+      case 'ES':
+        return s.bizProfCountryES;
+      case 'DE':
+        return s.bizProfCountryDE;
+      case 'GB':
+        return s.bizProfCountryGB;
+      case 'AO':
+        return s.bizProfCountryAO;
+      case 'MZ':
+        return s.bizProfCountryMZ;
+      default:
+        return code;
+    }
+  }
+
+  String _sectorName(S s, String key) {
+    switch (key) {
+      case 'FashionBeauty':
+        return s.bizProfSectorFashionBeauty;
+      case 'Tech':
+        return s.bizProfSectorTech;
+      case 'Food':
+        return s.bizProfSectorFood;
+      case 'Entertainment':
+        return s.bizProfSectorEntertainment;
+      case 'Education':
+        return s.bizProfSectorEducation;
+      case 'Health':
+        return s.bizProfSectorHealth;
+      case 'Finance':
+        return s.bizProfSectorFinance;
+      case 'Retail':
+        return s.bizProfSectorRetail;
+      case 'Music':
+        return s.bizProfSectorMusic;
+      case 'Games':
+        return s.bizProfSectorGames;
+      case 'Sports':
+        return s.bizProfSectorSports;
+      case 'RealEstate':
+        return s.bizProfSectorRealEstate;
+      case 'Agro':
+        return s.bizProfSectorAgro;
+      case 'Services':
+        return s.bizProfSectorServices;
+      case 'Ngo':
+        return s.bizProfSectorNgo;
+      case 'Other':
+        return s.bizProfSectorOther;
+      default:
+        return key;
+    }
+  }
+
   Widget _section({
     required BuildContext context,
-    required bool isDark,
-    required IconData icon,
-    required Color color,
     required String title,
+    String? subtitle,
     required List<Widget> children,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -479,33 +580,31 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Row(
-              children: [
-                Icon(icon, size: 13, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  title.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: context.colors.textTertiary,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: title.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                      color: c.textTertiary,
+                    ),
                   ),
-                ),
-              ],
+                  if (subtitle != null)
+                    TextSpan(
+                      text: '  ·  $subtitle',
+                      style: TextStyle(fontSize: 11, color: c.textTertiary),
+                    ),
+                ],
+              ),
             ),
           ),
           Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
+              color: c.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.07)
-                    : Colors.black.withValues(alpha: 0.06),
-              ),
             ),
             child: Column(children: children),
           ),
@@ -520,6 +619,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
     required String label,
     required Widget child,
   }) {
+    final c = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -527,7 +627,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: Icon(icon, size: 16, color: context.colors.textTertiary),
+            child: Icon(icon, size: 16, color: c.textSecondary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -537,10 +637,9 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: context.colors.textTertiary,
-                    letterSpacing: 0.2,
+                    color: c.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -556,7 +655,6 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   Widget _platformRow({
     required BuildContext context,
     required IconData icon,
-    required Color color,
     required String label,
     required TextEditingController ctrl,
     required String hint,
@@ -565,15 +663,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 15, color: color),
-          ),
+          Icon(icon, size: 16, color: context.colors.textSecondary),
           const SizedBox(width: 12),
           Expanded(
             child: _textField(
@@ -596,30 +686,29 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
     int? maxLength,
     String? prefixText,
     String? Function(String?)? validator,
-    List<TextInputFormatter>? inputFormatters,
   }) {
+    final c = context.colors;
     return TextFormField(
+      // maiúscula automática só em texto livre; links ficam como digitados
+      textCapitalization: prefixText == null
+          ? TextCapitalization.sentences
+          : TextCapitalization.none,
       controller: ctrl,
       maxLines: maxLines,
       maxLength: maxLength,
       validator: validator,
-      inputFormatters: inputFormatters,
-      style: TextStyle(
-        fontSize: 15,
-        color: context.colors.textPrimary,
-        fontWeight: FontWeight.w400,
-      ),
+      style: TextStyle(fontSize: 15, color: c.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         prefixText: prefixText,
         prefixStyle: TextStyle(
           fontSize: 14,
-          color: context.colors.textTertiary,
+          color: c.textTertiary,
           fontWeight: FontWeight.w500,
         ),
         hintStyle: TextStyle(
           fontSize: 15,
-          color: context.colors.textTertiary.withValues(alpha: 0.5),
+          color: c.textTertiary.withValues(alpha: 0.6),
         ),
         counterText: '',
         isDense: true,
@@ -635,23 +724,23 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
 
   Widget _dropdown<T>({
     required BuildContext context,
-    required bool isDark,
     required T? value,
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
     required String hint,
   }) {
+    final c = context.colors;
     return DropdownButtonFormField<T>(
       value: value,
       items: items,
       onChanged: onChanged,
-      dropdownColor: context.colors.surfaceElevated,
-      style: TextStyle(fontSize: 15, color: context.colors.textPrimary),
+      dropdownColor: c.surfaceElevated,
+      style: TextStyle(fontSize: 15, color: c.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
           fontSize: 15,
-          color: context.colors.textTertiary.withValues(alpha: 0.5),
+          color: c.textTertiary.withValues(alpha: 0.6),
         ),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -659,17 +748,10 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
       ),
-      icon: Icon(
-        LucideIcons.chevronDown,
-        size: 16,
-        color: context.colors.textTertiary,
-      ),
+      icon: Icon(LucideIcons.chevronDown, size: 16, color: c.textSecondary),
     );
   }
 
-  Widget _divider(BuildContext context) => Divider(
-    height: 1,
-    indent: 42,
-    color: context.colors.divider.withValues(alpha: 0.5),
-  );
+  Widget _divider(BuildContext context) =>
+      Divider(height: 1, indent: 42, color: context.colors.divider);
 }

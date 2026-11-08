@@ -2,6 +2,7 @@
 // (por que estou vendo isto · ocultar · ver menos do anunciante · denunciar).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -11,6 +12,7 @@ import '../../../data/repositories/ads_repository.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../domain/models/ad_models.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/view_models/follow_view_model.dart';
 
 /// Anúncios ocultados nesta sessão (por campanha ou por anunciante) — somem de todos os feeds na hora.
 final hiddenAdsProvider = NotifierProvider<HiddenAds, Set<String>>(
@@ -33,71 +35,146 @@ class HiddenAds extends Notifier<Set<String>> {
       (ad.advertiser != null && state.contains('owner:${ad.advertiser!.id}'));
 }
 
-/// Texto do botão de ação já resolvido (impulsionar → ver perfil / assistir à live).
-String adCtaLabel(BuildContext context, FeedAd ad) {
-  final s = S.of(context);
-  if (ad.isBoost && !ad.isContact) {
-    return ad.isLive ? s.adsWatchLive : s.adsSeeProfile;
-  }
-  return ad.ctaLabel.isNotEmpty ? ad.ctaLabel : s.adsSeeProfile;
+/// O que o botão do anúncio faz — segue o objetivo de quem impulsionou, para quem vê ir ao lugar certo:
+/// seguidores → Seguir (segue na hora) · visualizações → Assistir vídeo / Ver publicação (abre o post) ·
+/// visitas ao perfil → Ver perfil · mensagens → chat ou WhatsApp · live → Assistir à live.
+/// Anúncio da marca: o botão que a marca escolheu (link, loja, perfil, chat, WhatsApp).
+enum AdAction {
+  follow,
+  watch,
+  openPost,
+  profile,
+  live,
+  dm,
+  whatsapp,
+  store,
+  link,
 }
 
-/// Toque no botão de ação: registra o evento certo e abre o destino.
+AdAction adActionFor(FeedAd ad) {
+  if (ad.isLive) return AdAction.live;
+  if (ad.ctaType == 'dm') return AdAction.dm;
+  if (ad.ctaType == 'whatsapp' && ad.ctaUrl != null) return AdAction.whatsapp;
+  if (ad.isBoost) {
+    final hasPost = ad.contentType == 'post' && (ad.contentId ?? '').isNotEmpty;
+    return switch (ad.objective) {
+      'followers' => AdAction.follow,
+      'views' when hasPost => ad.isVideo ? AdAction.watch : AdAction.openPost,
+      _ => AdAction.profile,
+    };
+  }
+  if (ad.ctaType == 'store') return AdAction.store;
+  if (ad.ctaType == 'link' && ad.ctaUrl != null) return AdAction.link;
+  return AdAction.profile;
+}
+
+/// Já segue o anunciante? (mesmo estado do botão Seguir do perfil)
+bool adFollowing(WidgetRef ref, FeedAd ad) {
+  final id = ad.advertiser?.id;
+  if (id == null || adActionFor(ad) != AdAction.follow) return false;
+  return ref.watch(followViewModelProvider(id)).value ?? false;
+}
+
+/// Texto do botão. [playing]: o vídeo já está tocando em tela cheia (Para você) — então "Ver publicação".
+String adCtaLabel(
+  BuildContext context,
+  WidgetRef ref,
+  FeedAd ad, {
+  bool playing = false,
+}) {
+  final s = S.of(context);
+  final custom = ad.ctaLabel.trim();
+  return switch (adActionFor(ad)) {
+    AdAction.follow => adFollowing(ref, ad) ? s.adsFollowingNow : s.adsFollow,
+    AdAction.watch => playing ? s.adsSeePost : s.adsWatchVideo,
+    AdAction.openPost => s.adsSeePost,
+    AdAction.live => s.adsWatchLive,
+    AdAction.dm => ad.isBoost || custom.isEmpty ? s.adsCtaMessage : custom,
+    AdAction.whatsapp =>
+      ad.isBoost || custom.isEmpty ? s.adsCtaWhatsapp : custom,
+    AdAction.profile => ad.isBoost || custom.isEmpty ? s.adsSeeProfile : custom,
+    AdAction.store || AdAction.link => custom.isEmpty ? s.adsLearnMore : custom,
+  };
+}
+
+/// Toque no botão de ação: registra o evento certo e leva ao destino certo.
 Future<void> openAdCta(BuildContext context, WidgetRef ref, FeedAd ad) async {
   final repo = ref.read(adsRepositoryProvider);
   final router = GoRouter.of(context);
   final adv = ad.advertiser;
-  if ((ad.isBoost && !ad.isContact) ||
-      ad.ctaType == 'profile' ||
-      ad.ctaType == 'store') {
-    repo.track(ad.token, 'click');
-    if (ad.isLive && ad.contentId != null) {
+  switch (adActionFor(ad)) {
+    case AdAction.follow:
+      if (adv == null) return;
+      if (adFollowing(ref, ad)) {
+        // já segue: o botão leva ao perfil
+        repo.track(ad.token, 'profile_visit');
+        router.push('/profile/${adv.id}');
+        return;
+      }
+      HapticFeedback.mediumImpact();
+      repo.track(ad.token, 'follow');
+      await ref.read(followViewModelProvider(adv.id).notifier).toggleFollow();
+    case AdAction.watch || AdAction.openPost:
+      repo.track(ad.token, 'click');
+      router.push('/post/${ad.contentId}');
+    case AdAction.live:
+      repo.track(ad.token, 'click');
       router.push('/live/${ad.contentId}');
-    } else if (adv != null) {
-      router.push(
-        '/profile/${adv.username}${ad.ctaType == 'store' ? '?section=shop' : ''}',
+    case AdAction.profile:
+      if (adv == null) return;
+      repo.track(ad.token, 'profile_visit');
+      router.push('/profile/${adv.id}');
+    case AdAction.store:
+      if (adv == null) return;
+      repo.track(ad.token, 'click');
+      router.push('/profile/${adv.id}?section=shop');
+    case AdAction.whatsapp:
+      repo.track(ad.token, 'contact_whatsapp');
+      await launchUrl(
+        Uri.parse(ad.ctaUrl!),
+        mode: LaunchMode.externalApplication,
       );
-    }
-    return;
-  }
-  if (ad.ctaType == 'whatsapp' && ad.ctaUrl != null) {
-    repo.track(ad.token, 'contact_whatsapp');
-    await launchUrl(
-      Uri.parse(ad.ctaUrl!),
-      mode: LaunchMode.externalApplication,
-    );
-    return;
-  }
-  if (ad.ctaType == 'dm' && adv != null) {
-    repo.track(ad.token, 'contact_dm');
-    try {
-      final conv = await ref
-          .read(chatRepositoryProvider)
-          .startConversation(participantId: adv.id);
-      router.push(
-        '/chat/$conv',
-        extra: {
-          'participantName': adv.displayName,
-          'participantAvatarUrl': adv.avatarUrl,
-          'participantId': adv.id,
-        },
+    case AdAction.dm:
+      if (adv == null) return;
+      repo.track(ad.token, 'contact_dm');
+      try {
+        final conv = await ref
+            .read(chatRepositoryProvider)
+            .startConversation(participantId: adv.id);
+        router.push(
+          '/chat/$conv',
+          extra: {
+            'participantName': adv.displayName,
+            'participantAvatarUrl': adv.avatarUrl,
+            'participantId': adv.id,
+          },
+        );
+      } catch (_) {}
+    case AdAction.link:
+      repo.track(ad.token, 'click');
+      await launchUrl(
+        Uri.parse(ad.ctaUrl!),
+        mode: LaunchMode.externalApplication,
       );
-    } catch (_) {}
-    return;
   }
-  if (ad.ctaUrl != null) {
-    repo.track(ad.token, 'click');
-    await launchUrl(
-      Uri.parse(ad.ctaUrl!),
-      mode: LaunchMode.externalApplication,
-    );
+}
+
+/// Toque na foto/vídeo do anúncio (não no botão): nunca segue sem querer — abre o post, senão o botão.
+Future<void> openAdMedia(BuildContext context, WidgetRef ref, FeedAd ad) async {
+  if (adActionFor(ad) != AdAction.follow) return openAdCta(context, ref, ad);
+  ref.read(adsRepositoryProvider).track(ad.token, 'click');
+  final router = GoRouter.of(context);
+  if (ad.contentType == 'post' && (ad.contentId ?? '').isNotEmpty) {
+    router.push('/post/${ad.contentId}');
+  } else if (ad.advertiser != null) {
+    router.push('/profile/${ad.advertiser!.id}');
   }
 }
 
 void openAdvertiserProfile(BuildContext context, WidgetRef ref, FeedAd ad) {
   if (ad.advertiser == null) return;
   ref.read(adsRepositoryProvider).track(ad.token, 'profile_visit');
-  GoRouter.of(context).push('/profile/${ad.advertiser!.username}');
+  GoRouter.of(context).push('/profile/${ad.advertiser!.id}');
 }
 
 /// Menu ⋯ do anúncio. [onHidden] tira o anúncio da tela (ex.: passa para o próximo item).

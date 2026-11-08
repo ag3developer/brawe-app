@@ -142,6 +142,7 @@ class _BoostFlowScreenState extends ConsumerState<BoostFlowScreen> {
           imageUrl: video ? (p.coverUrl ?? p.imageUrl) : p.imageUrl,
           text: p.content,
           isVideo: video,
+          verified: p.author.isVerified,
         );
       } catch (_) {}
     }
@@ -773,6 +774,7 @@ class _BoostFlowScreenState extends ConsumerState<BoostFlowScreen> {
             ),
             const SizedBox(height: 10),
             TextField(
+              textCapitalization: TextCapitalization.sentences,
               controller: _waMessage,
               maxLength: 300,
               minLines: 2,

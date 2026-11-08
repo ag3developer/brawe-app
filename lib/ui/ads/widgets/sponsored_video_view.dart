@@ -228,66 +228,72 @@ class _SponsoredVideoViewState extends ConsumerState<SponsoredVideoView> {
           ),
 
           // anunciante, rótulo, texto e botão de ação
-          Positioned(
-            left: 16,
-            right: 76,
-            bottom: 18 + bottomPad,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (adv != null)
-                  GestureDetector(
-                    onTap: () => openAdvertiserProfile(context, ref, ad),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            adv.displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        if (adv.isVerified) const VerifiedBadge(size: 14),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 2),
-                SponsoredLabel(remaining: ad.isVideo ? _remaining : null),
-                if (text.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => setState(() => _expanded = !_expanded),
-                    child: Text(
-                      text,
-                      maxLines: _expanded ? 8 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-              ],
-            ),
-          ),
+          // uma coluna só: nome → Patrocinado → texto → botão (o botão nunca cobre o texto)
           Positioned(
             left: 16,
             right: 16,
             bottom: bottomPad + 6,
-            child: _CtaButton(
-              label: adCtaLabel(context, ad),
-              strong: _ctaStrong,
-              onTap: () => openAdCta(context, ref, ad),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  // deixa livre a coluna de ícones da direita
+                  padding: const EdgeInsets.only(right: 60),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (adv != null)
+                        GestureDetector(
+                          onTap: () => openAdvertiserProfile(context, ref, ad),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  adv.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              if (adv.isVerified) const VerifiedBadge(size: 14),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 2),
+                      SponsoredLabel(remaining: ad.isVideo ? _remaining : null),
+                      if (text.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => setState(() => _expanded = !_expanded),
+                          child: Text(
+                            text,
+                            maxLines: _expanded ? 8 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _CtaButton(
+                  label: adCtaLabel(context, ref, ad, playing: true),
+                  strong: _ctaStrong,
+                  onTap: () => openAdCta(context, ref, ad),
+                ),
+              ],
             ),
           ),
 

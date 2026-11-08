@@ -50,7 +50,7 @@ class _SponsoredPostCardState extends ConsumerState<SponsoredPostCard> {
     if (visible) {
       if (!_impression) {
         _seen = Timer(const Duration(seconds: 1), () {
-          _impression = true;
+          if (mounted) setState(() => _impression = true);
           ref.read(adsRepositoryProvider).track(ad.token, 'impression');
         });
       }
@@ -133,7 +133,7 @@ class _SponsoredPostCardState extends ConsumerState<SponsoredPostCard> {
           children: [
             // cabeçalho: avatar, nome, "Patrocinado" e ⋯
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   GestureDetector(
@@ -193,7 +193,7 @@ class _SponsoredPostCardState extends ConsumerState<SponsoredPostCard> {
             ),
             if (text.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                 child: Text(
                   text.join('\n'),
                   maxLines: 4,
@@ -205,53 +205,44 @@ class _SponsoredPostCardState extends ConsumerState<SponsoredPostCard> {
                   ),
                 ),
               ),
-            // mídia + faixa de ação colada
+            // mídia + faixa de ação colada — mesma margem e cantos do post comum
             Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: mediaMax),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () => openAdCta(context, ref, ad),
-                      child: AspectRatio(
-                        aspectRatio: _ready && _ctrl != null
-                            ? _ctrl!.value.aspectRatio.clamp(0.8, 1.91)
-                            : 4 / 5,
-                        child: _media(colors),
-                      ),
-                    ),
-                    Material(
-                      color: colors.surfaceHighest,
-                      child: InkWell(
-                        onTap: () => openAdCta(context, ref, ad),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  adCtaLabel(context, ad),
-                                  style: TextStyle(
-                                    color: colors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                LucideIcons.chevronRight,
-                                size: 18,
-                                color: colors.textPrimary,
-                              ),
-                            ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () => openAdMedia(context, ref, ad),
+                          child: AspectRatio(
+                            aspectRatio: _ready && _ctrl != null
+                                ? _ctrl!.value.aspectRatio.clamp(0.8, 1.91)
+                                : 4 / 5,
+                            child: _media(colors),
                           ),
                         ),
-                      ),
+                        _CtaStrip(
+                          label: adCtaLabel(context, ref, ad),
+                          // azul depois de 1 s na tela (destaque sem assustar); "Seguindo" volta ao neutro
+                          strong: _impression && !adFollowing(ref, ad),
+                          done: adFollowing(ref, ad),
+                          icon: switch (adActionFor(ad)) {
+                            AdAction.follow => LucideIcons.userPlus,
+                            AdAction.watch => LucideIcons.play,
+                            AdAction.dm => LucideIcons.messageCircle,
+                            AdAction.whatsapp => LucideIcons.phone,
+                            AdAction.link ||
+                            AdAction.store => LucideIcons.externalLink,
+                            _ => LucideIcons.chevronRight,
+                          },
+                          onTap: () => openAdCta(context, ref, ad),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -340,6 +331,58 @@ class _SponsoredPostCardState extends ConsumerState<SponsoredPostCard> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Faixa do botão colada embaixo da mídia. Começa discreta e fica azul (destaque) quando o anúncio já foi visto.
+class _CtaStrip extends StatelessWidget {
+  const _CtaStrip({
+    required this.label,
+    required this.strong,
+    required this.done,
+    required this.icon,
+    required this.onTap,
+  });
+  final String label;
+  final bool strong;
+  final bool done;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final fg = strong ? colors.textOnAccent : colors.textPrimary;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOut,
+      color: strong ? colors.accentPrimary : colors.surfaceHighest,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 450),
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    child: Text(label),
+                  ),
+                ),
+                Icon(done ? LucideIcons.check : icon, size: 18, color: fg),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

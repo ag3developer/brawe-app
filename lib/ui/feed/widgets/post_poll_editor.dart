@@ -192,6 +192,7 @@ class _PostPollEditorState extends State<PostPollEditor> {
             child: TextField(
               key: ValueKey('poll-option-$i'),
               controller: _controllers[i],
+              textCapitalization: TextCapitalization.sentences,
               focusNode: _nodes[i],
               maxLength: PollDraft.maxOptionLength,
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
