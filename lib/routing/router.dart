@@ -76,6 +76,7 @@ import '../ui/shop/pages/shop_payment_page.dart';
 import '../ui/onboarding/onboarding_gate.dart';
 import '../ui/onboarding/onboarding_screen.dart';
 import '../data/services/profile_service.dart';
+import '../ui/account/about_you_screen.dart';
 import '../ui/account/account_type_screen.dart';
 import '../ui/account/verify_account_screen.dart';
 import '../ui/account/verify_business_screen.dart';
@@ -329,6 +330,7 @@ GoRouter router(Ref ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Conta: tipo de conta e verificação (tela cheia).
       GoRoute(path: '/account/type', builder: (context, state) => const AccountTypeScreen()),
+      GoRoute(path: '/account/about', builder: (context, state) => const AboutYouScreen()),
       GoRoute(path: '/account/verify', builder: (context, state) => const VerifyAccountScreen()),
       GoRoute(path: '/account/verify/identity', builder: (context, state) => const VerifyIdentityScreen()),
       GoRoute(path: '/account/verify/business', builder: (context, state) => const VerifyBusinessScreen()),

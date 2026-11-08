@@ -11454,4 +11454,56 @@ class SEs extends S {
   @override
   String get kycBizCardHint =>
       'Descarga el comprobante de inscripción en el sitio de la Receita Federal (PDF) o envía una foto nítida.';
+
+  @override
+  String onbInterestsPickMin(String n) {
+    return 'Elige al menos $n';
+  }
+
+  @override
+  String get onbAboutTitle => 'Sobre ti';
+
+  @override
+  String get onbAboutSubtitle =>
+      'Nos ayuda a mostrarte personas, lives y ofertas de tu región.';
+
+  @override
+  String get onbGender => 'Género';
+
+  @override
+  String get onbGenderFemale => 'Femenino';
+
+  @override
+  String get onbGenderMale => 'Masculino';
+
+  @override
+  String get onbGenderOther => 'Otro';
+
+  @override
+  String get onbGenderUndisclosed => 'Prefiero no decirlo';
+
+  @override
+  String get onbWhereYouLive => 'Dónde vives';
+
+  @override
+  String get onbCityHint => 'Tu ciudad';
+
+  @override
+  String get onbAboutPrivacy =>
+      'No mostramos tu género ni tu ciudad en el perfil. Solo los usamos para personalizar lo que ves.';
+
+  @override
+  String get editProfileAbout => 'Sobre ti';
+
+  @override
+  String get boostGenderAll => 'Todos';
+
+  @override
+  String get boostGenderFemale => 'Mujeres';
+
+  @override
+  String get boostGenderMale => 'Hombres';
+
+  @override
+  String get adsRepGenderOther => 'Otro / no indicado';
 }

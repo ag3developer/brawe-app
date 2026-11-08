@@ -105,6 +105,7 @@ class AdFullReport {
         for (final x in _l(j['by_hour'])) _i(x['hour']): _i(x['impressions']),
       },
       age = _counts(_m(j['audience'])['age']),
+      genders = _counts(_m(j['audience'])['gender']),
       cities = _counts(_m(j['audience'])['city']),
       states = _counts(_m(j['audience'])['state']),
       regions = _counts(_m(j['audience'])['region']),
@@ -141,7 +142,12 @@ class AdFullReport {
   final List<AdDay> byDay;
   final List<AdBreakdown> byPlacement, byPlatform;
   final Map<int, int> byHour;
-  final List<MapEntry<String, int>> age, cities, states, regions, interests;
+  final List<MapEntry<String, int>> age,
+      genders,
+      cities,
+      states,
+      regions,
+      interests;
   final int coinsPaid, coinsUsed, coinsRefunded;
   final List<AdBudgetChange> changes;
   final Map<String, dynamic>? live;
@@ -335,6 +341,7 @@ class _AdReportViewState extends State<AdReportView> {
                 value: _audience,
                 items: {
                   'age': s.adsRepAge,
+                  'gender': s.onbGender,
                   'city': s.adsRepCities,
                   'state': s.adsRepStates,
                   'region': s.adsRepRegions,
@@ -524,6 +531,7 @@ class _AdReportViewState extends State<AdReportView> {
   Widget _audienceList(BuildContext context, AnalyticsFmt fmt) {
     final s = S.of(context);
     final list = switch (_audience) {
+      'gender' => r.genders,
       'city' => r.cities,
       'state' => r.states,
       'region' => r.regions,
@@ -564,6 +572,10 @@ class _AdReportViewState extends State<AdReportView> {
 }
 
 String _bucket(S s, String k) => switch (k) {
+  'female' => s.boostGenderFemale,
+  'male' => s.boostGenderMale,
+  'other' => s.adsRepGenderOther,
+  'unknown' => s.adsRepUnknown,
   'outros' => s.adsRepOthers,
   'desconhecida' || 'desconhecido' => s.adsRepUnknown,
   _ =>

@@ -4924,5 +4924,21 @@
   "kycBizDistrict": "District",
   "kycBizCity": "City",
   "kycBizCard": "CNPJ card",
-  "kycBizCardHint": "Download the registration proof from the Federal Revenue website (PDF) or send a clear photo."
+  "kycBizCardHint": "Download the registration proof from the Federal Revenue website (PDF) or send a clear photo.",
+  "onbInterestsPickMin": "Pick at least {n}",
+  "onbAboutTitle": "About you",
+  "onbAboutSubtitle": "Helps us show people, lives and offers from your area.",
+  "onbGender": "Gender",
+  "onbGenderFemale": "Female",
+  "onbGenderMale": "Male",
+  "onbGenderOther": "Other",
+  "onbGenderUndisclosed": "Prefer not to say",
+  "onbWhereYouLive": "Where you live",
+  "onbCityHint": "Your city",
+  "onbAboutPrivacy": "We don't show your gender or city on your profile. We only use them to personalize what you see.",
+  "editProfileAbout": "About you",
+  "boostGenderAll": "Everyone",
+  "boostGenderFemale": "Women",
+  "boostGenderMale": "Men",
+  "adsRepGenderOther": "Other / not said"
 }

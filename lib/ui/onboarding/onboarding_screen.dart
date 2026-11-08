@@ -10,16 +10,20 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../data/repositories/ads_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/auth_state_provider.dart';
 import '../../data/repositories/social_repository.dart';
 import '../../data/services/profile_service.dart';
 import '../../data/services/social_service.dart';
-import '../../domain/models/creator_network.dart' show ContentNiche, ContentNicheX;
+import '../../domain/models/creator_network.dart'
+    show ContentNiche, ContentNicheX;
+import '../../domain/models/ad_models.dart';
 import '../../domain/models/user.dart';
 import '../creator/utils/creator_l10n.dart';
 import '../../gen/l10n/app_localizations.dart';
 import '../core/themes/brawe_colors.dart';
+import '../core/widgets/country_picker.dart';
 import '../core/ui/verified_badge.dart';
 import '../edit_profile/widgets/image_position_editor.dart';
 import 'onboarding_gate.dart';
@@ -42,7 +46,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-enum _Step { birth, username, photo, bio, interests, follow }
+enum _Step { birth, about, username, photo, bio, interests, follow }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   List<_Step>? _steps;
@@ -69,10 +73,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     setState(() {
       _steps = [
         if (n == null || n.birthDate) _Step.birth,
+        if (n == null || n.gender || n.location) _Step.about,
         if (n == null || n.username) _Step.username,
         if (noAvatar || (n?.avatar ?? false)) _Step.photo,
         if (isNew && (n?.bio ?? true)) _Step.bio,
-        if (isNew && (n?.interests ?? true)) _Step.interests,
+        if (n?.interests ?? true) _Step.interests,
         if (isNew || (n?.followingCount ?? 0) < 3) _Step.follow,
       ];
       if (_steps!.isEmpty) _steps = [_Step.follow];
@@ -117,8 +122,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         transitionBuilder: (child, a) => FadeTransition(
           opacity: a,
           child: SlideTransition(
-            position: Tween(begin: const Offset(0.08, 0), end: Offset.zero)
-                .animate(a),
+            position: Tween(
+              begin: const Offset(0.08, 0),
+              end: Offset.zero,
+            ).animate(a),
             child: child,
           ),
         ),
@@ -126,9 +133,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           key: ValueKey(step),
           child: switch (step) {
             _Step.birth => _BirthStep(
-                onDone: _next,
-                onUnderage: () => setState(() => _underage = true),
-              ),
+              onDone: _next,
+              onUnderage: () => setState(() => _underage = true),
+            ),
+            _Step.about => AboutYouStep(onDone: _next),
             _Step.username => _UsernameStep(onDone: _next),
             _Step.photo => _PhotoStep(onDone: _next),
             _Step.bio => _BioStep(onDone: _next),
@@ -186,8 +194,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       const Spacer(),
                     IconButton(
                       tooltip: s.onbSignOut,
-                      icon: Icon(LucideIcons.logOut,
-                          size: 18, color: colors.textTertiary),
+                      icon: Icon(
+                        LucideIcons.logOut,
+                        size: 18,
+                        color: colors.textTertiary,
+                      ),
                       onPressed: _signOut,
                     ),
                   ],
@@ -292,10 +303,7 @@ class _StepScaffold extends StatelessWidget {
                   ),
           ),
           if (onSkip != null)
-            TextButton(
-              onPressed: busy ? null : onSkip,
-              child: Text(s.onbSkip),
-            )
+            TextButton(onPressed: busy ? null : onSkip, child: Text(s.onbSkip))
           else
             const SizedBox(height: 48),
         ],
@@ -538,8 +546,11 @@ class _UsernameStepState extends ConsumerState<_UsernameStep> {
     } on DioException catch (e) {
       if (!mounted) return;
       final d = e.response?.data;
-      setState(() => _problem = (d is Map ? d['detail']?.toString() : null) ??
-          S.of(context).onbError);
+      setState(
+        () => _problem =
+            (d is Map ? d['detail']?.toString() : null) ??
+            S.of(context).onbError,
+      );
     } catch (_) {
       if (mounted) _toast(context, S.of(context).onbError);
     } finally {
@@ -611,14 +622,14 @@ class _UsernameStepState extends ConsumerState<_UsernameStep> {
             _checking
                 ? s.onbUsernameChecking
                 : (ok
-                    ? s.onbUsernameAvailable
-                    : (_problem ?? s.onbUsernameRules)),
+                      ? s.onbUsernameAvailable
+                      : (_problem ?? s.onbUsernameRules)),
             style: TextStyle(
               color: ok
                   ? const Color(0xFF10B981)
                   : (_checked && _problem != null
-                      ? const Color(0xFFEF4444)
-                      : colors.textTertiary),
+                        ? const Color(0xFFEF4444)
+                        : colors.textTertiary),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -713,9 +724,12 @@ class _PhotoStepState extends ConsumerState<_PhotoStep> {
               child: _busy
                   ? const Center(child: CircularProgressIndicator())
                   : has
-                      ? CachedNetworkImage(imageUrl: _url!, fit: BoxFit.cover)
-                      : Icon(LucideIcons.userRound,
-                          size: 64, color: colors.textTertiary),
+                  ? CachedNetworkImage(imageUrl: _url!, fit: BoxFit.cover)
+                  : Icon(
+                      LucideIcons.userRound,
+                      size: 64,
+                      color: colors.textTertiary,
+                    ),
             ),
           ),
           const SizedBox(height: 22),
@@ -839,22 +853,20 @@ class _InterestsStepState extends ConsumerState<_InterestsStep> {
   final Set<ContentNiche> _picked = {};
   bool _busy = false;
 
+  static const _min = 3;
+
   Future<void> _save() async {
-    if (_picked.isEmpty) {
-      widget.onDone();
-      return;
-    }
+    if (_picked.length < _min) return;
     setState(() => _busy = true);
     try {
       await ref
           .read(profileServiceProvider)
           .updateInterests(_picked.map((e) => e.apiValue).toList());
+      if (mounted) widget.onDone();
     } catch (_) {
-      // Opcional: não prende a pessoa aqui.
-    }
-    if (mounted) {
-      setState(() => _busy = false);
-      widget.onDone();
+      if (mounted) _toast(context, S.of(context).onbError);
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -866,12 +878,11 @@ class _InterestsStepState extends ConsumerState<_InterestsStep> {
       icon: LucideIcons.heart,
       title: s.onbInterestsTitle,
       subtitle: s.onbInterestsSubtitle,
-      primaryLabel: _picked.isEmpty
-          ? s.onbContinue
+      primaryLabel: _picked.length < _min
+          ? s.onbInterestsPickMin('$_min')
           : '${s.onbContinue} · ${s.onbInterestsCount(_picked.length)}',
       busy: _busy,
-      onPrimary: _save,
-      onSkip: widget.onDone,
+      onPrimary: _picked.length < _min ? null : _save,
       child: SingleChildScrollView(
         child: Wrap(
           spacing: 8,
@@ -885,9 +896,11 @@ class _InterestsStepState extends ConsumerState<_InterestsStep> {
                 colors: colors,
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  setState(() => _picked.contains(n)
-                      ? _picked.remove(n)
-                      : _picked.add(n));
+                  setState(
+                    () => _picked.contains(n)
+                        ? _picked.remove(n)
+                        : _picked.add(n),
+                  );
                 },
               ),
           ],
@@ -1079,20 +1092,20 @@ class _FollowStepState extends ConsumerState<_FollowStep> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : followed
-                          ? OutlinedButton(
-                              onPressed: null,
-                              style: OutlinedButton.styleFrom(
-                                shape: const StadiumBorder(),
-                              ),
-                              child: Text(s.onbFollowing),
-                            )
-                          : FilledButton(
-                              onPressed: () => _follow(id),
-                              style: FilledButton.styleFrom(
-                                shape: const StadiumBorder(),
-                              ),
-                              child: Text(s.onbFollow),
-                            ),
+                      ? OutlinedButton(
+                          onPressed: null,
+                          style: OutlinedButton.styleFrom(
+                            shape: const StadiumBorder(),
+                          ),
+                          child: Text(s.onbFollowing),
+                        )
+                      : FilledButton(
+                          onPressed: () => _follow(id),
+                          style: FilledButton.styleFrom(
+                            shape: const StadiumBorder(),
+                          ),
+                          child: Text(s.onbFollow),
+                        ),
                 );
               },
             ),
@@ -1109,6 +1122,299 @@ class _FollowStepState extends ConsumerState<_FollowStep> {
       onPrimary: widget.onDone,
       onSkip: _followed.isEmpty ? widget.onDone : null,
       child: list,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sobre você: gênero, país e cidade (ajudam a mostrar conteúdo e anúncios da sua região)
+
+class AboutYouStep extends ConsumerStatefulWidget {
+  const AboutYouStep({
+    super.key,
+    required this.onDone,
+    this.initialGender,
+    this.initialCountry,
+  });
+  final VoidCallback onDone;
+  final String? initialGender;
+  final String? initialCountry;
+
+  @override
+  ConsumerState<AboutYouStep> createState() => _AboutStepState();
+}
+
+class _AboutStepState extends ConsumerState<AboutYouStep> {
+  late String? _gender = widget.initialGender;
+  late String _country = (widget.initialCountry ?? '').isNotEmpty
+      ? widget.initialCountry!.toUpperCase()
+      : _guessCountry();
+  AdCity? _city; // Brasil (IBGE)
+  final _cityText = TextEditingController(); // outros países
+  final _q = TextEditingController();
+  List<AdCity> _results = [];
+  Timer? _debounce;
+  bool _busy = false;
+
+  String _guessCountry() {
+    final c = WidgetsBinding.instance.platformDispatcher.locale.countryCode
+        ?.toUpperCase();
+    return (c != null && findCountryByCode(c) != null) ? c : 'BR';
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _cityText.dispose();
+    _q.dispose();
+    super.dispose();
+  }
+
+  bool get _isBr => _country == 'BR';
+  bool get _valid =>
+      _gender != null &&
+      (_isBr ? _city != null : _cityText.text.trim().length >= 2);
+
+  void _search(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () async {
+      if (v.trim().length < 2) {
+        if (mounted) setState(() => _results = []);
+        return;
+      }
+      try {
+        final r = await ref.read(adsRepositoryProvider).searchCities(v);
+        if (mounted && _q.text == v) setState(() => _results = r);
+      } catch (_) {}
+    });
+  }
+
+  Future<void> _pickCountry() async {
+    final s = S.of(context);
+    final c = await showCountryPicker(
+      context,
+      selectedCode: _country,
+      title: s.kycCountryChoose,
+      searchHint: s.kycCountrySearch,
+    );
+    if (c == null) return;
+    setState(() {
+      _country = c.code;
+      _city = null;
+      _results = [];
+      _q.clear();
+    });
+  }
+
+  Future<void> _save() async {
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(profileServiceProvider)
+          .updateAbout(
+            gender: _gender!,
+            country: _country,
+            cityId: _isBr ? _city!.id : null,
+            city: _isBr ? null : _cityText.text.trim(),
+          );
+      if (mounted) widget.onDone();
+    } catch (_) {
+      if (mounted) _toast(context, S.of(context).onbError);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final colors = context.colors;
+    final country = findCountryByCode(_country);
+    final genders = {
+      'female': s.onbGenderFemale,
+      'male': s.onbGenderMale,
+      'other': s.onbGenderOther,
+      'undisclosed': s.onbGenderUndisclosed,
+    };
+    return _StepScaffold(
+      icon: LucideIcons.userRound,
+      title: s.onbAboutTitle,
+      subtitle: s.onbAboutSubtitle,
+      primaryLabel: s.onbContinue,
+      busy: _busy,
+      onPrimary: _valid ? _save : null,
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              s.onbGender,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final e in genders.entries)
+                  ChoiceChip(
+                    label: Text(e.value),
+                    selected: _gender == e.key,
+                    showCheckmark: false,
+                    shape: const StadiumBorder(),
+                    onSelected: (_) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _gender = e.key);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Text(
+              s.onbWhereYouLive,
+              style: TextStyle(
+                color: colors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Material(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: _pickCountry,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        country?.flag ?? '🌎',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          country?.name ?? _country,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        LucideIcons.chevronDown,
+                        size: 18,
+                        color: colors.textTertiary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            if (_isBr && _city != null)
+              Material(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(14),
+                child: ListTile(
+                  leading: Icon(
+                    LucideIcons.mapPin,
+                    color: colors.accentPrimary,
+                  ),
+                  title: Text(
+                    _city!.label,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  trailing: TextButton(
+                    onPressed: () => setState(() => _city = null),
+                    child: Text(s.kycChangeFile),
+                  ),
+                ),
+              )
+            else
+              TextField(
+                controller: _isBr ? _q : _cityText,
+                textCapitalization: TextCapitalization.words,
+                onChanged: _isBr ? _search : (_) => setState(() {}),
+                decoration: InputDecoration(
+                  hintText: s.onbCityHint,
+                  prefixIcon: Icon(
+                    _isBr ? LucideIcons.search : LucideIcons.mapPin,
+                    size: 18,
+                  ),
+                  filled: true,
+                  fillColor: colors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            if (_isBr && _city == null && _results.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(top: 6),
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Column(
+                  children: [
+                    for (final c in _results.take(6))
+                      ListTile(
+                        dense: true,
+                        leading: Icon(
+                          LucideIcons.mapPin,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        title: Text(c.label),
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          setState(() {
+                            _city = c;
+                            _results = [];
+                            _q.clear();
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(LucideIcons.lock, size: 14, color: colors.textTertiary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    s.onbAboutPrivacy,
+                    style: TextStyle(
+                      color: colors.textTertiary,
+                      fontSize: 12.5,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

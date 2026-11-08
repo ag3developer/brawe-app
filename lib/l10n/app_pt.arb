@@ -6453,5 +6453,28 @@
   "kycBizDistrict": "Bairro",
   "kycBizCity": "Cidade",
   "kycBizCard": "Cartão CNPJ",
-  "kycBizCardHint": "Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida."
+  "kycBizCardHint": "Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida.",
+  "onbInterestsPickMin": "Escolha pelo menos {n}",
+  "onbAboutTitle": "Sobre você",
+  "onbAboutSubtitle": "Ajuda a mostrar pessoas, lives e ofertas da sua região.",
+  "onbGender": "Gênero",
+  "onbGenderFemale": "Feminino",
+  "onbGenderMale": "Masculino",
+  "onbGenderOther": "Outro",
+  "onbGenderUndisclosed": "Prefiro não dizer",
+  "onbWhereYouLive": "Onde você mora",
+  "onbCityHint": "Sua cidade",
+  "onbAboutPrivacy": "Não mostramos seu gênero nem sua cidade no perfil. Usamos só para personalizar o que você vê.",
+  "editProfileAbout": "Sobre você",
+  "@onbInterestsPickMin": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "boostGenderAll": "Todos",
+  "boostGenderFemale": "Mulheres",
+  "boostGenderMale": "Homens",
+  "adsRepGenderOther": "Outro / não disse"
 }

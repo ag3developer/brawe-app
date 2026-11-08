@@ -11403,4 +11403,56 @@ class SEn extends S {
   @override
   String get kycBizCardHint =>
       'Download the registration proof from the Federal Revenue website (PDF) or send a clear photo.';
+
+  @override
+  String onbInterestsPickMin(String n) {
+    return 'Pick at least $n';
+  }
+
+  @override
+  String get onbAboutTitle => 'About you';
+
+  @override
+  String get onbAboutSubtitle =>
+      'Helps us show people, lives and offers from your area.';
+
+  @override
+  String get onbGender => 'Gender';
+
+  @override
+  String get onbGenderFemale => 'Female';
+
+  @override
+  String get onbGenderMale => 'Male';
+
+  @override
+  String get onbGenderOther => 'Other';
+
+  @override
+  String get onbGenderUndisclosed => 'Prefer not to say';
+
+  @override
+  String get onbWhereYouLive => 'Where you live';
+
+  @override
+  String get onbCityHint => 'Your city';
+
+  @override
+  String get onbAboutPrivacy =>
+      'We don\'t show your gender or city on your profile. We only use them to personalize what you see.';
+
+  @override
+  String get editProfileAbout => 'About you';
+
+  @override
+  String get boostGenderAll => 'Everyone';
+
+  @override
+  String get boostGenderFemale => 'Women';
+
+  @override
+  String get boostGenderMale => 'Men';
+
+  @override
+  String get adsRepGenderOther => 'Other / not said';
 }

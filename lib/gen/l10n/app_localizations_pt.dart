@@ -11440,4 +11440,56 @@ class SPt extends S {
   @override
   String get kycBizCardHint =>
       'Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida.';
+
+  @override
+  String onbInterestsPickMin(String n) {
+    return 'Escolha pelo menos $n';
+  }
+
+  @override
+  String get onbAboutTitle => 'Sobre você';
+
+  @override
+  String get onbAboutSubtitle =>
+      'Ajuda a mostrar pessoas, lives e ofertas da sua região.';
+
+  @override
+  String get onbGender => 'Gênero';
+
+  @override
+  String get onbGenderFemale => 'Feminino';
+
+  @override
+  String get onbGenderMale => 'Masculino';
+
+  @override
+  String get onbGenderOther => 'Outro';
+
+  @override
+  String get onbGenderUndisclosed => 'Prefiro não dizer';
+
+  @override
+  String get onbWhereYouLive => 'Onde você mora';
+
+  @override
+  String get onbCityHint => 'Sua cidade';
+
+  @override
+  String get onbAboutPrivacy =>
+      'Não mostramos seu gênero nem sua cidade no perfil. Usamos só para personalizar o que você vê.';
+
+  @override
+  String get editProfileAbout => 'Sobre você';
+
+  @override
+  String get boostGenderAll => 'Todos';
+
+  @override
+  String get boostGenderFemale => 'Mulheres';
+
+  @override
+  String get boostGenderMale => 'Homens';
+
+  @override
+  String get adsRepGenderOther => 'Outro / não disse';
 }

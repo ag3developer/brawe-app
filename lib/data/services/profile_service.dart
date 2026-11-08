@@ -133,6 +133,16 @@ class ProfileService {
     await _dio.put('/profile/me', data: {'interests': interests});
   }
 
+  /// "Sobre você": gênero, país e cidade (Brasil: município do IBGE; outros países: nome da cidade).
+  Future<void> updateAbout({required String gender, required String country, String? cityId, String? city}) async {
+    await _dio.put('/profile/me', data: {
+      'gender': gender,
+      'country': country,
+      if (cityId != null) 'city_id': cityId,
+      if (city != null) 'city': city,
+    });
+  }
+
   /// Atualiza só a bio.
   Future<void> updateBio(String bio) async {
     await _dio.put('/profile/me', data: {'bio': bio});

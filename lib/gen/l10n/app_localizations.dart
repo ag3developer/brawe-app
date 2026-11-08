@@ -19976,6 +19976,102 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Baixe o comprovante de inscrição no site da Receita Federal (PDF) ou envie uma foto nítida.'**
   String get kycBizCardHint;
+
+  /// No description provided for @onbInterestsPickMin.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha pelo menos {n}'**
+  String onbInterestsPickMin(String n);
+
+  /// No description provided for @onbAboutTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre você'**
+  String get onbAboutTitle;
+
+  /// No description provided for @onbAboutSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuda a mostrar pessoas, lives e ofertas da sua região.'**
+  String get onbAboutSubtitle;
+
+  /// No description provided for @onbGender.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gênero'**
+  String get onbGender;
+
+  /// No description provided for @onbGenderFemale.
+  ///
+  /// In pt, this message translates to:
+  /// **'Feminino'**
+  String get onbGenderFemale;
+
+  /// No description provided for @onbGenderMale.
+  ///
+  /// In pt, this message translates to:
+  /// **'Masculino'**
+  String get onbGenderMale;
+
+  /// No description provided for @onbGenderOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro'**
+  String get onbGenderOther;
+
+  /// No description provided for @onbGenderUndisclosed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prefiro não dizer'**
+  String get onbGenderUndisclosed;
+
+  /// No description provided for @onbWhereYouLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Onde você mora'**
+  String get onbWhereYouLive;
+
+  /// No description provided for @onbCityHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua cidade'**
+  String get onbCityHint;
+
+  /// No description provided for @onbAboutPrivacy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não mostramos seu gênero nem sua cidade no perfil. Usamos só para personalizar o que você vê.'**
+  String get onbAboutPrivacy;
+
+  /// No description provided for @editProfileAbout.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sobre você'**
+  String get editProfileAbout;
+
+  /// No description provided for @boostGenderAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get boostGenderAll;
+
+  /// No description provided for @boostGenderFemale.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mulheres'**
+  String get boostGenderFemale;
+
+  /// No description provided for @boostGenderMale.
+  ///
+  /// In pt, this message translates to:
+  /// **'Homens'**
+  String get boostGenderMale;
+
+  /// No description provided for @adsRepGenderOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outro / não disse'**
+  String get adsRepGenderOther;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

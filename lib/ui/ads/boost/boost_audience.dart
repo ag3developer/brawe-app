@@ -35,6 +35,7 @@ class BoostAudience {
     this.radiusKm = 20,
     this.ageMin = 18,
     this.ageMax = 99,
+    this.gender = 'all',
     Set<String>? interests,
     this.exclude,
   }) : places = places ?? [],
@@ -49,6 +50,9 @@ class BoostAudience {
   int radiusKm;
   int ageMin;
   int ageMax;
+
+  /// all · female · male
+  String gender;
   Set<String> interests;
 
   /// exclusões feitas no site (o app não edita, só preserva)
@@ -92,6 +96,7 @@ class BoostAudience {
     'audience': 'all',
     'age_min': auto ? 18 : ageMin,
     'age_max': auto ? 99 : ageMax,
+    'gender': auto ? 'all' : gender,
     'location': location(),
     'interests': auto ? const <String>[] : interests.toList(),
   };
@@ -101,6 +106,7 @@ class BoostAudience {
     final loc = (t['location'] as Map?)?.cast<String, dynamic>() ?? const {};
     final ageMin = (t['age_min'] as num?)?.toInt() ?? 18;
     final ageMax = (t['age_max'] as num?)?.toInt() ?? 99;
+    final gender = (t['gender'] as String?) ?? 'all';
     final interests = ((t['interests'] as List?) ?? const [])
         .map((e) => e.toString())
         .toSet();
@@ -119,6 +125,7 @@ class BoostAudience {
         radiusKm: (loc['radius_km'] as num?)?.toInt() ?? 20,
         ageMin: ageMin,
         ageMax: ageMax,
+        gender: gender,
         interests: interests,
         exclude: exclude,
       );
@@ -148,6 +155,7 @@ class BoostAudience {
         places.first.id == 'BR';
     final isAuto =
         (mode == 'all' || onlyBrazil) &&
+        gender == 'all' &&
         ageMin == 18 &&
         ageMax == 99 &&
         interests.isEmpty &&
@@ -158,6 +166,7 @@ class BoostAudience {
       places: onlyBrazil ? [] : places,
       ageMin: ageMin,
       ageMax: ageMax,
+      gender: gender,
       interests: interests,
       exclude: exclude,
     );
@@ -279,6 +288,26 @@ class _BoostAudienceEditorState extends ConsumerState<BoostAudienceEditor> {
                       }),
                     ),
                     const SizedBox(height: 16),
+                    _Label(s.onbGender),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        for (final e in {
+                          'all': s.boostGenderAll,
+                          'female': s.boostGenderFemale,
+                          'male': s.boostGenderMale,
+                        }.entries)
+                          ChoiceChip(
+                            label: Text(e.value),
+                            selected: a.gender == e.key,
+                            showCheckmark: false,
+                            shape: const StadiumBorder(),
+                            onSelected: (_) => _set(() => a.gender = e.key),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
                     Row(
                       children: [
                         _Label(s.boostInterests),

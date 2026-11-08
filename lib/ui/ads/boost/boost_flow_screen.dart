@@ -52,6 +52,8 @@ String audienceSummary(BuildContext context, BoostAudience a) {
   return [
     where,
     age,
+    if (a.gender == 'female') s.boostGenderFemale,
+    if (a.gender == 'male') s.boostGenderMale,
     if (a.interests.isNotEmpty) a.interests.take(3).join(', '),
   ].join(' · ');
 }

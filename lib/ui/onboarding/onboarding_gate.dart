@@ -10,7 +10,15 @@ class OnboardingNeeds {
     required this.bio,
     required this.followingCount,
     this.interests = false,
+    this.gender = false,
+    this.location = false,
   });
+
+  /// Sem gênero (feminino, masculino, outro ou "prefiro não dizer").
+  final bool gender;
+
+  /// Sem país ou cidade.
+  final bool location;
 
   final bool birthDate;
   final bool username;
@@ -20,11 +28,12 @@ class OnboardingNeeds {
   final bool bio;
   final int followingCount;
 
-  /// Sem interesses escolhidos — passo opcional, só no cadastro inicial.
+  /// Sem interesses escolhidos (mínimo 3) — obrigatório para todos (alimenta o feed e os anúncios).
   final bool interests;
 
   /// Falta algo obrigatório → o app leva para /onboarding.
-  bool get blocking => birthDate || username || avatar;
+  bool get blocking =>
+      birthDate || username || avatar || gender || location || interests;
 
   /// Conta nova (sem foto) também recebe os passos opcionais (bio e seguir).
   bool get isNewAccount => avatar;
@@ -38,7 +47,9 @@ class OnboardingNeeds {
       avatar: s('avatar_url').isEmpty,
       bio: s('bio').isEmpty,
       followingCount: (p['following_count'] as num?)?.toInt() ?? 0,
-      interests: (p['interests'] as List?)?.isEmpty ?? true,
+      interests: ((p['interests'] as List?)?.length ?? 0) < 3,
+      gender: s('gender').isEmpty,
+      location: s('country').isEmpty || s('city').isEmpty,
     );
   }
 }
@@ -62,14 +73,17 @@ class OnboardingGate extends ValueNotifier<OnboardingNeeds?> {
     if (_userId != userId) value = null;
     _userId = userId;
     _loading = true;
-    loadProfile().then((p) {
-      if (_userId != userId) return;
-      value = OnboardingNeeds.fromProfile(p);
-    }).catchError((Object e) {
-      // Sem perfil (offline/erro): não trava o app — só a regra do avatar
-      // (que vem da sessão) continua valendo.
-      debugPrint('[ONBOARDING] perfil indisponível: $e');
-    }).whenComplete(() => _loading = false);
+    loadProfile()
+        .then((p) {
+          if (_userId != userId) return;
+          value = OnboardingNeeds.fromProfile(p);
+        })
+        .catchError((Object e) {
+          // Sem perfil (offline/erro): não trava o app — só a regra do avatar
+          // (que vem da sessão) continua valendo.
+          debugPrint('[ONBOARDING] perfil indisponível: $e');
+        })
+        .whenComplete(() => _loading = false);
   }
 
   /// Onboarding concluído: libera o app sem esperar recarregar o perfil.

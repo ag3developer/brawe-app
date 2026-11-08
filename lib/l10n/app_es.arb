@@ -4924,5 +4924,21 @@
   "kycBizDistrict": "Barrio",
   "kycBizCity": "Ciudad",
   "kycBizCard": "Tarjeta CNPJ",
-  "kycBizCardHint": "Descarga el comprobante de inscripción en el sitio de la Receita Federal (PDF) o envía una foto nítida."
+  "kycBizCardHint": "Descarga el comprobante de inscripción en el sitio de la Receita Federal (PDF) o envía una foto nítida.",
+  "onbInterestsPickMin": "Elige al menos {n}",
+  "onbAboutTitle": "Sobre ti",
+  "onbAboutSubtitle": "Nos ayuda a mostrarte personas, lives y ofertas de tu región.",
+  "onbGender": "Género",
+  "onbGenderFemale": "Femenino",
+  "onbGenderMale": "Masculino",
+  "onbGenderOther": "Otro",
+  "onbGenderUndisclosed": "Prefiero no decirlo",
+  "onbWhereYouLive": "Dónde vives",
+  "onbCityHint": "Tu ciudad",
+  "onbAboutPrivacy": "No mostramos tu género ni tu ciudad en el perfil. Solo los usamos para personalizar lo que ves.",
+  "editProfileAbout": "Sobre ti",
+  "boostGenderAll": "Todos",
+  "boostGenderFemale": "Mujeres",
+  "boostGenderMale": "Hombres",
+  "adsRepGenderOther": "Otro / no indicado"
 }

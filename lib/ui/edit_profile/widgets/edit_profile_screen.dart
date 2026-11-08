@@ -14,6 +14,7 @@ import '../../core/ui/grouped_list.dart';
 import '../../account/account_type_screen.dart' show accountTypeInfo;
 import '../../account/verify_account_screen.dart' show kycStateLabel;
 import '../../../data/repositories/kyc_repository.dart';
+import '../../account/about_you_screen.dart' show myAboutProvider;
 import '../../../domain/models/profile.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -440,6 +441,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                         ],
                       ),
 
+                      // ── sobre você (gênero, cidade) ─────────────
+                      GroupedSection(
+                        children: [
+                          GroupedRow(
+                            icon: LucideIcons.userRound,
+                            title: s.editProfileAbout,
+                            value: _aboutSummary(s),
+                            onTap: () => context.push('/account/about'),
+                          ),
+                        ],
+                      ),
+
                       // ── conta ───────────────────────────────────
                       GroupedSection(
                         caption: s.settingsAccount,
@@ -527,6 +540,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
         ),
       ),
     );
+  }
+}
+
+extension on _EditProfileScreenState {
+  /// "Feminino · Curitiba" (vazio enquanto carrega).
+  String _aboutSummary(S s) {
+    final me = ref.watch(myAboutProvider).value;
+    if (me == null) return '';
+    final g = switch (me['gender']) {
+      'female' => s.onbGenderFemale,
+      'male' => s.onbGenderMale,
+      'other' => s.onbGenderOther,
+      'undisclosed' => s.onbGenderUndisclosed,
+      _ => '',
+    };
+    return [g, '${me['city'] ?? ''}'].where((e) => e.isNotEmpty).join(' · ');
   }
 }
 
