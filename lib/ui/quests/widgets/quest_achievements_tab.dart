@@ -1,5 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -119,10 +122,10 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final items = [
-      (s.questsStatQuests, stats.totalQuestsCompleted, 'assets/images/quests/stat_trophy.png', const Color(0xFF7C5CFF)),
-      (s.questsStatXp, stats.totalXpEarned, 'assets/images/quests/stat_xp.png', const Color(0xFF22D3EE)),
-      (s.questsStatCoins, stats.totalCoinsEarned, 'assets/images/quests/stat_coin.png', const Color(0xFFFFB800)),
-      (s.questsStatBestStreak, stats.longestStreak, 'assets/images/quests/stat_streak.png', const Color(0xFFFF5E3A)),
+      (s.questsStatQuests, stats.totalQuestsCompleted, 'assets/images/quests/stat_trophy.png', QuestTones.violet),
+      (s.questsStatXp, stats.totalXpEarned, 'assets/images/quests/stat_xp.png', QuestTones.cyan),
+      (s.questsStatCoins, stats.totalCoinsEarned, 'assets/images/quests/stat_coin.png', QuestTones.gold),
+      (s.questsStatBestStreak, stats.longestStreak, 'assets/images/quests/stat_streak.png', QuestTones.ember),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +400,7 @@ class _BadgeSheet extends StatelessWidget {
             const SizedBox(height: 16),
             if (badge.unlocked)
               _Pill(
-                icon: Icons.verified_rounded,
+                icon: LucideIcons.badgeCheck,
                 color: colors.success,
                 text: badge.earnedAt != null
                     ? s.questsBadgeEarnedOn(
@@ -486,26 +489,26 @@ class QuestAwardTile extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [color, Color.lerp(color, Colors.black, 0.25)!],
+          colors: [color, Color.lerp(color, QuestTones.shade, 0.25)!],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: active
             ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 14)]
             : null,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6), width: 2),
+        border: Border.all(color: QuestTones.onGradient.withValues(alpha: 0.6), width: 2),
       ),
       padding: const EdgeInsets.all(3),
       child: ClipOval(
         child: award.award.badgeImageUrl == null
-            ? const Icon(Icons.workspace_premium_rounded, color: Colors.white)
+            ? const Icon(LucideIcons.award, color: QuestTones.onGradient)
             : CachedNetworkImage(
                 imageUrl: award.award.badgeImageUrl!,
                 fit: BoxFit.cover,
                 memCacheWidth: context.decodePx(compact ? 46 : 62),
                 errorWidget: (_, _, _) => const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: Colors.white,
+                  LucideIcons.award,
+                  color: QuestTones.onGradient,
                 ),
               ),
       ),
@@ -543,30 +546,30 @@ class QuestAwardTile extends StatelessWidget {
                   if (award.rank != null && award.rank! > 0)
                     _Pill(
                       text: s.questsAwardRank(award.rank!),
-                      color: const Color(0xFFFFB800),
+                      color: QuestTones.gold,
                       small: true,
-                      icon: Icons.emoji_events_rounded,
+                      icon: LucideIcons.trophy,
                     ),
                   if (!compact && award.freeCoins > 0)
                     _Pill(
                       text: s.questsAwardCoins(award.freeCoins),
-                      color: const Color(0xFFFFB800),
+                      color: QuestTones.gold,
                       small: true,
-                      icon: Icons.monetization_on_rounded,
+                      icon: LucideIcons.coins,
                     ),
                   if (!compact && award.award.frameUrl != null)
                     _Pill(
                       text: s.questsAwardFrame,
                       color: colors.accentPrimary,
                       small: true,
-                      icon: Icons.filter_frames_rounded,
+                      icon: LucideIcons.frame,
                     ),
                   if (!compact && award.hasEntry)
                     _Pill(
                       text: s.questsAwardEntry,
                       color: colors.accentPink,
                       small: true,
-                      icon: Icons.auto_awesome_rounded,
+                      icon: LucideIcons.sparkles,
                     ),
                 ],
               ),

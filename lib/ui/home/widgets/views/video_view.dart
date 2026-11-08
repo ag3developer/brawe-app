@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
+import '../home_bottom_nav.dart';
+
 import 'dart:async';
 
 import '../../../../data/repositories/post_repository.dart';
@@ -17,6 +19,7 @@ import '../../../shared/widgets/content_sound_attribution.dart';
 import '../../../sounds/view_models/sound_player_view_model.dart';
 import '../../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../../view_models/feed_video_mute_provider.dart';
+import '../../../feed/widgets/media_comments_layout.dart';
 import 'landscape_video_page.dart';
 import 'shared/_caption_block.dart';
 import 'shared/_feed_actions_rail.dart';
@@ -49,6 +52,9 @@ class _VideoViewState extends ConsumerState<VideoView> {
   bool _userPaused = false;
   bool _showPlayHint = false;
 
+  /// Painel de comentários embutido: o vídeo encolhe acima dele e segue tocando.
+  final MediaCommentsController _comments = MediaCommentsController();
+
   // View tracking — conta 1 view após 3s de reprodução ativa, no máximo 1x.
   Timer? _viewTimer;
   bool _viewSent = false;
@@ -66,7 +72,11 @@ class _VideoViewState extends ConsumerState<VideoView> {
   void initState() {
     super.initState();
     _initController();
+    _comments.addListener(_syncNav);
   }
+
+  /// Comentários abertos: esconde a barra de navegação (como no TikTok).
+  void _syncNav() => navHiddenByMedia.value = _comments.isOpen;
 
   @override
   void didUpdateWidget(covariant VideoView old) {
@@ -204,6 +214,9 @@ class _VideoViewState extends ConsumerState<VideoView> {
 
   @override
   void dispose() {
+    _comments.removeListener(_syncNav);
+    if (_comments.isOpen) navHiddenByMedia.value = false;
+    _comments.dispose();
     _disposeController();
     super.dispose();
   }
@@ -280,10 +293,10 @@ class _VideoViewState extends ConsumerState<VideoView> {
     final muted = ref.watch(feedVideoMuteProvider);
     final isPlaying = _ctrl?.value.isPlaying ?? false;
 
-    return GestureDetector(
+    return MediaCommentsLayout(
+      controller: _comments,
       onTap: _togglePlayPause,
-      behavior: HitTestBehavior.opaque,
-      child: Stack(
+      media: Stack(
         fit: StackFit.expand,
         children: [
           // ── Camada 1: capa até o vídeo carregar — no MESMO enquadramento
@@ -342,20 +355,33 @@ class _VideoViewState extends ConsumerState<VideoView> {
                         child: GestureDetector(
                           onTap: () => LandscapeVideoPage.open(context, _ctrl!),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.45),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.25),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(LucideIcons.maximize, size: 15, color: Colors.white),
+                                const Icon(
+                                  LucideIcons.maximize,
+                                  size: 15,
+                                  color: Colors.white,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   S.of(context).videoFullscreen,
-                                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -445,11 +471,41 @@ class _VideoViewState extends ConsumerState<VideoView> {
               ),
             ),
 
+          // ── Barra de progresso fina na base ────────────────────
+          if (_initialized && _ctrl != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              // Colada na base do vídeo (logo acima da bottom nav), como
+              // no TikTok/Reels. Arrastável para avançar/voltar; o padding
+              // superior aumenta a área de toque sem engrossar a barra.
+              bottom: 0,
+              child: SizedBox(
+                child: VideoProgressIndicator(
+                  _ctrl!,
+                  allowScrubbing: true,
+                  padding: const EdgeInsets.only(top: 14),
+                  colors: VideoProgressColors(
+                    playedColor: Colors.white,
+                    bufferedColor: Colors.white.withValues(alpha: 0.25),
+                    backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      overlay: Stack(
+        fit: StackFit.expand,
+        children: [
           // ── Rail de ações (curtir/comentar/share) ──────────────
           Positioned(
             right: 8,
             bottom: 62,
-            child: FeedActionsRail(item: widget.item),
+            child: FeedActionsRail(
+              item: widget.item,
+              commentsController: _comments,
+            ),
           ),
 
           // ── Legenda + autor (+ atribuição musical, se houver) ──
@@ -490,29 +546,6 @@ class _VideoViewState extends ConsumerState<VideoView> {
               ],
             ),
           ),
-
-          // ── Barra de progresso fina na base ────────────────────
-          if (_initialized && _ctrl != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              // Colada na base do vídeo (logo acima da bottom nav), como
-              // no TikTok/Reels. Arrastável para avançar/voltar; o padding
-              // superior aumenta a área de toque sem engrossar a barra.
-              bottom: 0,
-              child: SizedBox(
-                child: VideoProgressIndicator(
-                  _ctrl!,
-                  allowScrubbing: true,
-                  padding: const EdgeInsets.only(top: 14),
-                  colors: VideoProgressColors(
-                    playedColor: Colors.white,
-                    bufferedColor: Colors.white.withValues(alpha: 0.25),
-                    backgroundColor: Colors.white.withValues(alpha: 0.08),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -552,8 +585,6 @@ class _MuteButton extends StatelessWidget {
   }
 }
 
-
-
 /// Capa do vídeo enquadrada pela proporção da própria imagem, com a mesma
 /// regra do player. A proporção fica guardada por URL: voltar ao vídeo não
 /// pisca.
@@ -573,7 +604,8 @@ class _FeedThumbnailState extends State<_FeedThumbnail> {
   ImageStreamListener? _listener;
   double? _ratio;
 
-  ImageProvider get _provider => NetworkImage(widget.url, headers: mediaHeadersFor(widget.url));
+  ImageProvider get _provider =>
+      NetworkImage(widget.url, headers: mediaHeadersFor(widget.url));
 
   @override
   void initState() {
@@ -605,18 +637,33 @@ class _FeedThumbnailState extends State<_FeedThumbnail> {
   Widget build(BuildContext context) {
     final r = _ratio;
     if (r == null) return Container(color: AppColors.slate);
-    final image = Image(image: _provider, gaplessPlayback: true, errorBuilder: (_, _, _) => Container(color: AppColors.slate));
+    final image = Image(
+      image: _provider,
+      gaplessPlayback: true,
+      errorBuilder: (_, _, _) => Container(color: AppColors.slate),
+    );
     if (r <= 9 / 16) {
-      return Image(image: _provider, fit: BoxFit.cover, gaplessPlayback: true, errorBuilder: (_, _, _) => Container(color: AppColors.slate));
+      return Image(
+        image: _provider,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, _, _) => Container(color: AppColors.slate),
+      );
     }
     return Stack(
       fit: StackFit.expand,
       children: [
         ImageFiltered(
           imageFilter: ui.ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-          child: Image(image: _provider, fit: BoxFit.cover, gaplessPlayback: true),
+          child: Image(
+            image: _provider,
+            fit: BoxFit.cover,
+            gaplessPlayback: true,
+          ),
         ),
-        Center(child: AspectRatio(aspectRatio: r, child: image)),
+        Center(
+          child: AspectRatio(aspectRatio: r, child: image),
+        ),
       ],
     );
   }

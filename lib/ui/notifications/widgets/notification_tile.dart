@@ -2,12 +2,14 @@ import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../domain/models/app_notification.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/view_models/follow_view_model.dart';
 import '../notification_presentation.dart';
 
 /// Até 3 avatares empilhados (cascata diagonal) numa caixa fixa de 52x48.
@@ -67,7 +69,10 @@ class NotificationAvatars extends StatelessWidget {
       width: size + 4,
       height: size + 4,
       padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(color: colors.background, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: colors.background,
+        shape: BoxShape.circle,
+      ),
       child: child,
     );
 
@@ -97,7 +102,7 @@ class NotificationAvatars extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: colors.background, width: 2),
                   ),
-                  child: Icon(icon, size: 11, color: Colors.white),
+                  child: Icon(icon, size: 11, color: colors.textOnAccent),
                 ),
               ),
           ],
@@ -145,208 +150,249 @@ class NotificationTile extends StatelessWidget {
     final s = S.of(context);
     final n = notification;
     final unread = !n.isRead;
-    final (icon, color) = iconFor(n);
+    final (icon, color) = iconFor(n, colors);
     final xp = (n.data?['xp_reward'] as num?)?.toInt();
-    final grouped = n.isGrouped && NotifPresentation.kindOf(n) != null;
     final hasThumb = n.thumbnailUrl != null && n.thumbnailUrl!.isNotEmpty;
     final title = NotifPresentation.title(s, n);
-    final style = TextStyle(
-      fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
-    );
+    final (who, rest) = NotifPresentation.titleParts(s, n);
 
     final actors = n.actors.isNotEmpty
         ? n.actors
-        : [NotifActor(id: n.actorId ?? '', name: n.actorName ?? '', avatar: n.actorAvatar)];
+        : [
+            NotifActor(
+              id: n.actorId ?? '',
+              name: n.actorName ?? '',
+              avatar: n.actorAvatar,
+            ),
+          ];
+
+    final kind = NotifPresentation.kindOf(n);
+    final followActor =
+        kind == NotifKind.follow &&
+            n.actorsCount <= 1 &&
+            actors.length == 1 &&
+            actors.first.id.isNotEmpty
+        ? actors.first.id
+        : null;
+
+    final nameStyle = TextStyle(
+      fontWeight: FontWeight.w700,
+      color: colors.textPrimary,
+    );
+    final bodyStyle = TextStyle(
+      fontWeight: FontWeight.w400,
+      color: colors.textPrimary,
+    );
+
+    final Widget trailing;
+    if (followActor != null) {
+      trailing = _FollowBackButton(userId: followActor);
+    } else if (xp != null && xp > 0) {
+      trailing = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: colors.accentGold.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          '+$xp XP',
+          style: TextStyle(
+            color: colors.accentGold,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      );
+    } else if (hasThumb) {
+      trailing = ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: CachedNetworkImage(
+          key: const ValueKey('notif-thumb'),
+          memCacheWidth: context.decodePx(44),
+          imageUrl: n.thumbnailUrl!,
+          width: 44,
+          height: 44,
+          fit: BoxFit.cover,
+          fadeInDuration: const Duration(milliseconds: 150),
+          placeholder: (_, _) =>
+              Container(width: 44, height: 44, color: colors.surfaceHighest),
+          errorWidget: (_, _, _) =>
+              Container(width: 44, height: 44, color: colors.surfaceHighest),
+        ),
+      );
+    } else {
+      trailing = _PillButton(label: s.notifActionView, onTap: onTap);
+    }
 
     return Semantics(
       container: true,
       label: unread ? '${s.notifUnreadLabel}. $title' : title,
       child: InkWell(
         onTap: onTap,
-        child: Container(
-          color: unread
-              ? colors.accentPrimary.withValues(alpha: 0.06)
-              : Colors.transparent,
-          padding: const EdgeInsets.fromLTRB(16, 10, 14, 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              NotificationAvatars(actors: actors, icon: icon, color: color),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        children: grouped
-                            ? [TextSpan(text: title, style: style)]
-                            : _titleSpans(n, style),
-                      ),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 14,
-                        height: 1.3,
-                      ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 16, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  NotificationAvatars(actors: actors, icon: icon, color: color),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              ..._titleSpans(
+                                n,
+                                who,
+                                rest,
+                                nameStyle,
+                                bodyStyle,
+                              ),
+                              if (n.createdAt != null)
+                                TextSpan(
+                                  text: '  ${timeAgo(context, n.createdAt!)}',
+                                  style: TextStyle(
+                                    color: colors.textTertiary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 14,
+                            height: 1.3,
+                          ),
+                        ),
+                        if (n.message.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            BraweRichText.humanize(
+                              n.message,
+                              sharedPostLabel: s.linkSharedPost,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: colors.textSecondary,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (n.message.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        BraweRichText.humanize(
-                          n.message,
-                          sharedPostLabel: s.linkSharedPost,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colors.textSecondary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                    if (n.createdAt != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        timeAgo(context, n.createdAt!),
-                        style: TextStyle(
-                          color: colors.textTertiary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
+                  const SizedBox(width: 10),
+                  trailing,
+                ],
+              ),
+            ),
+            if (unread)
+              Positioned(
+                left: 6,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: Container(
+                    key: const ValueKey('notif-unread-dot'),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: colors.accentPrimary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              if (xp != null && xp > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '+$xp XP',
-                    style: const TextStyle(
-                      color: Color(0xFFD97706),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                )
-              else ...[
-                if (hasThumb)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      key: const ValueKey('notif-thumb'),
-                      memCacheWidth: context.decodePx(44),
-                      imageUrl: n.thumbnailUrl!,
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      fadeInDuration: const Duration(milliseconds: 150),
-                      placeholder: (_, _) =>
-                          Container(width: 44, height: 44, color: colors.surfaceHighest),
-                      errorWidget: (_, _, _) =>
-                          Container(width: 44, height: 44, color: colors.surfaceHighest),
-                    ),
-                  ),
-                if (unread)
-                  Padding(
-                    padding: EdgeInsets.only(left: hasThumb ? 8 : 0, top: 6),
-                    child: Container(
-                      key: const ValueKey('notif-unread-dot'),
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: colors.accentPrimary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 
-  /// Título com o selo de verificado logo após o nome do autor.
-  List<InlineSpan> _titleSpans(AppNotification n, TextStyle style) {
-    if (!n.actorIsVerified) return [TextSpan(text: n.title, style: style)];
-    final name = n.actorName?.trim() ?? '';
-    if (name.isNotEmpty && n.title.startsWith(name)) {
+  /// Nome em negrito (com selo de verificado) + ação em peso normal.
+  List<InlineSpan> _titleSpans(
+    AppNotification n,
+    String who,
+    String rest,
+    TextStyle nameStyle,
+    TextStyle bodyStyle,
+  ) {
+    if (who.isEmpty) {
       return [
-        TextSpan(text: name, style: style),
-        VerifiedBadge.span(size: 13, gap: 3),
-        TextSpan(text: n.title.substring(name.length), style: style),
+        TextSpan(text: rest, style: bodyStyle),
+        if (n.actorIsVerified) VerifiedBadge.span(size: 13, gap: 3),
       ];
     }
     return [
-      TextSpan(text: n.title, style: style),
-      VerifiedBadge.span(size: 13, gap: 3),
+      TextSpan(text: who, style: nameStyle),
+      if (n.actorIsVerified && n.actorsCount <= 1)
+        VerifiedBadge.span(size: 13, gap: 3),
+      if (rest.isNotEmpty) TextSpan(text: ' $rest', style: bodyStyle),
     ];
   }
 
-  static (IconData, Color) iconFor(AppNotification n) {
+  static (IconData, Color) iconFor(AppNotification n, BraweColors c) {
     if (NotifPresentation.filterOf(n) == NotifFilter.brawe &&
         (n.type == 'system' ||
             n.type == 'quest' ||
             n.type == 'quest_completed')) {
-      return (LucideIcons.trophy, const Color(0xFFF59E0B));
+      return (LucideIcons.trophy, c.accentGold);
     }
     switch (n.type) {
       case 'follow':
-        return (LucideIcons.userPlus, const Color(0xFF3B82F6));
+        return (LucideIcons.userPlus, c.accentPrimary);
       case 'like':
       case 'post_liked':
       case 'story_reaction':
-        return (LucideIcons.heart, const Color(0xFFEF4444));
+        return (LucideIcons.heart, c.accentPink);
       case 'comment':
       case 'post_commented':
       case 'story_reply':
-        return (LucideIcons.messageCircle, const Color(0xFF0EA5E9));
+        return (LucideIcons.messageCircle, c.accentSecondary);
       case 'reply':
       case 'comment_replied':
-        return (LucideIcons.cornerUpLeft, const Color(0xFF0EA5E9));
+        return (LucideIcons.cornerUpLeft, c.accentSecondary);
       case 'comment_mention':
-        return (LucideIcons.atSign, const Color(0xFF8B5CF6));
+        return (LucideIcons.atSign, c.accentPrimary);
       case 'gift':
       case 'gift_received':
       case 'mystery_gift_received':
       case 'mystery_gift_revealed':
-        return (LucideIcons.gift, const Color(0xFFF59E0B));
+        return (LucideIcons.gift, c.accentGold);
       case 'live_start':
       case 'live_started':
       case 'mystery_gifter_live':
-        return (LucideIcons.radio, const Color(0xFFEF4444));
+        return (LucideIcons.radio, c.danger);
       case 'live_starting':
-        return (LucideIcons.clock, const Color(0xFFF97316));
+        return (LucideIcons.clock, c.warning);
       case 'message':
       case 'new_message':
-        return (LucideIcons.messageSquare, const Color(0xFF0EA5E9));
+        return (LucideIcons.messageSquare, c.accentSecondary);
       case 'quest_reminder':
-        return (LucideIcons.target, const Color(0xFFF59E0B));
+        return (LucideIcons.target, c.accentGold);
       case 'new_post':
-        return (LucideIcons.image, const Color(0xFF8B5CF6));
+        return (LucideIcons.image, c.accentPrimary);
       case 'purchase':
-        return (LucideIcons.shoppingBag, const Color(0xFF10B981));
+        return (LucideIcons.shoppingBag, c.success);
       case 'battle_invite':
-        return (LucideIcons.swords, const Color(0xFFEF4444));
+        return (LucideIcons.swords, c.danger);
       case 'creator_approved':
-        return (LucideIcons.badgeCheck, const Color(0xFF3B82F6));
+        return (LucideIcons.badgeCheck, c.accentPrimary);
       case 'award_received':
-        return (LucideIcons.award, const Color(0xFFF59E0B));
+        return (LucideIcons.award, c.accentGold);
       case 'creator_level_up':
-        return (LucideIcons.trendingUp, const Color(0xFF10B981));
+        return (LucideIcons.trendingUp, c.success);
       default:
-        return (LucideIcons.bell, const Color(0xFF64748B));
+        return (LucideIcons.bell, c.textTertiary);
     }
   }
 
@@ -359,5 +405,71 @@ class NotificationTile extends StatelessWidget {
     if (diff.inDays < 7) return s.notificationsTimeDays(diff.inDays);
     final local = dt.toLocal();
     return '${local.day}/${local.month}/${local.year}';
+  }
+}
+
+/// Botão compacto de contorno suave ("Ver").
+class _PillButton extends StatelessWidget {
+  const _PillButton({
+    required this.label,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 120, minHeight: 32),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled ? colors.accentPrimary : colors.surfaceHighest,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: filled ? colors.textOnAccent : colors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Seguir de volta" / "Seguindo" usando o mesmo view model do resto do app.
+class _FollowBackButton extends ConsumerWidget {
+  const _FollowBackButton({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    final state = ref.watch(followViewModelProvider(userId));
+    if (state.isLoading) {
+      return _PillButton(label: s.notifFollowBack, onTap: null);
+    }
+    final following = state.value ?? false;
+    return _PillButton(
+      label: following ? s.actionUnfollow : s.notifFollowBack,
+      filled: !following,
+      onTap: () =>
+          ref.read(followViewModelProvider(userId).notifier).toggleFollow(),
+    );
   }
 }

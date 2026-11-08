@@ -34,6 +34,7 @@ import '../../sounds/view_models/sound_player_view_model.dart';
 import '../view_models/feed_view_model.dart';
 import '../view_models/stories_view_model.dart';
 import 'comments_sheet.dart';
+import 'one_tap_repost.dart';
 import 'post_image_viewer.dart';
 import 'reactions_bar.dart';
 import 'story_composer_screen.dart';
@@ -492,7 +493,8 @@ class _FeedTab extends ConsumerWidget {
                 },
               ),
             ],
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            // folga para a barra flutuante (o feed passa por trás do vidro)
+            SliverToBoxAdapter(child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)),
           ],
         ),
         loading: () => ListView.builder(
@@ -877,37 +879,25 @@ class _PostCardState extends ConsumerState<PostCard>
     }
   }
 
-  Future<void> _toggleRepost() async {
-    final prev = _post;
-    final wasReposted = prev.userReposted;
-    _applyLocal(
-      prev.copyWith(
-        userReposted: !wasReposted,
-        repostsCount: wasReposted
-            ? (prev.repostsCount - 1).clamp(0, 1 << 30)
-            : prev.repostsCount + 1,
-      ),
-    );
-    ref.read(feedbackServiceProvider).repost();
-    try {
-      await ref.read(postRepositoryProvider).toggleRepost(prev.id, wasReposted);
+  /// Repost em um toque (com "Desfazer" no aviso). Tocar de novo desfaz.
+  Future<void> _repost() => oneTapRepost(
+    context: context,
+    ref: ref,
+    postId: _post.id,
+    currentlyReposted: _post.userReposted,
+    apply: (reposted) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            wasReposted
-                ? S.of(context).feedRepostUndone
-                : S.of(context).feedReposted,
+      _applyLocal(
+        _post.copyWith(
+          userReposted: reposted,
+          repostsCount: (_post.repostsCount + (reposted ? 1 : -1)).clamp(
+            0,
+            1 << 30,
           ),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
         ),
       );
-    } catch (_) {
-      _applyLocal(prev);
-      if (mounted) _showError(S.of(context).feedCannotShare);
-    }
-  }
+    },
+  );
 
   void _doubleTapLike() {
     if (!_post.userLiked) _toggleLike();
@@ -939,6 +929,7 @@ class _PostCardState extends ConsumerState<PostCard>
       postCaption: post.content,
       postImageUrl: post.imageUrl,
       authorName: post.author.name,
+      authorId: post.author.id,
       isReposted: post.userReposted,
       onRepostChanged: (reposted) => _applyLocal(
         _post.copyWith(
@@ -1253,9 +1244,16 @@ class _PostCardState extends ConsumerState<PostCard>
                     ? context.colors.success
                     : context.colors.textSecondary,
                 active: post.userReposted,
-                onTap: () => _confirmRepost(context),
+                onTap: _repost,
+              ),
+              // Enviar junto das interações (curtir · comentar · repostar · enviar)
+              _IconAction(
+                icon: LucideIcons.send,
+                color: context.colors.textSecondary,
+                onTap: _sharePost,
               ),
               const Spacer(),
+              // Salvar: ação pessoal, sozinha à direita (padrão Instagram)
               _IconAction(
                 icon: _saved ? Icons.bookmark_rounded : LucideIcons.bookmark,
                 color: _saved
@@ -1263,47 +1261,37 @@ class _PostCardState extends ConsumerState<PostCard>
                     : context.colors.textSecondary,
                 onTap: _toggleSave,
               ),
-              // Impulsionar — só nos meus posts com foto/vídeo (mesmo foguete da web).
-              if (_canBoost(post))
-                _IconAction(
-                  icon: LucideIcons.rocket,
-                  color: _isBoosted(post)
-                      ? context.colors.accentPrimary
-                      : context.colors.textSecondary,
-                  onTap: () => _openBoost(post),
-                ),
-              _IconAction(
-                icon: LucideIcons.send,
-                color: context.colors.textSecondary,
-                onTap: _sharePost,
-              ),
             ],
           ),
         ),
-        // Linha de views — discreta, estilo Twitter/X.
-        if (post.viewsCount > 0)
+        // Linha de views (estilo X) + "Impulsionar" do dono ao lado do desempenho.
+        if (post.viewsCount > 0 || _canBoost(post))
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 10, 10),
             child: Row(
               children: [
-                Icon(
-                  LucideIcons.chartNoAxesColumn,
-                  size: 13,
-                  color: context.colors.textTertiary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  S
-                      .of(context)
-                      .feedViewsCount(
-                        post.viewsCount,
-                        _formatCount(post.viewsCount),
-                      ),
-                  style: TextStyle(
+                if (post.viewsCount > 0) ...[
+                  Icon(
+                    LucideIcons.chartNoAxesColumn,
+                    size: 13,
                     color: context.colors.textTertiary,
-                    fontSize: 12,
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  Text(
+                    S
+                        .of(context)
+                        .feedViewsCount(
+                          post.viewsCount,
+                          _formatCount(post.viewsCount),
+                        ),
+                    style: TextStyle(
+                      color: context.colors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                if (_canBoost(post)) _BoostLink(boosted: _isBoosted(post), onTap: () => _openBoost(post)),
               ],
             ),
           )
@@ -1557,62 +1545,6 @@ class _PostCardState extends ConsumerState<PostCard>
     } catch (_) {
       if (mounted) _showError(S.of(context).feedReportError);
     }
-  }
-
-  void _confirmRepost(BuildContext context) {
-    HapticFeedback.selectionClick();
-    final post = _post;
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      backgroundColor: context.colors.surfaceElevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetCtx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const _SheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  post.userReposted
-                      ? S.of(sheetCtx).feedRepostUndoConfirm
-                      : S.of(sheetCtx).feedRepostConfirm,
-                  style: TextStyle(
-                    color: sheetCtx.colors.textPrimary,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ),
-            _SheetTile(
-              icon: LucideIcons.repeat2,
-              color: post.userReposted ? sheetCtx.colors.success : null,
-              label: post.userReposted
-                  ? S.of(sheetCtx).feedRepostUndo
-                  : S.of(sheetCtx).feedRepost,
-              onTap: _toggleRepost,
-            ),
-            _SheetTile(
-              icon: LucideIcons.send,
-              label: S.of(sheetCtx).shareToFollowers,
-              onTap: () => ShareToChatSheet.show(
-                this.context,
-                postId: post.id,
-                postCaption: post.content,
-                storyMediaUrl: post.imageUrl,
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
   }
 
   String _formatCount(int count) {
@@ -2481,6 +2413,37 @@ class _FeedPhotoState extends State<_FeedPhoto> {
     return AspectRatio(
       aspectRatio: feedFrameAspect(_aspect),
       child: SizedBox.expand(child: widget.child),
+    );
+  }
+}
+
+/// "🚀 Impulsionar" (ou "Impulsionado · ver resultados") na linha de visualizações — só nos meus posts.
+class _BoostLink extends StatelessWidget {
+  const _BoostLink({required this.boosted, required this.onTap});
+  final bool boosted;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final color = context.colors.accentPrimary;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.rocket, size: 14, color: color),
+            const SizedBox(width: 5),
+            Text(
+              boosted ? s.postBoostedSeeResults : s.postBoost,
+              style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

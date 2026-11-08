@@ -201,7 +201,7 @@ class _Tips extends StatelessWidget {
         s.analyticsFollowersTip2Subtitle,
       ),
       (
-        LucideIcons.share2,
+        LucideIcons.send,
         s.analyticsFollowersTip3Title,
         s.analyticsFollowersTip3Subtitle,
       ),

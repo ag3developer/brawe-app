@@ -87,7 +87,7 @@ void main() {
 
       // "Notificar seguidores" vem ligado por padrão e abriria o warm-up de
       // 30s antes de ir ao broadcaster; desliga para ir direto.
-      await tester.tap(find.text('Notificar'));
+      await tester.tap(find.text('Notify'));
       await tester.pump();
 
       await tester.tap(find.text('GO LIVE'));

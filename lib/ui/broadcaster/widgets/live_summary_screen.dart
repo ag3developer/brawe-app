@@ -16,6 +16,8 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import '../../core/themes/brawe_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
@@ -98,7 +100,7 @@ class LiveSummaryScreen extends StatelessWidget {
     final s = S.of(context);
     return ForceDarkTheme(
       child: Scaffold(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: context.colors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -115,15 +117,17 @@ class LiveSummaryScreen extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.braweBlue.withValues(alpha: 0.35),
+                        color: context.colors.accentPrimary.withValues(
+                          alpha: 0.35,
+                        ),
                         blurRadius: 24,
                         spreadRadius: -4,
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
+                  child: Icon(
+                    LucideIcons.check,
+                    color: context.colors.textPrimary,
                     size: 44,
                   ),
                 ),
@@ -131,8 +135,8 @@ class LiveSummaryScreen extends StatelessWidget {
                 Text(
                   s.liveSummaryTitle,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                   ),
@@ -144,8 +148,8 @@ class LiveSummaryScreen extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white54,
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -158,8 +162,8 @@ class LiveSummaryScreen extends StatelessWidget {
                     child: Text(
                       s.liveSummaryUnavailable,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white54,
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
                         fontSize: 14,
                         height: 1.4,
                       ),
@@ -178,15 +182,18 @@ class LiveSummaryScreen extends StatelessWidget {
                   height: 52,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.braweBlue, AppColors.braweSky],
+                      gradient: LinearGradient(
+                        colors: [
+                          context.colors.accentPrimary,
+                          context.colors.accentSecondary,
+                        ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.braweBlue.withValues(
+                          color: context.colors.accentPrimary.withValues(
                             alpha: 0.4,
                           ),
                           blurRadius: 16,
@@ -204,8 +211,8 @@ class LiveSummaryScreen extends StatelessWidget {
                         child: Center(
                           child: Text(
                             s.liveSummaryDone,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: context.colors.textPrimary,
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.3,
@@ -243,28 +250,28 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <_StatItem>[
       _StatItem(
-        icon: Icons.timer_outlined,
+        icon: LucideIcons.timer,
         label: s.liveSummaryDuration,
         value: formatDuration(data.durationSeconds),
       ),
       _StatItem(
-        icon: Icons.trending_up_rounded,
+        icon: LucideIcons.trendingUp,
         label: s.liveSummaryPeakViewers,
         value: '${data.peakViewers ?? 0}',
       ),
       _StatItem(
-        icon: Icons.groups_outlined,
+        icon: LucideIcons.users,
         label: s.liveSummaryTotalViewers,
         value: '${data.totalViewers ?? 0}',
       ),
       _StatItem(
-        icon: Icons.card_giftcard_rounded,
+        icon: LucideIcons.gift,
         label: s.liveSummaryGiftsValue,
         value: '💎 ${formatGifts(data.totalGiftsValue)}',
       ),
       if ((data.mysteryGiftsRevealed ?? 0) > 0)
         _StatItem(
-          icon: Icons.auto_awesome_rounded,
+          icon: LucideIcons.sparkles,
           label: s.liveSummaryMysteryGifts,
           value: '${data.mysteryGiftsRevealed}',
         ),
@@ -305,20 +312,22 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.colors.textPrimary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(
+          color: context.colors.textPrimary.withValues(alpha: 0.08),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(item.icon, color: AppColors.braweSky, size: 22),
+          Icon(item.icon, color: context.colors.accentSecondary, size: 22),
           const SizedBox(height: 8),
           Text(
             item.value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -328,8 +337,8 @@ class _StatCard extends StatelessWidget {
             item.label,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white54,
+            style: TextStyle(
+              color: context.colors.textSecondary,
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
             ),

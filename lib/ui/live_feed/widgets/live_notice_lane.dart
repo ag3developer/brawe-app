@@ -212,7 +212,8 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
     if (me != null && uid != null && uid.isNotEmpty && uid != me) return;
     final award = UserAward.tryParse(e.data['award'] ?? e.data);
     if (award == null) return;
-    final key = '${award.id ?? ''}|${award.label.resolve('pt')}|${award.expiresAt}';
+    final key =
+        '${award.id ?? ''}|${award.label.resolve('pt')}|${award.expiresAt}';
     if (key == _lastAwardKey) return;
     _lastAwardKey = key;
     _push(_Notice(_Kind.award, award));
@@ -411,7 +412,9 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
           accent: awardColor(a.badgeColor, const Color(0xFFFFD166)),
           leading: AwardBadge(award: a, height: 30),
           title: s.awardGrantedTitle,
-          subtitle: a.localizedLabel(Localizations.localeOf(context).languageCode),
+          subtitle: a.localizedLabel(
+            Localizations.localeOf(context).languageCode,
+          ),
           onClose: _dismiss,
           personal: true,
         );
@@ -432,7 +435,7 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
         return _NoticeCard(
           accent: const Color(0xFFFFD166),
           leading: const Icon(
-            Icons.emoji_events_rounded,
+            LucideIcons.trophy,
             color: Color(0xFFFFD166),
             size: 22,
           ),
@@ -451,11 +454,7 @@ class _LiveNoticeLaneState extends ConsumerState<LiveNoticeLane> {
                 colors: [Color(0xFFFF3D7F), Color(0xFFFF7A59)],
               ),
             ),
-            child: const Icon(
-              Icons.favorite_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
+            child: const Icon(LucideIcons.heart, color: Colors.white, size: 18),
           ),
           title: s.likeMilestoneBanner(fmtGap(e.milestone)),
         );
@@ -590,7 +589,7 @@ class _NoticeCard extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(left: 6, right: 2),
                     child: Icon(
-                      Icons.close_rounded,
+                      LucideIcons.x,
                       size: 16,
                       color: Colors.white.withValues(alpha: 0.7),
                     ),

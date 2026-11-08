@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../core/view_models/hidden_users_view_model.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:convert';
 import 'package:dio/dio.dart' show DioException;
 import 'dart:ui' show ImageFilter;
@@ -14,7 +15,7 @@ import 'package:brawe_app/data/services/iap_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../feed/widgets/share_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 import '../view_models/live_room_comments_view_model.dart';
@@ -341,7 +342,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       socket.off(AppConstants.eventLinkEnded, _onLinkEnded);
       socket.off(AppConstants.eventLinkMute, _onLinkMute);
       socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
-    socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
+      socket.off(AppConstants.eventLinkMedia, _onLinkMedia);
       socket.off(AppConstants.eventLivePaused, _onLivePaused);
       socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
       socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
@@ -971,11 +972,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final s = S.of(context);
     final url = 'https://brawe.app/live/${widget.room.slug}';
     final message = s.liveFeedShareMessage(widget.room.title, url);
-    try {
-      await SharePlus.instance.share(ShareParams(text: message));
-    } catch (e) {
-      debugPrint('LivePlayer: share error: $e');
-    }
+    if (!mounted) return;
+    await ShareSheet.show(
+      context,
+      ShareTarget(kind: ShareKind.live, url: url, shareText: message),
+    );
   }
 
   void _openGifts() {
@@ -1089,7 +1090,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       if (!mounted) return;
       final message = e is Failure
           ? e.toDisplayMessage()
-          : 'Não foi possível enviar a rosa';
+          : S.of(context).livexRoseSendFailed;
       final isBalance =
           message.toLowerCase().contains('saldo') ||
           message.toLowerCase().contains('insuficiente');
@@ -1380,9 +1381,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
               child: _ViewerChatDock(
                 battleChatTop: _split ? _layout().rowsBottom : null,
                 // Produto fixado/loja: exclusivos da live solo (somem na conexão/batalha).
-              pinnedProduct: _split
-                  ? const SizedBox.shrink()
-                  : PinnedProductBar(roomId: widget.room.id),
+                pinnedProduct: _split
+                    ? const SizedBox.shrink()
+                    : PinnedProductBar(roomId: widget.room.id),
                 notices: LiveNoticeLane(
                   roomId: widget.room.id,
                   streamerId: widget.room.streamerId,
@@ -1754,7 +1755,7 @@ class _StreamerPausedOverlayState extends State<_StreamerPausedOverlay> {
                       ),
                     )
                   : const Icon(
-                      Icons.pause_rounded,
+                      LucideIcons.pause,
                       color: Colors.white,
                       size: 34,
                     ),
@@ -1970,8 +1971,8 @@ class _QualitySheet extends StatelessWidget {
               children: [
                 const Icon(Icons.hd, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Qualidade do vídeo',
+                Text(
+                  S.of(context).livexQualityTitle,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
@@ -1985,7 +1986,7 @@ class _QualitySheet extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
-              'FPS: definido pelo streamer (geralmente 30fps)',
+              S.of(context).livexQualityFpsNote,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.45),
                 fontSize: 11,
@@ -2048,7 +2049,7 @@ class _QualityTile extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _descriptionFor(quality),
+                    _descriptionFor(context, quality),
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.4),
                       fontSize: 11,
@@ -2070,16 +2071,19 @@ class _QualityTile extends StatelessWidget {
   }
 
   IconData _iconFor(StreamQuality q) => switch (q) {
-    StreamQuality.auto => Icons.auto_awesome,
+    StreamQuality.auto => LucideIcons.sparkles,
     StreamQuality.p480 => Icons.sd,
     StreamQuality.p720 => Icons.hd,
     StreamQuality.p1080 => Icons.high_quality,
   };
 
-  String _descriptionFor(StreamQuality q) => switch (q) {
-    StreamQuality.auto => 'Ajusta automaticamente conforme sua conexão',
-    StreamQuality.p480 => 'Menor consumo de dados',
-    StreamQuality.p720 => 'Boa qualidade, recomendado',
-    StreamQuality.p1080 => 'Máxima qualidade, requer boa internet',
-  };
+  String _descriptionFor(BuildContext context, StreamQuality q) {
+    final s = S.of(context);
+    return switch (q) {
+      StreamQuality.auto => s.livexQualityAutoDesc,
+      StreamQuality.p480 => s.livexQuality480Desc,
+      StreamQuality.p720 => s.livexQuality720Desc,
+      StreamQuality.p1080 => s.livexQuality1080Desc,
+    };
+  }
 }

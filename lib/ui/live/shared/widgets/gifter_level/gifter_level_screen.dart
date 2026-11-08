@@ -43,7 +43,7 @@ class _GifterLevelScreenState extends ConsumerState<GifterLevelScreen> {
                     children: [
                       IconButton(
                         icon: Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                          LucideIcons.arrowLeft,
                           color: colors.textPrimary,
                         ),
                         onPressed: () => Navigator.maybePop(context),
@@ -561,7 +561,7 @@ class _CarouselItem extends StatelessWidget {
                             bottom: 22,
                             child: _MiniDot(
                               color: tierColor,
-                              icon: Icons.check_rounded,
+                              icon: LucideIcons.check,
                               size: 26,
                             ),
                           ),
@@ -961,7 +961,11 @@ class _HowToEarnTile extends StatelessWidget {
               shape: BoxShape.circle,
               color: colors.accentPrimary.withValues(alpha: 0.14),
             ),
-            child: Icon(LucideIcons.zap, size: 16, color: colors.accentPrimary),
+            child: Icon(
+              LucideIcons.sparkles,
+              size: 16,
+              color: colors.accentPrimary,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -993,7 +997,7 @@ class _HowToEarnTile extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: colors.textSecondary),
+          Icon(LucideIcons.chevronRight, color: colors.textSecondary),
         ],
       ),
     );

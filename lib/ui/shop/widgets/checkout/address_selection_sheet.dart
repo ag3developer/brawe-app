@@ -77,7 +77,7 @@ class AddressSelectionSheet extends StatelessWidget {
                     ),
                     IconButton(
                       icon: Icon(
-                        Icons.close,
+                        LucideIcons.x,
                         color: context.colors.textSecondary,
                       ),
                       onPressed: () => Navigator.of(context).pop(),
@@ -110,7 +110,7 @@ class AddressSelectionSheet extends StatelessWidget {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => Navigator.of(context).pop('__new__'),
-                      icon: const Icon(Icons.add, size: 18),
+                      icon: const Icon(LucideIcons.plus, size: 18),
                       label: Text(s.shopCheckoutAddNewAddress),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: context.colors.textPrimary,

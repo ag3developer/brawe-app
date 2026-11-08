@@ -1,9 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../core/themes/brawe_colors.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:brawe_app/core/services/broadcast_audio_processing.dart';
 
-import '../../core/themes/app_colors.dart';
+import '../../../gen/l10n/app_localizations.dart';
 
 /// Painel de áudio minimalista — design moderno, glassmorphism, ícones Lucide.
 class AudioProcessorPanel extends StatefulWidget {
@@ -26,36 +27,12 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
 
   // Mapa de ícone + label por preset
   static const _presetMeta = {
-    AudioEQPreset.flat: (
-      icon: LucideIcons.minus,
-      label: 'Flat',
-      sub: 'Sem efeito',
-    ),
-    AudioEQPreset.voiceEnhancement: (
-      icon: LucideIcons.mic,
-      label: 'Voice',
-      sub: 'Voz clara',
-    ),
-    AudioEQPreset.musicBoost: (
-      icon: LucideIcons.music,
-      label: 'Music',
-      sub: 'Bass + Treble',
-    ),
-    AudioEQPreset.gaming: (
-      icon: LucideIcons.gamepad2,
-      label: 'Gaming',
-      sub: 'Diálogos',
-    ),
-    AudioEQPreset.podcast: (
-      icon: LucideIcons.headphones,
-      label: 'Podcast',
-      sub: 'Profissional',
-    ),
-    AudioEQPreset.studio: (
-      icon: LucideIcons.sliders,
-      label: 'Studio',
-      sub: 'Minimalista',
-    ),
+    AudioEQPreset.flat: (icon: LucideIcons.minus, label: 'Flat'),
+    AudioEQPreset.voiceEnhancement: (icon: LucideIcons.mic, label: 'Voice'),
+    AudioEQPreset.musicBoost: (icon: LucideIcons.music, label: 'Music'),
+    AudioEQPreset.gaming: (icon: LucideIcons.gamepad2, label: 'Gaming'),
+    AudioEQPreset.podcast: (icon: LucideIcons.headphones, label: 'Podcast'),
+    AudioEQPreset.studio: (icon: LucideIcons.sliders, label: 'Studio'),
   };
 
   @override
@@ -84,9 +61,18 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
   }
 
   String _labelForRatio(double ratio) {
-    if (ratio <= 2) return 'Light';
-    if (ratio <= 4) return 'Medium';
-    return 'Aggressive';
+    if (ratio <= 2) return 'light';
+    if (ratio <= 4) return 'medium';
+    return 'aggressive';
+  }
+
+  String _ratioText(String key) {
+    final s = S.of(context);
+    return switch (key) {
+      'light' => s.livexCompLight,
+      'aggressive' => s.livexCompAggressive,
+      _ => s.livexCompMedium,
+    };
   }
 
   @override
@@ -99,13 +85,13 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
           filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.72),
+              color: context.colors.surface.withValues(alpha: 0.94),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
               ),
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: context.colors.textPrimary.withValues(alpha: 0.08),
                   width: 1,
                 ),
               ),
@@ -126,12 +112,12 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                     const SizedBox(height: 20),
                     _buildSliderRow(
                       icon: LucideIcons.volume2,
-                      label: 'Gain',
+                      label: S.of(context).livexAudioGain,
                       value: _masterGain,
                       min: -12,
                       max: 12,
                       divisions: 48,
-                      color: AppColors.braweBlueLight,
+                      color: context.colors.accentPrimary,
                       displayValue:
                           '${_masterGain > 0 ? '+' : ''}${_masterGain.toStringAsFixed(1)}',
                       onChanged: (v) {
@@ -142,13 +128,13 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                     const SizedBox(height: 14),
                     _buildSliderRow(
                       icon: LucideIcons.shieldCheck,
-                      label: 'Limiter',
+                      label: S.of(context).livexAudioLimiter,
                       value: _limiterThreshold,
                       min: -6,
                       max: 0,
                       divisions: 12,
-                      color: const Color(0xFFFFB340),
-                      displayValue: '${_limiterThreshold.toStringAsFixed(1)}',
+                      color: context.colors.accentGold,
+                      displayValue: _limiterThreshold.toStringAsFixed(1),
                       onChanged: (v) {
                         setState(() => _limiterThreshold = v);
                         BroadcastAudioProcessing.setLimiterThreshold(v);
@@ -173,7 +159,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
       width: 36,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: context.colors.textPrimary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(2),
       ),
     ),
@@ -187,23 +173,23 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: AppColors.braweBlueLight.withValues(alpha: 0.15),
+          color: context.colors.accentPrimary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: const Icon(
+        child: Icon(
           LucideIcons.waves,
-          color: AppColors.braweBlueLight,
+          color: context.colors.accentPrimary,
           size: 18,
         ),
       ),
       const SizedBox(width: 10),
-      const Column(
+      Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Audio',
+            S.of(context).livexAudioTitle,
             style: TextStyle(
-              color: Colors.white,
+              color: context.colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
@@ -212,7 +198,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
           Text(
             'EQ · Compressor · Limiter',
             style: TextStyle(
-              color: Color(0xFF888888),
+              color: context.colors.textSecondary,
               fontSize: 11,
               height: 1.2,
             ),
@@ -226,10 +212,14 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.07),
+            color: context.colors.textPrimary.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(LucideIcons.x, color: Color(0xFF888888), size: 15),
+          child: Icon(
+            LucideIcons.x,
+            color: context.colors.textSecondary,
+            size: 15,
+          ),
         ),
       ),
     ],
@@ -256,13 +246,13 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
               width: 68,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.braweBlueLight.withValues(alpha: 0.18)
-                    : Colors.white.withValues(alpha: 0.05),
+                    ? context.colors.accentPrimary.withValues(alpha: 0.18)
+                    : context.colors.textPrimary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.braweBlueLight.withValues(alpha: 0.7)
-                      : Colors.white.withValues(alpha: 0.07),
+                      ? context.colors.accentPrimary.withValues(alpha: 0.7)
+                      : context.colors.textPrimary.withValues(alpha: 0.07),
                   width: isSelected ? 1.5 : 1,
                 ),
               ),
@@ -273,16 +263,16 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                     meta.icon,
                     size: 20,
                     color: isSelected
-                        ? AppColors.braweBlueLight
-                        : const Color(0xFF888888),
+                        ? context.colors.accentPrimary
+                        : context.colors.textSecondary,
                   ),
                   const SizedBox(height: 5),
                   Text(
                     meta.label,
                     style: TextStyle(
                       color: isSelected
-                          ? Colors.white
-                          : const Color(0xFF888888),
+                          ? context.colors.textPrimary
+                          : context.colors.textSecondary,
                       fontSize: 10,
                       fontWeight: isSelected
                           ? FontWeight.w700
@@ -318,8 +308,8 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF888888),
+          style: TextStyle(
+            color: context.colors.textSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -331,8 +321,10 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               activeTrackColor: color,
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.08),
-              thumbColor: Colors.white,
+              inactiveTrackColor: context.colors.textPrimary.withValues(
+                alpha: 0.08,
+              ),
+              thumbColor: context.colors.textPrimary,
               overlayColor: color.withValues(alpha: 0.15),
             ),
             child: Slider(
@@ -372,13 +364,13 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: _compressorEnabled
-                ? const Color(0xFF4FC3F7).withValues(alpha: 0.15)
-                : Colors.white.withValues(alpha: 0.05),
+                ? context.colors.accentSecondary.withValues(alpha: 0.15)
+                : context.colors.textPrimary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: _compressorEnabled
-                  ? const Color(0xFF4FC3F7).withValues(alpha: 0.5)
-                  : Colors.white.withValues(alpha: 0.07),
+                  ? context.colors.accentSecondary.withValues(alpha: 0.5)
+                  : context.colors.textPrimary.withValues(alpha: 0.07),
             ),
           ),
           child: Row(
@@ -388,16 +380,18 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
                 LucideIcons.activity,
                 size: 14,
                 color: _compressorEnabled
-                    ? const Color(0xFF4FC3F7)
-                    : const Color(0xFF555555),
+                    ? context.colors.accentSecondary
+                    : context.colors.textSecondary,
               ),
               const SizedBox(width: 6),
               Text(
-                _compressorEnabled ? _compressorLabel : 'Comp',
+                _compressorEnabled
+                    ? _ratioText(_compressorLabel)
+                    : S.of(context).livexCompShort,
                 style: TextStyle(
                   color: _compressorEnabled
-                      ? const Color(0xFF4FC3F7)
-                      : const Color(0xFF555555),
+                      ? context.colors.accentSecondary
+                      : context.colors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -423,13 +417,15 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: context.colors.textPrimary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+            border: Border.all(
+              color: context.colors.textPrimary.withValues(alpha: 0.07),
+            ),
           ),
-          child: const Icon(
+          child: Icon(
             LucideIcons.rotateCcw,
-            color: Color(0xFF666666),
+            color: context.colors.textSecondary,
             size: 15,
           ),
         ),
@@ -448,13 +444,13 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
         height: 28,
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFF4FC3F7).withValues(alpha: 0.2)
-              : Colors.white.withValues(alpha: 0.05),
+              ? context.colors.accentSecondary.withValues(alpha: 0.2)
+              : context.colors.textPrimary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(7),
           border: Border.all(
             color: isActive
-                ? const Color(0xFF4FC3F7).withValues(alpha: 0.6)
-                : Colors.white.withValues(alpha: 0.07),
+                ? context.colors.accentSecondary.withValues(alpha: 0.6)
+                : context.colors.textPrimary.withValues(alpha: 0.07),
           ),
         ),
         child: Center(
@@ -462,8 +458,8 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
             label,
             style: TextStyle(
               color: isActive
-                  ? const Color(0xFF4FC3F7)
-                  : const Color(0xFF555555),
+                  ? context.colors.accentSecondary
+                  : context.colors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -497,7 +493,7 @@ class _AudioProcessorPanelState extends State<AudioProcessorPanel>
       _compressorEnabled = BroadcastAudioProcessing.compressorEnabled;
       _masterGain = BroadcastAudioProcessing.masterGain;
       _limiterThreshold = BroadcastAudioProcessing.limiterThreshold;
-      _compressorLabel = 'Medium';
+      _compressorLabel = 'medium';
     });
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../../domain/models/conversation.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -106,18 +106,13 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
         toolbarHeight: 64,
         title: Row(
           children: [
-            ShaderMask(
-              shaderCallback: (b) => LinearGradient(
-                colors: [context.colors.textPrimary, context.colors.accentPrimary],
-              ).createShader(b),
-              child: Text(
-                S.of(context).chatListTitle,
-                style: TextStyle(
-                  color: context.colors.textPrimary,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.6,
-                ),
+            Text(
+              S.of(context).chatListTitle,
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.6,
               ),
             ),
             if (totalUnread > 0) ...[
@@ -125,16 +120,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.braweBlue, AppColors.braweSky],
-                  ),
+                  color: context.colors.accentPrimary,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.braweBlue.withValues(alpha: 0.55),
-                      blurRadius: 10,
-                    ),
-                  ],
                 ),
                 child: Text(
                   '$totalUnread',
@@ -166,9 +153,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
                       color: context.colors.surfaceHighest,
-                      border: Border.all(
-                        color: context.colors.border,
-                      ),
+                      border: Border.all(color: context.colors.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -206,16 +191,8 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.braweBlue.withValues(alpha: 0.10),
-                        AppColors.braweSky.withValues(alpha: 0.05),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: context.colors.border,
-                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    color: context.colors.surfaceHighest,
                   ),
                   child: TextField(
                     controller: _searchController,
@@ -233,7 +210,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                         fontSize: 14,
                       ),
                       prefixIcon: Icon(
-                        Icons.search,
+                        LucideIcons.search,
                         color: context.colors.textSecondary,
                         size: 20,
                       ),
@@ -241,7 +218,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                           ? null
                           : IconButton(
                               icon: Icon(
-                                Icons.close,
+                                LucideIcons.x,
                                 color: context.colors.textSecondary,
                                 size: 18,
                               ),
@@ -271,15 +248,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                   ),
                   indicator: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    gradient: const LinearGradient(
-                      colors: [AppColors.braweBlue, AppColors.braweSky],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.braweBlue.withValues(alpha: 0.45),
-                        blurRadius: 10,
-                      ),
-                    ],
+                    color: context.colors.accentPrimary,
                   ),
                   dividerColor: Colors.transparent,
                   labelStyle: const TextStyle(
@@ -302,8 +271,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
         ),
       ),
       body: chatState.isLoading && conversations.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.braweBlue),
+          ? Center(
+              child: CircularProgressIndicator(
+                color: context.colors.accentPrimary,
+              ),
             )
           : Column(
               children: [
@@ -313,23 +284,26 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
                     margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.12),
+                      color: context.colors.danger.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.35),
+                        color: context.colors.danger.withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.redAccent,
+                        Icon(
+                          LucideIcons.circleAlert,
+                          color: context.colors.danger,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            chatErrorText(S.of(context), chatState.errorMessage!),
+                            chatErrorText(
+                              S.of(context),
+                              chatState.errorMessage!,
+                            ),
                             style: TextStyle(
                               color: context.colors.textPrimary,
                               fontSize: 12,
@@ -386,28 +360,16 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen>
       floatingActionButton: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.braweBlue, AppColors.braweSky],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.braweBlue.withValues(alpha: 0.55),
-              blurRadius: 22,
-              spreadRadius: 1,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          color: context.colors.accentPrimary,
         ),
         child: FloatingActionButton(
           onPressed: () => context.go('/chat/new'),
           backgroundColor: Colors.transparent,
           elevation: 0,
           tooltip: S.of(context).chatListNewTooltip,
-          child: const Icon(
-            Icons.add_comment_outlined,
-            color: Colors.white,
+          child: Icon(
+            LucideIcons.messageSquarePlus,
+            color: context.colors.textOnAccent,
             size: 24,
           ),
         ),
@@ -440,15 +402,10 @@ class _ConversationList extends StatelessWidget {
               height: 112,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    AppColors.braweBlue.withValues(alpha: 0.30),
-                    AppColors.braweBlue.withValues(alpha: 0.0),
-                  ],
-                ),
+                color: context.colors.surfaceHighest,
               ),
               child: Icon(
-                Icons.forum_outlined,
+                LucideIcons.messagesSquare,
                 size: 56,
                 color: context.colors.textSecondary,
               ),
@@ -482,7 +439,7 @@ class _ConversationList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: AppColors.braweBlue,
+      color: context.colors.accentPrimary,
       child: ListView.separated(
         padding: const EdgeInsets.only(top: 8, bottom: 16),
         itemCount: conversations.length,
@@ -539,38 +496,28 @@ class _ConversationTile extends ConsumerWidget {
           onLongPress: () => _showQuickActions(context, ref),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: hasUnread
-                  ? AppColors.braweBlue.withValues(alpha: 0.07)
-                  : context.colors.surface,
-              border: Border.all(
-                color: hasUnread
-                    ? AppColors.braweBlue.withValues(alpha: 0.35)
-                    : context.colors.border,
-              ),
-            ),
             child: Row(
               children: [
                 if (conversation.isSystem)
                   const BraweOfficialAvatar(radius: 26)
                 else
-                StoryRingAvatar(
-                  userId: conversation.participantId,
-                  avatarUrl: conversation.participantAvatarUrl,
-                  fallbackText: conversation.participantName,
-                  radius: 26,
-                  isOnline: isOnline,
-                  showOnlineIndicator: true,
-                  onTapWithoutStories: () => context.push(
-                    '/chat/${conversation.id}',
-                    extra: {
-                      'participantName': conversation.participantName,
-                      'participantAvatarUrl': conversation.participantAvatarUrl,
-                      'participantId': conversation.participantId,
-                    },
+                  StoryRingAvatar(
+                    userId: conversation.participantId,
+                    avatarUrl: conversation.participantAvatarUrl,
+                    fallbackText: conversation.participantName,
+                    radius: 26,
+                    isOnline: isOnline,
+                    showOnlineIndicator: true,
+                    onTapWithoutStories: () => context.push(
+                      '/chat/${conversation.id}',
+                      extra: {
+                        'participantName': conversation.participantName,
+                        'participantAvatarUrl':
+                            conversation.participantAvatarUrl,
+                        'participantId': conversation.participantId,
+                      },
+                    ),
                   ),
-                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -591,13 +538,14 @@ class _ConversationTile extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (conversation.participantIsVerified || conversation.isSystem)
+                          if (conversation.participantIsVerified ||
+                              conversation.isSystem)
                             const VerifiedBadge(size: 14),
                           if (conversation.isMuted)
                             Padding(
                               padding: const EdgeInsets.only(left: 4),
                               child: Icon(
-                                Icons.notifications_off_outlined,
+                                LucideIcons.bellOff,
                                 size: 14,
                                 color: context.colors.textTertiary,
                               ),
@@ -607,7 +555,7 @@ class _ConversationTile extends ConsumerWidget {
                             Padding(
                               padding: const EdgeInsets.only(right: 6),
                               child: Icon(
-                                Icons.push_pin,
+                                LucideIcons.pin,
                                 size: 13,
                                 color: context.colors.textTertiary,
                               ),
@@ -615,13 +563,9 @@ class _ConversationTile extends ConsumerWidget {
                           Text(
                             _formatTime(context, conversation.updatedAt),
                             style: TextStyle(
-                              color: hasUnread
-                                  ? context.colors.accentPrimary
-                                  : context.colors.textSecondary,
+                              color: context.colors.textTertiary,
                               fontSize: 11,
-                              fontWeight: hasUnread
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
@@ -634,8 +578,9 @@ class _ConversationTile extends ConsumerWidget {
                               conversation.lastMessage?.content != null
                                   ? BraweRichText.humanize(
                                       conversation.lastMessage!.content,
-                                      sharedPostLabel:
-                                          S.of(context).linkSharedPost,
+                                      sharedPostLabel: S
+                                          .of(context)
+                                          .linkSharedPost,
                                     )
                                   : S.of(context).chatListTapToTalk,
                               style: TextStyle(
@@ -660,21 +605,8 @@ class _ConversationTile extends ConsumerWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    AppColors.braweBlue,
-                                    AppColors.braweSky,
-                                  ],
-                                ),
+                                color: context.colors.accentPrimary,
                                 borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.braweBlue.withValues(
-                                      alpha: 0.55,
-                                    ),
-                                    blurRadius: 8,
-                                  ),
-                                ],
                               ),
                               child: Text(
                                 conversation.unreadCount > 99
@@ -716,43 +648,51 @@ class _ConversationTile extends ConsumerWidget {
           children: [
             const SizedBox(height: 8),
             if (!conversation.isSystem)
-            ListTile(
-              leading: Icon(
-                conversation.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+              ListTile(
+                leading: Icon(
+                  conversation.isPinned ? LucideIcons.pinOff : LucideIcons.pin,
+                ),
+                title: Text(conversation.isPinned ? s.chatUnpin : s.chatPin),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final v = await notifier.setPinned(
+                    conversation.id,
+                    !conversation.isPinned,
+                  );
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        v == null
+                            ? s.chatPinLimit
+                            : (v ? s.chatPinnedToast : s.chatUnpinnedToast),
+                      ),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
               ),
-              title: Text(conversation.isPinned ? s.chatUnpin : s.chatPin),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final v =
-                    await notifier.setPinned(conversation.id, !conversation.isPinned);
-                messenger.showSnackBar(SnackBar(
-                  content: Text(
-                    v == null
-                        ? s.chatPinLimit
-                        : (v ? s.chatPinnedToast : s.chatUnpinnedToast),
-                  ),
-                  duration: const Duration(seconds: 2),
-                ));
-              },
-            ),
             ListTile(
               leading: Icon(
                 conversation.isMuted
-                    ? Icons.notifications_active_outlined
-                    : Icons.notifications_off_outlined,
+                    ? LucideIcons.bellRing
+                    : LucideIcons.bellOff,
               ),
               title: Text(
                 conversation.isMuted ? s.chatUnmute : s.chatDetailMute,
               ),
               onTap: () async {
                 Navigator.pop(ctx);
-                final v =
-                    await notifier.setMuted(conversation.id, !conversation.isMuted);
+                final v = await notifier.setMuted(
+                  conversation.id,
+                  !conversation.isMuted,
+                );
                 if (v == null) return;
-                messenger.showSnackBar(SnackBar(
-                  content: Text(v ? s.chatMutedToast : s.chatUnmutedToast),
-                  duration: const Duration(seconds: 1),
-                ));
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(v ? s.chatMutedToast : s.chatUnmutedToast),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 8),
@@ -777,14 +717,14 @@ class _SwipeableConversationTile extends ConsumerWidget {
       key: ValueKey('conv-${conversation.id}'),
       background: Container(
         color: archivedMode
-            ? Colors.blueGrey.shade700
-            : AppColors.braweBlue.withValues(alpha: 0.8),
+            ? context.colors.textTertiary
+            : context.colors.accentPrimary.withValues(alpha: 0.8),
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
           children: [
             Icon(
-              archivedMode ? Icons.unarchive : Icons.archive,
+              archivedMode ? LucideIcons.archiveRestore : LucideIcons.archive,
               color: context.colors.textOnAccent,
             ),
             const SizedBox(width: 8),
@@ -798,7 +738,7 @@ class _SwipeableConversationTile extends ConsumerWidget {
         ),
       ),
       secondaryBackground: Container(
-        color: AppColors.mutedRed,
+        color: context.colors.danger,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Row(
@@ -809,7 +749,7 @@ class _SwipeableConversationTile extends ConsumerWidget {
               style: TextStyle(color: context.colors.textOnAccent),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.delete, color: context.colors.textOnAccent),
+            Icon(LucideIcons.trash2, color: context.colors.textOnAccent),
           ],
         ),
       ),
@@ -842,7 +782,7 @@ class _SwipeableConversationTile extends ConsumerWidget {
                     onPressed: () => Navigator.pop(ctx, true),
                     child: Text(
                       S.of(context).chatListDelete,
-                      style: const TextStyle(color: AppColors.mutedRed),
+                      style: TextStyle(color: context.colors.danger),
                     ),
                   ),
                 ],

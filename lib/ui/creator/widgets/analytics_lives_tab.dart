@@ -487,7 +487,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
                     ),
                     SizedBox(width: 4),
                     Text(
-                      'Ver replay',
+                      S.of(context).moneyLivesViewReplay,
                       style: TextStyle(
                         color: context.colors.accentPrimary,
                         fontSize: 11,
@@ -588,7 +588,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
         );
       }
     } catch (e) {
-      if (mounted) _showSnack(context, 'Erro ao buscar replay', isError: true);
+      if (mounted) _showSnack(context, S.of(context).moneyLivesReplayFetchError, isError: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -947,7 +947,7 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
               const Icon(LucideIcons.download, color: _green, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Baixar Live',
+                S.of(context).moneyLivesDownloadTitle,
                 style: TextStyle(
                   color: textPrimary,
                   fontWeight: FontWeight.w700,
@@ -958,7 +958,7 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.item.title.isEmpty ? 'Live sem título' : widget.item.title,
+            widget.item.title.isEmpty ? S.of(context).moneyLivesUntitled : widget.item.title,
             style: TextStyle(color: textSec, fontSize: 13),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

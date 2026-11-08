@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:go_router/go_router.dart';
 import '../view_models/live_feed_view_model.dart';
 import '../../../domain/models/live_room.dart';
@@ -58,7 +59,10 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
         backgroundColor: colors.background,
         title: Text(
           s.liveFeedCategoryForYou,
-          style: TextStyle(color: colors.textPrimary, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -74,7 +78,7 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.videocam_off_outlined,
+                    LucideIcons.videoOff,
                     color: colors.textTertiary,
                     size: 64,
                   ),
@@ -92,7 +96,7 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
                   ElevatedButton.icon(
                     onPressed: () =>
                         ref.read(liveFeedViewModelProvider.notifier).refresh(),
-                    icon: const Icon(Icons.refresh),
+                    icon: const Icon(LucideIcons.refreshCw),
                     label: Text(s.liveFeedRefresh),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.accentPrimary,
@@ -116,8 +120,15 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
               builder: (context, _) {
                 loader.ensure(rooms.length);
                 final hidden = ref.watch(hiddenAdsProvider);
-                final slots = loader.mix(rooms, skip: (ad) => hidden.contains(ad.adId) || hidden.contains('owner:${ad.advertiser?.id}'));
-                final cols = (MediaQuery.sizeOf(context).width / 200).floor().clamp(2, 6);
+                final slots = loader.mix(
+                  rooms,
+                  skip: (ad) =>
+                      hidden.contains(ad.adId) ||
+                      hidden.contains('owner:${ad.advertiser?.id}'),
+                );
+                final cols = (MediaQuery.sizeOf(context).width / 200)
+                    .floor()
+                    .clamp(2, 6);
                 return GridView.builder(
                   padding: const EdgeInsets.all(8),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -129,11 +140,16 @@ class _ForYouLiveListScreenState extends ConsumerState<ForYouLiveListScreen>
                   itemCount: slots.length,
                   itemBuilder: (context, index) {
                     final slot = slots[index];
-                    if (slot case AdSlot(:final ad)) return SponsoredTile(key: ValueKey('ad-${ad.token}'), ad: ad);
+                    if (slot case AdSlot(:final ad))
+                      return SponsoredTile(
+                        key: ValueKey('ad-${ad.token}'),
+                        ad: ad,
+                      );
                     final room = (slot as ContentSlot).item;
                     return _LiveThumbnailCard(
                       room: room,
-                      onTap: () => context.push('/live/${room.id}', extra: room),
+                      onTap: () =>
+                          context.push('/live/${room.id}', extra: room),
                     );
                   },
                 );
@@ -250,7 +266,7 @@ class _LiveThumbnailCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.visibility, color: Colors.white, size: 12),
+                    const Icon(LucideIcons.eye, color: Colors.white, size: 12),
                     const SizedBox(width: 2),
                     Text(
                       '${room.viewerCount}',
@@ -279,10 +295,17 @@ class _LiveThumbnailCard extends StatelessWidget {
                         radius: 14,
                         backgroundColor: Colors.white24,
                         backgroundImage: room.streamerAvatarUrl != null
-                            ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(28))
+                            ? ResizeImage(
+                                NetworkImage(room.streamerAvatarUrl!),
+                                width: context.decodePx(28),
+                              )
                             : null,
                         child: room.streamerAvatarUrl == null
-                            ? const Icon(Icons.person, size: 14, color: Colors.white)
+                            ? const Icon(
+                                LucideIcons.user,
+                                size: 14,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                       const SizedBox(width: 6),
@@ -305,10 +328,7 @@ class _LiveThumbnailCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     room.title,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

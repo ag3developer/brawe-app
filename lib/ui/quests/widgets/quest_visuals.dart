@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 
 import '../../../domain/models/quest.dart';
 import '../../../gen/l10n/app_localizations.dart';
@@ -29,17 +32,17 @@ QuestPalette questPalette({
   String actionType = '',
 }) {
   if (isLiveQuestAction(actionType) || category == 'live') {
-    return const QuestPalette(Color(0xFFFF3D6E), Color(0xFFFF8A4D));
+    return const QuestPalette(QuestTones.coral, QuestTones.flame);
   }
   switch (category) {
     case 'engagement':
-      return const QuestPalette(AppColors.braweBlue, AppColors.braweSky);
+      return const QuestPalette(AppColors.braweBlue, QuestTones.sky);
     case 'social':
-      return const QuestPalette(Color(0xFFFF4D8D), Color(0xFFFFB13D));
+      return const QuestPalette(QuestTones.pink, QuestTones.flame);
     case 'creator':
-      return const QuestPalette(Color(0xFF14B87A), AppColors.braweSky);
+      return const QuestPalette(QuestTones.mint, QuestTones.sky);
     default:
-      return const QuestPalette(AppColors.braweBlue, Color(0xFFB14DFF));
+      return const QuestPalette(AppColors.braweBlue, QuestTones.orchid);
   }
 }
 
@@ -49,35 +52,35 @@ QuestPalette paletteForQuest(DailyQuest q) =>
 IconData questIcon(String? key, [String? actionType]) {
   switch (actionType) {
     case 'watch_live':
-      return Icons.live_tv_rounded;
+      return LucideIcons.tv;
     case 'send_live_gift':
-      return Icons.card_giftcard_rounded;
+      return LucideIcons.gift;
     case 'live_chat':
-      return Icons.forum_rounded;
+      return LucideIcons.messagesSquare;
     case 'live_like':
-      return Icons.favorite_rounded;
+      return LucideIcons.heart;
   }
   switch (key) {
     case 'Radio':
-      return Icons.live_tv_rounded;
+      return LucideIcons.tv;
     case 'Gift':
-      return Icons.card_giftcard_rounded;
+      return LucideIcons.gift;
     case 'MessageSquare':
-      return Icons.forum_rounded;
+      return LucideIcons.messagesSquare;
     case 'Play':
-      return Icons.play_circle_rounded;
+      return LucideIcons.circlePlay;
     case 'Heart':
-      return Icons.favorite_rounded;
+      return LucideIcons.heart;
     case 'MessageCircle':
-      return Icons.chat_bubble_rounded;
+      return LucideIcons.messageCircle;
     case 'UserPlus':
-      return Icons.person_add_rounded;
+      return LucideIcons.userPlus;
     case 'Share2':
-      return Icons.share_rounded;
+      return LucideIcons.send;
     case 'Camera':
-      return Icons.camera_alt_rounded;
+      return LucideIcons.camera;
     default:
-      return Icons.stars_rounded;
+      return LucideIcons.sparkles;
   }
 }
 
@@ -156,7 +159,7 @@ class QuestArt extends StatelessWidget {
       ),
       child: Icon(
         questIcon(icon, actionType),
-        color: Colors.white,
+        color: QuestTones.onGradient,
         size: size * 0.52,
       ),
     );
@@ -223,19 +226,19 @@ String questBadgeEmoji(String key) {
 List<Color> questBadgeColors(String key) {
   switch (key) {
     case 'streak_3':
-      return const [Color(0xFFE9A36A), Color(0xFFB4632E)];
+      return const [QuestTones.bronze, QuestTones.bronzeDeep];
     case 'streak_7':
-      return const [Color(0xFF7DD3FC), Color(0xFF3B82F6)];
+      return const [QuestTones.ice, QuestTones.iceDeep];
     case 'streak_14':
-      return const [Color(0xFFC4B5FD), Color(0xFF6366F1)];
+      return const [QuestTones.lavender, QuestTones.lavenderDeep];
     case 'streak_30':
-      return const [Color(0xFFFFE066), Color(0xFFFF8B33)];
+      return const [QuestTones.gold, QuestTones.flame];
     case 'streak_60':
-      return const [Color(0xFFD946EF), Color(0xFFFF4D8D)];
+      return const [QuestTones.fuchsia, QuestTones.pink];
     case 'streak_100':
-      return const [Color(0xFFFFD93D), Color(0xFFFF4D8D), Color(0xFF22D3EE)];
+      return const [QuestTones.gold, QuestTones.pink, QuestTones.cyan];
     default:
-      return const [AppColors.braweBlue, AppColors.braweSky];
+      return const [AppColors.braweBlue, QuestTones.sky];
   }
 }
 
@@ -293,8 +296,7 @@ class _QuestBadgeMedalState extends State<QuestBadgeMedal>
     final size = widget.size;
     final colors = questBadgeColors(widget.badgeKey);
     final locked = !widget.unlocked;
-    final greyA = context.isDark ? const Color(0xFF3A3F55) : const Color(0xFFD6D9E3);
-    final greyB = context.isDark ? const Color(0xFF262A3B) : const Color(0xFFB9BDCB);
+    final (greyA, greyB) = context.questLockedGreys;
 
     return SizedBox(
       width: size,
@@ -331,7 +333,7 @@ class _QuestBadgeMedalState extends State<QuestBadgeMedal>
                       ? [greyA, greyB, greyA]
                       : [
                           ...colors,
-                          Colors.white.withValues(alpha: 0.9),
+                          QuestTones.onGradient.withValues(alpha: 0.9),
                           colors.first,
                         ],
                 ),
@@ -350,7 +352,7 @@ class _QuestBadgeMedalState extends State<QuestBadgeMedal>
                 colors: locked ? [greyB, greyA] : colors,
               ),
               border: Border.all(
-                color: Colors.white.withValues(alpha: locked ? 0.15 : 0.55),
+                color: QuestTones.onGradient.withValues(alpha: locked ? 0.15 : 0.55),
                 width: size * 0.025,
               ),
             ),
@@ -376,7 +378,7 @@ class _QuestBadgeMedalState extends State<QuestBadgeMedal>
                     style: TextStyle(
                       fontSize: size * 0.4,
                       shadows: const [
-                        Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                        Shadow(color: QuestTones.shade, blurRadius: 4, offset: Offset(0, 2)),
                       ],
                     ),
                   ),
@@ -393,7 +395,7 @@ class _QuestBadgeMedalState extends State<QuestBadgeMedal>
                   border: Border.all(color: context.colors.border),
                 ),
                 child: Icon(
-                  Icons.lock_rounded,
+                  LucideIcons.lock,
                   size: size * 0.16,
                   color: context.colors.textTertiary,
                 ),
@@ -589,9 +591,9 @@ class _ShineSweepState extends State<ShineSweep>
                         begin: Alignment(x - 0.4, -0.6),
                         end: Alignment(x + 0.4, 0.6),
                         colors: [
-                          Colors.white.withValues(alpha: 0),
-                          Colors.white.withValues(alpha: widget.opacity),
-                          Colors.white.withValues(alpha: 0),
+                          QuestTones.onGradient.withValues(alpha: 0),
+                          QuestTones.onGradient.withValues(alpha: widget.opacity),
+                          QuestTones.onGradient.withValues(alpha: 0),
                         ],
                       ),
                     ),
@@ -754,7 +756,7 @@ class _GameTileState extends State<GameTile> {
     );
     final base = Color.alphaBlend(
       tint.withValues(alpha: dark ? 0.55 : 0.35),
-      dark ? Colors.black : colors.surfaceHighest,
+      dark ? QuestTones.shade : colors.surfaceHighest,
     );
     final press = _down ? widget.depth * 0.7 : 0.0;
 
@@ -877,7 +879,7 @@ class Sparkles extends StatefulWidget {
     super.key,
     required this.child,
     this.enabled = true,
-    this.color = const Color(0xFFFFE066),
+    this.color = QuestTones.gold,
     this.count = 6,
   });
 
@@ -1048,10 +1050,10 @@ class _BackdropPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = background);
     final a = t * 2 * math.pi;
     final blobs = [
-      (const Color(0xFF7C5CFF), 0.85, 0.08, 0.55),
-      (const Color(0xFF22D3EE), 0.10, 0.32, 0.50),
-      (const Color(0xFFFF4D8D), 0.80, 0.62, 0.45),
-      (const Color(0xFFFFB13D), 0.15, 0.88, 0.40),
+      (QuestTones.violet, 0.85, 0.08, 0.55),
+      (QuestTones.cyan, 0.10, 0.32, 0.50),
+      (QuestTones.pink, 0.80, 0.62, 0.45),
+      (QuestTones.flame, 0.15, 0.88, 0.40),
     ];
     for (var i = 0; i < blobs.length; i++) {
       final (color, bx, by, rr) = blobs[i];
@@ -1068,7 +1070,7 @@ class _BackdropPainter extends CustomPainter {
       canvas.drawCircle(Offset(cx, cy), radius, paint);
     }
     // Estrelas.
-    final starColor = dark ? Colors.white : const Color(0xFF7C5CFF);
+    final starColor = dark ? QuestTones.onGradient : QuestTones.violet;
     for (final (x, y, phase, s) in _stars) {
       final tw = 0.5 + 0.5 * math.sin(a * 3 + phase * 6.28);
       canvas.drawCircle(

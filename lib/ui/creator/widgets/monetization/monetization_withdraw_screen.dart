@@ -11,6 +11,7 @@ import '../../../../data/repositories/creator_payout_repository.dart';
 import '../../../../domain/models/creator_payout.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/brawe_colors.dart';
+import '../../../core/ui/grouped_list.dart';
 import '../agency/agency_widgets.dart';
 import 'monetization_account_screen.dart' show PayoutErrorBox;
 import 'monetization_l10n.dart';
@@ -180,7 +181,7 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
           automaticallyImplyLeading: _step != _Step.done,
         ),
         body: SafeArea(
-          child: ListView(
+          child: GroupedBody(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
             children: [
               if (_step != _Step.done) ...[
@@ -256,21 +257,14 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
       const SizedBox(height: 4),
       Text(s.payoutWithdrawAmountSubtitle(f.integer(avail)), style: AgencyText.caption(context)),
       const SizedBox(height: 16),
-      TextField(
-        controller: _amount,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(9)],
-        onChanged: (_) => _onAmountChanged(),
-        style: AgencyText.number(context, size: 22),
-        decoration: InputDecoration(
-          labelText: s.payoutWithdrawDiamondsLabel,
-          hintText: '0',
-          prefixIcon: Icon(LucideIcons.gem, size: 18, color: c.textTertiary),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          suffixIcon: Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: TextButton(
+      GroupedSection(
+        footer: minDiamonds > 0
+            ? s.payoutWithdrawMinHint(f.money(minAmount, _ov.currency), f.integer(minDiamonds))
+            : null,
+        children: [
+          GroupedField(
+            label: s.payoutWithdrawDiamondsLabel,
+            trailing: TextButton(
               onPressed: avail > 0
                   ? () {
                       _amount.text = '$avail';
@@ -279,16 +273,27 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
                   : null,
               child: Text(s.payoutWithdrawAll),
             ),
+            child: TextField(
+              controller: _amount,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              textCapitalization: TextCapitalization.none,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(9)],
+              onChanged: (_) => _onAmountChanged(),
+              style: AgencyText.number(context, size: 22),
+              decoration: groupedInput(context, hint: '0'),
+            ),
           ),
-        ),
+        ],
       ),
-      if (minDiamonds > 0) ...[
-        const SizedBox(height: 6),
-        Text(s.payoutWithdrawMinHint(f.money(minAmount, _ov.currency), f.integer(minDiamonds)),
-            style: AgencyText.caption(context).copyWith(fontSize: 11.5)),
-      ],
-      const SizedBox(height: 16),
-      AgencyBox(child: ConstrainedBox(constraints: const BoxConstraints(minHeight: 56), child: quoteBody())),
+      GroupedSection(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(constraints: const BoxConstraints(minHeight: 40), child: quoteBody()),
+          ),
+        ],
+      ),
       const SizedBox(height: 20),
       SizedBox(
         height: 48,
@@ -313,63 +318,47 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
       const SizedBox(height: 4),
       Text(s.payoutWithdrawReviewSubtitle, style: AgencyText.caption(context)),
       const SizedBox(height: 16),
-      AgencyBox(
-        child: Column(children: [
-          AgencyInfoRow(label: s.payoutWithdrawDiamonds, value: f.integer(q.diamonds)),
+      GroupedSection(
+        footer: q.taxes.isNotEmpty ? s.payoutWithdrawRetentionsHelp : null,
+        indent: 16,
+        children: [
+          GroupedRow(title: s.payoutWithdrawDiamonds, value: f.integer(q.diamonds)),
           if (brl)
-            AgencyInfoRow(
-              label: s.payoutWithdrawPtax(f.date(DateTime.tryParse(q.fxRefDate ?? _ov.fx?.refDate ?? ''))),
+            GroupedRow(
+              title: s.payoutWithdrawPtax(f.date(DateTime.tryParse(q.fxRefDate ?? _ov.fx?.refDate ?? ''))),
               value: r'US$ 1 = R$ ' + f.fx(q.fxQuote),
             )
           else
-            AgencyInfoRow(label: s.payoutWithdrawValueUsd, value: f.money(q.amountUsd, 'USD')),
-          AgencyInfoRow(label: s.payoutWithdrawGross, value: f.money(q.gross, q.currency)),
+            GroupedRow(title: s.payoutWithdrawValueUsd, value: f.money(q.amountUsd, 'USD')),
+          GroupedRow(title: s.payoutWithdrawGross, value: f.money(q.gross, q.currency)),
           if (q.taxes.isEmpty)
-            AgencyInfoRow(label: s.payoutWithdrawRetentions, value: s.payoutWithdrawNoRetentions, valueColor: c.textSecondary)
+            GroupedRow(title: s.payoutWithdrawRetentions, value: s.payoutWithdrawNoRetentions)
           else
-            for (final t in q.taxes)
-              AgencyInfoRow(label: t.label, value: '− ${f.money(t.amount, q.currency)}', valueColor: c.textSecondary),
-          if (q.taxes.isNotEmpty)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(s.payoutWithdrawRetentionsHelp, style: AgencyText.caption(context).copyWith(fontSize: 11)),
-            ),
-          const SizedBox(height: 8),
-          const AgencyDivider(),
-          const SizedBox(height: 10),
-          Row(children: [
-            Expanded(child: Text(s.payoutWithdrawNet, style: AgencyText.title(context))),
-            Text(f.money(q.net, q.currency), style: AgencyText.number(context, size: 22)),
-          ]),
-        ]),
+            for (final t in q.taxes) GroupedRow(title: t.label, value: '− ${f.money(t.amount, q.currency)}'),
+          GroupedRow(
+            title: s.payoutWithdrawNet,
+            trailing: Text(f.money(q.net, q.currency), style: AgencyText.number(context, size: 20)),
+          ),
+        ],
       ),
-      if (q.monthPriorGross > 0) ...[
-        const SizedBox(height: 8),
-        Text(s.payoutWithdrawMonthPrior(f.money(q.monthPriorGross, q.currency)),
-            style: AgencyText.caption(context).copyWith(fontSize: 11.5)),
-      ],
-      const SizedBox(height: 12),
-      AgencyBox(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(s.payoutWithdrawPaidTo, style: AgencyText.caption(context)),
-          const SizedBox(height: 4),
-          Text(acc.display, style: AgencyText.title(context)),
-          Text([acc.holderName, ?payoutHolderTypeLabel(s, acc.holderType)].join(' · '), style: AgencyText.caption(context)),
-          const SizedBox(height: 10),
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(LucideIcons.clock, size: 15, color: c.textTertiary),
-            const SizedBox(width: 8),
-            Expanded(child: Text(s.payoutWithdrawSla(_ov.rules.paymentDays), style: AgencyText.caption(context))),
-          ]),
-          if (acc.status == PayoutAccountStatus.pendingReview) ...[
-            const SizedBox(height: 6),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(LucideIcons.shieldCheck, size: 15, color: c.textTertiary),
-              const SizedBox(width: 8),
-              Expanded(child: Text(s.payoutWithdrawFirstPaymentCheck, style: AgencyText.caption(context))),
-            ]),
-          ],
-        ]),
+      if (q.monthPriorGross > 0)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 0, 14, 22),
+          child: Text(s.payoutWithdrawMonthPrior(f.money(q.monthPriorGross, q.currency)),
+              style: AgencyText.caption(context).copyWith(fontSize: 11.5)),
+        ),
+      GroupedSection(
+        caption: s.payoutWithdrawPaidTo,
+        children: [
+          GroupedRow(
+            icon: LucideIcons.landmark,
+            title: acc.display,
+            subtitle: [acc.holderName, ?payoutHolderTypeLabel(s, acc.holderType)].join(' · '),
+          ),
+          GroupedRow(icon: LucideIcons.clock, title: s.payoutWithdrawSla(_ov.rules.paymentDays)),
+          if (acc.status == PayoutAccountStatus.pendingReview)
+            GroupedRow(icon: LucideIcons.shieldCheck, title: s.payoutWithdrawFirstPaymentCheck),
+        ],
       ),
       if (_error.isNotEmpty) ...[const SizedBox(height: 14), PayoutErrorBox(text: _error)],
       const SizedBox(height: 20),
@@ -396,23 +385,27 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
       const SizedBox(height: 4),
       Text(s.payoutCodeSubtitle(ch.emailMasked ?? ''), style: AgencyText.caption(context)),
       const SizedBox(height: 18),
-      TextField(
-        controller: _code,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        autofillHints: const [AutofillHints.oneTimeCode],
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
-        onChanged: (v) {
-          setState(() {});
-          if (v.length == 6 && !_busy) _confirm();
-        },
-        style: AgencyText.number(context, size: 28).copyWith(letterSpacing: 10),
-        decoration: InputDecoration(
-          hintText: '000000',
-          semanticCounterText: s.payoutCodeLabel,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
+      GroupedSection(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: TextField(
+              controller: _code,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              textCapitalization: TextCapitalization.none,
+              textAlign: TextAlign.center,
+              autofillHints: const [AutofillHints.oneTimeCode],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)],
+              onChanged: (v) {
+                setState(() {});
+                if (v.length == 6 && !_busy) _confirm();
+              },
+              style: AgencyText.number(context, size: 28).copyWith(letterSpacing: 10),
+              decoration: groupedInput(context, hint: '000000').copyWith(semanticCounterText: s.payoutCodeLabel),
+            ),
+          ),
+        ],
       ),
       if (_error.isNotEmpty) ...[const SizedBox(height: 14), PayoutErrorBox(text: _error)],
       if (_notice.isNotEmpty && _error.isEmpty) ...[
@@ -466,19 +459,17 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
       Text(s.payoutDoneSubtitle(_ov.rules.paymentDays), textAlign: TextAlign.center, style: AgencyText.caption(context)),
       if (p != null) ...[
         const SizedBox(height: 20),
-        AgencyBox(
-          child: Column(children: [
-            AgencyInfoRow(label: s.payoutWithdrawDiamonds, value: f.integer(p.diamonds)),
-            AgencyInfoRow(label: s.payoutWithdrawPaidTo, value: p.accountDisplay),
-            AgencyInfoRow(label: s.payoutDoneStatus, value: s.payoutStatusRequested),
-            const SizedBox(height: 6),
-            const AgencyDivider(),
-            const SizedBox(height: 10),
-            Row(children: [
-              Expanded(child: Text(s.payoutWithdrawNet, style: AgencyText.title(context))),
-              Text(f.money(p.net, p.currency), style: AgencyText.number(context, size: 20)),
-            ]),
-          ]),
+        GroupedSection(
+          indent: 16,
+          children: [
+            GroupedRow(title: s.payoutWithdrawDiamonds, value: f.integer(p.diamonds)),
+            GroupedRow(title: s.payoutWithdrawPaidTo, value: p.accountDisplay),
+            GroupedRow(title: s.payoutDoneStatus, value: s.payoutStatusRequested),
+            GroupedRow(
+              title: s.payoutWithdrawNet,
+              trailing: Text(f.money(p.net, p.currency), style: AgencyText.number(context, size: 20)),
+            ),
+          ],
         ),
       ],
       const SizedBox(height: 24),

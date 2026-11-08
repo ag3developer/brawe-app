@@ -21,7 +21,6 @@ import '../../../domain/models/user.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/text/brawe_rich_text.dart';
 import '../../../core/text/link_preview_card.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/chat_detail_view_model.dart';
 import '../view_models/presence_provider.dart';
@@ -268,7 +267,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               S.of(context).chatDetailBlock,
-              style: const TextStyle(color: AppColors.mutedRed),
+              style: TextStyle(color: context.colors.danger),
             ),
           ),
         ],
@@ -320,7 +319,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               ),
               if (!_isSystem)
                 _MoreMenuItem(
-                  icon: Icons.person_outline,
+                  icon: LucideIcons.user,
                   label: S.of(context).chatDetailViewProfile,
                   onTap: () {
                     final pid = _participantId;
@@ -366,7 +365,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _MoreMenuItem(
-                        icon: Icons.search,
+                        icon: LucideIcons.search,
                         label: s.chatDetailSearchInChat,
                         onTap: () {
                           Navigator.pop(sheetCtx);
@@ -378,8 +377,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       ),
                       _MoreMenuItem(
                         icon: muted
-                            ? Icons.notifications_active_outlined
-                            : Icons.notifications_off_outlined,
+                            ? LucideIcons.bellRing
+                            : LucideIcons.bellOff,
                         label: muted ? s.chatUnmute : s.chatDetailMute,
                         onTap: () async {
                           Navigator.pop(sheetCtx);
@@ -399,9 +398,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       ),
                       if (!_isSystem)
                         _MoreMenuItem(
-                          icon: pinned
-                              ? Icons.push_pin
-                              : Icons.push_pin_outlined,
+                          icon: pinned ? LucideIcons.pin : LucideIcons.pin,
                           label: pinned ? s.chatUnpin : s.chatPin,
                           onTap: () async {
                             Navigator.pop(sheetCtx);
@@ -428,9 +425,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               ),
               if (!_isSystem)
                 _MoreMenuItem(
-                  icon: Icons.block,
+                  icon: LucideIcons.ban,
                   label: S.of(context).chatDetailBlockMenu(_participantName),
-                  color: AppColors.mutedRed,
+                  color: context.colors.danger,
                   onTap: () {
                     Navigator.pop(sheetCtx);
                     _blockUser();
@@ -438,9 +435,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 ),
               if (!_isSystem)
                 _MoreMenuItem(
-                  icon: Icons.flag_outlined,
+                  icon: LucideIcons.flag,
                   label: S.of(context).chatDetailReport,
-                  color: AppColors.mutedRed,
+                  color: context.colors.danger,
                   onTap: () {
                     Navigator.pop(sheetCtx);
                     showReportSheet(
@@ -506,15 +503,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               if (state.errorMessage != null)
                 Container(
                   width: double.infinity,
-                  color: AppColors.mutedRed.withValues(alpha: 0.15),
+                  color: context.colors.danger.withValues(alpha: 0.15),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 6,
                   ),
                   child: Text(
                     chatErrorText(S.of(context), state.errorMessage!),
-                    style: const TextStyle(
-                      color: AppColors.mutedRed,
+                    style: TextStyle(
+                      color: context.colors.danger,
                       fontSize: 12,
                     ),
                   ),
@@ -613,7 +610,7 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
       backgroundColor: context.colors.background,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
+        icon: Icon(LucideIcons.arrowLeft, color: context.colors.textPrimary),
         onPressed: onBack,
       ),
       titleSpacing: 0,
@@ -698,7 +695,10 @@ class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        _AppBarAction(icon: Icons.more_vert, onTap: onMoreTap ?? () {}),
+        _AppBarAction(
+          icon: LucideIcons.ellipsisVertical,
+          onTap: onMoreTap ?? () {},
+        ),
         const SizedBox(width: 4),
       ],
     );
@@ -775,11 +775,15 @@ class _TypingDotsState extends State<_TypingDots>
                 width: 4,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.braweSky.withValues(alpha: 0.35 + v * 0.6),
+                  color: context.colors.accentSecondary.withValues(
+                    alpha: 0.35 + v * 0.6,
+                  ),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.braweSky.withValues(alpha: 0.4 * v),
+                      color: context.colors.accentSecondary.withValues(
+                        alpha: 0.4 * v,
+                      ),
                       blurRadius: 4,
                     ),
                   ],
@@ -835,7 +839,7 @@ class _MessageList extends ConsumerWidget {
       itemCount: items.length + (isLoadingMore ? 1 : 0) + (isTyping ? 1 : 0),
       itemBuilder: (_, idx) {
         if (isLoadingMore && idx == 0) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: SizedBox(
@@ -843,7 +847,7 @@ class _MessageList extends ConsumerWidget {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.braweBlue,
+                  color: context.colors.accentPrimary,
                 ),
               ),
             ),
@@ -944,11 +948,11 @@ class _TypingBubbleState extends State<_TypingBubble>
                 bottomLeft: Radius.circular(4),
               ),
               border: Border.all(
-                color: AppColors.braweBlue.withValues(alpha: 0.25),
+                color: context.colors.accentPrimary.withValues(alpha: 0.25),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.braweBlue.withValues(alpha: 0.12),
+                  color: context.colors.accentPrimary.withValues(alpha: 0.12),
                   blurRadius: 8,
                 ),
               ],
@@ -976,10 +980,10 @@ class _TypingBubbleState extends State<_TypingBubble>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              AppColors.braweSky.withValues(
+                              context.colors.accentSecondary.withValues(
                                 alpha: 0.6 + v * 0.4,
                               ),
-                              AppColors.braweBlue.withValues(
+                              context.colors.accentPrimary.withValues(
                                 alpha: 0.5 + v * 0.4,
                               ),
                             ],
@@ -987,7 +991,7 @@ class _TypingBubbleState extends State<_TypingBubble>
                           borderRadius: BorderRadius.circular(4),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.braweSky.withValues(
+                              color: context.colors.accentSecondary.withValues(
                                 alpha: 0.3 * v,
                               ),
                               blurRadius: 6,
@@ -1030,15 +1034,15 @@ class _DateSeparator extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.braweBlue.withValues(alpha: 0.18),
-                AppColors.braweSky.withValues(alpha: 0.18),
+                context.colors.accentPrimary.withValues(alpha: 0.18),
+                context.colors.accentSecondary.withValues(alpha: 0.18),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: context.colors.border),
             boxShadow: [
               BoxShadow(
-                color: AppColors.braweBlue.withValues(alpha: 0.12),
+                color: context.colors.accentPrimary.withValues(alpha: 0.12),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -1102,7 +1106,9 @@ class _MessageBubble extends ConsumerWidget {
         Text(
           hh,
           style: TextStyle(
-            color: isMe ? Colors.white70 : context.colors.textSecondary,
+            color: isMe
+                ? context.colors.textOnAccent.withValues(alpha: 0.75)
+                : context.colors.textSecondary,
             fontSize: 10,
           ),
         ),
@@ -1142,7 +1148,7 @@ class _MessageBubble extends ConsumerWidget {
                             : null,
                         child: avatarUrl == null
                             ? Icon(
-                                Icons.person,
+                                LucideIcons.user,
                                 size: 14,
                                 color: context.colors.textTertiary,
                               )
@@ -1222,7 +1228,7 @@ class _MessageBubble extends ConsumerWidget {
                             : null,
                         child: avatarUrl == null
                             ? Icon(
-                                Icons.person,
+                                LucideIcons.user,
                                 size: 14,
                                 color: context.colors.textTertiary,
                               )
@@ -1338,44 +1344,13 @@ class _MessageBubble extends ConsumerWidget {
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient:
-                isMe &&
-                    !(_isImage || _gifAttachment != null) &&
-                    !message.isBurned
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.braweBlue, AppColors.braweSky],
-                  )
-                : null,
             color:
                 (!isMe ||
                     _isImage ||
                     _gifAttachment != null ||
                     message.isBurned)
                 ? context.colors.surfaceHighest
-                : null,
-            border:
-                (!isMe ||
-                    _isImage ||
-                    _gifAttachment != null ||
-                    message.isBurned)
-                ? Border.all(
-                    color: context.colors.border.withValues(alpha: 0.15),
-                  )
-                : null,
-            boxShadow:
-                isMe &&
-                    !(_isImage || _gifAttachment != null) &&
-                    !message.isBurned
-                ? [
-                    BoxShadow(
-                      color: AppColors.braweBlue.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
+                : context.colors.accentPrimary,
           ),
           padding: (_isImage || _gifAttachment != null) && !message.isBurned
               ? const EdgeInsets.all(3)
@@ -1420,7 +1395,7 @@ class _MessageBubble extends ConsumerWidget {
                             : null,
                         child: avatarUrl == null
                             ? Icon(
-                                Icons.person,
+                                LucideIcons.user,
                                 color: context.colors.textPrimary,
                                 size: 14,
                               )
@@ -1485,8 +1460,8 @@ class _MessageBubble extends ConsumerWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.braweBlue.withValues(alpha: 0.18),
-                        AppColors.braweSky.withValues(alpha: 0.18),
+                        context.colors.accentPrimary.withValues(alpha: 0.18),
+                        context.colors.accentSecondary.withValues(alpha: 0.18),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(28),
@@ -1527,7 +1502,7 @@ class _MessageBubble extends ConsumerWidget {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.add,
+                            LucideIcons.plus,
                             color: context.colors.textPrimary,
                             size: 18,
                           ),
@@ -1540,7 +1515,10 @@ class _MessageBubble extends ConsumerWidget {
             const SizedBox(height: 4),
             if (!message.isBurned)
               ListTile(
-                leading: const Icon(Icons.reply, color: AppColors.braweSky),
+                leading: Icon(
+                  LucideIcons.reply,
+                  color: context.colors.accentSecondary,
+                ),
                 title: Text(
                   S.of(context).chatDetailReply,
                   style: TextStyle(color: context.colors.textPrimary),
@@ -1597,7 +1575,10 @@ class _MessageBubble extends ConsumerWidget {
               ),
             if (!message.isBurned && message.messageType == 'text')
               ListTile(
-                leading: Icon(Icons.copy, color: context.colors.textPrimary),
+                leading: Icon(
+                  LucideIcons.copy,
+                  color: context.colors.textPrimary,
+                ),
                 title: Text(
                   S.of(context).chatDetailCopy,
                   style: TextStyle(color: context.colors.textPrimary),
@@ -1618,13 +1599,10 @@ class _MessageBubble extends ConsumerWidget {
             // meu lado); "para todos" pede uma confirmação curta, porque
             // não dá para desfazer para a outra pessoa.
             ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppColors.mutedRed,
-              ),
+              leading: Icon(LucideIcons.trash2, color: context.colors.danger),
               title: Text(
                 S.of(context).chatDetailDeleteForMe,
-                style: const TextStyle(color: AppColors.mutedRed),
+                style: TextStyle(color: context.colors.danger),
               ),
               onTap: () {
                 Navigator.pop(sheetCtx);
@@ -1640,13 +1618,10 @@ class _MessageBubble extends ConsumerWidget {
             ),
             if (isMe && !message.isPending)
               ListTile(
-                leading: const Icon(
-                  Icons.delete_forever_outlined,
-                  color: AppColors.mutedRed,
-                ),
+                leading: Icon(LucideIcons.trash2, color: context.colors.danger),
                 title: Text(
                   S.of(context).chatDeleteForEveryone,
-                  style: const TextStyle(color: AppColors.mutedRed),
+                  style: TextStyle(color: context.colors.danger),
                 ),
                 onTap: () {
                   Navigator.pop(sheetCtx);
@@ -1684,7 +1659,7 @@ class _MessageBubble extends ConsumerWidget {
             child: Text(s.actionCancel),
           ),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppColors.mutedRed),
+            style: TextButton.styleFrom(foregroundColor: context.colors.danger),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               s.chatDeleteForEveryone,
@@ -1746,13 +1721,15 @@ class _TextBubbleContent extends ConsumerWidget {
           BraweRichText(
             caption,
             style: TextStyle(
-              // Balão próprio tem gradiente colorido → texto sempre branco
+              // Balão próprio = accentPrimary → texto textOnAccent
               // Balão recebido → segue o tema
-              color: isMe ? Colors.white : context.colors.textPrimary,
+              color: isMe
+                  ? context.colors.textOnAccent
+                  : context.colors.textPrimary,
               fontSize: 14,
               height: 1.3,
             ),
-            linkColor: isMe ? Colors.white : null,
+            linkColor: isMe ? context.colors.textOnAccent : null,
           ),
         if (postId != null) ...[
           if (caption.isNotEmpty) const SizedBox(height: 6),
@@ -1771,30 +1748,25 @@ class _TextBubbleContent extends ConsumerWidget {
                   ? '${S.of(context).chatEdited} · ${_formatTime(message.timestamp)}'
                   : _formatTime(message.timestamp),
               style: TextStyle(
-                color: isMe ? Colors.white70 : context.colors.textSecondary,
+                color: isMe
+                    ? context.colors.textOnAccent.withValues(alpha: 0.75)
+                    : context.colors.textSecondary,
                 fontSize: 10,
               ),
             ),
             if (isMe) ...[
               const SizedBox(width: 4),
-              if (message.isRead)
-                ShaderMask(
-                  shaderCallback: (r) => const LinearGradient(
-                    colors: [AppColors.braweSky, AppColors.braweBlue],
-                  ).createShader(r),
-                  blendMode: BlendMode.srcIn,
-                  child: Icon(
-                    Icons.done_all,
-                    color: context.colors.textPrimary,
-                    size: 13,
-                  ),
-                )
-              else
-                Icon(
-                  message.isPending ? Icons.access_time : Icons.done,
-                  color: context.colors.textSecondary,
-                  size: 12,
-                ),
+              Icon(
+                message.isRead
+                    ? LucideIcons.checkCheck
+                    : (message.isPending
+                          ? LucideIcons.clock
+                          : LucideIcons.check),
+                color: message.isRead
+                    ? context.colors.textOnAccent
+                    : context.colors.textOnAccent.withValues(alpha: 0.7),
+                size: 13,
+              ),
             ],
           ],
         ),
@@ -1838,10 +1810,10 @@ class _GifBubbleContent extends StatelessWidget {
                 width: 200,
                 height: 150,
                 color: context.colors.surfaceElevated,
-                child: const Center(
+                child: Center(
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.braweBlue,
+                    color: context.colors.accentPrimary,
                   ),
                 ),
               );
@@ -1906,18 +1878,18 @@ class _ImageBubbleContent extends StatelessWidget {
                       memCacheWidth: context.decodeScreenPx,
                       imageUrl: message.content,
                       fit: BoxFit.cover,
-                      placeholder: (_, _) => const Center(
+                      placeholder: (_, _) => Center(
                         child: SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.braweBlue,
+                            color: context.colors.accentPrimary,
                           ),
                         ),
                       ),
                       errorWidget: (_, _, _) => Icon(
-                        Icons.broken_image,
+                        LucideIcons.imageOff,
                         color: context.colors.textTertiary,
                       ),
                     ),
@@ -1939,9 +1911,9 @@ class _ImageBubbleContent extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.local_fire_department,
+                        LucideIcons.flame,
                         size: 12,
-                        color: Colors.amber,
+                        color: context.colors.accentGold,
                       ),
                       SizedBox(width: 4),
                       Text(
@@ -1991,8 +1963,10 @@ class _ViewOnceBubbleContent extends StatelessWidget {
     final s = S.of(context);
     final opened = message.isBurned || message.viewedAt != null;
     final canOpen = !isMe && !opened && !message.isPending;
-    final fg = isMe ? Colors.white : context.colors.textPrimary;
-    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+    final fg = isMe ? context.colors.textOnAccent : context.colors.textPrimary;
+    final sub = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textSecondary;
 
     final String subtitle;
     if (opened) {
@@ -2076,7 +2050,11 @@ class _BurnedPlaceholder extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.whatshot, size: 16, color: context.colors.textSecondary),
+          Icon(
+            LucideIcons.flame,
+            size: 16,
+            color: context.colors.textSecondary,
+          ),
           const SizedBox(width: 6),
           Text(
             isMe
@@ -2110,8 +2088,8 @@ class _ImageViewerPage extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.local_fire_department,
-                    color: Colors.amber,
+                    LucideIcons.flame,
+                    color: context.colors.accentGold,
                     size: 18,
                   ),
                   SizedBox(width: 6),
@@ -2134,11 +2112,11 @@ class _ImageViewerPage extends StatelessWidget {
                   memCacheWidth: context.decodeScreenPx,
                   imageUrl: message.content,
                   fit: BoxFit.contain,
-                  placeholder: (_, _) => const CircularProgressIndicator(
-                    color: AppColors.braweBlue,
+                  placeholder: (_, _) => CircularProgressIndicator(
+                    color: context.colors.accentPrimary,
                   ),
                   errorWidget: (_, _, _) => Icon(
-                    Icons.broken_image,
+                    LucideIcons.imageOff,
                     color: context.colors.textTertiary,
                   ),
                 ),
@@ -2163,13 +2141,13 @@ class _EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.braweBlue.withValues(alpha: 0.30),
-                  AppColors.braweSky.withValues(alpha: 0.0),
+                  context.colors.accentPrimary.withValues(alpha: 0.30),
+                  context.colors.accentSecondary.withValues(alpha: 0.0),
                 ],
               ),
             ),
             child: Icon(
-              Icons.waving_hand,
+              LucideIcons.hand,
               color: context.colors.textSecondary,
               size: 56,
             ),
@@ -2384,14 +2362,7 @@ class _ComposerState extends ConsumerState<_Composer>
                               width: 3,
                               height: 34,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    AppColors.braweBlue,
-                                    AppColors.braweSky,
-                                  ],
-                                ),
+                                color: context.colors.accentPrimary,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -2404,7 +2375,7 @@ class _ComposerState extends ConsumerState<_Composer>
                                   Text(
                                     S.of(context).chatDetailReplying,
                                     style: TextStyle(
-                                      color: AppColors.braweBlue,
+                                      color: context.colors.accentPrimary,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -2428,7 +2399,7 @@ class _ComposerState extends ConsumerState<_Composer>
                             ),
                             IconButton(
                               icon: Icon(
-                                Icons.close,
+                                LucideIcons.x,
                                 size: 16,
                                 color: context.colors.textTertiary,
                               ),
@@ -2461,16 +2432,18 @@ class _ComposerState extends ConsumerState<_Composer>
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           _IconRoundButton(
-                            icon: Icons.attach_file,
+                            icon: LucideIcons.paperclip,
                             onTap: () => _showAttachSheet(context),
                           ),
                           const SizedBox(width: 4),
                           _IconRoundButton(
                             icon: widget.viewOnce
-                                ? Icons.local_fire_department
-                                : Icons.local_fire_department_outlined,
+                                ? LucideIcons.flame
+                                : LucideIcons.flame,
                             onTap: widget.onToggleViewOnce,
-                            tint: widget.viewOnce ? AppColors.mutedRed : null,
+                            tint: widget.viewOnce
+                                ? context.colors.danger
+                                : null,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
@@ -2550,8 +2523,8 @@ class _ComposerState extends ConsumerState<_Composer>
                                         : null,
                                     icon: Icon(
                                       _emojiOpen
-                                          ? Icons.keyboard_outlined
-                                          : Icons.emoji_emotions_outlined,
+                                          ? LucideIcons.keyboard
+                                          : LucideIcons.smile,
                                       color: _emojiOpen
                                           ? context.colors.accentPrimary
                                           : context.colors.textSecondary,
@@ -2818,16 +2791,16 @@ class _RecordingBar extends StatelessWidget {
           Container(
             width: 10,
             height: 10,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.redAccent,
+              color: context.colors.danger,
             ),
           ),
           const SizedBox(width: 10),
           Text(
             fmtSeconds(seconds),
-            style: const TextStyle(
-              color: Colors.redAccent,
+            style: TextStyle(
+              color: context.colors.danger,
               fontWeight: FontWeight.w700,
               fontSize: 14,
             ),
@@ -2838,7 +2811,7 @@ class _RecordingBar extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 color: isCancelling
-                    ? Colors.redAccent
+                    ? context.colors.danger
                     : context.colors.textSecondary,
                 fontSize: 13,
               ),
@@ -2886,19 +2859,15 @@ class _MicButton extends StatelessWidget {
           height: 46,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: isRecording
-                ? LinearGradient(
-                    colors: isCancelling
-                        ? [Colors.grey, Colors.grey.shade700]
-                        : [Colors.redAccent, Colors.red],
-                  )
-                : const LinearGradient(
-                    colors: [AppColors.braweBlue, AppColors.braweSky],
-                  ),
+            color: isRecording
+                ? (isCancelling
+                      ? context.colors.textTertiary
+                      : context.colors.danger)
+                : context.colors.accentPrimary,
           ),
           child: Icon(
-            isRecording ? Icons.stop : Icons.mic,
-            color: Colors.white,
+            isRecording ? LucideIcons.square : LucideIcons.mic,
+            color: context.colors.textOnAccent,
             size: 22,
           ),
         ),
@@ -2942,10 +2911,8 @@ class _SendButton extends StatelessWidget {
       child: Container(
         width: 46,
         height: 46,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.braweBlue, AppColors.braweSky],
-          ),
+        decoration: BoxDecoration(
+          color: context.colors.accentPrimary,
           shape: BoxShape.circle,
         ),
         child: loading
@@ -2953,10 +2920,14 @@ class _SendButton extends StatelessWidget {
                 padding: EdgeInsets.all(12),
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: context.colors.textOnAccent,
                 ),
               )
-            : Icon(Icons.send, color: Colors.white, size: 20),
+            : Icon(
+                LucideIcons.send,
+                color: context.colors.textOnAccent,
+                size: 20,
+              ),
       ),
     );
   }
@@ -3029,7 +3000,7 @@ class _MoreMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor = color ?? context.colors.textPrimary;
-    final isDanger = color == AppColors.mutedRed;
+    final isDanger = color == context.colors.danger;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -3041,7 +3012,7 @@ class _MoreMenuItem extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             color: isDanger
-                ? AppColors.mutedRed.withValues(alpha: 0.07)
+                ? context.colors.danger.withValues(alpha: 0.07)
                 : context.colors.surfaceHighest,
           ),
           child: Row(
@@ -3098,7 +3069,9 @@ class _SharedPostPreview extends ConsumerWidget {
     final bg = isMe
         ? context.colors.surface
         : context.colors.background.withValues(alpha: 0.55);
-    final border = isMe ? Colors.white24 : context.colors.border;
+    final border = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.25)
+        : context.colors.border;
 
     return GestureDetector(
       onTap: () => _openPost(context),
@@ -3149,7 +3122,7 @@ class _SharedPostPreview extends ConsumerWidget {
                           ),
                         Center(
                           child: Icon(
-                            Icons.play_circle_fill,
+                            LucideIcons.circlePlay,
                             color: Colors.white.withValues(alpha: 0.9),
                             size: 48,
                             shadows: const [
@@ -3169,17 +3142,17 @@ class _SharedPostPreview extends ConsumerWidget {
                               color: Colors.black54,
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.videocam,
+                                  LucideIcons.video,
                                   color: Colors.white,
                                   size: 12,
                                 ),
                                 SizedBox(width: 3),
                                 Text(
-                                  'Vídeo',
+                                  S.of(context).createVideoTitle,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -3201,7 +3174,7 @@ class _SharedPostPreview extends ConsumerWidget {
                     errorWidget: (_, _, _) => Container(
                       color: context.colors.surfaceElevated,
                       child: Icon(
-                        Icons.broken_image,
+                        LucideIcons.imageOff,
                         color: context.colors.textSecondary,
                       ),
                     ),
@@ -3230,7 +3203,7 @@ class _SharedPostPreview extends ConsumerWidget {
                         (post.author.avatarUrl == null ||
                             post.author.avatarUrl!.isEmpty)
                         ? Icon(
-                            Icons.person,
+                            LucideIcons.user,
                             color: context.colors.textPrimary,
                             size: 12,
                           )
@@ -3270,7 +3243,7 @@ class _SharedPostPreview extends ConsumerWidget {
               Row(
                 children: [
                   Icon(
-                    Icons.favorite_border,
+                    LucideIcons.heart,
                     size: 12,
                     color: context.colors.textSecondary,
                   ),
@@ -3284,7 +3257,7 @@ class _SharedPostPreview extends ConsumerWidget {
                   ),
                   const SizedBox(width: 10),
                   Icon(
-                    Icons.mode_comment_outlined,
+                    LucideIcons.messageCircle,
                     size: 12,
                     color: context.colors.textSecondary,
                   ),
@@ -3357,7 +3330,7 @@ class _SharedPostPreview extends ConsumerWidget {
       padding: const EdgeInsets.all(14),
       child: Row(
         children: [
-          Icon(Icons.link, size: 16, color: context.colors.textSecondary),
+          Icon(LucideIcons.link, size: 16, color: context.colors.textSecondary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -3421,11 +3394,7 @@ class _WaveformPreviewState extends State<_WaveformPreview>
               width: 4,
               height: 48 * v,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [AppColors.braweBlue, AppColors.braweSky],
-                ),
+                color: context.colors.accentPrimary,
                 borderRadius: BorderRadius.circular(2),
               ),
             );
@@ -3599,15 +3568,13 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
           Container(
             width: 64,
             height: 64,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [AppColors.braweBlue, AppColors.braweSky],
-              ),
+              color: context.colors.accentPrimary,
             ),
             child: Icon(
-              _hasRecording ? Icons.mic_none : Icons.mic,
-              color: Colors.white,
+              _hasRecording ? LucideIcons.mic : LucideIcons.mic,
+              color: context.colors.textOnAccent,
               size: 28,
             ),
           ),
@@ -3635,18 +3602,21 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.mutedRed,
+                  backgroundColor: context.colors.danger,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
                 onPressed: _stopRecording,
-                icon: const Icon(Icons.stop, color: Colors.white),
-                label: const Text(
-                  'Parar',
+                icon: Icon(
+                  LucideIcons.square,
+                  color: context.colors.textOnAccent,
+                ),
+                label: Text(
+                  S.of(context).chatxStop,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: context.colors.textOnAccent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -3659,7 +3629,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.braweBlue),
+                      side: BorderSide(color: context.colors.accentPrimary),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -3667,15 +3637,15 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                     ),
                     onPressed: _togglePlay,
                     icon: Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: AppColors.braweBlue,
+                      _isPlaying ? LucideIcons.pause : LucideIcons.play,
+                      color: context.colors.accentPrimary,
                     ),
                     label: Text(
                       _isPlaying
                           ? '${_fmt(_playPosition.inSeconds)} / ${_fmt(_playDuration.inSeconds)}'
-                          : 'Ouvir',
+                          : S.of(context).chatxListen,
                       style: TextStyle(
-                        color: AppColors.braweBlue,
+                        color: context.colors.accentPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3686,7 +3656,7 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.braweBlue,
+                      backgroundColor: context.colors.accentPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -3694,19 +3664,22 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                     ),
                     onPressed: _isSending ? null : _send,
                     icon: _isSending
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: context.colors.textOnAccent,
                             ),
                           )
-                        : const Icon(Icons.send, color: Colors.white),
-                    label: const Text(
-                      'Enviar',
+                        : Icon(
+                            LucideIcons.send,
+                            color: context.colors.textOnAccent,
+                          ),
+                    label: Text(
+                      S.of(context).chatSend,
                       style: TextStyle(
-                        color: Colors.white,
+                        color: context.colors.textOnAccent,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3721,12 +3694,12 @@ class _VoiceRecorderSheetState extends State<_VoiceRecorderSheet> {
                 Navigator.pop(context);
               },
               icon: Icon(
-                Icons.delete_outline,
+                LucideIcons.trash2,
                 color: context.colors.textSecondary,
                 size: 18,
               ),
               label: Text(
-                'Descartar',
+                S.of(context).composerDiscard,
                 style: TextStyle(color: context.colors.textSecondary),
               ),
             ),
@@ -3840,21 +3813,19 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [AppColors.braweBlue, AppColors.braweSky],
-                ),
+                color: context.colors.accentPrimary,
               ),
               child: _isLoading
-                  ? const Padding(
+                  ? Padding(
                       padding: EdgeInsets.all(10),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: context.colors.textOnAccent,
                       ),
                     )
                   : Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: Colors.white,
+                      _isPlaying ? LucideIcons.pause : LucideIcons.play,
+                      color: context.colors.textOnAccent,
                       size: 22,
                     ),
             ),
@@ -3870,10 +3841,12 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
                   child: LinearProgressIndicator(
                     value: progressValue,
                     backgroundColor: widget.isMe
-                        ? Colors.white.withValues(alpha: 0.2)
+                        ? context.colors.textOnAccent.withValues(alpha: 0.2)
                         : context.colors.border,
                     valueColor: AlwaysStoppedAnimation(
-                      widget.isMe ? Colors.white : context.colors.accentPrimary,
+                      widget.isMe
+                          ? context.colors.textOnAccent
+                          : context.colors.accentPrimary,
                     ),
                     minHeight: 3,
                   ),
@@ -3883,7 +3856,7 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
                   '${_fmt(_isPlaying ? _position : _position)} / ${_fmt(_duration)}',
                   style: TextStyle(
                     color: widget.isMe
-                        ? Colors.white70
+                        ? context.colors.textOnAccent.withValues(alpha: 0.75)
                         : context.colors.textSecondary,
                     fontSize: 11,
                   ),
@@ -3893,9 +3866,11 @@ class _AudioBubbleContentState extends State<_AudioBubbleContent> {
           ),
           const SizedBox(width: 6),
           Icon(
-            Icons.mic,
+            LucideIcons.mic,
             size: 16,
-            color: widget.isMe ? Colors.white54 : context.colors.textTertiary,
+            color: widget.isMe
+                ? context.colors.textOnAccent.withValues(alpha: 0.6)
+                : context.colors.textTertiary,
           ),
         ],
       ),
@@ -3929,7 +3904,9 @@ class _ReplyQuote extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border(
           left: BorderSide(
-            color: isMe ? Colors.white : AppColors.braweSky,
+            color: isMe
+                ? context.colors.textOnAccent
+                : context.colors.accentSecondary,
             width: 3,
           ),
         ),
@@ -3941,7 +3918,9 @@ class _ReplyQuote extends StatelessWidget {
           Text(
             s.chatDetailReplying,
             style: TextStyle(
-              color: isMe ? Colors.white : context.colors.accentPrimary,
+              color: isMe
+                  ? context.colors.textOnAccent
+                  : context.colors.accentPrimary,
               fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.3,
@@ -3953,7 +3932,9 @@ class _ReplyQuote extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isMe ? Colors.white70 : context.colors.textSecondary,
+              color: isMe
+                  ? context.colors.textOnAccent.withValues(alpha: 0.75)
+                  : context.colors.textSecondary,
               fontSize: 12,
               height: 1.2,
             ),
@@ -3987,8 +3968,8 @@ class _ReactionChips extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.braweBlue.withValues(alpha: 0.22),
-                      AppColors.braweSky.withValues(alpha: 0.22),
+                      context.colors.accentPrimary.withValues(alpha: 0.22),
+                      context.colors.accentSecondary.withValues(alpha: 0.22),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
@@ -4517,23 +4498,17 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        gradient: selected
-                            ? const LinearGradient(
-                                colors: [
-                                  AppColors.braweBlue,
-                                  AppColors.braweSky,
-                                ],
-                              )
-                            : null,
                         color: selected
-                            ? null
+                            ? context.colors.accentPrimary
                             : isGif
-                            ? AppColors.braweBlue.withValues(alpha: 0.12)
+                            ? context.colors.accentPrimary.withValues(
+                                alpha: 0.12,
+                              )
                             : context.colors.surfaceHighest,
                         borderRadius: BorderRadius.circular(20),
                         border: isGif && !selected
                             ? Border.all(
-                                color: AppColors.braweBlue.withValues(
+                                color: context.colors.accentPrimary.withValues(
                                   alpha: 0.35,
                                 ),
                               )
@@ -4544,9 +4519,9 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
-                                  Icons.gif,
+                                  LucideIcons.film,
                                   color: selected
-                                      ? Colors.white
+                                      ? context.colors.textOnAccent
                                       : context.colors.accentPrimary,
                                   size: 20,
                                 ),
@@ -4555,7 +4530,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                                   'GIF',
                                   style: TextStyle(
                                     color: selected
-                                        ? Colors.white
+                                        ? context.colors.textOnAccent
                                         : context.colors.accentPrimary,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
@@ -4567,7 +4542,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet>
                               allTabs[i],
                               style: TextStyle(
                                 color: selected
-                                    ? Colors.white
+                                    ? context.colors.textOnAccent
                                     : context.colors.textSecondary,
                                 fontSize: 13,
                                 fontWeight: selected
@@ -4682,10 +4657,10 @@ class _GifGrid extends StatelessWidget {
                     if (progress == null) return child;
                     return Container(
                       color: context.colors.surfaceElevated,
-                      child: const Center(
+                      child: Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.braweBlue,
+                          color: context.colors.accentPrimary,
                         ),
                       ),
                     );
@@ -4763,12 +4738,12 @@ class _LiveInviteCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         color: context.colors.surface,
         border: Border.all(
-          color: AppColors.braweBlue.withValues(alpha: 0.35),
+          color: context.colors.accentPrimary.withValues(alpha: 0.35),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.braweBlue.withValues(alpha: 0.18),
+            color: context.colors.accentPrimary.withValues(alpha: 0.18),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -4797,20 +4772,16 @@ class _LiveInviteCard extends StatelessWidget {
                         thumb,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) =>
-                            const ColoredBox(color: AppColors.deepBlue),
+                            ColoredBox(color: context.colors.surfaceHighest),
                       )
                     else
                       Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [AppColors.braweBlue, AppColors.braweSky],
-                          ),
+                        decoration: BoxDecoration(
+                          color: context.colors.accentPrimary,
                         ),
                         child: Center(
                           child: Icon(
-                            Icons.videocam_rounded,
+                            LucideIcons.video,
                             color: context.colors.textSecondary,
                             size: 48,
                           ),
@@ -4840,11 +4811,11 @@ class _LiveInviteCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.mutedRed,
+                            color: context.colors.danger,
                             borderRadius: BorderRadius.circular(4),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.mutedRed.withValues(
+                                color: context.colors.danger.withValues(
                                   alpha: 0.5,
                                 ),
                                 blurRadius: 8,
@@ -4854,7 +4825,11 @@ class _LiveInviteCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.circle, color: Colors.white, size: 8),
+                              Icon(
+                                LucideIcons.circle,
+                                color: Colors.white,
+                                size: 8,
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 S.of(context).liveBadgeLive,
@@ -4872,7 +4847,7 @@ class _LiveInviteCard extends StatelessWidget {
                     // Play overlay
                     Center(
                       child: Icon(
-                        Icons.play_circle_fill,
+                        LucideIcons.circlePlay,
                         color: Colors.white,
                         size: 56,
                       ),
@@ -4902,7 +4877,7 @@ class _LiveInviteCard extends StatelessWidget {
                           child:
                               (streamerAvatar == null || streamerAvatar.isEmpty)
                               ? Icon(
-                                  Icons.person,
+                                  LucideIcons.user,
                                   size: 14,
                                   color: context.colors.textTertiary,
                                 )
@@ -4964,9 +4939,9 @@ class _LiveInviteCard extends StatelessWidget {
                     // CTA
                     Row(
                       children: [
-                        const Icon(
-                          Icons.play_arrow_rounded,
-                          color: AppColors.braweSky,
+                        Icon(
+                          LucideIcons.play,
+                          color: context.colors.accentSecondary,
                           size: 18,
                         ),
                         const SizedBox(width: 4),

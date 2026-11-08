@@ -500,7 +500,7 @@ class _MyQrCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => _share(context),
               icon: Icon(
-                LucideIcons.share2,
+                LucideIcons.send,
                 size: 16,
                 color: colors.textPrimary,
               ),

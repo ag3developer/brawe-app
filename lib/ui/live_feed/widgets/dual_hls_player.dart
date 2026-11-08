@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
@@ -88,9 +89,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
         mixWithOthers: true,
         allowBackgroundPlayback: false,
       ),
-      httpHeaders: const {
-        'User-Agent': 'BraweApp/1.0 (HLS-Battle-Dual)',
-      },
+      httpHeaders: const {'User-Agent': 'BraweApp/1.0 (HLS-Battle-Dual)'},
     );
   }
 
@@ -173,9 +172,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
         Positioned.fromRect(
           rect: l.divider,
           child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Color(0x24FFFFFF),
-            ),
+            decoration: BoxDecoration(color: Color(0x24FFFFFF)),
           ),
         ),
       ],
@@ -247,7 +244,10 @@ class _HalfStream extends StatelessWidget {
                   maxWidth: (MediaQuery.sizeOf(context).width / 2) - 70,
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: kBattleBg.withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(10),
@@ -288,7 +288,7 @@ class _HalfStream extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        audioActive ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                        audioActive ? LucideIcons.volume2 : LucideIcons.volumeX,
                         color: kBattleText,
                         size: 16,
                       ),

@@ -782,7 +782,7 @@ void openLiveRoom(BuildContext context, String roomId, [LiveRoom? room]) {
   if (roomId.isEmpty || roomId == 'missing_id') {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Live indisponível')));
+    ).showSnackBar(SnackBar(content: Text(S.of(context).moneyLiveUnavailable)));
     return;
   }
   context.push('/live/$roomId', extra: room);

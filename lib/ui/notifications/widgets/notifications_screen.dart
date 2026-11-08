@@ -98,54 +98,62 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               .where((n) => NotifPresentation.matches(_filter, n))
               .toList();
 
-          return Column(
-            children: [
-              NotificationFilterBar(
-                selected: _filter,
-                unreadBy: unreadBy,
-                totalUnread: page.unreadCount,
-                onSelect: (f) => setState(() => _filter = f),
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () => ref
-                      .read(notificationsViewModelProvider.notifier)
-                      .refresh(),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: items.isEmpty
-                        ? ListView(
-                            key: ValueKey('empty-$_filter'),
-                            children: [
-                              const SizedBox(height: 80),
-                              Icon(
-                                LucideIcons.inbox,
-                                size: 40,
-                                color: colors.textTertiary,
-                              ),
-                              const SizedBox(height: 10),
-                              Text(
-                                s.notifFilterEmpty,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          )
-                        : NotificationSectionsList(
-                            key: ValueKey('list-$_filter'),
-                            items: items,
-                            onOpen: _open,
-                            onRemove: (n) => ref
-                                .read(notificationsViewModelProvider.notifier)
-                                .remove(n.id),
-                          ),
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: Column(
+                children: [
+                  NotificationFilterBar(
+                    selected: _filter,
+                    unreadBy: unreadBy,
+                    totalUnread: page.unreadCount,
+                    onSelect: (f) => setState(() => _filter = f),
                   ),
-                ),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () => ref
+                          .read(notificationsViewModelProvider.notifier)
+                          .refresh(),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: items.isEmpty
+                            ? ListView(
+                                key: ValueKey('empty-$_filter'),
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  const SizedBox(height: 80),
+                                  Icon(
+                                    LucideIcons.inbox,
+                                    size: 40,
+                                    color: colors.textTertiary,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    s.notifFilterEmpty,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : NotificationSectionsList(
+                                key: ValueKey('list-$_filter'),
+                                items: items,
+                                onOpen: _open,
+                                onRemove: (n) => ref
+                                    .read(
+                                      notificationsViewModelProvider.notifier,
+                                    )
+                                    .remove(n.id),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
@@ -157,17 +165,17 @@ class _EmptyView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final colors = context.colors;
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       children: [
         const SizedBox(height: 60),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: scheme.surface,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: Column(
             children: [
@@ -176,7 +184,8 @@ class _EmptyView extends StatelessWidget {
               Text(
                 s.notificationsEmptyTitle,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
@@ -186,7 +195,7 @@ class _EmptyView extends StatelessWidget {
                 s.notificationsEmptySubtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: scheme.onSurface.withValues(alpha: 0.6),
+                  color: colors.textSecondary,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -210,7 +219,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 40),
+          Icon(
+            LucideIcons.circleAlert,
+            size: 40,
+            color: context.colors.textTertiary,
+          ),
           const SizedBox(height: 12),
           Text(s.notificationsLoadError),
           const SizedBox(height: 12),

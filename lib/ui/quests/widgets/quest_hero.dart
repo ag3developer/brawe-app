@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 
 import '../../../domain/models/quest.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/ui/image_decode.dart';
 import 'quest_visuals.dart';
 
@@ -41,7 +43,7 @@ class QuestHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: AppColors.braweBlue.withValues(alpha: 0.35),
+            color: context.questPrimary.withValues(alpha: 0.35),
             blurRadius: 26,
             offset: const Offset(0, 12),
           ),
@@ -53,9 +55,9 @@ class QuestHeroCard extends StatelessWidget {
           opacity: 0.18,
           borderRadius: BorderRadius.circular(26),
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF2B1B8F), AppColors.braweBlue, Color(0xFF1E9BD7)],
+                colors: context.questHeroGradient,
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -66,12 +68,12 @@ class QuestHeroCard extends StatelessWidget {
                 Positioned(
                   right: -40,
                   top: -50,
-                  child: _circle(160, Colors.white.withValues(alpha: 0.07)),
+                  child: _circle(160, QuestTones.onGradient.withValues(alpha: 0.07)),
                 ),
                 Positioned(
                   left: -30,
                   bottom: -60,
-                  child: _circle(140, Colors.white.withValues(alpha: 0.05)),
+                  child: _circle(140, QuestTones.onGradient.withValues(alpha: 0.05)),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
@@ -92,7 +94,7 @@ class QuestHeroCard extends StatelessWidget {
                                 Text(
                                   s.questsLevel(profile.level),
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: QuestTones.onGradient,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 24,
                                     letterSpacing: -0.4,
@@ -106,7 +108,7 @@ class QuestHeroCard extends StatelessWidget {
                                     profile.xpToNextLevel,
                                   ),
                                   style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.9),
+                                    color: QuestTones.onGradient.withValues(alpha: 0.9),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -120,8 +122,8 @@ class QuestHeroCard extends StatelessWidget {
                       const SizedBox(height: 16),
                       QuestProgressBar(
                         value: profile.levelProgressPercent / 100,
-                        colors: const [Color(0xFFFFE066), Colors.white],
-                        background: Colors.white.withValues(alpha: 0.2),
+                        colors: const [QuestTones.gold, QuestTones.onGradient],
+                        background: QuestTones.onGradient.withValues(alpha: 0.2),
                         height: 10,
                       ),
                       const SizedBox(height: 14),
@@ -130,13 +132,13 @@ class QuestHeroCard extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           _HeroPill(
-                            icon: Icons.schedule_rounded,
+                            icon: LucideIcons.clock,
                             child: _Countdown(seconds: resetInSeconds),
                           ),
                           if (streak.multiplierLabel != null)
                             _HeroPill(
-                              icon: Icons.flash_on_rounded,
-                              iconColor: const Color(0xFFFFE066),
+                              icon: LucideIcons.zap,
+                              iconColor: QuestTones.gold,
                               child: Text(
                                 s.questsStreakBonus(streak.multiplierLabel!),
                                 style: _pillText,
@@ -144,8 +146,8 @@ class QuestHeroCard extends StatelessWidget {
                             ),
                           if (nextMilestone > 0)
                             _HeroPill(
-                              icon: Icons.military_tech_rounded,
-                              iconColor: const Color(0xFFFFB86B),
+                              icon: LucideIcons.medal,
+                              iconColor: QuestTones.flame,
                               child: Text(
                                 s.questsNextBadge(nextMilestone - streak.current),
                                 style: _pillText,
@@ -172,7 +174,7 @@ class QuestHeroCard extends StatelessWidget {
 }
 
 const _pillText = TextStyle(
-  color: Colors.white,
+  color: QuestTones.onGradient,
   fontSize: 12,
   fontWeight: FontWeight.w700,
 );
@@ -189,14 +191,14 @@ class _HeroPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: QuestTones.onGradient.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: QuestTones.onGradient.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: iconColor ?? Colors.white),
+          Icon(icon, size: 14, color: iconColor ?? QuestTones.onGradient),
           const SizedBox(width: 5),
           child,
         ],
@@ -272,23 +274,23 @@ class _StreakFlame extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: active
                   ? const RadialGradient(
-                      colors: [Color(0xFFFFE066), Color(0xFFFF8B33), Color(0xFFFF3D6E)],
+                      colors: [QuestTones.gold, QuestTones.flame, QuestTones.coral],
                     )
                   : null,
-              color: active ? null : Colors.white.withValues(alpha: 0.15),
+              color: active ? null : QuestTones.onGradient.withValues(alpha: 0.15),
               boxShadow: active
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFFF8B33).withValues(alpha: 0.7),
+                        color: QuestTones.flame.withValues(alpha: 0.7),
                         blurRadius: 16,
                       ),
                     ]
                   : null,
             ),
             child: Icon(
-              Icons.local_fire_department_rounded,
+              LucideIcons.flame,
               size: 30,
-              color: active ? Colors.white : Colors.white.withValues(alpha: 0.6),
+              color: active ? QuestTones.onGradient : QuestTones.onGradient.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -296,7 +298,7 @@ class _StreakFlame extends StatelessWidget {
         Text(
           S.of(context).questsStreakDays(days),
           style: const TextStyle(
-            color: Colors.white,
+            color: QuestTones.onGradient,
             fontSize: 11.5,
             fontWeight: FontWeight.w800,
           ),
@@ -333,33 +335,33 @@ class _LevelTier {
 
   static const _bronze = _LevelTier(
     frameAsset: 'frame_bronze.png',
-    ringColors: [Color(0xFFCD7F32), Color(0xFF8B5A2B)],
-    badgeColors: [Color(0xFFCD7F32), Color(0xFF8B5A2B)],
-    glow: Color(0xFFCD7F32),
+    ringColors: [QuestTones.bronze, QuestTones.bronzeDeep],
+    badgeColors: [QuestTones.bronze, QuestTones.bronzeDeep],
+    glow: QuestTones.bronze,
   );
   static const _silver = _LevelTier(
     frameAsset: 'frame_silver.png',
-    ringColors: [Color(0xFFE0E0E0), Color(0xFF9E9E9E)],
-    badgeColors: [Color(0xFFBDBDBD), Color(0xFF757575)],
-    glow: Color(0xFFE0E0E0),
+    ringColors: [QuestTones.silver, QuestTones.silverDeep],
+    badgeColors: [QuestTones.silverMid, QuestTones.silverDark],
+    glow: QuestTones.silver,
   );
   static const _gold = _LevelTier(
     frameAsset: 'frame_gold.png',
-    ringColors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
-    badgeColors: [Color(0xFFFFD93D), Color(0xFFFF8B33)],
-    glow: Color(0xFFFFD93D),
+    ringColors: [QuestTones.gold, QuestTones.flame],
+    badgeColors: [QuestTones.gold, QuestTones.flame],
+    glow: QuestTones.gold,
   );
   static const _epic = _LevelTier(
     frameAsset: 'frame_epic.png',
-    ringColors: [Color(0xFFB14DFF), Color(0xFFFF4D8D)],
-    badgeColors: [AppColors.braweBlueLight, Color(0xFFFF4D8D)],
-    glow: Color(0xFFB14DFF),
+    ringColors: [QuestTones.orchid, QuestTones.pink],
+    badgeColors: [QuestTones.violet, QuestTones.pink],
+    glow: QuestTones.orchid,
   );
   static const _legendary = _LevelTier(
     frameAsset: 'frame_legendary.png',
-    ringColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D), AppColors.braweSky],
-    badgeColors: [Color(0xFFFFD93D), Color(0xFFFF4D8D)],
-    glow: Color(0xFFFFD93D),
+    ringColors: [QuestTones.gold, QuestTones.pink, QuestTones.sky],
+    badgeColors: [QuestTones.gold, QuestTones.pink],
+    glow: QuestTones.gold,
   );
 }
 
@@ -436,15 +438,15 @@ class QuestLevelAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: tier.badgeColors),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white, width: 1.5),
+                border: Border.all(color: QuestTones.onGradient, width: 1.5),
               ),
               child: Text(
                 '$level',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: QuestTones.onGradient,
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  shadows: [Shadow(color: Colors.black38, blurRadius: 2)],
+                  shadows: [Shadow(color: QuestTones.shade, blurRadius: 2)],
                 ),
               ),
             ),
@@ -455,8 +457,8 @@ class QuestLevelAvatar extends StatelessWidget {
   }
 
   Widget _fallback() => Container(
-        color: AppColors.braweDeep,
+        color: QuestTones.indigo,
         alignment: Alignment.center,
-        child: const Icon(Icons.person, color: Colors.white70, size: 26),
+        child: const Icon(LucideIcons.user, color: QuestTones.onGradient, size: 26),
       );
 }

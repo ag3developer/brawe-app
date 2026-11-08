@@ -21,6 +21,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -29,7 +30,7 @@ import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../domain/models/gifter_summary.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_coin.dart';
 import '../../core/widgets/gift_icon.dart';
 import '../view_models/wallet_view_model.dart';
@@ -114,11 +115,11 @@ class _GiftersTabs extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.braweBlue : scheme.surface,
+            color: selected ? context.colors.accentPrimary : scheme.surface,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
-                  ? AppColors.braweBlue
+                  ? context.colors.accentPrimary
                   : Theme.of(context).dividerColor,
             ),
           ),
@@ -231,17 +232,17 @@ class _GifterCard extends ConsumerWidget {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.braweBlue.withValues(
+                                color: context.colors.accentPrimary.withValues(
                                   alpha: 0.14,
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 s.giftersBadgeFollowsYou,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.braweBlue,
+                                  color: context.colors.accentPrimary,
                                 ),
                               ),
                             ),
@@ -307,7 +308,7 @@ class _GifterCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _ActionBtn(
-                    icon: Icons.chat_bubble_outline,
+                    icon: LucideIcons.messageCircle,
                     label: direction == 'received'
                         ? s.giftersActionThank
                         : s.giftersActionMessage,
@@ -318,7 +319,7 @@ class _GifterCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _ActionBtn(
-                      icon: Icons.person_add_alt_1_outlined,
+                      icon: LucideIcons.userPlus,
                       label: s.giftersActionFollow,
                       filled: true,
                       onTap: () => _follow(context, ref),
@@ -328,7 +329,7 @@ class _GifterCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _ActionBtn(
-                      icon: Icons.check,
+                      icon: LucideIcons.check,
                       label: s.giftersActionFollowing,
                       muted: true,
                       onTap: () {},
@@ -394,7 +395,7 @@ class _Avatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.braweBlue.withValues(alpha: 0.15),
+        color: context.colors.accentPrimary.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         image: hasUrl
             ? DecorationImage(image: ResizeImage(NetworkImage(url!), width: context.decodePx(size)), fit: BoxFit.cover)
@@ -403,9 +404,9 @@ class _Avatar extends StatelessWidget {
       child: hasUrl
           ? null
           : Icon(
-              Icons.person,
+              LucideIcons.user,
               size: size * 0.55,
-              color: AppColors.braweBlue,
+              color: context.colors.accentPrimary,
             ),
     );
   }
@@ -420,15 +421,15 @@ class _RankPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: AppColors.braweBlue.withValues(alpha: 0.18),
+        color: context.colors.accentPrimary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         rank,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w800,
-          color: AppColors.braweBlue,
+          color: context.colors.accentPrimary,
           letterSpacing: 0.3,
         ),
       ),
@@ -494,14 +495,14 @@ class _ActionBtn extends StatelessWidget {
         ? Colors.white
         : muted
         ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)
-        : AppColors.braweBlue;
+        : context.colors.accentPrimary;
     final bg = filled
-        ? AppColors.braweBlue
+        ? context.colors.accentPrimary
         : muted
         ? Theme.of(
             context,
           ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4)
-        : AppColors.braweBlue.withValues(alpha: 0.10);
+        : context.colors.accentPrimary.withValues(alpha: 0.10);
     return Material(
       color: bg,
       borderRadius: BorderRadius.circular(10),
@@ -559,10 +560,10 @@ class _EmptyView extends StatelessWidget {
                 : 'assets/images/illustrations/coin_3d.png',
             width: 80,
             height: 80,
-            errorBuilder: (_, _, _) => const Icon(
-              Icons.card_giftcard_outlined,
+            errorBuilder: (_, _, _) => Icon(
+              LucideIcons.gift,
               size: 60,
-              color: AppColors.braweBlue,
+              color: context.colors.accentPrimary,
             ),
           ),
           const SizedBox(height: 14),
@@ -603,7 +604,7 @@ class _ErrorBox extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, size: 18),
+          const Icon(LucideIcons.circleAlert, size: 18),
           const SizedBox(width: 8),
           Expanded(child: Text(message)),
           TextButton(onPressed: onRetry, child: Text(S.of(context).commonRetry)),
@@ -734,10 +735,10 @@ class GifterDetailSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.braweBlue.withValues(alpha: 0.10),
+                    color: context.colors.accentPrimary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: AppColors.braweBlue.withValues(alpha: 0.25),
+                      color: context.colors.accentPrimary.withValues(alpha: 0.25),
                     ),
                   ),
                   child: Row(

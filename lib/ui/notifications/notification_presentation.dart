@@ -7,7 +7,7 @@ import '../../gen/l10n/app_localizations.dart';
 enum NotifFilter { all, likes, comments, followers, gifts, mentions, brawe }
 
 /// Seções por data.
-enum NotifBucket { today, week, older }
+enum NotifBucket { today, week, month, older }
 
 /// Tipo de evento agrupável (espelha `KINDS` do backend).
 enum NotifKind { like, comment, reply, follow, gift, mention, storyReaction }
@@ -98,6 +98,9 @@ class NotifPresentation {
     final diff = today.difference(day).inDays;
     if (diff <= 0) return NotifBucket.today;
     if (diff < 7) return NotifBucket.week;
+    if (local.year == now.year && local.month == now.month) {
+      return NotifBucket.month;
+    }
     return NotifBucket.older;
   }
 
@@ -108,8 +111,18 @@ class NotifPresentation {
   /// Texto resumido ("Ana, Bruno e mais 12 curtiram seu post"). Notificações
   /// sem agrupamento (backend antigo / outros tipos) usam o título do servidor.
   static String title(S s, AppNotification n) {
+    final (who, rest) = titleParts(s, n);
+    if (who.isEmpty) return rest;
+    return rest.isEmpty ? who : '$who $rest';
+  }
+
+  /// Título dividido em (quem, ação) para destacar o nome em negrito.
+  /// `quem` vem vazio quando não dá para separar (texto do servidor).
+  static (String, String) titleParts(S s, AppNotification n) {
     final kind = kindOf(n);
-    if (kind == null || !n.isGrouped || n.actors.isEmpty) return n.title;
+    if (kind == null || !n.isGrouped || n.actors.isEmpty) {
+      return _splitServerTitle(n);
+    }
     final names = [
       for (final a in n.actors) a.name.trim().isEmpty ? '?' : a.name.trim(),
     ];
@@ -124,7 +137,7 @@ class NotifPresentation {
     } else if (names.length >= 2) {
       who = s.notifActorsMore(names[0], names[1], total - 2);
     } else {
-      return n.title;
+      return _splitServerTitle(n);
     }
     final verb = switch (kind) {
       NotifKind.like => s.notifVerbLike(total),
@@ -135,11 +148,19 @@ class NotifPresentation {
       NotifKind.mention => s.notifVerbMention(total),
       NotifKind.storyReaction => s.notifVerbStoryReaction(total),
     };
-    var out = '$who $verb';
+    var out = verb;
     if (kind == NotifKind.gift && n.groupValue > 0) {
       final f = NumberFormat.decimalPattern(s.localeName).format(n.groupValue);
       out += ' ${s.notifGiftDiamonds(n.groupValue, f)}';
     }
-    return out;
+    return (who, out);
+  }
+
+  static (String, String) _splitServerTitle(AppNotification n) {
+    final name = n.actorName?.trim() ?? '';
+    if (name.isNotEmpty && n.title.startsWith(name)) {
+      return (name, n.title.substring(name.length).trimLeft());
+    }
+    return ('', n.title);
   }
 }

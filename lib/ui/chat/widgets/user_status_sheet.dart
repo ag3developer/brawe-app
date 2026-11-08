@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 
 part 'user_status_sheet.g.dart';
@@ -108,7 +108,10 @@ class _UserStatusSheet extends ConsumerWidget {
               const SizedBox(height: 18),
               ShaderMask(
                 shaderCallback: (b) => LinearGradient(
-                  colors: [context.colors.textPrimary, context.colors.accentPrimary],
+                  colors: [
+                    context.colors.textPrimary,
+                    context.colors.accentPrimary,
+                  ],
                 ).createShader(b),
                 child: Text(
                   S.of(context).chatStatusSheetTitle,
@@ -132,24 +135,26 @@ class _UserStatusSheet extends ConsumerWidget {
                 final selected = current == status;
                 return GestureDetector(
                   onTap: () {
-                    ref
-                        .read(userStatusProvider.notifier)
-                        .setStatus(status);
+                    ref.read(userStatusProvider.notifier).setStatus(status);
                     Navigator.pop(context);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: selected
-                          ? AppColors.braweBlue.withValues(alpha: 0.15)
+                          ? context.colors.accentPrimary.withValues(alpha: 0.15)
                           : context.colors.surfaceHighest,
                       border: Border.all(
                         color: selected
-                            ? AppColors.braweBlue.withValues(alpha: 0.55)
+                            ? context.colors.accentPrimary.withValues(
+                                alpha: 0.55,
+                              )
                             : context.colors.border,
                         width: 1.5,
                       ),
@@ -165,8 +170,9 @@ class _UserStatusSheet extends ConsumerWidget {
                             boxShadow: selected
                                 ? [
                                     BoxShadow(
-                                      color: status.color
-                                          .withValues(alpha: 0.5),
+                                      color: status.color.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       blurRadius: 8,
                                     ),
                                   ]
@@ -178,7 +184,9 @@ class _UserStatusSheet extends ConsumerWidget {
                           child: Text(
                             status.localizedLabel(context),
                             style: TextStyle(
-                              color: selected ? context.colors.textPrimary : context.colors.textSecondary,
+                              color: selected
+                                  ? context.colors.textPrimary
+                                  : context.colors.textSecondary,
                               fontSize: 15,
                               fontWeight: selected
                                   ? FontWeight.w700
@@ -190,17 +198,15 @@ class _UserStatusSheet extends ConsumerWidget {
                           Container(
                             width: 22,
                             height: 22,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.braweBlue,
-                                  AppColors.braweSky,
-                                ],
-                              ),
+                              color: context.colors.accentPrimary,
                             ),
-                            child: Icon(Icons.check,
-                                color: Colors.white, size: 14),
+                            child: Icon(
+                              LucideIcons.check,
+                              color: context.colors.textOnAccent,
+                              size: 14,
+                            ),
                           ),
                       ],
                     ),

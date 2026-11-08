@@ -1,12 +1,11 @@
 import 'dart:convert';
 import '../../core/view_models/hidden_users_view_model.dart';
-import 'package:share_plus/share_plus.dart';
+import '../../feed/widgets/share_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../creator/widgets/creator_tier_badge_for_user.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../config/feature_flags.dart';
@@ -14,7 +13,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/themes/force_dark_theme.dart';
-import '../../core/ui/follow_button.dart';
+import '../../core/view_models/follow_view_model.dart';
 import '../../core/view_models/profile_view_model.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
@@ -26,7 +25,6 @@ import '../../../domain/models/marketplace_models.dart' show Product;
 import '../../../domain/models/profile.dart';
 import 'profile_videos_grid.dart';
 import '../../../domain/models/profile_state.dart';
-import '../../../domain/models/social_stats.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
 import 'profile_menu_widgets.dart';
@@ -124,12 +122,18 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  TabController? _tabController;
-  // Abas: Posts, Reposts, Vídeos, Galeria.
+  // Abas (só ícones): grade · vídeos · textos · reposts · galeria.
   // A Vitrine NUNCA fica lado a lado com posts/vídeos/galeria — ela abre
   // como página dedicada fullscreen (/shop/creator/:userId), estilo TikTok
   // Shop, acessível pelo ícone de loja no AppBar.
-  int _tabCount = 4;
+  static const int _tabGrid = 0;
+  static const int _tabTexts = 2;
+  static const int _tabCount = 5;
+
+  late final TabController _tabController;
+
+  /// A aba inicial é escolhida uma única vez, quando os posts chegam.
+  bool _autoTabDone = false;
 
   @override
   void initState() {
@@ -145,12 +149,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         overlays: SystemUiOverlay.values,
       );
     }
+    // Posts já em cache: decide a aba logo no primeiro quadro.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(profileViewModelProvider(widget.userId))
+          .posts
+          .whenData(_pickInitialTab);
+    });
   }
 
   @override
   void dispose() {
-    _tabController?.dispose();
+    _tabController.dispose();
     super.dispose();
+  }
+
+  /// Abre na aba que tem conteúdo: a grade primeiro; se a pessoa só tem
+  /// posts de texto, vai direto para a aba de textos (antes o perfil abria
+  /// numa aba vazia e parecia sem nada).
+  void _pickInitialTab(List<Post> posts) {
+    if (_autoTabDone) return;
+    _autoTabDone = true;
+    if (_tabController.index != _tabGrid) return; // pessoa já trocou de aba
+    final hasMedia = posts.any((p) => (p.imageUrl ?? '').isNotEmpty);
+    final hasText = posts.any((p) => (p.imageUrl ?? '').isEmpty);
+    if (!hasMedia && hasText) _tabController.index = _tabTexts;
   }
 
   @override
@@ -158,7 +182,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final profileState = ref.watch(profileViewModelProvider(widget.userId));
     final currentUserId = ref.watch(authStateProvider).value?.id;
     final isMe = currentUserId == widget.userId;
-    final hidden = ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+    final hidden =
+        ref.watch(hiddenUsersProvider).value ?? const HiddenUsersState();
+
+    ref.listen<AsyncValue<List<Post>>>(
+      profileViewModelProvider(widget.userId).select((st) => st.posts),
+      (_, next) => next.whenData(_pickInitialTab),
+    );
 
     // Bloqueio (recíproco): nada do perfil aparece. Quem bloqueou pode desfazer.
     if (!isMe && hidden.isBlocked(widget.userId)) {
@@ -171,9 +201,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     // Vitrine: busca a vitrine PÚBLICA do usuário visitado (`widget.userId`)
     // via endpoint sem autenticação — funciona tanto no próprio perfil
     // quanto no de terceiros. Usado apenas para decidir se mostramos o
-    // ícone de loja no AppBar e o badge de parceiro — os produtos em si são
-    // exibidos na página dedicada /shop/creator/:userId (ShopVitrinePage),
-    // nunca dentro das abas.
+    // ícone de loja no AppBar — os produtos em si são exibidos na página
+    // dedicada /shop/creator/:userId (ShopVitrinePage), nunca nas abas.
     final storefrontAsync = ref.watch(
       storefrontProductsProvider(widget.userId),
     );
@@ -183,205 +212,213 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
 
     final s = S.of(context);
+    final colors = context.colors;
     final tabs = <Tab>[
-      Tab(
-        icon: const Icon(Icons.article_outlined, size: 20),
-        text: s.profileTabPosts,
-      ),
-      Tab(
-        icon: const Icon(Icons.repeat_rounded, size: 20),
-        text: s.profileTabReposts,
-      ),
-      Tab(
-        icon: const Icon(Icons.play_circle_outline, size: 20),
-        text: s.profileTabVideos,
-      ),
-      Tab(
-        icon: const Icon(Icons.grid_on_outlined, size: 20),
-        text: s.profileTabGallery,
-      ),
+      _iconTab(LucideIcons.layoutGrid, s.profileTabGrid),
+      _iconTab(LucideIcons.clapperboard, s.profileTabVideos),
+      _iconTab(LucideIcons.textAlignStart, s.profileTabTexts),
+      _iconTab(LucideIcons.repeat2, s.profileTabReposts),
+      _iconTab(LucideIcons.images, s.profileTabGallery),
     ];
 
     return Scaffold(
-      backgroundColor: context.colors.background,
-      body: NestedScrollView(
-        headerSliverBuilder: (_, __) => [
-          SliverAppBar(
-            backgroundColor: context.colors.background,
-            elevation: 0,
-            pinned: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-              onPressed: () =>
-                  context.canPop() ? context.pop() : context.go('/home'),
-            ),
-            // No PRÓPRIO perfil não mostramos "@username" no título — é
-            // redundante (o usuário já sabe quem é) e visualmente datado.
-            // Em vez disso, o título fica vazio e o ícone de "adicionar
-            // pessoa" (ver actions) assume esse espaço, abrindo a página
-            // de Encontrar amigos. Em perfis de terceiros mantemos o
-            // "@username" — útil para saber de quem é o perfil ao rolar.
-            title: isMe
-                ? null
-                : profileState.profile.maybeWhen(
-                    data: (p) {
-                      final handle = _realHandle(p.username);
-                      if (handle == null) return const SizedBox.shrink();
-                      return Text(
-                        '@$handle',
-                        style: TextStyle(
-                          color: context.colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      );
-                    },
-                    orElse: () => const SizedBox.shrink(),
-                  ),
-            actions: [
-              if (isMe)
-                IconButton(
-                  icon: Icon(
-                    LucideIcons.userPlus,
-                    color: context.colors.textPrimary,
-                    size: 22,
-                  ),
-                  tooltip: s.profileTooltipFindFriends,
-                  onPressed: () => context.push('/find-friends'),
-                ),
-              if (products.isNotEmpty)
-                IconButton(
-                  icon: Icon(
-                    Icons.storefront,
-                    color: context.colors.textPrimary,
-                  ),
-                  tooltip: s.profileTooltipShop,
-                  // Vitrine é sempre uma página dedicada fullscreen (estilo
-                  // TikTok Shop) — nunca uma aba ao lado de posts/vídeos.
+      backgroundColor: colors.background,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: NestedScrollView(
+            headerSliverBuilder: (_, __) => [
+              SliverAppBar(
+                backgroundColor: colors.background,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                pinned: true,
+                leading: IconButton(
+                  icon: Icon(LucideIcons.arrowLeft, color: colors.textPrimary),
                   onPressed: () =>
-                      context.push('/shop/creator/${widget.userId}'),
+                      context.canPop() ? context.pop() : context.go('/home'),
                 ),
-              if (isMe)
-                Consumer(
-                  builder: (context, ref, _) {
-                    final unread =
-                        ref
-                            .watch(notificationsUnreadCountProvider)
-                            .asData
-                            ?.value ??
-                        0;
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.notifications_outlined,
-                            color: context.colors.textPrimary,
-                          ),
-                          tooltip: s.profileTooltipNotifications,
-                          onPressed: () => context.push('/notifications'),
-                        ),
-                        if (unread > 0)
-                          Positioned(
-                            right: 6,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 1,
-                              ),
-                              constraints: const BoxConstraints(
-                                minWidth: 16,
-                                minHeight: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.redAccent,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: context.colors.background,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                unread > 99 ? '99+' : unread.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+                // No PRÓPRIO perfil não mostramos "@username" no título — é
+                // redundante. Em perfis de terceiros mantemos o "@username",
+                // útil para saber de quem é o perfil ao rolar.
+                title: isMe
+                    ? null
+                    : profileState.profile.maybeWhen(
+                        data: (p) {
+                          final handle = _realHandle(p.username);
+                          if (handle == null) return const SizedBox.shrink();
+                          return Text(
+                            '@$handle',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
                             ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              IconButton(
-                icon: Icon(
-                  isMe ? LucideIcons.menu : LucideIcons.ellipsisVertical,
-                  color: context.colors.textPrimary,
-                  size: 22,
-                ),
-                onPressed: () => _showOptions(context, isMe),
+                          );
+                        },
+                        orElse: () => const SizedBox.shrink(),
+                      ),
+                actions: [
+                  if (isMe)
+                    IconButton(
+                      icon: Icon(
+                        LucideIcons.userPlus,
+                        color: colors.textPrimary,
+                        size: 22,
+                      ),
+                      tooltip: s.profileTooltipFindFriends,
+                      onPressed: () => context.push('/find-friends'),
+                    ),
+                  if (products.isNotEmpty)
+                    IconButton(
+                      icon: Icon(
+                        LucideIcons.store,
+                        color: colors.textPrimary,
+                        size: 22,
+                      ),
+                      tooltip: s.profileTooltipShop,
+                      // Vitrine é sempre uma página dedicada fullscreen (estilo
+                      // TikTok Shop) — nunca uma aba ao lado de posts/vídeos.
+                      onPressed: () =>
+                          context.push('/shop/creator/${widget.userId}'),
+                    ),
+                  if (isMe)
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final unread =
+                            ref
+                                .watch(notificationsUnreadCountProvider)
+                                .asData
+                                ?.value ??
+                            0;
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                LucideIcons.bell,
+                                color: colors.textPrimary,
+                                size: 22,
+                              ),
+                              tooltip: s.profileTooltipNotifications,
+                              onPressed: () => context.push('/notifications'),
+                            ),
+                            if (unread > 0)
+                              Positioned(
+                                right: 6,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 5,
+                                    vertical: 1,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colors.danger,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: colors.background,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    unread > 99 ? '99+' : unread.toString(),
+                                    style: TextStyle(
+                                      color: colors.textOnAccent,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  IconButton(
+                    icon: Icon(
+                      isMe ? LucideIcons.menu : LucideIcons.ellipsisVertical,
+                      color: colors.textPrimary,
+                      size: 22,
+                    ),
+                    onPressed: () => _showOptions(context, isMe),
+                  ),
+                ],
               ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _ProfileHeader(
+              SliverToBoxAdapter(
+                child: _ProfileHeader(
                   userId: widget.userId,
                   isMe: isMe,
                   profileState: profileState,
                   section: widget.section,
+                  onShare: () => _shareProfile(context),
                 ),
-              ],
-            ),
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _SliverAppBarDelegate(
-              TabBar(
-                controller: _tabController,
-                indicatorColor: AppColors.braweBlue,
-                indicatorWeight: 2,
-                labelColor: context.colors.textPrimary,
-                unselectedLabelColor: context.colors.textSecondary,
-                labelStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverAppBarDelegate(
+                  TabBar(
+                    controller: _tabController,
+                    indicatorColor: colors.textPrimary,
+                    indicatorWeight: 2,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: colors.divider,
+                    labelColor: colors.textPrimary,
+                    unselectedLabelColor: colors.textTertiary,
+                    splashFactory: NoSplash.splashFactory,
+                    tabs: tabs,
+                  ),
+                  colors.background,
                 ),
-                tabs: tabs,
               ),
-            ),
-          ),
-        ],
-        body: RefreshIndicator(
-          onRefresh: () {
-            ref.invalidate(profileRepostsProvider(widget.userId));
-            return ref
-                .read(profileViewModelProvider(widget.userId).notifier)
-                .refresh();
-          },
-          color: AppColors.braweBlue,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _PostsGrid(postsState: profileState.posts),
-              _RepostsList(userId: widget.userId),
-              ProfileVideosGrid(
-                userId: widget.userId,
-                isMe: isMe,
-                postsState: profileState.posts,
-              ),
-              ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
             ],
+            body: RefreshIndicator(
+              onRefresh: () {
+                ref.invalidate(profileRepostsProvider(widget.userId));
+                return ref
+                    .read(profileViewModelProvider(widget.userId).notifier)
+                    .refresh();
+              },
+              color: colors.accentPrimary,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  ProfileVideosGrid(
+                    userId: widget.userId,
+                    isMe: isMe,
+                    postsState: profileState.posts,
+                    videosOnly: false,
+                  ),
+                  ProfileVideosGrid(
+                    userId: widget.userId,
+                    isMe: isMe,
+                    postsState: profileState.posts,
+                  ),
+                  _TextPostsList(postsState: profileState.posts, isMe: isMe),
+                  _RepostsList(userId: widget.userId, isMe: isMe),
+                  ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
   }
+
+  /// Aba só com ícone; o nome fica para leitores de tela.
+  Tab _iconTab(IconData icon, String label) => Tab(
+    height: 46,
+    child: Semantics(
+      label: label,
+      child: Tooltip(message: label, child: Icon(icon, size: 22)),
+    ),
+  );
 
   // ---- Sprint 3: Share / Block / Report --------------------------------
   Future<void> _shareProfile(BuildContext context) async {
@@ -392,10 +429,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final handle = _realHandle(profile?.username) ?? widget.userId;
     final name = profile?.displayName ?? handle;
     final url = 'https://brawe.app/connect/u/$handle';
-    final text = 'Confira $name no Brawe Connect: $url';
+    final text = S.of(context).profileShareText(name, url);
+    if (!context.mounted) return;
     try {
-      // ignore: deprecated_member_use
-      await Share.share(text, subject: name);
+      await ShareSheet.show(
+        context,
+        ShareTarget(kind: ShareKind.profile, url: url, shareText: text),
+      );
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -435,7 +475,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: Text(S.of(ctx).actionCancel),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.colors.danger,
+              foregroundColor: context.colors.textOnAccent,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(S.of(ctx).profileBlockTitle),
           ),
@@ -472,7 +515,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   Future<void> _toggleMute(BuildContext context, bool muted) async {
     final s = S.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final name = ref.read(profileViewModelProvider(widget.userId)).profile.value?.username ?? '';
+    final name =
+        ref
+            .read(profileViewModelProvider(widget.userId))
+            .profile
+            .value
+            ?.username ??
+        '';
     try {
       final notifier = ref.read(hiddenUsersProvider.notifier);
       if (muted) {
@@ -481,7 +530,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         await notifier.mute(widget.userId);
       }
       messenger.showSnackBar(
-        SnackBar(content: Text(muted ? s.relShownSnack(name) : s.relHiddenSnack(name))),
+        SnackBar(
+          content: Text(muted ? s.relShownSnack(name) : s.relHiddenSnack(name)),
+        ),
       );
     } catch (_) {
       messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
@@ -582,14 +633,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 title: s.menuSectionProfile,
                 items: [
                   ProfileMenuItem(
-                    icon: LucideIcons.share2,
-                    color: const Color(0xFF3B82F6),
+                    icon: LucideIcons.send,
+                    color: context.colors.accentPrimary,
                     title: s.profileOptionShareProfile,
                     onTap: go(() => _shareProfile(context)),
                   ),
                   ProfileMenuItem(
                     icon: LucideIcons.link,
-                    color: const Color(0xFF8B5CF6),
+                    color: context.colors.accentSecondary,
                     title: s.profileOptionCopyLink,
                     showChevron: false,
                     onTap: go(() => _copyProfileLink(context)),
@@ -608,7 +659,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                               .contains(widget.userId);
                       return ProfileMenuItem(
                         icon: muted ? LucideIcons.eye : LucideIcons.eyeOff,
-                        color: const Color(0xFF64748B),
+                        color: context.colors.textSecondary,
                         title: muted ? s.relShowPosts : s.relHidePosts,
                         showChevron: false,
                         onTap: go(() => _toggleMute(context, muted)),
@@ -617,14 +668,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   ),
                   ProfileMenuItem(
                     icon: LucideIcons.ban,
-                    color: const Color(0xFFF97316),
+                    color: context.colors.warning,
                     title: s.profileBlockTitle,
                     showChevron: false,
                     onTap: go(() => _confirmBlock(context)),
                   ),
                   ProfileMenuItem(
                     icon: LucideIcons.flag,
-                    color: const Color(0xFFEF4444),
+                    color: context.colors.danger,
                     title: s.profileOptionReport,
                     destructive: true,
                     onTap: go(() => _showReportSheet(context)),
@@ -645,14 +696,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   items: [
                     ProfileMenuItem(
                       icon: LucideIcons.trophy,
-                      color: const Color(0xFFF59E0B),
+                      color: context.colors.accentGold,
                       title: s.profileOptionDailyQuests,
                       subtitle: s.menuQuestsSubtitle,
                       onTap: go(() => context.push('/quests')),
                     ),
                     ProfileMenuItem(
                       icon: LucideIcons.medal,
-                      color: const Color(0xFF8B5CF6),
+                      color: context.colors.accentSecondary,
                       title: s.gifterLevelTitle,
                       subtitle: s.menuLevelSubtitle,
                       onTap: go(() => context.push('/gifter-level')),
@@ -665,7 +716,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     items: [
                       ProfileMenuItem(
                         icon: LucideIcons.wallet,
-                        color: const Color(0xFF10B981),
+                        color: context.colors.success,
                         title: s.profileOptionWallet,
                         subtitle: s.menuWalletSubtitle,
                         onTap: go(() => context.push('/wallet')),
@@ -697,14 +748,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   items: [
                     ProfileMenuItem(
                       icon: LucideIcons.settings,
-                      color: const Color(0xFF64748B),
+                      color: context.colors.textSecondary,
                       title: s.profileOptionSettings,
                       subtitle: s.menuSettingsSubtitle,
                       onTap: go(() => context.push('/settings')),
                     ),
                     ProfileMenuItem(
                       icon: LucideIcons.logOut,
-                      color: const Color(0xFFEF4444),
+                      color: context.colors.danger,
                       title: s.profileOptionLogout,
                       destructive: true,
                       onTap: go(() => _confirmLogout(context)),
@@ -746,7 +797,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.mutedRed),
+            style: TextButton.styleFrom(foregroundColor: context.colors.danger),
             child: Text(
               S.of(ctx).profileLogoutConfirm,
               style: const TextStyle(fontWeight: FontWeight.w700),
@@ -768,15 +819,16 @@ class _ProfileHeader extends ConsumerWidget {
   final String userId;
   final bool isMe;
   final ProfileState profileState;
+  final String? section;
+  final VoidCallback onShare;
 
   const _ProfileHeader({
     required this.userId,
     required this.isMe,
     required this.profileState,
+    required this.onShare,
     this.section,
   });
-
-  final String? section;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -807,126 +859,138 @@ class _ProfileHeader extends ConsumerWidget {
   }
 
   Widget _buildFull(BuildContext context, WidgetRef ref, Profile profile) {
+    final colors = context.colors;
+    final s = S.of(context);
     final stats = profileState.stats.asData?.value;
-    final joinedAt = _parseJoinDate(profile);
+    final postsCount = profileState.posts.asData?.value.length;
+    final joinedAt = _joinDate(context, profile);
+    final handle = _realHandle(profile.username);
+    final bio = profile.bio?.trim() ?? '';
+
+    final storiesAsync = ref.watch(userStoriesProvider(userId));
+    final stories = storiesAsync.asData?.value ?? const <Story>[];
+    final hasStories = stories.isNotEmpty;
+    final hasUnviewed = stories.any((st) => !st.isSeen);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Banner / Capa ──────────────────────────────────────────────
-        Builder(
-          builder: (context) {
-            final storiesAsync = ref.watch(userStoriesProvider(userId));
-            final stories = storiesAsync.asData?.value ?? const <Story>[];
-            final hasStories = stories.isNotEmpty;
-            final hasUnviewed = stories.any((s) => !s.isSeen);
-            return _BannerSection(
-              userId: userId,
-              bannerUrl: profile.bannerUrl,
-              avatarUrl: profile.avatarUrl,
-              initials: _initialsFor(profile),
-              isMe: isMe,
-              onEditProfile: () => context.push('/edit-profile'),
-              onSettings: () => context.push('/settings'),
-              hasStories: hasStories,
-              hasUnviewedStories: hasUnviewed,
-              frameUrl: UserAward.mostPrestigious(
-                profile.activeAwards.where((a) => a.frameUrl != null).toList(),
-              )?.frameUrl,
-              isLive: !isMe && profile.isLive,
-              onAvatarTap: !isMe &&
-                      profile.isLive &&
-                      (profile.liveRoomId ?? '').isNotEmpty
-                  ? () => context.push('/live/${profile.liveRoomId}')
-                  : hasStories
-                  ? () => _openStoryViewer(context, ref, stories)
-                  : null,
-            );
-          },
+        // ── Banner / Capa + avatar sobreposto ─────────────────────────
+        _BannerSection(
+          userId: userId,
+          bannerUrl: profile.bannerUrl,
+          avatarUrl: profile.avatarUrl,
+          initials: _initialsFor(profile),
+          hasStories: hasStories,
+          hasUnviewedStories: hasUnviewed,
+          frameUrl: UserAward.mostPrestigious(
+            profile.activeAwards.where((a) => a.frameUrl != null).toList(),
+          )?.frameUrl,
+          isLive: !isMe && profile.isLive,
+          onAvatarTap:
+              !isMe && profile.isLive && (profile.liveRoomId ?? '').isNotEmpty
+              ? () => context.push('/live/${profile.liveRoomId}')
+              : hasStories
+              ? () => _openStoryViewer(context, ref, stories)
+              : null,
         ),
 
-        // Espaço reservado para o avatar sobreposto (Positioned bottom: -48)
-        // + espaçamento até o nome, evitando que o nome se sobreponha à foto.
-        const SizedBox(height: 60),
+        // ── Números ao lado do avatar: posts · seguidores · seguindo ───
+        // O avatar (98 px) invade 48 px abaixo do banner; os números ocupam
+        // o espaço à direita dele.
+        SizedBox(
+          height: 60,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 126, right: 16),
+            child: Row(
+              children: [
+                _StatBlock(
+                  value: postsCount == null ? '–' : _fmtCount(postsCount),
+                  label: s.profileTabPosts,
+                ),
+                _StatBlock(
+                  value: stats == null ? '–' : _fmtCount(stats.followersCount),
+                  label: s.profileStatFollowers,
+                  onTap: () => context.push('/follows/$userId?tab=followers'),
+                ),
+                _StatBlock(
+                  value: stats == null ? '–' : _fmtCount(stats.followingCount),
+                  label: s.profileStatFollowing,
+                  onTap: () => context.push('/follows/$userId?tab=following'),
+                ),
+              ],
+            ),
+          ),
+        ),
 
-        // ── Nome + verificado ──────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Nome + verificado ──────────────────────────────────
               Row(
                 children: [
                   Flexible(
                     child: Text(
                       profile.displayName ??
                           profile.username ??
-                          S.of(context).profileUserFallback,
+                          s.profileUserFallback,
                       style: TextStyle(
-                        color: context.colors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                        color: colors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (profile.isVerified) const VerifiedBadge(size: 20, gap: 6),
+                  if (profile.isVerified) const VerifiedBadge(size: 18, gap: 6),
                   CreatorTierBadgeForUser(userId: profile.id, size: 18),
                 ],
               ),
-              const SizedBox(height: 2),
-              // ── @username + data de entrada na mesma linha ────────────
-              Row(
-                children: [
-                  if (_realHandle(profile.username) != null)
-                    Text(
-                      '@${_realHandle(profile.username)}',
-                      style: TextStyle(
-                        color: context.colors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  if (_realHandle(profile.username) != null && joinedAt != null)
-                    Text(
-                      '  ·  ',
-                      style: TextStyle(
-                        color: context.colors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  if (joinedAt != null)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          color: context.colors.textSecondary,
-                          size: 12,
+              if (handle != null || joinedAt != null) ...[
+                const SizedBox(height: 2),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 10,
+                  children: [
+                    if (handle != null)
+                      Text(
+                        '@$handle',
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 14,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          joinedAt,
-                          style: TextStyle(
-                            color: context.colors.textSecondary,
-                            fontSize: 13,
+                      ),
+                    if (joinedAt != null)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.calendar,
+                            color: colors.textTertiary,
+                            size: 12,
                           ),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
-
-              // ── Stats compactos (inline, sem card) ────────────────────
-              if (stats != null) ...[
-                const SizedBox(height: 10),
-                _CompactStats(stats: stats, userId: userId),
+                          const SizedBox(width: 4),
+                          Text(
+                            s.profileJoinedAt(joinedAt),
+                            style: TextStyle(
+                              color: colors.textTertiary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ],
 
-              if (profile.bio != null && profile.bio!.isNotEmpty) ...[
-                const SizedBox(height: 10),
+              if (bio.isNotEmpty) ...[
+                const SizedBox(height: 8),
                 Text(
-                  profile.bio!,
+                  bio,
                   style: TextStyle(
-                    color: context.colors.textSecondary,
+                    color: colors.textPrimary,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -951,16 +1015,9 @@ class _ProfileHeader extends ConsumerWidget {
 
               const SizedBox(height: 14),
 
-              // ── Ações ──────────────────────────────────────────────────
-              // Quando isMe == true, _buildActions retorna SizedBox.shrink()
-              // (a ação "Editar" virou ícone flutuante no banner).
               // Nota: o badge "Parceiro verificado" NÃO aparece aqui — ele
-              // pertence à página dedicada da vitrine (ShopVitrinePage),
-              // nunca ao perfil social (nem para o próprio usuário, nem
-              // para visitantes).
+              // pertence à página dedicada da vitrine (ShopVitrinePage).
               _buildActions(context, ref, profile),
-
-              const SizedBox(height: 8),
             ],
           ),
         ),
@@ -968,54 +1025,89 @@ class _ProfileHeader extends ConsumerWidget {
     );
   }
 
+  ButtonStyle _primaryStyle(BuildContext context) => FilledButton.styleFrom(
+    backgroundColor: context.colors.accentPrimary,
+    foregroundColor: context.colors.textOnAccent,
+    elevation: 0,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+  );
+
+  ButtonStyle _tonalStyle(BuildContext context) => FilledButton.styleFrom(
+    backgroundColor: context.colors.surfaceHighest,
+    foregroundColor: context.colors.textPrimary,
+    elevation: 0,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+  );
+
   Widget _buildActions(BuildContext context, WidgetRef ref, Profile profile) {
-    // No perfil próprio, NÃO renderizamos botão na área de conteúdo —
-    // a ação "Editar perfil" virou um ícone flutuante (pencil) no canto
-    // superior direito do banner (ver _BannerSection). Isso deixa o
-    // perfil mais limpo, alinhado com Instagram/X.
+    final s = S.of(context);
+    const height = 44.0;
+
     if (isMe) {
-      return const SizedBox.shrink();
+      return Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: height,
+              child: FilledButton(
+                style: _tonalStyle(context),
+                onPressed: () => context.push('/edit-profile'),
+                child: Text(s.profileEditButton),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: height,
+            height: height,
+            child: Tooltip(
+              message: s.actionShare,
+              child: FilledButton(
+                style: _tonalStyle(context).copyWith(
+                  padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                ),
+                onPressed: onShare,
+                child: const Icon(LucideIcons.send, size: 20),
+              ),
+            ),
+          ),
+        ],
+      );
     }
 
+    final followState = ref.watch(followViewModelProvider(userId));
+    final isFollowing = followState.asData?.value ?? false;
     return Row(
       children: [
         Expanded(
-          child: FollowButton(
-            userId: userId,
-            useThemeColors: true,
-            filled: true,
+          child: SizedBox(
+            height: height,
+            child: FilledButton(
+              style: isFollowing
+                  ? _tonalStyle(context)
+                  : _primaryStyle(context),
+              onPressed: followState.isLoading
+                  ? null
+                  : () => ref
+                        .read(followViewModelProvider(userId).notifier)
+                        .toggleFollow(),
+              child: Text(isFollowing ? s.actionUnfollow : s.actionFollow),
+            ),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: GestureDetector(
-            onTap: () => _openConversation(context, ref, profile),
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.colors.surfaceElevated,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: context.colors.divider),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.message_outlined,
-                    color: context.colors.textPrimary,
-                    size: 16,
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    S.of(context).profileMessageButton,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+          child: SizedBox(
+            height: height,
+            child: FilledButton.icon(
+              style: _tonalStyle(context),
+              onPressed: () => _openConversation(context, ref, profile),
+              icon: const Icon(LucideIcons.messageCircle, size: 18),
+              label: Text(s.profileMessageButton),
             ),
           ),
         ),
@@ -1028,8 +1120,9 @@ class _ProfileHeader extends ConsumerWidget {
     WidgetRef ref,
     Profile profile,
   ) async {
-    // Mostra um spinner discreto enquanto resolve/cria a conversa.
+    // Captura antes do await: o aviso aparece nesta tela.
     final messenger = ScaffoldMessenger.of(context);
+    final s = S.of(context);
     try {
       final convId = await ref
           .read(chatRepositoryProvider)
@@ -1039,39 +1132,24 @@ class _ProfileHeader extends ConsumerWidget {
         '/chat/$convId',
         extra: {
           'participantName':
-              profile.displayName ??
-              profile.username ??
-              S.of(context).profileChatFallback,
+              profile.displayName ?? profile.username ?? s.profileChatFallback,
           'participantAvatarUrl': profile.avatarUrl,
           'participantId': profile.id,
         },
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text(S.of(context).profileOpenConversationError(e))),
+        SnackBar(content: Text(s.profileOpenConversationError(e))),
       );
     }
   }
 
-  String? _parseJoinDate(Profile profile) {
+  /// Mês e ano de entrada, já no idioma do app (ex.: "novembro de 2024").
+  String? _joinDate(BuildContext context, Profile profile) {
     if (profile.createdAt == null || profile.createdAt!.isEmpty) return null;
     try {
       final dt = DateTime.parse(profile.createdAt!);
-      const months = [
-        'jan',
-        'fev',
-        'mar',
-        'abr',
-        'mai',
-        'jun',
-        'jul',
-        'ago',
-        'set',
-        'out',
-        'nov',
-        'dez',
-      ];
-      return '${months[dt.month - 1]}. de ${dt.year}';
+      return MaterialLocalizations.of(context).formatMonthYear(dt);
     } catch (_) {
       return null;
     }
@@ -1091,6 +1169,12 @@ class _ProfileHeader extends ConsumerWidget {
   }
 }
 
+String _fmtCount(int v) {
+  if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+  if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+  return '$v';
+}
+
 // ── Banner + Avatar sobrepostos ──────────────────────────────────────────────
 class _BannerSection extends ConsumerStatefulWidget {
   const _BannerSection({
@@ -1098,9 +1182,6 @@ class _BannerSection extends ConsumerStatefulWidget {
     required this.bannerUrl,
     required this.avatarUrl,
     required this.initials,
-    required this.isMe,
-    required this.onEditProfile,
-    required this.onSettings,
     this.hasStories = false,
     this.hasUnviewedStories = false,
     this.onAvatarTap,
@@ -1115,9 +1196,6 @@ class _BannerSection extends ConsumerStatefulWidget {
   final String? bannerUrl;
   final String? avatarUrl;
   final String initials;
-  final bool isMe;
-  final VoidCallback onEditProfile;
-  final VoidCallback onSettings;
   final bool hasStories;
   final bool hasUnviewedStories;
   final VoidCallback? onAvatarTap;
@@ -1156,19 +1234,15 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final bannerUrl = widget.bannerUrl;
     final avatarUrl = widget.avatarUrl;
-    final initials = widget.initials;
-    final isMe = widget.isMe;
-    final onEditProfile = widget.onEditProfile;
     final hasStories = widget.hasStories;
     final hasUnviewedStories = widget.hasUnviewedStories;
-    final onAvatarTap = widget.onAvatarTap;
-    final userId = widget.userId;
 
     final hasBanner = bannerUrl != null && bannerUrl.isNotEmpty;
     // Sem banner: usamos uma faixa baixa só para acomodar o avatar sobreposto.
-    final bannerHeight = hasBanner ? 160.0 : 70.0;
+    final bannerHeight = hasBanner ? 150.0 : 70.0;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -1177,31 +1251,16 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
         Container(
           height: bannerHeight,
           width: double.infinity,
-          color: context.colors.background,
+          color: hasBanner ? colors.surfaceHighest : colors.background,
           child: hasBanner
               ? CachedNetworkImage(
-                memCacheWidth: context.decodeScreenPx,
+                  memCacheWidth: context.decodeScreenPx,
                   imageUrl: bannerUrl,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => const SizedBox.shrink(),
                 )
               : null,
         ),
-
-        // ── Botão flutuante "Editar perfil" (apenas no perfil próprio) ──
-        // Estilo Instagram/X: ícone discreto no canto superior direito do
-        // banner, com glassmorphism leve. Substitui o antigo botão outlined
-        // grande que ficava abaixo da bio.
-        if (isMe)
-          Positioned(
-            top: 12,
-            right: 12,
-            child: _BannerActionChip(
-              icon: Icons.edit_outlined,
-              tooltip: S.of(context).profileEditTooltip,
-              onTap: onEditProfile,
-            ),
-          ),
 
         // Avatar com anel (gradiente quando há stories não vistos,
         // cinza quando já foram vistos, neutro quando não há stories)
@@ -1212,49 +1271,52 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
             clipBehavior: Clip.none,
             children: [
               GestureDetector(
-                onTap: onAvatarTap,
+                onTap: widget.onAvatarTap,
                 child: AvatarFrame(
                   size: 98,
                   overflow: 0.14,
                   frameUrl: widget.frameUrl,
                   child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: !widget.isLive && hasUnviewedStories
-                        ? const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: AppColors.brandGradient,
-                          )
-                        : null,
-                    color: widget.isLive
-                        ? AppColors.liveRed
-                        : hasUnviewedStories
-                        ? null
-                        : hasStories
-                        ? context.colors.border
-                        : Colors.transparent,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: context.colors.background,
+                      gradient: !widget.isLive && hasUnviewedStories
+                          ? const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: AppColors.brandGradient,
+                            )
+                          : null,
+                      color: widget.isLive
+                          ? AppColors.liveRed
+                          : hasUnviewedStories
+                          ? null
+                          : hasStories
+                          ? colors.border
+                          : Colors.transparent,
                     ),
-                    child: ClipOval(
-                      child: SizedBox(
-                        width: 86,
-                        height: 86,
-                        child: _Avatar(url: avatarUrl, initials: initials),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: colors.background,
+                      ),
+                      child: ClipOval(
+                        child: SizedBox(
+                          width: 86,
+                          height: 86,
+                          child: _Avatar(
+                            url: avatarUrl,
+                            initials: widget.initials,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
                   ),
                 ),
               ),
               // ── Indicador online (com dados reais do presenceCacheProvider) ──
-              if (!widget.isLive) _OnlineIndicator(userId: userId),
+              if (!widget.isLive) _OnlineIndicator(userId: widget.userId),
               // ── Selo AO VIVO na base da foto ──
               if (widget.isLive)
                 Positioned(
@@ -1272,13 +1334,14 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
                           color: AppColors.liveRed,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
-                            color: context.colors.background,
+                            color: colors.background,
                             width: 2,
                           ),
                         ),
                         child: Text(
                           S.of(context).liveBadge,
                           style: const TextStyle(
+                            // Sobre o vermelho da live (cor fixa de marca).
                             color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
@@ -1297,260 +1360,82 @@ class _BannerSectionState extends ConsumerState<_BannerSection> {
   }
 }
 
-// ── Chip de ação flutuante no banner (ex.: "Editar perfil") ─────────────────
-/// Botão circular discreto com glassmorphism, posicionado sobre o banner.
-/// Substitui o antigo botão outlined grande que poluía a área de conteúdo.
-class _BannerActionChip extends StatelessWidget {
-  const _BannerActionChip({
-    required this.icon,
-    required this.onTap,
-    this.tooltip,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    final btn = GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        // Fixed dark scrim behind the icon (sits over the cover photo).
-        child: Icon(icon, color: Colors.white, size: 18),
-      ),
-    );
-    if (tooltip == null) return btn;
-    return Tooltip(message: tooltip!, child: btn);
-  }
-}
-
-// ── Compact Stats (inline, sem card) ─────────────────────────────────────────
-class _CompactStats extends StatelessWidget {
-  const _CompactStats({required this.stats, required this.userId});
-  final SocialStats stats;
-  final String userId;
-
-  String _fmt(int v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return '$v';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return Wrap(
-      spacing: 18,
-      runSpacing: 4,
-      children: [
-        _InlineStat(
-          value: _fmt(stats.followersCount),
-          label: s.profileFollowers,
-          valueColor: AppColors.braweBlue,
-          onTap: () => context.push('/follows/$userId?tab=followers'),
-        ),
-        _InlineStat(
-          value: _fmt(stats.followingCount),
-          label: s.profileFollowing,
-          onTap: () => context.push('/follows/$userId?tab=following'),
-        ),
-        _InlineStat(value: _fmt(stats.totalViews), label: s.profileViews),
-      ],
-    );
-  }
-}
-
-class _InlineStat extends StatelessWidget {
-  const _InlineStat({
-    required this.value,
-    required this.label,
-    this.valueColor,
-    this.onTap,
-  });
+// ── Número grande + rótulo pequeno (posts · seguidores · seguindo) ──────────
+class _StatBlock extends StatelessWidget {
+  const _StatBlock({required this.value, required this.label, this.onTap});
   final String value;
   final String label;
-  final Color? valueColor;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final row = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor ?? context.colors.textPrimary,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+    final colors = context.colors;
+    return Expanded(
+      child: Semantics(
+        button: onTap != null,
+        label: '$value $label',
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
-        ),
-      ],
+      ),
     );
-    if (onTap == null) return row;
-    return GestureDetector(onTap: onTap, child: row);
   }
 }
 
-// ── Links Sociais ─────────────────────────────────────────────────────────────
+// ── Links Sociais (chips neutros, sem cor de marca) ──────────────────────────
 class _SocialLinks extends StatelessWidget {
   const _SocialLinks({required this.links});
   final Map<String, String> links;
 
-  // Paleta nativa: usamos `Icons.public` (globo Material) para website e
-  // `Icons.mail_outline` para email — ambos nativos do sistema, sem FA.
-  // Para as marcas (Instagram, X, YouTube, etc.) usamos FontAwesomeIcons
-  // que entrega o logotipo oficial mais reconhecível.
-  static final Map<String, _SocialLinkStyle> _config = {
-    'website': _SocialLinkStyle(
-      color: const Color(0xFF1A1428),
-      border: AppColors.braweBlue,
-      label: 'Website',
-      icon: Icons.public,
-      isNative: true,
-    ),
-    'site': _SocialLinkStyle(
-      color: const Color(0xFF1A1428),
-      border: AppColors.braweBlue,
-      label: 'Site',
-      icon: Icons.public,
-      isNative: true,
-    ),
-    'email': _SocialLinkStyle(
-      color: const Color(0xFF2A2010),
-      border: const Color(0xFFFFB74D),
-      label: 'Email',
-      icon: Icons.mail_outline,
-      isNative: true,
-    ),
-    'instagram': _SocialLinkStyle(
-      color: const Color(0xFF2A1020),
-      border: const Color(0xFFE1306C),
-      label: 'Instagram',
-      icon: FontAwesomeIcons.instagram,
-    ),
-    'twitter': _SocialLinkStyle(
-      color: const Color(0xFF0E0E0E),
-      border: const Color(0xFFFFFFFF),
-      label: 'X',
-      icon: FontAwesomeIcons.xTwitter,
-    ),
-    'x': _SocialLinkStyle(
-      color: const Color(0xFF0E0E0E),
-      border: const Color(0xFFFFFFFF),
-      label: 'X',
-      icon: FontAwesomeIcons.xTwitter,
-    ),
-    'youtube': _SocialLinkStyle(
-      color: const Color(0xFF2A0A0A),
-      border: const Color(0xFFFF0000),
-      label: 'YouTube',
-      icon: FontAwesomeIcons.youtube,
-    ),
-    'tiktok': _SocialLinkStyle(
-      color: const Color(0xFF1A1A1A),
-      border: const Color(0xFFFFFFFF),
-      label: 'TikTok',
-      icon: FontAwesomeIcons.tiktok,
-    ),
-    'telegram': _SocialLinkStyle(
-      color: const Color(0xFF0A1A2A),
-      border: const Color(0xFF2AABEE),
-      label: 'Telegram',
-      icon: FontAwesomeIcons.telegram,
-    ),
-    'whatsapp': _SocialLinkStyle(
-      color: const Color(0xFF0A3A1A),
-      border: const Color(0xFF25D366),
-      label: 'WhatsApp',
-      icon: FontAwesomeIcons.whatsapp,
-    ),
-    'twitch': _SocialLinkStyle(
-      color: const Color(0xFF1A0A2A),
-      border: const Color(0xFF9146FF),
-      label: 'Twitch',
-      icon: FontAwesomeIcons.twitch,
-    ),
-    'kick': _SocialLinkStyle(
-      color: const Color(0xFF0A2A14),
-      border: const Color(0xFF53FC18),
-      label: 'Kick',
-      icon: Icons.sports_esports,
-      isNative: true,
-    ),
-    'spotify': _SocialLinkStyle(
-      color: const Color(0xFF0A1F0E),
-      border: const Color(0xFF1DB954),
-      label: 'Spotify',
-      icon: FontAwesomeIcons.spotify,
-    ),
-    'linkedin': _SocialLinkStyle(
-      color: const Color(0xFF0A1F2A),
-      border: const Color(0xFF0A66C2),
-      label: 'LinkedIn',
-      icon: FontAwesomeIcons.linkedinIn,
-    ),
-    'github': _SocialLinkStyle(
-      color: const Color(0xFF14141A),
-      border: const Color(0xFFCCCCCC),
-      label: 'GitHub',
-      icon: FontAwesomeIcons.github,
-    ),
-    'threads': _SocialLinkStyle(
-      color: const Color(0xFF14141A),
-      border: const Color(0xFFFFFFFF),
-      label: 'Threads',
-      icon: FontAwesomeIcons.threads,
-    ),
-    'snapchat': _SocialLinkStyle(
-      color: const Color(0xFF2A2A0A),
-      border: const Color(0xFFFFFC00),
-      label: 'Snapchat',
-      icon: FontAwesomeIcons.snapchat,
-    ),
-    'discord': _SocialLinkStyle(
-      color: const Color(0xFF14142A),
-      border: const Color(0xFF5865F2),
-      label: 'Discord',
-      icon: FontAwesomeIcons.discord,
-    ),
-    'facebook': _SocialLinkStyle(
-      color: const Color(0xFF0A1A3A),
-      border: const Color(0xFF1877F2),
-      label: 'Facebook',
-      icon: FontAwesomeIcons.facebook,
-    ),
+  // Lucide não tem ícones de marca: usamos símbolos neutros por rede.
+  static const Map<String, (IconData, String)> _config = {
+    'website': (LucideIcons.globe, 'Website'),
+    'site': (LucideIcons.globe, 'Site'),
+    'email': (LucideIcons.mail, 'Email'),
+    'instagram': (LucideIcons.camera, 'Instagram'),
+    'twitter': (LucideIcons.atSign, 'X'),
+    'x': (LucideIcons.atSign, 'X'),
+    'youtube': (LucideIcons.circlePlay, 'YouTube'),
+    'tiktok': (LucideIcons.music2, 'TikTok'),
+    'telegram': (LucideIcons.send, 'Telegram'),
+    'whatsapp': (LucideIcons.messageCircle, 'WhatsApp'),
+    'twitch': (LucideIcons.tv, 'Twitch'),
+    'kick': (LucideIcons.gamepad2, 'Kick'),
+    'spotify': (LucideIcons.music, 'Spotify'),
+    'linkedin': (LucideIcons.briefcase, 'LinkedIn'),
+    'github': (LucideIcons.code, 'GitHub'),
+    'threads': (LucideIcons.atSign, 'Threads'),
+    'snapchat': (LucideIcons.camera, 'Snapchat'),
+    'discord': (LucideIcons.messageSquare, 'Discord'),
+    'facebook': (LucideIcons.users, 'Facebook'),
   };
-
-  /// Estilo neutro para chaves desconhecidas ou links customizados sem ícone:
-  /// usa globo Material (Icons.public) — comportamento de link de site externo.
-  static _SocialLinkStyle _fallbackStyle(String label) => _SocialLinkStyle(
-    color: const Color(0xFF1A1A2E),
-    border: AppColors.braweBlue,
-    label: label,
-    icon: Icons.public,
-    isNative: true,
-  );
 
   @override
   Widget build(BuildContext context) {
@@ -1568,41 +1453,78 @@ class _SocialLinks extends StatelessWidget {
       children: [
         ...socials.map((e) {
           final key = e.key.toLowerCase();
-          final style = _config[key] ?? _fallbackStyle(e.key);
-          return _SocialPill(network: key, style: style, url: e.value);
-        }),
-        ...custom.map((c) {
-          final style = _SocialLinkStyle(
-            color: const Color(0xFF1A1A2E),
-            border: AppColors.braweBlue,
-            label: c.title,
-            icon: _customIconFor(c.icon),
-            isNative: true,
+          final cfg = _config[key] ?? (LucideIcons.globe, e.key);
+          return _SocialPill(
+            network: key,
+            icon: cfg.$1,
+            label: cfg.$2,
+            url: e.value,
           );
-          return _SocialPill(network: 'website', style: style, url: c.url);
         }),
+        ...custom.map(
+          (c) => _SocialPill(
+            network: 'website',
+            icon: _customIconFor(c.icon),
+            label: c.title.isEmpty ? c.url : c.title,
+            url: c.url,
+          ),
+        ),
       ],
     );
   }
 }
 
-class _SocialLinkStyle {
-  final Color color;
-  final Color border;
-  final String label;
-  // Object aceita tanto IconData (Material) quanto FaIconData (FontAwesome 11+),
-  // já que FaIconData não implementa mais IconData a partir da versão 11.0.0.
-  final Object icon;
-
-  /// `true` → renderiza com `Icon()` (Material); `false` → renderiza com `FaIcon()`.
-  final bool isNative;
-  const _SocialLinkStyle({
-    required this.color,
-    required this.border,
-    required this.label,
+class _SocialPill extends StatelessWidget {
+  const _SocialPill({
+    required this.network,
     required this.icon,
-    this.isNative = false,
+    required this.label,
+    required this.url,
   });
+  final String network;
+  final IconData icon;
+  final String label;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Material(
+      color: colors.surfaceHighest,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => _launchSocial(network, url),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.6,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: colors.textSecondary, size: 14),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CustomLink {
@@ -1638,50 +1560,50 @@ List<_CustomLink> _parseCustomLinks(String? raw) {
 }
 
 /// Paleta de ícones para custom links — espelha a paleta do web
-/// (`CUSTOM_ICON_PALETTE`). Usa Material Icons (nativos).
+/// (`CUSTOM_ICON_PALETTE`), em Lucide.
 IconData _customIconFor(String name) {
   switch (name) {
     case 'ShoppingBag':
-      return Icons.shopping_bag_outlined;
+      return LucideIcons.shoppingBag;
     case 'Briefcase':
-      return Icons.work_outline;
+      return LucideIcons.briefcase;
     case 'Heart':
-      return Icons.favorite_border;
+      return LucideIcons.heart;
     case 'Star':
-      return Icons.star_outline;
+      return LucideIcons.star;
     case 'Music':
-      return Icons.music_note_outlined;
+      return LucideIcons.music;
     case 'Book':
-      return Icons.menu_book_outlined;
+      return LucideIcons.bookOpen;
     case 'Coffee':
-      return Icons.local_cafe_outlined;
+      return LucideIcons.coffee;
     case 'Award':
-      return Icons.emoji_events_outlined;
+      return LucideIcons.award;
     case 'Zap':
-      return Icons.flash_on_outlined;
+      return LucideIcons.zap;
     case 'Mic':
-      return Icons.mic_none_outlined;
+      return LucideIcons.mic;
     case 'Tv':
-      return Icons.tv_outlined;
+      return LucideIcons.tv;
     case 'Calendar':
-      return Icons.calendar_today_outlined;
+      return LucideIcons.calendar;
     case 'Mail':
-      return Icons.mail_outline;
+      return LucideIcons.mail;
     case 'Phone':
-      return Icons.phone_outlined;
+      return LucideIcons.phone;
     case 'MessageSquare':
-      return Icons.chat_bubble_outline;
+      return LucideIcons.messageSquare;
     case 'MessageCircle':
-      return Icons.chat_outlined;
+      return LucideIcons.messageCircle;
     case 'DollarSign':
-      return Icons.attach_money_outlined;
+      return LucideIcons.dollarSign;
     case 'CreditCard':
-      return Icons.credit_card_outlined;
+      return LucideIcons.creditCard;
     case 'LinkIcon':
-      return Icons.link_rounded;
+      return LucideIcons.link;
     case 'Globe':
     default:
-      return Icons.public;
+      return LucideIcons.globe;
   }
 }
 
@@ -1772,66 +1694,6 @@ Future<void> _launchSocial(String network, String raw) async {
   }
 }
 
-class _SocialPill extends StatelessWidget {
-  const _SocialPill({
-    required this.network,
-    required this.style,
-    required this.url,
-  });
-  final String network;
-  final _SocialLinkStyle style;
-  final String url;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
-    // Para marcas com cor branca/quase branca (X, TikTok, Threads), no tema
-    // claro o branco fica invisível — usamos textPrimary como fallback.
-    final brand = style.border;
-    final brandLuma = brand.computeLuminance();
-    final fg = (isLight && brandLuma > 0.7) ? colors.textPrimary : brand;
-
-    // Fundo do pill: tint suave da marca sobre a superfície elevada, em vez
-    // do hex escuro fixo. Mantém legibilidade em ambos os temas.
-    final bg = Color.alphaBlend(
-      brand.withValues(alpha: isLight ? 0.10 : 0.18),
-      colors.surfaceElevated,
-    );
-
-    return GestureDetector(
-      onTap: () => _launchSocial(network, url),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: fg.withValues(alpha: 0.6)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (style.isNative)
-              Icon(style.icon as IconData, color: fg, size: 14)
-            else
-              FaIcon(style.icon as FaIconData, color: fg, size: 14),
-            const SizedBox(width: 6),
-            Text(
-              style.label,
-              style: TextStyle(
-                color: fg,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ── Avatar com cache + fade-in + fallback de iniciais ───────────────────────
 class _Avatar extends StatelessWidget {
   const _Avatar({required this.url, required this.initials});
@@ -1852,13 +1714,13 @@ class _Avatar extends StatelessWidget {
       cacheKey: url,
       placeholder: (_, __) => Container(
         color: context.colors.surfaceElevated,
-        child: const Center(
+        child: Center(
           child: SizedBox(
             width: 22,
             height: 22,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.braweBlue,
+              color: context.colors.accentPrimary,
             ),
           ),
         ),
@@ -1879,19 +1741,20 @@ class _AvatarFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.braweBlue, AppColors.braweBlueLight],
+          colors: [colors.accentPrimary, colors.accentSecondary],
         ),
       ),
       alignment: Alignment.center,
       child: Text(
         initials,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: colors.textOnAccent,
           fontSize: 32,
           fontWeight: FontWeight.w800,
           letterSpacing: -1,
@@ -1907,11 +1770,12 @@ class _HeaderSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fill = context.colors.surfaceHighest;
     Widget bar({double w = 120, double h = 14}) => Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
-        color: context.colors.surfaceHighest.withValues(alpha: 0.06),
+        color: fill,
         borderRadius: BorderRadius.circular(6),
       ),
     );
@@ -1921,12 +1785,9 @@ class _HeaderSkeleton extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            width: 102,
-            height: 102,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: context.colors.surfaceHighest.withValues(alpha: 0.05),
-            ),
+            width: 98,
+            height: 98,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: fill),
           ),
           const SizedBox(height: 14),
           bar(w: 160, h: 18),
@@ -1945,6 +1806,7 @@ class _HeaderError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
@@ -1953,23 +1815,16 @@ class _HeaderError extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.mutedRed.withValues(alpha: 0.12),
+              color: colors.danger.withValues(alpha: 0.12),
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.mutedRed.withValues(alpha: 0.3),
-              ),
             ),
-            child: const Icon(
-              Icons.cloud_off_rounded,
-              color: AppColors.mutedRed,
-              size: 26,
-            ),
+            child: Icon(LucideIcons.cloudOff, color: colors.danger, size: 26),
           ),
           const SizedBox(height: 12),
           Text(
             S.of(context).profileLoadError,
             style: TextStyle(
-              color: context.colors.textPrimary,
+              color: colors.textPrimary,
               fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
@@ -1977,31 +1832,25 @@ class _HeaderError extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             S.of(context).profileLoadErrorHint,
-            style: TextStyle(
-              color: context.colors.textSecondary.withValues(alpha: 0.85),
-              fontSize: 12,
-            ),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.textSecondary, fontSize: 12),
           ),
           const SizedBox(height: 14),
-          OutlinedButton.icon(
-            onPressed: onRetry,
-            icon: Icon(
-              Icons.refresh_rounded,
-              size: 18,
-              color: context.colors.textPrimary,
-            ),
-            label: Text(
-              S.of(context).profileRetry,
-              style: TextStyle(color: context.colors.textPrimary),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: context.colors.surfaceHighest.withValues(alpha: 0.2),
+          SizedBox(
+            height: 44,
+            child: FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(LucideIcons.refreshCw, size: 18),
+              label: Text(S.of(context).profileRetry),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.surfaceHighest,
+                foregroundColor: colors.textPrimary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
           ),
         ],
@@ -2010,62 +1859,31 @@ class _HeaderError extends StatelessWidget {
   }
 }
 
-// ── POSTS LIST (estilo Twitter/X — feed completo) ───────────────────────────
-class _PostsGrid extends StatelessWidget {
+// ── POSTS DE TEXTO (lista, estilo feed) ─────────────────────────────────────
+/// Posts sem mídia. Os que têm foto/vídeo aparecem na grade e em Vídeos.
+class _TextPostsList extends StatelessWidget {
   final AsyncValue<List<Post>> postsState;
-  const _PostsGrid({required this.postsState});
+  final bool isMe;
+  const _TextPostsList({required this.postsState, required this.isMe});
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return postsState.when(
-      data: (posts) {
-        // Aba "Posts" mostra TUDO: textos, fotos e vídeos publicados no feed.
-        // Desta forma o usuário vê todo o conteúdo que criou.
-
+      data: (all) {
+        final posts = all
+            .where((p) => (p.imageUrl ?? '').isEmpty)
+            .toList(growable: false);
         if (posts.isEmpty) {
-          return _EmptyState(
-            icon: Icons.article_outlined,
-            message: S.of(context).profileNoTextPosts,
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.only(top: 4, bottom: 16),
-          itemCount: posts.length,
-          separatorBuilder: (_, __) =>
-              Divider(color: context.colors.divider, height: 1),
-          itemBuilder: (context, index) => PostCard(post: posts[index]),
-        );
-      },
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.braweBlue),
-      ),
-      error: (_, __) => _EmptyState(
-        icon: Icons.error_outline,
-        message: S.of(context).profilePostsLoadError,
-      ),
-    );
-  }
-}
-
-// ── REPOSTS ─────────────────────────────────────────────────────────────────
-/// Posts de outras pessoas que o usuário repostou, do mais recente ao mais
-/// antigo. O cartão já mostra "Fulano repostou" acima do post original.
-class _RepostsList extends ConsumerWidget {
-  final String userId;
-  const _RepostsList({required this.userId});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ref.watch(profileRepostsProvider(userId)).when(
-      data: (posts) {
-        if (posts.isEmpty) {
-          return _EmptyState(
-            icon: Icons.repeat_rounded,
-            message: S.of(context).profileNoReposts,
+          return ProfileEmptyState(
+            icon: LucideIcons.textAlignStart,
+            title: isMe ? s.profileEmptyMeTexts : s.profileNoTextPosts,
+            actionLabel: isMe ? s.profileEmptyMeAction : null,
+            onAction: isMe ? () => showProfileCreatePost(context) : null,
           );
         }
         return ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(top: 4, bottom: 16),
           itemCount: posts.length,
           separatorBuilder: (_, __) =>
@@ -2076,46 +1894,62 @@ class _RepostsList extends ConsumerWidget {
       loading: () => Center(
         child: CircularProgressIndicator(color: context.colors.accentPrimary),
       ),
-      error: (_, __) => _EmptyState(
-        icon: Icons.error_outline,
-        message: S.of(context).profilePostsLoadError,
+      error: (_, __) => ProfileEmptyState(
+        icon: LucideIcons.circleAlert,
+        title: s.profilePostsLoadError,
       ),
     );
   }
 }
 
-// ── GALERIA (grid estilo Instagram com fotos/vídeos publicados) ─────────────
-class _EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  const _EmptyState({required this.icon, required this.message});
+// ── REPOSTS ─────────────────────────────────────────────────────────────────
+/// Posts de outras pessoas que o usuário repostou, do mais recente ao mais
+/// antigo. O cartão já mostra "Fulano repostou" acima do post original.
+class _RepostsList extends ConsumerWidget {
+  final String userId;
+  final bool isMe;
+  const _RepostsList({required this.userId, required this.isMe});
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 56,
-            color: context.colors.textSecondary.withValues(alpha: 0.4),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final s = S.of(context);
+    return ref
+        .watch(profileRepostsProvider(userId))
+        .when(
+          data: (posts) {
+            if (posts.isEmpty) {
+              return ProfileEmptyState(
+                icon: LucideIcons.repeat2,
+                title: s.profileNoReposts,
+              );
+            }
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.only(top: 4, bottom: 16),
+              itemCount: posts.length,
+              separatorBuilder: (_, __) =>
+                  Divider(color: context.colors.divider, height: 1),
+              itemBuilder: (context, index) => PostCard(post: posts[index]),
+            );
+          },
+          loading: () => Center(
+            child: CircularProgressIndicator(
+              color: context.colors.accentPrimary,
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            message,
-            style: TextStyle(color: context.colors.textSecondary, fontSize: 14),
+          error: (_, __) => ProfileEmptyState(
+            icon: LucideIcons.circleAlert,
+            title: s.profilePostsLoadError,
           ),
-        ],
-      ),
-    );
+        );
   }
 }
 
 // ── SLIVER DELEGATE ─────────────────────────────────────────────────────────
 class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
-  _SliverAppBarDelegate(this._tabBar);
+  _SliverAppBarDelegate(this._tabBar, this._background);
   final TabBar _tabBar;
+  final Color _background;
 
   @override
   double get minExtent => _tabBar.preferredSize.height;
@@ -2128,16 +1962,15 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(color: context.colors.background, child: _tabBar);
+    return Container(color: _background, child: _tabBar);
   }
 
   @override
   bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    // Precisa reconstruir quando a TabBar muda (ex.: troca de tema altera
-    // as cores do label/indicator) — senão o header persistente fica com
-    // a cor de fundo "presa" no tema anterior (bug do fundo branco no
-    // tema claro sobre conteúdo escuro).
-    return oldDelegate._tabBar != _tabBar;
+    // Precisa reconstruir quando a TabBar ou a cor mudam (troca de tema) —
+    // senão o header persistente fica "preso" no tema anterior.
+    return oldDelegate._tabBar != _tabBar ||
+        oldDelegate._background != _background;
   }
 }
 
@@ -2166,12 +1999,12 @@ class _OnlineIndicator extends ConsumerWidget {
         width: 14,
         height: 14,
         decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50),
+          color: context.colors.success,
           shape: BoxShape.circle,
           border: Border.all(color: context.colors.background, width: 2),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
+              color: context.colors.success.withValues(alpha: 0.5),
               blurRadius: 4,
               spreadRadius: 0.5,
             ),
@@ -2182,7 +2015,6 @@ class _OnlineIndicator extends ConsumerWidget {
   }
 }
 
-
 /// Perfil com bloqueio: "Você bloqueou" (com Desbloquear) ou indisponível.
 class _BlockedProfileView extends ConsumerStatefulWidget {
   const _BlockedProfileView({required this.userId, required this.blockedByMe});
@@ -2191,7 +2023,8 @@ class _BlockedProfileView extends ConsumerStatefulWidget {
   final bool blockedByMe;
 
   @override
-  ConsumerState<_BlockedProfileView> createState() => _BlockedProfileViewState();
+  ConsumerState<_BlockedProfileView> createState() =>
+      _BlockedProfileViewState();
 }
 
 class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
@@ -2223,8 +2056,9 @@ class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
         backgroundColor: context.colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
-          onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
+          icon: Icon(LucideIcons.arrowLeft, color: context.colors.textPrimary),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go('/home'),
         ),
       ),
       body: Center(
@@ -2233,10 +2067,16 @@ class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.block_rounded, size: 56, color: context.colors.textSecondary),
+              Icon(
+                LucideIcons.ban,
+                size: 56,
+                color: context.colors.textSecondary,
+              ),
               const SizedBox(height: 16),
               Text(
-                widget.blockedByMe ? s.profileBlockedState : s.profileUnavailable,
+                widget.blockedByMe
+                    ? s.profileBlockedState
+                    : s.profileUnavailable,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: context.colors.textPrimary,
@@ -2246,16 +2086,25 @@ class _BlockedProfileViewState extends ConsumerState<_BlockedProfileView> {
               ),
               const SizedBox(height: 8),
               Text(
-                widget.blockedByMe ? s.profileBlockedStateHint : s.profileUnavailableHint,
+                widget.blockedByMe
+                    ? s.profileBlockedStateHint
+                    : s.profileUnavailableHint,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.colors.textSecondary, fontSize: 14),
+                style: TextStyle(
+                  color: context.colors.textSecondary,
+                  fontSize: 14,
+                ),
               ),
               if (widget.blockedByMe) ...[
                 const SizedBox(height: 20),
                 OutlinedButton(
                   onPressed: _busy ? null : _unblock,
                   child: _busy
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : Text(s.profileUnblock),
                 ),
               ],
@@ -2336,9 +2185,9 @@ class _AwardsSectionState extends State<_AwardsSection> {
                 ),
                 padding: const EdgeInsets.fromLTRB(6, 5, 12, 5),
                 decoration: BoxDecoration(
-                  color: awardColor(a.badgeColor).withValues(
-                    alpha: widget.highlight ? 0.22 : 0.12,
-                  ),
+                  color: awardColor(
+                    a.badgeColor,
+                  ).withValues(alpha: widget.highlight ? 0.22 : 0.12),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: awardColor(a.badgeColor).withValues(alpha: 0.6),

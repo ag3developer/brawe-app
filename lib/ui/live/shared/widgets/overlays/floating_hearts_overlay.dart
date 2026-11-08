@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../data/repositories/auth_state_provider.dart';
@@ -21,7 +22,8 @@ class FloatingHeartsOverlay extends ConsumerStatefulWidget {
   final String roomId;
 
   @override
-  ConsumerState<FloatingHeartsOverlay> createState() => FloatingHeartsOverlayState();
+  ConsumerState<FloatingHeartsOverlay> createState() =>
+      FloatingHeartsOverlayState();
 }
 
 class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
@@ -39,7 +41,9 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
   // Sem palette aleatória aqui: a leitura visual é "purple sobe = lado A
   // está sendo torcido", "pink sobe = lado B". Ajuda o espectador a
   // entender quem está bombando sem precisar olhar o placar.
-  static const Color _kBattleSideAColor = Color(0xFF8DB8FF); // brawe blue soft (lado A)
+  static const Color _kBattleSideAColor = Color(
+    0xFF8DB8FF,
+  ); // brawe blue soft (lado A)
   static const Color _kBattleSideBColor = Color(0xFFFF4D8B); // pink
 
   final List<_HeartSpec> _hearts = [];
@@ -130,19 +134,22 @@ class FloatingHeartsOverlayState extends ConsumerState<FloatingHeartsOverlay> {
 
     setState(() {
       for (int i = 0; i < clamped; i++) {
-        _hearts.add(_HeartSpec(
-          id: _seq++,
-          // Em batalha cada lado tem sua faixa; em solo, faixa direita.
-          startX: startXBase + _rand.nextDouble() * startXRange,
-          // Drift leve para a esquerda/direita, mas sem cruzar a tela.
-          drift: (_rand.nextDouble() - 0.5) * 0.10,
-          scale: 0.85 + _rand.nextDouble() * 0.55,
-          // Prioridade: cor explícita do caller > cor do lado > palette aleatória.
-          // (Em batalha, sideColor sempre vence — vira identidade visual do lado.)
-          color: color ?? sideColor ?? _palette[_rand.nextInt(_palette.length)],
-          duration: Duration(milliseconds: 2200 + _rand.nextInt(900)),
-          delay: Duration(milliseconds: i * 60),
-        ));
+        _hearts.add(
+          _HeartSpec(
+            id: _seq++,
+            // Em batalha cada lado tem sua faixa; em solo, faixa direita.
+            startX: startXBase + _rand.nextDouble() * startXRange,
+            // Drift leve para a esquerda/direita, mas sem cruzar a tela.
+            drift: (_rand.nextDouble() - 0.5) * 0.10,
+            scale: 0.85 + _rand.nextDouble() * 0.55,
+            // Prioridade: cor explícita do caller > cor do lado > palette aleatória.
+            // (Em batalha, sideColor sempre vence — vira identidade visual do lado.)
+            color:
+                color ?? sideColor ?? _palette[_rand.nextInt(_palette.length)],
+            duration: Duration(milliseconds: 2200 + _rand.nextInt(900)),
+            delay: Duration(milliseconds: i * 60),
+          ),
+        );
       }
     });
   }
@@ -240,8 +247,8 @@ class _FloatingHeartState extends State<_FloatingHeart>
         final opacity = t < 0.1
             ? (t / 0.1)
             : t > 0.65
-                ? ((1 - t) / 0.35).clamp(0.0, 1.0)
-                : 1.0;
+            ? ((1 - t) / 0.35).clamp(0.0, 1.0)
+            : 1.0;
         return Positioned(
           left: dx - 14,
           top: dy,
@@ -250,7 +257,7 @@ class _FloatingHeartState extends State<_FloatingHeart>
             child: Transform.scale(
               scale: widget.spec.scale * (0.85 + 0.25 * math.sin(t * math.pi)),
               child: Icon(
-                Icons.favorite,
+                LucideIcons.heart,
                 size: 32,
                 color: widget.spec.color,
                 shadows: [

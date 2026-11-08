@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/themes/brawe_colors.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../data/services/live_moderation_service.dart';
@@ -56,7 +57,9 @@ class _ModeratorsSheetState extends ConsumerState<ModeratorsSheet> {
     if (!mounted) return;
     _removing.remove(m.userId);
     if (res == ModerationResult.ok) {
-      setState(() => _items = _items?.where((e) => e.userId != m.userId).toList());
+      setState(
+        () => _items = _items?.where((e) => e.userId != m.userId).toList(),
+      );
     } else {
       setState(() {});
       ScaffoldMessenger.of(context)
@@ -78,7 +81,7 @@ class _ModeratorsSheetState extends ConsumerState<ModeratorsSheet> {
           maxHeight: MediaQuery.sizeOf(context).height * 0.7,
         ),
         decoration: BoxDecoration(
-          color: const Color(0xFF16161D),
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -90,7 +93,7 @@ class _ModeratorsSheetState extends ConsumerState<ModeratorsSheet> {
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: context.colors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -98,12 +101,16 @@ class _ModeratorsSheetState extends ConsumerState<ModeratorsSheet> {
             const SizedBox(height: 14),
             Row(
               children: [
-                const Icon(LucideIcons.shield, color: Color(0xFF4FC3F7), size: 20),
+                Icon(
+                  LucideIcons.shield,
+                  color: context.colors.accentSecondary,
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   s.modModeratorsTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                   ),
@@ -114,7 +121,7 @@ class _ModeratorsSheetState extends ConsumerState<ModeratorsSheet> {
             Text(
               s.modModeratorsSubtitle,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: context.colors.textPrimary.withValues(alpha: 0.6),
                 fontSize: 12.5,
               ),
             ),
@@ -160,7 +167,10 @@ class _Message extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 20),
     child: Text(
       text,
-      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13.5),
+      style: TextStyle(
+        color: context.colors.textPrimary.withValues(alpha: 0.7),
+        fontSize: 13.5,
+      ),
     ),
   );
 }
@@ -187,14 +197,14 @@ class _ModeratorTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         radius: 20,
-        backgroundColor: Colors.white12,
+        backgroundColor: context.colors.divider,
         backgroundImage: avatar == null
             ? null
             : ResizeImage(NetworkImage(avatar), width: 80),
         child: avatar == null
             ? Text(
                 name.isEmpty ? '?' : name.characters.first.toUpperCase(),
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: context.colors.textPrimary),
               )
             : null,
       ),
@@ -202,13 +212,18 @@ class _ModeratorTile extends StatelessWidget {
         name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: context.colors.textPrimary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
       subtitle: m.username == null
           ? null
           : Text(
               '@${m.username}',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.55)),
+              style: TextStyle(
+                color: context.colors.textPrimary.withValues(alpha: 0.55),
+              ),
             ),
       trailing: busy
           ? const SizedBox(
@@ -218,7 +233,11 @@ class _ModeratorTile extends StatelessWidget {
             )
           : IconButton(
               tooltip: removeLabel,
-              icon: const Icon(LucideIcons.userMinus, color: Colors.white70, size: 20),
+              icon: Icon(
+                LucideIcons.userMinus,
+                color: context.colors.textSecondary,
+                size: 20,
+              ),
               onPressed: onRemove,
             ),
     );

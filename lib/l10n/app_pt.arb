@@ -28,7 +28,7 @@
   "actionReport": "Denunciar",
   "actionCopy": "Copiar",
   "feedEmptyTitle": "Nenhum vídeo por aqui ainda.",
-  "feedEmptySubtitle": "Siga creators ou volte mais tarde.",
+  "feedEmptySubtitle": "Siga criadores ou volte mais tarde.",
   "feedFollowingEmptyTitle": "Siga pessoas para ver os posts delas aqui.",
   "feedLoadError": "Não foi possível carregar o feed.",
   "feedNoMore": "Você está em dia! 🎉",
@@ -131,7 +131,7 @@
   "settingsThemeSystem": "Sistema",
   "settingsNotifications": "Notificações",
   "settingsNotifLiveStart": "Lives começando",
-  "settingsNotifLiveStartHint": "Receba aviso quando seus creators favoritos forem ao vivo",
+  "settingsNotifLiveStartHint": "Receba aviso quando seus criadores favoritos forem ao vivo",
   "settingsNotifGifts": "Presentes recebidos",
   "settingsNotifGiftsHint": "Avisar quando alguém te enviar um gift",
   "settingsNotifFollowers": "Novos seguidores",
@@ -305,7 +305,7 @@
   "createPostTitle": "Post",
   "createPostSubtitle": "Texto, foto ou link no seu feed",
   "feedEmptyVideoTitle": "Nenhum vídeo ou foto por aqui ainda.",
-  "feedEmptyVideoSubtitle": "Siga creators ou volte mais tarde.\nPosts de texto estão na aba Feed.",
+  "feedEmptyVideoSubtitle": "Siga criadores ou volte mais tarde.\nPosts de texto estão na aba Feed.",
   "liveJoining": "Entrando na live…",
   "liveStoryBattleBadge": "BATALHA",
   "liveBadgeBattle": "AO VIVO · BATALHA",
@@ -837,7 +837,7 @@
   "chatListRetry": "Tentar de novo",
   "chatListNewTooltip": "Nova conversa",
   "chatListEmptyTitle": "Comece uma conversa",
-  "chatListEmptySubtitle": "Suas mensagens com creators, amigos e brawers vão aparecer aqui.",
+  "chatListEmptySubtitle": "Suas mensagens com criadores, amigos e brawers vão aparecer aqui.",
   "chatListTapToTalk": "Toque para conversar",
   "chatListArchive": "Arquivar",
   "chatListUnarchive": "Desarquivar",
@@ -1367,7 +1367,7 @@
   "walletTxEmpty": "Sem presentes ainda.",
   "walletTxTo": "Para",
   "walletTxFrom": "De",
-  "walletIapInfo": "Compra processada pela loja oficial (Google Play / App Store). As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados apenas para enviar presentes em lives.",
+  "walletIapInfo": "Compra processada pela loja oficial do seu celular. As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados dentro do app.",
   "walletIapBuyFor": "Comprar por {price}",
   "@walletIapBuyFor": {
     "placeholders": {
@@ -1380,7 +1380,7 @@
   "walletIapUnavailable": "Indisponível",
   "walletIapPackageUnavailable": "Pacote indisponível na loja. Tente novamente em breve.",
   "walletIapNotSupported": "Plataforma não suporta compras no app.",
-  "walletIapStoreUnavailable": "Compras no app indisponíveis neste dispositivo. Verifique se sua conta Google/Apple está configurada.",
+  "walletIapStoreUnavailable": "Compras no app indisponíveis neste aparelho. Verifique se sua conta da loja está configurada.",
   "walletIapPaymentPending": "Pagamento em processamento. Você receberá as moedas assim que for confirmado pela loja.",
   "walletIapPaymentError": "Falha ao processar a compra. Tente novamente.",
   "walletIapSuccess": "Moedas creditadas com sucesso! (+{coins})",
@@ -1400,7 +1400,7 @@
   "earningsTotalEarned": "Diamantes recebidos de presentes",
   "earningsAccountNumber": "Brawe ID",
   "earningsPurchaseHistoryTitle": "Histórico de compras",
-  "earningsPurchaseHistorySubtitle": "Compras de moedas via App Store / Google Play",
+  "earningsPurchaseHistorySubtitle": "Compras de moedas pela loja do app",
   "earningsGiftHistoryTitle": "Presentes recebidos",
   "earningsGiftHistorySubtitle": "Origem dos seus diamantes do Programa de Criador",
   "earningsNoPurchases": "Você ainda não comprou moedas.",
@@ -1961,24 +1961,24 @@
   "topUpSubtitle": "Compre direto pela loja do seu celular",
   "topUpReasonGift": "Saldo insuficiente para este presente",
   "topUpReasonBattle": "Continue na batalha! Recarregue agora",
-  "topUpStoreDisclaimer": "Pagamento seguro via Play Store / App Store",
+  "topUpStoreDisclaimer": "Pagamento seguro pela loja do seu celular",
   "topUpStoreDisclaimerApple": "Pagamento seguro pela App Store",
   "topUpStoreDisclaimerGoogle": "Pagamento seguro pelo Google Play",
-  "earningsNoPurchasesHint": "Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.",
+  "earningsNoPurchasesHint": "Quando você comprar moedas pela loja do app, elas aparecerão aqui.",
   "earningsNoGiftsHint": "Os diamantes do Creator Program vêm dos gifts que você recebe em lives.",
   "creatorProgramTitle": "Brawe Creator Network",
   "creatorProgramSubtitle": "Cresça sua audiência. Construa sua comunidade. Faça parte da Brawe.",
   "creatorProgramDescription": "A Rede de Criadores Brawe é o programa oficial para criadores que querem crescer, ganhar visibilidade e construir uma comunidade dentro da Brawe.",
   "creatorActionApplyNow": "Quero me inscrever",
-  "creatorActionViewLevels": "Ver níveis de creator",
+  "creatorActionViewLevels": "Ver níveis de criador",
   "creatorActionCheckStatus": "Acompanhar inscrição",
   "creatorBenefitsHeader": "O que você ganha",
   "creatorBenefit1": "Seja descoberto por novas audiências",
-  "creatorBenefit2": "Construa sua identidade de creator",
-  "creatorBenefit3": "Desbloqueie badges oficiais",
+  "creatorBenefit2": "Construa sua identidade de criador",
+  "creatorBenefit3": "Desbloqueie selos oficiais",
   "creatorBenefit4": "Cresça com lives e conteúdo",
   "creatorBenefit5": "Faça parte de uma comunidade premium",
-  "creatorTotalCreators": "{n, plural, =1{1 creator na rede} other{{n} creators na rede}}",
+  "creatorTotalCreators": "{n, plural, =1{1 criador na rede} other{{n} criadores na rede}}",
   "@creatorTotalCreators": {
     "placeholders": {
       "n": {
@@ -1986,21 +1986,21 @@
       }
     }
   },
-  "creatorLevelsTitle": "Níveis de Creator",
+  "creatorLevelsTitle": "Níveis de Criador",
   "creatorLevelsSubtitle": "Cada nível representa um momento da sua jornada.",
   "creatorTierRisingTitle": "Rising Creator",
-  "creatorTierRisingBody": "Para creators em crescimento que querem oportunidade real de alcance.",
+  "creatorTierRisingBody": "Para criadores em crescimento que querem oportunidade real de alcance.",
   "creatorTierFeaturedTitle": "Featured Creator",
-  "creatorTierFeaturedBody": "Para creators ativos com conteúdo consistente e potencial editorial.",
+  "creatorTierFeaturedBody": "Para criadores ativos com conteúdo consistente e potencial editorial.",
   "creatorTierLiveTitle": "Live Creator",
-  "creatorTierLiveBody": "Para streamers, hosts e creators focados em lives e batalhas.",
+  "creatorTierLiveBody": "Para streamers, hosts e criadores focados em lives e batalhas.",
   "creatorTierAmbassadorTitle": "Ambassador",
-  "creatorTierAmbassadorBody": "Para creators reconhecidos que representam a visão da Brawe.",
+  "creatorTierAmbassadorBody": "Para criadores reconhecidos que representam a visão da Brawe.",
   "creatorTierFoundingTitle": "Founding Creator",
-  "creatorTierFoundingBody": "Para creators selecionados que ajudam a moldar o futuro da Brawe.",
-  "creatorTierApplyCta": "Inscrever-se como creator",
+  "creatorTierFoundingBody": "Para criadores selecionados que ajudam a moldar o futuro da Brawe.",
+  "creatorTierApplyCta": "Inscrever-se como criador",
   "creatorFormTitle": "Inscrever-se na Rede",
-  "creatorFormSubtitle": "Conte mais sobre sua jornada como creator.",
+  "creatorFormSubtitle": "Conte mais sobre sua jornada como criador.",
   "creatorFormDescription": "Analisamos cada inscrição com cuidado para entender seu conteúdo, objetivos e potencial dentro da Brawe.",
   "creatorFormSectionIdentity": "Identidade",
   "creatorFormSectionContent": "Conteúdo",
@@ -2015,17 +2015,17 @@
   "creatorFormLanguage": "Idioma principal",
   "creatorFormNiche": "Nicho de conteúdo",
   "creatorFormNichePlaceholder": "Ex: lifestyle, música, games, educação...",
-  "creatorFormCategory": "Categoria de creator",
+  "creatorFormCategory": "Categoria de criador",
   "creatorFormSocialLinks": "Links de redes sociais",
   "creatorFormSocialPlaceholder": "Cole seu Instagram, TikTok, YouTube...",
   "creatorFormFollowers": "Seguidores aproximados",
   "creatorFormDoesLive": "Você faz lives atualmente?",
   "creatorFormBio": "Conte sua história",
-  "creatorFormBioPlaceholder": "Conte quem é você como creator",
+  "creatorFormBioPlaceholder": "Conte quem é você como criador",
   "creatorFormMotivation": "Sua motivação",
   "creatorFormMotivationPlaceholder": "Por que quer crescer com a Brawe?",
   "creatorFormGoals": "Seus objetivos",
-  "creatorFormGoalsPlaceholder": "O que quer alcançar como creator?",
+  "creatorFormGoalsPlaceholder": "O que quer alcançar como criador?",
   "creatorFormPortfolio": "Portfólio (opcional)",
   "creatorFormSubmit": "Enviar inscrição",
   "creatorFormSaveDraft": "Salvar rascunho",
@@ -2061,7 +2061,7 @@
   "creatorStatusPendingTitle": "Inscrição recebida",
   "creatorStatusPendingBody": "Sua inscrição foi recebida e está aguardando revisão.",
   "creatorStatusAnalysisTitle": "Em análise",
-  "creatorStatusAnalysisBody": "Nossa equipe está revisando seu perfil de creator.",
+  "creatorStatusAnalysisBody": "Nossa equipe está revisando seu perfil de criador.",
   "creatorStatusApprovedTitle": "Você foi aprovado!",
   "creatorStatusApprovedBody": "Parabéns! Você agora faz parte da Brawe Creator Network.",
   "creatorStatusRejectedTitle": "Inscrição não aprovada",
@@ -2092,36 +2092,36 @@
       }
     }
   },
-  "creatorProfileTitle": "Perfil de Creator",
-  "creatorProfileSubtitle": "Personalize como você aparece como creator.",
+  "creatorProfileTitle": "Perfil de Criador",
+  "creatorProfileSubtitle": "Personalize como você aparece como criador.",
   "creatorProfileFieldDisplayName": "Nome público",
-  "creatorProfileFieldBio": "Bio de creator",
+  "creatorProfileFieldBio": "Bio de criador",
   "creatorProfileFieldCategory": "Categoria de conteúdo",
   "creatorProfileFieldSocial": "Links públicos",
-  "creatorProfileFieldBadgeVisibility": "Mostrar badge no perfil",
+  "creatorProfileFieldBadgeVisibility": "Mostrar selo no perfil",
   "creatorProfileSave": "Salvar alterações",
   "creatorProfilePreview": "Visualizar perfil",
-  "creatorProfileSaved": "Perfil de creator atualizado.",
-  "creatorProfileSaveError": "Não foi possível atualizar o perfil de creator.",
-  "creatorBadgeScreenTitle": "Seu Badge de Creator",
-  "creatorBadgeScreenSubtitle": "Seu badge ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.",
+  "creatorProfileSaved": "Perfil de criador atualizado.",
+  "creatorProfileSaveError": "Não foi possível atualizar o perfil de criador.",
+  "creatorBadgeScreenTitle": "Seu selo de Criador",
+  "creatorBadgeScreenSubtitle": "Seu selo ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.",
   "creatorBadgeLocked": "Bloqueado",
   "creatorBadgeUnlocked": "Desbloqueado",
   "creatorBadgeViewBenefits": "Ver benefícios",
   "creatorBadgeBack": "Voltar",
-  "creatorDashboardTitle": "Painel do Creator",
+  "creatorDashboardTitle": "Painel do Criador",
   "creatorDashboardSubtitle": "Acompanhe seu crescimento e gerencie sua presença.",
   "creatorDashboardCardViews": "Visualizações de perfil",
   "creatorDashboardCardFollowers": "Crescimento de seguidores",
   "creatorDashboardCardReach": "Alcance de conteúdo",
   "creatorDashboardCardLives": "Atividade em lives",
-  "creatorDashboardCardStatus": "Status de creator",
+  "creatorDashboardCardStatus": "Status de criador",
   "creatorDashboardQuickCreatePost": "Criar post",
   "creatorDashboardQuickGoLive": "Entrar ao vivo",
   "creatorDashboardQuickEditProfile": "Editar perfil",
-  "creatorDashboardQuickViewBadge": "Ver badge",
+  "creatorDashboardQuickViewBadge": "Ver selo",
   "creatorDashboardQuickInsights": "Ver insights",
-  "adminCreatorAppsTitle": "Inscrições de Creators",
+  "adminCreatorAppsTitle": "Inscrições de Criadores",
   "adminCreatorAppsFilterAll": "Todos",
   "adminCreatorAppsFilterPending": "Pendentes",
   "adminCreatorAppsFilterAnalysis": "Em análise",
@@ -2136,7 +2136,7 @@
   "adminCreatorAppsEmpty": "Nenhuma inscrição encontrada.",
   "adminCreatorAppsLoadError": "Erro ao carregar inscrições.",
   "adminCreatorAppDetailTitle": "Análise da Inscrição",
-  "adminCreatorSectionInfo": "Informações do creator",
+  "adminCreatorSectionInfo": "Informações do criador",
   "adminCreatorSectionSocial": "Redes sociais",
   "adminCreatorSectionNiche": "Nicho de conteúdo",
   "adminCreatorSectionMotivation": "Motivação",
@@ -2150,20 +2150,20 @@
   "adminCreatorActionInviteAmbassador": "Convidar como Ambassador",
   "adminCreatorActionInviteFounding": "Convidar como Founding Creator",
   "adminCreatorActionSaveNotes": "Salvar notas",
-  "adminCreatorConfirmApprove": "Tem certeza que quer aprovar este creator?",
+  "adminCreatorConfirmApprove": "Tem certeza que quer aprovar este criador?",
   "adminCreatorConfirmReject": "Tem certeza que quer rejeitar esta inscrição?",
-  "adminCreatorConfirmRequestInfo": "Diga ao creator quais informações estão faltando.",
+  "adminCreatorConfirmRequestInfo": "Diga ao criador quais informações estão faltando.",
   "adminCreatorReviewSuccess": "Decisão registrada.",
   "adminCreatorReviewError": "Não foi possível registrar a decisão.",
-  "adminCreatorsTitle": "Gerenciar Creators",
-  "adminCreatorsFilterAll": "Todos os creators",
+  "adminCreatorsTitle": "Gerenciar Criadores",
+  "adminCreatorsFilterAll": "Todos os criadores",
   "adminCreatorsFilterRising": "Rising",
   "adminCreatorsFilterFeatured": "Featured",
   "adminCreatorsFilterLive": "Live",
   "adminCreatorsFilterAmbassadors": "Ambassadors",
   "adminCreatorsFilterFounding": "Founding",
-  "adminCreatorsActionEdit": "Editar creator",
-  "adminCreatorsActionChangeBadge": "Mudar badge",
+  "adminCreatorsActionEdit": "Editar criador",
+  "adminCreatorsActionChangeBadge": "Mudar selo",
   "adminCreatorsActionFeature": "Destacar",
   "adminCreatorsActionDisable": "Desativar",
   "creatorTimelineTitle": "Linha do tempo",
@@ -3430,7 +3430,7 @@
   "creatorGuideHowStep1": "Preencha a inscrição",
   "creatorGuideHowStep2": "Nossa equipe analisa seu perfil",
   "creatorGuideHowStep3": "Você recebe a resposta no app",
-  "creatorGuideHowStep4": "Aprovado, ative seu perfil de creator",
+  "creatorGuideHowStep4": "Aprovado, ative seu perfil de criador",
   "creatorGuideRule1": "Conteúdo original ou com créditos",
   "creatorGuideRule2": "Respeito à comunidade, sem ódio ou assédio",
   "creatorGuideRule3": "Nada de seguidores falsos ou compra de engajamento",
@@ -3524,7 +3524,7 @@
   "rewardsToggleDiamonds": "Diamantes",
   "rewardsDiamondsAvailable": "Diamantes disponíveis",
   "rewardsPeriodLabel": "Período",
-  "creatorDashSince": "Creator desde {date}",
+  "creatorDashSince": "Criador desde {date}",
   "@creatorDashSince": {
     "placeholders": {
       "date": {
@@ -3585,7 +3585,7 @@
   "creatorJourneyMetricLiveMinutes": "Minutos ao vivo",
   "creatorJourneyMetricPosts": "Posts publicados",
   "creatorJourneyMetricGiftCredits": "Presentes recebidos",
-  "creatorJourneyMetricActiveDays": "Dias como creator",
+  "creatorJourneyMetricActiveDays": "Dias como criador",
   "creatorJourneyMetricViewers": "Espectadores nas lives",
   "creatorJourneyRemainingFollowers": "{n, plural, =1{Falta 1 seguidor} other{Faltam {n} seguidores}}",
   "@creatorJourneyRemainingFollowers": {
@@ -3669,7 +3669,7 @@
   "creatorDashShortcutAnalytics": "Análises",
   "creatorDashShortcutSettings": "Configurações",
   "creatorDashErrorTitle": "Não conseguimos carregar sua jornada. Puxe para tentar de novo.",
-  "creatorJourneyBadgeGeneric": "Badge de creator",
+  "creatorJourneyBadgeGeneric": "Selo de criador",
   "creatorJourneyBadgeEarnedOn": "Conquistado em {date}",
   "@creatorJourneyBadgeEarnedOn": {
     "placeholders": {
@@ -3680,31 +3680,31 @@
   },
   "creatorJourneyBadgeBenefitsTitle": "Benefícios ativos",
   "creatorJourneyBadgeNextTitle": "Próximo nível",
-  "creatorJourneyBadgeAllTitle": "Seus badges",
-  "creatorJourneyBadgeOpenDashboard": "Abrir painel do creator",
-  "creatorJourneyBenefitRisingBadgeTitle": "Badge Rising",
-  "creatorJourneyBenefitRisingBadgeDesc": "Seu selo oficial de creator aparece no perfil, nas lives e nos comentários.",
-  "creatorJourneyBenefitCreatorProfileTitle": "Perfil de Creator",
-  "creatorJourneyBenefitCreatorProfileDesc": "Perfil com identidade própria na rede de creators da Brawe.",
+  "creatorJourneyBadgeAllTitle": "Seus selos",
+  "creatorJourneyBadgeOpenDashboard": "Abrir painel do criador",
+  "creatorJourneyBenefitRisingBadgeTitle": "Selo Rising",
+  "creatorJourneyBenefitRisingBadgeDesc": "Seu selo oficial de criador aparece no perfil, nas lives e nos comentários.",
+  "creatorJourneyBenefitCreatorProfileTitle": "Perfil de Criador",
+  "creatorJourneyBenefitCreatorProfileDesc": "Perfil com identidade própria na rede de criadores da Brawe.",
   "creatorJourneyBenefitDiscoverySuggestionsTitle": "Sugestões de descoberta",
   "creatorJourneyBenefitDiscoverySuggestionsDesc": "Seu conteúdo pode ser sugerido a pessoas que ainda não te seguem.",
   "creatorJourneyBenefitAnalyticsTitle": "Análises detalhadas",
   "creatorJourneyBenefitAnalyticsDesc": "Acompanhe seguidores, alcance e lives com gráficos e números reais.",
-  "creatorJourneyBenefitFeaturedBadgeTitle": "Badge Featured",
-  "creatorJourneyBenefitFeaturedBadgeDesc": "Selo de destaque que mostra que você é um creator consistente.",
+  "creatorJourneyBenefitFeaturedBadgeTitle": "Selo Featured",
+  "creatorJourneyBenefitFeaturedBadgeDesc": "Selo de destaque que mostra que você é um criador consistente.",
   "creatorJourneyBenefitEditorialHighlightTitle": "Destaque editorial",
   "creatorJourneyBenefitEditorialHighlightDesc": "Chance de aparecer nas vitrines selecionadas pela equipe Brawe.",
   "creatorJourneyBenefitMoreReachTitle": "Mais alcance orgânico",
   "creatorJourneyBenefitMoreReachDesc": "Seu conteúdo ganha mais força na descoberta e chega a mais gente.",
-  "creatorJourneyBenefitLiveBadgeTitle": "Badge Live",
+  "creatorJourneyBenefitLiveBadgeTitle": "Selo Live",
   "creatorJourneyBenefitLiveBadgeDesc": "Selo exclusivo para quem constrói comunidade ao vivo.",
   "creatorJourneyBenefitAdvancedLiveTitle": "Recursos avançados de live",
   "creatorJourneyBenefitAdvancedLiveDesc": "Ferramentas extras para fazer lives mais profissionais.",
   "creatorJourneyBenefitLiveBattlesTitle": "Batalhas ao vivo",
-  "creatorJourneyBenefitLiveBattlesDesc": "Participe de batalhas e dispute presentes com outros creators.",
+  "creatorJourneyBenefitLiveBattlesDesc": "Participe de batalhas e dispute presentes com outros criadores.",
   "creatorJourneyBenefitLiveRankingTitle": "Ranking de Live Creators",
-  "creatorJourneyBenefitLiveRankingDesc": "Apareça no ranking público dos creators que mais brilham nas lives.",
-  "creatorJourneyBenefitAmbassadorBadgeTitle": "Badge Ambassador",
+  "creatorJourneyBenefitLiveRankingDesc": "Apareça no ranking público dos criadores que mais brilham nas lives.",
+  "creatorJourneyBenefitAmbassadorBadgeTitle": "Selo Ambassador",
   "creatorJourneyBenefitAmbassadorBadgeDesc": "Selo de quem representa a Brawe com reconhecimento oficial.",
   "creatorJourneyBenefitAmbassadorPageTitle": "Página de embaixador",
   "creatorJourneyBenefitAmbassadorPageDesc": "Uma página oficial para contar sua história e suas conquistas.",
@@ -3712,7 +3712,7 @@
   "creatorJourneyBenefitOfficialCampaignsDesc": "Convites para participar de campanhas e ações da marca Brawe.",
   "creatorJourneyBenefitPremiumHighlightTitle": "Destaque premium",
   "creatorJourneyBenefitPremiumHighlightDesc": "Posição privilegiada nos destaques da plataforma.",
-  "creatorJourneyBenefitFoundingBadgeTitle": "Badge Founding",
+  "creatorJourneyBenefitFoundingBadgeTitle": "Selo Founding",
   "creatorJourneyBenefitFoundingBadgeDesc": "O selo mais raro: para quem constrói a Brawe desde o início.",
   "creatorJourneyBenefitFoundingSealTitle": "Selo de Fundador",
   "creatorJourneyBenefitFoundingSealDesc": "Reconhecimento permanente como parte da história da Brawe.",
@@ -5144,7 +5144,7 @@
     }
   },
   "creatorApplyErrFollowersMin": "Informe quantos seguidores você tem (mínimo 1)",
-  "editProfileCreatorBadgeTitle": "Mostrar selo de creator",
+  "editProfileCreatorBadgeTitle": "Mostrar selo de criador",
   "editProfileCreatorBadgeHint": "Exibe o selo da Creator Network no seu perfil.",
   "editProfileCreatorBadgeSaveFailed": "Não foi possível salvar a visibilidade do selo.",
   "videoPubSound": "Som",
@@ -6534,5 +6534,240 @@
   "videoErrServer": "Nosso servidor teve um problema. Tente de novo em instantes.",
   "videoErrSession": "Sua sessão expirou. Entre de novo e tente publicar outra vez.",
   "videoErrProcessing": "Não conseguimos processar esse vídeo. Tente de novo ou escolha outro arquivo.",
-  "videoErrUnknown": "Algo deu errado ao publicar. Tente de novo."
+  "videoErrUnknown": "Algo deu errado ao publicar. Tente de novo.",
+  "postBoostedSeeResults": "Impulsionado · ver resultados",
+  "navCreate": "Criar",
+  "profileTabGrid": "Publicações",
+  "profileTabTexts": "Textos",
+  "profileEmptyMeGrid": "Sua grade está vazia. Compartilhe uma foto ou vídeo.",
+  "profileEmptyOtherGrid": "Nenhuma publicação ainda",
+  "profileEmptyMeVideos": "Você ainda não publicou vídeos",
+  "profileEmptyMeTexts": "Você ainda não publicou textos",
+  "profileEmptyMeAction": "Publicar",
+  "profileShareText": "Confira {name} no Brawe Connect: {url}",
+  "@profileShareText": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "chatxStop": "Parar",
+  "chatxListen": "Ouvir",
+  "livexEligCheckFailTitle": "Não foi possível verificar",
+  "livexEligCheckFailSub": "Verifique sua conexão e tente novamente.",
+  "livexNeedAvatarTitle": "Adicione uma foto de perfil",
+  "livexNeedAvatarSub": "Lives só podem ser iniciadas por usuários com foto de perfil.",
+  "livexNeedAvatarCta": "Adicionar foto agora",
+  "livexNeedCreatorTitle": "Live é exclusivo do Creator Network",
+  "livexNeedCreatorSub": "Transmissões ao vivo são liberadas após aprovação no programa. É grátis e leva poucos minutos.",
+  "livexNeedCreatorCta": "Inscrever-se no programa",
+  "livexCheckingPerms": "Verificando permissões…",
+  "livexNotNow": "Agora não",
+  "livexAddSound": "Adicionar som",
+  "livexFlip": "Virar",
+  "livexBeauty": "Beleza",
+  "livexFilters": "Filtros",
+  "livexShare": "Compartilhar",
+  "livexCover": "Capa",
+  "livexChange": "Alterar",
+  "livexBattle": "Batalha",
+  "livexGifts": "Presentes",
+  "livexNotify": "Notificar",
+  "livexGuests": "Convidados",
+  "livexPromote": "Promover",
+  "livexPublicLive": "Live pública",
+  "livexModeCamera": "Câmera",
+  "livexModeTemplate": "Modelo",
+  "livexShareMax": "Você pode enviar para até 50 pessoas por vez",
+  "livexShareOtherApps": "Outros apps",
+  "livexShareText": "{who} está ao vivo na Brawe: {title}\n{url}",
+  "@livexShareText": {
+    "placeholders": {
+      "who": {
+        "type": "String"
+      },
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "livexShareTextSelf": "Estou ao vivo na Brawe: {title}\n{url}",
+  "@livexShareTextSelf": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "livexAudioTitle": "Áudio",
+  "livexAudioGain": "Ganho",
+  "livexAudioLimiter": "Limitador",
+  "livexCompLight": "Leve",
+  "livexCompMedium": "Médio",
+  "livexCompAggressive": "Forte",
+  "livexCompShort": "Comp",
+  "livexAudioProcessor": "Processador de áudio",
+  "livexAudioProcessorSub": "Equalizador + compressor — {preset}",
+  "@livexAudioProcessorSub": {
+    "placeholders": {
+      "preset": {
+        "type": "String"
+      }
+    }
+  },
+  "livexAudioNoiseOn": "Redução de ruído ativada",
+  "livexAudioQualityOn": "Modo qualidade ativado",
+  "livexAudioModeQuality": "Áudio: Qualidade",
+  "livexAudioModeVoice": "Áudio: Redução de ruído",
+  "livexAudioModeQualitySub": "Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.",
+  "livexAudioModeVoiceSub": "AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.",
+  "livexRose": "Rosa",
+  "livexViewProduct": "Ver produto",
+  "livexProductSoon": "Abrir produto na vitrine — em breve.",
+  "livexQualityTitle": "Qualidade do vídeo",
+  "livexQualityFpsNote": "FPS: definido pelo streamer (geralmente 30fps)",
+  "livexPauseExpired": "A pausa passou de 5 minutos e a live foi encerrada.",
+  "livexPauseOneMinute": "Falta 1 minuto: retome a live ou ela será encerrada.",
+  "livexCameraSwitchDropped": "A transmissão caiu ao trocar a câmera. Toque em Retomar.",
+  "livexQualityAutoDesc": "Ajusta automaticamente conforme sua conexão",
+  "livexQuality480Desc": "Menor consumo de dados",
+  "livexQuality720Desc": "Boa qualidade, recomendado",
+  "livexQuality1080Desc": "Máxima qualidade, requer boa internet",
+  "livexRoseSendFailed": "Não foi possível enviar a rosa",
+  "livexLevelMax": "Nível máximo alcançado",
+  "livexXpToNext": "Mais {xp} XP para subir de nível",
+  "@livexXpToNext": {
+    "placeholders": {
+      "xp": {
+        "type": "String"
+      }
+    }
+  },
+  "livexSentVerb": "enviou",
+  "livexSwitchCameraFailed": "Não foi possível trocar a câmera",
+  "notifGroupMonth": "Este mês",
+  "notifFollowBack": "Seguir de volta",
+  "notifActionView": "Ver",
+  "moneyLivesViewReplay": "Ver replay",
+  "moneyLivesReplayFetchError": "Não foi possível buscar o replay. Tente novamente.",
+  "moneyLivesDownloadTitle": "Baixar live",
+  "moneyLivesUntitled": "Live sem título",
+  "moneyLiveUnavailable": "Esta live não está disponível.",
+  "moneyCheckoutCepInvalid": "CEP inválido. Digite os 8 números.",
+  "moneyCheckoutCepFilled": "Endereço preenchido pelo CEP",
+  "moneyCheckoutCepLookupError": "Não foi possível buscar o CEP. Confira os números ou preencha o endereço à mão.",
+  "moneyPayPixError": "Não foi possível gerar o pagamento Pix agora. Seu pedido foi criado normalmente: tente novamente.",
+  "moneyPayConfirmedToast": "Pagamento confirmado!",
+  "moneyPayTitle": "Pagamento",
+  "moneyPayPreparing": "Preparando pagamento...",
+  "moneyPayErrorTitle": "Erro ao gerar pagamento",
+  "moneyPayTryLater": "Tente novamente mais tarde.",
+  "moneyPayCodeCopied": "Código Pix copiado!",
+  "moneyPayStatusPaid": "Pagamento confirmado",
+  "moneyPayStatusWaiting": "Aguardando pagamento",
+  "moneyPayTotal": "Total a pagar",
+  "moneyPayScanHint": "Escaneie com o app do seu banco",
+  "moneyPayCopyTitle": "Ou copie o código Pix",
+  "moneyPayValidUntil": "Válido até {time}",
+  "@moneyPayValidUntil": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "moneyPaySoon": "em breve",
+  "moneyPayStep1": "Abra o app do seu banco ou carteira Pix",
+  "moneyPayStep2": "Escaneie o QR Code ou cole o código copiado",
+  "moneyPayStep3": "Confirme o pagamento",
+  "moneyPayStep4": "Seu pedido é liberado automaticamente",
+  "moneyPayHowTo": "Como pagar",
+  "moneyPayChecking": "Verificando pagamento...",
+  "moneyPayConfirmed": "Pagamento confirmado!",
+  "moneyPayRedirecting": "Redirecionando para o seu pedido...",
+  "walletPurchaseSourceStore": "Loja do app",
+  "adsRepPlatformOtherPhones": "Outros celulares",
+  "mediaRepostedToast": "Repostado",
+  "mediaUndo": "Desfazer",
+  "mediaStoryLabel": "Story",
+  "mediaRepostStoryTooltip": "Repostar no story",
+  "cmtTitle": "{count, plural, =1{1 comentário} other{{count} comentários}}",
+  "cmtSortTooltip": "Ordenar comentários",
+  "cmtSortTop": "Mais relevantes",
+  "cmtSortRecent": "Mais recentes",
+  "cmtViewReplies": "{count, plural, =1{Exibir 1 resposta} other{Exibir {count} respostas}}",
+  "cmtHideReplies": "Ocultar",
+  "cmtAddHint": "Adicionar comentário...",
+  "cmtEmptyTitle": "Nenhum comentário ainda",
+  "cmtEmptyBody": "Comece a conversa: seja o primeiro a comentar.",
+  "cmtCopyText": "Copiar texto",
+  "cmtCopied": "Texto copiado",
+  "cmtDelete": "Apagar comentário",
+  "cmtDeleteFail": "Não foi possível apagar o comentário.",
+  "cmtMentionTooltip": "Marcar alguém",
+  "cmtEmojiTooltip": "Emoji",
+  "cmtSendTooltip": "Enviar comentário",
+  "cmtShareComment": "Compartilhar comentário",
+  "cmtShareTitle": "Enviar para",
+  "cmtShareSearchHint": "Buscar pessoas",
+  "cmtShareSendCount": "Enviar ({count})",
+  "cmtShareNoteHint": "Escreva uma mensagem...",
+  "cmtShareSentCount": "{count, plural, =1{Enviado para 1 pessoa} other{Enviado para {count} pessoas}}",
+  "cmtShareSendFail": "Não foi possível enviar para algumas pessoas. Tente de novo.",
+  "cmtShareWhatsapp": "WhatsApp",
+  "cmtShareAddStory": "Adicionar ao Story",
+  "cmtShareNoResults": "Ninguém encontrado.",
+  "cmtShareOpenFail": "Não foi possível abrir o aplicativo.",
+  "cmtShareCommentText": "Comentário de @{username} no Brawe: “{text}”\n{url}",
+  "@cmtTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@cmtViewReplies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@cmtShareSendCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@cmtShareSentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@cmtShareCommentText": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      },
+      "text": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  }
 }

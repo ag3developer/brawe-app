@@ -1,8 +1,9 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import '../../../../core/themes/brawe_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 
@@ -40,10 +41,10 @@ class MoreSheet extends StatelessWidget {
           filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: context.colors.textPrimary.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: context.colors.textPrimary.withValues(alpha: 0.12),
               ),
             ),
             child: SafeArea(
@@ -57,13 +58,13 @@ class MoreSheet extends StatelessWidget {
                     height: 4,
                     margin: const EdgeInsets.only(top: 10, bottom: 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
+                      color: context.colors.textPrimary.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   _MoreTile(
-                    icon: Icons.send_rounded,
-                    iconColor: AppColors.braweBlue,
+                    icon: LucideIcons.send,
+                    iconColor: context.colors.accentPrimary,
                     title: s.livePlayerShareTitle,
                     subtitle: s.livePlayerShareSubtitle,
                     onTap: () {
@@ -73,12 +74,12 @@ class MoreSheet extends StatelessWidget {
                   ),
                   Divider(
                     height: 1,
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: context.colors.textPrimary.withValues(alpha: 0.08),
                     indent: 64,
                   ),
                   _MoreTile(
-                    icon: Icons.flag_outlined,
-                    iconColor: const Color(0xFFFF4D6D),
+                    icon: LucideIcons.flag,
+                    iconColor: context.colors.danger,
                     title: s.livePlayerReportTitle,
                     subtitle: s.livePlayerReportSubtitle,
                     onTap: () {
@@ -144,8 +145,8 @@ class _MoreTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -154,7 +155,9 @@ class _MoreTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: context.colors.textPrimary.withValues(
+                          alpha: 0.6,
+                        ),
                         fontSize: 12.5,
                       ),
                     ),
@@ -162,8 +165,8 @@ class _MoreTile extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.chevron_right,
-                color: Colors.white.withValues(alpha: 0.35),
+                LucideIcons.chevronRight,
+                color: context.colors.textPrimary.withValues(alpha: 0.35),
                 size: 20,
               ),
             ],

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -482,7 +483,15 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
   /// (`.mp4`, `.3gp`, `.mkv`, `.MOV`...) — antes `.3gp`/`.mkv`/maiúsculas
   /// caíam como FOTO e o editor quebrava.
   static const Set<String> _kVideoExts = {
-    'mp4', 'mov', 'm4v', 'webm', '3gp', '3g2', 'mkv', 'avi', 'ts',
+    'mp4',
+    'mov',
+    'm4v',
+    'webm',
+    '3gp',
+    '3g2',
+    'mkv',
+    'avi',
+    'ts',
   };
 
   bool _isLocalVideo(XFile x) {
@@ -929,7 +938,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
           top: 48,
           left: 16,
           child: _CircleIconBtn(
-            icon: Icons.close,
+            icon: LucideIcons.x,
             onTap: () => Navigator.of(context).pop(),
           ),
         ),
@@ -939,7 +948,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
-                      Icons.error_outline,
+                      LucideIcons.circleAlert,
                       color: Colors.white70,
                       size: 48,
                     ),
@@ -954,7 +963,10 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
                         final url = widget.initialRemoteUrl;
                         if (url != null) _prefetchRemote(url);
                       },
-                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      icon: const Icon(
+                        LucideIcons.refreshCw,
+                        color: Colors.white,
+                      ),
                       label: Text(
                         S.of(context).composerRetry,
                         style: const TextStyle(color: Colors.white),
@@ -965,9 +977,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const CircularProgressIndicator(
-                      color: AppColors.braweBlue,
-                    ),
+                    const CircularProgressIndicator(color: AppColors.braweBlue),
                     const SizedBox(height: 16),
                     Text(
                       S.of(context).composerPreparing,
@@ -1073,7 +1083,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.videocam_off_outlined,
+                  LucideIcons.videoOff,
                   color: Colors.white54,
                   size: 40,
                 ),
@@ -1137,7 +1147,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
               tooltip: s.composerClose,
               onTap: () => Navigator.of(context).maybePop(),
               child: const Icon(
-                Icons.close_rounded,
+                LucideIcons.x,
                 color: Colors.white,
                 size: 28,
                 shadows: _kIconShadows,
@@ -1153,9 +1163,9 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
                 onTap: _cycleFlash,
                 child: Icon(
                   switch (_flash) {
-                    _StoryFlash.off => Icons.flash_off_rounded,
-                    _StoryFlash.auto => Icons.flash_auto_rounded,
-                    _StoryFlash.on => Icons.flash_on_rounded,
+                    _StoryFlash.off => LucideIcons.flashlightOff,
+                    _StoryFlash.auto => LucideIcons.flashlight,
+                    _StoryFlash.on => LucideIcons.flashlight,
                   },
                   color: _flash == _StoryFlash.on
                       ? AppColors.gold
@@ -1305,7 +1315,7 @@ class _StoryComposerScreenState extends ConsumerState<StoryComposerScreen>
                           ? const SizedBox.shrink()
                           : _RoundGlassButton(
                               tooltip: s.composerFlipCamera,
-                              icon: Icons.cameraswitch_rounded,
+                              icon: LucideIcons.switchCamera,
                               onTap: _flipCamera,
                             ),
                     ),
@@ -1664,11 +1674,7 @@ class _CameraPermissionView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.no_photography_outlined,
-              color: Colors.white70,
-              size: 44,
-            ),
+            const Icon(LucideIcons.cameraOff, color: Colors.white70, size: 44),
             const SizedBox(height: 16),
             Text(
               title,
@@ -1733,7 +1739,7 @@ class _GalleryButton extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 2),
             ),
             child: const Icon(
-              Icons.photo_library_outlined,
+              LucideIcons.images,
               color: Colors.white,
               size: 20,
             ),
@@ -2670,7 +2676,7 @@ class _StoryEditorState extends State<_StoryEditor> {
             tooltip: s.composerClose,
             onTap: _handleClose,
             child: const Icon(
-              Icons.close_rounded,
+              LucideIcons.x,
               color: Colors.white,
               size: 28,
               shadows: _kIconShadows,
@@ -2702,7 +2708,7 @@ class _StoryEditorState extends State<_StoryEditor> {
                 onTap: () => widget.onPickSound(),
                 badge: sound != null,
                 child: const Icon(
-                  Icons.music_note_rounded,
+                  LucideIcons.music,
                   color: Colors.white,
                   size: 24,
                   shadows: _kIconShadows,
@@ -2732,7 +2738,7 @@ class _StoryEditorState extends State<_StoryEditor> {
                   tooltip: s.composerToolTrim,
                   onTap: () => widget.onTrim(),
                   child: const Icon(
-                    Icons.content_cut_rounded,
+                    LucideIcons.scissors,
                     color: Colors.white,
                     size: 24,
                     shadows: _kIconShadows,
@@ -2751,7 +2757,7 @@ class _StoryEditorState extends State<_StoryEditor> {
                         ),
                       )
                     : const Icon(
-                        Icons.download_rounded,
+                        LucideIcons.download,
                         color: Colors.white,
                         size: 24,
                         shadows: _kIconShadows,
@@ -2764,9 +2770,9 @@ class _StoryEditorState extends State<_StoryEditor> {
                   badge: _frameStyle != 0,
                   child: Icon(
                     switch (_frameStyle) {
-                      1 => Icons.filter_frames_outlined,
-                      2 => Icons.auto_awesome_outlined,
-                      _ => Icons.crop_square_rounded,
+                      1 => LucideIcons.frame,
+                      2 => LucideIcons.sparkles,
+                      _ => LucideIcons.square,
                     },
                     color: Colors.white,
                     size: 24,
@@ -2782,7 +2788,7 @@ class _StoryEditorState extends State<_StoryEditor> {
                           tooltip: s.composerToolResetZoom,
                           onTap: _resetTransform,
                           child: const Icon(
-                            Icons.fit_screen_rounded,
+                            LucideIcons.maximize,
                             color: Colors.white,
                             size: 24,
                             shadows: _kIconShadows,
@@ -2876,9 +2882,9 @@ class _StoryEditorState extends State<_StoryEditor> {
                       },
                       child: Icon(
                         switch (_cAlign) {
-                          TextAlign.left => Icons.format_align_left_rounded,
-                          TextAlign.right => Icons.format_align_right_rounded,
-                          _ => Icons.format_align_center_rounded,
+                          TextAlign.left => LucideIcons.textAlignStart,
+                          TextAlign.right => LucideIcons.textAlignEnd,
+                          _ => LucideIcons.textAlignCenter,
                         },
                         color: Colors.white,
                         size: 24,
@@ -2895,9 +2901,9 @@ class _StoryEditorState extends State<_StoryEditor> {
                       },
                       child: Icon(
                         switch (_cBg) {
-                          _TextBg.none => Icons.font_download_off_outlined,
-                          _TextBg.translucent => Icons.font_download_outlined,
-                          _TextBg.solid => Icons.font_download_rounded,
+                          _TextBg.none => LucideIcons.baseline,
+                          _TextBg.translucent => LucideIcons.type,
+                          _TextBg.solid => LucideIcons.type,
                         },
                         color: Colors.white,
                         size: 24,
@@ -3617,11 +3623,7 @@ class _TrashTarget extends StatelessWidget {
               width: 1.5,
             ),
           ),
-          child: const Icon(
-            Icons.delete_outline_rounded,
-            color: Colors.white,
-            size: 26,
-          ),
+          child: const Icon(LucideIcons.trash2, color: Colors.white, size: 26),
         ),
       ),
     );
@@ -3781,7 +3783,7 @@ class _SelectedStorySoundChip extends StatelessWidget {
                   ClipOval(
                     child: sound.coverUrl != null
                         ? Image.network(
-                          cacheWidth: context.decodePx(26),
+                            cacheWidth: context.decodePx(26),
                             sound.coverUrl!,
                             width: 26,
                             height: 26,
@@ -3811,12 +3813,12 @@ class _SelectedStorySoundChip extends StatelessWidget {
           ),
           if (onMixer != null)
             _ChipIcon(
-              icon: Icons.tune_rounded,
+              icon: LucideIcons.slidersHorizontal,
               tooltip: mixerTooltip,
               onTap: onMixer!,
             ),
           _ChipIcon(
-            icon: Icons.close_rounded,
+            icon: LucideIcons.x,
             tooltip: MaterialLocalizations.of(context).deleteButtonTooltip,
             onTap: onRemove,
           ),
@@ -3829,7 +3831,7 @@ class _SelectedStorySoundChip extends StatelessWidget {
     width: 26,
     height: 26,
     decoration: const BoxDecoration(gradient: _kBrandGradient),
-    child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 15),
+    child: const Icon(LucideIcons.music, color: Colors.white, size: 15),
   );
 }
 
@@ -3893,17 +3895,17 @@ class _StoryDestinationPill extends StatelessWidget {
                 color: AppColors.darkSurfaceElevated,
                 child: url != null && url.isNotEmpty
                     ? Image.network(
-                      cacheWidth: context.decodePx(34),
+                        cacheWidth: context.decodePx(34),
                         url,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const Icon(
-                          Icons.person_rounded,
+                          LucideIcons.user,
                           color: Colors.white70,
                           size: 20,
                         ),
                       )
                     : const Icon(
-                        Icons.person_rounded,
+                        LucideIcons.user,
                         color: Colors.white70,
                         size: 20,
                       ),
@@ -3977,7 +3979,7 @@ class _SendButton extends StatelessWidget {
                     ),
                   )
                 : const Icon(
-                    Icons.arrow_forward_rounded,
+                    LucideIcons.arrowRight,
                     color: Colors.white,
                     size: 26,
                   ),

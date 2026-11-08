@@ -22,8 +22,9 @@ const _gold = Color(0xFFFFC53D);
 const _pink = Color(0xFFFF3D7F);
 
 /// Texto curto da meta: "10 Rosas" / "5.000 curtidas".
-String _goalLabel(S s, LiveGoal g) =>
-    g.isLikes ? s.goalLikesLabel(fmtGap(g.target)) : '${fmtGap(g.target)} ${g.giftName ?? ''}'.trim();
+String _goalLabel(S s, LiveGoal g) => g.isLikes
+    ? s.goalLikesLabel(fmtGap(g.target))
+    : '${fmtGap(g.target)} ${g.giftName ?? ''}'.trim();
 
 /// Ícone da meta: o próprio presente, ou coração (curtidas).
 class _GoalIcon extends StatelessWidget {
@@ -34,7 +35,8 @@ class _GoalIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (goal.isLikes) return Icon(LucideIcons.heart, size: size * 0.85, color: _pink);
+    if (goal.isLikes)
+      return Icon(LucideIcons.heart, size: size * 0.85, color: _pink);
     // Mesmo componente da sacola: imagem do app → do servidor → genérico.
     return GiftIcon(
       slug: goal.giftSlug ?? '',
@@ -84,9 +86,13 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
   void initState() {
     super.initState();
     _goals = widget.initialGoals;
-    _sub = ref.read(liveRepositoryProvider).watchRoomEvents(widget.roomId).listen((e) {
-      if (e.type == LiveRoomEvent.goalsUpdate) apply(LiveGoal.listFrom(e.data['goals']));
-    });
+    _sub = ref
+        .read(liveRepositoryProvider)
+        .watchRoomEvents(widget.roomId)
+        .listen((e) {
+          if (e.type == LiveRoomEvent.goalsUpdate)
+            apply(LiveGoal.listFrom(e.data['goals']));
+        });
   }
 
   @override
@@ -100,7 +106,9 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
   void apply(List<LiveGoal> goals) {
     if (!mounted) return;
     final before = {for (final g in _goals) g.id: g.reached};
-    final justReached = goals.where((g) => g.reached && before[g.id] == false).toList();
+    final justReached = goals
+        .where((g) => g.reached && before[g.id] == false)
+        .toList();
     setState(() => _goals = goals);
     if (justReached.isEmpty) return;
     HapticFeedback.mediumImpact();
@@ -108,8 +116,9 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
     for (final g in justReached) {
       // Meta atingida NÃO entra no chat: narrador (em batalha) ou painel
       // de avisos da live.
-      routeGameNotice(ref, context, 'goal_reached', {'nome': _goalLabel(s, g)},
-          roomId: widget.roomId);
+      routeGameNotice(ref, context, 'goal_reached', {
+        'nome': _goalLabel(s, g),
+      }, roomId: widget.roomId);
     }
     _glowTimer?.cancel();
     setState(() => _glow = true);
@@ -127,18 +136,33 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
     final gifts = open.where((g) => g.isGift).toList();
     if (open.length == 1 && gifts.length == 1) {
       // Link direto: sacola já no presente da meta.
-      GiftsOverlay.show(context, widget.roomId, widget.streamerId, preselectGiftSlug: gifts.first.giftSlug);
+      GiftsOverlay.show(
+        context,
+        widget.roomId,
+        widget.streamerId,
+        preselectGiftSlug: gifts.first.giftSlug,
+      );
       return;
     }
-    LiveGoalsSheet.show(context, roomId: widget.roomId, streamerId: widget.streamerId, goals: _goals);
+    LiveGoalsSheet.show(
+      context,
+      roomId: widget.roomId,
+      streamerId: widget.streamerId,
+      goals: _goals,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     if (_goals.isEmpty) return const SizedBox.shrink();
-    final featured = _goals.firstWhere((g) => !g.reached, orElse: () => _goals.last);
+    final featured = _goals.firstWhere(
+      (g) => !g.reached,
+      orElse: () => _goals.last,
+    );
     final allDone = _goals.every((g) => g.reached);
-    final accent = allDone || _glow ? _gold : (featured.isLikes ? _pink : _gold);
+    final accent = allDone || _glow
+        ? _gold
+        : (featured.isLikes ? _pink : _gold);
     final more = _goals.length - 1;
 
     return GestureDetector(
@@ -157,13 +181,26 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.45),
             borderRadius: BorderRadius.circular(widget.expand ? 15 : 16),
-            border: Border.all(color: accent.withValues(alpha: _glow ? 0.95 : 0.45)),
-            boxShadow: _glow ? [BoxShadow(color: _gold.withValues(alpha: 0.55), blurRadius: 14)] : null,
+            border: Border.all(
+              color: accent.withValues(alpha: _glow ? 0.95 : 0.45),
+            ),
+            boxShadow: _glow
+                ? [
+                    BoxShadow(
+                      color: _gold.withValues(alpha: 0.55),
+                      blurRadius: 14,
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(allDone ? LucideIcons.circleCheck : LucideIcons.target, size: 14, color: accent),
+              Icon(
+                allDone ? LucideIcons.circleCheck : LucideIcons.target,
+                size: 14,
+                color: accent,
+              ),
               const SizedBox(width: 6),
               _GoalIcon(goal: featured, size: 18),
               const SizedBox(width: 6),
@@ -173,7 +210,11 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
                 children: [
                   Text(
                     '${fmtGap(featured.progress)}/${fmtGap(featured.target)}',
-                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 3),
                   ClipRRect(
@@ -194,7 +235,11 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
                 const SizedBox(width: 8),
                 Text(
                   '+$more',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ],
@@ -208,7 +253,11 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
 // ─── Gaveta do espectador: o que o criador precisa ─────────────────────────
 
 class LiveGoalsSheet extends StatelessWidget {
-  const LiveGoalsSheet._({required this.roomId, required this.streamerId, required this.goals});
+  const LiveGoalsSheet._({
+    required this.roomId,
+    required this.streamerId,
+    required this.goals,
+  });
 
   final String roomId;
   final String streamerId;
@@ -226,7 +275,11 @@ class LiveGoalsSheet extends StatelessWidget {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => LiveGoalsSheet._(roomId: roomId, streamerId: streamerId, goals: goals),
+      builder: (_) => LiveGoalsSheet._(
+        roomId: roomId,
+        streamerId: streamerId,
+        goals: goals,
+      ),
     );
   }
 
@@ -242,18 +295,28 @@ class LiveGoalsSheet extends StatelessWidget {
           for (final g in goals)
             _GoalRow(
               goal: g,
-              action: g.reached ? null : (g.isGift ? s.goalSendGift : s.goalLike),
+              action: g.reached
+                  ? null
+                  : (g.isGift ? s.goalSendGift : s.goalLike),
               onAction: () {
                 final root = Navigator.of(context, rootNavigator: true).context;
                 Navigator.of(context).pop();
                 if (g.isGift) {
-                  GiftsOverlay.show(root, roomId, streamerId, preselectGiftSlug: g.giftSlug);
+                  GiftsOverlay.show(
+                    root,
+                    roomId,
+                    streamerId,
+                    preselectGiftSlug: g.giftSlug,
+                  );
                 }
               },
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
-            child: Text(s.goalsViewerHint, style: TextStyle(color: colors.textTertiary, fontSize: 12)),
+            child: Text(
+              s.goalsViewerHint,
+              style: TextStyle(color: colors.textTertiary, fontSize: 12),
+            ),
           ),
         ],
       ),
@@ -262,7 +325,12 @@ class LiveGoalsSheet extends StatelessWidget {
 }
 
 class _GoalRow extends StatelessWidget {
-  const _GoalRow({required this.goal, this.action, this.onAction, this.onRemove});
+  const _GoalRow({
+    required this.goal,
+    this.action,
+    this.onAction,
+    this.onRemove,
+  });
 
   final LiveGoal goal;
   final String? action;
@@ -282,7 +350,10 @@ class _GoalRow extends StatelessWidget {
             width: 44,
             height: 44,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: colors.surfaceHighest, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: colors.surfaceHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: _GoalIcon(goal: goal, size: 28),
           ),
           const SizedBox(width: 12),
@@ -297,12 +368,20 @@ class _GoalRow extends StatelessWidget {
                         _goalLabel(s, goal),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: colors.textPrimary, fontSize: 14, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     if (goal.reached) ...[
                       const SizedBox(width: 6),
-                      const Icon(LucideIcons.circleCheck, size: 15, color: _gold),
+                      const Icon(
+                        LucideIcons.circleCheck,
+                        size: 15,
+                        color: _gold,
+                      ),
                     ],
                   ],
                 ),
@@ -313,12 +392,19 @@ class _GoalRow extends StatelessWidget {
                     value: goal.ratio,
                     minHeight: 5,
                     backgroundColor: colors.surfaceHighest,
-                    valueColor: AlwaysStoppedAnimation(goal.reached ? _gold : accent),
+                    valueColor: AlwaysStoppedAnimation(
+                      goal.reached ? _gold : accent,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  goal.reached ? s.goalReached : s.goalProgress(fmtGap(goal.progress), fmtGap(goal.target)),
+                  goal.reached
+                      ? s.goalReached
+                      : s.goalProgress(
+                          fmtGap(goal.progress),
+                          fmtGap(goal.target),
+                        ),
                   style: TextStyle(color: colors.textSecondary, fontSize: 11.5),
                 ),
               ],
@@ -331,11 +417,22 @@ class _GoalRow extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: accent,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 visualDensity: VisualDensity.compact,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: Text(action!, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5)),
+              child: Text(
+                action!,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                ),
+              ),
             ),
           ],
           if (onRemove != null)
@@ -362,7 +459,9 @@ class _SheetFrame extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.86),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.86,
+        ),
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -376,7 +475,10 @@ class _SheetFrame extends StatelessWidget {
               Container(
                 width: 36,
                 height: 4,
-                decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                  color: colors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               SizedBox(
                 width: double.infinity,
@@ -384,12 +486,19 @@ class _SheetFrame extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Text(title, style: TextStyle(color: colors.textPrimary, fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     Positioned(
                       right: 4,
                       child: IconButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(Icons.close_rounded, color: colors.textSecondary),
+                        icon: Icon(LucideIcons.x, color: colors.textSecondary),
                         iconSize: 22,
                         visualDensity: VisualDensity.compact,
                       ),
@@ -417,7 +526,11 @@ class LiveGoalsEditorSheet extends ConsumerStatefulWidget {
   final List<LiveGoal> current;
 
   /// Devolve as metas salvas (ou null se fechou sem salvar).
-  static Future<List<LiveGoal>?> show(BuildContext context, {required String roomId, required List<LiveGoal> current}) {
+  static Future<List<LiveGoal>?> show(
+    BuildContext context, {
+    required String roomId,
+    required List<LiveGoal> current,
+  }) {
     final rootContext = Navigator.of(context, rootNavigator: true).context;
     return showModalBottomSheet<List<LiveGoal>>(
       context: rootContext,
@@ -429,7 +542,8 @@ class LiveGoalsEditorSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<LiveGoalsEditorSheet> createState() => _LiveGoalsEditorSheetState();
+  ConsumerState<LiveGoalsEditorSheet> createState() =>
+      _LiveGoalsEditorSheetState();
 }
 
 class _Draft {
@@ -454,7 +568,11 @@ class _Draft {
 
   LiveGoalDraft get request => type == LiveGoal.typeLikes
       ? LiveGoalDraft.likes(target: target, id: existing?.id)
-      : LiveGoalDraft.gift(slug: gift?.slug ?? existing!.giftSlug!, target: target, id: existing?.id);
+      : LiveGoalDraft.gift(
+          slug: gift?.slug ?? existing!.giftSlug!,
+          target: target,
+          id: existing?.id,
+        );
 }
 
 class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
@@ -463,7 +581,8 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
   static const _likeAmounts = [1000, 5000, 10000, 50000];
 
   late final List<_Draft> _drafts = [
-    for (final g in widget.current) _Draft(type: g.type, target: g.target, existing: g),
+    for (final g in widget.current)
+      _Draft(type: g.type, target: g.target, existing: g),
   ];
   bool _likesMode = false;
   int _category = 0;
@@ -473,8 +592,11 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
     super.initState();
     // Catálogo atualizado ao abrir: presente/categoria recém-criado no
     // painel já aparece aqui.
-    Future.microtask(() => ref.read(giftCatalogViewModelProvider.notifier).refresh());
+    Future.microtask(
+      () => ref.read(giftCatalogViewModelProvider.notifier).refresh(),
+    );
   }
+
   Gift? _gift;
   int _amount = 10;
   bool _saving = false;
@@ -503,7 +625,9 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(S.of(context).goalsSaveError)));
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(S.of(context).goalsSaveError)));
     }
   }
 
@@ -524,7 +648,10 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
           if (_drafts.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Text(s.goalsEmptyCreator, style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+              child: Text(
+                s.goalsEmptyCreator,
+                style: TextStyle(color: colors.textSecondary, fontSize: 13),
+              ),
             ),
           for (var i = 0; i < _drafts.length; i++)
             _GoalRow(
@@ -564,7 +691,11 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                 runSpacing: 8,
                 children: [
                   for (final a in amounts)
-                    _AmountChip(label: fmtGap(a), selected: _amount == a, onTap: () => setState(() => _amount = a)),
+                    _AmountChip(
+                      label: fmtGap(a),
+                      selected: _amount == a,
+                      onTap: () => setState(() => _amount = a),
+                    ),
                 ],
               ),
             ),
@@ -576,13 +707,17 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                 label: Text(
                   _likesMode
                       ? s.goalAddLikes(fmtGap(_amount))
-                      : (_gift == null ? s.goalPickGift : s.goalAddGift(fmtGap(_amount), _gift!.name)),
+                      : (_gift == null
+                            ? s.goalPickGift
+                            : s.goalAddGift(fmtGap(_amount), _gift!.name)),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.textPrimary,
                   side: BorderSide(color: colors.border),
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -595,11 +730,20 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                 backgroundColor: colors.accentPrimary,
                 foregroundColor: colors.textOnAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: _saving
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(_drafts.isEmpty ? s.goalsRemoveAll : s.goalsSave, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      _drafts.isEmpty ? s.goalsRemoveAll : s.goalsSave,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
             ),
           ),
         ],
@@ -645,12 +789,16 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                   decoration: BoxDecoration(
                     color: selected ? colors.textPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: selected ? colors.textPrimary : colors.border),
+                    border: Border.all(
+                      color: selected ? colors.textPrimary : colors.border,
+                    ),
                   ),
                   child: Text(
                     GiftTierNames.label(context, tiers[i].name, tiers[i].names),
                     style: TextStyle(
-                      color: selected ? colors.surfaceElevated : colors.textSecondary,
+                      color: selected
+                          ? colors.surfaceElevated
+                          : colors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -677,15 +825,27 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                   width: 66,
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: selected ? colors.accentPrimary.withValues(alpha: 0.14) : colors.surfaceHighest,
+                    color: selected
+                        ? colors.accentPrimary.withValues(alpha: 0.14)
+                        : colors.surfaceHighest,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: selected ? colors.accentPrimary : Colors.transparent, width: 1.5),
+                    border: Border.all(
+                      color: selected
+                          ? colors.accentPrimary
+                          : Colors.transparent,
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
                       Expanded(
                         child: Center(
-                          child: GiftIcon(slug: g.slug, tier: g.tier, iconUrl: g.iconUrl, size: 40),
+                          child: GiftIcon(
+                            slug: g.slug,
+                            tier: g.tier,
+                            iconUrl: g.iconUrl,
+                            size: 40,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -693,7 +853,11 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
                         g.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: colors.textSecondary, fontSize: 10.5, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -708,7 +872,12 @@ class _LiveGoalsEditorSheetState extends ConsumerState<LiveGoalsEditorSheet> {
 }
 
 class _ModeChip extends StatelessWidget {
-  const _ModeChip({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _ModeChip({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -725,14 +894,22 @@ class _ModeChip extends StatelessWidget {
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? colors.accentPrimary.withValues(alpha: 0.14) : colors.surfaceHighest,
+            color: selected
+                ? colors.accentPrimary.withValues(alpha: 0.14)
+                : colors.surfaceHighest,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: selected ? colors.accentPrimary : Colors.transparent),
+            border: Border.all(
+              color: selected ? colors.accentPrimary : Colors.transparent,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: selected ? colors.accentPrimary : colors.textSecondary),
+              Icon(
+                icon,
+                size: 16,
+                color: selected ? colors.accentPrimary : colors.textSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -751,7 +928,11 @@ class _ModeChip extends StatelessWidget {
 }
 
 class _AmountChip extends StatelessWidget {
-  const _AmountChip({required this.label, required this.selected, required this.onTap});
+  const _AmountChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;

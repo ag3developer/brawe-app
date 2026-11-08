@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,7 +56,10 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
     if (_isBusy) return;
     final l10n = S.of(context);
     final cur = ref.read(battleViewModelProvider(widget.battleId)).value;
-    final mine = cur?.sideOf(userId: widget.myStreamerId, roomId: widget.myRoomId);
+    final mine = cur?.sideOf(
+      userId: widget.myStreamerId,
+      roomId: widget.myRoomId,
+    );
     final streakNow = mine == null ? null : cur?.winStreakOf(mine);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -182,14 +186,16 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
             opp,
             Semantics(
               button: true,
-              label: iMuted ? l10n.battleUnmuteOpponent : l10n.battleMuteOpponent,
+              label: iMuted
+                  ? l10n.battleUnmuteOpponent
+                  : l10n.battleMuteOpponent,
               child: GestureDetector(
                 onTap: () => _toggleMute(battle, mySide),
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: battleGlass(radius: 18),
                   child: Icon(
-                    iMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                    iMuted ? LucideIcons.volumeX : LucideIcons.volume2,
                     size: 16,
                     color: iMuted ? kBattleTextDim : kBattleText,
                   ),
@@ -222,7 +228,7 @@ class _StreamerBattleHudState extends ConsumerState<StreamerBattleHud> {
                       color: Colors.white60,
                     ),
                   )
-                : const Icon(Icons.exit_to_app_rounded, size: 14),
+                : const Icon(LucideIcons.logOut, size: 14),
             label: Text(
               l10n.battleLeave,
               style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),

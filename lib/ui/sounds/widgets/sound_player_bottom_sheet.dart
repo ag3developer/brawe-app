@@ -215,7 +215,7 @@ class _SoundPlayerBottomSheetState
 
               const SizedBox(width: 24),
               _StatChip(
-                icon: LucideIcons.share2,
+                icon: LucideIcons.send,
                 value: _fmtCount(sound.usageCount),
               ),
             ],

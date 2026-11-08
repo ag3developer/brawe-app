@@ -44,6 +44,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
   int _cameraIndex = 0;
   bool _initializing = true;
   String? _initError;
+  String? _submitError;
 
   /// Câmera/microfone negados "para sempre" — o botão abre os Ajustes
   /// (pedir de novo não mostra diálogo nenhum).
@@ -266,21 +267,23 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
 
   Future<void> _onStartLive() async {
     final s = S.of(context);
+    setState(() => _submitError = null);
     final success = await ref
         .read(startLiveViewModelProvider.notifier)
         .submit();
     if (!mounted) return;
 
+    // Erros ficam na própria tela de início (aviso inline acima do botão).
     if (!success) {
       final error = ref.read(startLiveViewModelProvider).displayError(s);
-      if (error != null) AppSnackBar.showError(context, error);
+      if (error != null) setState(() => _submitError = error);
       return;
     }
 
     final state = ref.read(startLiveViewModelProvider);
     final room = state.status.asData?.value;
     if (room == null) {
-      AppSnackBar.showError(context, s.startLiveRoomDataError);
+      setState(() => _submitError = s.startLiveRoomDataError);
       return;
     }
 
@@ -375,9 +378,13 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                   titleController: _titleCtrl,
                   titleSuggestions: _titleSuggestions,
                   isLoading: isLoading,
-                  onTitleChanged: ref
-                      .read(startLiveViewModelProvider.notifier)
-                      .updateTitle,
+                  onTitleChanged: (v) {
+                    if (_submitError != null)
+                      setState(() => _submitError = null);
+                    ref
+                        .read(startLiveViewModelProvider.notifier)
+                        .updateTitle(v);
+                  },
                   onSuggestionTap: (s) {
                     _titleCtrl.text = s;
                     _titleCtrl.selection = TextSelection.fromPosition(
@@ -388,6 +395,8 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                         .updateTitle(s);
                   },
                   onCategoryChanged: (cat) {
+                    if (_submitError != null)
+                      setState(() => _submitError = null);
                     ref
                         .read(startLiveViewModelProvider.notifier)
                         .updateCategory(cat);
@@ -405,6 +414,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
                   onThumbnailTap: _pickThumbnailFromGallery,
                   onThumbnailLongPress: _captureThumbnailFromCamera,
                   onSubmit: state.canSubmit ? _onStartLive : null,
+                  errorText: _submitError ?? state.errorMessage,
                 ),
               ],
             ),
@@ -419,10 +429,10 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
           eligAsync.when(
             loading: () => const _EligibilityLoadingOverlay(),
             error: (e, _) => _EligibilityBlockedOverlay(
-              icon: Icons.cloud_off_rounded,
-              title: 'Não foi possível verificar',
-              subtitle: 'Verifique sua conexão e tente novamente.',
-              ctaLabel: 'Tentar novamente',
+              icon: LucideIcons.cloudOff,
+              title: S.of(context).livexEligCheckFailTitle,
+              subtitle: S.of(context).livexEligCheckFailSub,
+              ctaLabel: S.of(context).startLiveRetry,
               onCta: () => ref.invalidate(liveEligibilityProvider),
               onClose: () => context.pop(),
               gradient: const [Color(0xFF64748B), Color(0xFF475569)],
@@ -431,12 +441,11 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               if (elig.canGoLive) return const SizedBox.shrink();
               if (elig.needsAvatar) {
                 return _EligibilityBlockedOverlay(
-                  icon: Icons.account_circle_outlined,
-                  title: 'Adicione uma foto de perfil',
-                  subtitle:
-                      'Lives só podem ser iniciadas por usuários com foto de perfil.',
-                  ctaLabel: 'Adicionar foto agora',
-                  ctaIcon: Icons.camera_alt_rounded,
+                  icon: LucideIcons.circleUser,
+                  title: S.of(context).livexNeedAvatarTitle,
+                  subtitle: S.of(context).livexNeedAvatarSub,
+                  ctaLabel: S.of(context).livexNeedAvatarCta,
+                  ctaIcon: LucideIcons.camera,
                   onCta: () {
                     invalidateLiveEligibilityCache();
                     context.pop();
@@ -448,12 +457,11 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
               }
               if (elig.needsCreator) {
                 return _EligibilityBlockedOverlay(
-                  icon: Icons.workspace_premium_rounded,
-                  title: 'Live é exclusivo do Creator Network',
-                  subtitle:
-                      'Transmissões ao vivo são liberadas após aprovação no programa. É grátis e leva poucos minutos.',
-                  ctaLabel: 'Inscrever-se no programa',
-                  ctaIcon: Icons.rocket_launch_rounded,
+                  icon: LucideIcons.crown,
+                  title: S.of(context).livexNeedCreatorTitle,
+                  subtitle: S.of(context).livexNeedCreatorSub,
+                  ctaLabel: S.of(context).livexNeedCreatorCta,
+                  ctaIcon: LucideIcons.rocket,
                   onCta: () {
                     invalidateLiveEligibilityCache();
                     context.pop();
@@ -485,7 +493,7 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
-                Icons.videocam_off_outlined,
+                LucideIcons.videoOff,
                 color: AppColors.coolGray,
                 size: 56,
               ),
@@ -527,24 +535,21 @@ class _StartLiveScreenState extends ConsumerState<StartLiveScreen>
 }
 
 class _CategoryChips extends StatelessWidget {
-  const _CategoryChips({
-    required this.value,
-    required this.onChanged,
-  });
+  const _CategoryChips({required this.value, required this.onChanged});
 
   final String? value;
   final ValueChanged<String> onChanged;
 
   static const Map<String, IconData> _icons = {
     'Shopping': LucideIcons.shoppingBag, // sacola de compras ✓
-    'Gaming': Icons.sports_esports, // controle de videogame ✓
+    'Gaming': LucideIcons.gamepad2, // controle de videogame ✓
     'Talk Show': LucideIcons.mic2, // microfone ✓
     'Música': LucideIcons.music, // nota musical ✓
     'Educação': LucideIcons.bookMarked, // livro ✓
-    'Fitness': Icons.fitness_center, // haltere ✓
-    'Culinária': Icons.restaurant, // garfo e faca ✓
+    'Fitness': LucideIcons.dumbbell, // haltere ✓
+    'Culinária': LucideIcons.utensils, // garfo e faca ✓
     'Beleza': LucideIcons.sparkles, // brilho ✓
-    'Tecnologia': Icons.developer_mode, // código/tech ✓
+    'Tecnologia': LucideIcons.code, // código/tech ✓
     'Esportes': LucideIcons.trophy, // troféu ✓
     'Entretenimento': LucideIcons.disc3, // disco ✓
     'Outro': LucideIcons.plus, // genérico ✓
@@ -611,7 +616,7 @@ class _CategoryChips extends StatelessWidget {
                 ),
               const Spacer(),
               Icon(
-                Icons.chevron_right_rounded,
+                LucideIcons.chevronRight,
                 size: 18,
                 color: Colors.white.withValues(alpha: 0.4),
               ),
@@ -653,10 +658,7 @@ class _CategoryChips extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: selected
                           ? const LinearGradient(
-                              colors: [
-                                AppColors.braweBlue,
-                                AppColors.braweSky,
-                              ],
+                              colors: [AppColors.braweBlue, AppColors.braweSky],
                             )
                           : null,
                       color: selected
@@ -758,7 +760,7 @@ class _GoLiveButton extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
-                          Icons.fiber_manual_record,
+                          LucideIcons.circle,
                           color: Colors.white,
                           size: 14,
                         ),
@@ -774,7 +776,7 @@ class _GoLiveButton extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         const Icon(
-                          Icons.arrow_forward,
+                          LucideIcons.arrowRight,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -802,15 +804,18 @@ class _EligibilityLoadingOverlay extends StatelessWidget {
       filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
       child: Container(
         color: Colors.black.withValues(alpha: 0.65),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-              SizedBox(height: 16),
+              const CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2.5,
+              ),
+              const SizedBox(height: 16),
               Text(
-                'Verificando permissões…',
-                style: TextStyle(
+                S.of(context).livexCheckingPerms,
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -873,7 +878,7 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
                         ),
                       ),
                       child: const Icon(
-                        Icons.close,
+                        LucideIcons.x,
                         color: Colors.white,
                         size: 18,
                       ),
@@ -939,7 +944,7 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
                   height: 52,
                   child: FilledButton.icon(
                     onPressed: onCta,
-                    icon: Icon(ctaIcon ?? Icons.arrow_forward, size: 18),
+                    icon: Icon(ctaIcon ?? LucideIcons.arrowRight, size: 18),
                     label: Text(
                       ctaLabel,
                       style: const TextStyle(
@@ -961,7 +966,7 @@ class _EligibilityBlockedOverlay extends StatelessWidget {
               TextButton(
                 onPressed: onClose,
                 child: Text(
-                  'Agora não',
+                  S.of(context).livexNotNow,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 13.5,
@@ -1007,7 +1012,11 @@ class _TikTokTopBar extends StatelessWidget {
                   width: 36,
                   height: 36,
                   color: Colors.black.withValues(alpha: 0.45),
-                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                  child: const Icon(
+                    LucideIcons.x,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ),
@@ -1032,9 +1041,9 @@ class _TikTokTopBar extends StatelessWidget {
                     children: [
                       Icon(LucideIcons.music, color: Colors.white, size: 14),
                       const SizedBox(width: 6),
-                      const Text(
-                        'Adicionar som',
-                        style: TextStyle(
+                      Text(
+                        S.of(context).livexAddSound,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1057,8 +1066,8 @@ class _TikTokTopBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
-            child: const Text(
-              'LIVE',
+            child: Text(
+              S.of(context).liveBadge,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 11,
@@ -1086,12 +1095,14 @@ class _RightSideBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final items = <({IconData icon, String label, VoidCallback? onTap})>[
-      if (canFlip) (icon: LucideIcons.refreshCw, label: 'Virar', onTap: onFlip),
-      (icon: LucideIcons.sparkles, label: 'Beleza', onTap: null),
-      (icon: LucideIcons.aperture, label: 'Filtros', onTap: null),
-      (icon: LucideIcons.share2, label: 'Compartilhar', onTap: null),
-      (icon: LucideIcons.image, label: 'Capa', onTap: onThumbnail),
+      if (canFlip)
+        (icon: LucideIcons.switchCamera, label: s.livexFlip, onTap: onFlip),
+      (icon: LucideIcons.sparkles, label: s.livexBeauty, onTap: null),
+      (icon: LucideIcons.aperture, label: s.livexFilters, onTap: null),
+      (icon: LucideIcons.send, label: s.livexShare, onTap: null),
+      (icon: LucideIcons.image, label: s.livexCover, onTap: onThumbnail),
     ];
 
     return Column(
@@ -1153,8 +1164,10 @@ class _TikTokBottomArea extends StatelessWidget {
     required this.onThumbnailTap,
     required this.onThumbnailLongPress,
     required this.onSubmit,
+    this.errorText,
   });
 
+  final String? errorText;
   final StartLiveState state;
   final TextEditingController titleController;
   final List<String> titleSuggestions;
@@ -1217,9 +1230,9 @@ class _TikTokBottomArea extends StatelessWidget {
                                   size: 18,
                                 ),
                                 const SizedBox(height: 2),
-                                const Text(
-                                  'Alterar',
-                                  style: TextStyle(
+                                Text(
+                                  S.of(context).livexChange,
+                                  style: const TextStyle(
                                     color: Colors.white60,
                                     fontSize: 9,
                                   ),
@@ -1251,7 +1264,7 @@ class _TikTokBottomArea extends StatelessWidget {
                             ),
                             maxLength: 100,
                             decoration: InputDecoration(
-                              hintText: 'Adicionar um título',
+                              hintText: S.of(context).startLiveTitleHint,
                               hintStyle: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.4),
                                 fontSize: 15,
@@ -1303,32 +1316,32 @@ class _TikTokBottomArea extends StatelessWidget {
             children: [
               _ActionCircle(
                 icon: LucideIcons.swords,
-                label: 'Batalha',
+                label: S.of(context).livexBattle,
                 active: state.battleModeEnabled,
                 onTap: isLoading ? null : onBattleTap,
               ),
               _ActionCircle(
                 icon: LucideIcons.gift,
-                label: 'Presentes',
+                label: S.of(context).livexGifts,
                 active: state.giftsEnabled,
                 onTap: isLoading ? null : onGiftsTap,
               ),
               _ActionCircle(
                 icon: LucideIcons.bell,
-                label: 'Notificar',
+                label: S.of(context).livexNotify,
                 active: state.notifyFollowers,
                 onTap: isLoading ? null : onNotifyTap,
               ),
               _ActionCircle(
                 icon: LucideIcons.user,
-                label: 'Convidados',
+                label: S.of(context).livexGuests,
                 active: false,
                 onTap: null,
                 dimmed: true,
               ),
               _ActionCircle(
-                icon: LucideIcons.zap,
-                label: 'Promover',
+                icon: LucideIcons.megaphone,
+                label: S.of(context).livexPromote,
                 active: false,
                 onTap: null,
                 dimmed: true,
@@ -1338,10 +1351,38 @@ class _TikTokBottomArea extends StatelessWidget {
           SizedBox(height: gap2),
 
           // ── Error ──
-          if (state.errorMessage != null) ...[
-            Text(
-              state.errorMessage!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+          if (errorText != null) ...[
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.redAccent.withValues(alpha: 0.6),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    LucideIcons.circleAlert,
+                    color: Colors.redAccent,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      errorText!,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
           ],
@@ -1361,11 +1402,11 @@ class _TikTokBottomArea extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_outlined, color: Colors.white38, size: 11),
+                  Icon(LucideIcons.shield, color: Colors.white38, size: 11),
                   const SizedBox(width: 4),
-                  const Text(
-                    'LIVE pública',
-                    style: TextStyle(color: Colors.white38, fontSize: 10),
+                  Text(
+                    S.of(context).livexPublicLive,
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
                   ),
                 ],
               ),
@@ -1446,7 +1487,8 @@ class _ModeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const modes = ['Câmera', 'LIVE', 'Modelo', 'MV'];
+    final s = S.of(context);
+    final modes = [s.livexModeCamera, s.liveBadge, s.livexModeTemplate, 'MV'];
     const activeIndex = 1; // LIVE always selected
 
     return Row(

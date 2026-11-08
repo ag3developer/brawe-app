@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/feed_item.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -17,6 +18,7 @@ class ActionRail extends StatelessWidget {
     this.onLikeLongPress,
     this.onLikeCountTap,
     this.onShareLongPress,
+    this.onRepost,
   });
 
   final FeedItem item;
@@ -28,6 +30,10 @@ class ActionRail extends StatelessWidget {
   final VoidCallback? onLikeLongPress;
   final VoidCallback? onLikeCountTap;
   final VoidCallback? onShareLongPress;
+
+  /// Repost em um toque. Quando informado, vira um botão próprio (com a
+  /// contagem) e o botão de enviar fica só com o rótulo.
+  final VoidCallback? onRepost;
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +64,29 @@ class ActionRail extends StatelessWidget {
           onTap: onComment,
         ),
         const SizedBox(height: 18),
-        // Toque: compartilhar. Toque longo: repostar/desfazer — quando já
-        // repostado, o ícone vira "repetir" em verde.
-        _RailButton(
-          icon: item.userReposted ? Icons.repeat_rounded : Icons.send_rounded,
-          color: item.userReposted ? AppColors.success : Colors.white,
-          label: _format(item.sharesCount),
-          onTap: onShare,
-          onLongPress: onShareLongPress,
-        ),
+        if (onRepost != null) ...[
+          _RailButton(
+            icon: Icons.repeat_rounded,
+            color: item.userReposted ? AppColors.success : Colors.white,
+            label: _format(item.sharesCount),
+            onTap: onRepost!,
+          ),
+          const SizedBox(height: 18),
+          _RailButton(
+            icon: Icons.send_rounded,
+            label: S.of(context).actionShare,
+            onTap: onShare,
+          ),
+        ] else
+          // Toque: compartilhar. Toque longo: repostar/desfazer — quando já
+          // repostado, o ícone vira "repetir" em verde.
+          _RailButton(
+            icon: item.userReposted ? Icons.repeat_rounded : Icons.send_rounded,
+            color: item.userReposted ? AppColors.success : Colors.white,
+            label: _format(item.sharesCount),
+            onTap: onShare,
+            onLongPress: onShareLongPress,
+          ),
         if (item.viewsCount > 0) ...[
           const SizedBox(height: 14),
           _ViewsLabel(count: item.viewsCount, formatter: _format),

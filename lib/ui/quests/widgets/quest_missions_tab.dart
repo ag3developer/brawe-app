@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/services/feedback_service.dart';
@@ -140,7 +143,7 @@ class _QuestMissionsTabState extends ConsumerState<QuestMissionsTab>
         content: Text(
           text,
           style: const TextStyle(
-            color: Colors.white,
+            color: QuestTones.onGradient,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -293,14 +296,14 @@ class _DayProgressCard extends StatelessWidget {
                       ),
                     ),
                     _MiniStat(
-                      icon: Icons.bolt_rounded,
-                      color: const Color(0xFF7C5CFF),
+                      icon: LucideIcons.zap,
+                      color: QuestTones.violet,
                       value: '+${data.summary.totalXpToday}',
                     ),
                     const SizedBox(width: 6),
                     _MiniStat(
-                      icon: Icons.monetization_on_rounded,
-                      color: const Color(0xFFFFB800),
+                      icon: LucideIcons.coins,
+                      color: QuestTones.gold,
                       value: '+${data.summary.totalCoinsToday}',
                     ),
                   ],
@@ -505,12 +508,12 @@ class _ClaimAllButton extends StatelessWidget {
             child: Ink(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD93D), Color(0xFFFF8B33), Color(0xFFFF4D8D)],
+                  colors: [QuestTones.gold, QuestTones.flame, QuestTones.pink],
                 ),
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFF8B33).withValues(alpha: 0.45),
+                    color: QuestTones.flame.withValues(alpha: 0.45),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),
@@ -530,8 +533,8 @@ class _ClaimAllButton extends StatelessWidget {
                         width: 40,
                         height: 36,
                         errorBuilder: (_, _, _) => const Icon(
-                          Icons.celebration_rounded,
-                          color: Colors.white,
+                          LucideIcons.partyPopper,
+                          color: QuestTones.onGradient,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -541,18 +544,18 @@ class _ClaimAllButton extends StatelessWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.4,
-                            color: Colors.white,
+                            color: QuestTones.onGradient,
                           ),
                         )
                       else
                         Text(
                           S.of(context).questsClaimAll(count),
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: QuestTones.onGradient,
                             fontWeight: FontWeight.w900,
                             fontSize: 16,
                             shadows: [
-                              Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                              Shadow(color: QuestTones.shade, blurRadius: 4, offset: Offset(0, 2)),
                             ],
                           ),
                         ),
@@ -726,7 +729,7 @@ class _QuestCardState extends State<_QuestCard>
                             border: Border.all(color: colors.surface, width: 2),
                           ),
                           padding: const EdgeInsets.all(2),
-                          child: const Icon(Icons.check_rounded, size: 14, color: Colors.white),
+                          child: const Icon(LucideIcons.check, size: 14, color: QuestTones.onGradient),
                         ),
                       ),
                   ],
@@ -784,16 +787,16 @@ class _QuestCardState extends State<_QuestCard>
                         children: [
                           if (q.xpReward > 0)
                             _RewardChip(
-                              icon: Icons.bolt_rounded,
+                              icon: LucideIcons.zap,
                               text: s.questsRewardXp(q.xpReward),
-                              color: const Color(0xFF7C5CFF),
+                              color: QuestTones.violet,
                               faded: claimed,
                             ),
                           if (q.coinsReward > 0)
                             _RewardChip(
-                              icon: Icons.monetization_on_rounded,
+                              icon: LucideIcons.coins,
                               text: s.questsRewardCoins(q.coinsReward),
-                              color: const Color(0xFFFFB800),
+                              color: QuestTones.gold,
                               faded: claimed,
                             ),
                         ],
@@ -834,7 +837,7 @@ class _QuestCardState extends State<_QuestCard>
                           key: const ValueKey('claimed'),
                           text: s.questsStatusClaimed,
                           color: colors.success,
-                          icon: Icons.check_circle_rounded,
+                          icon: LucideIcons.circleCheck,
                         )
                       : claimable
                           ? _ClaimButton(
@@ -1024,12 +1027,12 @@ class _ClaimButtonState extends State<_ClaimButton> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.redeem_rounded, color: Colors.white, size: 16),
+                const Icon(LucideIcons.gift, color: QuestTones.onGradient, size: 16),
                 const SizedBox(width: 5),
                 Text(
                   widget.label,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: QuestTones.onGradient,
                     fontWeight: FontWeight.w900,
                     fontSize: 13,
                   ),

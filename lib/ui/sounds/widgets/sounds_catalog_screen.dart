@@ -408,7 +408,7 @@ class _SoundTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                LucideIcons.share2,
+                LucideIcons.send,
                 size: 11,
                 color: context.colors.textTertiary,
               ),

@@ -9,7 +9,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../data/providers/marketplace_payment_providers.dart';
-import '../../core/themes/app_colors.dart';
+import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 
 /// Payment page that displays QR code for PIX payment.
@@ -94,8 +94,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
   String _friendlyError(Object e) {
     // Nunca exibir stack traces/tokens ao usuário — apenas uma mensagem
     // curta e amigável. Detalhes completos já foram para debugPrint acima.
-    return 'Não foi possível gerar o pagamento Pix agora. '
-        'Seu pedido foi criado normalmente — tente novamente.';
+    return S.of(context).moneyPayPixError;
   }
 
   void _startPolling() {
@@ -112,8 +111,8 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('✓ Pagamento confirmado!'),
-              backgroundColor: AppColors.success,
+              content: Text(S.of(context).moneyPayConfirmedToast),
+              backgroundColor: context.colors.success,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -150,7 +149,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
           onPressed: () => context.pop(),
         ),
         title: Text(
-          'Pagamento',
+          S.of(context).moneyPayTitle,
           style: TextStyle(
             color: context.colors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -178,10 +177,10 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.braweBlue),
+          CircularProgressIndicator(color: context.colors.accentPrimary),
           const SizedBox(height: 16),
           Text(
-            'Preparando pagamento...',
+            S.of(context).moneyPayPreparing,
             style: TextStyle(color: context.colors.textSecondary),
           ),
         ],
@@ -200,18 +199,18 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.mutedRed.withValues(alpha: 0.1),
+                color: context.colors.danger.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                LucideIcons.alertCircle,
-                color: AppColors.mutedRed,
+              child: Icon(
+                LucideIcons.circleAlert,
+                color: context.colors.danger,
                 size: 30,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Erro ao gerar pagamento',
+              S.of(context).moneyPayErrorTitle,
               style: TextStyle(
                 color: context.colors.textPrimary,
                 fontSize: 18,
@@ -220,7 +219,7 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Tente novamente mais tarde',
+              _errorMessage ?? S.of(context).moneyPayTryLater,
               style: TextStyle(
                 color: context.colors.textSecondary,
                 fontSize: 14,
@@ -235,15 +234,15 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
               child: ElevatedButton(
                 onPressed: _retry,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.braweBlue,
+                  backgroundColor: context.colors.accentPrimary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Tentar novamente',
+                child: Text(
+                  S.of(context).actionRetry,
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
               ),
@@ -308,8 +307,8 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
     setState(() => _copied = true);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('✓ Código Pix copiado!'),
-        backgroundColor: AppColors.success,
+        content: Text(S.of(context).moneyPayCodeCopied),
+        backgroundColor: context.colors.success,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -333,7 +332,9 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isPaid ? AppColors.success : AppColors.braweBlue;
+    final color = isPaid
+        ? context.colors.success
+        : context.colors.accentPrimary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
@@ -344,13 +345,15 @@ class _StatusBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isPaid ? LucideIcons.checkCircle2 : LucideIcons.clock,
+            isPaid ? LucideIcons.circleCheck : LucideIcons.clock,
             size: 15,
             color: color,
           ),
           const SizedBox(width: 6),
           Text(
-            isPaid ? 'Pagamento Confirmado' : 'Aguardando Pagamento',
+            isPaid
+                ? S.of(context).moneyPayStatusPaid
+                : S.of(context).moneyPayStatusWaiting,
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w700,
@@ -377,19 +380,19 @@ class _AmountCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.braweBlue.withValues(alpha: 0.10),
-            AppColors.braweSky.withValues(alpha: 0.08),
+            context.colors.accentPrimary.withValues(alpha: 0.10),
+            context.colors.accentSecondary.withValues(alpha: 0.08),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.braweBlue.withValues(alpha: 0.15),
+          color: context.colors.accentPrimary.withValues(alpha: 0.15),
         ),
       ),
       child: Column(
         children: [
           Text(
-            'Total a pagar',
+            S.of(context).moneyPayTotal,
             style: TextStyle(
               color: context.colors.textSecondary,
               fontSize: 13,
@@ -400,8 +403,8 @@ class _AmountCard extends StatelessWidget {
           FittedBox(
             child: Text(
               'R\$ ${total.toStringAsFixed(2).replaceAll('.', ',')}',
-              style: const TextStyle(
-                color: AppColors.braweBlue,
+              style: TextStyle(
+                color: context.colors.accentPrimary,
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
@@ -459,13 +462,13 @@ class _QrCodeCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 12),
-          const Row(
+          Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(LucideIcons.scanLine, size: 14, color: Colors.black45),
               SizedBox(width: 6),
               Text(
-                'Escaneie com o app do seu banco',
+                S.of(context).moneyPayScanHint,
                 style: TextStyle(
                   color: Colors.black54,
                   fontSize: 12,
@@ -536,7 +539,7 @@ class _CopyPasteField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ou copie o código Pix',
+          S.of(context).moneyPayCopyTitle,
           style: TextStyle(
             color: context.colors.textSecondary,
             fontSize: 12,
@@ -571,17 +574,17 @@ class _CopyPasteField extends StatelessWidget {
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: copied
-                        ? const Icon(
+                        ? Icon(
                             LucideIcons.checkCheck,
                             key: ValueKey('copied'),
                             size: 20,
-                            color: AppColors.success,
+                            color: context.colors.success,
                           )
-                        : const Icon(
+                        : Icon(
                             LucideIcons.copy,
                             key: ValueKey('copy'),
                             size: 20,
-                            color: AppColors.braweBlue,
+                            color: context.colors.accentPrimary,
                           ),
                   ),
                 ],
@@ -600,14 +603,14 @@ class _ExpirationChip extends StatelessWidget {
   final String isoExpiresAt;
   const _ExpirationChip({required this.isoExpiresAt});
 
-  String get _formatted {
+  String _formatted(BuildContext context) {
     try {
       final dt = DateTime.parse(isoExpiresAt).toLocal();
       final h = dt.hour.toString().padLeft(2, '0');
       final m = dt.minute.toString().padLeft(2, '0');
       return '$h:$m';
     } catch (_) {
-      return 'em breve';
+      return S.of(context).moneyPaySoon;
     }
   }
 
@@ -624,7 +627,7 @@ class _ExpirationChip extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            'Válido até $_formatted',
+            S.of(context).moneyPayValidUntil(_formatted(context)),
             style: TextStyle(
               color: context.colors.textSecondary,
               fontSize: 12,
@@ -641,11 +644,11 @@ class _ExpirationChip extends StatelessWidget {
 class _InstructionsCard extends StatelessWidget {
   const _InstructionsCard();
 
-  static const _steps = [
-    'Abra o app do seu banco ou carteira Pix',
-    'Escaneie o QR Code ou cole o código copiado',
-    'Confirme o pagamento',
-    'Seu pedido é liberado automaticamente',
+  List<String> _steps(BuildContext context) => [
+    S.of(context).moneyPayStep1,
+    S.of(context).moneyPayStep2,
+    S.of(context).moneyPayStep3,
+    S.of(context).moneyPayStep4,
   ];
 
   @override
@@ -660,7 +663,7 @@ class _InstructionsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Como pagar',
+            S.of(context).moneyPayHowTo,
             style: TextStyle(
               color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -668,9 +671,11 @@ class _InstructionsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          for (var i = 0; i < _steps.length; i++)
+          for (var i = 0; i < _steps(context).length; i++)
             Padding(
-              padding: EdgeInsets.only(bottom: i == _steps.length - 1 ? 0 : 10),
+              padding: EdgeInsets.only(
+                bottom: i == _steps(context).length - 1 ? 0 : 10,
+              ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -678,8 +683,8 @@ class _InstructionsCard extends StatelessWidget {
                     width: 22,
                     height: 22,
                     margin: const EdgeInsets.only(top: 1),
-                    decoration: const BoxDecoration(
-                      color: AppColors.braweBlue,
+                    decoration: BoxDecoration(
+                      color: context.colors.accentPrimary,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -695,7 +700,7 @@ class _InstructionsCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _steps[i],
+                      _steps(context)[i],
                       style: TextStyle(
                         color: context.colors.textSecondary,
                         fontSize: 13,
@@ -727,13 +732,13 @@ class _PollingIndicator extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation(
-                AppColors.braweBlue.withValues(alpha: 0.5),
+                context.colors.accentPrimary.withValues(alpha: 0.5),
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Verificando pagamento...',
+            S.of(context).moneyPayChecking,
             style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
           ),
         ],
@@ -756,18 +761,18 @@ class _PaidConfirmation extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.12),
+              color: context.colors.success.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              LucideIcons.checkCircle2,
-              color: AppColors.success,
+            child: Icon(
+              LucideIcons.circleCheck,
+              color: context.colors.success,
               size: 36,
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            'Pagamento confirmado!',
+            S.of(context).moneyPayConfirmed,
             style: TextStyle(
               color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -776,7 +781,7 @@ class _PaidConfirmation extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Redirecionando para o seu pedido...',
+            S.of(context).moneyPayRedirecting,
             style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
           ),
         ],

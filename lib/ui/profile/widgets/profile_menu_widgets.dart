@@ -129,7 +129,7 @@ class ProfileMenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final fg = destructive ? const Color(0xFFEF4444) : colors.textPrimary;
+    final fg = destructive ? colors.danger : colors.textPrimary;
     return InkWell(
       onTap: onTap,
       child: Padding(

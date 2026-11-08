@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../data/repositories/gallery_repository.dart';
@@ -12,6 +13,7 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../view_models/gallery_view_model.dart';
+import 'profile_videos_grid.dart' show ProfileEmptyState;
 import '../../../core/network/media_headers.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
@@ -46,12 +48,12 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
     final asyncData = ref.watch(galleryViewModelProvider(widget.userId));
 
     return RefreshIndicator(
-      color: AppColors.braweBlue,
+      color: context.colors.accentPrimary,
       onRefresh: () =>
           ref.read(galleryViewModelProvider(widget.userId).notifier).refresh(),
       child: asyncData.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.braweBlue),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: context.colors.accentPrimary),
         ),
         error: (_, _) => ListView(
           children: [
@@ -70,7 +72,8 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
               color: context.colors.background,
               child: TabBar(
                 controller: _tab,
-                indicatorColor: AppColors.braweBlue,
+                indicatorColor: context.colors.textPrimary,
+                dividerColor: context.colors.divider,
                 labelColor: context.colors.textPrimary,
                 unselectedLabelColor: context.colors.textSecondary,
                 tabs: [
@@ -157,8 +160,8 @@ class _ProfileGalleryGridState extends ConsumerState<ProfileGalleryGrid>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.braweBlue),
+      builder: (ctx) => Center(
+        child: CircularProgressIndicator(color: ctx.colors.accentPrimary),
       ),
     );
   }
@@ -190,31 +193,9 @@ class _MediaGrid extends ConsumerWidget {
     final tileCount = items.length + (showAdd ? 1 : 0);
 
     if (tileCount == 0) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          const SizedBox(height: 80),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.image_outlined,
-                    size: 48,
-                    color: context.colors.textTertiary,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    S.of(context).profileGalleryEmpty,
-                    style: TextStyle(color: context.colors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      return ProfileEmptyState(
+        icon: LucideIcons.images,
+        title: S.of(context).profileGalleryEmpty,
       );
     }
 
@@ -252,7 +233,7 @@ class _AddTile extends StatelessWidget {
         ),
         child: Center(
           child: Icon(
-            Icons.add_a_photo_outlined,
+            LucideIcons.imagePlus,
             color: context.colors.textSecondary,
             size: 32,
           ),
@@ -301,7 +282,7 @@ class _MediaTile extends ConsumerWidget {
             errorWidget: (_, _, _) => Container(
               color: context.colors.surfaceHighest,
               child: Icon(
-                Icons.broken_image,
+                LucideIcons.imageOff,
                 color: context.colors.textTertiary,
               ),
             ),
@@ -311,7 +292,7 @@ class _MediaTile extends ConsumerWidget {
               right: 6,
               top: 6,
               child: Icon(
-                Icons.play_circle_filled,
+                LucideIcons.circlePlay,
                 color: Colors.white,
                 size: 22,
               ),
@@ -329,14 +310,15 @@ class _MediaTile extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.favorite, color: Colors.white, size: 12),
+                    const Icon(
+                      LucideIcons.heart,
+                      color: Colors.white,
+                      size: 12,
+                    ),
                     const SizedBox(width: 3),
                     Text(
                       media.likesCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ],
                 ),
@@ -461,16 +443,16 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
         child: isVideo
             ? (_chewie != null
                   ? Chewie(controller: _chewie!)
-                  : const CircularProgressIndicator(
-                      color: AppColors.braweBlue,
+                  : CircularProgressIndicator(
+                      color: context.colors.accentPrimary,
                     ))
             : InteractiveViewer(
                 child: CachedNetworkImage(
                   memCacheWidth: context.decodeScreenPx,
                   imageUrl: m.url,
                   fit: BoxFit.contain,
-                  placeholder: (_, _) => const CircularProgressIndicator(
-                    color: AppColors.braweBlue,
+                  placeholder: (_, _) => CircularProgressIndicator(
+                    color: context.colors.accentPrimary,
                   ),
                 ),
               ),
@@ -489,8 +471,8 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
                   setState(() {});
                 },
                 icon: Icon(
-                  m.isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: m.isLiked ? Colors.redAccent : Colors.white,
+                  LucideIcons.heart,
+                  color: m.isLiked ? context.colors.danger : Colors.white,
                 ),
               ),
               Text(
@@ -498,7 +480,7 @@ class _MediaViewerState extends ConsumerState<_MediaViewer> {
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.remove_red_eye, color: Colors.white54, size: 18),
+              const Icon(LucideIcons.eye, color: Colors.white54, size: 18),
               const SizedBox(width: 4),
               Text(
                 '${m.viewsCount}',

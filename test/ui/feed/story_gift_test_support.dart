@@ -1,3 +1,4 @@
+import 'package:brawe_app/data/services/iap_service.dart';
 import 'package:brawe_app/data/repositories/gift_repository.dart';
 import 'package:brawe_app/data/repositories/stories_repository.dart';
 import 'package:brawe_app/domain/models/gift.dart';
@@ -103,6 +104,8 @@ List<Override> giftOverrides({
   giftCatalogViewModelProvider.overrideWith(FakeCatalog.new),
   creditsViewModelProvider.overrideWith(() => FakeCredits(balance)),
   giftRepositoryProvider.overrideWithValue(repo),
+  // sem loja de verdade no teste: venda de Coins fechada (não abre conexão com Apple/Google)
+  coinPurchaseOpenProvider.overrideWithValue(false),
 ];
 
 /// App mínimo com tema real (claro/escuro), l10n pt e escala de texto.

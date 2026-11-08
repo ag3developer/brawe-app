@@ -599,7 +599,7 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
               ),
               ListTile(
                 leading: Icon(
-                  Icons.share_outlined,
+                  LucideIcons.send,
                   color: context.colors.textPrimary,
                 ),
                 title: Text(

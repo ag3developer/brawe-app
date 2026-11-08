@@ -35,6 +35,27 @@ class PostComment {
   /// GIF (GIPHY) do comentário; `content` pode ser vazio quando há GIF.
   final GifAttachment? gif;
 
+  PostComment copyWith({
+    int? likesCount,
+    bool? userLiked,
+    List<PostComment>? replies,
+  }) => PostComment(
+    id: id,
+    postId: postId,
+    authorId: authorId,
+    authorName: authorName,
+    authorUsername: authorUsername,
+    authorAvatarUrl: authorAvatarUrl,
+    authorIsVerified: authorIsVerified,
+    content: content,
+    likesCount: likesCount ?? this.likesCount,
+    userLiked: userLiked ?? this.userLiked,
+    createdAt: createdAt,
+    parentId: parentId,
+    replies: replies ?? this.replies,
+    gif: gif,
+  );
+
   String get timeAgo {
     final diff = DateTime.now().difference(createdAt);
     if (diff.inSeconds < 60) return '${diff.inSeconds}s';

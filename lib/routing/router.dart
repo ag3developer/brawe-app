@@ -397,12 +397,33 @@ GoRouter router(Ref ref) {
           },
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            extendBody: false,
+            // Barra flutuante: no Feed o conteúdo passa por trás do vidro (a lista tem folga no fim);
+            // nas demais abas a altura fica reservada, então nada muda nelas.
+            extendBody: state.uri.path.startsWith('/feed'),
             resizeToAvoidBottomInset: false,
             // O indicador de envio de vídeo vive no nível do app
             // (MaterialApp.builder em main.dart), visível em qualquer tela.
-            body: child,
-            bottomNavigationBar: const HomeBottomNav(),
+            body: NotificationListener<ScrollUpdateNotification>(
+              // rolar para baixo compacta a barra; subir expande (qualquer lista vertical)
+              onNotification: (n) {
+                if (n.metrics.axis == Axis.vertical && n.scrollDelta != null && n.dragDetails != null) {
+                  ref.read(navCompactProvider.notifier).onScroll(n.scrollDelta!, n.metrics.pixels);
+                }
+                return false;
+              },
+              child: child,
+            ),
+            // Barra só onde se navega; telas de tarefa (ajustes, formulários, painéis) ficam sem ela.
+            // Se a tela foi aberta sem ter para onde voltar, a barra fica (ninguém fica preso).
+            bottomNavigationBar: ValueListenableBuilder<bool>(
+              // comentários abertos no Para você: a barra sai (como no TikTok)
+              valueListenable: navHiddenByMedia,
+              builder: (context, hiddenByMedia, _) => hiddenByMedia ||
+                      HomeBottomNav.fullscreenMedia(state.uri.path) ||
+                      (HomeBottomNav.hiddenOn(state.uri.path) && GoRouter.of(context).canPop())
+                  ? const SizedBox.shrink()
+                  : HomeBottomNav(location: state.uri.path),
+            ),
           ),
         ),
         routes: [

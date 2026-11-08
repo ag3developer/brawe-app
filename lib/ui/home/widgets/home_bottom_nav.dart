@@ -1,7 +1,9 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -17,164 +19,297 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 
+/// Comentários abertos no Para você: a barra sai e o painel vai até a borda (como no TikTok).
+final ValueNotifier<bool> navHiddenByMedia = ValueNotifier<bool>(false);
+
+/// Rolando para baixo em qualquer aba a barra compacta; subindo, volta (o ShellRoute avisa).
+final navCompactProvider = NotifierProvider<NavCompact, bool>(NavCompact.new);
+
+class NavCompact extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  double _acc = 0;
+
+  /// Recebe o quanto a lista andou (positivo = para baixo) e a posição atual.
+  void onScroll(double delta, double pixels) {
+    if (pixels < 40) {
+      _acc = 0;
+      if (state) state = false;
+      return;
+    }
+    _acc = (delta.sign == _acc.sign) ? _acc + delta : delta;
+    if (_acc > 24 && !state) state = true;
+    if (_acc < -18 && state) state = false;
+  }
+
+  void expand() {
+    _acc = 0;
+    if (state) state = false;
+  }
+}
+
+/// Barra de navegação flutuante (cápsula de vidro, só ícones), no estilo do iOS 26.
+/// - iOS: vidro com desfoque. Android: sem desfoque (pesa em aparelhos simples), superfície quase opaca.
+/// - Compacta ao rolar para baixo; na tela Para você (vídeo) fica sempre compacta e escura.
+/// - A altura reservada é sempre a mesma: compactar não faz as telas "pularem".
 class HomeBottomNav extends ConsumerStatefulWidget {
-  const HomeBottomNav({super.key});
+  const HomeBottomNav({super.key, required this.location});
+
+  /// Rota atual (para saber a aba ativa).
+  final String location;
+
+  /// Altura reservada pela barra (sem a área segura do aparelho).
+  static const double reservedHeight = 72;
+
+  /// Telas de tarefa (ajustes, formulários, painéis, comentários): sem a barra, como no Instagram.
+  static bool hiddenOn(String path) {
+    const prefixes = [
+      '/settings',
+      '/edit-profile',
+      '/artist-profile',
+      '/business-profile',
+      '/wallet',
+      '/creator',
+      '/admin',
+      '/sounds',
+      '/scan-qr',
+    ];
+    if (prefixes.any(path.startsWith)) return true;
+    return RegExp(r'^/post/[^/]+/(comments|likes|video)').hasMatch(path);
+  }
+
+  /// Mídia em tela cheia (vídeo do post): NUNCA mostra a barra, nem quando a
+  /// tela foi aberta sem ter para onde voltar (só a aba Para você mostra).
+  static bool fullscreenMedia(String path) =>
+      RegExp(r'^/post/[^/]+/video').hasMatch(path);
 
   @override
   ConsumerState<HomeBottomNav> createState() => _HomeBottomNavState();
 }
 
 class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
-  int _selected = 0;
+  static final bool _glass =
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 
-  List<_NavDestination> _buildDestinations(S s) => [
-    _NavDestination(icon: Icons.home_filled, label: s.navHome, route: '/home'),
-    _NavDestination(icon: Icons.newspaper, label: s.navFeed, route: '/feed'),
-    _NavDestination(
-      icon: Icons.chat_bubble_outline,
-      label: s.navChat,
-      route: '/chat',
-    ),
-    _NavDestination(
-      icon: Icons.person_outline,
-      label: s.navProfile,
-      route: null,
-    ),
-  ];
-
-  void _onTap(int index, String? route, String? userId) {
-    setState(() => _selected = index);
-    if (route == null && userId != null) {
-      context.go('/profile/$userId');
-    } else if (route != null) {
-      context.go(route);
+  @override
+  void didUpdateWidget(covariant HomeBottomNav old) {
+    super.didUpdateWidget(old);
+    if (old.location != widget.location) {
+      // trocou de tela: a barra volta ao tamanho normal
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(navCompactProvider.notifier).expand();
+      });
     }
+  }
+
+  int _activeIndex(String? myId) {
+    final p = widget.location;
+    if (p.startsWith('/home')) return 0;
+    if (p.startsWith('/feed')) return 1;
+    if (p.startsWith('/chat')) return 2;
+    if (myId != null && p.startsWith('/profile/$myId')) return 3;
+    return -1;
+  }
+
+  void _go(String route) {
+    HapticFeedback.selectionClick();
+    ref.read(navCompactProvider.notifier).expand();
+    context.go(route);
   }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).value;
-    final colors = context.colors;
     final s = S.of(context);
-    final destinations = _buildDestinations(s);
     final unreadChats = ref.watch(unreadChatsProvider).length;
+    final onVideo = widget.location.startsWith('/home');
+    final compact = onVideo || ref.watch(navCompactProvider);
+    final active = _activeIndex(user?.id);
+    final colors = context.colors;
+    final dark = onVideo || Theme.of(context).brightness == Brightness.dark;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final dur = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 380);
+    const curve = Curves.easeOutCubic;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final iconColor = dark ? Colors.white : colors.textPrimary;
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).padding.bottom,
-          ),
-          decoration: BoxDecoration(
-            color: colors.surface.withValues(alpha: 0.75),
-            border: Border(top: BorderSide(color: colors.divider)),
-          ),
-          child: SizedBox(
-            height: 56,
-            child: Row(
-              children: List.generate(destinations.length + 1, (i) {
-                // índice 2 = botão + central
-                if (i == 2) {
-                  return Expanded(
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () => _showCreateOptions(context),
-                        child: Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                colors.accentPrimary,
-                                colors.accentSecondary,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: colors.accentPrimary.withValues(
-                                  alpha: 0.4,
-                                ),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.add,
-                            color: colors.textOnAccent,
-                            size: 26,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }
+    // cor do vidro (iOS) ou da superfície (Android)
+    final fill = _glass
+        ? (dark
+              ? Colors.black.withValues(alpha: 0.45)
+              : Colors.white.withValues(alpha: 0.62))
+        : (dark
+              ? const Color(0xF0181B22)
+              : colors.surface.withValues(alpha: 0.97));
+    final edge = dark
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.85);
 
-                // índices 0,1 → destinations[0,1]; 3,4,5 → destinations[2,3,4]
-                final destIdx = i < 2 ? i : i - 1;
-                final dest = destinations[destIdx];
-                final isSelected = _selected == destIdx;
-
-                // Profile tab: show avatar instead of icon
-                final isProfile = dest.route == null;
-
-                return Expanded(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _onTap(destIdx, dest.route, user?.id),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (isProfile)
-                          _AvatarIcon(
-                            avatarUrl: user?.avatarUrl,
-                            isSelected: isSelected,
-                            accentColor: colors.accentPrimary,
-                          )
-                        else if (dest.route == '/chat')
-                          UnreadBadge(
-                            count: unreadChats,
-                            semanticsLabel: s.navChatUnreadSemantics(
-                              unreadChats,
-                            ),
-                            child: Icon(
-                              dest.icon,
-                              color: isSelected
-                                  ? colors.accentPrimary
-                                  : colors.textSecondary,
-                              size: 24,
-                            ),
-                          )
-                        else
-                          Icon(
-                            dest.icon,
-                            color: isSelected
-                                ? colors.accentPrimary
-                                : colors.textSecondary,
-                            size: 24,
-                          ),
-                        const SizedBox(height: 2),
-                        Text(
-                          dest.label,
-                          style: TextStyle(
-                            color: isSelected
-                                ? colors.accentPrimary
-                                : colors.textSecondary,
-                            fontSize: 10,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+    Widget item({
+      required int index,
+      required String label,
+      required Widget icon,
+      required VoidCallback onTap,
+    }) {
+      final on = index == active;
+      return Semantics(
+        button: true,
+        selected: on,
+        label: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: dur,
+            curve: curve,
+            width: compact ? 44 : 54,
+            height: compact ? 40 : 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: on
+                  ? iconColor.withValues(alpha: dark ? 0.16 : 0.08)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: AnimatedScale(
+              scale: compact ? 0.88 : 1,
+              duration: dur,
+              curve: curve,
+              child: icon,
             ),
           ),
+        ),
+      );
+    }
+
+    Icon ic(IconData d, int index) => Icon(
+      d,
+      size: 25,
+      color: index == active ? iconColor : iconColor.withValues(alpha: 0.72),
+    );
+
+    final pill = AnimatedContainer(
+      duration: dur,
+      curve: curve,
+      width: compact
+          ? 236
+          : MediaQuery.sizeOf(context).width.clamp(0, 520) - 36,
+      height: compact ? 52 : 64,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 10),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: edge, width: 0.6),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: dark ? 0.45 : 0.14),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          item(
+            index: 0,
+            label: s.navHome,
+            icon: ic(LucideIcons.house, 0),
+            onTap: () => _go('/home'),
+          ),
+          item(
+            index: 1,
+            label: s.navFeed,
+            icon: ic(LucideIcons.newspaper, 1),
+            onTap: () => _go('/feed'),
+          ),
+          // Criar: azul, no meio
+          Semantics(
+            button: true,
+            label: s.navCreate,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.mediumImpact();
+                _showCreateOptions(context);
+              },
+              child: AnimatedContainer(
+                duration: dur,
+                curve: curve,
+                width: compact ? 44 : 52,
+                height: compact ? 36 : 42,
+                decoration: BoxDecoration(
+                  color: colors.accentPrimary,
+                  borderRadius: BorderRadius.circular(compact ? 14 : 16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.accentPrimary.withValues(alpha: 0.4),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  LucideIcons.plus,
+                  color: colors.textOnAccent,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+          item(
+            index: 2,
+            label: s.navChatUnreadSemantics(unreadChats),
+            icon: UnreadBadge(
+              count: unreadChats,
+              semanticsLabel: s.navChatUnreadSemantics(unreadChats),
+              child: ic(LucideIcons.messageCircle, 2),
+            ),
+            onTap: () => _go('/chat'),
+          ),
+          item(
+            index: 3,
+            label: s.navProfile,
+            icon: _AvatarIcon(
+              avatarUrl: user?.avatarUrl,
+              isSelected: active == 3,
+              accentColor: iconColor,
+            ),
+            onTap: () {
+              if (user?.id != null) _go('/profile/${user!.id}');
+            },
+          ),
+        ],
+      ),
+    );
+
+    // No Feed o conteúdo passa por trás (extendBody): faixa transparente.
+    // Nas outras telas a faixa reservada pinta a cor da página (antes ficava preta atrás do vidro).
+    final stripColor = widget.location.startsWith('/feed')
+        ? Colors.transparent
+        : (onVideo ? Colors.black : colors.background);
+    return Container(
+      color: stripColor,
+      // altura sempre igual (a cápsula anima por dentro): as telas não mudam de tamanho
+      height: HomeBottomNav.reservedHeight + bottomInset,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: bottomInset > 0 ? bottomInset - 6 : 6,
+          ),
+          child: _glass
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                    child: pill,
+                  ),
+                )
+              : pill,
         ),
       ),
     );
@@ -471,17 +606,6 @@ class _OverlayItem extends StatelessWidget {
   }
 }
 
-class _NavDestination {
-  const _NavDestination({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
-  final IconData icon;
-  final String label;
-  final String? route;
-}
-
 class _AvatarIcon extends StatelessWidget {
   const _AvatarIcon({
     required this.avatarUrl,
@@ -509,7 +633,7 @@ class _AvatarIcon extends StatelessWidget {
       child: ClipOval(
         child: avatarUrl != null && avatarUrl!.isNotEmpty
             ? CachedNetworkImage(
-              memCacheWidth: context.decodePx(48),
+                memCacheWidth: context.decodePx(48),
                 imageUrl: avatarUrl!,
                 fit: BoxFit.cover,
                 placeholder: (_, _) => _fallback(context),

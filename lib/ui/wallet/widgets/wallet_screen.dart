@@ -1,27 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../config/feature_flags.dart';
 import '../../../data/services/iap_service.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/grouped_list.dart';
 import '../../core/widgets/brawe_coin.dart';
 import '../view_models/wallet_view_model.dart';
 import 'earnings_screen.dart';
 import 'gifters_section.dart';
 import 'top_up_coins_sheet.dart';
 
+/// Carteira no padrão de lista agrupada: saldo em destaque, ações em linhas,
+/// histórico social e explicação curta em cartões.
 class WalletScreen extends ConsumerWidget {
   const WalletScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
+    final c = context.colors;
     final async = ref.watch(walletViewModelProvider);
+    // Compra de moedas pela loja do aparelho (Apple/Google): só com a venda ligada no admin
+    // (pacotes e preços vêm da loja, ver TopUpCoinsSheet).
+    final canBuy =
+        kCoinPurchaseEnabled &&
+        (ref.watch(iapCatalogProvider).value?.enabled ?? false);
 
     return Scaffold(
-      appBar: AppBar(title: Text(s.walletTitle), leading: const BackButton()),
+      backgroundColor: c.background,
+      appBar: AppBar(
+        backgroundColor: c.background,
+        surfaceTintColor: Colors.transparent,
+        title: Text(s.walletTitle),
+        leading: const BackButton(),
+      ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => _ErrorView(
@@ -29,138 +45,148 @@ class WalletScreen extends ConsumerWidget {
         ),
         data: (wallet) => RefreshIndicator(
           onRefresh: () => ref.read(walletViewModelProvider.notifier).refresh(),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
+          child: GroupedBody(
             children: [
               _BalanceCard(wallet: wallet),
-              const SizedBox(height: 16),
-              const _QuickActionsRow(),
-              const SizedBox(height: 24),
-              // Compra de moedas pela loja do aparelho: só com a venda ligada no admin
-              // (os pacotes e preços vêm da loja, ver TopUpCoinsSheet).
-              if (kCoinPurchaseEnabled && (ref.watch(iapCatalogProvider).value?.enabled ?? false)) ...[
-                _SectionHeader(
-                  title: s.walletSectionBuyTitle,
-                  subtitle: s.walletSectionBuySubtitle,
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton.icon(
-                    onPressed: () => TopUpCoinsSheet.show(context),
-                    icon: const BraweCoin(size: 18),
-                    label: Text(s.walletSectionBuyTitle),
+              const SizedBox(height: 22),
+              GroupedSection(
+                children: [
+                  if (canBuy)
+                    GroupedRow(
+                      icon: LucideIcons.coins,
+                      title: s.walletSectionBuyTitle,
+                      subtitle: s.walletSectionBuySubtitle,
+                      onTap: () => TopUpCoinsSheet.show(context),
+                    ),
+                  // Nota: compra de coins é via IAP (Google Play / App Store),
+                  // por isso não há atalho de "adicionar cartão".
+                  GroupedRow(
+                    icon: LucideIcons.history,
+                    title: s.walletActionStatement,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const EarningsScreen()),
+                    ),
+                  ),
+                  GroupedRow(
+                    icon: LucideIcons.send,
+                    title: s.walletActionSend,
+                    value: s.walletComingSoon,
+                    onTap: () => ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(s.walletComingSoon))),
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 7),
+                child: Text(
+                  s.walletSectionHistoryTitle.toUpperCase(),
+                  style: TextStyle(
+                    color: c.textTertiary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-              _SectionHeader(
-                title: s.walletSectionHistoryTitle,
-                subtitle: s.walletSectionHistorySubtitle,
               ),
-              const SizedBox(height: 12),
               const GiftersSection(),
-              const SizedBox(height: 20),
-              const _InfoCard(),
+              const SizedBox(height: 22),
+              GroupedSection(
+                caption: s.walletInfoTitle,
+                children: [
+                  GroupedRow(
+                    icon: LucideIcons.zap,
+                    title: s.walletInfoQuestsTitle,
+                    subtitle: s.walletInfoQuestsBody,
+                  ),
+                  GroupedRow(
+                    icon: LucideIcons.gift,
+                    title: s.walletInfoGiftsTitle,
+                    subtitle: s.walletInfoGiftsBody,
+                  ),
+                  GroupedRow(
+                    icon: LucideIcons.shoppingBag,
+                    title: s.walletInfoUseTitle,
+                    subtitle: s.walletInfoUseBody,
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
   }
-
 }
 
+/// Saldo em destaque: cartão limpo, número grande, número da conta como legenda.
 class _BalanceCard extends StatelessWidget {
   final Wallet wallet;
   const _BalanceCard({required this.wallet});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.colors;
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.braweBlue, AppColors.braweSky],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.account_balance_wallet_outlined,
-                color: Colors.white,
-                size: 22,
-              ),
+              Icon(LucideIcons.wallet, color: c.textSecondary, size: 16),
               const SizedBox(width: 8),
               Text(
                 S.of(context).walletAvailableBalance,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
+                  color: c.textSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
+              const Spacer(),
+              if (wallet.accountNumber != null) ...[
+                Icon(LucideIcons.hash, color: c.textTertiary, size: 12),
+                const SizedBox(width: 2),
+                Text(
+                  wallet.accountNumber!,
+                  style: TextStyle(color: c.textTertiary, fontSize: 12),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const BraweCoin(size: 40, glow: true),
+              const BraweCoin(size: 34, glow: true),
               const SizedBox(width: 10),
               Text(
                 _format(wallet.balance),
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 38,
+                  color: c.textPrimary,
+                  fontSize: 36,
                   fontWeight: FontWeight.w800,
                   height: 1,
                 ),
               ),
               const SizedBox(width: 8),
               Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(top: 12),
                 child: Text(
                   S.of(context).walletCoins,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: c.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          if (wallet.accountNumber != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.tag, color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    wallet.accountNumber!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -178,102 +204,6 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  const _SectionHeader({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: scheme.onSurface.withValues(alpha: 0.7),
-            fontSize: 13,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context);
-    final items = <(IconData, String, String)>[
-      (Icons.bolt_outlined, s.walletInfoQuestsTitle, s.walletInfoQuestsBody),
-      (
-        Icons.card_giftcard_outlined,
-        s.walletInfoGiftsTitle,
-        s.walletInfoGiftsBody,
-      ),
-      (Icons.shopping_bag_outlined, s.walletInfoUseTitle, s.walletInfoUseBody),
-    ];
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            s.walletInfoTitle,
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-          ),
-          const SizedBox(height: 12),
-          ...items.map(
-            (it) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(it.$1, color: AppColors.braweBlue, size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          it.$2,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          it.$3,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: scheme.onSurface.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ErrorView extends StatelessWidget {
   final VoidCallback onRetry;
   const _ErrorView({required this.onRetry});
@@ -285,7 +215,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 40),
+          Icon(
+            LucideIcons.circleAlert,
+            size: 40,
+            color: context.colors.textTertiary,
+          ),
           const SizedBox(height: 12),
           Text(s.walletLoadError),
           const SizedBox(height: 12),
@@ -295,92 +229,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Quick actions row
-// ---------------------------------------------------------------------------
-class _QuickActionsRow extends StatelessWidget {
-  const _QuickActionsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    // Nota: compra de coins é via IAP (Google Play / App Store), por isso
-    // não há atalho de "adicionar cartão" — o método de pagamento é
-    // gerenciado pela loja do dispositivo.
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.send,
-            label: s.walletActionSend,
-            onTap: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(s.walletComingSoon)));
-            },
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActionButton(
-            icon: Icons.history,
-            label: s.walletActionStatement,
-            onTap: () {
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const EarningsScreen()));
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: AppColors.braweBlue, size: 22),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// NOTE: legacy `_TransactionsList` / `_TransactionTile` removidos — substituídos
-// pelo `GiftersSection` (lista social agrupada por pessoa).

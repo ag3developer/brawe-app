@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:brawe_app/data/services/iap_service.dart';
@@ -143,9 +144,9 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
           );
         } else {
           // Compra de moedas ainda não existe: só avisa o saldo.
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(content: Text(s.topUpReasonGift)),
-          );
+          ScaffoldMessenger.maybeOf(
+            context,
+          )?.showSnackBar(SnackBar(content: Text(s.topUpReasonGift)));
         }
         return;
       }
@@ -201,7 +202,8 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
         SnackBar(
           content: Text(message),
           backgroundColor: Colors.red.shade700,
-          action: ref.read(coinPurchaseOpenProvider) &&
+          action:
+              ref.read(coinPurchaseOpenProvider) &&
                   sendNotifier.lastErrorIsBalance &&
                   gift.isMonetary
               ? SnackBarAction(
@@ -224,7 +226,9 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
   Widget build(BuildContext context) {
     final s = S.of(context);
     final catalogState = ref.watch(giftCatalogViewModelProvider);
-    ref.watch(coinPurchaseOpenProvider); // mantém o catálogo da loja carregado enquanto aberto
+    ref.watch(
+      coinPurchaseOpenProvider,
+    ); // mantém o catálogo da loja carregado enquanto aberto
     final sendState = ref.watch(sendGiftViewModelProvider);
 
     return Container(
@@ -334,7 +338,9 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
           );
           if (pick != null) {
             _selectedGift = pick;
-            final i = tiers.indexWhere((t) => t.gifts.any((g) => g.id == pick.id));
+            final i = tiers.indexWhere(
+              (t) => t.gifts.any((g) => g.id == pick.id),
+            );
             if (i >= 0) {
               initialIndex = i;
               // Controller já criado (saldo chegou depois): move a aba.
@@ -403,7 +409,13 @@ class _GiftsOverlayState extends ConsumerState<GiftsOverlay>
                       // Localizado via GiftTierNames — "free" vira
                       // "COFRE" (PT) / "VAULT" (EN) / "BÓVEDA" (ES). UPPER
                       // pra manter o estilo TikTok dos tabs da live.
-                      (t) => Tab(text: GiftTierNames.label(context, t.name, t.names).toUpperCase()),
+                      (t) => Tab(
+                        text: GiftTierNames.label(
+                          context,
+                          t.name,
+                          t.names,
+                        ).toUpperCase(),
+                      ),
                     )
                     .toList(),
               ),
@@ -487,64 +499,64 @@ class _GamerLevelHeader extends ConsumerWidget {
             behavior: HitTestBehavior.opaque,
             onTap: openLevelScreen,
             child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.braweSpark, AppColors.braweEmber],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.braweEmber.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      spreadRadius: -1,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [AppColors.braweSpark, AppColors.braweEmber],
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.braweEmber.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        spreadRadius: -1,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(2),
+                  child: ClipOval(
+                    child:
+                        (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty)
+                        ? Image.network(
+                            cacheWidth: context.decodePx(44),
+                            user.avatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _avatarFallback(user),
+                          )
+                        : _avatarFallback(user),
+                  ),
                 ),
-                padding: const EdgeInsets.all(2),
-                child: ClipOval(
-                  child:
-                      (user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty)
-                      ? Image.network(
-                        cacheWidth: context.decodePx(44),
-                          user.avatarUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _avatarFallback(user),
-                        )
-                      : _avatarFallback(user),
-                ),
-              ),
-              // Selo de nível: mesmo chip do chat (cápsula na cor da faixa +
-              // emblema + número), centralizado na base do avatar.
-              Positioned(
-                left: -12,
-                right: -12,
-                bottom: -7,
-                child: Center(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(
-                        color: const Color(0xFF0A1230),
-                        width: 1.5,
+                // Selo de nível: mesmo chip do chat (cápsula na cor da faixa +
+                // emblema + número), centralizado na base do avatar.
+                Positioned(
+                  left: -12,
+                  right: -12,
+                  bottom: -7,
+                  child: Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(
+                          color: const Color(0xFF0A1230),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: LevelChip(
+                        level: level,
+                        badge: badgeEmoji,
+                        colorHex: data.badge.color,
+                        imageUrl: data.badge.imageUrl,
+                        height: 16,
                       ),
                     ),
-                    child: LevelChip(
-                      level: level,
-                      badge: badgeEmoji,
-                      colorHex: data.badge.color,
-                      imageUrl: data.badge.imageUrl,
-                      height: 16,
-                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -553,8 +565,8 @@ class _GamerLevelHeader extends ConsumerWidget {
               children: [
                 Text(
                   next == null
-                      ? 'Nível máximo alcançado 👑'
-                      : 'Mais ${fmtThousands(missing)} XP para subir de nível',
+                      ? S.of(context).livexLevelMax
+                      : S.of(context).livexXpToNext(fmtThousands(missing)),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12.5,
@@ -590,7 +602,7 @@ class _GamerLevelHeader extends ConsumerWidget {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right, color: Colors.white60),
+            icon: const Icon(LucideIcons.chevronRight, color: Colors.white60),
             onPressed: openLevelScreen,
             tooltip: S.of(context).gifterLevelSeeLevels,
           ),
@@ -832,7 +844,7 @@ class _BalanceFooter extends ConsumerWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.add,
+                        LucideIcons.plus,
                         color: Colors.white,
                         size: 14,
                       ),
@@ -978,5 +990,5 @@ class _GiftIcon extends StatelessWidget {
   }
 
   Widget _fallback() =>
-      Icon(Icons.card_giftcard, color: Colors.white54, size: size * 0.8);
+      Icon(LucideIcons.gift, color: Colors.white54, size: size * 0.8);
 }

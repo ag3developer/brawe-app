@@ -17,6 +17,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,7 +36,6 @@ import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
 import 'package:brawe_app/core/media/media_utils.dart';
 import '../../feed/widgets/video_fullscreen_screen.dart';
-
 
 /// Provider local para refetch ao tocar em like / repost.
 final _sharedPostDetailProvider = FutureProvider.autoDispose
@@ -184,6 +184,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
       postCaption: post.content,
       postImageUrl: post.imageUrl,
       authorName: post.author.name,
+      authorId: post.author.id,
     );
   }
 
@@ -324,13 +325,16 @@ class _SheetContent extends StatelessWidget {
                         backgroundImage:
                             (post.author.avatarUrl != null &&
                                 post.author.avatarUrl!.isNotEmpty)
-                            ? ResizeImage(NetworkImage(post.author.avatarUrl!), width: context.decodePx(44))
+                            ? ResizeImage(
+                                NetworkImage(post.author.avatarUrl!),
+                                width: context.decodePx(44),
+                              )
                             : null,
                         child:
                             (post.author.avatarUrl == null ||
                                 post.author.avatarUrl!.isEmpty)
                             ? Icon(
-                                Icons.person,
+                                LucideIcons.user,
                                 color: context.colors.textPrimary,
                                 size: 22,
                               )
@@ -358,7 +362,8 @@ class _SheetContent extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                if (post.author.isVerified) const VerifiedBadge(size: 16, gap: 4),
+                                if (post.author.isVerified)
+                                  const VerifiedBadge(size: 16, gap: 4),
                               ],
                             ),
                             if (post.author.username.isNotEmpty)
@@ -376,7 +381,7 @@ class _SheetContent extends StatelessWidget {
                     IconButton(
                       onPressed: onClose,
                       icon: Icon(
-                        Icons.close,
+                        LucideIcons.x,
                         color: context.colors.textSecondary,
                       ),
                       tooltip: s.actionClose,
@@ -392,8 +397,8 @@ class _SheetContent extends StatelessWidget {
                   hlsUrl: post.hlsUrl,
                   postId: post.id,
                   mediaType: post.mediaType,
-                  mediaAspect: post.aspectRatio ??
-                      MediaAspectCache.get(post.imageUrl),
+                  mediaAspect:
+                      post.aspectRatio ?? MediaAspectCache.get(post.imageUrl),
                 ),
 
               // ── Caption ───────────────────────────────────────────
@@ -416,13 +421,13 @@ class _SheetContent extends StatelessWidget {
                 child: Row(
                   children: [
                     _StatChip(
-                      icon: Icons.visibility_outlined,
+                      icon: LucideIcons.eye,
                       value: post.viewsCount,
                       color: context.colors.textSecondary,
                     ),
                     const SizedBox(width: 14),
                     _StatChip(
-                      icon: Icons.access_time,
+                      icon: LucideIcons.clock,
                       label: _timeAgo(context, post.createdAt),
                       color: context.colors.textSecondary,
                     ),
@@ -438,22 +443,22 @@ class _SheetContent extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _ActionButton(
-                      icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                      icon: isLiked ? LucideIcons.heart : LucideIcons.heart,
                       iconColor: isLiked
-                          ? Colors.redAccent
+                          ? context.colors.danger
                           : context.colors.textPrimary,
                       label: _compact(likes),
                       onTap: onLikeTap,
                       onLongPress: onLikeLongPress,
                     ),
                     _ActionButton(
-                      icon: Icons.mode_comment_outlined,
+                      icon: LucideIcons.messageCircle,
                       iconColor: context.colors.textPrimary,
                       label: _compact(post.commentsCount),
                       onTap: onCommentTap,
                     ),
                     _ActionButton(
-                      icon: Icons.repeat_rounded,
+                      icon: LucideIcons.repeat,
                       iconColor: isReposted
                           ? context.colors.accentPrimary
                           : context.colors.textPrimary,
@@ -461,7 +466,7 @@ class _SheetContent extends StatelessWidget {
                       onTap: onRepostTap,
                     ),
                     _ActionButton(
-                      icon: Icons.ios_share,
+                      icon: LucideIcons.send,
                       iconColor: context.colors.textPrimary,
                       label: s.actionShare,
                       onTap: onShareTap,
@@ -514,10 +519,8 @@ class _MediaBlock extends StatelessWidget {
           onOpenFull: () => Navigator.of(context, rootNavigator: true).push(
             MaterialPageRoute(
               fullscreenDialog: true,
-              builder: (_) => VideoFullscreenScreen(
-                postId: postId,
-                initialUrl: playUrl,
-              ),
+              builder: (_) =>
+                  VideoFullscreenScreen(postId: postId, initialUrl: playUrl),
             ),
           ),
         ),
@@ -534,7 +537,10 @@ class _MediaBlock extends StatelessWidget {
         errorWidget: (_, _, _) => Container(
           height: 240,
           color: context.colors.surfaceElevated,
-          child: Icon(Icons.broken_image, color: context.colors.textSecondary),
+          child: Icon(
+            LucideIcons.imageOff,
+            color: context.colors.textSecondary,
+          ),
         ),
       ),
     );
@@ -638,90 +644,94 @@ class _AutoplayVideoState extends State<_AutoplayVideo> {
       return Container(
         color: Colors.black,
         child: Icon(
-          Icons.videocam_off,
+          LucideIcons.videoOff,
           color: Colors.white.withValues(alpha: 0.6),
         ),
       );
     }
     final isPlaying = c.value.isPlaying;
-    return LayoutBuilder(builder: (context, box) {
-    final frame = box.maxHeight > 0 ? box.maxWidth / box.maxHeight : 1.0;
-    final fit = c.value.aspectRatio > frame + 0.02 ? BoxFit.contain : BoxFit.cover;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const ColoredBox(color: Colors.black),
-        GestureDetector(
-          // Toque abre em tela cheia (antes só pausava).
-          onTap: widget.onOpenFull,
-          onDoubleTap: _togglePlay,
-          child: FittedBox(
-            fit: fit,
-            child: SizedBox(
-              width: c.value.size.width,
-              height: c.value.size.height,
-              child: VideoPlayer(c),
-            ),
-          ),
-        ),
-        if (!isPlaying)
-          IgnorePointer(
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.play_arrow,
-                  color: Colors.white,
-                  size: 38,
+    return LayoutBuilder(
+      builder: (context, box) {
+        final frame = box.maxHeight > 0 ? box.maxWidth / box.maxHeight : 1.0;
+        final fit = c.value.aspectRatio > frame + 0.02
+            ? BoxFit.contain
+            : BoxFit.cover;
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            const ColoredBox(color: Colors.black),
+            GestureDetector(
+              // Toque abre em tela cheia (antes só pausava).
+              onTap: widget.onOpenFull,
+              onDoubleTap: _togglePlay,
+              child: FittedBox(
+                fit: fit,
+                child: SizedBox(
+                  width: c.value.size.width,
+                  height: c.value.size.height,
+                  child: VideoPlayer(c),
                 ),
               ),
             ),
-          ),
-        Positioned(
-          bottom: 10,
-          right: 10,
-          child: GestureDetector(
-            onTap: _toggleMute,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                shape: BoxShape.circle,
+            if (!isPlaying)
+              IgnorePointer(
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.play,
+                      color: Colors.white,
+                      size: 38,
+                    ),
+                  ),
+                ),
               ),
-              child: Icon(
-                _muted ? Icons.volume_off : Icons.volume_up,
-                color: Colors.white,
-                size: 18,
+            Positioned(
+              bottom: 10,
+              right: 10,
+              child: GestureDetector(
+                onTap: _toggleMute,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _muted ? LucideIcons.volumeX : LucideIcons.volume2,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        Positioned(
-          bottom: 10,
-          left: 10,
-          child: GestureDetector(
-            onTap: widget.onOpenFull,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.fullscreen_rounded,
-                color: Colors.white,
-                size: 18,
+            Positioned(
+              bottom: 10,
+              left: 10,
+              child: GestureDetector(
+                onTap: widget.onOpenFull,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    LucideIcons.maximize,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
-    });
   }
 }
 
@@ -807,7 +817,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.link_off, size: 42, color: context.colors.textSecondary),
+          Icon(
+            LucideIcons.link2Off,
+            size: 42,
+            color: context.colors.textSecondary,
+          ),
           const SizedBox(height: 12),
           Text(
             s.chatDetailPostUnavailable,

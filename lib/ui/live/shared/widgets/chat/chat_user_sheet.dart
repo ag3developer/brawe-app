@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../../core/themes/brawe_colors.dart';
 
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
-import '../../../../core/themes/app_colors.dart';
 import '../../../../core/themes/force_dark_theme.dart';
 import '../level_chip.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
@@ -114,7 +114,7 @@ class ChatUserSheet extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF16161D),
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(22),
         ),
         child: Column(
@@ -124,23 +124,28 @@ class ChatUserSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: context.colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 16),
             CircleAvatar(
               radius: 32,
-              backgroundColor: AppColors.braweBlue,
-              backgroundImage: hasAvatar ? ResizeImage(NetworkImage(c.avatarUrl!), width: context.decodePx(64)) : null,
+              backgroundColor: context.colors.accentPrimary,
+              backgroundImage: hasAvatar
+                  ? ResizeImage(
+                      NetworkImage(c.avatarUrl!),
+                      width: context.decodePx(64),
+                    )
+                  : null,
               child: hasAvatar
                   ? null
                   : Text(
                       c.userName.isNotEmpty
                           ? c.userName.characters.first.toUpperCase()
                           : '?',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                       ),
@@ -165,8 +170,8 @@ class ChatUserSheet extends StatelessWidget {
                     c.userName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                     ),
@@ -180,7 +185,7 @@ class ChatUserSheet extends StatelessWidget {
               Text(
                 '@${c.username}',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
+                  color: context.colors.textPrimary.withValues(alpha: 0.55),
                   fontSize: 13,
                 ),
               ),
@@ -190,8 +195,8 @@ class ChatUserSheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: _SheetButton(
-                    icon: Icons.reply_rounded,
-                    label: 'Responder',
+                    icon: LucideIcons.reply,
+                    label: S.of(context).chatDetailReply,
                     filled: true,
                     onTap: () => Navigator.pop(context, ChatUserAction.reply),
                   ),
@@ -200,8 +205,8 @@ class ChatUserSheet extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _SheetButton(
-                      icon: Icons.person_outline_rounded,
-                      label: 'Ver perfil',
+                      icon: LucideIcons.user,
+                      label: S.of(context).chatDetailViewProfile,
                       onTap: () =>
                           Navigator.pop(context, ChatUserAction.viewProfile),
                     ),
@@ -225,7 +230,10 @@ class ChatUserSheet extends StatelessWidget {
     void pop(ChatUserAction a) => Navigator.pop(context, a);
     return [
       const SizedBox(height: 14),
-      Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+      Divider(
+        height: 1,
+        color: context.colors.textPrimary.withValues(alpha: 0.1),
+      ),
       if (canAct) ...[
         _ModRow(
           icon: LucideIcons.volumeX,
@@ -250,8 +258,12 @@ class ChatUserSheet extends StatelessWidget {
       ),
       if (access.isCreator)
         _ModRow(
-          icon: comment.isModerator ? LucideIcons.userMinus : LucideIcons.shield,
-          label: comment.isModerator ? s.modRemoveModerator : s.modMakeModerator,
+          icon: comment.isModerator
+              ? LucideIcons.userMinus
+              : LucideIcons.shield,
+          label: comment.isModerator
+              ? s.modRemoveModerator
+              : s.modMakeModerator,
           onTap: () => pop(
             comment.isModerator
                 ? ChatUserAction.removeModerator
@@ -277,13 +289,13 @@ class _ModRow extends StatelessWidget {
         height: 44,
         child: Row(
           children: [
-            Icon(icon, size: 18, color: Colors.white70),
+            Icon(icon, size: 18, color: context.colors.textSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -313,8 +325,8 @@ class _SheetButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: filled
-          ? const Color(0xFFFF3D6E)
-          : Colors.white.withValues(alpha: 0.08),
+          ? context.colors.danger
+          : context.colors.textPrimary.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -324,12 +336,12 @@ class _SheetButton extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white, size: 18),
+              Icon(icon, color: context.colors.textPrimary, size: 18),
               const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),

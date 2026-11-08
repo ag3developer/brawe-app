@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,10 +32,13 @@ class StreamerIdentityBar extends ConsumerWidget {
     // ⚠️ NUNCA cair para `r.title` (título da live) — o título só faz
     // sentido no card de descoberta (For You), não no header da live.
     final name = r.streamerName.trim();
-    final looksGeneric = name.isEmpty ||
+    final looksGeneric =
+        name.isEmpty ||
         name.toLowerCase() == 'streamer' ||
-        RegExp(r'^streamer-?[0-9a-f]{0,8}$', caseSensitive: false)
-            .hasMatch(name);
+        RegExp(
+          r'^streamer-?[0-9a-f]{0,8}$',
+          caseSensitive: false,
+        ).hasMatch(name);
     if (!looksGeneric) return name;
     final username = (r.streamerUsername ?? '').trim();
     if (username.isNotEmpty) {
@@ -91,10 +95,17 @@ class StreamerIdentityBar extends ConsumerWidget {
                   radius: 14,
                   backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
-                      ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(28))
+                      ? ResizeImage(
+                          NetworkImage(room.streamerAvatarUrl!),
+                          width: context.decodePx(28),
+                        )
                       : null,
                   child: room.streamerAvatarUrl == null
-                      ? const Icon(Icons.person, size: 14, color: Colors.white)
+                      ? const Icon(
+                          LucideIcons.user,
+                          size: 14,
+                          color: Colors.white,
+                        )
                       : null,
                 ),
                 const SizedBox(width: 7),
@@ -111,7 +122,8 @@ class StreamerIdentityBar extends ConsumerWidget {
                     ),
                   ),
                 ),
-                if (room.streamerVerified) const VerifiedBadge(size: 13, gap: 3),
+                if (room.streamerVerified)
+                  const VerifiedBadge(size: 13, gap: 3),
                 // Botão "Seguir" só aparece se NÃO segue (HUD limpo para fãs).
                 if (!isFollowing) ...[
                   const SizedBox(width: 8),
@@ -180,10 +192,17 @@ class StreamerQuickSheet extends StatelessWidget {
                   radius: 36,
                   backgroundColor: AppColors.braweBlue,
                   backgroundImage: room.streamerAvatarUrl != null
-                      ? ResizeImage(NetworkImage(room.streamerAvatarUrl!), width: context.decodePx(72))
+                      ? ResizeImage(
+                          NetworkImage(room.streamerAvatarUrl!),
+                          width: context.decodePx(72),
+                        )
                       : null,
                   child: room.streamerAvatarUrl == null
-                      ? const Icon(Icons.person, size: 36, color: Colors.white)
+                      ? const Icon(
+                          LucideIcons.user,
+                          size: 36,
+                          color: Colors.white,
+                        )
                       : null,
                 ),
                 const SizedBox(height: 12),
@@ -202,7 +221,8 @@ class StreamerQuickSheet extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (room.streamerVerified) const VerifiedBadge(size: 18, gap: 6),
+                    if (room.streamerVerified)
+                      const VerifiedBadge(size: 18, gap: 6),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -221,8 +241,8 @@ class StreamerQuickSheet extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _QuickSheetButton(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Ver perfil',
+                        icon: LucideIcons.user,
+                        label: S.of(context).chatDetailViewProfile,
                         filled: false,
                         onTap: () {
                           // Roteador capturado ANTES de fechar a gaveta (o
@@ -237,8 +257,8 @@ class StreamerQuickSheet extends StatelessWidget {
                     Expanded(
                       child: _QuickSheetButton(
                         icon: isFollowing
-                            ? Icons.check_rounded
-                            : Icons.add_rounded,
+                            ? LucideIcons.check
+                            : LucideIcons.plus,
                         label: isFollowing ? 'Seguindo' : 'Seguir',
                         filled: !isFollowing,
                         onTap: () {
@@ -252,7 +272,7 @@ class StreamerQuickSheet extends StatelessWidget {
                 if (onViewLive != null) ...[
                   const SizedBox(height: 10),
                   _QuickSheetButton(
-                    icon: Icons.live_tv_rounded,
+                    icon: LucideIcons.tv,
                     label: S.of(context).viewLiveAction,
                     filled: false,
                     onTap: () {
@@ -275,7 +295,7 @@ class StreamerQuickSheet extends StatelessWidget {
                     );
                   },
                   icon: Icon(
-                    Icons.flag_outlined,
+                    LucideIcons.flag,
                     size: 16,
                     color: Colors.white.withValues(alpha: 0.6),
                   ),

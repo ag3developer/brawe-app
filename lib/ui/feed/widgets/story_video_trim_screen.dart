@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -51,10 +52,8 @@ class StoryVideoTrimScreen extends StatefulWidget {
     return Navigator.of(context).push<File?>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => StoryVideoTrimScreen(
-          file: file,
-          maxDuration: maxDuration,
-        ),
+        builder: (_) =>
+            StoryVideoTrimScreen(file: file, maxDuration: maxDuration),
       ),
     );
   }
@@ -248,7 +247,9 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                 // Top bar
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       _TopBarButton(
@@ -273,7 +274,8 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                         // Só permite salvar depois do vídeo carregar E
                         // do TrimViewer ter chamado `onChangeEnd` pelo
                         // menos uma vez (i.e. `_endValue > 0`).
-                        onTap: (_isProcessing ||
+                        onTap:
+                            (_isProcessing ||
                                 !_videoLoaded ||
                                 _endValue <= _startValue)
                             ? null
@@ -313,12 +315,11 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                                 color: Colors.black.withValues(alpha: 0.45),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color:
-                                      Colors.white.withValues(alpha: 0.4),
+                                  color: Colors.white.withValues(alpha: 0.4),
                                 ),
                               ),
                               child: const Icon(
-                                Icons.play_arrow_rounded,
+                                LucideIcons.play,
                                 color: Colors.white,
                                 size: 36,
                               ),
@@ -344,7 +345,9 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                       // Hint + duração selecionada
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 8),
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
                         child: Column(
                           children: [
                             Text(
@@ -357,8 +360,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                             const SizedBox(height: 6),
                             _DurationBadge(
                               duration: Duration(
-                                milliseconds:
-                                    (_endValue - _startValue).round(),
+                                milliseconds: (_endValue - _startValue).round(),
                               ),
                             ),
                           ],
@@ -394,8 +396,7 @@ class _StoryVideoTrimScreenState extends State<StoryVideoTrimScreen> {
                       SizedBox(
                         height: _kTrimViewerHeight,
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: TrimViewer(
                             trimmer: _trimmer,
                             viewerHeight: _kThumbnailHeight,
@@ -518,8 +519,7 @@ class _TopBarButton extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           gradient: accent && !disabled
               ? const LinearGradient(
@@ -533,9 +533,7 @@ class _TopBarButton extends StatelessWidget {
               : null,
           borderRadius: BorderRadius.circular(20),
           border: !accent
-              ? Border.all(
-                  color: Colors.white.withValues(alpha: 0.18),
-                )
+              ? Border.all(color: Colors.white.withValues(alpha: 0.18))
               : null,
           boxShadow: accent && !disabled
               ? [

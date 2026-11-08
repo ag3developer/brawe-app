@@ -121,7 +121,11 @@ class FollowerRow extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(LucideIcons.chevronRight, size: 18, color: colors.textTertiary),
+            Icon(
+              LucideIcons.chevronRight,
+              size: 18,
+              color: colors.textTertiary,
+            ),
           ],
         ),
       ),

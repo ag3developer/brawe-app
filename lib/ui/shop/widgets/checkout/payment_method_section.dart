@@ -134,8 +134,8 @@ class _PaymentOption extends StatelessWidget {
               ),
               Icon(
                 selected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_unchecked,
+                    ? LucideIcons.circleDot
+                    : LucideIcons.circle,
                 size: 18,
                 color: selected
                     ? context.colors.accentPrimary

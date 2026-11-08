@@ -10,6 +10,7 @@ import '../../../domain/models/account_security.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../core/ui/grouped_list.dart';
 import '../view_models/security_view_model.dart';
 
 const kDefaultGeoAttribution = 'IP Geolocation by DB-IP';
@@ -28,12 +29,12 @@ IconData securityPlatformIcon({String? platform, String? client}) {
   return LucideIcons.globe;
 }
 
-String securityClientLabel(S s, String? client) => switch ((client ?? '')
-    .toLowerCase()) {
-  'app' => s.secClientApp,
-  'partners' => s.secClientPartners,
-  _ => s.secClientWeb,
-};
+String securityClientLabel(S s, String? client) =>
+    switch ((client ?? '').toLowerCase()) {
+      'app' => s.secClientApp,
+      'partners' => s.secClientPartners,
+      _ => s.secClientWeb,
+    };
 
 IconData securityEventIcon(SecurityEventType t) => switch (t) {
   SecurityEventType.login => LucideIcons.logIn,
@@ -185,7 +186,11 @@ class _StateMessage extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: TextStyle(color: c.textSecondary, fontSize: 14, height: 1.4),
+              style: TextStyle(
+                color: c.textSecondary,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 12),
@@ -245,47 +250,40 @@ class _DevicesTab extends ConsumerWidget {
             ref.invalidate(sessionsProvider);
             await ref.read(sessionsProvider.future).catchError((_) => data);
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: GroupedBody(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             children: [
-              Text(
-                s.secDevicesTitle,
-                style: TextStyle(
-                  color: context.colors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
+              GroupedSection(
+                caption: s.secDevicesTitle,
+                footer: s.secDevicesSubtitle,
+                indent: 70,
+                children: [
+                  for (final x in data.sessions)
+                    SessionCard(
+                      session: x,
+                      onEnd: x.current ? null : () => _endOne(context, ref, x),
+                    ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                s.secDevicesSubtitle,
-                style: TextStyle(color: context.colors.textSecondary, fontSize: 13.5),
-              ),
-              const SizedBox(height: 14),
-              for (final x in data.sessions) ...[
-                SessionCard(
-                  session: x,
-                  onEnd: x.current ? null : () => _endOne(context, ref, x),
-                ),
-                const SizedBox(height: 10),
-              ],
-              const SizedBox(height: 6),
               if (others.isEmpty)
                 Text(
                   s.secNoOtherDevices,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 13,
+                  ),
                 )
               else
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: context.colors.danger,
-                    side: BorderSide(color: context.colors.danger.withValues(alpha: 0.5)),
-                    minimumSize: const Size.fromHeight(48),
-                  ),
-                  icon: const Icon(LucideIcons.logOut, size: 18),
-                  label: Text(s.secSignOutOthers, textAlign: TextAlign.center),
-                  onPressed: () => _endOthers(context, ref),
+                GroupedSection(
+                  children: [
+                    GroupedRow(
+                      icon: LucideIcons.logOut,
+                      title: s.secSignOutOthers,
+                      danger: true,
+                      onTap: () => _endOthers(context, ref),
+                    ),
+                  ],
                 ),
               _GeoFooter(data.geoAttribution),
             ],
@@ -323,7 +321,11 @@ class _DevicesTab extends ConsumerWidget {
     return ok == true;
   }
 
-  Future<void> _endOne(BuildContext context, WidgetRef ref, AuthSession x) async {
+  Future<void> _endOne(
+    BuildContext context,
+    WidgetRef ref,
+    AuthSession x,
+  ) async {
     final s = S.of(context);
     final ok = await _confirm(
       context,
@@ -358,7 +360,8 @@ class _DevicesTab extends ConsumerWidget {
     try {
       await ref.read(securityServiceProvider).revokeOthers();
       ref.invalidate(sessionsProvider);
-      if (context.mounted) AppSnackBar.showSuccess(context, s.secSignedOutOthersOk);
+      if (context.mounted)
+        AppSnackBar.showSuccess(context, s.secSignedOutOthersOk);
     } catch (_) {
       if (context.mounted) AppSnackBar.showError(context, s.secActionError);
     }
@@ -378,21 +381,16 @@ class SessionCard extends StatelessWidget {
     final locale = Localizations.localeOf(context).languageCode;
     final last = x.current
         ? s.secActiveNow
-        : s.secLastActive(securityRelativeTime(s, x.lastSeenAt, locale: locale));
+        : s.secLastActive(
+            securityRelativeTime(s, x.lastSeenAt, locale: locale),
+          );
     final clientLine = [
       securityClientLabel(s, x.client),
       if (x.appVersion != null) s.secAppVersion(x.appVersion!),
     ].join(' · ');
-    return Container(
+    return Padding(
       key: Key('session-${x.id}'),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: x.current ? c.accentPrimary.withValues(alpha: 0.6) : c.border,
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -403,12 +401,12 @@ class SessionCard extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: c.accentPrimary.withValues(alpha: 0.12),
+                  color: c.surfaceHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   securityPlatformIcon(platform: x.platform, client: x.client),
-                  color: c.accentPrimary,
+                  color: c.textSecondary,
                   size: 22,
                 ),
               ),
@@ -430,7 +428,10 @@ class SessionCard extends StatelessWidget {
                     if (x.current) ...[
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: c.success.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
@@ -466,7 +467,6 @@ class SessionCard extends StatelessWidget {
             ],
           ),
           if (onEnd != null) ...[
-            const SizedBox(height: 6),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -514,18 +514,21 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
       ),
       data: (st) {
         final items = st.items.where(_filter.matches).toList();
-        return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        return GroupedBody(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           children: [
-            Text(
-              s.secHistoryTitle,
-              style: TextStyle(
-                color: context.colors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 7),
+              child: Text(
+                s.secHistoryTitle.toUpperCase(),
+                style: TextStyle(
+                  color: context.colors.textTertiary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                ),
               ),
             ),
-            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -539,7 +542,7 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 28),
@@ -550,7 +553,10 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
                 ),
               )
             else
-              for (final e in items) SecurityEventTile(event: e),
+              GroupedSection(
+                indent: 64,
+                children: [for (final e in items) SecurityEventTile(event: e)],
+              ),
             if (st.hasMore)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -563,8 +569,9 @@ class _HistoryTabState extends ConsumerState<_HistoryTab> {
                         ),
                       )
                     : OutlinedButton(
-                        onPressed: () =>
-                            ref.read(securityEventsProvider.notifier).loadMore(),
+                        onPressed: () => ref
+                            .read(securityEventsProvider.notifier)
+                            .loadMore(),
                         child: Text(
                           st.loadMoreFailed ? s.secRetry : s.secLoadMore,
                         ),
@@ -593,15 +600,9 @@ class SecurityEventTile extends StatelessWidget {
       if (e.deviceName != null) e.deviceName!,
       e.place ?? s.secUnknownPlace,
     ].join(' · ');
-    return Container(
+    return Padding(
       key: Key('event-${e.id}'),
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.border),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -655,15 +656,14 @@ class _ProtectTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     final c = context.colors;
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return GroupedBody(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: c.warning.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: c.warning.withValues(alpha: 0.4)),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -681,14 +681,18 @@ class _ProtectTab extends ConsumerWidget {
               const SizedBox(height: 6),
               Text(
                 s.secProtectBody,
-                style: TextStyle(color: c.textSecondary, fontSize: 14, height: 1.4),
+                style: TextStyle(
+                  color: c.textSecondary,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 14),
               FilledButton(
                 key: const Key('protect-open'),
                 style: FilledButton.styleFrom(
                   backgroundColor: c.danger,
-                  foregroundColor: Colors.white,
+                  foregroundColor: c.textOnAccent,
                   minimumSize: const Size.fromHeight(48),
                 ),
                 onPressed: () => showProtectAccountSheet(context, ref),
@@ -697,21 +701,16 @@ class _ProtectTab extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        Material(
-          color: c.surface,
-          clipBehavior: Clip.antiAlias,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: c.border),
-          ),
-          child: ListTile(
-            leading: const Icon(Icons.lock_reset_outlined),
-            title: Text(s.settingsChangePassword),
-            subtitle: Text(s.secChangePasswordSub),
-            trailing: const Icon(Icons.chevron_right, size: 20),
-            onTap: () => context.push('/settings/change-password'),
-          ),
+        const SizedBox(height: 22),
+        GroupedSection(
+          children: [
+            GroupedRow(
+              icon: LucideIcons.keyRound,
+              title: s.settingsChangePassword,
+              subtitle: s.secChangePasswordSub,
+              onTap: () => context.push('/settings/change-password'),
+            ),
+          ],
         ),
       ],
     );
@@ -739,7 +738,8 @@ class ProtectAccountSheet extends ConsumerStatefulWidget {
   final VoidCallback onDone;
 
   @override
-  ConsumerState<ProtectAccountSheet> createState() => _ProtectAccountSheetState();
+  ConsumerState<ProtectAccountSheet> createState() =>
+      _ProtectAccountSheetState();
 }
 
 class _ProtectAccountSheetState extends ConsumerState<ProtectAccountSheet> {
@@ -784,7 +784,11 @@ class _ProtectAccountSheetState extends ConsumerState<ProtectAccountSheet> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: c.textPrimary, fontSize: 14, height: 1.35),
+              style: TextStyle(
+                color: c.textPrimary,
+                fontSize: 14,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -830,17 +834,17 @@ class _ProtectAccountSheetState extends ConsumerState<ProtectAccountSheet> {
               key: const Key('protect-confirm'),
               style: FilledButton.styleFrom(
                 backgroundColor: c.danger,
-                foregroundColor: Colors.white,
+                foregroundColor: c.textOnAccent,
                 minimumSize: const Size.fromHeight(50),
               ),
               onPressed: _busy ? null : _protect,
               child: _busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: c.textOnAccent,
                       ),
                     )
                   : Text(s.secProtectConfirm, textAlign: TextAlign.center),

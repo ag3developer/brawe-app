@@ -11,6 +11,7 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,7 +19,6 @@ import '../../../config/feature_flags.dart';
 import '../../../core/utils/gift_names.dart';
 import '../../../domain/models/wallet.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_coin.dart';
 import '../../core/widgets/gift_icon.dart';
@@ -103,15 +103,15 @@ class _BalanceCardState extends ConsumerState<_BalanceCard> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.braweBlue, AppColors.braweSky],
+        gradient: LinearGradient(
+          colors: [context.colors.accentPrimary, context.colors.accentSecondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.braweBlue.withValues(alpha: 0.25),
+            color: context.colors.accentPrimary.withValues(alpha: 0.25),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -158,7 +158,7 @@ class _BalanceCardState extends ConsumerState<_BalanceCard> {
                           fontSize: 12.5,
                         ),
                       ),
-                      const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+                      const Icon(LucideIcons.chevronDown, color: Colors.white, size: 20),
                     ],
                   ),
                 ),
@@ -275,10 +275,10 @@ class _BalanceCardState extends ConsumerState<_BalanceCard> {
               child: FilledButton.icon(
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: AppColors.braweBlue,
+                  foregroundColor: context.colors.accentPrimary,
                 ),
                 onPressed: () => context.push('/creator/dashboard?tab=monetization'),
-                icon: const Icon(Icons.account_balance_outlined, size: 18),
+                icon: const Icon(LucideIcons.landmark, size: 18),
                 label: Text(s.payoutSeeMonetization),
               ),
             ),
@@ -316,7 +316,7 @@ class _CardToggle extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                color: selected ? AppColors.braweBlue : Colors.white,
+                color: selected ? context.colors.accentPrimary : Colors.white,
                 fontWeight: FontWeight.w800,
                 fontSize: 12.5,
               ),
@@ -428,16 +428,15 @@ class _PurchaseOrderTile extends StatelessWidget {
     final (statusColor, statusLabel) = switch (order.status) {
       'completed' => (Colors.green, s.earningsStatusCompleted),
       'pending' => (Colors.orange, s.earningsStatusPending),
-      'failed' => (Colors.redAccent, s.earningsStatusFailed),
-      'refunded' => (Colors.blueGrey, s.earningsStatusRefunded),
+      'failed' => (context.colors.danger, s.earningsStatusFailed),
+      'refunded' => (context.colors.textSecondary, s.earningsStatusRefunded),
       _ => (scheme.onSurface, order.status),
     };
 
     final methodLabel = switch (order.method) {
-      'iap_android' => 'Google Play',
-      'iap_ios' => 'App Store',
-      'wolknow' => 'Wolknow',
-      'pix' => 'PIX',
+      // Apple (2.3.10 / 3.1.1): sem citar outra loja nem outros meios de pagamento no app
+      'iap_android' || 'iap_ios' => s.walletPurchaseSourceStore,
+      'wolknow' || 'pix' => '—',
       '' => '—',
       _ => order.method,
     };
@@ -450,7 +449,7 @@ class _PurchaseOrderTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.braweBlue.withValues(alpha: 0.12),
+              color: context.colors.accentPrimary.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Center(child: BraweCoin(size: 22)),
@@ -589,7 +588,7 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today_rounded, size: 14, color: colors.textSecondary),
+                    Icon(LucideIcons.calendar, size: 14, color: colors.textSecondary),
                     const SizedBox(width: 6),
                     Text(
                       periodLabels[_period]!,
@@ -599,7 +598,7 @@ class _GiftHistoryState extends ConsumerState<_GiftHistory> {
                         fontSize: 12.5,
                       ),
                     ),
-                    Icon(Icons.arrow_drop_down, size: 20, color: colors.textSecondary),
+                    Icon(LucideIcons.chevronDown, size: 20, color: colors.textSecondary),
                   ],
                 ),
               ),
@@ -734,7 +733,7 @@ class _TabPill extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? AppColors.braweBlue : Colors.transparent,
+            color: selected ? context.colors.accentPrimary : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
@@ -887,7 +886,7 @@ class _GiftTile extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: AppColors.braweBlue.withValues(alpha: 0.08),
+              color: context.colors.accentPrimary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,
@@ -1011,7 +1010,7 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 40),
+          const Icon(LucideIcons.circleAlert, size: 40),
           const SizedBox(height: 12),
           Text(s.earningsLoadError),
           const SizedBox(height: 12),

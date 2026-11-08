@@ -698,18 +698,12 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       final left = until.difference(DateTime.now());
       if (left <= Duration.zero) {
         _pauseTicker?.cancel();
-        AppSnackBar.showError(
-          context,
-          'A pausa passou de 5 minutos e a live foi encerrada.',
-        );
+        AppSnackBar.showError(context, S.of(context).livexPauseExpired);
         _closeBroadcaster(force: true);
         return;
       }
       if (left.inSeconds == 60) {
-        AppSnackBar.showError(
-          context,
-          'Falta 1 minuto: retome a live ou ela será encerrada.',
-        );
+        AppSnackBar.showError(context, S.of(context).livexPauseOneMinute);
       }
       setState(() {}); // atualiza o contador do painel de pausa
     });
@@ -872,7 +866,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
         _currentCameraIndex = previousIndex;
         await _setupCameraController(_cameras[previousIndex]);
         if (mounted) {
-          AppSnackBar.showError(context, 'Não foi possível trocar a câmera');
+          AppSnackBar.showError(context, S.of(context).livexSwitchCameraFailed);
         }
       }
 
@@ -911,10 +905,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
     if (mounted) {
       setState(() => _isStreaming = false);
-      AppSnackBar.showError(
-        context,
-        'A transmissão caiu ao trocar a câmera. Toque em Retomar.',
-      );
+      AppSnackBar.showError(context, S.of(context).livexCameraSwitchDropped);
     }
   }
 
@@ -934,7 +925,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final st = ref.read(battleViewModelProvider(id)).value;
     if (st == null || st.isOver) return null;
     final side = st.sideOf(userId: _room.streamerId, roomId: _room.id);
-    return battleLeaveWarning(S.of(context), side == null ? null : st.winStreakOf(side));
+    return battleLeaveWarning(
+      S.of(context),
+      side == null ? null : st.winStreakOf(side),
+    );
   }
 
   Future<bool> _confirmCloseDialog() async {
@@ -1239,10 +1233,10 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     final id = _activeBattleId;
     final b = id == null
         ? null
-        : ref.read(battleViewModelProvider(id)).value?.sideOf(
-            userId: _room.streamerId,
-            roomId: _room.id,
-          );
+        : ref
+              .read(battleViewModelProvider(id))
+              .value
+              ?.sideOf(userId: _room.streamerId, roomId: _room.id);
     return b ?? _rtcSession?.credentials.side ?? 'a';
   }
 
@@ -1741,7 +1735,11 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
       if (!ended && mounted) {
         AppSnackBar.showError(
           context,
-          battleErrorText(S.of(context), e, fallback: S.of(context).linkErrDisconnect),
+          battleErrorText(
+            S.of(context),
+            e,
+            fallback: S.of(context).linkErrDisconnect,
+          ),
         );
       }
     } catch (e) {
@@ -2452,11 +2450,15 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
   /// Compacto e sem quebra: 1,2k / 3,4M (vírgula em pt/es).
   String _formatCount(int n) {
-    final comma = const ['pt', 'es'].contains(Localizations.localeOf(context).languageCode);
+    final comma = const [
+      'pt',
+      'es',
+    ].contains(Localizations.localeOf(context).languageCode);
     String f(double v) {
       final t = v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
       return comma ? t.replaceAll('.', ',') : t;
     }
+
     if (n >= 1000000) return '${f(n / 1000000)}M';
     if (n >= 1000) return '${f(n / 1000)}k';
     return '$n';
@@ -2487,9 +2489,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ),
                 MoreOptionTile(
-                  icon: _isPaused
-                      ? Icons.play_arrow_rounded
-                      : Icons.pause_rounded,
+                  icon: _isPaused ? LucideIcons.play : LucideIcons.pause,
                   iconColor: _isPaused
                       ? const Color(0xFF22C55E)
                       : Colors.orange,
@@ -2506,7 +2506,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 ),
                 if (_cameras.length > 1)
                   MoreOptionTile(
-                    icon: Icons.flip_camera_ios_outlined,
+                    icon: LucideIcons.switchCamera,
                     iconColor: Colors.white,
                     title: s.broadcasterMoreSwitchCamera,
                     subtitle: s.broadcasterMoreSwitchCameraSubtitle,
@@ -2524,17 +2524,17 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   // ── Modo de áudio ──────────────────────────────────────
                   MoreOptionTile(
                     icon: _audioMode == BroadcastAudioMode.quality
-                        ? Icons.music_note_rounded
-                        : Icons.record_voice_over_rounded,
+                        ? LucideIcons.music
+                        : LucideIcons.mic,
                     iconColor: _audioMode == BroadcastAudioMode.quality
                         ? AppColors.braweBlueLight
                         : const Color(0xFF4FC3F7),
                     title: _audioMode == BroadcastAudioMode.quality
-                        ? 'Áudio: Qualidade'
-                        : 'Áudio: Redução de ruído',
+                        ? S.of(context).livexAudioModeQuality
+                        : S.of(context).livexAudioModeVoice,
                     subtitle: _audioMode == BroadcastAudioMode.quality
-                        ? 'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.'
-                        : 'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.',
+                        ? S.of(context).livexAudioModeQualitySub
+                        : S.of(context).livexAudioModeVoiceSub,
                     onTap: () async {
                       Navigator.pop(ctx);
                       final newMode = _audioMode == BroadcastAudioMode.quality
@@ -2547,8 +2547,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                           SnackBar(
                             content: Text(
                               newMode == BroadcastAudioMode.voice
-                                  ? '🎙️ Redução de ruído ativada'
-                                  : '🎵 Modo qualidade ativado',
+                                  ? S.of(context).livexAudioNoiseOn
+                                  : S.of(context).livexAudioQualityOn,
                             ),
                             duration: const Duration(seconds: 2),
                           ),
@@ -2558,11 +2558,14 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                   // ── Processador de Áudio (EQ + Compressor) ─────────────────
                   MoreOptionTile(
-                    icon: Icons.graphic_eq_rounded,
+                    icon: LucideIcons.audioLines,
                     iconColor: AppColors.braweSky,
-                    title: '🎛️ Processador de áudio',
-                    subtitle:
-                        'Equalizador + compressor — ${BroadcastAudioProcessing.currentPreset.label}',
+                    title: S.of(context).livexAudioProcessor,
+                    subtitle: S
+                        .of(context)
+                        .livexAudioProcessorSub(
+                          BroadcastAudioProcessing.currentPreset.label,
+                        ),
                     onTap: () {
                       Navigator.pop(ctx);
                       showModalBottomSheet(
@@ -2579,7 +2582,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   ),
                 ],
                 MoreOptionTile(
-                  icon: Icons.flag_rounded,
+                  icon: LucideIcons.flag,
                   iconColor: const Color(0xFFFFD166),
                   title: s.liveGoalOption,
                   subtitle: s.liveGoalOptionSubtitle,
@@ -2599,7 +2602,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   },
                 ),
                 MoreOptionTile(
-                  icon: Icons.share_outlined,
+                  icon: LucideIcons.send,
                   iconColor: Colors.white,
                   title: s.broadcasterMoreShareLive,
                   subtitle: s.broadcasterMoreShareLiveSubtitle,
@@ -2616,7 +2619,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                   },
                 ),
                 MoreOptionTile(
-                  icon: Icons.stop_rounded,
+                  icon: LucideIcons.square,
                   iconColor: AppColors.mutedRed,
                   title: s.broadcasterMoreEndLive,
                   subtitle: s.broadcasterMoreEndLiveSubtitle,
@@ -3020,112 +3023,112 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                 child: BattleDockClip(
                   enabled: _split,
                   child: _BroadcasterChatDock(
-                  battleChatTop: _split
-                      ? battleLayoutOf(
-                          context,
-                          splitTop: battleCreatorSplitTop(context),
-                          ownSide: _layoutSide(),
-                        ).rowsBottom
-                      : null,
-                  banner: _outgoingInvite == null
-                      ? null
-                      : _OutgoingInviteBanner(
-                          key: ValueKey(_outgoingInvite!.battleId),
-                          invite: _outgoingInvite!,
-                          onCancel: _cancelOutgoingInvite,
-                          onTimeout: () => _onOutgoingInviteTimeout(
-                            _outgoingInvite!.battleId,
+                    battleChatTop: _split
+                        ? battleLayoutOf(
+                            context,
+                            splitTop: battleCreatorSplitTop(context),
+                            ownSide: _layoutSide(),
+                          ).rowsBottom
+                        : null,
+                    banner: _outgoingInvite == null
+                        ? null
+                        : _OutgoingInviteBanner(
+                            key: ValueKey(_outgoingInvite!.battleId),
+                            invite: _outgoingInvite!,
+                            onCancel: _cancelOutgoingInvite,
+                            onTimeout: () => _onOutgoingInviteTimeout(
+                              _outgoingInvite!.battleId,
+                            ),
                           ),
+                    // Criador lê o chat de longe (celular no tripé) — texto
+                    // ~12% maior que o do espectador.
+                    tickerBuilder: (maxHeight) => Builder(
+                      // Builder: dependência de MediaQuery fica só aqui, não no
+                      // State da tela (que reconstruiria a câmera no teclado).
+                      builder: (ctx) => MediaQuery(
+                        data: MediaQuery.of(ctx).copyWith(
+                          textScaler: MediaQuery.textScalerOf(
+                            ctx,
+                          ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
                         ),
-                  // Criador lê o chat de longe (celular no tripé) — texto
-                  // ~12% maior que o do espectador.
-                  tickerBuilder: (maxHeight) => Builder(
-                    // Builder: dependência de MediaQuery fica só aqui, não no
-                    // State da tela (que reconstruiria a câmera no teclado).
-                    builder: (ctx) => MediaQuery(
-                      data: MediaQuery.of(ctx).copyWith(
-                        textScaler: MediaQuery.textScalerOf(
-                          ctx,
-                        ).clamp(minScaleFactor: 1.12, maxScaleFactor: 1.4),
-                      ),
-                      child: PinnedAboveChat(
-                        roomId: widget.room.id,
-                        isHost: true,
-                        child: ChatTicker(
-                          giftParts: commentsState.chatGiftParts,
-                          // Bloqueados (nos dois sentidos) não aparecem no chat da live.
-                          comments: commentsState.comments
-                              .where((c) => !hidden.isBlocked(c.userId))
-                              .toList(),
-                          gifts: commentsState.chatGifts
-                              .where((g) => !hidden.isBlocked(g.senderId))
-                              .toList(),
-                          hostUserId: _room.streamerId,
-                          myUserId: _room.streamerId,
-                          myUsername: commentsState.myUsername,
-                          onCommentTap: _onCommentTap,
-                          maxHeight: maxHeight,
+                        child: PinnedAboveChat(
+                          roomId: widget.room.id,
+                          isHost: true,
+                          child: ChatTicker(
+                            giftParts: commentsState.chatGiftParts,
+                            // Bloqueados (nos dois sentidos) não aparecem no chat da live.
+                            comments: commentsState.comments
+                                .where((c) => !hidden.isBlocked(c.userId))
+                                .toList(),
+                            gifts: commentsState.chatGifts
+                                .where((g) => !hidden.isBlocked(g.senderId))
+                                .toList(),
+                            hostUserId: _room.streamerId,
+                            myUserId: _room.streamerId,
+                            myUsername: commentsState.myUsername,
+                            onCommentTap: _onCommentTap,
+                            maxHeight: maxHeight,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  input: _showChatInput
-                      ? ChatErrorAbove(
-                          roomId: widget.room.id,
-                          child: _CreatorChatInput(
-                            controller: _chatCtrl,
-                            focusNode: _chatFocus,
-                            hint: S.of(context).liveCommentsHint,
-                            onSend: _sendCreatorComment,
-                            onClose: _closeChatInput,
-                          ),
-                        )
-                      : null,
-                  actionBar: !_showCountdown && (_isStreaming || _isPaused)
-                      ? LiveActionBar(
-                          isPaused: _isPaused,
-                          isTogglingPause: _isTogglingPause,
-                          isTogglingStream: _isTogglingStream,
-                          hasBattle: _activeBattleId != null && !_battleEnded,
-                          // Após o fim: "Revanche" na barra de ações (sem cartão).
-                          battleLabel:
-                              (_rematchId != null &&
-                                  (_activeBattleId == null || _battleEnded))
-                              ? S.of(context).battleRematch
-                              : null,
-                          battleIcon:
-                              (_rematchId != null &&
-                                  (_activeBattleId == null || _battleEnded))
-                              ? Icons.replay_rounded
-                              : null,
-                          onBattle:
-                              (_rematchId != null &&
-                                  (_activeBattleId == null || _battleEnded))
-                              ? _requestRematch
-                              : _link != null
-                              ? _startBattleInLink
-                              : () => _showBattleSheet(context),
-                          coHostLabel: _link != null
-                              ? S.of(context).linkDisconnect
-                              : null,
-                          coHostIcon: _link != null
-                              ? Icons.link_off_rounded
-                              : null,
-                          // Co-host desativado até existir mídia em tempo
-                          // real (ver diagnóstico) — botão escondido.
-                          onCoHost: _link != null
-                              ? _confirmDisconnect
-                              : (_linkEnabled && _activeBattleId == null)
-                              ? () => _showLinkSheet(context)
-                              : null,
-                          onPauseResume: _togglePause,
-                          onEnd: _closeBroadcaster,
-                          onMoreOptions: () => _showMoreOptions(context),
-                          onGoals: _openGoals,
-                          showChat: _showChatInput,
-                          onChatToggle: _toggleChatInput,
-                        )
-                      : null,
+                    input: _showChatInput
+                        ? ChatErrorAbove(
+                            roomId: widget.room.id,
+                            child: _CreatorChatInput(
+                              controller: _chatCtrl,
+                              focusNode: _chatFocus,
+                              hint: S.of(context).liveCommentsHint,
+                              onSend: _sendCreatorComment,
+                              onClose: _closeChatInput,
+                            ),
+                          )
+                        : null,
+                    actionBar: !_showCountdown && (_isStreaming || _isPaused)
+                        ? LiveActionBar(
+                            isPaused: _isPaused,
+                            isTogglingPause: _isTogglingPause,
+                            isTogglingStream: _isTogglingStream,
+                            hasBattle: _activeBattleId != null && !_battleEnded,
+                            // Após o fim: "Revanche" na barra de ações (sem cartão).
+                            battleLabel:
+                                (_rematchId != null &&
+                                    (_activeBattleId == null || _battleEnded))
+                                ? S.of(context).battleRematch
+                                : null,
+                            battleIcon:
+                                (_rematchId != null &&
+                                    (_activeBattleId == null || _battleEnded))
+                                ? LucideIcons.rotateCcw
+                                : null,
+                            onBattle:
+                                (_rematchId != null &&
+                                    (_activeBattleId == null || _battleEnded))
+                                ? _requestRematch
+                                : _link != null
+                                ? _startBattleInLink
+                                : () => _showBattleSheet(context),
+                            coHostLabel: _link != null
+                                ? S.of(context).linkDisconnect
+                                : null,
+                            coHostIcon: _link != null
+                                ? LucideIcons.unlink
+                                : null,
+                            // Co-host desativado até existir mídia em tempo
+                            // real (ver diagnóstico) — botão escondido.
+                            onCoHost: _link != null
+                                ? _confirmDisconnect
+                                : (_linkEnabled && _activeBattleId == null)
+                                ? () => _showLinkSheet(context)
+                                : null,
+                            onPauseResume: _togglePause,
+                            onEnd: _closeBroadcaster,
+                            onMoreOptions: () => _showMoreOptions(context),
+                            onGoals: _openGoals,
+                            showChat: _showChatInput,
+                            onChatToggle: _toggleChatInput,
+                          )
+                        : null,
                   ),
                 ),
               ),
@@ -3226,10 +3229,7 @@ class _BattleInviteDialogState extends State<_BattleInviteDialog> {
           else
             const Padding(
               padding: EdgeInsets.only(right: 10),
-              child: Icon(
-                Icons.sports_kabaddi,
-                color: AppColors.braweBlueBright,
-              ),
+              child: Icon(LucideIcons.swords, color: AppColors.braweBlueBright),
             ),
           Expanded(
             child: Text(
@@ -3563,11 +3563,11 @@ class _CreatorChatInput extends StatelessWidget {
         const SizedBox(width: 6),
         IconButton(
           onPressed: onSend,
-          icon: const Icon(Icons.send_rounded, color: AppColors.braweBlueLight),
+          icon: const Icon(LucideIcons.send, color: AppColors.braweBlueLight),
         ),
         IconButton(
           onPressed: onClose,
-          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+          icon: const Icon(LucideIcons.x, color: Colors.white70),
         ),
       ],
     );
@@ -3610,7 +3610,7 @@ class _PausedPanel extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.pause_circle_filled_rounded,
+                LucideIcons.circlePause,
                 color: AppColors.braweOrange,
                 size: 22,
               ),
@@ -3666,7 +3666,7 @@ class _PausedPanel extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.play_arrow_rounded),
+                  : const Icon(LucideIcons.play),
               label: Text(
                 s.broadcasterResumeButton,
                 style: const TextStyle(fontWeight: FontWeight.w800),
@@ -3704,7 +3704,7 @@ class _ResumeFeedbackPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           live
-              ? const Icon(Icons.sensors_rounded, color: Colors.white, size: 22)
+              ? const Icon(LucideIcons.radio, color: Colors.white, size: 22)
               : const SizedBox(
                   width: 18,
                   height: 18,

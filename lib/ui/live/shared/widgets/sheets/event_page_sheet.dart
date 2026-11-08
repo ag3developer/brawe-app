@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../../core/themes/brawe_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/repositories/gift_repository.dart';
@@ -16,7 +18,7 @@ import 'gifter_ranking_sheet.dart';
 /// Página do evento da sala, por cima da live (folha de ~92% da altura): a
 /// live continua montada e tocando atrás; fechar volta sem recarregar.
 class EventPageSheet extends ConsumerStatefulWidget {
-  const EventPageSheet({
+  EventPageSheet({
     super.key,
     required this.roomId,
     required this.streamerId,
@@ -40,7 +42,11 @@ class EventPageSheet extends ConsumerStatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: 0.92,
-        child: EventPageSheet(roomId: roomId, streamerId: streamerId, event: event),
+        child: EventPageSheet(
+          roomId: roomId,
+          streamerId: streamerId,
+          event: event,
+        ),
       ),
     );
   }
@@ -50,9 +56,9 @@ class EventPageSheet extends ConsumerStatefulWidget {
 }
 
 class _EventPageSheetState extends ConsumerState<EventPageSheet> {
-  static const _bg = Color(0xFF0B0E14);
-  static const _card = Color(0xFF141A28);
-  static const _gold = Color(0xFFFFC53D);
+  Color get _bg => context.colors.background;
+  Color get _card => context.colors.surface;
+  Color get _gold => context.colors.accentGold;
 
   Timer? _tick;
   DateTime _now = DateTime.now();
@@ -88,7 +94,11 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
       if (!mounted) return;
       setState(() {
         _entries = raw is List
-            ? raw.whereType<Map>().map(GifterEntry.fromMap).whereType<GifterEntry>().toList()
+            ? raw
+                  .whereType<Map>()
+                  .map(GifterEntry.fromMap)
+                  .whereType<GifterEntry>()
+                  .toList()
             : const [];
         _myRank = me is Map ? (me['rank'] as num?)?.toInt() : null;
         _myPoints = me is Map ? (me['points'] as num?)?.toInt() : null;
@@ -130,7 +140,9 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
       context,
       roomId: widget.roomId,
       streamerId: widget.streamerId,
-      ranking: ref.read(liveRoomCommentsViewModelProvider(widget.roomId)).gifterRanking,
+      ranking: ref
+          .read(liveRoomCommentsViewModelProvider(widget.roomId))
+          .gifterRanking,
       openEventTab: true,
     );
   }
@@ -144,7 +156,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
 
     // Quanto falta para o top 10.
     String? gap;
-    if (_myRank != null && _myRank! > 10 && _entries.length >= 10 && _myPoints != null) {
+    if (_myRank != null &&
+        _myRank! > 10 &&
+        _entries.length >= 10 &&
+        _myPoints != null) {
       final tenth = _entries[9].totalValue;
       final need = (tenth - _myPoints! + 1).clamp(1, 1 << 31);
       gap = l10n.eventPageToTop10('$need');
@@ -153,7 +168,7 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
     }
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: _bg,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -175,9 +190,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                             ? Image.network(
                                 e.bannerImageUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const ColoredBox(color: _card),
+                                errorBuilder: (_, _, _) =>
+                                    ColoredBox(color: _card),
                               )
-                            : const ColoredBox(color: _card),
+                            : ColoredBox(color: _card),
                       ),
                       Positioned.fill(
                         child: DecoratedBox(
@@ -185,7 +201,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, _bg.withValues(alpha: 0.95)],
+                              colors: [
+                                Colors.transparent,
+                                _bg.withValues(alpha: 0.95),
+                              ],
                             ),
                           ),
                         ),
@@ -198,8 +217,8 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                           e.localizedName(lang),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                           ),
@@ -210,8 +229,13 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                         right: 10,
                         child: IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded, color: Colors.white),
-                          style: IconButton.styleFrom(backgroundColor: Colors.black38),
+                          icon: Icon(
+                            LucideIcons.x,
+                            color: context.colors.textPrimary,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.black38,
+                          ),
                         ),
                       ),
                     ],
@@ -221,9 +245,15 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _row(Icons.auto_awesome, l10n.eventPageGiftsWorth(e.multiplierLabel)),
+                        _row(
+                          LucideIcons.sparkles,
+                          l10n.eventPageGiftsWorth(e.multiplierLabel),
+                        ),
                         const SizedBox(height: 8),
-                        _row(Icons.timer_outlined, l10n.eventPageEndsIn(_hms(remaining))),
+                        _row(
+                          LucideIcons.timer,
+                          l10n.eventPageEndsIn(_hms(remaining)),
+                        ),
                         const SizedBox(height: 16),
                         // Sua posição
                         _section(l10n.eventPageYourPosition),
@@ -239,9 +269,12 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                                 child: Text(
                                   _myRank == null
                                       ? l10n.eventPageNoRank
-                                      : l10n.eventPageRankPoints(_myRank!, '${_myPoints ?? 0}'),
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                      : l10n.eventPageRankPoints(
+                                          _myRank!,
+                                          '${_myPoints ?? 0}',
+                                        ),
+                                  style: TextStyle(
+                                    color: context.colors.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w800,
                                   ),
@@ -252,7 +285,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                                   child: Text(
                                     gap,
                                     textAlign: TextAlign.end,
-                                    style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                    style: TextStyle(
+                                      color: context.colors.textSecondary,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                             ],
@@ -272,9 +308,14 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                                     child: Text(
                                       p.rankFrom == p.rankTo
                                           ? l10n.eventPagePrizeOne(p.rankFrom)
-                                          : l10n.eventPagePrizeRank(p.rankFrom, p.rankTo),
+                                          : l10n.eventPagePrizeRank(
+                                              p.rankFrom,
+                                              p.rankTo,
+                                            ),
                                       style: TextStyle(
-                                        color: p.covers(1) ? _gold : Colors.white70,
+                                        color: p.covers(1)
+                                            ? _gold
+                                            : context.colors.textSecondary,
                                         fontWeight: FontWeight.w800,
                                         fontSize: 13,
                                       ),
@@ -283,7 +324,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                                   Expanded(
                                     child: Text(
                                       p.label.resolve(lang),
-                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                      style: TextStyle(
+                                        color: context.colors.textPrimary,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -296,7 +340,9 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                         if (_loading)
                           const Padding(
                             padding: EdgeInsets.all(12),
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
                           )
                         else
                           for (var i = 0; i < _entries.length && i < 3; i++)
@@ -314,7 +360,11 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                           _section(l10n.eventPageHow),
                           Text(
                             e.description!.resolve(lang),
-                            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ],
@@ -331,9 +381,9 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                 16,
                 10 + MediaQuery.paddingOf(context).bottom,
               ),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: _card,
-                border: Border(top: BorderSide(color: Colors.white10)),
+                border: Border(top: BorderSide(color: context.colors.divider)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -342,7 +392,10 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                   if (_gifts.isNotEmpty) ...[
                     Text(
                       l10n.eventPageGifts,
-                      style: const TextStyle(color: Colors.white60, fontSize: 11),
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
+                        fontSize: 11,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     SizedBox(
@@ -366,11 +419,11 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
                     child: FilledButton.icon(
                       onPressed: _sendGift,
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A6DFF),
-                        foregroundColor: Colors.white,
+                        backgroundColor: context.colors.accentPrimary,
+                        foregroundColor: context.colors.textPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 13),
                       ),
-                      icon: const Icon(Icons.card_giftcard_rounded, size: 18),
+                      icon: const Icon(LucideIcons.gift, size: 18),
                       label: Text(
                         l10n.eventPageSend,
                         style: const TextStyle(fontWeight: FontWeight.w800),
@@ -388,10 +441,17 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
 
   Widget _row(IconData icon, String text) => Row(
     children: [
-      Icon(icon, size: 16, color: Colors.white70),
+      Icon(icon, size: 16, color: context.colors.textSecondary),
       const SizedBox(width: 8),
       Expanded(
-        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: context.colors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     ],
   );
@@ -400,7 +460,12 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
     padding: const EdgeInsets.only(bottom: 8),
     child: Text(
       t,
-      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4),
+      style: TextStyle(
+        color: context.colors.textSecondary,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+      ),
     ),
   );
 
@@ -415,7 +480,7 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
             child: Text(
               '$pos',
               style: TextStyle(
-                color: first ? _gold : Colors.white54,
+                color: first ? _gold : context.colors.textSecondary,
                 fontWeight: FontWeight.w900,
                 fontSize: 15,
               ),
@@ -424,10 +489,17 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
           CircleAvatar(
             radius: 16,
             backgroundColor: _card,
-            backgroundImage: g.avatarUrl != null ? NetworkImage(g.avatarUrl!) : null,
+            backgroundImage: g.avatarUrl != null
+                ? NetworkImage(g.avatarUrl!)
+                : null,
             child: g.avatarUrl == null
-                ? Text(g.name.isNotEmpty ? g.name[0].toUpperCase() : '?',
-                    style: const TextStyle(color: Colors.white, fontSize: 12))
+                ? Text(
+                    g.name.isNotEmpty ? g.name[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
+                      fontSize: 12,
+                    ),
+                  )
                 : null,
           ),
           const SizedBox(width: 10),
@@ -436,13 +508,17 @@ class _EventPageSheetState extends ConsumerState<EventPageSheet> {
               g.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           Text(
             '${g.totalValue}',
             style: TextStyle(
-              color: first ? _gold : Colors.white70,
+              color: first ? _gold : context.colors.textSecondary,
               fontWeight: FontWeight.w800,
               fontSize: 14,
             ),

@@ -2,12 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/push_notification_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../core/themes/brawe_colors.dart';
 import '../../core/ui/app_snackbar.dart';
+import '../../core/ui/grouped_list.dart';
 
 class DeleteAccountScreen extends ConsumerStatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -21,6 +24,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   final _passwordController = TextEditingController();
   bool _ack = false;
   bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -32,11 +36,11 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     final s = S.of(context);
     final password = _passwordController.text;
     if (password.isEmpty) {
-      AppSnackBar.showError(context, s.delAccEnterPassword);
+      setState(() => _error = s.delAccEnterPassword);
       return;
     }
     if (!_ack) {
-      AppSnackBar.showError(context, s.delAccAckRequired);
+      setState(() => _error = s.delAccAckRequired);
       return;
     }
     final ok = await showDialog<bool>(
@@ -52,7 +56,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
               child: Text(ds.actionCancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: FilledButton.styleFrom(backgroundColor: ctx.colors.danger),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(ds.delAccConfirmButton),
             ),
@@ -62,7 +66,10 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
     );
     if (ok != true) return;
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       await ref.read(authServiceProvider).deleteAccount(password);
       try {
@@ -78,10 +85,10 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       final detail = e.response?.data is Map
           ? (e.response?.data['detail']?.toString() ?? fallback)
           : fallback;
-      AppSnackBar.showError(context, detail);
+      setState(() => _error = detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, S.of(context).errorNetwork);
+      setState(() => _error = S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -90,114 +97,127 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final c = context.colors;
     return Scaffold(
+      backgroundColor: c.background,
       appBar: AppBar(
+        backgroundColor: c.background,
+        surfaceTintColor: Colors.transparent,
         title: Text(s.delAccTitle),
         leading: const BackButton(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.redAccent.withValues(alpha: 0.4),
+      body: GroupedBody(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: c.danger.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(LucideIcons.triangleAlert, size: 18, color: c.danger),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    s.delAccWarningBanner,
+                    style: TextStyle(
+                      color: c.textPrimary,
+                      fontSize: 13.5,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          GroupedSection(
+            caption: s.delAccWhatHappens,
+            indent: 16,
+            children: [
+              GroupedRow(title: s.delAccBullet1),
+              GroupedRow(title: s.delAccBullet2),
+              GroupedRow(title: s.delAccBullet3),
+              GroupedRow(title: s.delAccBullet4),
+            ],
+          ),
+          GroupedSection(
+            indent: 16,
+            footer: _error == null ? s.delAccPasswordHelper : null,
+            children: [
+              GroupedField(
+                label: s.cpCurrentPassword,
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  textCapitalization: TextCapitalization.none,
+                  onChanged: (_) {
+                    if (_error != null) setState(() => _error = null);
+                  },
+                  decoration: groupedInput(context),
                 ),
               ),
+              GroupedRow(
+                title: s.delAccAckCheckbox,
+                onTap: () => setState(() {
+                  _ack = !_ack;
+                  _error = null;
+                }),
+                trailing: Checkbox(
+                  value: _ack,
+                  activeColor: c.danger,
+                  onChanged: (v) => setState(() {
+                    _ack = v ?? false;
+                    _error = null;
+                  }),
+                ),
+              ),
+            ],
+          ),
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                  const SizedBox(width: 12),
+                  Icon(LucideIcons.circleAlert, size: 15, color: c.danger),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      s.delAccWarningBanner,
-                      style: const TextStyle(fontSize: 13),
+                      _error!,
+                      style: TextStyle(color: c.danger, fontSize: 13),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              s.delAccWhatHappens,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: c.danger,
+              foregroundColor: c.textOnAccent,
+              minimumSize: const Size.fromHeight(52),
             ),
-            const SizedBox(height: 8),
-            _BulletItem(s.delAccBullet1),
-            _BulletItem(s.delAccBullet2),
-            _BulletItem(s.delAccBullet3),
-            _BulletItem(s.delAccBullet4),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: s.cpCurrentPassword,
-                helperText: s.delAccPasswordHelper,
-                prefixIcon: const Icon(Icons.lock_outline),
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            CheckboxListTile(
-              value: _ack,
-              onChanged: (v) => setState(() => _ack = v ?? false),
-              title: Text(
-                s.delAccAckCheckbox,
-                style: const TextStyle(fontSize: 14),
-              ),
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
-            ),
-            const SizedBox(height: 16),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                minimumSize: const Size.fromHeight(52),
-              ),
-              onPressed: _loading ? null : _submit,
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(s.delAccDeleteMyAccount),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(s.actionCancel),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BulletItem extends StatelessWidget {
-  final String text;
-  const _BulletItem(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('•  '),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+            onPressed: _loading ? null : _submit,
+            child: _loading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: c.textOnAccent,
+                    ),
+                  )
+                : Text(s.delAccDeleteMyAccount),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => context.pop(),
+            child: Text(s.actionCancel),
+          ),
         ],
       ),
     );

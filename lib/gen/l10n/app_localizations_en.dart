@@ -2523,7 +2523,7 @@ class SEn extends S {
 
   @override
   String get walletIapInfo =>
-      'Purchase processed by the official store (Google Play / App Store). Coins are credited automatically after payment. Coins are non-redeemable virtual items used only to send gifts in lives.';
+      'Purchase processed by your phone\'s official app store. Coins are credited automatically after payment. Coins are non-redeemable virtual items used inside the app.';
 
   @override
   String walletIapBuyFor(String price) {
@@ -2546,7 +2546,7 @@ class SEn extends S {
 
   @override
   String get walletIapStoreUnavailable =>
-      'In-app purchases unavailable on this device. Make sure your Google/Apple account is set up.';
+      'In-app purchases aren\'t available on this device. Check that your store account is set up.';
 
   @override
   String get walletIapPaymentPending =>
@@ -2590,7 +2590,7 @@ class SEn extends S {
 
   @override
   String get earningsPurchaseHistorySubtitle =>
-      'Coin purchases via App Store / Google Play';
+      'Coin purchases through the app store';
 
   @override
   String get earningsGiftHistoryTitle => 'Received gifts';
@@ -3600,7 +3600,7 @@ class SEn extends S {
 
   @override
   String get topUpStoreDisclaimer =>
-      'Secure payment via Play Store / App Store';
+      'Secure payment through your phone\'s app store';
 
   @override
   String get topUpStoreDisclaimerApple =>
@@ -3611,7 +3611,7 @@ class SEn extends S {
 
   @override
   String get earningsNoPurchasesHint =>
-      'When you buy coins via App Store or Google Play, they\'ll show up here.';
+      'When you buy coins through the app store, they\'ll show up here.';
 
   @override
   String get earningsNoGiftsHint =>
@@ -11514,4 +11514,477 @@ class SEn extends S {
   @override
   String get videoErrUnknown =>
       'Something went wrong while publishing. Try again.';
+
+  @override
+  String get postBoostedSeeResults => 'Boosted · see results';
+
+  @override
+  String get navCreate => 'Create';
+
+  @override
+  String get profileTabGrid => 'Posts';
+
+  @override
+  String get profileTabTexts => 'Text posts';
+
+  @override
+  String get profileEmptyMeGrid =>
+      'Your grid is empty. Share a photo or video.';
+
+  @override
+  String get profileEmptyOtherGrid => 'No posts yet';
+
+  @override
+  String get profileEmptyMeVideos => 'You haven\'t posted any videos yet';
+
+  @override
+  String get profileEmptyMeTexts => 'You haven\'t posted any text yet';
+
+  @override
+  String get profileEmptyMeAction => 'Post';
+
+  @override
+  String profileShareText(String name, String url) {
+    return 'Check out $name on Brawe Connect: $url';
+  }
+
+  @override
+  String get chatxStop => 'Stop';
+
+  @override
+  String get chatxListen => 'Listen';
+
+  @override
+  String get livexEligCheckFailTitle => 'Could not verify';
+
+  @override
+  String get livexEligCheckFailSub => 'Check your connection and try again.';
+
+  @override
+  String get livexNeedAvatarTitle => 'Add a profile photo';
+
+  @override
+  String get livexNeedAvatarSub =>
+      'Only users with a profile photo can start a live.';
+
+  @override
+  String get livexNeedAvatarCta => 'Add photo now';
+
+  @override
+  String get livexNeedCreatorTitle => 'Live is exclusive to Creator Network';
+
+  @override
+  String get livexNeedCreatorSub =>
+      'Live streaming is unlocked after approval in the program. It is free and takes a few minutes.';
+
+  @override
+  String get livexNeedCreatorCta => 'Join the program';
+
+  @override
+  String get livexCheckingPerms => 'Checking permissions…';
+
+  @override
+  String get livexNotNow => 'Not now';
+
+  @override
+  String get livexAddSound => 'Add sound';
+
+  @override
+  String get livexFlip => 'Flip';
+
+  @override
+  String get livexBeauty => 'Beauty';
+
+  @override
+  String get livexFilters => 'Filters';
+
+  @override
+  String get livexShare => 'Share';
+
+  @override
+  String get livexCover => 'Cover';
+
+  @override
+  String get livexChange => 'Change';
+
+  @override
+  String get livexBattle => 'Battle';
+
+  @override
+  String get livexGifts => 'Gifts';
+
+  @override
+  String get livexNotify => 'Notify';
+
+  @override
+  String get livexGuests => 'Guests';
+
+  @override
+  String get livexPromote => 'Promote';
+
+  @override
+  String get livexPublicLive => 'Public live';
+
+  @override
+  String get livexModeCamera => 'Camera';
+
+  @override
+  String get livexModeTemplate => 'Template';
+
+  @override
+  String get livexShareMax => 'You can send to up to 50 people at a time';
+
+  @override
+  String get livexShareOtherApps => 'Other apps';
+
+  @override
+  String livexShareText(String who, String title, String url) {
+    return '$who is live on Brawe: $title\n$url';
+  }
+
+  @override
+  String livexShareTextSelf(String title, String url) {
+    return 'I am live on Brawe: $title\n$url';
+  }
+
+  @override
+  String get livexAudioTitle => 'Audio';
+
+  @override
+  String get livexAudioGain => 'Gain';
+
+  @override
+  String get livexAudioLimiter => 'Limiter';
+
+  @override
+  String get livexCompLight => 'Light';
+
+  @override
+  String get livexCompMedium => 'Medium';
+
+  @override
+  String get livexCompAggressive => 'Strong';
+
+  @override
+  String get livexCompShort => 'Comp';
+
+  @override
+  String get livexAudioProcessor => 'Audio processor';
+
+  @override
+  String livexAudioProcessorSub(String preset) {
+    return 'Equalizer + compressor — $preset';
+  }
+
+  @override
+  String get livexAudioNoiseOn => 'Noise reduction on';
+
+  @override
+  String get livexAudioQualityOn => 'Quality mode on';
+
+  @override
+  String get livexAudioModeQuality => 'Audio: Quality';
+
+  @override
+  String get livexAudioModeVoice => 'Audio: Noise reduction';
+
+  @override
+  String get livexAudioModeQualitySub =>
+      'Full-range 44.1kHz — best for music. Tap to turn on noise reduction.';
+
+  @override
+  String get livexAudioModeVoiceSub =>
+      'AEC + noise suppression — best for talking. Tap to go back to quality.';
+
+  @override
+  String get livexRose => 'Rose';
+
+  @override
+  String get livexViewProduct => 'View product';
+
+  @override
+  String get livexProductSoon =>
+      'Open the product in the storefront — coming soon.';
+
+  @override
+  String get livexQualityTitle => 'Video quality';
+
+  @override
+  String get livexQualityFpsNote => 'FPS: set by the streamer (usually 30fps)';
+
+  @override
+  String get livexPauseExpired =>
+      'The pause went past 5 minutes and the live was ended.';
+
+  @override
+  String get livexPauseOneMinute =>
+      '1 minute left: resume the live or it will end.';
+
+  @override
+  String get livexCameraSwitchDropped =>
+      'The stream dropped while switching cameras. Tap Resume.';
+
+  @override
+  String get livexQualityAutoDesc => 'Adjusts automatically to your connection';
+
+  @override
+  String get livexQuality480Desc => 'Lowest data usage';
+
+  @override
+  String get livexQuality720Desc => 'Good quality, recommended';
+
+  @override
+  String get livexQuality1080Desc => 'Best quality, needs a good connection';
+
+  @override
+  String get livexRoseSendFailed => 'Could not send the rose';
+
+  @override
+  String get livexLevelMax => 'Max level reached';
+
+  @override
+  String livexXpToNext(String xp) {
+    return '$xp more XP to level up';
+  }
+
+  @override
+  String get livexSentVerb => 'sent';
+
+  @override
+  String get livexSwitchCameraFailed => 'Could not switch the camera';
+
+  @override
+  String get notifGroupMonth => 'This month';
+
+  @override
+  String get notifFollowBack => 'Follow back';
+
+  @override
+  String get notifActionView => 'View';
+
+  @override
+  String get moneyLivesViewReplay => 'View replay';
+
+  @override
+  String get moneyLivesReplayFetchError =>
+      'Couldn\'t fetch the replay. Try again.';
+
+  @override
+  String get moneyLivesDownloadTitle => 'Download live';
+
+  @override
+  String get moneyLivesUntitled => 'Untitled live';
+
+  @override
+  String get moneyLiveUnavailable => 'This live isn\'t available.';
+
+  @override
+  String get moneyCheckoutCepInvalid =>
+      'Invalid postal code. Enter all 8 digits.';
+
+  @override
+  String get moneyCheckoutCepFilled => 'Address filled from postal code';
+
+  @override
+  String get moneyCheckoutCepLookupError =>
+      'Couldn\'t look up the postal code. Check the digits or fill in the address by hand.';
+
+  @override
+  String get moneyPayPixError =>
+      'Couldn\'t generate the Pix payment right now. Your order was created normally: please try again.';
+
+  @override
+  String get moneyPayConfirmedToast => 'Payment confirmed!';
+
+  @override
+  String get moneyPayTitle => 'Payment';
+
+  @override
+  String get moneyPayPreparing => 'Preparing payment...';
+
+  @override
+  String get moneyPayErrorTitle => 'Couldn\'t generate payment';
+
+  @override
+  String get moneyPayTryLater => 'Please try again later.';
+
+  @override
+  String get moneyPayCodeCopied => 'Pix code copied!';
+
+  @override
+  String get moneyPayStatusPaid => 'Payment confirmed';
+
+  @override
+  String get moneyPayStatusWaiting => 'Waiting for payment';
+
+  @override
+  String get moneyPayTotal => 'Total to pay';
+
+  @override
+  String get moneyPayScanHint => 'Scan with your bank app';
+
+  @override
+  String get moneyPayCopyTitle => 'Or copy the Pix code';
+
+  @override
+  String moneyPayValidUntil(String time) {
+    return 'Valid until $time';
+  }
+
+  @override
+  String get moneyPaySoon => 'soon';
+
+  @override
+  String get moneyPayStep1 => 'Open your bank app or Pix wallet';
+
+  @override
+  String get moneyPayStep2 => 'Scan the QR code or paste the copied code';
+
+  @override
+  String get moneyPayStep3 => 'Confirm the payment';
+
+  @override
+  String get moneyPayStep4 => 'Your order is released automatically';
+
+  @override
+  String get moneyPayHowTo => 'How to pay';
+
+  @override
+  String get moneyPayChecking => 'Checking payment...';
+
+  @override
+  String get moneyPayConfirmed => 'Payment confirmed!';
+
+  @override
+  String get moneyPayRedirecting => 'Taking you to your order...';
+
+  @override
+  String get walletPurchaseSourceStore => 'App store';
+
+  @override
+  String get adsRepPlatformOtherPhones => 'Other phones';
+
+  @override
+  String get mediaRepostedToast => 'Reposted';
+
+  @override
+  String get mediaUndo => 'Undo';
+
+  @override
+  String get mediaStoryLabel => 'Story';
+
+  @override
+  String get mediaRepostStoryTooltip => 'Repost to story';
+
+  @override
+  String cmtTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comments',
+      one: '1 comment',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtSortTooltip => 'Sort comments';
+
+  @override
+  String get cmtSortTop => 'Most relevant';
+
+  @override
+  String get cmtSortRecent => 'Most recent';
+
+  @override
+  String cmtViewReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'View $count replies',
+      one: 'View 1 reply',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtHideReplies => 'Hide';
+
+  @override
+  String get cmtAddHint => 'Add comment...';
+
+  @override
+  String get cmtEmptyTitle => 'No comments yet';
+
+  @override
+  String get cmtEmptyBody => 'Start the conversation: be the first to comment.';
+
+  @override
+  String get cmtCopyText => 'Copy text';
+
+  @override
+  String get cmtCopied => 'Text copied';
+
+  @override
+  String get cmtDelete => 'Delete comment';
+
+  @override
+  String get cmtDeleteFail => 'Could not delete the comment.';
+
+  @override
+  String get cmtMentionTooltip => 'Mention someone';
+
+  @override
+  String get cmtEmojiTooltip => 'Emoji';
+
+  @override
+  String get cmtSendTooltip => 'Send comment';
+
+  @override
+  String get cmtShareComment => 'Share comment';
+
+  @override
+  String get cmtShareTitle => 'Send to';
+
+  @override
+  String get cmtShareSearchHint => 'Search people';
+
+  @override
+  String cmtShareSendCount(int count) {
+    return 'Send ($count)';
+  }
+
+  @override
+  String get cmtShareNoteHint => 'Write a message...';
+
+  @override
+  String cmtShareSentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Sent to $count people',
+      one: 'Sent to 1 person',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtShareSendFail => 'Could not send to some people. Try again.';
+
+  @override
+  String get cmtShareWhatsapp => 'WhatsApp';
+
+  @override
+  String get cmtShareAddStory => 'Add to Story';
+
+  @override
+  String get cmtShareNoResults => 'No one found.';
+
+  @override
+  String get cmtShareOpenFail => 'Could not open the app.';
+
+  @override
+  String cmtShareCommentText(String username, String text, String url) {
+    return 'Comment by @$username on Brawe: “$text”\n$url';
+  }
 }

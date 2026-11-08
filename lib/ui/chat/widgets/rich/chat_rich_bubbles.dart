@@ -32,7 +32,9 @@ class ForwardedLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = isMe ? Colors.white70 : context.colors.textTertiary;
+    final c = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textTertiary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -75,8 +77,10 @@ class StoryInteractionBubble extends StatelessWidget {
     final media = p['story_media_url']?.toString();
     final expires = DateTime.tryParse(p['story_expires_at']?.toString() ?? '');
     final expired = expires != null && expires.isBefore(DateTime.now());
-    final fg = isMe ? Colors.white : context.colors.textPrimary;
-    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+    final fg = isMe ? context.colors.textOnAccent : context.colors.textPrimary;
+    final sub = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textSecondary;
 
     final label = isReply
         ? (isMe ? s.chatStoryRepliedMine : s.chatStoryReplied)
@@ -430,8 +434,10 @@ class _GiftVaultBubbleState extends ConsumerState<GiftVaultBubble> {
     final opened = p['opened'] == true;
     final tier = p['tier']?.toString();
     final tint = vaultTierColor(tier);
-    final fg = isMe ? Colors.white : context.colors.textPrimary;
-    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+    final fg = isMe ? context.colors.textOnAccent : context.colors.textPrimary;
+    final sub = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textSecondary;
     final giftName = p['gift_name']?.toString() ?? '';
     final qty = (p['quantity'] as num?)?.toInt() ?? 1;
 
@@ -490,7 +496,7 @@ class _GiftVaultBubbleState extends ConsumerState<GiftVaultBubble> {
                   child: Text(
                     vaultTierName(s, tier).toUpperCase(),
                     style: TextStyle(
-                      color: isMe ? Colors.white : tint,
+                      color: isMe ? context.colors.textOnAccent : tint,
                       fontSize: 9.5,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.6,
@@ -519,19 +525,23 @@ class _GiftVaultBubbleState extends ConsumerState<GiftVaultBubble> {
                                 height: 11,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 1.6,
-                                  color: isMe ? Colors.white : tint,
+                                  color: isMe
+                                      ? context.colors.textOnAccent
+                                      : tint,
                                 ),
                               )
                             : Icon(
                                 LucideIcons.rotateCcw,
                                 size: 12,
-                                color: isMe ? Colors.white : tint,
+                                color: isMe
+                                    ? context.colors.textOnAccent
+                                    : tint,
                               ),
                         const SizedBox(width: 4),
                         Text(
                           s.chatVaultReplay,
                           style: TextStyle(
-                            color: isMe ? Colors.white : tint,
+                            color: isMe ? context.colors.textOnAccent : tint,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -872,8 +882,8 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
                                       child: Text(
                                         s.chatVaultEarnings(money),
                                         textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          color: Color(0xFF34D399),
+                                        style: TextStyle(
+                                          color: context.colors.success,
                                           fontWeight: FontWeight.w800,
                                           fontSize: 13,
                                         ),
@@ -936,10 +946,7 @@ class _VaultRevealState extends ConsumerState<_VaultReveal>
                       top: 8,
                       right: 8,
                       child: IconButton(
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Colors.white70,
-                        ),
+                        icon: const Icon(LucideIcons.x, color: Colors.white70),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),
@@ -1048,8 +1055,10 @@ class LocationBubble extends StatelessWidget {
     final name = p['name']?.toString();
     final lat = (p['lat'] as num?)?.toDouble();
     final lng = (p['lng'] as num?)?.toDouble();
-    final fg = isMe ? Colors.white : context.colors.textPrimary;
-    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+    final fg = isMe ? context.colors.textOnAccent : context.colors.textPrimary;
+    final sub = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textSecondary;
 
     return GestureDetector(
       onTap: message.isPending ? null : _open,
@@ -1066,21 +1075,28 @@ class LocationBubble extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFFD1FAE5), Color(0xFFBFDBFE)],
+                        colors: [
+                          context.colors.success.withValues(alpha: 0.22),
+                          context.colors.accentSecondary.withValues(
+                            alpha: 0.22,
+                          ),
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
                   ),
-                  CustomPaint(painter: _MapGridPainter()),
-                  const Center(
+                  CustomPaint(
+                    painter: _MapGridPainter(context.colors.surfaceElevated),
+                  ),
+                  Center(
                     child: Icon(
-                      Icons.location_on_rounded,
+                      LucideIcons.mapPin,
                       size: 40,
-                      color: Color(0xFFEF4444),
+                      color: context.colors.danger,
                     ),
                   ),
                   if (message.isPending)
@@ -1113,7 +1129,9 @@ class LocationBubble extends StatelessWidget {
           Text(
             s.chatLocationOpen,
             style: TextStyle(
-              color: isMe ? Colors.white : context.colors.accentPrimary,
+              color: isMe
+                  ? context.colors.textOnAccent
+                  : context.colors.accentPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
             ),
@@ -1125,13 +1143,16 @@ class LocationBubble extends StatelessWidget {
 }
 
 class _MapGridPainter extends CustomPainter {
+  _MapGridPainter(this.roadColor);
+  final Color roadColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     final road = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
+      ..color = roadColor.withValues(alpha: 0.85)
       ..strokeWidth = 5;
     final minor = Paint()
-      ..color = Colors.white.withValues(alpha: 0.5)
+      ..color = roadColor.withValues(alpha: 0.5)
       ..strokeWidth = 2;
     canvas.drawLine(
       Offset(0, size.height * 0.62),
@@ -1174,8 +1195,10 @@ class FileBubble extends StatelessWidget {
     final name = p['name']?.toString() ?? 'arquivo';
     final url = p['url']?.toString() ?? '';
     final ext = name.contains('.') ? name.split('.').last.toUpperCase() : '';
-    final fg = isMe ? Colors.white : context.colors.textPrimary;
-    final sub = isMe ? Colors.white70 : context.colors.textSecondary;
+    final fg = isMe ? context.colors.textOnAccent : context.colors.textPrimary;
+    final sub = isMe
+        ? context.colors.textOnAccent.withValues(alpha: 0.75)
+        : context.colors.textSecondary;
     final color = switch (ext) {
       'PDF' => const Color(0xFFEF4444),
       'DOC' || 'DOCX' => const Color(0xFF3B82F6),

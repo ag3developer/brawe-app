@@ -1,5 +1,7 @@
 import 'dart:ui' as ui;
+import 'package:brawe_app/gen/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/services/socket_service.dart';
@@ -131,7 +133,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
               ),
               const SizedBox(height: 18),
               Text(
-                'Abrir produto na vitrine — em breve.',
+                S.of(context).livexProductSoon,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 13,
@@ -198,7 +200,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                   height: 64,
                                   child: p.thumbnailUrl != null
                                       ? Image.network(
-                                        cacheWidth: context.decodePx(64),
+                                          cacheWidth: context.decodePx(64),
                                           p.thumbnailUrl!,
                                           fit: BoxFit.cover,
                                           errorBuilder: (_, _, _) =>
@@ -273,15 +275,16 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.braweEmber
-                                          .withValues(alpha: 0.45),
+                                      color: AppColors.braweEmber.withValues(
+                                        alpha: 0.45,
+                                      ),
                                       blurRadius: 14,
                                       offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: const Text(
-                                  'Ver produto',
+                                child: Text(
+                                  S.of(context).livexViewProduct,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 12.5,
@@ -302,16 +305,18 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
                             height: 22,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: AppColors.braweOrange
-                                  .withValues(alpha: 0.22),
+                              color: AppColors.braweOrange.withValues(
+                                alpha: 0.22,
+                              ),
                               border: Border.all(
-                                color: AppColors.braweOrange
-                                    .withValues(alpha: 0.55),
+                                color: AppColors.braweOrange.withValues(
+                                  alpha: 0.55,
+                                ),
                                 width: 0.8,
                               ),
                             ),
                             child: const Icon(
-                              Icons.push_pin_rounded,
+                              LucideIcons.pin,
                               color: AppColors.braweSpark,
                               size: 12,
                             ),
@@ -328,10 +333,6 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
 
   Widget _thumbPlaceholder() => Container(
     color: Colors.white.withValues(alpha: 0.08),
-    child: const Icon(
-      Icons.shopping_bag_outlined,
-      color: Colors.white54,
-      size: 18,
-    ),
+    child: const Icon(LucideIcons.shoppingBag, color: Colors.white54, size: 18),
   );
 }

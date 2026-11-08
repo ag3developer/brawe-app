@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/providers/affiliate_origin_provider.dart';
 import '../../../data/providers/cart_notifier_provider.dart';
@@ -9,6 +10,7 @@ import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/viacep_service.dart';
 import '../../../domain/models/marketplace_models.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/mask_formatter.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../widgets/checkout/address_selection_sheet.dart';
 import '../widgets/checkout/checkout_bottom_bar.dart';
@@ -77,6 +79,10 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   bool _isSavingAddress = false;
   bool _isFetchingCep = false;
   String? _cepError;
+  bool _cepFilled = false;
+  // Erros mostrados na própria tela (junto do botão), não em SnackBar.
+  String? _addressError;
+  String? _submitError;
   double _calculatedShipping = 0.0;
 
   // Quantidade sendo atualizada por item — evita múltiplas requisições
@@ -129,7 +135,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         toolbarHeight: 48,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back,
+            LucideIcons.arrowLeft,
             size: 20,
             color: context.colors.textPrimary,
           ),
@@ -155,6 +161,8 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
                     ? _buildDesktopLayout(context, cartState, addressesAsync)
                     : _buildMobileLayout(context, cartState, addressesAsync),
               ),
+              if (_submitError != null)
+                _InlineNotice(message: _submitError!, isError: true),
               CheckoutBottomBar(
                 itemCount: cartState.itemCount,
                 total: cartState.total,
@@ -475,7 +483,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.colors.overlay.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -610,7 +618,17 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
                   ),
                 ],
                 onChanged: (value) {
-                  if (value != null) setState(() => _documentType = value);
+                  if (value == null) return;
+                  setState(() {
+                    _documentType = value;
+                    // reaplica a máscara do novo tipo ao que já foi digitado
+                    final mask = value == _DocumentType.cpf
+                        ? DigitMask.cpf
+                        : DigitMask.cnpj;
+                    _recipientDocumentController.text = mask.apply(
+                      _recipientDocumentController.text,
+                    );
+                  });
                 },
               ),
             ),
@@ -620,6 +638,11 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               child: TextFormField(
                 controller: _recipientDocumentController,
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  _documentType == _DocumentType.cpf
+                      ? DigitMask.cpf
+                      : DigitMask.cnpj,
+                ],
                 style: TextStyle(color: context.colors.textPrimary),
                 decoration: _inputDecoration(
                   context,
@@ -631,6 +654,10 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
           ],
         ),
         const SizedBox(height: 16),
+        if (_addressError != null) ...[
+          _InlineNotice(message: _addressError!, isError: true),
+          const SizedBox(height: 8),
+        ],
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
@@ -666,6 +693,8 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            textCapitalization: TextCapitalization.none,
+            autocorrect: false,
             style: TextStyle(color: context.colors.textPrimary),
             decoration: _inputDecoration(
               context,
@@ -685,6 +714,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
+            inputFormatters: [DigitMask.phoneBr],
             style: TextStyle(color: context.colors.textPrimary),
             decoration: _inputDecoration(
               context,
@@ -707,6 +737,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   }) {
     return TextFormField(
       controller: controller,
+      textCapitalization: TextCapitalization.words,
       style: TextStyle(color: context.colors.textPrimary),
       decoration: _inputDecoration(context, label),
       validator: required
@@ -724,6 +755,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         TextFormField(
           controller: _postalCodeController,
           style: TextStyle(color: context.colors.textPrimary),
+          inputFormatters: [DigitMask.cep],
           decoration:
               _inputDecoration(
                 context,
@@ -751,7 +783,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               return S.of(context).shopCheckoutAddressRequired;
             }
             if (!ViaCepService.isValidCepFormat(value)) {
-              return 'CEP inválido (8 dígitos)';
+              return S.of(context).moneyCheckoutCepInvalid;
             }
             return null;
           },
@@ -760,7 +792,10 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
             if (ViaCepService.isValidCepFormat(value) && _cepError == null) {
               _fetchAddressFromCep(value, context);
             }
-            setState(() => _cepError = null);
+            setState(() {
+              _cepError = null;
+              _cepFilled = false;
+            });
           },
         ),
         if (_cepError != null) ...[
@@ -771,7 +806,28 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
               _cepError!,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: Colors.red),
+              ).textTheme.bodySmall?.copyWith(color: context.colors.danger),
+            ),
+          ),
+        ] else if (_cepFilled) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(
+                  LucideIcons.circleCheck,
+                  size: 14,
+                  color: context.colors.success,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  S.of(context).moneyCheckoutCepFilled,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.colors.success,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -796,17 +852,8 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         _cityController.text = address.city;
         _stateController.text = address.state;
         _isFetchingCep = false;
+        _cepFilled = true;
       });
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✓ Endereço auto-completado'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
     } on InvalidCepException catch (e) {
       setState(() {
         _cepError = e.message;
@@ -814,7 +861,7 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       });
     } catch (e) {
       setState(() {
-        _cepError = 'Erro ao buscar CEP: $e';
+        _cepError = S.of(context).moneyCheckoutCepLookupError;
         _isFetchingCep = false;
       });
     }
@@ -892,13 +939,15 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
   Future<void> _saveAddress(BuildContext context) async {
     final address = _buildAddressFromForm();
     if (address == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).shopCheckoutAddressRequired)),
-      );
+      setState(() => _addressError = S.of(context).shopCheckoutAddressRequired);
+      _formKey.currentState?.validate();
       return;
     }
 
-    setState(() => _isSavingAddress = true);
+    setState(() {
+      _isSavingAddress = true;
+      _addressError = null;
+    });
     try {
       final repo = ref.read(marketplaceRepositoryProvider);
       final saved = await repo.createAddress(address) as ShippingAddress;
@@ -908,18 +957,13 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
         _addingNewAddress = false;
         _isSavingAddress = false;
       });
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).shopCheckoutAddressSaved)),
-        );
-      }
+      // o endereço salvo aparece no cartão de entrega; sem aviso extra
     } catch (_) {
-      setState(() => _isSavingAddress = false);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).shopCheckoutAddressSaveError)),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _isSavingAddress = false;
+        _addressError = S.of(context).shopCheckoutAddressSaveError;
+      });
     }
   }
 
@@ -933,13 +977,14 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
 
     final address = _selectedAddress ?? _buildAddressFromForm();
     if (address == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(S.of(context).shopCheckoutAddressRequired)),
-      );
+      setState(() => _submitError = S.of(context).shopCheckoutAddressRequired);
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
 
     // ⭐ CRÍTICO: preserva a atribuição do afiliado capturada na vitrine
     // (via ?ref=... ou ?affiliate_code=...) e persistida em
@@ -997,12 +1042,49 @@ class _ShopCheckoutPageState extends ConsumerState<ShopCheckoutPage> {
       debugPrint('❌ Checkout error: $e');
       debugPrint('❌ Error stack: ${StackTrace.current}');
       debugPrint('❌ Error type: ${e.runtimeType}');
-      setState(() => _isSubmitting = false);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(S.of(context).shopCheckoutError)),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _submitError = S.of(context).shopCheckoutError;
+      });
     }
+  }
+}
+
+/// Aviso na própria tela (no lugar de SnackBar): ícone + mensagem em cartão discreto.
+class _InlineNotice extends StatelessWidget {
+  const _InlineNotice({required this.message, this.isError = false});
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final color = isError ? c.danger : c.success;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isError ? LucideIcons.circleAlert : LucideIcons.circleCheck,
+            size: 16,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontSize: 13, height: 1.3),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

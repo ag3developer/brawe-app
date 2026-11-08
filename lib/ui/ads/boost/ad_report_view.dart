@@ -5,6 +5,7 @@
 
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -402,7 +403,7 @@ class _AdReportViewState extends State<AdReportView> {
             child: _Split(
               items: [
                 for (final p in r.byPlatform)
-                  MapEntry(_platform(p.key), p.impressions),
+                  MapEntry(_platform(s, p.key), p.impressions),
               ],
               fmt: fmt,
             ),
@@ -592,9 +593,10 @@ String _placement(S s, String k) => switch (k) {
   _ => k,
 };
 
-String _platform(String k) => switch (k) {
+/// No iPhone o app não cita outra plataforma (regra 2.3.10 da Apple): Android vira "Outros celulares".
+String _platform(S s, String k) => switch (k) {
   'ios' => 'iPhone',
-  'android' => 'Android',
+  'android' => defaultTargetPlatform == TargetPlatform.iOS ? s.adsRepPlatformOtherPhones : 'Android',
   'web' => 'Web',
   _ => k,
 };

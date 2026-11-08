@@ -2,12 +2,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/services/auth_service.dart';
 import '../../../data/services/storage_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/ui/app_snackbar.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/grouped_list.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key, this.required = false});
@@ -25,6 +27,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _loading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -40,23 +43,25 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     final next = _newController.text;
     final confirm = _confirmController.text;
     if (current.isEmpty) {
-      AppSnackBar.showError(context, s.cpEnterCurrentPassword);
+      setState(() => _error = s.cpEnterCurrentPassword);
       return;
     }
     if (next.length < 8) {
-      AppSnackBar.showError(context, s.cpPasswordTooShort);
+      setState(() => _error = s.cpPasswordTooShort);
       return;
     }
     if (next != confirm) {
-      AppSnackBar.showError(context, s.cpPasswordsDontMatch);
+      setState(() => _error = s.cpPasswordsDontMatch);
       return;
     }
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final newToken = await ref.read(authServiceProvider).changePassword(
-            currentPassword: current,
-            newPassword: next,
-          );
+      final newToken = await ref
+          .read(authServiceProvider)
+          .changePassword(currentPassword: current, newPassword: next);
       // A troca de senha encerra as outras sessões e renova esta.
       if (newToken != null) {
         await ref.read(storageServiceProvider).saveToken(newToken);
@@ -74,10 +79,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       final detail = e.response?.data is Map
           ? (e.response?.data['detail']?.toString() ?? fallback)
           : fallback;
-      AppSnackBar.showError(context, detail);
+      setState(() => _error = detail);
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, S.of(context).errorNetwork);
+      setState(() => _error = S.of(context).errorNetwork);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -86,73 +91,95 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
+    final c = context.colors;
+    Widget pwField(TextEditingController ctl, String label, {String? hint}) =>
+        GroupedField(
+          label: label,
+          child: TextField(
+            controller: ctl,
+            obscureText: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.none,
+            onChanged: (_) {
+              if (_error != null) setState(() => _error = null);
+            },
+            decoration: groupedInput(context, hint: hint),
+          ),
+        );
     return PopScope(
       canPop: !widget.required,
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(s.settingsChangePassword),
-        automaticallyImplyLeading: false,
-        leading: widget.required ? null : const BackButton(),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        backgroundColor: c.background,
+        appBar: AppBar(
+          backgroundColor: c.background,
+          surfaceTintColor: Colors.transparent,
+          title: Text(s.settingsChangePassword),
+          automaticallyImplyLeading: false,
+          leading: widget.required ? null : const BackButton(),
+        ),
+        body: GroupedBody(
           children: [
             if (widget.required) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: context.colors.warning.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: c.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Text(
-                  s.secPasswordRequired,
-                  style: TextStyle(
-                    color: context.colors.textPrimary,
-                    fontSize: 14,
-                    height: 1.35,
-                  ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(LucideIcons.shieldAlert, size: 18, color: c.warning),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        s.secPasswordRequired,
+                        style: TextStyle(
+                          color: c.textPrimary,
+                          fontSize: 14,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 22),
             ],
-            const SizedBox(height: 8),
-            TextField(
-              controller: _currentController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: s.cpCurrentPassword,
-                prefixIcon: const Icon(Icons.lock_outline),
-                border: const OutlineInputBorder(),
-              ),
+            GroupedSection(
+              indent: 16,
+              children: [pwField(_currentController, s.cpCurrentPassword)],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _newController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: s.cpNewPassword,
-                helperText: s.cpMin8Chars,
-                prefixIcon: const Icon(Icons.lock_reset_outlined),
-                border: const OutlineInputBorder(),
-              ),
+            GroupedSection(
+              indent: 16,
+              footer: _error == null ? s.cpMin8Chars : null,
+              children: [
+                pwField(_newController, s.cpNewPassword),
+                pwField(_confirmController, s.cpConfirmNewPassword),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _confirmController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: s.cpConfirmNewPassword,
-                prefixIcon: const Icon(Icons.lock_reset_outlined),
-                border: const OutlineInputBorder(),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(LucideIcons.circleAlert, size: 15, color: c.danger),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: TextStyle(color: c.danger, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
             FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: context.colors.accentPrimary,
-                foregroundColor: context.colors.textOnAccent,
+                backgroundColor: c.accentPrimary,
+                foregroundColor: c.textOnAccent,
                 minimumSize: const Size.fromHeight(52),
               ),
               onPressed: _loading ? null : _submit,
@@ -162,14 +189,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: context.colors.textOnAccent,
+                        color: c.textOnAccent,
                       ),
                     )
                   : Text(s.cpSaveNewPassword),
             ),
           ],
         ),
-      ),
       ),
     );
   }

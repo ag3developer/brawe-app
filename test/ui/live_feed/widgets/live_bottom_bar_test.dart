@@ -1,3 +1,5 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:brawe_app/gen/l10n/app_localizations.dart';
 import 'package:brawe_app/ui/live/shared/widgets/actions/live_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,9 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('pt'),
+        localizationsDelegates: S.localizationsDelegates,
+        supportedLocales: S.supportedLocales,
         home: Scaffold(
           backgroundColor: Colors.black,
           body: Center(
@@ -136,7 +141,7 @@ void main() {
         (tester) async {
       await pumpBar(tester);
       // Texto vazio → ícone de chat (abre o teclado), não send.
-      expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget);
+      expect(find.byIcon(LucideIcons.messageCircle), findsOneWidget);
       // Validamos pelo Row do TextField que NÃO contém send_rounded.
       final inputRow = find
           .ancestor(of: find.byType(TextField), matching: find.byType(Row))

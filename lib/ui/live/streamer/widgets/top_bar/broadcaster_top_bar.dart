@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'atoms/atoms.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Top HUD bar for the broadcaster screen: close button, LIVE/PAUSED badge,
 /// inline stats (viewers, gifts, likes, messages, elapsed) and camera flip.
@@ -43,14 +44,14 @@ class BroadcasterTopBar extends StatelessWidget {
     final showStats = isStreaming || isPaused;
     return Row(
       children: [
-        CircleIconButton(icon: Icons.close, onTap: onClose),
+        CircleIconButton(icon: LucideIcons.x, onTap: onClose),
         const SizedBox(width: 8),
         LiveOrPausedBadge(isStreaming: isStreaming, isPaused: isPaused),
         // Cronômetro FIXO ao lado do selo — antes era o último item de uma
         // linha rolável e aparecia cortado ("26:…") sem indicação de scroll.
         if (showStats) ...[
           const SizedBox(width: 6),
-          InlineStat(icon: Icons.timer_outlined, label: elapsedLabel),
+          InlineStat(icon: LucideIcons.timer, label: elapsedLabel),
         ],
         const SizedBox(width: 6),
         if (showStats)
@@ -60,17 +61,27 @@ class BroadcasterTopBar extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               child: Row(
                 children: [
-                  InlineStat(icon: Icons.visibility, label: countFormatter(viewerCount)),
+                  InlineStat(
+                    icon: LucideIcons.eye,
+                    label: countFormatter(viewerCount),
+                  ),
                   const SizedBox(width: 6),
                   InlineStat(
-                    icon: Icons.card_giftcard_rounded,
+                    icon: LucideIcons.gift,
                     label: _formatGiftValue(totalGiftsValue),
                     iconColor: const Color(0xFF4ADE80),
                   ),
                   const SizedBox(width: 6),
-                  InlineStat(icon: Icons.favorite, label: countFormatter(likes), iconColor: Colors.redAccent),
+                  InlineStat(
+                    icon: LucideIcons.heart,
+                    label: countFormatter(likes),
+                    iconColor: Colors.redAccent,
+                  ),
                   const SizedBox(width: 6),
-                  InlineStat(icon: Icons.chat_bubble_outline, label: countFormatter(messages)),
+                  InlineStat(
+                    icon: LucideIcons.messageCircle,
+                    label: countFormatter(messages),
+                  ),
                 ],
               ),
             ),
@@ -79,7 +90,10 @@ class BroadcasterTopBar extends StatelessWidget {
           const Spacer(),
         const SizedBox(width: 6),
         if (onSwitchCamera != null)
-          CircleIconButton(icon: Icons.flip_camera_ios_outlined, onTap: onSwitchCamera!),
+          CircleIconButton(
+            icon: LucideIcons.switchCamera,
+            onTap: onSwitchCamera!,
+          ),
       ],
     );
   }

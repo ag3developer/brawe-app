@@ -17,7 +17,8 @@ import '../../shared/widgets/content_sound_attribution.dart';
 import '../../sounds/view_models/sound_player_view_model.dart';
 import '../../sounds/widgets/sound_player_bottom_sheet.dart';
 import '../view_models/feed_view_model.dart';
-import 'comments_sheet.dart';
+import 'media_comments_layout.dart';
+import 'one_tap_repost.dart';
 import 'reactions_bar.dart';
 import 'share_to_chat_sheet.dart';
 import '../../../core/network/media_headers.dart';
@@ -62,6 +63,10 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     );
   }
   Post? _post;
+
+  /// Painel de comentários embutido: o vídeo encolhe acima dele e segue tocando.
+  final MediaCommentsController _comments = MediaCommentsController();
+  bool _watchingComments = false;
   bool _loading = true;
   bool _error = false;
   bool _muted = false;
@@ -276,6 +281,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
       );
     }
     _syncTimer?.cancel();
+    _comments.dispose();
     _ctrl?.removeListener(_onTick);
     _ctrl?.dispose();
     // Brawe Sound: para a música ao sair da tela — não deve continuar
@@ -417,11 +423,44 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
   void _onComment() {
     final post = _post;
     if (post == null) return;
-    showModalBottomSheet(
+    HapticFeedback.selectionClick();
+    if (!_watchingComments) {
+      _watchingComments = true;
+      watchCommentsCount(ref, post.id, post.commentsCount, (count) {
+        if (!mounted || _post == null) return;
+        setState(() => _post = _post!.copyWith(commentsCount: count));
+        _patchFeeds((p) => p.copyWith(commentsCount: count));
+      });
+    }
+    _comments.open(post.id);
+  }
+
+  void _patchFeeds(Post Function(Post) patch) {
+    try {
+      ref.read(feedViewModelProvider.notifier).patchPost(widget.postId, patch);
+      ref
+          .read(followingFeedViewModelProvider.notifier)
+          .patchPost(widget.postId, patch);
+    } catch (_) {}
+  }
+
+  Future<void> _onRepost() {
+    final post = _post;
+    if (post == null) return Future.value();
+    return oneTapRepost(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CommentsSheet(postId: post.id),
+      ref: ref,
+      postId: post.id,
+      currentlyReposted: post.userReposted,
+      apply: (reposted) {
+        if (!mounted || _post == null) return;
+        Post patch(Post p) => p.copyWith(
+          userReposted: reposted,
+          repostsCount: (p.repostsCount + (reposted ? 1 : -1)).clamp(0, 1 << 30),
+        );
+        setState(() => _post = patch(_post!));
+        _patchFeeds(patch);
+      },
     );
   }
 
@@ -440,198 +479,212 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return PopScope(
-      canPop: true,
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: GestureDetector(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      // O teclado dos comentários é tratado pelo MediaCommentsLayout.
+      resizeToAvoidBottomInset: false,
+      body: GestureDetector(
+        onVerticalDragEnd: (d) {
+          // Swipe-down para fechar (com os comentários abertos, quem arrasta é o painel)
+          if (!_comments.isOpen && (d.primaryVelocity ?? 0) > 600) {
+            Navigator.of(context).maybePop();
+          }
+        },
+        child: MediaCommentsLayout(
+          controller: _comments,
           onTap: _toggleControls,
-          onVerticalDragEnd: (d) {
-            // Swipe-down para fechar
-            if ((d.primaryVelocity ?? 0) > 600) {
-              Navigator.of(context).maybePop();
-            }
-          },
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Vídeo
-              if (_loading)
-                const Center(
-                  child: CircularProgressIndicator(color: AppColors.braweBlue),
-                )
-              else if (_error || _ctrl == null)
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.white,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        s.feedCannotShare, // genérico — pode-se trocar por chave dedicada
-                        style: const TextStyle(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                )
-              else
-                Center(
-                  child: AspectRatio(
-                    aspectRatio: _ctrl!.value.aspectRatio,
-                    child: VideoPlayer(_ctrl!),
-                  ),
-                ),
-
-              // Overlay de play/pause
-              if (_ctrl != null && !_ctrl!.value.isPlaying)
-                Center(
-                  child: GestureDetector(
-                    onTap: _togglePlay,
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.play_arrow_rounded,
-                        color: Colors.white,
-                        size: 56,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // Top bar (back + mute)
-              if (_controlsVisible)
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 4,
-                  left: 4,
-                  right: 4,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
-                      const Spacer(),
-                      // Vídeo deitado: botão para girar (paisagem).
-                      if ((_ctrl?.value.aspectRatio ?? 0) > 1.05)
-                        IconButton(
-                          tooltip: 'Landscape',
-                          icon: Icon(
-                            _landscape
-                                ? Icons.screen_lock_portrait_rounded
-                                : Icons.screen_rotation_rounded,
-                            color: Colors.white,
-                          ),
-                          onPressed: _toggleLandscape,
-                        ),
-                      IconButton(
-                        icon: Icon(
-                          _muted
-                              ? Icons.volume_off_rounded
-                              : Icons.volume_up_rounded,
-                          color: Colors.white,
-                        ),
-                        onPressed: _toggleMute,
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Action rail
-              if (_post != null && _controlsVisible)
-                Positioned(
-                  right: 8,
-                  bottom: 110,
-                  child: _VideoActionRail(
-                    post: _post!,
-                    onLike: _onLike,
-                    onLikeLongPress: () async {
-                      final size = MediaQuery.of(context).size;
-                      final picked = await showReactionsBar(
-                        context,
-                        globalPosition: Offset(
-                          size.width - 48,
-                          size.height * 0.5,
-                        ),
-                      );
-                      if (picked != null) _onReact(picked);
-                    },
-                    onLikeCountTap: () =>
-                        context.push('/post/${_post!.id}/likes'),
-                    onComment: _onComment,
-                    onShare: _onShare,
-                  ),
-                ),
-
-              // Bottom: caption + progress bar
-              if (_post != null && _controlsVisible)
-                Positioned(
-                  left: 0,
-                  right: 70,
-                  bottom: 0,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Brawe Sound: atribuição musical compacta. O
-                          // áudio JÁ ESTÁ mixado no arquivo de vídeo (não
-                          // existe player de música separado aqui) — o
-                          // componente só exibe metadados e sincroniza o
-                          // estado visual "tocando" com o player de vídeo,
-                          // sem nunca iniciar uma segunda reprodução.
-                          if (_post!.sound != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: ContentSoundAttribution(
-                                trackId: _post!.sound!.id,
-                                title: _post!.sound!.title,
-                                artistName: _post!.sound!.artistName,
-                                coverUrl: _post!.sound!.coverUrl,
-                                isPlaying:
-                                    (_ctrl?.value.isPlaying ?? false) &&
-                                    !_muted,
-                                contentType: ContentSoundSurface.reel,
-                                onTap: () => _openSoundDetails(_post!.sound!),
-                              ),
-                            ),
-                          if (_post!.content.isNotEmpty)
-                            Text(
-                              _post!.content,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                height: 1.4,
-                                shadows: [
-                                  Shadow(color: Colors.black54, blurRadius: 6),
-                                ],
-                              ),
-                            ),
-                          if (_ctrl != null) ...[
-                            const SizedBox(height: 10),
-                            _ProgressBar(controller: _ctrl!),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          media: _buildMedia(s),
+          overlay: _buildOverlay(),
         ),
       ),
+    );
+  }
+
+  /// Vídeo (+ play/pause): a parte que encolhe quando os comentários abrem.
+  Widget _buildMedia(S s) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (_loading)
+          const Center(
+            child: CircularProgressIndicator(color: AppColors.braweBlue),
+          )
+        else if (_error || _ctrl == null)
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  s.feedCannotShare, // genérico — pode-se trocar por chave dedicada
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
+            ),
+          )
+        else
+          LayoutBuilder(
+            builder: (context, box) {
+              final c = _ctrl!;
+              final a = c.value.aspectRatio;
+              final screenAspect = box.maxWidth / box.maxHeight;
+              // Vídeo em pé (≈ proporção da tela): preenche de ponta a ponta.
+              // Deitado / quadrado: mostra inteiro, centralizado.
+              final fill = a > 0 && a <= screenAspect * 1.15 && !_landscape;
+              return SizedBox.expand(
+                child: FittedBox(
+                  fit: fill ? BoxFit.cover : BoxFit.contain,
+                  child: SizedBox(
+                    width: c.value.size.width,
+                    height: c.value.size.height,
+                    child: VideoPlayer(c),
+                  ),
+                ),
+              );
+            },
+          ),
+
+        // Overlay de play/pause
+        if (_ctrl != null && !_ctrl!.value.isPlaying)
+          Center(
+            child: GestureDetector(
+              onTap: _togglePlay,
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 56,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Controles por cima do vídeo (somem enquanto os comentários estão abertos).
+  Widget _buildOverlay() {
+    final pad = MediaQuery.of(context).padding;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Top bar (back + mute)
+        if (_controlsVisible)
+          Positioned(
+            top: pad.top + 4,
+            left: 4,
+            right: 4,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const Spacer(),
+                // Vídeo deitado: botão para girar (paisagem).
+                if ((_ctrl?.value.aspectRatio ?? 0) > 1.05)
+                  IconButton(
+                    tooltip: 'Landscape',
+                    icon: Icon(
+                      _landscape
+                          ? Icons.screen_lock_portrait_rounded
+                          : Icons.screen_rotation_rounded,
+                      color: Colors.white,
+                    ),
+                    onPressed: _toggleLandscape,
+                  ),
+                IconButton(
+                  icon: Icon(
+                    _muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                    color: Colors.white,
+                  ),
+                  onPressed: _toggleMute,
+                ),
+              ],
+            ),
+          ),
+
+        // Action rail
+        if (_post != null && _controlsVisible)
+          Positioned(
+            right: 8 + pad.right,
+            bottom: 110 + pad.bottom,
+            child: _VideoActionRail(
+              post: _post!,
+              onLike: _onLike,
+              onLikeLongPress: () async {
+                final size = MediaQuery.of(context).size;
+                final picked = await showReactionsBar(
+                  context,
+                  globalPosition: Offset(size.width - 48, size.height * 0.5),
+                );
+                if (picked != null) _onReact(picked);
+              },
+              onLikeCountTap: () => context.push('/post/${_post!.id}/likes'),
+              onComment: _onComment,
+              onRepost: _onRepost,
+              onShare: _onShare,
+            ),
+          ),
+
+        // Bottom: caption + progress bar
+        if (_post != null && _controlsVisible)
+          Positioned(
+            left: 0,
+            right: 70,
+            bottom: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Brawe Sound: atribuição musical compacta (só metadados,
+                    // sem iniciar uma segunda reprodução).
+                    if (_post!.sound != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: ContentSoundAttribution(
+                          trackId: _post!.sound!.id,
+                          title: _post!.sound!.title,
+                          artistName: _post!.sound!.artistName,
+                          coverUrl: _post!.sound!.coverUrl,
+                          isPlaying:
+                              (_ctrl?.value.isPlaying ?? false) && !_muted,
+                          contentType: ContentSoundSurface.reel,
+                          onTap: () => _openSoundDetails(_post!.sound!),
+                        ),
+                      ),
+                    if (_post!.content.isNotEmpty)
+                      Text(
+                        _post!.content,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          height: 1.4,
+                          shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                        ),
+                      ),
+                    if (_ctrl != null) ...[
+                      const SizedBox(height: 10),
+                      _ProgressBar(controller: _ctrl!),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -692,6 +745,7 @@ class _VideoActionRail extends StatelessWidget {
     required this.onLikeLongPress,
     required this.onLikeCountTap,
     required this.onComment,
+    required this.onRepost,
     required this.onShare,
   });
 
@@ -700,6 +754,7 @@ class _VideoActionRail extends StatelessWidget {
   final VoidCallback onLikeLongPress;
   final VoidCallback onLikeCountTap;
   final VoidCallback onComment;
+  final VoidCallback onRepost;
   final VoidCallback onShare;
 
   @override
@@ -726,8 +781,15 @@ class _VideoActionRail extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _RailItem(
-          icon: Icons.send_rounded,
+          icon: Icons.repeat_rounded,
           label: _fmt(post.repostsCount),
+          color: post.userReposted ? AppColors.success : Colors.white,
+          onTap: onRepost,
+        ),
+        const SizedBox(height: 18),
+        _RailItem(
+          icon: Icons.send_rounded,
+          label: S.of(context).actionShare,
           color: Colors.white,
           onTap: onShare,
         ),

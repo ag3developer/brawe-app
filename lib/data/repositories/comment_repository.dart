@@ -17,9 +17,9 @@ class CommentRepository {
   CommentRepository(this._service);
 
   Future<List<PostComment>> getComments(String postId,
-      {int limit = 50, int offset = 0}) async {
+      {int limit = 50, int offset = 0, String sort = 'top'}) async {
     try {
-      final dtos = await _service.getComments(postId, limit: limit, offset: offset);
+      final dtos = await _service.getComments(postId, limit: limit, offset: offset, sort: sort);
       return dtos.map(_mapDto).toList();
     } on DioException catch (_) {
       throw const Failure.network();
@@ -33,6 +33,16 @@ class CommentRepository {
     try {
       final dto = await _service.addComment(postId, content, parentId: parentId, gif: gif);
       return _mapDto(dto);
+    } on DioException catch (_) {
+      throw const Failure.network();
+    } catch (_) {
+      throw const Failure.unknown();
+    }
+  }
+
+  Future<void> deleteComment(String postId, String commentId) async {
+    try {
+      await _service.deleteComment(postId, commentId);
     } on DioException catch (_) {
       throw const Failure.network();
     } catch (_) {

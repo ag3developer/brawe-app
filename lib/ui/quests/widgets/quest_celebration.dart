@@ -1,29 +1,25 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 import 'package:flutter/services.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'quest_visuals.dart';
 
-const _confettiColors = [
-  Color(0xFFFFD93D),
-  Color(0xFFFF4D8D),
-  Color(0xFF22D3EE),
-  Color(0xFF7C5CFF),
-  Color(0xFF2BD995),
-  Color(0xFFFF8B33),
-];
+const _confettiColors = QuestTones.confetti;
 
 class _Particle {
   _Particle(math.Random r, {required this.spread, required this.speed})
-      : angle = -math.pi / 2 + (r.nextDouble() - 0.5) * spread,
-        velocity = speed * (0.55 + r.nextDouble() * 0.6),
-        size = 4 + r.nextDouble() * 6,
-        spin = (r.nextDouble() - 0.5) * 12,
-        color = _confettiColors[r.nextInt(_confettiColors.length)],
-        circle = r.nextBool();
+    : angle = -math.pi / 2 + (r.nextDouble() - 0.5) * spread,
+      velocity = speed * (0.55 + r.nextDouble() * 0.6),
+      size = 4 + r.nextDouble() * 6,
+      spin = (r.nextDouble() - 0.5) * 12,
+      color = _confettiColors[r.nextInt(_confettiColors.length)],
+      circle = r.nextBool();
 
   final double spread;
   final double speed;
@@ -64,7 +60,11 @@ class _ConfettiPainter extends CustomPainter {
       } else {
         canvas.drawRRect(
           RRect.fromRectAndRadius(
-            Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.5),
+            Rect.fromCenter(
+              center: Offset.zero,
+              width: p.size,
+              height: p.size * 0.5,
+            ),
             const Radius.circular(1.5),
           ),
           paint,
@@ -174,25 +174,31 @@ class _RewardBurstState extends State<_RewardBurst>
                   child: Opacity(
                     opacity: opacity.clamp(0.0, 1.0),
                     child: Transform.scale(
-                      scale: 0.6 + 0.5 * Curves.elasticOut.transform(
-                        (t * 1.6).clamp(0.0, 1.0),
-                      ),
+                      scale:
+                          0.6 +
+                          0.5 *
+                              Curves.elasticOut.transform(
+                                (t * 1.6).clamp(0.0, 1.0),
+                              ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (widget.xp > 0)
                             _FloatChip(
                               text: '+${widget.xp} XP',
-                              icon: Icons.bolt_rounded,
-                              colors: const [Color(0xFF7C5CFF), Color(0xFF22D3EE)],
+                              icon: LucideIcons.zap,
+                              colors: const [
+                                QuestTones.violet,
+                                QuestTones.cyan,
+                              ],
                             ),
                           if (widget.xp > 0 && widget.coins > 0)
                             const SizedBox(width: 6),
                           if (widget.coins > 0)
                             _FloatChip(
                               text: '+${widget.coins}',
-                              icon: Icons.monetization_on_rounded,
-                              colors: const [Color(0xFFFFD93D), Color(0xFFFF8B33)],
+                              icon: LucideIcons.coins,
+                              colors: const [QuestTones.gold, QuestTones.flame],
                             ),
                         ],
                       ),
@@ -237,12 +243,12 @@ class _FloatChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 16),
+          Icon(icon, color: QuestTones.onGradient, size: 16),
           const SizedBox(width: 4),
           Text(
             text,
             style: const TextStyle(
-              color: Colors.white,
+              color: QuestTones.onGradient,
               fontWeight: FontWeight.w900,
               fontSize: 14,
             ),
@@ -265,7 +271,7 @@ Future<void> showQuestLevelUp(BuildContext context, int level) {
     hero: _LevelHero(level: level),
     title: s.questsLevelUpTitle,
     body: s.questsLevelUpBody(level),
-    colors: const [Color(0xFF7C5CFF), Color(0xFF22D3EE)],
+    colors: const [QuestTones.violet, QuestTones.cyan],
   );
 }
 
@@ -294,7 +300,7 @@ Future<void> _showCelebrationDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: title,
-    barrierColor: Colors.black.withValues(alpha: 0.6),
+    barrierColor: QuestTones.shade.withValues(alpha: 0.6),
     transitionDuration: const Duration(milliseconds: 420),
     pageBuilder: (ctx, _, _) => _CelebrationCard(
       hero: hero,
@@ -368,7 +374,9 @@ class _CelebrationCardState extends State<_CelebrationCard>
           decoration: BoxDecoration(
             color: colors.surfaceElevated,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: widget.colors.first.withValues(alpha: 0.5)),
+            border: Border.all(
+              color: widget.colors.first.withValues(alpha: 0.5),
+            ),
             boxShadow: [
               BoxShadow(
                 color: widget.colors.last.withValues(alpha: 0.35),
@@ -468,7 +476,7 @@ class _CelebrationCardState extends State<_CelebrationCard>
                             child: Text(
                               S.of(context).questsContinue,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: QuestTones.onGradient,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 15,
                               ),
@@ -505,9 +513,9 @@ class _LevelHero extends StatelessWidget {
             width: 120,
             height: 120,
             errorBuilder: (_, _, _) => const Icon(
-              Icons.emoji_events_rounded,
+              LucideIcons.trophy,
               size: 100,
-              color: Color(0xFFFFD93D),
+              color: QuestTones.gold,
             ),
           ),
           Positioned(
@@ -516,15 +524,15 @@ class _LevelHero extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF7C5CFF), Color(0xFF22D3EE)],
+                  colors: [QuestTones.violet, QuestTones.cyan],
                 ),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: QuestTones.onGradient, width: 2),
               ),
               child: Text(
                 S.of(context).questsLevelShort(level),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: QuestTones.onGradient,
                   fontWeight: FontWeight.w900,
                   fontSize: 16,
                 ),

@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../../core/themes/brawe_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../data/services/battle_service.dart';
@@ -211,8 +213,8 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
         expand: false,
         builder: (ctx, scrollCtrl) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF0E0E14),
+            decoration: BoxDecoration(
+              color: context.colors.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
@@ -223,7 +225,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
+                      color: context.colors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -235,7 +237,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                 const SizedBox(height: 12),
                 if (!widget.linkMode) _buildDurationPicker(),
                 const SizedBox(height: 4),
-                const Divider(color: Colors.white12, height: 20),
+                Divider(color: context.colors.divider, height: 20),
                 Expanded(child: _buildList(scrollCtrl)),
                 _buildInviteButton(keyboardOpen: keyboard > 0),
               ],
@@ -254,12 +256,12 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.braweBlue.withValues(alpha: 0.15),
+              color: context.colors.accentPrimary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.sports_kabaddi_rounded,
-              color: AppColors.braweBlue,
+            child: Icon(
+              LucideIcons.swords,
+              color: context.colors.accentPrimary,
               size: 22,
             ),
           ),
@@ -271,8 +273,8 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                 widget.linkMode
                     ? S.of(context).linkStartTitle
                     : S.of(context).battleStartTitle,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.colors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                 ),
@@ -280,7 +282,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
               Text(
                 S.of(context).battleSheetSubtitle,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: context.colors.textPrimary.withValues(alpha: 0.5),
                   fontSize: 13,
                 ),
               ),
@@ -298,24 +300,29 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
         valueListenable: _searchCtrl,
         builder: (_, value, _) => TextField(
           controller: _searchCtrl,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: context.colors.textPrimary),
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: S.of(context).battleSearchHint,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
-            prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54),
+            hintStyle: TextStyle(
+              color: context.colors.textPrimary.withValues(alpha: 0.35),
+            ),
+            prefixIcon: Icon(
+              LucideIcons.search,
+              color: context.colors.textSecondary,
+            ),
             suffixIcon: value.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
-                      Icons.clear_rounded,
-                      color: Colors.white38,
+                    icon: Icon(
+                      LucideIcons.x,
+                      color: context.colors.textTertiary,
                       size: 18,
                     ),
                     onPressed: _searchCtrl.clear,
                   )
                 : null,
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.07),
+            fillColor: context.colors.textPrimary.withValues(alpha: 0.07),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
@@ -326,8 +333,8 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.braweBlue,
+              borderSide: BorderSide(
+                color: context.colors.accentPrimary,
                 width: 1.5,
               ),
             ),
@@ -347,7 +354,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
             Text(
               '${S.of(context).battleDurationLabel}:',
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: context.colors.textPrimary.withValues(alpha: 0.6),
                 fontSize: 13,
               ),
             ),
@@ -369,19 +376,23 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: selected
-                          ? AppColors.braweBlue.withValues(alpha: 0.25)
-                          : Colors.white.withValues(alpha: 0.07),
+                          ? context.colors.accentPrimary.withValues(alpha: 0.25)
+                          : context.colors.textPrimary.withValues(alpha: 0.07),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: selected
-                            ? AppColors.braweBlue.withValues(alpha: 0.7)
-                            : Colors.white.withValues(alpha: 0.1),
+                            ? context.colors.accentPrimary.withValues(
+                                alpha: 0.7,
+                              )
+                            : context.colors.textPrimary.withValues(alpha: 0.1),
                       ),
                     ),
                     child: Text(
                       opt.$1,
                       style: TextStyle(
-                        color: selected ? AppColors.braweBlue : Colors.white60,
+                        color: selected
+                            ? context.colors.accentPrimary
+                            : context.colors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -398,13 +409,13 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
 
   Widget _buildList(ScrollController scrollCtrl) {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.braweBlue),
+      return Center(
+        child: CircularProgressIndicator(color: context.colors.accentPrimary),
       );
     }
     if (_error != null) {
       return _CenteredMessage(
-        icon: Icons.wifi_off_rounded,
+        icon: LucideIcons.wifiOff,
         message: _error!,
         actionLabel: S.of(context).battleRetry,
         onAction: () => _load(reset: true),
@@ -412,7 +423,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
     }
     if (_items.isEmpty) {
       return RefreshIndicator(
-        color: AppColors.braweBlue,
+        color: context.colors.accentPrimary,
         onRefresh: () => _load(reset: true),
         // ListView para o pull-to-refresh funcionar com a lista vazia.
         child: ListView(
@@ -421,7 +432,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           children: [
             const SizedBox(height: 40),
             _CenteredMessage(
-              icon: Icons.live_tv_rounded,
+              icon: LucideIcons.tv,
               message: _query.isNotEmpty
                   ? S.of(context).battleNoCreatorQuery(_query)
                   : S.of(context).battleNoCreator,
@@ -433,7 +444,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
     return NotificationListener<ScrollNotification>(
       onNotification: _onScroll,
       child: RefreshIndicator(
-        color: AppColors.braweBlue,
+        color: context.colors.accentPrimary,
         onRefresh: () => _load(reset: true),
         child: ListView.builder(
           controller: scrollCtrl,
@@ -443,7 +454,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
           itemCount: _items.length + (_loadingMore ? 1 : 0),
           itemBuilder: (_, i) {
             if (i >= _items.length) {
-              return const Padding(
+              return Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(
                   child: SizedBox(
@@ -451,7 +462,7 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.braweBlue,
+                      color: context.colors.accentPrimary,
                     ),
                   ),
                 ),
@@ -492,17 +503,17 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    color: Color(0xFFFF6B6B),
+                  Icon(
+                    LucideIcons.circleAlert,
+                    color: context.colors.danger,
                     size: 16,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _inviteError!,
-                      style: const TextStyle(
-                        color: Color(0xFFFF6B6B),
+                      style: TextStyle(
+                        color: context.colors.danger,
                         fontSize: 12.5,
                       ),
                     ),
@@ -516,11 +527,16 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: enabled
-                    ? const LinearGradient(
-                        colors: [AppColors.braweBlue, AppColors.braweSky],
+                    ? LinearGradient(
+                        colors: [
+                          context.colors.accentPrimary,
+                          context.colors.accentSecondary,
+                        ],
                       )
                     : null,
-                color: enabled ? null : Colors.white.withValues(alpha: 0.07),
+                color: enabled
+                    ? null
+                    : context.colors.textPrimary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Material(
@@ -530,20 +546,22 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                   onTap: enabled ? _invite : null,
                   child: Center(
                     child: _sending
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 22,
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.2,
-                              color: Colors.white,
+                              color: context.colors.textPrimary,
                             ),
                           )
                         : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.send_rounded,
-                                color: enabled ? Colors.white : Colors.white30,
+                                LucideIcons.send,
+                                color: enabled
+                                    ? context.colors.textPrimary
+                                    : context.colors.textTertiary,
                                 size: 18,
                               ),
                               const SizedBox(width: 8),
@@ -551,13 +569,21 @@ class _BattleInviteSheetState extends ConsumerState<BattleInviteSheet> {
                                 child: Text(
                                   _selected != null
                                       ? (widget.linkMode
-                                            ? S.of(context).linkInviteCreator(_selected!.displayName)
-                                            : S.of(context).battleInviteCreator(_selected!.displayName))
+                                            ? S
+                                                  .of(context)
+                                                  .linkInviteCreator(
+                                                    _selected!.displayName,
+                                                  )
+                                            : S
+                                                  .of(context)
+                                                  .battleInviteCreator(
+                                                    _selected!.displayName,
+                                                  ))
                                       : S.of(context).battleSelectCreator,
                                   style: TextStyle(
                                     color: enabled
-                                        ? Colors.white
-                                        : Colors.white30,
+                                        ? context.colors.textPrimary
+                                        : context.colors.textTertiary,
                                     fontWeight: FontWeight.w800,
                                     fontSize: 15,
                                     letterSpacing: 0.3,
@@ -602,13 +628,13 @@ class _CandidateTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.braweBlue.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.04),
+              ? context.colors.accentPrimary.withValues(alpha: 0.15)
+              : context.colors.textPrimary.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
-                ? AppColors.braweBlue.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.07),
+                ? context.colors.accentPrimary.withValues(alpha: 0.5)
+                : context.colors.textPrimary.withValues(alpha: 0.07),
           ),
         ),
         child: Row(
@@ -618,7 +644,9 @@ class _CandidateTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.braweBlue.withValues(alpha: 0.3),
+                  backgroundColor: context.colors.accentPrimary.withValues(
+                    alpha: 0.3,
+                  ),
                   backgroundImage: avatar != null
                       ? ResizeImage(
                           NetworkImage(avatar),
@@ -632,8 +660,8 @@ class _CandidateTile extends StatelessWidget {
                                     .replaceFirst('@', '')[0]
                                     .toUpperCase()
                               : '?',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         )
@@ -653,14 +681,14 @@ class _CandidateTile extends StatelessWidget {
                         color: AppColors.liveRed,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: const Color(0xFF0E0E14),
+                          color: context.colors.surface,
                           width: 1.5,
                         ),
                       ),
                       child: Text(
                         S.of(context).battleLiveBadge,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: context.colors.textPrimary,
                           fontSize: 7,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 0.3,
@@ -681,8 +709,8 @@ class _CandidateTile extends StatelessWidget {
                       Flexible(
                         child: Text(
                           c.displayName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                           ),
@@ -698,13 +726,15 @@ class _CandidateTile extends StatelessWidget {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: context.colors.textPrimary.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             S.of(context).battleFollowing,
-                            style: const TextStyle(
-                              color: Colors.white70,
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
                               fontSize: 9.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -718,7 +748,9 @@ class _CandidateTile extends StatelessWidget {
                     Text(
                       c.title,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.45),
+                        color: context.colors.textPrimary.withValues(
+                          alpha: 0.45,
+                        ),
                         fontSize: 12,
                       ),
                       maxLines: 1,
@@ -734,16 +766,16 @@ class _CandidateTile extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.remove_red_eye_rounded,
-                      color: Colors.white38,
+                    Icon(
+                      LucideIcons.eye,
+                      color: context.colors.textTertiary,
                       size: 12,
                     ),
                     const SizedBox(width: 3),
                     Text(
                       '${c.viewerCount}',
-                      style: const TextStyle(
-                        color: Colors.white38,
+                      style: TextStyle(
+                        color: context.colors.textTertiary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -751,11 +783,11 @@ class _CandidateTile extends StatelessWidget {
                   ],
                 ),
                 if (selected)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 4),
                     child: Icon(
-                      Icons.check_circle_rounded,
-                      color: AppColors.braweBlue,
+                      LucideIcons.circleCheck,
+                      color: context.colors.accentPrimary,
                       size: 18,
                     ),
                   ),
@@ -789,12 +821,15 @@ class _CenteredMessage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white24, size: 40),
+            Icon(icon, color: context.colors.border, size: 40),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white38, fontSize: 13),
+              style: TextStyle(
+                color: context.colors.textTertiary,
+                fontSize: 13,
+              ),
             ),
             if (actionLabel != null) ...[
               const SizedBox(height: 12),
@@ -802,7 +837,7 @@ class _CenteredMessage extends StatelessWidget {
                 onPressed: onAction,
                 child: Text(
                   actionLabel!,
-                  style: const TextStyle(color: AppColors.braweBlue),
+                  style: TextStyle(color: context.colors.accentPrimary),
                 ),
               ),
             ],

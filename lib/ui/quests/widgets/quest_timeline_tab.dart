@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -153,7 +156,7 @@ class _DayHeader extends StatelessWidget {
             child: Text(
               label[0].toUpperCase() + label.substring(1),
               style: const TextStyle(
-                color: Colors.white,
+                color: QuestTones.onGradient,
                 fontWeight: FontWeight.w800,
                 fontSize: 12.5,
               ),
@@ -188,7 +191,7 @@ class _EventRow extends StatelessWidget {
       case 'award':
         final a = event.award;
         nodeColor = awardColor(a?.award.badgeColor);
-        node = const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 16);
+        node = const Icon(LucideIcons.award, color: QuestTones.onGradient, size: 16);
         kicker = s.questsTimelineAward;
         content = a == null
             ? const SizedBox.shrink()
@@ -206,8 +209,8 @@ class _EventRow extends StatelessWidget {
           ],
         );
       case 'level_up':
-        nodeColor = const Color(0xFF7C5CFF);
-        node = const Icon(Icons.trending_up_rounded, color: Colors.white, size: 16);
+        nodeColor = QuestTones.violet;
+        node = const Icon(LucideIcons.trendingUp, color: QuestTones.onGradient, size: 16);
         kicker = s.questsTimelineLevel(event.level ?? 0);
         content = Row(
           children: [
@@ -227,7 +230,7 @@ class _EventRow extends StatelessWidget {
           actionType: event.actionType ?? '',
         );
         nodeColor = palette.end;
-        node = const Icon(Icons.check_rounded, color: Colors.white, size: 16);
+        node = const Icon(LucideIcons.check, color: QuestTones.onGradient, size: 16);
         kicker = s.questsTimelineQuest;
         content = Row(
           children: [
@@ -249,15 +252,15 @@ class _EventRow extends StatelessWidget {
                     children: [
                       if (event.xp > 0)
                         _Gain(
-                          icon: Icons.bolt_rounded,
+                          icon: LucideIcons.zap,
                           text: '+${event.xp} XP',
-                          color: const Color(0xFF7C5CFF),
+                          color: QuestTones.violet,
                         ),
                       if (event.coins > 0)
                         _Gain(
-                          icon: Icons.monetization_on_rounded,
+                          icon: LucideIcons.coins,
                           text: '+${event.coins}',
-                          color: const Color(0xFFFFB800),
+                          color: QuestTones.gold,
                         ),
                     ],
                   ),

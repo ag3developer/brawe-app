@@ -49,8 +49,9 @@ class NotificationsViewModel extends _$NotificationsViewModel {
   Future<void> markAllRead() async {
     final current = state.value;
     if (current == null) return;
-    final optimistic =
-        current.items.map((n) => n.copyWith(isRead: true)).toList();
+    final optimistic = current.items
+        .map((n) => n.copyWith(isRead: true))
+        .toList();
     state = AsyncValue.data(
       NotificationsPage(
         items: optimistic,

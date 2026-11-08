@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../domain/models/live_room.dart';
 import '../../../../../ui/live_feed/view_models/live_room_comments_view_model.dart';
@@ -52,10 +53,10 @@ class LiveTopBar extends ConsumerWidget {
   static const double height = 56;
 
   static IconData _qualityIcon(String? label) => switch (label) {
-    '480p' => Icons.sd_rounded,
-    '720p HD' => Icons.hd_rounded,
-    '1080p Full HD' => Icons.high_quality_rounded,
-    _ => Icons.hd_outlined, // Auto
+    '480p' => LucideIcons.monitor,
+    '720p HD' => LucideIcons.monitor,
+    '1080p Full HD' => LucideIcons.monitor,
+    _ => LucideIcons.monitor, // Auto
   };
 
   void _openRanking(BuildContext context) => GifterRankingSheet.show(
@@ -87,10 +88,14 @@ class LiveTopBar extends ConsumerWidget {
                   builder: (_) => ForceDarkTheme(
                     child: StreamerQuickSheet(
                       room: room,
-                      displayName: StreamerIdentityBar.displayStreamerName(room),
+                      displayName: StreamerIdentityBar.displayStreamerName(
+                        room,
+                      ),
                       isFollowing: isFollowing,
                       onToggleFollow: () => ref
-                          .read(followViewModelProvider(room.streamerId).notifier)
+                          .read(
+                            followViewModelProvider(room.streamerId).notifier,
+                          )
                           .toggleFollow(sourceRoomId: room.id),
                     ),
                   ),
@@ -124,7 +129,11 @@ class LiveTopBar extends ConsumerWidget {
                                     )
                                   : null,
                               child: room.streamerAvatarUrl == null
-                                  ? const Icon(Icons.person, size: 18, color: Colors.white)
+                                  ? const Icon(
+                                      LucideIcons.user,
+                                      size: 18,
+                                      color: Colors.white,
+                                    )
                                   : null,
                             ),
                             // "+" pequeno: segue; some quando já segue.
@@ -135,7 +144,11 @@ class LiveTopBar extends ConsumerWidget {
                                 child: GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () => ref
-                                      .read(followViewModelProvider(room.streamerId).notifier)
+                                      .read(
+                                        followViewModelProvider(
+                                          room.streamerId,
+                                        ).notifier,
+                                      )
                                       .toggleFollow(sourceRoomId: room.id),
                                   child: Container(
                                     width: 18,
@@ -148,7 +161,11 @@ class LiveTopBar extends ConsumerWidget {
                                         width: 1.5,
                                       ),
                                     ),
-                                    child: const Icon(Icons.add_rounded, size: 12, color: Colors.white),
+                                    child: const Icon(
+                                      LucideIcons.plus,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -166,7 +183,9 @@ class LiveTopBar extends ConsumerWidget {
                               children: [
                                 Flexible(
                                   child: Text(
-                                    StreamerIdentityBar.displayStreamerName(room),
+                                    StreamerIdentityBar.displayStreamerName(
+                                      room,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -184,7 +203,7 @@ class LiveTopBar extends ConsumerWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(
-                                  Icons.favorite_rounded,
+                                  LucideIcons.heart,
                                   color: Color(0xFFFF3D6E),
                                   size: 12,
                                 ),
@@ -221,7 +240,11 @@ class LiveTopBar extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (top2.isEmpty)
-                    const Icon(Icons.emoji_events_outlined, size: 18, color: Colors.white70)
+                    const Icon(
+                      LucideIcons.trophy,
+                      size: 18,
+                      color: Colors.white70,
+                    )
                   else
                     for (var i = 0; i < top2.length; i++)
                       Padding(
@@ -232,7 +255,10 @@ class LiveTopBar extends ConsumerWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: const Color(0xFF1A1D2B),
-                            border: Border.all(color: medalColor(i + 1), width: 1.8),
+                            border: Border.all(
+                              color: medalColor(i + 1),
+                              width: 1.8,
+                            ),
                           ),
                           child: ClipOval(
                             child: top2[i].avatarUrl != null
@@ -240,7 +266,8 @@ class LiveTopBar extends ConsumerWidget {
                                     top2[i].avatarUrl!,
                                     cacheWidth: context.decodePx(28),
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => _initial(top2[i].name),
+                                    errorBuilder: (_, _, _) =>
+                                        _initial(top2[i].name),
                                   )
                                 : _initial(top2[i].name),
                           ),
@@ -262,12 +289,19 @@ class LiveTopBar extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.5),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  width: 0.5,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.visibility_outlined, size: 14, color: Colors.white.withValues(alpha: 0.9)),
+                  Icon(
+                    LucideIcons.eye,
+                    size: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     ViewersStack.formatBucket(viewerCount),
@@ -288,7 +322,11 @@ class LiveTopBar extends ConsumerWidget {
             const SizedBox(width: 6),
             GestureDetector(
               onTap: onQualityTap,
-              child: Icon(_qualityIcon(qualityLabel), color: Colors.white60, size: 18),
+              child: Icon(
+                _qualityIcon(qualityLabel),
+                color: Colors.white60,
+                size: 18,
+              ),
             ),
           ],
 
@@ -298,7 +336,7 @@ class LiveTopBar extends ConsumerWidget {
             child: const SizedBox(
               width: 36,
               height: 36,
-              child: Icon(Icons.close_rounded, color: Colors.white, size: 26),
+              child: Icon(LucideIcons.x, color: Colors.white, size: 26),
             ),
           ),
         ],
@@ -309,7 +347,11 @@ class LiveTopBar extends ConsumerWidget {
   static Widget _initial(String name) => Center(
     child: Text(
       name.isNotEmpty ? name[0].toUpperCase() : '?',
-      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
     ),
   );
 }

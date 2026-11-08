@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../data/repositories/chat_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import 'package:brawe_app/ui/core/ui/image_decode.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
@@ -103,7 +103,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
         backgroundColor: context.colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: context.colors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: context.colors.textPrimary),
           onPressed: () =>
               context.canPop() ? context.pop() : context.go('/chat'),
         ),
@@ -123,20 +123,13 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.braweBlue.withValues(alpha: 0.10),
-                    AppColors.braweSky.withValues(alpha: 0.05),
-                  ],
-                ),
-                border: Border.all(
-                  color: context.colors.border,
-                ),
+                borderRadius: BorderRadius.circular(14),
+                color: context.colors.surfaceHighest,
               ),
               child: TextField(
                 controller: _searchCtrl,
                 autofocus: true,
+                textCapitalization: TextCapitalization.none,
                 onChanged: _onSearch,
                 style: TextStyle(
                   color: context.colors.textPrimary,
@@ -149,7 +142,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                     fontSize: 14,
                   ),
                   prefixIcon: Icon(
-                    Icons.search,
+                    LucideIcons.search,
                     color: context.colors.textSecondary,
                     size: 20,
                   ),
@@ -157,7 +150,7 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
                       ? null
                       : IconButton(
                           icon: Icon(
-                            Icons.close,
+                            LucideIcons.x,
                             color: context.colors.textSecondary,
                             size: 18,
                           ),
@@ -181,18 +174,12 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
             child: Row(
               children: [
-                ShaderMask(
-                  shaderCallback: (b) => const LinearGradient(
-                    colors: [AppColors.braweBlue, AppColors.braweSky],
-                  ).createShader(b),
-                  child: Text(
-                    S.of(context).chatFollowingLabel,
-                    style: TextStyle(
-                      color: context.colors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
+                Text(
+                  S.of(context).chatFollowingLabel,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -202,9 +189,9 @@ class _NewConversationScreenState extends ConsumerState<NewConversationScreen> {
           // ─── List ───
           Expanded(
             child: usersAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.braweBlue,
+                  color: context.colors.accentPrimary,
                 ),
               ),
               error: (e, _) => Center(
@@ -271,10 +258,6 @@ class _UserTile extends StatelessWidget {
         onTap: loading ? null : onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: context.colors.surface,
-          ),
           child: Row(
             children: [
               // Avatar
@@ -284,8 +267,11 @@ class _UserTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: isLive
-                          ? const LinearGradient(
-                              colors: [Colors.red, Colors.orange],
+                          ? LinearGradient(
+                              colors: [
+                                context.colors.danger,
+                                context.colors.accentGold,
+                              ],
                             )
                           : null,
                     ),
@@ -294,7 +280,10 @@ class _UserTile extends StatelessWidget {
                       radius: 24,
                       backgroundColor: context.colors.surfaceElevated,
                       backgroundImage: avatarUrl != null
-                          ? CachedNetworkImageProvider(avatarUrl, maxWidth: context.decodePx(48))
+                          ? CachedNetworkImageProvider(
+                              avatarUrl,
+                              maxWidth: context.decodePx(48),
+                            )
                           : null,
                       child: avatarUrl == null
                           ? Text(
@@ -317,7 +306,7 @@ class _UserTile extends StatelessWidget {
                           vertical: 1,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: context.colors.danger,
                           borderRadius: BorderRadius.circular(5),
                           border: Border.all(
                             color: context.colors.background,
@@ -327,7 +316,7 @@ class _UserTile extends StatelessWidget {
                         child: Text(
                           S.of(context).chatLiveBadge,
                           style: TextStyle(
-                            color: Colors.white,
+                            color: context.colors.textOnAccent,
                             fontSize: 7,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 0.5,
@@ -365,9 +354,7 @@ class _UserTile extends StatelessWidget {
                       Text(
                         '@$username',
                         style: TextStyle(
-                          color: context.colors.textSecondary.withValues(
-                            alpha: 0.7,
-                          ),
+                          color: context.colors.textTertiary,
                           fontSize: 12,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -377,17 +364,10 @@ class _UserTile extends StatelessWidget {
                 ),
               ),
 
-              // Arrow
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [AppColors.braweBlue, AppColors.braweSky],
-                  ),
-                ),
-                child: Icon(Icons.send, color: Colors.white, size: 16),
+              Icon(
+                LucideIcons.chevronRight,
+                color: context.colors.textTertiary,
+                size: 18,
               ),
             ],
           ),
@@ -411,15 +391,10 @@ class _EmptySearchState extends StatelessWidget {
             height: 96,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  AppColors.braweBlue.withValues(alpha: 0.25),
-                  AppColors.braweBlue.withValues(alpha: 0.0),
-                ],
-              ),
+              color: context.colors.surfaceHighest,
             ),
             child: Icon(
-              Icons.person_search,
+              LucideIcons.userSearch,
               size: 48,
               color: context.colors.textSecondary,
             ),

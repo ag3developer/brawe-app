@@ -114,7 +114,7 @@ class _LiveEventChipState extends ConsumerState<LiveEventChip> {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, size: 16, color: _gold),
+              const Icon(LucideIcons.chevronRight, size: 16, color: _gold),
             ],
           ),
         ),
@@ -157,7 +157,9 @@ class _LiveEventChipState extends ConsumerState<LiveEventChip> {
                         ),
                       ),
                       Text(
-                        s.eventChipEndsIn(formatEventCountdown(e.remaining(_now))),
+                        s.eventChipEndsIn(
+                          formatEventCountdown(e.remaining(_now)),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

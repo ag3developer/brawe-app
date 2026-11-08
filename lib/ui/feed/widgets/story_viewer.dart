@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../core/view_models/hidden_users_view_model.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -544,10 +545,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 ),
                 if (isOwn)
                   ListTile(
-                    leading: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                    ),
+                    leading: const Icon(LucideIcons.trash2, color: Colors.red),
                     title: Text(
                       S.of(sheetCtx).viewerDeleteStory,
                       style: const TextStyle(color: Colors.red),
@@ -557,7 +555,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                 else ...[
                   ListTile(
                     leading: Icon(
-                      Icons.person_off_outlined,
+                      LucideIcons.userX,
                       color: sheetCtx.colors.textPrimary,
                     ),
                     title: Text(
@@ -568,7 +566,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                   ),
                   ListTile(
                     leading: Icon(
-                      Icons.block,
+                      LucideIcons.ban,
                       color: sheetCtx.colors.textPrimary,
                     ),
                     title: Text(
@@ -578,7 +576,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                     onTap: () => Navigator.pop(sheetCtx, 'block'),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.flag_outlined, color: Colors.red),
+                    leading: const Icon(LucideIcons.flag, color: Colors.red),
                     title: Text(
                       S.of(sheetCtx).viewerReport,
                       style: const TextStyle(color: Colors.red),
@@ -847,7 +845,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
 
   Widget _reasonTile(BuildContext ctx, String r, String label) => ListTile(
     title: Text(label, style: TextStyle(color: ctx.colors.textPrimary)),
-    trailing: Icon(Icons.chevron_right, color: ctx.colors.textTertiary),
+    trailing: Icon(LucideIcons.chevronRight, color: ctx.colors.textTertiary),
     onTap: () => Navigator.pop(ctx, r),
   );
 
@@ -1147,21 +1145,23 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                               if (story.isVideo)
                                 IconButton(
                                   icon: Icon(
-                                    _muted ? Icons.volume_off : Icons.volume_up,
+                                    _muted
+                                        ? LucideIcons.volumeX
+                                        : LucideIcons.volume2,
                                     color: Colors.white,
                                   ),
                                   onPressed: _toggleMute,
                                 ),
                               IconButton(
                                 icon: const Icon(
-                                  Icons.more_vert,
+                                  LucideIcons.ellipsisVertical,
                                   color: Colors.white,
                                 ),
                                 onPressed: _openMenu,
                               ),
                               IconButton(
                                 icon: const Icon(
-                                  Icons.close,
+                                  LucideIcons.x,
                                   color: Colors.white,
                                 ),
                                 onPressed: () => Navigator.of(context).pop(),
@@ -1227,7 +1227,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.open_in_new,
+                            LucideIcons.externalLink,
                             size: 14,
                             color: Colors.white,
                           ),
@@ -1250,7 +1250,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
               if (_reactionFlash)
                 const Center(
                   child: Icon(
-                    Icons.favorite,
+                    LucideIcons.heart,
                     size: 140,
                     color: Color(0xFFFF3B7E),
                   ),
@@ -1403,16 +1403,18 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.visibility, color: Colors.white, size: 18),
+            const Icon(LucideIcons.eye, color: Colors.white, size: 18),
             const SizedBox(width: 6),
             Text(
-              story.viewsCount == 1
-                  ? '1 visualização'
-                  : '${story.viewsCount} visualizações',
+              S.of(context).viewerViewsCount(story.viewsCount),
               style: const TextStyle(color: Colors.white, fontSize: 13),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.chevron_right, color: Colors.white70, size: 18),
+            const Icon(
+              LucideIcons.chevronRight,
+              color: Colors.white70,
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -1474,11 +1476,11 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
         ),
         const SizedBox(width: 8),
         // Botão de presente — chip glass.
-        _StoryActionChip(icon: Icons.card_giftcard, onTap: _openGiftSheet),
+        _StoryActionChip(icon: LucideIcons.gift, onTap: _openGiftSheet),
         const SizedBox(width: 6),
         // Botão de coração — chip glass. Long-press abre picker de 6 reações.
         _StoryActionChip(
-          icon: Icons.favorite_border,
+          icon: LucideIcons.heart,
           onTap: () => _sendQuickReaction(),
           onLongPress: _openReactionPicker,
         ),
@@ -1513,7 +1515,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                : const Icon(LucideIcons.send, color: Colors.white, size: 20),
           ),
         ),
       ],
@@ -1683,7 +1685,7 @@ class _StoryViewersSheetState extends ConsumerState<StoryViewersSheet> {
               child: Row(
                 children: [
                   Icon(
-                    Icons.visibility,
+                    LucideIcons.eye,
                     color: context.colors.textPrimary,
                     size: 18,
                   ),

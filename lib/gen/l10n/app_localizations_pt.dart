@@ -93,7 +93,7 @@ class SPt extends S {
   String get feedEmptyTitle => 'Nenhum vídeo por aqui ainda.';
 
   @override
-  String get feedEmptySubtitle => 'Siga creators ou volte mais tarde.';
+  String get feedEmptySubtitle => 'Siga criadores ou volte mais tarde.';
 
   @override
   String get feedFollowingEmptyTitle =>
@@ -252,7 +252,7 @@ class SPt extends S {
 
   @override
   String get settingsNotifLiveStartHint =>
-      'Receba aviso quando seus creators favoritos forem ao vivo';
+      'Receba aviso quando seus criadores favoritos forem ao vivo';
 
   @override
   String get settingsNotifGifts => 'Presentes recebidos';
@@ -692,7 +692,7 @@ class SPt extends S {
 
   @override
   String get feedEmptyVideoSubtitle =>
-      'Siga creators ou volte mais tarde.\nPosts de texto estão na aba Feed.';
+      'Siga criadores ou volte mais tarde.\nPosts de texto estão na aba Feed.';
 
   @override
   String get liveJoining => 'Entrando na live…';
@@ -1659,7 +1659,7 @@ class SPt extends S {
 
   @override
   String get chatListEmptySubtitle =>
-      'Suas mensagens com creators, amigos e brawers vão aparecer aqui.';
+      'Suas mensagens com criadores, amigos e brawers vão aparecer aqui.';
 
   @override
   String get chatListTapToTalk => 'Toque para conversar';
@@ -2530,7 +2530,7 @@ class SPt extends S {
 
   @override
   String get walletIapInfo =>
-      'Compra processada pela loja oficial (Google Play / App Store). As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados apenas para enviar presentes em lives.';
+      'Compra processada pela loja oficial do seu celular. As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados dentro do app.';
 
   @override
   String walletIapBuyFor(String price) {
@@ -2552,7 +2552,7 @@ class SPt extends S {
 
   @override
   String get walletIapStoreUnavailable =>
-      'Compras no app indisponíveis neste dispositivo. Verifique se sua conta Google/Apple está configurada.';
+      'Compras no app indisponíveis neste aparelho. Verifique se sua conta da loja está configurada.';
 
   @override
   String get walletIapPaymentPending =>
@@ -2596,7 +2596,7 @@ class SPt extends S {
 
   @override
   String get earningsPurchaseHistorySubtitle =>
-      'Compras de moedas via App Store / Google Play';
+      'Compras de moedas pela loja do app';
 
   @override
   String get earningsGiftHistoryTitle => 'Presentes recebidos';
@@ -3614,7 +3614,7 @@ class SPt extends S {
 
   @override
   String get topUpStoreDisclaimer =>
-      'Pagamento seguro via Play Store / App Store';
+      'Pagamento seguro pela loja do seu celular';
 
   @override
   String get topUpStoreDisclaimerApple => 'Pagamento seguro pela App Store';
@@ -3624,7 +3624,7 @@ class SPt extends S {
 
   @override
   String get earningsNoPurchasesHint =>
-      'Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.';
+      'Quando você comprar moedas pela loja do app, elas aparecerão aqui.';
 
   @override
   String get earningsNoGiftsHint =>
@@ -3645,7 +3645,7 @@ class SPt extends S {
   String get creatorActionApplyNow => 'Quero me inscrever';
 
   @override
-  String get creatorActionViewLevels => 'Ver níveis de creator';
+  String get creatorActionViewLevels => 'Ver níveis de criador';
 
   @override
   String get creatorActionCheckStatus => 'Acompanhar inscrição';
@@ -3657,10 +3657,10 @@ class SPt extends S {
   String get creatorBenefit1 => 'Seja descoberto por novas audiências';
 
   @override
-  String get creatorBenefit2 => 'Construa sua identidade de creator';
+  String get creatorBenefit2 => 'Construa sua identidade de criador';
 
   @override
-  String get creatorBenefit3 => 'Desbloqueie badges oficiais';
+  String get creatorBenefit3 => 'Desbloqueie selos oficiais';
 
   @override
   String get creatorBenefit4 => 'Cresça com lives e conteúdo';
@@ -3673,14 +3673,14 @@ class SPt extends S {
     String _temp0 = intl.Intl.pluralLogic(
       n,
       locale: localeName,
-      other: '$n creators na rede',
-      one: '1 creator na rede',
+      other: '$n criadores na rede',
+      one: '1 criador na rede',
     );
     return '$_temp0';
   }
 
   @override
-  String get creatorLevelsTitle => 'Níveis de Creator';
+  String get creatorLevelsTitle => 'Níveis de Criador';
 
   @override
   String get creatorLevelsSubtitle =>
@@ -3691,45 +3691,45 @@ class SPt extends S {
 
   @override
   String get creatorTierRisingBody =>
-      'Para creators em crescimento que querem oportunidade real de alcance.';
+      'Para criadores em crescimento que querem oportunidade real de alcance.';
 
   @override
   String get creatorTierFeaturedTitle => 'Featured Creator';
 
   @override
   String get creatorTierFeaturedBody =>
-      'Para creators ativos com conteúdo consistente e potencial editorial.';
+      'Para criadores ativos com conteúdo consistente e potencial editorial.';
 
   @override
   String get creatorTierLiveTitle => 'Live Creator';
 
   @override
   String get creatorTierLiveBody =>
-      'Para streamers, hosts e creators focados em lives e batalhas.';
+      'Para streamers, hosts e criadores focados em lives e batalhas.';
 
   @override
   String get creatorTierAmbassadorTitle => 'Ambassador';
 
   @override
   String get creatorTierAmbassadorBody =>
-      'Para creators reconhecidos que representam a visão da Brawe.';
+      'Para criadores reconhecidos que representam a visão da Brawe.';
 
   @override
   String get creatorTierFoundingTitle => 'Founding Creator';
 
   @override
   String get creatorTierFoundingBody =>
-      'Para creators selecionados que ajudam a moldar o futuro da Brawe.';
+      'Para criadores selecionados que ajudam a moldar o futuro da Brawe.';
 
   @override
-  String get creatorTierApplyCta => 'Inscrever-se como creator';
+  String get creatorTierApplyCta => 'Inscrever-se como criador';
 
   @override
   String get creatorFormTitle => 'Inscrever-se na Rede';
 
   @override
   String get creatorFormSubtitle =>
-      'Conte mais sobre sua jornada como creator.';
+      'Conte mais sobre sua jornada como criador.';
 
   @override
   String get creatorFormDescription =>
@@ -3776,7 +3776,7 @@ class SPt extends S {
       'Ex: lifestyle, música, games, educação...';
 
   @override
-  String get creatorFormCategory => 'Categoria de creator';
+  String get creatorFormCategory => 'Categoria de criador';
 
   @override
   String get creatorFormSocialLinks => 'Links de redes sociais';
@@ -3795,7 +3795,7 @@ class SPt extends S {
   String get creatorFormBio => 'Conte sua história';
 
   @override
-  String get creatorFormBioPlaceholder => 'Conte quem é você como creator';
+  String get creatorFormBioPlaceholder => 'Conte quem é você como criador';
 
   @override
   String get creatorFormMotivation => 'Sua motivação';
@@ -3808,7 +3808,7 @@ class SPt extends S {
   String get creatorFormGoals => 'Seus objetivos';
 
   @override
-  String get creatorFormGoalsPlaceholder => 'O que quer alcançar como creator?';
+  String get creatorFormGoalsPlaceholder => 'O que quer alcançar como criador?';
 
   @override
   String get creatorFormPortfolio => 'Portfólio (opcional)';
@@ -3905,7 +3905,7 @@ class SPt extends S {
 
   @override
   String get creatorStatusAnalysisBody =>
-      'Nossa equipe está revisando seu perfil de creator.';
+      'Nossa equipe está revisando seu perfil de criador.';
 
   @override
   String get creatorStatusApprovedTitle => 'Você foi aprovado!';
@@ -3977,17 +3977,17 @@ class SPt extends S {
   }
 
   @override
-  String get creatorProfileTitle => 'Perfil de Creator';
+  String get creatorProfileTitle => 'Perfil de Criador';
 
   @override
   String get creatorProfileSubtitle =>
-      'Personalize como você aparece como creator.';
+      'Personalize como você aparece como criador.';
 
   @override
   String get creatorProfileFieldDisplayName => 'Nome público';
 
   @override
-  String get creatorProfileFieldBio => 'Bio de creator';
+  String get creatorProfileFieldBio => 'Bio de criador';
 
   @override
   String get creatorProfileFieldCategory => 'Categoria de conteúdo';
@@ -3996,7 +3996,7 @@ class SPt extends S {
   String get creatorProfileFieldSocial => 'Links públicos';
 
   @override
-  String get creatorProfileFieldBadgeVisibility => 'Mostrar badge no perfil';
+  String get creatorProfileFieldBadgeVisibility => 'Mostrar selo no perfil';
 
   @override
   String get creatorProfileSave => 'Salvar alterações';
@@ -4005,18 +4005,18 @@ class SPt extends S {
   String get creatorProfilePreview => 'Visualizar perfil';
 
   @override
-  String get creatorProfileSaved => 'Perfil de creator atualizado.';
+  String get creatorProfileSaved => 'Perfil de criador atualizado.';
 
   @override
   String get creatorProfileSaveError =>
-      'Não foi possível atualizar o perfil de creator.';
+      'Não foi possível atualizar o perfil de criador.';
 
   @override
-  String get creatorBadgeScreenTitle => 'Seu Badge de Creator';
+  String get creatorBadgeScreenTitle => 'Seu selo de Criador';
 
   @override
   String get creatorBadgeScreenSubtitle =>
-      'Seu badge ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.';
+      'Seu selo ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.';
 
   @override
   String get creatorBadgeLocked => 'Bloqueado';
@@ -4031,7 +4031,7 @@ class SPt extends S {
   String get creatorBadgeBack => 'Voltar';
 
   @override
-  String get creatorDashboardTitle => 'Painel do Creator';
+  String get creatorDashboardTitle => 'Painel do Criador';
 
   @override
   String get creatorDashboardSubtitle =>
@@ -4050,7 +4050,7 @@ class SPt extends S {
   String get creatorDashboardCardLives => 'Atividade em lives';
 
   @override
-  String get creatorDashboardCardStatus => 'Status de creator';
+  String get creatorDashboardCardStatus => 'Status de criador';
 
   @override
   String get creatorDashboardQuickCreatePost => 'Criar post';
@@ -4062,13 +4062,13 @@ class SPt extends S {
   String get creatorDashboardQuickEditProfile => 'Editar perfil';
 
   @override
-  String get creatorDashboardQuickViewBadge => 'Ver badge';
+  String get creatorDashboardQuickViewBadge => 'Ver selo';
 
   @override
   String get creatorDashboardQuickInsights => 'Ver insights';
 
   @override
-  String get adminCreatorAppsTitle => 'Inscrições de Creators';
+  String get adminCreatorAppsTitle => 'Inscrições de Criadores';
 
   @override
   String get adminCreatorAppsFilterAll => 'Todos';
@@ -4113,7 +4113,7 @@ class SPt extends S {
   String get adminCreatorAppDetailTitle => 'Análise da Inscrição';
 
   @override
-  String get adminCreatorSectionInfo => 'Informações do creator';
+  String get adminCreatorSectionInfo => 'Informações do criador';
 
   @override
   String get adminCreatorSectionSocial => 'Redes sociais';
@@ -4157,7 +4157,7 @@ class SPt extends S {
 
   @override
   String get adminCreatorConfirmApprove =>
-      'Tem certeza que quer aprovar este creator?';
+      'Tem certeza que quer aprovar este criador?';
 
   @override
   String get adminCreatorConfirmReject =>
@@ -4165,7 +4165,7 @@ class SPt extends S {
 
   @override
   String get adminCreatorConfirmRequestInfo =>
-      'Diga ao creator quais informações estão faltando.';
+      'Diga ao criador quais informações estão faltando.';
 
   @override
   String get adminCreatorReviewSuccess => 'Decisão registrada.';
@@ -4174,10 +4174,10 @@ class SPt extends S {
   String get adminCreatorReviewError => 'Não foi possível registrar a decisão.';
 
   @override
-  String get adminCreatorsTitle => 'Gerenciar Creators';
+  String get adminCreatorsTitle => 'Gerenciar Criadores';
 
   @override
-  String get adminCreatorsFilterAll => 'Todos os creators';
+  String get adminCreatorsFilterAll => 'Todos os criadores';
 
   @override
   String get adminCreatorsFilterRising => 'Rising';
@@ -4195,10 +4195,10 @@ class SPt extends S {
   String get adminCreatorsFilterFounding => 'Founding';
 
   @override
-  String get adminCreatorsActionEdit => 'Editar creator';
+  String get adminCreatorsActionEdit => 'Editar criador';
 
   @override
-  String get adminCreatorsActionChangeBadge => 'Mudar badge';
+  String get adminCreatorsActionChangeBadge => 'Mudar selo';
 
   @override
   String get adminCreatorsActionFeature => 'Destacar';
@@ -6336,7 +6336,7 @@ class SPt extends S {
   String get creatorGuideHowStep3 => 'Você recebe a resposta no app';
 
   @override
-  String get creatorGuideHowStep4 => 'Aprovado, ative seu perfil de creator';
+  String get creatorGuideHowStep4 => 'Aprovado, ative seu perfil de criador';
 
   @override
   String get creatorGuideRule1 => 'Conteúdo original ou com créditos';
@@ -6566,7 +6566,7 @@ class SPt extends S {
 
   @override
   String creatorDashSince(String date) {
-    return 'Creator desde $date';
+    return 'Criador desde $date';
   }
 
   @override
@@ -6639,7 +6639,7 @@ class SPt extends S {
   String get creatorJourneyMetricGiftCredits => 'Presentes recebidos';
 
   @override
-  String get creatorJourneyMetricActiveDays => 'Dias como creator';
+  String get creatorJourneyMetricActiveDays => 'Dias como criador';
 
   @override
   String get creatorJourneyMetricViewers => 'Espectadores nas lives';
@@ -6758,7 +6758,7 @@ class SPt extends S {
       'Não conseguimos carregar sua jornada. Puxe para tentar de novo.';
 
   @override
-  String get creatorJourneyBadgeGeneric => 'Badge de creator';
+  String get creatorJourneyBadgeGeneric => 'Selo de criador';
 
   @override
   String creatorJourneyBadgeEarnedOn(String date) {
@@ -6772,24 +6772,24 @@ class SPt extends S {
   String get creatorJourneyBadgeNextTitle => 'Próximo nível';
 
   @override
-  String get creatorJourneyBadgeAllTitle => 'Seus badges';
+  String get creatorJourneyBadgeAllTitle => 'Seus selos';
 
   @override
-  String get creatorJourneyBadgeOpenDashboard => 'Abrir painel do creator';
+  String get creatorJourneyBadgeOpenDashboard => 'Abrir painel do criador';
 
   @override
-  String get creatorJourneyBenefitRisingBadgeTitle => 'Badge Rising';
+  String get creatorJourneyBenefitRisingBadgeTitle => 'Selo Rising';
 
   @override
   String get creatorJourneyBenefitRisingBadgeDesc =>
-      'Seu selo oficial de creator aparece no perfil, nas lives e nos comentários.';
+      'Seu selo oficial de criador aparece no perfil, nas lives e nos comentários.';
 
   @override
-  String get creatorJourneyBenefitCreatorProfileTitle => 'Perfil de Creator';
+  String get creatorJourneyBenefitCreatorProfileTitle => 'Perfil de Criador';
 
   @override
   String get creatorJourneyBenefitCreatorProfileDesc =>
-      'Perfil com identidade própria na rede de creators da Brawe.';
+      'Perfil com identidade própria na rede de criadores da Brawe.';
 
   @override
   String get creatorJourneyBenefitDiscoverySuggestionsTitle =>
@@ -6807,11 +6807,11 @@ class SPt extends S {
       'Acompanhe seguidores, alcance e lives com gráficos e números reais.';
 
   @override
-  String get creatorJourneyBenefitFeaturedBadgeTitle => 'Badge Featured';
+  String get creatorJourneyBenefitFeaturedBadgeTitle => 'Selo Featured';
 
   @override
   String get creatorJourneyBenefitFeaturedBadgeDesc =>
-      'Selo de destaque que mostra que você é um creator consistente.';
+      'Selo de destaque que mostra que você é um criador consistente.';
 
   @override
   String get creatorJourneyBenefitEditorialHighlightTitle =>
@@ -6829,7 +6829,7 @@ class SPt extends S {
       'Seu conteúdo ganha mais força na descoberta e chega a mais gente.';
 
   @override
-  String get creatorJourneyBenefitLiveBadgeTitle => 'Badge Live';
+  String get creatorJourneyBenefitLiveBadgeTitle => 'Selo Live';
 
   @override
   String get creatorJourneyBenefitLiveBadgeDesc =>
@@ -6848,7 +6848,7 @@ class SPt extends S {
 
   @override
   String get creatorJourneyBenefitLiveBattlesDesc =>
-      'Participe de batalhas e dispute presentes com outros creators.';
+      'Participe de batalhas e dispute presentes com outros criadores.';
 
   @override
   String get creatorJourneyBenefitLiveRankingTitle =>
@@ -6856,10 +6856,10 @@ class SPt extends S {
 
   @override
   String get creatorJourneyBenefitLiveRankingDesc =>
-      'Apareça no ranking público dos creators que mais brilham nas lives.';
+      'Apareça no ranking público dos criadores que mais brilham nas lives.';
 
   @override
-  String get creatorJourneyBenefitAmbassadorBadgeTitle => 'Badge Ambassador';
+  String get creatorJourneyBenefitAmbassadorBadgeTitle => 'Selo Ambassador';
 
   @override
   String get creatorJourneyBenefitAmbassadorBadgeDesc =>
@@ -6888,7 +6888,7 @@ class SPt extends S {
       'Posição privilegiada nos destaques da plataforma.';
 
   @override
-  String get creatorJourneyBenefitFoundingBadgeTitle => 'Badge Founding';
+  String get creatorJourneyBenefitFoundingBadgeTitle => 'Selo Founding';
 
   @override
   String get creatorJourneyBenefitFoundingBadgeDesc =>
@@ -9000,7 +9000,7 @@ class SPt extends S {
       'Informe quantos seguidores você tem (mínimo 1)';
 
   @override
-  String get editProfileCreatorBadgeTitle => 'Mostrar selo de creator';
+  String get editProfileCreatorBadgeTitle => 'Mostrar selo de criador';
 
   @override
   String get editProfileCreatorBadgeHint =>
@@ -11550,4 +11550,479 @@ class SPt extends S {
 
   @override
   String get videoErrUnknown => 'Algo deu errado ao publicar. Tente de novo.';
+
+  @override
+  String get postBoostedSeeResults => 'Impulsionado · ver resultados';
+
+  @override
+  String get navCreate => 'Criar';
+
+  @override
+  String get profileTabGrid => 'Publicações';
+
+  @override
+  String get profileTabTexts => 'Textos';
+
+  @override
+  String get profileEmptyMeGrid =>
+      'Sua grade está vazia. Compartilhe uma foto ou vídeo.';
+
+  @override
+  String get profileEmptyOtherGrid => 'Nenhuma publicação ainda';
+
+  @override
+  String get profileEmptyMeVideos => 'Você ainda não publicou vídeos';
+
+  @override
+  String get profileEmptyMeTexts => 'Você ainda não publicou textos';
+
+  @override
+  String get profileEmptyMeAction => 'Publicar';
+
+  @override
+  String profileShareText(String name, String url) {
+    return 'Confira $name no Brawe Connect: $url';
+  }
+
+  @override
+  String get chatxStop => 'Parar';
+
+  @override
+  String get chatxListen => 'Ouvir';
+
+  @override
+  String get livexEligCheckFailTitle => 'Não foi possível verificar';
+
+  @override
+  String get livexEligCheckFailSub =>
+      'Verifique sua conexão e tente novamente.';
+
+  @override
+  String get livexNeedAvatarTitle => 'Adicione uma foto de perfil';
+
+  @override
+  String get livexNeedAvatarSub =>
+      'Lives só podem ser iniciadas por usuários com foto de perfil.';
+
+  @override
+  String get livexNeedAvatarCta => 'Adicionar foto agora';
+
+  @override
+  String get livexNeedCreatorTitle => 'Live é exclusivo do Creator Network';
+
+  @override
+  String get livexNeedCreatorSub =>
+      'Transmissões ao vivo são liberadas após aprovação no programa. É grátis e leva poucos minutos.';
+
+  @override
+  String get livexNeedCreatorCta => 'Inscrever-se no programa';
+
+  @override
+  String get livexCheckingPerms => 'Verificando permissões…';
+
+  @override
+  String get livexNotNow => 'Agora não';
+
+  @override
+  String get livexAddSound => 'Adicionar som';
+
+  @override
+  String get livexFlip => 'Virar';
+
+  @override
+  String get livexBeauty => 'Beleza';
+
+  @override
+  String get livexFilters => 'Filtros';
+
+  @override
+  String get livexShare => 'Compartilhar';
+
+  @override
+  String get livexCover => 'Capa';
+
+  @override
+  String get livexChange => 'Alterar';
+
+  @override
+  String get livexBattle => 'Batalha';
+
+  @override
+  String get livexGifts => 'Presentes';
+
+  @override
+  String get livexNotify => 'Notificar';
+
+  @override
+  String get livexGuests => 'Convidados';
+
+  @override
+  String get livexPromote => 'Promover';
+
+  @override
+  String get livexPublicLive => 'Live pública';
+
+  @override
+  String get livexModeCamera => 'Câmera';
+
+  @override
+  String get livexModeTemplate => 'Modelo';
+
+  @override
+  String get livexShareMax => 'Você pode enviar para até 50 pessoas por vez';
+
+  @override
+  String get livexShareOtherApps => 'Outros apps';
+
+  @override
+  String livexShareText(String who, String title, String url) {
+    return '$who está ao vivo na Brawe: $title\n$url';
+  }
+
+  @override
+  String livexShareTextSelf(String title, String url) {
+    return 'Estou ao vivo na Brawe: $title\n$url';
+  }
+
+  @override
+  String get livexAudioTitle => 'Áudio';
+
+  @override
+  String get livexAudioGain => 'Ganho';
+
+  @override
+  String get livexAudioLimiter => 'Limitador';
+
+  @override
+  String get livexCompLight => 'Leve';
+
+  @override
+  String get livexCompMedium => 'Médio';
+
+  @override
+  String get livexCompAggressive => 'Forte';
+
+  @override
+  String get livexCompShort => 'Comp';
+
+  @override
+  String get livexAudioProcessor => 'Processador de áudio';
+
+  @override
+  String livexAudioProcessorSub(String preset) {
+    return 'Equalizador + compressor — $preset';
+  }
+
+  @override
+  String get livexAudioNoiseOn => 'Redução de ruído ativada';
+
+  @override
+  String get livexAudioQualityOn => 'Modo qualidade ativado';
+
+  @override
+  String get livexAudioModeQuality => 'Áudio: Qualidade';
+
+  @override
+  String get livexAudioModeVoice => 'Áudio: Redução de ruído';
+
+  @override
+  String get livexAudioModeQualitySub =>
+      'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.';
+
+  @override
+  String get livexAudioModeVoiceSub =>
+      'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.';
+
+  @override
+  String get livexRose => 'Rosa';
+
+  @override
+  String get livexViewProduct => 'Ver produto';
+
+  @override
+  String get livexProductSoon => 'Abrir produto na vitrine — em breve.';
+
+  @override
+  String get livexQualityTitle => 'Qualidade do vídeo';
+
+  @override
+  String get livexQualityFpsNote =>
+      'FPS: definido pelo streamer (geralmente 30fps)';
+
+  @override
+  String get livexPauseExpired =>
+      'A pausa passou de 5 minutos e a live foi encerrada.';
+
+  @override
+  String get livexPauseOneMinute =>
+      'Falta 1 minuto: retome a live ou ela será encerrada.';
+
+  @override
+  String get livexCameraSwitchDropped =>
+      'A transmissão caiu ao trocar a câmera. Toque em Retomar.';
+
+  @override
+  String get livexQualityAutoDesc =>
+      'Ajusta automaticamente conforme sua conexão';
+
+  @override
+  String get livexQuality480Desc => 'Menor consumo de dados';
+
+  @override
+  String get livexQuality720Desc => 'Boa qualidade, recomendado';
+
+  @override
+  String get livexQuality1080Desc => 'Máxima qualidade, requer boa internet';
+
+  @override
+  String get livexRoseSendFailed => 'Não foi possível enviar a rosa';
+
+  @override
+  String get livexLevelMax => 'Nível máximo alcançado';
+
+  @override
+  String livexXpToNext(String xp) {
+    return 'Mais $xp XP para subir de nível';
+  }
+
+  @override
+  String get livexSentVerb => 'enviou';
+
+  @override
+  String get livexSwitchCameraFailed => 'Não foi possível trocar a câmera';
+
+  @override
+  String get notifGroupMonth => 'Este mês';
+
+  @override
+  String get notifFollowBack => 'Seguir de volta';
+
+  @override
+  String get notifActionView => 'Ver';
+
+  @override
+  String get moneyLivesViewReplay => 'Ver replay';
+
+  @override
+  String get moneyLivesReplayFetchError =>
+      'Não foi possível buscar o replay. Tente novamente.';
+
+  @override
+  String get moneyLivesDownloadTitle => 'Baixar live';
+
+  @override
+  String get moneyLivesUntitled => 'Live sem título';
+
+  @override
+  String get moneyLiveUnavailable => 'Esta live não está disponível.';
+
+  @override
+  String get moneyCheckoutCepInvalid => 'CEP inválido. Digite os 8 números.';
+
+  @override
+  String get moneyCheckoutCepFilled => 'Endereço preenchido pelo CEP';
+
+  @override
+  String get moneyCheckoutCepLookupError =>
+      'Não foi possível buscar o CEP. Confira os números ou preencha o endereço à mão.';
+
+  @override
+  String get moneyPayPixError =>
+      'Não foi possível gerar o pagamento Pix agora. Seu pedido foi criado normalmente: tente novamente.';
+
+  @override
+  String get moneyPayConfirmedToast => 'Pagamento confirmado!';
+
+  @override
+  String get moneyPayTitle => 'Pagamento';
+
+  @override
+  String get moneyPayPreparing => 'Preparando pagamento...';
+
+  @override
+  String get moneyPayErrorTitle => 'Erro ao gerar pagamento';
+
+  @override
+  String get moneyPayTryLater => 'Tente novamente mais tarde.';
+
+  @override
+  String get moneyPayCodeCopied => 'Código Pix copiado!';
+
+  @override
+  String get moneyPayStatusPaid => 'Pagamento confirmado';
+
+  @override
+  String get moneyPayStatusWaiting => 'Aguardando pagamento';
+
+  @override
+  String get moneyPayTotal => 'Total a pagar';
+
+  @override
+  String get moneyPayScanHint => 'Escaneie com o app do seu banco';
+
+  @override
+  String get moneyPayCopyTitle => 'Ou copie o código Pix';
+
+  @override
+  String moneyPayValidUntil(String time) {
+    return 'Válido até $time';
+  }
+
+  @override
+  String get moneyPaySoon => 'em breve';
+
+  @override
+  String get moneyPayStep1 => 'Abra o app do seu banco ou carteira Pix';
+
+  @override
+  String get moneyPayStep2 => 'Escaneie o QR Code ou cole o código copiado';
+
+  @override
+  String get moneyPayStep3 => 'Confirme o pagamento';
+
+  @override
+  String get moneyPayStep4 => 'Seu pedido é liberado automaticamente';
+
+  @override
+  String get moneyPayHowTo => 'Como pagar';
+
+  @override
+  String get moneyPayChecking => 'Verificando pagamento...';
+
+  @override
+  String get moneyPayConfirmed => 'Pagamento confirmado!';
+
+  @override
+  String get moneyPayRedirecting => 'Redirecionando para o seu pedido...';
+
+  @override
+  String get walletPurchaseSourceStore => 'Loja do app';
+
+  @override
+  String get adsRepPlatformOtherPhones => 'Outros celulares';
+
+  @override
+  String get mediaRepostedToast => 'Repostado';
+
+  @override
+  String get mediaUndo => 'Desfazer';
+
+  @override
+  String get mediaStoryLabel => 'Story';
+
+  @override
+  String get mediaRepostStoryTooltip => 'Repostar no story';
+
+  @override
+  String cmtTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comentários',
+      one: '1 comentário',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtSortTooltip => 'Ordenar comentários';
+
+  @override
+  String get cmtSortTop => 'Mais relevantes';
+
+  @override
+  String get cmtSortRecent => 'Mais recentes';
+
+  @override
+  String cmtViewReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Exibir $count respostas',
+      one: 'Exibir 1 resposta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtHideReplies => 'Ocultar';
+
+  @override
+  String get cmtAddHint => 'Adicionar comentário...';
+
+  @override
+  String get cmtEmptyTitle => 'Nenhum comentário ainda';
+
+  @override
+  String get cmtEmptyBody => 'Comece a conversa: seja o primeiro a comentar.';
+
+  @override
+  String get cmtCopyText => 'Copiar texto';
+
+  @override
+  String get cmtCopied => 'Texto copiado';
+
+  @override
+  String get cmtDelete => 'Apagar comentário';
+
+  @override
+  String get cmtDeleteFail => 'Não foi possível apagar o comentário.';
+
+  @override
+  String get cmtMentionTooltip => 'Marcar alguém';
+
+  @override
+  String get cmtEmojiTooltip => 'Emoji';
+
+  @override
+  String get cmtSendTooltip => 'Enviar comentário';
+
+  @override
+  String get cmtShareComment => 'Compartilhar comentário';
+
+  @override
+  String get cmtShareTitle => 'Enviar para';
+
+  @override
+  String get cmtShareSearchHint => 'Buscar pessoas';
+
+  @override
+  String cmtShareSendCount(int count) {
+    return 'Enviar ($count)';
+  }
+
+  @override
+  String get cmtShareNoteHint => 'Escreva uma mensagem...';
+
+  @override
+  String cmtShareSentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enviado para $count pessoas',
+      one: 'Enviado para 1 pessoa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtShareSendFail =>
+      'Não foi possível enviar para algumas pessoas. Tente de novo.';
+
+  @override
+  String get cmtShareWhatsapp => 'WhatsApp';
+
+  @override
+  String get cmtShareAddStory => 'Adicionar ao Story';
+
+  @override
+  String get cmtShareNoResults => 'Ninguém encontrado.';
+
+  @override
+  String get cmtShareOpenFail => 'Não foi possível abrir o aplicativo.';
+
+  @override
+  String cmtShareCommentText(String username, String text, String url) {
+    return 'Comentário de @$username no Brawe: “$text”\n$url';
+  }
 }

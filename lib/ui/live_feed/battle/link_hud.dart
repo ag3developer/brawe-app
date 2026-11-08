@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../domain/models/link_state.dart';
 import 'battle_hud_parts.dart';
@@ -54,7 +55,12 @@ class LinkHudOverlay extends ConsumerWidget {
         children: [
           // Toque na metade do parceiro (espectador).
           Positioned.fromRect(
-            rect: Rect.fromLTRB(half.left, half.top, half.right, half.bottom - 48),
+            rect: Rect.fromLTRB(
+              half.left,
+              half.top,
+              half.right,
+              half.bottom - 48,
+            ),
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
               onTap: openPartner,
@@ -109,7 +115,6 @@ class _RegionPublisherState extends State<_RegionPublisher> {
   }
 }
 
-
 /// Silenciar o parceiro (só o criador): botão discreto na faixa escura do
 /// topo, acima da metade do parceiro — vale na conexão e na batalha.
 class LinkMuteButton extends StatelessWidget {
@@ -138,7 +143,7 @@ class LinkMuteButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                muted ? LucideIcons.volumeX : LucideIcons.volume2,
                 size: 15,
                 color: muted ? kBattleTextDim : kBattleText,
               ),

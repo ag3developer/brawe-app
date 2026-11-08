@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
+import '../../core/themes/brawe_colors.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,11 +60,18 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
 
   Future<void> _loadNext() async {
     try {
-      final rooms = await ref.read(liveRepositoryProvider).getLiveFeed(limit: 12);
+      final rooms = await ref
+          .read(liveRepositoryProvider)
+          .getLiveFeed(limit: 12);
       // Nunca a própria live de quem está vendo (mesma conta em outro aparelho).
       final myId = ref.read(authStateProvider).value?.id;
       final next = rooms
-          .where((r) => r.id != widget.room.id && r.status == 'live' && r.streamerId != myId)
+          .where(
+            (r) =>
+                r.id != widget.room.id &&
+                r.status == 'live' &&
+                r.streamerId != myId,
+          )
           .firstOrNull;
       if (!mounted) return;
       setState(() {
@@ -121,7 +130,9 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final room = widget.room;
-    final name = room.streamerName.trim().isEmpty ? 'Streamer' : room.streamerName.trim();
+    final name = room.streamerName.trim().isEmpty
+        ? 'Streamer'
+        : room.streamerName.trim();
     final me = ref.watch(authStateProvider).value?.id;
     final isMe = me != null && me == room.streamerId;
     final follow = ref.watch(followViewModelProvider(room.streamerId));
@@ -135,7 +146,7 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
         children: [
           // Base opaca: sem ela o "Conectando à live…" e o HUD do player
           // vazavam por trás quando a live não tem capa.
-          const ColoredBox(color: Color(0xFF070B1A)),
+          ColoredBox(color: context.colors.surface),
           // Fundo: capa da live desfocada + escurecida.
           if (room.thumbnailUrl != null && room.thumbnailUrl!.isNotEmpty)
             ImageFiltered(
@@ -147,12 +158,16 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                 errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
             ),
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xE6070B1A), Color(0xF2070B1A), Color(0xFF05070F)],
+                colors: [
+                  context.colors.surface.withValues(alpha: 0.90),
+                  context.colors.surface.withValues(alpha: 0.95),
+                  context.colors.background,
+                ],
               ),
             ),
           ),
@@ -163,48 +178,74 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     onPressed: _close,
-                    icon: const Icon(Icons.close_rounded, color: Colors.white, size: 28),
+                    icon: Icon(
+                      LucideIcons.x,
+                      color: context.colors.textPrimary,
+                      size: 28,
+                    ),
                   ),
                 ),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(colors: [AppColors.braweBlue, AppColors.braweOrange]),
+                    gradient: LinearGradient(
+                      colors: [
+                        context.colors.accentPrimary,
+                        AppColors.braweOrange,
+                      ],
+                    ),
                   ),
                   child: BraweAvatar(
                     avatarUrl: room.streamerAvatarUrl,
                     displayName: name,
                     size: 96,
-                    borderColor: const Color(0xFF070B1A),
+                    borderColor: context.colors.surface,
                     borderWidth: 3,
                   ),
                 ),
                 const SizedBox(height: 14),
                 Text(
                   name,
-                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 Text(
                   s.liveEndedTitle,
-                  style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
-                    widget.late ? s.liveEndedAlready(name) : s.liveEndedByStreamer(name),
+                    widget.late
+                        ? s.liveEndedAlready(name)
+                        : s.liveEndedByStreamer(name),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Color(0xFFB5BFD6), fontSize: 15, height: 1.4),
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 if (seconds > 0) ...[
                   const SizedBox(height: 6),
                   Text(
                     s.liveEndedLasted(_duration(seconds)),
-                    style: const TextStyle(color: Color(0xFF8792AD), fontSize: 13),
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 26),
@@ -217,18 +258,33 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                           ? null
                           : () {
                               _stopCountdown();
-                              ref.read(followViewModelProvider(room.streamerId).notifier).toggleFollow(sourceRoomId: room.id);
+                              ref
+                                  .read(
+                                    followViewModelProvider(
+                                      room.streamerId,
+                                    ).notifier,
+                                  )
+                                  .toggleFollow(sourceRoomId: room.id);
                             },
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.braweBlue,
-                        disabledBackgroundColor: Colors.white.withValues(alpha: 0.12),
-                        disabledForegroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        backgroundColor: context.colors.accentPrimary,
+                        foregroundColor: context.colors.textOnAccent,
+                        disabledBackgroundColor: context.colors.textPrimary
+                            .withValues(alpha: 0.12),
+                        disabledForegroundColor: context.colors.textPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
-                      icon: Icon(following ? Icons.check_rounded : Icons.person_add_alt_1_rounded),
+                      icon: Icon(
+                        following ? LucideIcons.check : LucideIcons.userPlus,
+                      ),
                       label: Text(
                         following ? s.liveEndedFollowing : s.liveEndedFollow,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -239,7 +295,10 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                       child: Text(
                         s.liveEndedFollowHint(name),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Color(0xFF8792AD), fontSize: 12),
+                        style: TextStyle(
+                          color: context.colors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -248,41 +307,49 @@ class _LiveEndedViewState extends ConsumerState<LiveEndedView> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: _loadingNext
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 72,
                           child: Center(
                             child: SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: context.colors.textSecondary,
+                              ),
                             ),
                           ),
                         )
                       : _next != null
-                          ? _NextLiveCard(
-                              room: _next!,
-                              countdown: _countdown,
-                              onWatch: _goNext,
-                              onStay: _stopCountdown,
-                            )
-                          : Column(
-                              children: [
-                                Text(
-                                  s.liveEndedNoOther,
-                                  style: const TextStyle(color: Color(0xFF8792AD), fontSize: 13),
-                                ),
-                                const SizedBox(height: 10),
-                                OutlinedButton(
-                                  onPressed: () => context.go('/home'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: const BorderSide(color: Colors.white24),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  ),
-                                  child: Text(s.liveEndedBackHome),
-                                ),
-                              ],
+                      ? _NextLiveCard(
+                          room: _next!,
+                          countdown: _countdown,
+                          onWatch: _goNext,
+                          onStay: _stopCountdown,
+                        )
+                      : Column(
+                          children: [
+                            Text(
+                              s.liveEndedNoOther,
+                              style: TextStyle(
+                                color: context.colors.textSecondary,
+                                fontSize: 13,
+                              ),
                             ),
+                            const SizedBox(height: 10),
+                            OutlinedButton(
+                              onPressed: () => context.go('/home'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: context.colors.textPrimary,
+                                side: BorderSide(color: context.colors.border),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(s.liveEndedBackHome),
+                            ),
+                          ],
+                        ),
                 ),
               ],
             ),
@@ -312,9 +379,11 @@ class _NextLiveCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: context.colors.textPrimary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+        border: Border.all(
+          color: context.colors.textPrimary.withValues(alpha: 0.10),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -336,10 +405,16 @@ class _NextLiveCard extends StatelessWidget {
                 child: SizedBox(
                   width: 54,
                   height: 72,
-                  child: room.thumbnailUrl != null && room.thumbnailUrl!.isNotEmpty
-                      ? Image.network(cacheWidth: context.decodePx(54), room.thumbnailUrl!, fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF141A2E)))
-                      : const ColoredBox(color: Color(0xFF141A2E)),
+                  child:
+                      room.thumbnailUrl != null && room.thumbnailUrl!.isNotEmpty
+                      ? Image.network(
+                          cacheWidth: context.decodePx(54),
+                          room.thumbnailUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              ColoredBox(color: context.colors.surface),
+                        )
+                      : ColoredBox(color: context.colors.surface),
                 ),
               ),
               const SizedBox(width: 12),
@@ -351,31 +426,50 @@ class _NextLiveCard extends StatelessWidget {
                       room.streamerName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                      style: TextStyle(
+                        color: context.colors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       room.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFFB5BFD6), fontSize: 13),
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE5254B),
+                            color: context.colors.danger,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text('LIVE',
-                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                          child: Text(
+                            s.liveBadge,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           s.liveEndedWatching('${room.viewerCount}'),
-                          style: const TextStyle(color: Color(0xFF8792AD), fontSize: 12),
+                          style: TextStyle(
+                            color: context.colors.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
@@ -386,9 +480,14 @@ class _NextLiveCard extends StatelessWidget {
                 onPressed: onWatch,
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.braweOrange,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: Text(s.liveEndedWatchNow, style: const TextStyle(fontWeight: FontWeight.w800)),
+                child: Text(
+                  s.liveEndedWatchNow,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
               ),
             ],
           ),
@@ -399,12 +498,17 @@ class _NextLiveCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     s.liveEndedGoingIn(countdown!),
-                    style: const TextStyle(color: Color(0xFFB5BFD6), fontSize: 12),
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 TextButton(
                   onPressed: onStay,
-                  style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                  style: TextButton.styleFrom(
+                    foregroundColor: context.colors.textSecondary,
+                  ),
                   child: Text(s.liveEndedStay),
                 ),
               ],

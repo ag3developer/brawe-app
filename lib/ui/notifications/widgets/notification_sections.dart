@@ -105,15 +105,18 @@ class _FilterChip extends StatelessWidget {
               if (count > 0) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
+                    color: colors.danger,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     count > 99 ? '99+' : '$count',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textOnAccent,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
                     ),
@@ -128,7 +131,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Lista com seções: Hoje, Esta semana, Anteriores (já na ordem recebida).
+/// Lista com seções: Hoje, Esta semana, Este mês, Anteriores (já na ordem recebida).
 class NotificationSectionsList extends StatelessWidget {
   const NotificationSectionsList({
     super.key,
@@ -150,6 +153,7 @@ class NotificationSectionsList extends StatelessWidget {
     final titles = {
       NotifBucket.today: s.notifGroupToday,
       NotifBucket.week: s.notifGroupWeek,
+      NotifBucket.month: s.notifGroupMonth,
       NotifBucket.older: s.notifGroupOlder,
     };
     final clock = now ?? DateTime.now();
@@ -162,15 +166,15 @@ class NotificationSectionsList extends StatelessWidget {
         rows.add(
           Padding(
             key: ValueKey('notif-section-${b.name}'),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            padding: const EdgeInsets.fromLTRB(18, 16, 16, 4),
             child: Semantics(
               header: true,
               child: Text(
                 titles[b]!,
                 style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  color: colors.textTertiary,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

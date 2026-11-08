@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../live_feed/view_models/live_moderation_view_model.dart';
@@ -72,12 +73,12 @@ class LiveBottomBar extends StatelessWidget {
       onTapOutside: (_) => focusNode.unfocus(),
       child: ListenableBuilder(
         listenable: focusNode,
-        builder: (context, _) => _buildRow(typing: focusNode.hasFocus),
+        builder: (context, _) => _buildRow(context, typing: focusNode.hasFocus),
       ),
     );
   }
 
-  Widget _buildRow({required bool typing}) {
+  Widget _buildRow(BuildContext context, {required bool typing}) {
     // ─── Linha ÚNICA (TikTok clean) ───
     // Input flexível à esquerda + ações flat à direita, tudo numa única
     // faixa horizontal de ~52dp. Antes eram 2 linhas (input + fileira de
@@ -182,8 +183,8 @@ class LiveBottomBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 150),
                               child: Icon(
                                 hasText
-                                    ? Icons.send_rounded
-                                    : Icons.chat_bubble_outline_rounded,
+                                    ? LucideIcons.send
+                                    : LucideIcons.messageCircle,
                                 key: ValueKey(hasText),
                                 color: hasText
                                     ? AppColors.braweBlueLight
@@ -207,38 +208,36 @@ class LiveBottomBar extends StatelessWidget {
         if (!typing) ...[
           const SizedBox(width: 6),
           _LiveActionButton(
-            icon: isLiked
-                ? Icons.favorite_rounded
-                : Icons.favorite_border_rounded,
-            label: 'Curtir',
+            icon: isLiked ? LucideIcons.heart : LucideIcons.heart,
+            label: S.of(context).actionLike,
             iconColor: isLiked ? const Color(0xFFFF3D6E) : Colors.white,
             onTap: onLike,
           ),
           // 🌹 Rosa rápida — envia 1 rosa direto como presente (fast-tap).
           _LiveActionButton(
-            icon: Icons.local_florist_rounded, // fallback (emoji override)
+            icon: LucideIcons.flower, // fallback (emoji override)
             emoji: '🌹',
-            label: 'Rosa',
+            label: S.of(context).livexRose,
             onTap: onSendRose,
           ),
           // 🎁 Presentes — abre o catálogo. Ícone laranja de marca (sutil destaque).
           _LiveActionButton(
-            icon: Icons.card_giftcard_rounded,
-            label: 'Presente',
+            icon: LucideIcons.gift,
+            label: S.of(context).liveFeedGift,
             solid: true,
             iconColor: AppColors.braweOrange,
             onTap: onGifts,
           ),
           if (onMore != null)
             _LiveActionButton(
-              icon: Icons.more_horiz_rounded,
-              label: 'Mais',
+              icon: LucideIcons.ellipsis,
+              label: S.of(context).broadcasterTooltipMore,
               onTap: onMore!,
             ),
           if (hasStorefront)
             _LiveActionButton(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Loja',
+              icon: LucideIcons.shoppingBag,
+              label: S.of(context).profileTabShop,
               onTap: onShop,
             ),
         ],
@@ -298,7 +297,11 @@ class _LiveActionButton extends StatelessWidget {
                           color: Color(0xFFFF8300),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(icon, color: const Color(0xFF0B0E14), size: 17),
+                        child: Icon(
+                          icon,
+                          color: const Color(0xFF0B0E14),
+                          size: 17,
+                        ),
                       )
                     : Icon(
                         icon,

@@ -14,12 +14,12 @@
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/feature_flags.dart';
 import '../../../data/services/iap_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
-import '../../core/themes/app_colors.dart';
 import '../../core/themes/brawe_colors.dart';
 import '../../core/view_models/credits_view_model.dart';
 import '../../core/widgets/brawe_coin.dart';
@@ -144,7 +144,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
             content: Text(
               S.of(context).walletIapSuccess(_fmtInt(offer.coins)),
             ),
-            backgroundColor: AppColors.braweBlue,
+            backgroundColor: context.colors.accentPrimary,
           ),
         );
         Navigator.of(context).pop();
@@ -299,14 +299,14 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.redAccent, size: 16),
+                      Icon(LucideIcons.circleAlert,
+                          color: context.colors.danger, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _error!,
-                          style: const TextStyle(
-                            color: Colors.redAccent,
+                          style: TextStyle(
+                            color: context.colors.danger,
                             fontSize: 12,
                           ),
                         ),
@@ -321,7 +321,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.lock_outline,
+                    LucideIcons.lock,
                     size: 12,
                     color: context.colors.textTertiary,
                   ),
@@ -378,7 +378,7 @@ class _TopUpPackageCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: highlight
-                    ? AppColors.braweOrange
+                    ? context.colors.warning
                     : context.colors.border,
                 width: highlight ? 1.4 : 1,
               ),

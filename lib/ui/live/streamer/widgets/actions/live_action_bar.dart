@@ -74,68 +74,71 @@ class LiveActionBar extends StatelessWidget {
           child: Row(
             children: [
               for (final btn in <Widget>[
-              // Pause / Resume
-              ActionBtn(
-                icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                label: isPaused ? 'Retomar' : 'Pausar',
-                color: isPaused ? const Color(0xFF22C55E) : Colors.orange,
-                loading: isTogglingPause,
-                onTap: onPauseResume,
-              ),
-              // ⚔ Batalha — destaque especial
-              ActionBtn(
-                icon: battleIcon ?? Icons.sports_kabaddi_rounded,
-                label: battleLabel ??
-                    (hasBattle
-                        ? S.of(context).battleActionActive
-                        : S.of(context).battleActionLabel),
-                color: AppColors.braweBlue,
-                glow: !hasBattle,
-                badge: hasBattle ? '⚔' : null,
-                onTap: hasBattle ? null : onBattle,
-              ),
-              // 👥 Co-host
-              if (onCoHost != null)
+                // Pause / Resume
                 ActionBtn(
-                  icon: coHostIcon ?? Icons.link_rounded,
-                  label: coHostLabel ?? S.of(context).linkConnect,
-                  color: const Color(0xFF0EA5E9),
-                  onTap: onCoHost,
+                  icon: isPaused ? LucideIcons.play : LucideIcons.pause,
+                  label: isPaused ? 'Retomar' : 'Pausar',
+                  color: isPaused ? const Color(0xFF22C55E) : Colors.orange,
+                  loading: isTogglingPause,
+                  onTap: onPauseResume,
                 ),
-              if (onGoals != null)
+                // ⚔ Batalha — destaque especial
                 ActionBtn(
-                  icon: LucideIcons.target,
-                  label: S.of(context).goalsButton,
-                  color: const Color(0xFFFFC53D),
-                  onTap: onGoals,
+                  icon: battleIcon ?? LucideIcons.swords,
+                  label:
+                      battleLabel ??
+                      (hasBattle
+                          ? S.of(context).battleActionActive
+                          : S.of(context).battleActionLabel),
+                  color: AppColors.braweBlue,
+                  glow: !hasBattle,
+                  badge: hasBattle ? '⚔' : null,
+                  onTap: hasBattle ? null : onBattle,
                 ),
-              // 💬 Chat
-              ActionBtn(
-                icon: Icons.chat_bubble_outline_rounded,
-                label: 'Chat',
-                color: showChat ? AppColors.braweBlue : Colors.white24,
-                onTap: onChatToggle,
-                flat: !showChat,
-              ),
-              // ···
-              ActionBtn(
-                icon: Icons.more_horiz_rounded,
-                label: 'Mais',
-                color: Colors.white24,
-                onTap: onMoreOptions,
-                flat: true,
-              ),
-              // ⏹ Encerrar
-              ActionBtn(
-                icon: Icons.stop_rounded,
-                label: 'Encerrar',
-                color: const Color(0xFFEF4444),
-                glow: true,
-                loading: isTogglingStream,
-                onTap: onEnd,
-              ),
+                // 👥 Co-host
+                if (onCoHost != null)
+                  ActionBtn(
+                    icon: coHostIcon ?? LucideIcons.link,
+                    label: coHostLabel ?? S.of(context).linkConnect,
+                    color: const Color(0xFF0EA5E9),
+                    onTap: onCoHost,
+                  ),
+                if (onGoals != null)
+                  ActionBtn(
+                    icon: LucideIcons.target,
+                    label: S.of(context).goalsButton,
+                    color: const Color(0xFFFFC53D),
+                    onTap: onGoals,
+                  ),
+                // 💬 Chat
+                ActionBtn(
+                  icon: LucideIcons.messageCircle,
+                  label: S.of(context).navChat,
+                  color: showChat ? AppColors.braweBlue : Colors.white24,
+                  onTap: onChatToggle,
+                  flat: !showChat,
+                ),
+                // ···
+                ActionBtn(
+                  icon: LucideIcons.ellipsis,
+                  label: S.of(context).broadcasterTooltipMore,
+                  color: Colors.white24,
+                  onTap: onMoreOptions,
+                  flat: true,
+                ),
+                // ⏹ Encerrar
+                ActionBtn(
+                  icon: LucideIcons.square,
+                  label: S.of(context).broadcasterEnd,
+                  color: const Color(0xFFEF4444),
+                  glow: true,
+                  loading: isTogglingStream,
+                  onTap: onEnd,
+                ),
               ])
-                Expanded(child: FittedBox(fit: BoxFit.scaleDown, child: btn)),
+                Expanded(
+                  child: FittedBox(fit: BoxFit.scaleDown, child: btn),
+                ),
             ],
           ),
         ),

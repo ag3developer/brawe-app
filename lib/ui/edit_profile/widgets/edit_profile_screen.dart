@@ -235,6 +235,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     final value = _showBadge ?? settings?.privacyShowAccountType ?? true;
     return GroupedRow(
       key: const ValueKey('creator_badge_switch'),
+      // tocar na linha inteira também liga/desliga
+      onTap: settings == null ? null : () => setState(() => _showBadge = !value),
       icon: LucideIcons.sparkles,
       title: s.editProfileCreatorBadgeTitle,
       subtitle: s.editProfileCreatorBadgeHint,

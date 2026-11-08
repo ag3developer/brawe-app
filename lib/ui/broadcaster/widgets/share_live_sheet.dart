@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/themes/brawe_colors.dart';
+import '../../core/themes/force_dark_theme.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
-import '../../core/themes/app_colors.dart';
-import '../../core/themes/force_dark_theme.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/live_repository.dart';
 import '../../../data/repositories/social_repository.dart';
@@ -71,6 +72,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
 
   bool _loading = true;
   bool _sending = false;
+  String? _sendError;
   String? _error;
   List<FollowUser> _followers = const [];
   String _query = '';
@@ -142,16 +144,11 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   void _toggle(String userId) {
     if (!_selectedUserIds.contains(userId) &&
         _selectedUserIds.length >= _maxRecipients) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Você pode enviar para até 50 pessoas por vez'),
-          ),
-        );
+      setState(() => _sendError = S.of(context).livexShareMax);
       return;
     }
     setState(() {
+      _sendError = null;
       if (_selectedUserIds.contains(userId)) {
         _selectedUserIds.remove(userId);
       } else {
@@ -167,8 +164,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     final url = AppConstants.liveUrl(slug);
     final who = widget.streamerName?.trim();
     final text = who != null && who.isNotEmpty
-        ? '$who está ao vivo na Brawe: ${widget.title}\n$url'
-        : 'Estou ao vivo na Brawe: ${widget.title}\n$url';
+        ? S.of(context).livexShareText(who, widget.title, url)
+        : S.of(context).livexShareTextSelf(widget.title, url);
     try {
       await SharePlus.instance.share(ShareParams(text: text));
     } catch (e) {
@@ -178,7 +175,10 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
 
   Future<void> _send() async {
     if (_selectedUserIds.isEmpty || _sending) return;
-    setState(() => _sending = true);
+    setState(() {
+      _sending = true;
+      _sendError = null;
+    });
     final s = S.of(context);
     try {
       final repo = ref.read(liveRepositoryProvider);
@@ -189,22 +189,25 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         note: note.isEmpty ? null : note,
       );
       if (!mounted) return;
+      // Captura antes de fechar o sheet: o aviso de sucesso aparece na tela de baixo.
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
-          backgroundColor: AppColors.braweBlue,
-          content: Text(s.shareLiveSentToCount(sent)),
+          backgroundColor: context.colors.accentPrimary,
+          content: Text(
+            s.shareLiveSentToCount(sent),
+            style: TextStyle(color: context.colors.textOnAccent),
+          ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _sending = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.red.shade700,
-          content: Text(s.shareLiveSendFailed),
-        ),
-      );
+      // Falha: o sheet continua aberto, então o erro aparece dentro dele.
+      setState(() {
+        _sending = false;
+        _sendError = s.shareLiveSendFailed;
+      });
     }
   }
 
@@ -220,8 +223,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         expand: false,
         builder: (context, scrollController) {
           return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.nearBlack,
+            decoration: BoxDecoration(
+              color: context.colors.background,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
@@ -232,15 +235,16 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                 _search(),
                 Expanded(
                   child: _loading
-                      ? const Center(
+                      ? Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.braweBlue,
+                            color: context.colors.accentPrimary,
                           ),
                         )
                       : _error != null
                       ? _errorState()
                       : _list(scrollController),
                 ),
+                if (_sendError != null) _errorBanner(_sendError!),
                 if (_selectedUserIds.isNotEmpty) _noteBar(),
                 _bottomActions(),
               ],
@@ -256,7 +260,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     width: 40,
     height: 4,
     decoration: BoxDecoration(
-      color: AppColors.coolGray.withValues(alpha: 0.3),
+      color: context.colors.textSecondary.withValues(alpha: 0.3),
       borderRadius: BorderRadius.circular(2),
     ),
   );
@@ -268,8 +272,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         Expanded(
           child: Text(
             S.of(context).shareLiveTitle,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
@@ -278,9 +282,11 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         if (widget.slug != null && widget.slug!.isNotEmpty)
           TextButton.icon(
             onPressed: _shareExternally,
-            icon: const Icon(Icons.ios_share_rounded, size: 18),
-            label: const Text('Outros apps'),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            icon: const Icon(LucideIcons.send, size: 18),
+            label: Text(S.of(context).livexShareOtherApps),
+            style: TextButton.styleFrom(
+              foregroundColor: context.colors.textPrimary,
+            ),
           ),
       ],
     ),
@@ -291,10 +297,10 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.slate,
+        color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.braweBlue.withValues(alpha: 0.25),
+          color: context.colors.accentPrimary.withValues(alpha: 0.25),
         ),
       ),
       child: Row(
@@ -310,7 +316,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                       widget.thumbnailUrl != null &&
                           widget.thumbnailUrl!.isNotEmpty
                       ? Image.network(
-                        cacheWidth: context.decodePx(56),
+                          cacheWidth: context.decodePx(56),
                           widget.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => _previewFallback(),
@@ -326,13 +332,13 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                       vertical: 1,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.mutedRed,
+                      color: context.colors.danger,
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
                       S.of(context).shareLiveBadge,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Colors.white, // selo sobre a miniatura da live
                         fontSize: 8,
                         fontWeight: FontWeight.w800,
                       ),
@@ -351,8 +357,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                     widget.streamerName!.isNotEmpty)
                   Text(
                     widget.streamerName!,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -361,8 +367,8 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
                   widget.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.coolGray,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -375,8 +381,12 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
   }
 
   Widget _previewFallback() => Container(
-    color: AppColors.deepBlue,
-    child: const Icon(Icons.videocam_outlined, color: Colors.white54, size: 24),
+    color: context.colors.surfaceHighest,
+    child: Icon(
+      LucideIcons.video,
+      color: context.colors.textSecondary,
+      size: 24,
+    ),
   );
 
   Widget _search() {
@@ -384,13 +394,16 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       child: TextField(
         controller: _searchCtrl,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: context.colors.textPrimary),
         decoration: InputDecoration(
           hintText: S.of(context).shareLiveSearchHint,
-          hintStyle: const TextStyle(color: AppColors.coolGray),
-          prefixIcon: const Icon(Icons.search, color: AppColors.coolGray),
+          hintStyle: TextStyle(color: context.colors.textSecondary),
+          prefixIcon: Icon(
+            LucideIcons.search,
+            color: context.colors.textSecondary,
+          ),
           filled: true,
-          fillColor: AppColors.slate,
+          fillColor: context.colors.surfaceElevated,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
@@ -409,7 +422,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
         children: [
           Text(
             _error ?? s.shareLiveErrorGeneric,
-            style: const TextStyle(color: AppColors.coolGray),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
           const SizedBox(height: 8),
           TextButton(onPressed: _load, child: Text(s.shareLiveRetry)),
@@ -427,7 +440,7 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
           padding: const EdgeInsets.all(24),
           child: Text(
             s.shareLiveEmptyFollowers,
-            style: const TextStyle(color: AppColors.coolGray),
+            style: TextStyle(color: context.colors.textSecondary),
           ),
         ),
       );
@@ -452,20 +465,38 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
     );
   }
 
+  Widget _errorBanner(String message) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      child: Row(
+        children: [
+          Icon(LucideIcons.circleAlert, size: 16, color: context.colors.danger),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: context.colors.danger, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _noteBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: TextField(
         textCapitalization: TextCapitalization.sentences,
         controller: _noteCtrl,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: context.colors.textPrimary),
         maxLines: 2,
         minLines: 1,
         decoration: InputDecoration(
           hintText: S.of(context).shareLiveNoteHint,
-          hintStyle: const TextStyle(color: AppColors.coolGray),
+          hintStyle: TextStyle(color: context.colors.textSecondary),
           filled: true,
-          fillColor: AppColors.slate,
+          fillColor: context.colors.surfaceElevated,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 14,
             vertical: 10,
@@ -492,22 +523,22 @@ class _ShareLiveSheetState extends ConsumerState<ShareLiveSheet> {
           child: ElevatedButton(
             onPressed: hasSelection && !_sending ? _send : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.braweBlue,
-              disabledBackgroundColor: AppColors.braweBlue.withValues(
+              backgroundColor: context.colors.accentPrimary,
+              disabledBackgroundColor: context.colors.accentPrimary.withValues(
                 alpha: 0.3,
               ),
-              foregroundColor: Colors.white,
+              foregroundColor: context.colors.textOnAccent,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
             child: _sending
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: context.colors.textOnAccent,
                       strokeWidth: 2,
                     ),
                   )
@@ -551,12 +582,19 @@ class _RecipientTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.slate,
+              backgroundColor: context.colors.surfaceElevated,
               backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
-                  ? ResizeImage(NetworkImage(avatarUrl!), width: context.decodePx(44))
+                  ? ResizeImage(
+                      NetworkImage(avatarUrl!),
+                      width: context.decodePx(44),
+                    )
                   : null,
               child: (avatarUrl == null || avatarUrl!.isEmpty)
-                  ? const Icon(Icons.person, color: Colors.white54, size: 22)
+                  ? Icon(
+                      LucideIcons.user,
+                      color: context.colors.textSecondary,
+                      size: 22,
+                    )
                   : null,
             ),
             const SizedBox(width: 12),
@@ -571,8 +609,8 @@ class _RecipientTile extends StatelessWidget {
                           name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.colors.textPrimary,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -586,8 +624,8 @@ class _RecipientTile extends StatelessWidget {
                       '@$username',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.coolGray,
+                      style: TextStyle(
+                        color: context.colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -599,16 +637,22 @@ class _RecipientTile extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: selected ? AppColors.braweBlue : Colors.transparent,
+                color: selected
+                    ? context.colors.accentPrimary
+                    : Colors.transparent,
                 border: Border.all(
                   color: selected
-                      ? AppColors.braweBlue
-                      : AppColors.coolGray.withValues(alpha: 0.5),
+                      ? context.colors.accentPrimary
+                      : context.colors.textSecondary.withValues(alpha: 0.5),
                   width: 1.6,
                 ),
               ),
               child: selected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? Icon(
+                      LucideIcons.check,
+                      size: 16,
+                      color: context.colors.textOnAccent,
+                    )
                   : null,
             ),
           ],

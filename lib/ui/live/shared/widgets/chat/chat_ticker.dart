@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../domain/models/live_comment.dart';
 import '../../../../../core/remote_config/remote_flags.dart';
@@ -356,7 +357,7 @@ class _ChatTickerState extends State<ChatTicker> {
                       ),
                       const SizedBox(width: 2),
                       const Icon(
-                        Icons.keyboard_arrow_down_rounded,
+                        LucideIcons.chevronDown,
                         color: Colors.black87,
                         size: 16,
                       ),

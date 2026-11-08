@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../domain/models/live_room.dart';
 import '../../core/themes/force_dark_theme.dart';
@@ -98,7 +99,7 @@ class PartnerAvatarButton extends StatelessWidget {
                       border: Border.all(color: const Color(0x33FFFFFF)),
                     ),
                     child: const Icon(
-                      Icons.mic_off_rounded,
+                      LucideIcons.micOff,
                       size: 10,
                       color: Colors.white70,
                     ),
@@ -113,33 +114,30 @@ class PartnerAvatarButton extends StatelessWidget {
 
   Widget _photo(String url) {
     return Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF1C2230),
-              border: Border.all(color: const Color(0x33FFFFFF), width: 1.5),
-              image: url.isEmpty
-                  ? null
-                  : DecorationImage(
-                      image: NetworkImage(url),
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            alignment: Alignment.center,
-            child: url.isEmpty
-                ? Text(
-                    name.trim().isEmpty
-                        ? '?'
-                        : name.trim().characters.first.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      decoration: TextDecoration.none,
-                    ),
-                  )
-                : null,
-          );
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF1C2230),
+        border: Border.all(color: const Color(0x33FFFFFF), width: 1.5),
+        image: url.isEmpty
+            ? null
+            : DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
+      ),
+      alignment: Alignment.center,
+      child: url.isEmpty
+          ? Text(
+              name.trim().isEmpty
+                  ? '?'
+                  : name.trim().characters.first.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                decoration: TextDecoration.none,
+              ),
+            )
+          : null,
+    );
   }
 }

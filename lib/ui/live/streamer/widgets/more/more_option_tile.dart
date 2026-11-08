@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/themes/brawe_colors.dart';
+
 /// Single tile used inside the streamer's "More options" bottom sheet.
 class MoreOptionTile extends StatelessWidget {
   const MoreOptionTile({
@@ -32,15 +34,15 @@ class MoreOptionTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: context.colors.textPrimary,
           fontWeight: FontWeight.w700,
           fontSize: 15,
         ),
       ),
       subtitle: Text(
         subtitle,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: TextStyle(color: context.colors.textSecondary, fontSize: 12),
       ),
     );
   }

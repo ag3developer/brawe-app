@@ -87,10 +87,11 @@ class CommentService {
     String postId, {
     int limit = 50,
     int offset = 0,
+    String sort = 'top',
   }) async {
     final response = await _dio.get(
       '/posts/$postId/comments',
-      queryParameters: {'limit': limit, 'offset': offset},
+      queryParameters: {'limit': limit, 'offset': offset, 'sort': sort},
     );
     final data = response.data;
     final List<dynamic> list = data is List
@@ -117,6 +118,10 @@ class CommentService {
     return CommentDto.fromJson(
       data['comment'] as Map<String, dynamic>? ?? data,
     );
+  }
+
+  Future<void> deleteComment(String postId, String commentId) async {
+    await _dio.delete('/posts/$postId/comments/$commentId');
   }
 
   // A rota do servidor fica sob /posts (antes chamava /comments/... e toda

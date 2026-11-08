@@ -1,3 +1,5 @@
+import 'package:brawe_app/ui/account/about_you_screen.dart';
+import 'package:brawe_app/data/repositories/kyc_repository.dart';
 import 'package:brawe_app/data/services/profile_service.dart';
 import 'package:brawe_app/data/services/settings_service.dart';
 import 'package:brawe_app/gen/l10n/app_localizations.dart';
@@ -50,6 +52,12 @@ Future<void> _pump(WidgetTester tester, _ProfileSvc p, _SettingsSvc s) async {
     overrides: [
       profileServiceProvider.overrideWithValue(p),
       settingsServiceProvider.overrideWithValue(s),
+      // verificação da conta sem rede no teste
+      kycStatusProvider.overrideWith((ref) async => const KycStatus(
+          identity: 'none', identityReason: null, business: 'none', businessReason: null,
+          businessName: null, accountType: 'consumer')),
+      // "Sobre você" sem rede no teste
+      myAboutProvider.overrideWith((ref) async => <String, dynamic>{'gender': 'female', 'city': 'Curitiba'}),
     ],
     child: MaterialApp(
       theme: AppTheme.dark(),

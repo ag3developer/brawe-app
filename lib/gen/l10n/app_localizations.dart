@@ -270,7 +270,7 @@ abstract class S {
   /// No description provided for @feedEmptySubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Siga creators ou volte mais tarde.'**
+  /// **'Siga criadores ou volte mais tarde.'**
   String get feedEmptySubtitle;
 
   /// No description provided for @feedFollowingEmptyTitle.
@@ -552,7 +552,7 @@ abstract class S {
   /// No description provided for @settingsNotifLiveStartHint.
   ///
   /// In pt, this message translates to:
-  /// **'Receba aviso quando seus creators favoritos forem ao vivo'**
+  /// **'Receba aviso quando seus criadores favoritos forem ao vivo'**
   String get settingsNotifLiveStartHint;
 
   /// No description provided for @settingsNotifGifts.
@@ -1386,7 +1386,7 @@ abstract class S {
   /// No description provided for @feedEmptyVideoSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Siga creators ou volte mais tarde.\nPosts de texto estão na aba Feed.'**
+  /// **'Siga criadores ou volte mais tarde.\nPosts de texto estão na aba Feed.'**
   String get feedEmptyVideoSubtitle;
 
   /// No description provided for @liveJoining.
@@ -3102,7 +3102,7 @@ abstract class S {
   /// No description provided for @chatListEmptySubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Suas mensagens com creators, amigos e brawers vão aparecer aqui.'**
+  /// **'Suas mensagens com criadores, amigos e brawers vão aparecer aqui.'**
   String get chatListEmptySubtitle;
 
   /// No description provided for @chatListTapToTalk.
@@ -4620,7 +4620,7 @@ abstract class S {
   /// No description provided for @walletIapInfo.
   ///
   /// In pt, this message translates to:
-  /// **'Compra processada pela loja oficial (Google Play / App Store). As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados apenas para enviar presentes em lives.'**
+  /// **'Compra processada pela loja oficial do seu celular. As moedas são creditadas automaticamente após o pagamento. Moedas são itens virtuais não-resgatáveis usados dentro do app.'**
   String get walletIapInfo;
 
   /// No description provided for @walletIapBuyFor.
@@ -4656,7 +4656,7 @@ abstract class S {
   /// No description provided for @walletIapStoreUnavailable.
   ///
   /// In pt, this message translates to:
-  /// **'Compras no app indisponíveis neste dispositivo. Verifique se sua conta Google/Apple está configurada.'**
+  /// **'Compras no app indisponíveis neste aparelho. Verifique se sua conta da loja está configurada.'**
   String get walletIapStoreUnavailable;
 
   /// No description provided for @walletIapPaymentPending.
@@ -4734,7 +4734,7 @@ abstract class S {
   /// No description provided for @earningsPurchaseHistorySubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Compras de moedas via App Store / Google Play'**
+  /// **'Compras de moedas pela loja do app'**
   String get earningsPurchaseHistorySubtitle;
 
   /// No description provided for @earningsGiftHistoryTitle.
@@ -6528,7 +6528,7 @@ abstract class S {
   /// No description provided for @topUpStoreDisclaimer.
   ///
   /// In pt, this message translates to:
-  /// **'Pagamento seguro via Play Store / App Store'**
+  /// **'Pagamento seguro pela loja do seu celular'**
   String get topUpStoreDisclaimer;
 
   /// No description provided for @topUpStoreDisclaimerApple.
@@ -6546,7 +6546,7 @@ abstract class S {
   /// No description provided for @earningsNoPurchasesHint.
   ///
   /// In pt, this message translates to:
-  /// **'Quando você comprar coins pela App Store ou Google Play elas aparecerão aqui.'**
+  /// **'Quando você comprar moedas pela loja do app, elas aparecerão aqui.'**
   String get earningsNoPurchasesHint;
 
   /// No description provided for @earningsNoGiftsHint.
@@ -6582,7 +6582,7 @@ abstract class S {
   /// No description provided for @creatorActionViewLevels.
   ///
   /// In pt, this message translates to:
-  /// **'Ver níveis de creator'**
+  /// **'Ver níveis de criador'**
   String get creatorActionViewLevels;
 
   /// No description provided for @creatorActionCheckStatus.
@@ -6606,13 +6606,13 @@ abstract class S {
   /// No description provided for @creatorBenefit2.
   ///
   /// In pt, this message translates to:
-  /// **'Construa sua identidade de creator'**
+  /// **'Construa sua identidade de criador'**
   String get creatorBenefit2;
 
   /// No description provided for @creatorBenefit3.
   ///
   /// In pt, this message translates to:
-  /// **'Desbloqueie badges oficiais'**
+  /// **'Desbloqueie selos oficiais'**
   String get creatorBenefit3;
 
   /// No description provided for @creatorBenefit4.
@@ -6630,13 +6630,13 @@ abstract class S {
   /// No description provided for @creatorTotalCreators.
   ///
   /// In pt, this message translates to:
-  /// **'{n, plural, =1{1 creator na rede} other{{n} creators na rede}}'**
+  /// **'{n, plural, =1{1 criador na rede} other{{n} criadores na rede}}'**
   String creatorTotalCreators(int n);
 
   /// No description provided for @creatorLevelsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Níveis de Creator'**
+  /// **'Níveis de Criador'**
   String get creatorLevelsTitle;
 
   /// No description provided for @creatorLevelsSubtitle.
@@ -6654,7 +6654,7 @@ abstract class S {
   /// No description provided for @creatorTierRisingBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para creators em crescimento que querem oportunidade real de alcance.'**
+  /// **'Para criadores em crescimento que querem oportunidade real de alcance.'**
   String get creatorTierRisingBody;
 
   /// No description provided for @creatorTierFeaturedTitle.
@@ -6666,7 +6666,7 @@ abstract class S {
   /// No description provided for @creatorTierFeaturedBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para creators ativos com conteúdo consistente e potencial editorial.'**
+  /// **'Para criadores ativos com conteúdo consistente e potencial editorial.'**
   String get creatorTierFeaturedBody;
 
   /// No description provided for @creatorTierLiveTitle.
@@ -6678,7 +6678,7 @@ abstract class S {
   /// No description provided for @creatorTierLiveBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para streamers, hosts e creators focados em lives e batalhas.'**
+  /// **'Para streamers, hosts e criadores focados em lives e batalhas.'**
   String get creatorTierLiveBody;
 
   /// No description provided for @creatorTierAmbassadorTitle.
@@ -6690,7 +6690,7 @@ abstract class S {
   /// No description provided for @creatorTierAmbassadorBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para creators reconhecidos que representam a visão da Brawe.'**
+  /// **'Para criadores reconhecidos que representam a visão da Brawe.'**
   String get creatorTierAmbassadorBody;
 
   /// No description provided for @creatorTierFoundingTitle.
@@ -6702,13 +6702,13 @@ abstract class S {
   /// No description provided for @creatorTierFoundingBody.
   ///
   /// In pt, this message translates to:
-  /// **'Para creators selecionados que ajudam a moldar o futuro da Brawe.'**
+  /// **'Para criadores selecionados que ajudam a moldar o futuro da Brawe.'**
   String get creatorTierFoundingBody;
 
   /// No description provided for @creatorTierApplyCta.
   ///
   /// In pt, this message translates to:
-  /// **'Inscrever-se como creator'**
+  /// **'Inscrever-se como criador'**
   String get creatorTierApplyCta;
 
   /// No description provided for @creatorFormTitle.
@@ -6720,7 +6720,7 @@ abstract class S {
   /// No description provided for @creatorFormSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Conte mais sobre sua jornada como creator.'**
+  /// **'Conte mais sobre sua jornada como criador.'**
   String get creatorFormSubtitle;
 
   /// No description provided for @creatorFormDescription.
@@ -6810,7 +6810,7 @@ abstract class S {
   /// No description provided for @creatorFormCategory.
   ///
   /// In pt, this message translates to:
-  /// **'Categoria de creator'**
+  /// **'Categoria de criador'**
   String get creatorFormCategory;
 
   /// No description provided for @creatorFormSocialLinks.
@@ -6846,7 +6846,7 @@ abstract class S {
   /// No description provided for @creatorFormBioPlaceholder.
   ///
   /// In pt, this message translates to:
-  /// **'Conte quem é você como creator'**
+  /// **'Conte quem é você como criador'**
   String get creatorFormBioPlaceholder;
 
   /// No description provided for @creatorFormMotivation.
@@ -6870,7 +6870,7 @@ abstract class S {
   /// No description provided for @creatorFormGoalsPlaceholder.
   ///
   /// In pt, this message translates to:
-  /// **'O que quer alcançar como creator?'**
+  /// **'O que quer alcançar como criador?'**
   String get creatorFormGoalsPlaceholder;
 
   /// No description provided for @creatorFormPortfolio.
@@ -7044,7 +7044,7 @@ abstract class S {
   /// No description provided for @creatorStatusAnalysisBody.
   ///
   /// In pt, this message translates to:
-  /// **'Nossa equipe está revisando seu perfil de creator.'**
+  /// **'Nossa equipe está revisando seu perfil de criador.'**
   String get creatorStatusAnalysisBody;
 
   /// No description provided for @creatorStatusApprovedTitle.
@@ -7170,13 +7170,13 @@ abstract class S {
   /// No description provided for @creatorProfileTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Perfil de Creator'**
+  /// **'Perfil de Criador'**
   String get creatorProfileTitle;
 
   /// No description provided for @creatorProfileSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Personalize como você aparece como creator.'**
+  /// **'Personalize como você aparece como criador.'**
   String get creatorProfileSubtitle;
 
   /// No description provided for @creatorProfileFieldDisplayName.
@@ -7188,7 +7188,7 @@ abstract class S {
   /// No description provided for @creatorProfileFieldBio.
   ///
   /// In pt, this message translates to:
-  /// **'Bio de creator'**
+  /// **'Bio de criador'**
   String get creatorProfileFieldBio;
 
   /// No description provided for @creatorProfileFieldCategory.
@@ -7206,7 +7206,7 @@ abstract class S {
   /// No description provided for @creatorProfileFieldBadgeVisibility.
   ///
   /// In pt, this message translates to:
-  /// **'Mostrar badge no perfil'**
+  /// **'Mostrar selo no perfil'**
   String get creatorProfileFieldBadgeVisibility;
 
   /// No description provided for @creatorProfileSave.
@@ -7224,25 +7224,25 @@ abstract class S {
   /// No description provided for @creatorProfileSaved.
   ///
   /// In pt, this message translates to:
-  /// **'Perfil de creator atualizado.'**
+  /// **'Perfil de criador atualizado.'**
   String get creatorProfileSaved;
 
   /// No description provided for @creatorProfileSaveError.
   ///
   /// In pt, this message translates to:
-  /// **'Não foi possível atualizar o perfil de creator.'**
+  /// **'Não foi possível atualizar o perfil de criador.'**
   String get creatorProfileSaveError;
 
   /// No description provided for @creatorBadgeScreenTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Seu Badge de Creator'**
+  /// **'Seu selo de Criador'**
   String get creatorBadgeScreenTitle;
 
   /// No description provided for @creatorBadgeScreenSubtitle.
   ///
   /// In pt, this message translates to:
-  /// **'Seu badge ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.'**
+  /// **'Seu selo ajuda as pessoas a reconhecerem seu papel dentro da Brawe Creator Network.'**
   String get creatorBadgeScreenSubtitle;
 
   /// No description provided for @creatorBadgeLocked.
@@ -7272,7 +7272,7 @@ abstract class S {
   /// No description provided for @creatorDashboardTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Painel do Creator'**
+  /// **'Painel do Criador'**
   String get creatorDashboardTitle;
 
   /// No description provided for @creatorDashboardSubtitle.
@@ -7308,7 +7308,7 @@ abstract class S {
   /// No description provided for @creatorDashboardCardStatus.
   ///
   /// In pt, this message translates to:
-  /// **'Status de creator'**
+  /// **'Status de criador'**
   String get creatorDashboardCardStatus;
 
   /// No description provided for @creatorDashboardQuickCreatePost.
@@ -7332,7 +7332,7 @@ abstract class S {
   /// No description provided for @creatorDashboardQuickViewBadge.
   ///
   /// In pt, this message translates to:
-  /// **'Ver badge'**
+  /// **'Ver selo'**
   String get creatorDashboardQuickViewBadge;
 
   /// No description provided for @creatorDashboardQuickInsights.
@@ -7344,7 +7344,7 @@ abstract class S {
   /// No description provided for @adminCreatorAppsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Inscrições de Creators'**
+  /// **'Inscrições de Criadores'**
   String get adminCreatorAppsTitle;
 
   /// No description provided for @adminCreatorAppsFilterAll.
@@ -7434,7 +7434,7 @@ abstract class S {
   /// No description provided for @adminCreatorSectionInfo.
   ///
   /// In pt, this message translates to:
-  /// **'Informações do creator'**
+  /// **'Informações do criador'**
   String get adminCreatorSectionInfo;
 
   /// No description provided for @adminCreatorSectionSocial.
@@ -7518,7 +7518,7 @@ abstract class S {
   /// No description provided for @adminCreatorConfirmApprove.
   ///
   /// In pt, this message translates to:
-  /// **'Tem certeza que quer aprovar este creator?'**
+  /// **'Tem certeza que quer aprovar este criador?'**
   String get adminCreatorConfirmApprove;
 
   /// No description provided for @adminCreatorConfirmReject.
@@ -7530,7 +7530,7 @@ abstract class S {
   /// No description provided for @adminCreatorConfirmRequestInfo.
   ///
   /// In pt, this message translates to:
-  /// **'Diga ao creator quais informações estão faltando.'**
+  /// **'Diga ao criador quais informações estão faltando.'**
   String get adminCreatorConfirmRequestInfo;
 
   /// No description provided for @adminCreatorReviewSuccess.
@@ -7548,13 +7548,13 @@ abstract class S {
   /// No description provided for @adminCreatorsTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Gerenciar Creators'**
+  /// **'Gerenciar Criadores'**
   String get adminCreatorsTitle;
 
   /// No description provided for @adminCreatorsFilterAll.
   ///
   /// In pt, this message translates to:
-  /// **'Todos os creators'**
+  /// **'Todos os criadores'**
   String get adminCreatorsFilterAll;
 
   /// No description provided for @adminCreatorsFilterRising.
@@ -7590,13 +7590,13 @@ abstract class S {
   /// No description provided for @adminCreatorsActionEdit.
   ///
   /// In pt, this message translates to:
-  /// **'Editar creator'**
+  /// **'Editar criador'**
   String get adminCreatorsActionEdit;
 
   /// No description provided for @adminCreatorsActionChangeBadge.
   ///
   /// In pt, this message translates to:
-  /// **'Mudar badge'**
+  /// **'Mudar selo'**
   String get adminCreatorsActionChangeBadge;
 
   /// No description provided for @adminCreatorsActionFeature.
@@ -11346,7 +11346,7 @@ abstract class S {
   /// No description provided for @creatorGuideHowStep4.
   ///
   /// In pt, this message translates to:
-  /// **'Aprovado, ative seu perfil de creator'**
+  /// **'Aprovado, ative seu perfil de criador'**
   String get creatorGuideHowStep4;
 
   /// No description provided for @creatorGuideRule1.
@@ -11766,7 +11766,7 @@ abstract class S {
   /// No description provided for @creatorDashSince.
   ///
   /// In pt, this message translates to:
-  /// **'Creator desde {date}'**
+  /// **'Criador desde {date}'**
   String creatorDashSince(String date);
 
   /// No description provided for @creatorDashCurrentLevel.
@@ -11886,7 +11886,7 @@ abstract class S {
   /// No description provided for @creatorJourneyMetricActiveDays.
   ///
   /// In pt, this message translates to:
-  /// **'Dias como creator'**
+  /// **'Dias como criador'**
   String get creatorJourneyMetricActiveDays;
 
   /// No description provided for @creatorJourneyMetricViewers.
@@ -12012,7 +12012,7 @@ abstract class S {
   /// No description provided for @creatorJourneyBadgeGeneric.
   ///
   /// In pt, this message translates to:
-  /// **'Badge de creator'**
+  /// **'Selo de criador'**
   String get creatorJourneyBadgeGeneric;
 
   /// No description provided for @creatorJourneyBadgeEarnedOn.
@@ -12036,37 +12036,37 @@ abstract class S {
   /// No description provided for @creatorJourneyBadgeAllTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Seus badges'**
+  /// **'Seus selos'**
   String get creatorJourneyBadgeAllTitle;
 
   /// No description provided for @creatorJourneyBadgeOpenDashboard.
   ///
   /// In pt, this message translates to:
-  /// **'Abrir painel do creator'**
+  /// **'Abrir painel do criador'**
   String get creatorJourneyBadgeOpenDashboard;
 
   /// No description provided for @creatorJourneyBenefitRisingBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Badge Rising'**
+  /// **'Selo Rising'**
   String get creatorJourneyBenefitRisingBadgeTitle;
 
   /// No description provided for @creatorJourneyBenefitRisingBadgeDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Seu selo oficial de creator aparece no perfil, nas lives e nos comentários.'**
+  /// **'Seu selo oficial de criador aparece no perfil, nas lives e nos comentários.'**
   String get creatorJourneyBenefitRisingBadgeDesc;
 
   /// No description provided for @creatorJourneyBenefitCreatorProfileTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Perfil de Creator'**
+  /// **'Perfil de Criador'**
   String get creatorJourneyBenefitCreatorProfileTitle;
 
   /// No description provided for @creatorJourneyBenefitCreatorProfileDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Perfil com identidade própria na rede de creators da Brawe.'**
+  /// **'Perfil com identidade própria na rede de criadores da Brawe.'**
   String get creatorJourneyBenefitCreatorProfileDesc;
 
   /// No description provided for @creatorJourneyBenefitDiscoverySuggestionsTitle.
@@ -12096,13 +12096,13 @@ abstract class S {
   /// No description provided for @creatorJourneyBenefitFeaturedBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Badge Featured'**
+  /// **'Selo Featured'**
   String get creatorJourneyBenefitFeaturedBadgeTitle;
 
   /// No description provided for @creatorJourneyBenefitFeaturedBadgeDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Selo de destaque que mostra que você é um creator consistente.'**
+  /// **'Selo de destaque que mostra que você é um criador consistente.'**
   String get creatorJourneyBenefitFeaturedBadgeDesc;
 
   /// No description provided for @creatorJourneyBenefitEditorialHighlightTitle.
@@ -12132,7 +12132,7 @@ abstract class S {
   /// No description provided for @creatorJourneyBenefitLiveBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Badge Live'**
+  /// **'Selo Live'**
   String get creatorJourneyBenefitLiveBadgeTitle;
 
   /// No description provided for @creatorJourneyBenefitLiveBadgeDesc.
@@ -12162,7 +12162,7 @@ abstract class S {
   /// No description provided for @creatorJourneyBenefitLiveBattlesDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Participe de batalhas e dispute presentes com outros creators.'**
+  /// **'Participe de batalhas e dispute presentes com outros criadores.'**
   String get creatorJourneyBenefitLiveBattlesDesc;
 
   /// No description provided for @creatorJourneyBenefitLiveRankingTitle.
@@ -12174,13 +12174,13 @@ abstract class S {
   /// No description provided for @creatorJourneyBenefitLiveRankingDesc.
   ///
   /// In pt, this message translates to:
-  /// **'Apareça no ranking público dos creators que mais brilham nas lives.'**
+  /// **'Apareça no ranking público dos criadores que mais brilham nas lives.'**
   String get creatorJourneyBenefitLiveRankingDesc;
 
   /// No description provided for @creatorJourneyBenefitAmbassadorBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Badge Ambassador'**
+  /// **'Selo Ambassador'**
   String get creatorJourneyBenefitAmbassadorBadgeTitle;
 
   /// No description provided for @creatorJourneyBenefitAmbassadorBadgeDesc.
@@ -12228,7 +12228,7 @@ abstract class S {
   /// No description provided for @creatorJourneyBenefitFoundingBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Badge Founding'**
+  /// **'Selo Founding'**
   String get creatorJourneyBenefitFoundingBadgeTitle;
 
   /// No description provided for @creatorJourneyBenefitFoundingBadgeDesc.
@@ -15780,7 +15780,7 @@ abstract class S {
   /// No description provided for @editProfileCreatorBadgeTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Mostrar selo de creator'**
+  /// **'Mostrar selo de criador'**
   String get editProfileCreatorBadgeTitle;
 
   /// No description provided for @editProfileCreatorBadgeHint.
@@ -20156,6 +20156,846 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Algo deu errado ao publicar. Tente de novo.'**
   String get videoErrUnknown;
+
+  /// No description provided for @postBoostedSeeResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Impulsionado · ver resultados'**
+  String get postBoostedSeeResults;
+
+  /// No description provided for @navCreate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Criar'**
+  String get navCreate;
+
+  /// No description provided for @profileTabGrid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicações'**
+  String get profileTabGrid;
+
+  /// No description provided for @profileTabTexts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Textos'**
+  String get profileTabTexts;
+
+  /// No description provided for @profileEmptyMeGrid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua grade está vazia. Compartilhe uma foto ou vídeo.'**
+  String get profileEmptyMeGrid;
+
+  /// No description provided for @profileEmptyOtherGrid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma publicação ainda'**
+  String get profileEmptyOtherGrid;
+
+  /// No description provided for @profileEmptyMeVideos.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não publicou vídeos'**
+  String get profileEmptyMeVideos;
+
+  /// No description provided for @profileEmptyMeTexts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você ainda não publicou textos'**
+  String get profileEmptyMeTexts;
+
+  /// No description provided for @profileEmptyMeAction.
+  ///
+  /// In pt, this message translates to:
+  /// **'Publicar'**
+  String get profileEmptyMeAction;
+
+  /// No description provided for @profileShareText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confira {name} no Brawe Connect: {url}'**
+  String profileShareText(String name, String url);
+
+  /// No description provided for @chatxStop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Parar'**
+  String get chatxStop;
+
+  /// No description provided for @chatxListen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ouvir'**
+  String get chatxListen;
+
+  /// No description provided for @livexEligCheckFailTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível verificar'**
+  String get livexEligCheckFailTitle;
+
+  /// No description provided for @livexEligCheckFailSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique sua conexão e tente novamente.'**
+  String get livexEligCheckFailSub;
+
+  /// No description provided for @livexNeedAvatarTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicione uma foto de perfil'**
+  String get livexNeedAvatarTitle;
+
+  /// No description provided for @livexNeedAvatarSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lives só podem ser iniciadas por usuários com foto de perfil.'**
+  String get livexNeedAvatarSub;
+
+  /// No description provided for @livexNeedAvatarCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar foto agora'**
+  String get livexNeedAvatarCta;
+
+  /// No description provided for @livexNeedCreatorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live é exclusivo do Creator Network'**
+  String get livexNeedCreatorTitle;
+
+  /// No description provided for @livexNeedCreatorSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Transmissões ao vivo são liberadas após aprovação no programa. É grátis e leva poucos minutos.'**
+  String get livexNeedCreatorSub;
+
+  /// No description provided for @livexNeedCreatorCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'Inscrever-se no programa'**
+  String get livexNeedCreatorCta;
+
+  /// No description provided for @livexCheckingPerms.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificando permissões…'**
+  String get livexCheckingPerms;
+
+  /// No description provided for @livexNotNow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agora não'**
+  String get livexNotNow;
+
+  /// No description provided for @livexAddSound.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar som'**
+  String get livexAddSound;
+
+  /// No description provided for @livexFlip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Virar'**
+  String get livexFlip;
+
+  /// No description provided for @livexBeauty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Beleza'**
+  String get livexBeauty;
+
+  /// No description provided for @livexFilters.
+  ///
+  /// In pt, this message translates to:
+  /// **'Filtros'**
+  String get livexFilters;
+
+  /// No description provided for @livexShare.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar'**
+  String get livexShare;
+
+  /// No description provided for @livexCover.
+  ///
+  /// In pt, this message translates to:
+  /// **'Capa'**
+  String get livexCover;
+
+  /// No description provided for @livexChange.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alterar'**
+  String get livexChange;
+
+  /// No description provided for @livexBattle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Batalha'**
+  String get livexBattle;
+
+  /// No description provided for @livexGifts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Presentes'**
+  String get livexGifts;
+
+  /// No description provided for @livexNotify.
+  ///
+  /// In pt, this message translates to:
+  /// **'Notificar'**
+  String get livexNotify;
+
+  /// No description provided for @livexGuests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convidados'**
+  String get livexGuests;
+
+  /// No description provided for @livexPromote.
+  ///
+  /// In pt, this message translates to:
+  /// **'Promover'**
+  String get livexPromote;
+
+  /// No description provided for @livexPublicLive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live pública'**
+  String get livexPublicLive;
+
+  /// No description provided for @livexModeCamera.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera'**
+  String get livexModeCamera;
+
+  /// No description provided for @livexModeTemplate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modelo'**
+  String get livexModeTemplate;
+
+  /// No description provided for @livexShareMax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você pode enviar para até 50 pessoas por vez'**
+  String get livexShareMax;
+
+  /// No description provided for @livexShareOtherApps.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros apps'**
+  String get livexShareOtherApps;
+
+  /// No description provided for @livexShareText.
+  ///
+  /// In pt, this message translates to:
+  /// **'{who} está ao vivo na Brawe: {title}\n{url}'**
+  String livexShareText(String who, String title, String url);
+
+  /// No description provided for @livexShareTextSelf.
+  ///
+  /// In pt, this message translates to:
+  /// **'Estou ao vivo na Brawe: {title}\n{url}'**
+  String livexShareTextSelf(String title, String url);
+
+  /// No description provided for @livexAudioTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio'**
+  String get livexAudioTitle;
+
+  /// No description provided for @livexAudioGain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ganho'**
+  String get livexAudioGain;
+
+  /// No description provided for @livexAudioLimiter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limitador'**
+  String get livexAudioLimiter;
+
+  /// No description provided for @livexCompLight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Leve'**
+  String get livexCompLight;
+
+  /// No description provided for @livexCompMedium.
+  ///
+  /// In pt, this message translates to:
+  /// **'Médio'**
+  String get livexCompMedium;
+
+  /// No description provided for @livexCompAggressive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Forte'**
+  String get livexCompAggressive;
+
+  /// No description provided for @livexCompShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comp'**
+  String get livexCompShort;
+
+  /// No description provided for @livexAudioProcessor.
+  ///
+  /// In pt, this message translates to:
+  /// **'Processador de áudio'**
+  String get livexAudioProcessor;
+
+  /// No description provided for @livexAudioProcessorSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Equalizador + compressor — {preset}'**
+  String livexAudioProcessorSub(String preset);
+
+  /// No description provided for @livexAudioNoiseOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redução de ruído ativada'**
+  String get livexAudioNoiseOn;
+
+  /// No description provided for @livexAudioQualityOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo qualidade ativado'**
+  String get livexAudioQualityOn;
+
+  /// No description provided for @livexAudioModeQuality.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio: Qualidade'**
+  String get livexAudioModeQuality;
+
+  /// No description provided for @livexAudioModeVoice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Áudio: Redução de ruído'**
+  String get livexAudioModeVoice;
+
+  /// No description provided for @livexAudioModeQualitySub.
+  ///
+  /// In pt, this message translates to:
+  /// **'Full-range 44.1kHz — ideal para música. Toque para ativar redução de ruído.'**
+  String get livexAudioModeQualitySub;
+
+  /// No description provided for @livexAudioModeVoiceSub.
+  ///
+  /// In pt, this message translates to:
+  /// **'AEC + supressão de ruído — ideal para conversa. Toque para voltar à qualidade.'**
+  String get livexAudioModeVoiceSub;
+
+  /// No description provided for @livexRose.
+  ///
+  /// In pt, this message translates to:
+  /// **'Rosa'**
+  String get livexRose;
+
+  /// No description provided for @livexViewProduct.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver produto'**
+  String get livexViewProduct;
+
+  /// No description provided for @livexProductSoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abrir produto na vitrine — em breve.'**
+  String get livexProductSoon;
+
+  /// No description provided for @livexQualityTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qualidade do vídeo'**
+  String get livexQualityTitle;
+
+  /// No description provided for @livexQualityFpsNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'FPS: definido pelo streamer (geralmente 30fps)'**
+  String get livexQualityFpsNote;
+
+  /// No description provided for @livexPauseExpired.
+  ///
+  /// In pt, this message translates to:
+  /// **'A pausa passou de 5 minutos e a live foi encerrada.'**
+  String get livexPauseExpired;
+
+  /// No description provided for @livexPauseOneMinute.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta 1 minuto: retome a live ou ela será encerrada.'**
+  String get livexPauseOneMinute;
+
+  /// No description provided for @livexCameraSwitchDropped.
+  ///
+  /// In pt, this message translates to:
+  /// **'A transmissão caiu ao trocar a câmera. Toque em Retomar.'**
+  String get livexCameraSwitchDropped;
+
+  /// No description provided for @livexQualityAutoDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajusta automaticamente conforme sua conexão'**
+  String get livexQualityAutoDesc;
+
+  /// No description provided for @livexQuality480Desc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Menor consumo de dados'**
+  String get livexQuality480Desc;
+
+  /// No description provided for @livexQuality720Desc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Boa qualidade, recomendado'**
+  String get livexQuality720Desc;
+
+  /// No description provided for @livexQuality1080Desc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Máxima qualidade, requer boa internet'**
+  String get livexQuality1080Desc;
+
+  /// No description provided for @livexRoseSendFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar a rosa'**
+  String get livexRoseSendFailed;
+
+  /// No description provided for @livexLevelMax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível máximo alcançado'**
+  String get livexLevelMax;
+
+  /// No description provided for @livexXpToNext.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais {xp} XP para subir de nível'**
+  String livexXpToNext(String xp);
+
+  /// No description provided for @livexSentVerb.
+  ///
+  /// In pt, this message translates to:
+  /// **'enviou'**
+  String get livexSentVerb;
+
+  /// No description provided for @livexSwitchCameraFailed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível trocar a câmera'**
+  String get livexSwitchCameraFailed;
+
+  /// No description provided for @notifGroupMonth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Este mês'**
+  String get notifGroupMonth;
+
+  /// No description provided for @notifFollowBack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seguir de volta'**
+  String get notifFollowBack;
+
+  /// No description provided for @notifActionView.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver'**
+  String get notifActionView;
+
+  /// No description provided for @moneyLivesViewReplay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver replay'**
+  String get moneyLivesViewReplay;
+
+  /// No description provided for @moneyLivesReplayFetchError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível buscar o replay. Tente novamente.'**
+  String get moneyLivesReplayFetchError;
+
+  /// No description provided for @moneyLivesDownloadTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Baixar live'**
+  String get moneyLivesDownloadTitle;
+
+  /// No description provided for @moneyLivesUntitled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Live sem título'**
+  String get moneyLivesUntitled;
+
+  /// No description provided for @moneyLiveUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta live não está disponível.'**
+  String get moneyLiveUnavailable;
+
+  /// No description provided for @moneyCheckoutCepInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'CEP inválido. Digite os 8 números.'**
+  String get moneyCheckoutCepInvalid;
+
+  /// No description provided for @moneyCheckoutCepFilled.
+  ///
+  /// In pt, this message translates to:
+  /// **'Endereço preenchido pelo CEP'**
+  String get moneyCheckoutCepFilled;
+
+  /// No description provided for @moneyCheckoutCepLookupError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível buscar o CEP. Confira os números ou preencha o endereço à mão.'**
+  String get moneyCheckoutCepLookupError;
+
+  /// No description provided for @moneyPayPixError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível gerar o pagamento Pix agora. Seu pedido foi criado normalmente: tente novamente.'**
+  String get moneyPayPixError;
+
+  /// No description provided for @moneyPayConfirmedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento confirmado!'**
+  String get moneyPayConfirmedToast;
+
+  /// No description provided for @moneyPayTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento'**
+  String get moneyPayTitle;
+
+  /// No description provided for @moneyPayPreparing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Preparando pagamento...'**
+  String get moneyPayPreparing;
+
+  /// No description provided for @moneyPayErrorTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Erro ao gerar pagamento'**
+  String get moneyPayErrorTitle;
+
+  /// No description provided for @moneyPayTryLater.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tente novamente mais tarde.'**
+  String get moneyPayTryLater;
+
+  /// No description provided for @moneyPayCodeCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Código Pix copiado!'**
+  String get moneyPayCodeCopied;
+
+  /// No description provided for @moneyPayStatusPaid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento confirmado'**
+  String get moneyPayStatusPaid;
+
+  /// No description provided for @moneyPayStatusWaiting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aguardando pagamento'**
+  String get moneyPayStatusWaiting;
+
+  /// No description provided for @moneyPayTotal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Total a pagar'**
+  String get moneyPayTotal;
+
+  /// No description provided for @moneyPayScanHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escaneie com o app do seu banco'**
+  String get moneyPayScanHint;
+
+  /// No description provided for @moneyPayCopyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ou copie o código Pix'**
+  String get moneyPayCopyTitle;
+
+  /// No description provided for @moneyPayValidUntil.
+  ///
+  /// In pt, this message translates to:
+  /// **'Válido até {time}'**
+  String moneyPayValidUntil(String time);
+
+  /// No description provided for @moneyPaySoon.
+  ///
+  /// In pt, this message translates to:
+  /// **'em breve'**
+  String get moneyPaySoon;
+
+  /// No description provided for @moneyPayStep1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Abra o app do seu banco ou carteira Pix'**
+  String get moneyPayStep1;
+
+  /// No description provided for @moneyPayStep2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escaneie o QR Code ou cole o código copiado'**
+  String get moneyPayStep2;
+
+  /// No description provided for @moneyPayStep3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirme o pagamento'**
+  String get moneyPayStep3;
+
+  /// No description provided for @moneyPayStep4.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu pedido é liberado automaticamente'**
+  String get moneyPayStep4;
+
+  /// No description provided for @moneyPayHowTo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como pagar'**
+  String get moneyPayHowTo;
+
+  /// No description provided for @moneyPayChecking.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificando pagamento...'**
+  String get moneyPayChecking;
+
+  /// No description provided for @moneyPayConfirmed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pagamento confirmado!'**
+  String get moneyPayConfirmed;
+
+  /// No description provided for @moneyPayRedirecting.
+  ///
+  /// In pt, this message translates to:
+  /// **'Redirecionando para o seu pedido...'**
+  String get moneyPayRedirecting;
+
+  /// No description provided for @walletPurchaseSourceStore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Loja do app'**
+  String get walletPurchaseSourceStore;
+
+  /// No description provided for @adsRepPlatformOtherPhones.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros celulares'**
+  String get adsRepPlatformOtherPhones;
+
+  /// No description provided for @mediaRepostedToast.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostado'**
+  String get mediaRepostedToast;
+
+  /// No description provided for @mediaUndo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desfazer'**
+  String get mediaUndo;
+
+  /// No description provided for @mediaStoryLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Story'**
+  String get mediaStoryLabel;
+
+  /// No description provided for @mediaRepostStoryTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Repostar no story'**
+  String get mediaRepostStoryTooltip;
+
+  /// No description provided for @cmtTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 comentário} other{{count} comentários}}'**
+  String cmtTitle(int count);
+
+  /// No description provided for @cmtSortTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ordenar comentários'**
+  String get cmtSortTooltip;
+
+  /// No description provided for @cmtSortTop.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais relevantes'**
+  String get cmtSortTop;
+
+  /// No description provided for @cmtSortRecent.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mais recentes'**
+  String get cmtSortRecent;
+
+  /// No description provided for @cmtViewReplies.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Exibir 1 resposta} other{Exibir {count} respostas}}'**
+  String cmtViewReplies(int count);
+
+  /// No description provided for @cmtHideReplies.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ocultar'**
+  String get cmtHideReplies;
+
+  /// No description provided for @cmtAddHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar comentário...'**
+  String get cmtAddHint;
+
+  /// No description provided for @cmtEmptyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum comentário ainda'**
+  String get cmtEmptyTitle;
+
+  /// No description provided for @cmtEmptyBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comece a conversa: seja o primeiro a comentar.'**
+  String get cmtEmptyBody;
+
+  /// No description provided for @cmtCopyText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Copiar texto'**
+  String get cmtCopyText;
+
+  /// No description provided for @cmtCopied.
+  ///
+  /// In pt, this message translates to:
+  /// **'Texto copiado'**
+  String get cmtCopied;
+
+  /// No description provided for @cmtDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar comentário'**
+  String get cmtDelete;
+
+  /// No description provided for @cmtDeleteFail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível apagar o comentário.'**
+  String get cmtDeleteFail;
+
+  /// No description provided for @cmtMentionTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcar alguém'**
+  String get cmtMentionTooltip;
+
+  /// No description provided for @cmtEmojiTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emoji'**
+  String get cmtEmojiTooltip;
+
+  /// No description provided for @cmtSendTooltip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar comentário'**
+  String get cmtSendTooltip;
+
+  /// No description provided for @cmtShareComment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Compartilhar comentário'**
+  String get cmtShareComment;
+
+  /// No description provided for @cmtShareTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar para'**
+  String get cmtShareTitle;
+
+  /// No description provided for @cmtShareSearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar pessoas'**
+  String get cmtShareSearchHint;
+
+  /// No description provided for @cmtShareSendCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar ({count})'**
+  String cmtShareSendCount(int count);
+
+  /// No description provided for @cmtShareNoteHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escreva uma mensagem...'**
+  String get cmtShareNoteHint;
+
+  /// No description provided for @cmtShareSentCount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Enviado para 1 pessoa} other{Enviado para {count} pessoas}}'**
+  String cmtShareSentCount(int count);
+
+  /// No description provided for @cmtShareSendFail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível enviar para algumas pessoas. Tente de novo.'**
+  String get cmtShareSendFail;
+
+  /// No description provided for @cmtShareWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'WhatsApp'**
+  String get cmtShareWhatsapp;
+
+  /// No description provided for @cmtShareAddStory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar ao Story'**
+  String get cmtShareAddStory;
+
+  /// No description provided for @cmtShareNoResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém encontrado.'**
+  String get cmtShareNoResults;
+
+  /// No description provided for @cmtShareOpenFail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível abrir o aplicativo.'**
+  String get cmtShareOpenFail;
+
+  /// No description provided for @cmtShareCommentText.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentário de @{username} no Brawe: “{text}”\n{url}'**
+  String cmtShareCommentText(String username, String text, String url);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

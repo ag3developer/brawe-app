@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Cores de medalha (ouro, prata, bronze) por posição 1-based.
 /// Posições > 3 usam um cinza neutro.
@@ -28,11 +29,8 @@ class CoinIcon extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (_, _, _) => Icon(
-        Icons.monetization_on_rounded,
-        size: size,
-        color: const Color(0xFFFFD166),
-      ),
+      errorBuilder: (_, _, _) =>
+          Icon(LucideIcons.coins, size: size, color: const Color(0xFFFFD166)),
     );
   }
 }

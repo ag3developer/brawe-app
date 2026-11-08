@@ -2532,7 +2532,7 @@ class SEs extends S {
 
   @override
   String get walletIapInfo =>
-      'Compra procesada por la tienda oficial (Google Play / App Store). Las monedas se acreditan automáticamente tras el pago. Las monedas son artículos virtuales no canjeables usados solo para enviar regalos en directos.';
+      'Compra procesada por la tienda oficial de tu celular. Las monedas se acreditan automáticamente después del pago. Las monedas son artículos virtuales no canjeables que se usan dentro de la app.';
 
   @override
   String walletIapBuyFor(String price) {
@@ -2555,7 +2555,7 @@ class SEs extends S {
 
   @override
   String get walletIapStoreUnavailable =>
-      'Compras dentro de la app no disponibles en este dispositivo. Verifica tu cuenta de Google/Apple.';
+      'Las compras en la app no están disponibles en este dispositivo. Verifica que tu cuenta de la tienda esté configurada.';
 
   @override
   String get walletIapPaymentPending =>
@@ -2599,7 +2599,7 @@ class SEs extends S {
 
   @override
   String get earningsPurchaseHistorySubtitle =>
-      'Compras de monedas vía App Store / Google Play';
+      'Compras de monedas en la tienda de la app';
 
   @override
   String get earningsGiftHistoryTitle => 'Regalos recibidos';
@@ -3618,7 +3618,7 @@ class SEs extends S {
   String get topUpReasonBattle => '¡Sigue en la batalla! Recarga ahora';
 
   @override
-  String get topUpStoreDisclaimer => 'Pago seguro vía Play Store / App Store';
+  String get topUpStoreDisclaimer => 'Pago seguro con la tienda de tu celular';
 
   @override
   String get topUpStoreDisclaimerApple => 'Pago seguro por App Store';
@@ -3628,7 +3628,7 @@ class SEs extends S {
 
   @override
   String get earningsNoPurchasesHint =>
-      'Cuando compres coins por App Store o Google Play, aparecerán aquí.';
+      'Cuando compres monedas en la tienda de la app, aparecerán aquí.';
 
   @override
   String get earningsNoGiftsHint =>
@@ -11565,4 +11565,483 @@ class SEs extends S {
   @override
   String get videoErrUnknown =>
       'Algo salió mal al publicar. Inténtalo de nuevo.';
+
+  @override
+  String get postBoostedSeeResults => 'Impulsado · ver resultados';
+
+  @override
+  String get navCreate => 'Crear';
+
+  @override
+  String get profileTabGrid => 'Publicaciones';
+
+  @override
+  String get profileTabTexts => 'Textos';
+
+  @override
+  String get profileEmptyMeGrid =>
+      'Tu cuadrícula está vacía. Comparte una foto o un video.';
+
+  @override
+  String get profileEmptyOtherGrid => 'Aún no hay publicaciones';
+
+  @override
+  String get profileEmptyMeVideos => 'Aún no has publicado videos';
+
+  @override
+  String get profileEmptyMeTexts => 'Aún no has publicado textos';
+
+  @override
+  String get profileEmptyMeAction => 'Publicar';
+
+  @override
+  String profileShareText(String name, String url) {
+    return 'Mira a $name en Brawe Connect: $url';
+  }
+
+  @override
+  String get chatxStop => 'Detener';
+
+  @override
+  String get chatxListen => 'Escuchar';
+
+  @override
+  String get livexEligCheckFailTitle => 'No se pudo verificar';
+
+  @override
+  String get livexEligCheckFailSub =>
+      'Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get livexNeedAvatarTitle => 'Añade una foto de perfil';
+
+  @override
+  String get livexNeedAvatarSub =>
+      'Solo los usuarios con foto de perfil pueden iniciar un en vivo.';
+
+  @override
+  String get livexNeedAvatarCta => 'Añadir foto ahora';
+
+  @override
+  String get livexNeedCreatorTitle =>
+      'El en vivo es exclusivo de Creator Network';
+
+  @override
+  String get livexNeedCreatorSub =>
+      'Las transmisiones en vivo se habilitan tras la aprobación en el programa. Es gratis y toma pocos minutos.';
+
+  @override
+  String get livexNeedCreatorCta => 'Unirme al programa';
+
+  @override
+  String get livexCheckingPerms => 'Verificando permisos…';
+
+  @override
+  String get livexNotNow => 'Ahora no';
+
+  @override
+  String get livexAddSound => 'Añadir sonido';
+
+  @override
+  String get livexFlip => 'Girar';
+
+  @override
+  String get livexBeauty => 'Belleza';
+
+  @override
+  String get livexFilters => 'Filtros';
+
+  @override
+  String get livexShare => 'Compartir';
+
+  @override
+  String get livexCover => 'Portada';
+
+  @override
+  String get livexChange => 'Cambiar';
+
+  @override
+  String get livexBattle => 'Batalla';
+
+  @override
+  String get livexGifts => 'Regalos';
+
+  @override
+  String get livexNotify => 'Avisar';
+
+  @override
+  String get livexGuests => 'Invitados';
+
+  @override
+  String get livexPromote => 'Promocionar';
+
+  @override
+  String get livexPublicLive => 'En vivo público';
+
+  @override
+  String get livexModeCamera => 'Cámara';
+
+  @override
+  String get livexModeTemplate => 'Plantilla';
+
+  @override
+  String get livexShareMax => 'Puedes enviar a hasta 50 personas a la vez';
+
+  @override
+  String get livexShareOtherApps => 'Otras apps';
+
+  @override
+  String livexShareText(String who, String title, String url) {
+    return '$who está en vivo en Brawe: $title\n$url';
+  }
+
+  @override
+  String livexShareTextSelf(String title, String url) {
+    return 'Estoy en vivo en Brawe: $title\n$url';
+  }
+
+  @override
+  String get livexAudioTitle => 'Audio';
+
+  @override
+  String get livexAudioGain => 'Ganancia';
+
+  @override
+  String get livexAudioLimiter => 'Limitador';
+
+  @override
+  String get livexCompLight => 'Suave';
+
+  @override
+  String get livexCompMedium => 'Medio';
+
+  @override
+  String get livexCompAggressive => 'Fuerte';
+
+  @override
+  String get livexCompShort => 'Comp';
+
+  @override
+  String get livexAudioProcessor => 'Procesador de audio';
+
+  @override
+  String livexAudioProcessorSub(String preset) {
+    return 'Ecualizador + compresor — $preset';
+  }
+
+  @override
+  String get livexAudioNoiseOn => 'Reducción de ruido activada';
+
+  @override
+  String get livexAudioQualityOn => 'Modo calidad activado';
+
+  @override
+  String get livexAudioModeQuality => 'Audio: Calidad';
+
+  @override
+  String get livexAudioModeVoice => 'Audio: Reducción de ruido';
+
+  @override
+  String get livexAudioModeQualitySub =>
+      'Rango completo 44.1kHz — ideal para música. Toca para activar la reducción de ruido.';
+
+  @override
+  String get livexAudioModeVoiceSub =>
+      'AEC + supresión de ruido — ideal para conversar. Toca para volver a calidad.';
+
+  @override
+  String get livexRose => 'Rosa';
+
+  @override
+  String get livexViewProduct => 'Ver producto';
+
+  @override
+  String get livexProductSoon =>
+      'Abrir el producto en la tienda — próximamente.';
+
+  @override
+  String get livexQualityTitle => 'Calidad del video';
+
+  @override
+  String get livexQualityFpsNote =>
+      'FPS: lo define el streamer (normalmente 30fps)';
+
+  @override
+  String get livexPauseExpired =>
+      'La pausa pasó de 5 minutos y el en vivo terminó.';
+
+  @override
+  String get livexPauseOneMinute =>
+      'Falta 1 minuto: reanuda el en vivo o terminará.';
+
+  @override
+  String get livexCameraSwitchDropped =>
+      'La transmisión se cayó al cambiar de cámara. Toca Reanudar.';
+
+  @override
+  String get livexQualityAutoDesc => 'Se ajusta automáticamente a tu conexión';
+
+  @override
+  String get livexQuality480Desc => 'Menor consumo de datos';
+
+  @override
+  String get livexQuality720Desc => 'Buena calidad, recomendado';
+
+  @override
+  String get livexQuality1080Desc => 'Máxima calidad, requiere buena conexión';
+
+  @override
+  String get livexRoseSendFailed => 'No se pudo enviar la rosa';
+
+  @override
+  String get livexLevelMax => 'Nivel máximo alcanzado';
+
+  @override
+  String livexXpToNext(String xp) {
+    return '$xp XP más para subir de nivel';
+  }
+
+  @override
+  String get livexSentVerb => 'envió';
+
+  @override
+  String get livexSwitchCameraFailed => 'No se pudo cambiar la cámara';
+
+  @override
+  String get notifGroupMonth => 'Este mes';
+
+  @override
+  String get notifFollowBack => 'Seguir también';
+
+  @override
+  String get notifActionView => 'Ver';
+
+  @override
+  String get moneyLivesViewReplay => 'Ver repetición';
+
+  @override
+  String get moneyLivesReplayFetchError =>
+      'No se pudo obtener la repetición. Inténtalo de nuevo.';
+
+  @override
+  String get moneyLivesDownloadTitle => 'Descargar directo';
+
+  @override
+  String get moneyLivesUntitled => 'Directo sin título';
+
+  @override
+  String get moneyLiveUnavailable => 'Este directo no está disponible.';
+
+  @override
+  String get moneyCheckoutCepInvalid =>
+      'Código postal inválido. Escribe los 8 números.';
+
+  @override
+  String get moneyCheckoutCepFilled =>
+      'Dirección completada con el código postal';
+
+  @override
+  String get moneyCheckoutCepLookupError =>
+      'No se pudo buscar el código postal. Revisa los números o completa la dirección a mano.';
+
+  @override
+  String get moneyPayPixError =>
+      'No se pudo generar el pago Pix ahora. Tu pedido se creó con normalidad: inténtalo de nuevo.';
+
+  @override
+  String get moneyPayConfirmedToast => '¡Pago confirmado!';
+
+  @override
+  String get moneyPayTitle => 'Pago';
+
+  @override
+  String get moneyPayPreparing => 'Preparando el pago...';
+
+  @override
+  String get moneyPayErrorTitle => 'Error al generar el pago';
+
+  @override
+  String get moneyPayTryLater => 'Inténtalo de nuevo más tarde.';
+
+  @override
+  String get moneyPayCodeCopied => '¡Código Pix copiado!';
+
+  @override
+  String get moneyPayStatusPaid => 'Pago confirmado';
+
+  @override
+  String get moneyPayStatusWaiting => 'Esperando el pago';
+
+  @override
+  String get moneyPayTotal => 'Total a pagar';
+
+  @override
+  String get moneyPayScanHint => 'Escanea con la app de tu banco';
+
+  @override
+  String get moneyPayCopyTitle => 'O copia el código Pix';
+
+  @override
+  String moneyPayValidUntil(String time) {
+    return 'Válido hasta $time';
+  }
+
+  @override
+  String get moneyPaySoon => 'pronto';
+
+  @override
+  String get moneyPayStep1 => 'Abre la app de tu banco o billetera Pix';
+
+  @override
+  String get moneyPayStep2 => 'Escanea el código QR o pega el código copiado';
+
+  @override
+  String get moneyPayStep3 => 'Confirma el pago';
+
+  @override
+  String get moneyPayStep4 => 'Tu pedido se libera automáticamente';
+
+  @override
+  String get moneyPayHowTo => 'Cómo pagar';
+
+  @override
+  String get moneyPayChecking => 'Comprobando el pago...';
+
+  @override
+  String get moneyPayConfirmed => '¡Pago confirmado!';
+
+  @override
+  String get moneyPayRedirecting => 'Llevándote a tu pedido...';
+
+  @override
+  String get walletPurchaseSourceStore => 'Tienda de la app';
+
+  @override
+  String get adsRepPlatformOtherPhones => 'Otros celulares';
+
+  @override
+  String get mediaRepostedToast => 'Reposteado';
+
+  @override
+  String get mediaUndo => 'Deshacer';
+
+  @override
+  String get mediaStoryLabel => 'Story';
+
+  @override
+  String get mediaRepostStoryTooltip => 'Repostear en story';
+
+  @override
+  String cmtTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count comentarios',
+      one: '1 comentario',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtSortTooltip => 'Ordenar comentarios';
+
+  @override
+  String get cmtSortTop => 'Más relevantes';
+
+  @override
+  String get cmtSortRecent => 'Más recientes';
+
+  @override
+  String cmtViewReplies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ver $count respuestas',
+      one: 'Ver 1 respuesta',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtHideReplies => 'Ocultar';
+
+  @override
+  String get cmtAddHint => 'Añadir comentario...';
+
+  @override
+  String get cmtEmptyTitle => 'Aún no hay comentarios';
+
+  @override
+  String get cmtEmptyBody =>
+      'Empieza la conversación: sé el primero en comentar.';
+
+  @override
+  String get cmtCopyText => 'Copiar texto';
+
+  @override
+  String get cmtCopied => 'Texto copiado';
+
+  @override
+  String get cmtDelete => 'Eliminar comentario';
+
+  @override
+  String get cmtDeleteFail => 'No se pudo eliminar el comentario.';
+
+  @override
+  String get cmtMentionTooltip => 'Mencionar a alguien';
+
+  @override
+  String get cmtEmojiTooltip => 'Emoji';
+
+  @override
+  String get cmtSendTooltip => 'Enviar comentario';
+
+  @override
+  String get cmtShareComment => 'Compartir comentario';
+
+  @override
+  String get cmtShareTitle => 'Enviar a';
+
+  @override
+  String get cmtShareSearchHint => 'Buscar personas';
+
+  @override
+  String cmtShareSendCount(int count) {
+    return 'Enviar ($count)';
+  }
+
+  @override
+  String get cmtShareNoteHint => 'Escribe un mensaje...';
+
+  @override
+  String cmtShareSentCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Enviado a $count personas',
+      one: 'Enviado a 1 persona',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cmtShareSendFail =>
+      'No se pudo enviar a algunas personas. Inténtalo de nuevo.';
+
+  @override
+  String get cmtShareWhatsapp => 'WhatsApp';
+
+  @override
+  String get cmtShareAddStory => 'Añadir a Story';
+
+  @override
+  String get cmtShareNoResults => 'No se encontró a nadie.';
+
+  @override
+  String get cmtShareOpenFail => 'No se pudo abrir la aplicación.';
+
+  @override
+  String cmtShareCommentText(String username, String text, String url) {
+    return 'Comentario de @$username en Brawe: “$text”\n$url';
+  }
 }

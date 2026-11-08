@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'quest_tones.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repositories/auth_state_provider.dart';
@@ -78,7 +81,7 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen>
                     children: [
                       IconButton(
                         icon: Icon(
-                          Icons.arrow_back_ios_new_rounded,
+                          LucideIcons.chevronLeft,
                           color: colors.textPrimary,
                         ),
                         onPressed: () => Navigator.maybePop(context),
@@ -108,9 +111,9 @@ class _QuestsScreenState extends ConsumerState<QuestsScreen>
                   child: _GameTabBar(
                     controller: _tabs,
                     labels: [
-                      (s.questsTabMissions, Icons.flag_rounded),
-                      (s.questsTabAchievements, Icons.emoji_events_rounded),
-                      (s.questsTabJourney, Icons.timeline_rounded),
+                      (s.questsTabMissions, LucideIcons.flag),
+                      (s.questsTabAchievements, LucideIcons.trophy),
+                      (s.questsTabJourney, LucideIcons.waypoints),
                     ],
                   ),
                 ),
@@ -185,11 +188,13 @@ class _GameTabBar extends StatelessWidget {
             ),
           ],
         ),
-        labelColor: Colors.white,
+        labelColor: QuestTones.onGradient,
         unselectedLabelColor: colors.textSecondary,
         labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
-        unselectedLabelStyle:
-            const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
+        ),
         labelPadding: EdgeInsets.zero,
         tabs: [
           for (final (label, icon) in labels)
@@ -199,9 +204,7 @@ class _GameTabBar extends StatelessWidget {
                 children: [
                   Icon(icon, size: 17),
                   const SizedBox(width: 5),
-                  Flexible(
-                    child: Text(label, overflow: TextOverflow.ellipsis),
-                  ),
+                  Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
                 ],
               ),
             ),
@@ -221,12 +224,12 @@ class _CoinsCounter extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFB800).withValues(
+        color: QuestTones.gold.withValues(
           alpha: context.isDark ? 0.18 : 0.14,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFFFB800).withValues(alpha: 0.45),
+          color: QuestTones.gold.withValues(alpha: 0.45),
         ),
       ),
       child: Row(
@@ -240,8 +243,8 @@ class _CoinsCounter extends StatelessWidget {
               width: 26,
               height: 26,
               errorBuilder: (_, _, _) => const Icon(
-                Icons.monetization_on_rounded,
-                color: Color(0xFFFFB800),
+                LucideIcons.coins,
+                color: QuestTones.gold,
                 size: 22,
               ),
             ),

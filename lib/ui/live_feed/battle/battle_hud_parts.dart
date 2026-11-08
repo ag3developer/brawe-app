@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' show FontFeature;
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -143,8 +144,14 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
   @override
   void didUpdateWidget(covariant BattleAdvantageBar old) {
     super.didUpdateWidget(old);
-    final target = battleProgressLeft(widget.battle, widget.ownSide).clamp(0.04, 0.96);
-    final before = battleProgressLeft(old.battle, old.ownSide).clamp(0.04, 0.96);
+    final target = battleProgressLeft(
+      widget.battle,
+      widget.ownSide,
+    ).clamp(0.04, 0.96);
+    final before = battleProgressLeft(
+      old.battle,
+      old.ownSide,
+    ).clamp(0.04, 0.96);
     if ((target - before).abs() > 0.0005) {
       _spring.animateWith(
         SpringSimulation(
@@ -184,7 +191,10 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
           ? Text(
               you,
               style: TextStyle(
-                color: battleOnSide(side, widget.ownSide).withValues(alpha: 0.8),
+                color: battleOnSide(
+                  side,
+                  widget.ownSide,
+                ).withValues(alpha: 0.8),
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 decoration: TextDecoration.none,
@@ -202,7 +212,8 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
     }
 
     return Semantics(
-      label: '${formatBattleScore(battle.scoreA)} x ${formatBattleScore(battle.scoreB)}',
+      label:
+          '${formatBattleScore(battle.scoreA)} x ${formatBattleScore(battle.scoreB)}',
       child: SizedBox(
         height: kBattleBarH,
         child: Stack(
@@ -221,7 +232,9 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
                         top: 0,
                         bottom: 0,
                         width: x,
-                        child: const ColoredBox(color: AppColors.braweBlueBright),
+                        child: const ColoredBox(
+                          color: AppColors.braweBlueBright,
+                        ),
                       ),
                       Positioned(
                         left: x,
@@ -237,7 +250,9 @@ class _BattleAdvantageBarState extends State<BattleAdvantageBar>
                         bottom: 0,
                         width: 3,
                         child: ColoredBox(
-                          color: Colors.white.withValues(alpha: 0.55 + 0.45 * _pulse.value),
+                          color: Colors.white.withValues(
+                            alpha: 0.55 + 0.45 * _pulse.value,
+                          ),
                         ),
                       ),
                     ],
@@ -337,7 +352,7 @@ class _PowerSeal extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 11, color: kBattleBoost),
+            const Icon(LucideIcons.sparkles, size: 11, color: kBattleBoost),
             const SizedBox(width: 2),
             Text(
               label,
@@ -359,7 +374,11 @@ class _PowerSeal extends StatelessWidget {
 // ─── Sequência de vitórias ──────────────────────────────────────────────────
 
 class BattleStreakBadge extends StatelessWidget {
-  const BattleStreakBadge({super.key, required this.side, required this.streak});
+  const BattleStreakBadge({
+    super.key,
+    required this.side,
+    required this.streak,
+  });
   final String side;
   final int streak;
 
@@ -371,7 +390,7 @@ class BattleStreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.emoji_events_outlined, size: 11, color: kBattleTextDim),
+          const Icon(LucideIcons.trophy, size: 11, color: kBattleTextDim),
           const SizedBox(width: 3),
           Text(
             '×$streak',
@@ -424,7 +443,9 @@ class BattleSupporters extends StatelessWidget {
                         url: top[i].avatarUrl,
                         name: top[i].name ?? '',
                         size: 30,
-                        color: Colors.white.withValues(alpha: i == 0 ? 0.55 : 0.25),
+                        color: Colors.white.withValues(
+                          alpha: i == 0 ? 0.55 : 0.25,
+                        ),
                         ring: 1.5,
                       ),
                     ),
@@ -432,7 +453,11 @@ class BattleSupporters extends StatelessWidget {
                       const Positioned(
                         top: -9,
                         left: 8,
-                        child: Icon(Icons.workspace_premium_rounded, size: 15, color: kBattleGold),
+                        child: Icon(
+                          LucideIcons.crown,
+                          size: 15,
+                          color: kBattleGold,
+                        ),
                       ),
                     // Número 1/2/3 no canto.
                     Positioned(
@@ -445,7 +470,10 @@ class BattleSupporters extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: kBattleBg,
                           shape: BoxShape.circle,
-                          border: Border.all(color: kBattleGlassBorder, width: 1),
+                          border: Border.all(
+                            color: kBattleGlassBorder,
+                            width: 1,
+                          ),
                         ),
                         child: Text(
                           '${i + 1}',
@@ -537,9 +565,9 @@ class _BattleFlashPillState extends State<BattleFlashPill> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (f.isBoost)
-            Icon(Icons.auto_awesome, size: 16, color: color)
+            Icon(LucideIcons.sparkles, size: 16, color: color)
           else
-            Icon(Icons.card_giftcard_rounded, size: 15, color: color),
+            Icon(LucideIcons.gift, size: 15, color: color),
           const SizedBox(width: 5),
           Flexible(
             child: Text(
@@ -573,7 +601,7 @@ class BattleInfoText extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.info_outline_rounded, size: 14, color: kBattleInfoGray),
+        const Icon(LucideIcons.info, size: 14, color: kBattleInfoGray),
         const SizedBox(width: 5),
         Flexible(
           child: Text(
@@ -680,7 +708,12 @@ class BattleCountdownOverlay extends StatelessWidget {
 // ─── Chip de estado (carregando/erro) ───────────────────────────────────────
 
 class BattleStatusChip extends StatelessWidget {
-  const BattleStatusChip({super.key, required this.label, this.actionLabel, this.onAction});
+  const BattleStatusChip({
+    super.key,
+    required this.label,
+    this.actionLabel,
+    this.onAction,
+  });
   final String label;
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -700,7 +733,10 @@ class BattleStatusChip extends StatelessWidget {
             const SizedBox(
               width: 12,
               height: 12,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 8),
           ],
@@ -716,7 +752,10 @@ class BattleStatusChip extends StatelessWidget {
           if (actionLabel != null)
             TextButton(
               onPressed: onAction,
-              child: Text(actionLabel!, style: const TextStyle(color: kBattleText)),
+              child: Text(
+                actionLabel!,
+                style: const TextStyle(color: kBattleText),
+              ),
             ),
         ],
       ),
@@ -781,7 +820,7 @@ class BattleEndSeal extends StatelessWidget {
           Center(
             child: _SealPop(
               child: const Icon(
-                Icons.workspace_premium_rounded,
+                LucideIcons.crown,
                 color: kBattleGold,
                 size: 56,
                 shadows: [Shadow(blurRadius: 10, color: Colors.black87)],
@@ -810,7 +849,7 @@ class BattleDrawSeal extends StatelessWidget {
         children: [
           const _SealPop(
             child: Icon(
-              Icons.balance_rounded,
+              LucideIcons.scale,
               color: kBattleGold,
               size: 52,
               shadows: [Shadow(blurRadius: 10, color: Colors.black87)],
@@ -858,11 +897,13 @@ class BattleMvpPill extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.workspace_premium_rounded, size: 16, color: kBattleMvpText),
+        const Icon(LucideIcons.crown, size: 16, color: kBattleMvpText),
         const SizedBox(width: 5),
         Flexible(
           child: Text(
-            S.of(context).battleMvpPill(mvp.name ?? '', formatBattleScore(mvp.total)),
+            S
+                .of(context)
+                .battleMvpPill(mvp.name ?? '', formatBattleScore(mvp.total)),
             maxLines: 1,
             softWrap: false,
             overflow: TextOverflow.ellipsis,
@@ -911,7 +952,8 @@ class _Confetti extends StatefulWidget {
   State<_Confetti> createState() => _ConfettiState();
 }
 
-class _ConfettiState extends State<_Confetti> with SingleTickerProviderStateMixin {
+class _ConfettiState extends State<_Confetti>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 3),
@@ -944,9 +986,13 @@ class _ConfettiPainter extends CustomPainter {
     for (var i = 0; i < 28; i++) {
       final seed = (i * 7919) % 1000 / 1000.0;
       final phase = (t + seed) % 1.0;
-      final x = ((i * 37) % 100) / 100 * size.width + 10 * (phase * 6.28).abs() % 12;
+      final x =
+          ((i * 37) % 100) / 100 * size.width + 10 * (phase * 6.28).abs() % 12;
       final y = phase * size.height;
-      final paint = Paint()..color = _colors[i % _colors.length].withValues(alpha: 1 - phase * 0.6);
+      final paint = Paint()
+        ..color = _colors[i % _colors.length].withValues(
+          alpha: 1 - phase * 0.6,
+        );
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(phase * 9 + i);

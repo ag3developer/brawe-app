@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
 /// Cronômetro da batalha (MM:SS).
@@ -74,8 +75,14 @@ class _BattleTimerState extends State<BattleTimer>
   Widget build(BuildContext context) {
     final compact = widget.compact;
     final timeRemaining = widget.timeRemaining;
-    final minutes = timeRemaining.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = timeRemaining.inSeconds.remainder(60).toString().padLeft(2, '0');
+    final minutes = timeRemaining.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = timeRemaining.inSeconds
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
     final label = '$minutes:$seconds';
 
     final urgent = _isUrgent(timeRemaining);
@@ -92,13 +99,15 @@ class _BattleTimerState extends State<BattleTimer>
         color: const Color(0xB30B0E14),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: urgent ? _orange.withValues(alpha: 0.7) : const Color(0x14FFFFFF),
+          color: urgent
+              ? _orange.withValues(alpha: 0.7)
+              : const Color(0x14FFFFFF),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer_outlined, size: compact ? 12 : 15, color: fg),
+          Icon(LucideIcons.timer, size: compact ? 12 : 15, color: fg),
           const SizedBox(width: 4),
           Text(
             label,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:brawe_app/gen/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../../domain/models/live_comment.dart';
@@ -95,7 +96,7 @@ class ChatLine extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.trending_up_rounded,
+              LucideIcons.trendingUp,
               size: 14,
               color: Color(0xFFFFD166),
             ),
@@ -141,7 +142,10 @@ class ChatLine extends StatelessWidget {
               color: AppColors.braweBlue,
               image: hasAvatar
                   ? DecorationImage(
-                      image: ResizeImage(NetworkImage(comment.avatarUrl!), width: context.decodePx(20)),
+                      image: ResizeImage(
+                        NetworkImage(comment.avatarUrl!),
+                        width: context.decodePx(20),
+                      ),
                       fit: BoxFit.cover,
                     )
                   : null,
@@ -252,8 +256,8 @@ class _HostBadge extends StatelessWidget {
         color: const Color(0xFFFF3D6E),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Text(
-        'Criador',
+      child: Text(
+        S.of(context).editProfileAccountTypeCreator,
         style: TextStyle(
           color: Colors.white,
           fontSize: 9.5,
@@ -279,7 +283,7 @@ class ModeratorBadge extends StatelessWidget {
         LucideIcons.shield,
         size: size,
         color: const Color(0xFF4FC3F7),
-        semanticLabel: 'Moderator',
+        semanticLabel: S.of(context).chatModeratorBadge,
       ),
     );
   }

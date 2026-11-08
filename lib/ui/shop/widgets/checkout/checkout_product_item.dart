@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../../domain/models/marketplace_models.dart';
 import '../../../core/themes/brawe_colors.dart';
@@ -118,7 +119,7 @@ class CheckoutProductItem extends StatelessWidget {
       height: 76,
       color: context.colors.surfaceHighest,
       child: Icon(
-        Icons.image_outlined,
+        LucideIcons.image,
         color: context.colors.textSecondary,
         size: 24,
       ),
