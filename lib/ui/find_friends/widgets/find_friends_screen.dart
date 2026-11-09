@@ -105,6 +105,8 @@ class _FindFriendsScreenState extends ConsumerState<FindFriendsScreen> {
 
   void _showMyQr(String profileUrl, String? avatarUrl, String? name) {
     showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -473,7 +475,7 @@ class _MyQrCard extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: avatarUrl != null && avatarUrl!.isNotEmpty
                       ? CachedNetworkImage(
-                        memCacheWidth: context.decodePx(44),
+                          memCacheWidth: context.decodePx(44),
                           imageUrl: avatarUrl!,
                           fit: BoxFit.cover,
                           errorWidget: (_, __, ___) =>
@@ -499,11 +501,7 @@ class _MyQrCard extends StatelessWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _share(context),
-              icon: Icon(
-                LucideIcons.send,
-                size: 16,
-                color: colors.textPrimary,
-              ),
+              icon: Icon(LucideIcons.send, size: 16, color: colors.textPrimary),
               label: Text(
                 S.of(context).actionShare,
                 style: TextStyle(
@@ -576,7 +574,11 @@ class _SuggestionsList extends ConsumerWidget {
 class _UserTile extends ConsumerStatefulWidget {
   final Map<String, dynamic> user;
   final bool initialFollowing;
-  const _UserTile({super.key, required this.user, this.initialFollowing = false});
+  const _UserTile({
+    super.key,
+    required this.user,
+    this.initialFollowing = false,
+  });
 
   @override
   ConsumerState<_UserTile> createState() => _UserTileState();
@@ -625,7 +627,10 @@ class _UserTileState extends ConsumerState<_UserTile> {
               radius: 24,
               backgroundColor: colors.surfaceHighest,
               backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? CachedNetworkImageProvider(avatarUrl, maxWidth: context.decodePx(48))
+                  ? CachedNetworkImageProvider(
+                      avatarUrl,
+                      maxWidth: context.decodePx(48),
+                    )
                   : null,
               child: avatarUrl == null || avatarUrl.isEmpty
                   ? Icon(Icons.person, color: colors.textSecondary)

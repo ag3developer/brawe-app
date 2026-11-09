@@ -29,6 +29,7 @@ class AddressSelectionSheet extends StatelessWidget {
     ShippingAddress? selected,
   }) {
     return showModalBottomSheet<Object?>(
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

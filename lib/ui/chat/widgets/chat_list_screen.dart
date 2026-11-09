@@ -640,6 +640,7 @@ class _ConversationTile extends ConsumerWidget {
     final messenger = ScaffoldMessenger.of(context);
     HapticFeedback.mediumImpact();
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       builder: (ctx) => SafeArea(

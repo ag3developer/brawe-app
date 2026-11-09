@@ -49,6 +49,8 @@ class VolumeMixerSheet extends StatefulWidget {
     String? musicTitle,
   }) {
     return showModalBottomSheet<(double, double)>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

@@ -1789,6 +1789,7 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     } catch (_) {}
     if (!mounted) return;
     final seconds = await showModalBottomSheet<int>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: const Color(0xFF0E0E14),
       builder: (ctx) => SafeArea(
@@ -1864,6 +1865,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
     }
     FocusManager.instance.primaryFocus?.unfocus();
     await showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: this.context,
       backgroundColor: const Color(0xFF0E0E14),
       isScrollControlled: true,
@@ -2270,6 +2273,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
 
     if (!mounted) return;
     await showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: this.context,
       backgroundColor: const Color(0xFF0E0E14),
       isScrollControlled: true,
@@ -2467,6 +2472,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
   Future<void> _showMoreOptions(BuildContext context) async {
     final s = S.of(context);
     await showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: const Color(0xFF1A1A22),
       shape: const RoundedRectangleBorder(
@@ -2569,6 +2576,8 @@ class _BroadcasterScreenState extends ConsumerState<BroadcasterScreen>
                     onTap: () {
                       Navigator.pop(ctx);
                       showModalBottomSheet(
+                        useRootNavigator: true,
+                        useSafeArea: true,
                         context: context,
                         backgroundColor: Colors.transparent,
                         isScrollControlled: true,

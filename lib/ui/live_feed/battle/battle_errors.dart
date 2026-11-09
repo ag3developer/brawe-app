@@ -1,3 +1,4 @@
+import '../../../data/services/privacy_ux_service.dart';
 import '../../../data/services/battle_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 
@@ -10,6 +11,11 @@ String battleLeaveWarning(S l10n, int? streak) => (streak ?? 0) > 0
     : l10n.battleLeaveBodyNoStreak;
 
 String battleErrorText(S l10n, Object error, {String? fallback}) {
+  // Privacidade: a pessoa não recebe convites de batalha (403).
+  final privacyMsg = PrivacyApiError.messageFor(error, {
+    'battle_invites_not_allowed',
+  });
+  if (privacyMsg != null) return privacyMsg;
   final info = BattleService.classifyError(error);
   switch (info.kind) {
     case BattleErrorKind.network:

@@ -266,6 +266,8 @@ class _VideoViewState extends ConsumerState<VideoView> {
     final wasPlaying = _ctrl?.value.isPlaying ?? false;
     _ctrl?.pause();
     await showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

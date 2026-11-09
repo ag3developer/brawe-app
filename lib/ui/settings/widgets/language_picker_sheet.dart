@@ -19,6 +19,7 @@ class LanguagePickerSheet extends ConsumerWidget {
   /// Helper para abrir o sheet de forma consistente.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       showDragHandle: true,
       builder: (_) => const LanguagePickerSheet(),
@@ -36,16 +37,8 @@ class LanguagePickerSheet extends ConsumerWidget {
         flag: '🇧🇷',
         label: s.languagePt,
       ),
-      _LangEntry(
-        locale: const Locale('es'),
-        flag: '🇪🇸',
-        label: s.languageEs,
-      ),
-      _LangEntry(
-        locale: const Locale('en'),
-        flag: '🇺🇸',
-        label: s.languageEn,
-      ),
+      _LangEntry(locale: const Locale('es'), flag: '🇪🇸', label: s.languageEs),
+      _LangEntry(locale: const Locale('en'), flag: '🇺🇸', label: s.languageEn),
     ];
 
     return SafeArea(
@@ -59,9 +52,9 @@ class LanguagePickerSheet extends ConsumerWidget {
               alignment: AlignmentDirectional.centerStart,
               child: Text(
                 s.languagePickerTitle,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ),

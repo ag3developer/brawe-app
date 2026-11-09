@@ -11987,4 +11987,431 @@ class SEn extends S {
   String cmtShareCommentText(String username, String text, String url) {
     return 'Comment by @$username on Brawe: “$text”\n$url';
   }
+
+  @override
+  String get privacyRetry => 'Try again';
+
+  @override
+  String get privacyErrorGeneric =>
+      'Couldn\'t save right now. Check your connection and try again.';
+
+  @override
+  String get privacySectionAccount => 'Account';
+
+  @override
+  String get privacyPrivateAccount => 'Private account';
+
+  @override
+  String get privacyPrivateUnavailable =>
+      'Only available for Personal accounts';
+
+  @override
+  String get privacyPrivateFooter =>
+      'With a private account, only people you approve can see your posts, stories and lists.';
+
+  @override
+  String get privacyPrivateUnavailableFooter =>
+      'Artist, Business and Agency accounts are always public because they exist to be found. To go private, use a Personal account.';
+
+  @override
+  String get privacyPrivateOnTitle => 'Make your account private?';
+
+  @override
+  String get privacyPrivateOn1 =>
+      'People who already follow you keep following you.';
+
+  @override
+  String get privacyPrivateOn2 =>
+      'New people have to send a follow request, and you approve it.';
+
+  @override
+  String get privacyPrivateOn3 =>
+      'Posts, stories and lists are visible only to your followers.';
+
+  @override
+  String get privacyPrivateOnConfirm => 'Make private';
+
+  @override
+  String get privacyPrivateOffTitle => 'Make your account public?';
+
+  @override
+  String get privacyPrivateOff1 =>
+      'Anyone will be able to see your posts, stories and lists.';
+
+  @override
+  String get privacyPrivateOff2 =>
+      'Pending follow requests will be accepted automatically.';
+
+  @override
+  String get privacyPrivateOffConfirm => 'Make public';
+
+  @override
+  String get privacySectionInteractions => 'Interactions';
+
+  @override
+  String get privacyComments => 'Comments';
+
+  @override
+  String get privacyCommentsDesc =>
+      'Choose who can comment on your posts. People who can\'t comment won\'t be able to send one.';
+
+  @override
+  String get privacyMessages => 'Messages';
+
+  @override
+  String get privacyMessagesDesc =>
+      'Choose who can start a conversation with you.';
+
+  @override
+  String get privacyMentions => 'Mentions (@)';
+
+  @override
+  String get privacyMentionsDesc =>
+      'Choose who can tag you in posts, comments and stories.';
+
+  @override
+  String get privacyStoryReplies => 'Story replies';
+
+  @override
+  String get privacyStoryRepliesDesc => 'Choose who can reply to your stories.';
+
+  @override
+  String get privacyBattleInvites => 'Battle and live invites';
+
+  @override
+  String get privacyBattleInvitesDesc =>
+      'Choose who can invite you to a battle or live.';
+
+  @override
+  String get privacyWhoEveryone => 'Everyone';
+
+  @override
+  String get privacyWhoFollowers => 'People who follow me';
+
+  @override
+  String get privacyWhoFollowing => 'People I follow';
+
+  @override
+  String get privacyWhoNobody => 'No one';
+
+  @override
+  String get privacyHiddenWords => 'Hidden words';
+
+  @override
+  String privacyHiddenWordsValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words',
+      one: '1 word',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacyFilterOffensive => 'Filter offensive comments';
+
+  @override
+  String get privacyFilterOffensiveHint =>
+      'Offensive comments are hidden from others; only the author still sees them.';
+
+  @override
+  String get privacyCustomWords => 'Your words';
+
+  @override
+  String privacyCustomWordsHint(int max) {
+    return 'Comments containing these words are hidden. Up to $max words.';
+  }
+
+  @override
+  String get privacyAddWord => 'Add a word';
+
+  @override
+  String get privacyAddWordHint => 'Type a word or phrase';
+
+  @override
+  String privacyHiddenWordsMax(int max) {
+    return 'You already have $max words. Remove one to add another.';
+  }
+
+  @override
+  String get privacyLimit => 'Limit interactions';
+
+  @override
+  String get privacyLimitTitle => 'Limit interactions';
+
+  @override
+  String get privacyLimitExplain =>
+      'Only people who already follow you will be able to comment, message, tag and reply to stories.';
+
+  @override
+  String get privacyLimitOff => 'Off';
+
+  @override
+  String get privacyLimit24h => '24 hours';
+
+  @override
+  String get privacyLimit3d => '3 days';
+
+  @override
+  String get privacyLimit7d => '7 days';
+
+  @override
+  String privacyLimitLeftDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String privacyLimitLeftHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours left',
+      one: '1 hour left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get privacySectionShow => 'What I show';
+
+  @override
+  String get privacyHideLikes => 'Hide likes on my posts';
+
+  @override
+  String get privacyHideLikesHint =>
+      'Others won\'t see the like count; you still do.';
+
+  @override
+  String get privacyHideOthersLikes => 'Hide likes on others\' posts';
+
+  @override
+  String get privacyHideOthersLikesHint =>
+      'Hides the like count on posts you see.';
+
+  @override
+  String get privacyActivityStatus => 'Activity status';
+
+  @override
+  String get privacyActivityStatusHint =>
+      'Shows when you\'re online. If you turn it off, you won\'t see others\' either.';
+
+  @override
+  String get privacyHideFollowLists => 'Hide followers and following';
+
+  @override
+  String get privacyHideFollowListsHint =>
+      'Only you can see who follows you and who you follow.';
+
+  @override
+  String get privacyShowInExplore => 'Appear in Suggestions and Explore';
+
+  @override
+  String get privacyShowInExploreHint =>
+      'Your profile and posts can be recommended to other people.';
+
+  @override
+  String get privacyReadReceipts => 'Read receipts';
+
+  @override
+  String get privacyReadReceiptsHint =>
+      'Shows when you\'ve read a message. If you turn it off, you won\'t see others\' either.';
+
+  @override
+  String get privacySectionAccounts => 'Accounts';
+
+  @override
+  String get privacyFollowRequests => 'Follow requests';
+
+  @override
+  String get privacyRestricted => 'Restricted accounts';
+
+  @override
+  String get privacyMuted => 'Muted accounts';
+
+  @override
+  String get privacyBlocked => 'Blocked accounts';
+
+  @override
+  String get privacySectionData => 'Your data';
+
+  @override
+  String get privacyExport => 'Download my data';
+
+  @override
+  String get privacyExportFooter =>
+      'Creates a file with your account information to keep or share.';
+
+  @override
+  String get privacyExportShareSubject => 'My Brawe data';
+
+  @override
+  String get privacySearchHint => 'Search';
+
+  @override
+  String get privacyNoResults => 'No accounts found';
+
+  @override
+  String privacySince(String date) {
+    return 'since $date';
+  }
+
+  @override
+  String get privacyUnblock => 'Unblock';
+
+  @override
+  String get privacyUnmute => 'Unmute';
+
+  @override
+  String get privacyUnrestrict => 'Remove restriction';
+
+  @override
+  String get privacyUndo => 'Undo';
+
+  @override
+  String privacyUnblockedSnack(String name) {
+    return '$name was unblocked';
+  }
+
+  @override
+  String privacyUnmutedSnack(String name) {
+    return '$name was unmuted';
+  }
+
+  @override
+  String privacyUnrestrictedSnack(String name) {
+    return 'Restriction removed from $name';
+  }
+
+  @override
+  String get privacyEmptyBlockedTitle => 'No blocked accounts';
+
+  @override
+  String get privacyEmptyBlockedBody =>
+      'People you block can\'t see your profile or contact you. To block someone, open their profile and tap ⋯.';
+
+  @override
+  String get privacyEmptyMutedTitle => 'No muted accounts';
+
+  @override
+  String get privacyEmptyMutedBody =>
+      'Muted accounts disappear from your feeds without them knowing. To mute someone, open their profile and tap ⋯.';
+
+  @override
+  String get privacyEmptyRestrictedTitle => 'No restricted accounts';
+
+  @override
+  String get privacyEmptyRestrictedBody =>
+      'Comments from restricted accounts are visible only to them. To restrict someone, open their profile and tap ⋯.';
+
+  @override
+  String get privacyEmptyRequestsTitle => 'No pending requests';
+
+  @override
+  String get privacyEmptyRequestsBody =>
+      'When someone asks to follow your private account, the request shows up here.';
+
+  @override
+  String get privacyConfirm => 'Confirm';
+
+  @override
+  String get privacyConfirmAll => 'Confirm all';
+
+  @override
+  String get privacyDelete => 'Delete';
+
+  @override
+  String get privUxRestrict => 'Restrict';
+
+  @override
+  String get privUxUnrestrict => 'Remove restriction';
+
+  @override
+  String get privUxRestrictIntroTitle => 'Restrict this account?';
+
+  @override
+  String get privUxRestrictIntroBody =>
+      'Their comments are visible only to them. They are not notified.';
+
+  @override
+  String get privUxRestrictedSnack =>
+      'Account restricted. They are not notified.';
+
+  @override
+  String get privUxUnrestrictedSnack => 'Restriction removed.';
+
+  @override
+  String get privUxFollowListsHidden =>
+      'This account does not show its followers or following lists.';
+
+  @override
+  String get privUxRequested => 'Requested';
+
+  @override
+  String get privUxMessagesNotAllowed =>
+      'This person is not receiving messages from you right now.';
+
+  @override
+  String get privUxCancelRequestTitle => 'Cancel request?';
+
+  @override
+  String get privUxCancelRequestBody =>
+      'Your request to follow will be cancelled. You can ask again anytime.';
+
+  @override
+  String get privUxCancelRequestConfirm => 'Cancel request';
+
+  @override
+  String get privUxKeepRequest => 'Keep request';
+
+  @override
+  String get privUxAccountPrivate => 'This account is private';
+
+  @override
+  String get privUxFollowToSee => 'Follow to see their photos and videos.';
+
+  @override
+  String get privUxEnableComments => 'Turn on commenting';
+
+  @override
+  String get privUxDisableComments => 'Turn off commenting';
+
+  @override
+  String get privUxCommentsDisabledLine => 'Comments are turned off';
+
+  @override
+  String get privUxCommentsRestrictedLine => 'Only some people can comment';
+
+  @override
+  String get privUxWantsToFollow => 'wants to follow you';
+
+  @override
+  String get privUxAcceptedYourRequest => 'accepted your follow request';
+
+  @override
+  String get privUxConfirm => 'Confirm';
+
+  @override
+  String get privUxDelete => 'Delete';
+
+  @override
+  String get privUxRequestAccepted => 'Request confirmed';
+
+  @override
+  String get privUxRequestDeclined => 'Request deleted';
+
+  @override
+  String privUxFollowRequestsEntry(int count) {
+    return 'Follow requests ($count)';
+  }
+
+  @override
+  String get privUxStoryRepliesNotAllowed =>
+      'This person does not accept replies or reactions to their stories.';
 }

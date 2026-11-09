@@ -29,6 +29,7 @@ class VitrineSortSheet extends StatelessWidget {
     required VitrineSortOption selected,
   }) {
     return showModalBottomSheet<VitrineSortOption>(
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

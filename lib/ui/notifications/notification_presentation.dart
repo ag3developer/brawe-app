@@ -104,6 +104,13 @@ class NotifPresentation {
     return NotifBucket.older;
   }
 
+  /// `data.kind` de notificações de seguir: `follow_request` | `follow_accepted`.
+  static String? followKind(AppNotification n) {
+    if (n.type != 'follow') return null;
+    final k = n.data?['kind'];
+    return k is String ? k : null;
+  }
+
   /// Seguidores novos agrupados: toque abre a lista de quem seguiu.
   static bool isFollowGroup(AppNotification n) =>
       kindOf(n) == NotifKind.follow && n.actorsCount > 1;
@@ -119,6 +126,20 @@ class NotifPresentation {
   /// Título dividido em (quem, ação) para destacar o nome em negrito.
   /// `quem` vem vazio quando não dá para separar (texto do servidor).
   static (String, String) titleParts(S s, AppNotification n) {
+    final fk = followKind(n);
+    if (fk == 'follow_request' || fk == 'follow_accepted') {
+      final name = (n.actorName ?? '').trim().isNotEmpty
+          ? n.actorName!.trim()
+          : (n.actors.isNotEmpty ? n.actors.first.name.trim() : '');
+      if (name.isNotEmpty) {
+        return (
+          name,
+          fk == 'follow_request'
+              ? s.privUxWantsToFollow
+              : s.privUxAcceptedYourRequest,
+        );
+      }
+    }
     final kind = kindOf(n);
     if (kind == null || !n.isGrouped || n.actors.isEmpty) {
       return _splitServerTitle(n);

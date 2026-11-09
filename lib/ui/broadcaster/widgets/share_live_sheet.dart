@@ -45,6 +45,7 @@ class ShareLiveSheet extends ConsumerStatefulWidget {
     String? thumbnailUrl,
   }) {
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

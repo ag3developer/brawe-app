@@ -49,10 +49,12 @@ class NavCompact extends Notifier<bool> {
   }
 }
 
-/// Barra de navegação flutuante (cápsula de vidro, só ícones), no estilo do iOS 26.
-/// - iOS: vidro com desfoque. Android: sem desfoque (pesa em aparelhos simples), superfície quase opaca.
-/// - Compacta ao rolar para baixo; na tela Para você (vídeo) fica sempre compacta e escura.
-/// - A altura reservada é sempre a mesma: compactar não faz as telas "pularem".
+/// Barra de navegação inferior, uma por plataforma:
+/// - iOS: cápsula de vidro flutuante (estilo iOS 26), compacta ao rolar para baixo.
+/// - Android: barra fixa colada embaixo (Material 3, como Instagram/YouTube no Android):
+///   largura total, fundo sólido que também pinta a área dos botões/gestos do sistema,
+///   indicador em pílula no item ativo, toque com ripple e alvo de 48 dp. Não encolhe.
+/// - Na tela Para você (vídeo) fica escura nas duas.
 class HomeBottomNav extends ConsumerStatefulWidget {
   const HomeBottomNav({super.key, required this.location});
 
@@ -61,6 +63,9 @@ class HomeBottomNav extends ConsumerStatefulWidget {
 
   /// Altura reservada pela barra (sem a área segura do aparelho).
   static const double reservedHeight = 72;
+
+  /// Altura da barra do Android (sem a área dos botões/gestos do sistema).
+  static const double androidHeight = 64;
 
   /// Telas de tarefa (ajustes, formulários, painéis, comentários): sem a barra, como no Instagram.
   static bool hiddenOn(String path) {
@@ -192,6 +197,19 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
       color: index == active ? iconColor : iconColor.withValues(alpha: 0.72),
     );
 
+    if (!_glass) {
+      return _androidBar(
+        context: context,
+        s: s,
+        user: user,
+        unreadChats: unreadChats,
+        active: active,
+        onVideo: onVideo,
+        dark: dark,
+        bottomInset: bottomInset,
+      );
+    }
+
     final pill = AnimatedContainer(
       duration: dur,
       curve: curve,
@@ -312,6 +330,168 @@ class _HomeBottomNavState extends ConsumerState<HomeBottomNav> {
               : pill,
         ),
       ),
+    );
+  }
+
+  /// Barra do Android: colada embaixo, largura total, sem flutuar nem encolher.
+  Widget _androidBar({
+    required BuildContext context,
+    required S s,
+    required dynamic user,
+    required int unreadChats,
+    required int active,
+    required bool onVideo,
+    required bool dark,
+    required double bottomInset,
+  }) {
+    final colors = context.colors;
+    final bg = onVideo ? Colors.black : colors.surface;
+    final fg = dark ? Colors.white : colors.textPrimary;
+    final divider = onVideo
+        ? Colors.white.withValues(alpha: 0.08)
+        : colors.divider;
+
+    Widget tab({
+      required int index,
+      required String label,
+      required Widget icon,
+      required VoidCallback onTap,
+    }) {
+      final on = index == active;
+      return Expanded(
+        child: Semantics(
+          button: true,
+          selected: on,
+          label: label,
+          child: InkResponse(
+            onTap: onTap,
+            radius: 32,
+            containedInkWell: false,
+            highlightShape: BoxShape.circle,
+            child: SizedBox(
+              height: HomeBottomNav.androidHeight,
+              child: Center(
+                // indicador em pílula do Material 3 atrás do ícone ativo
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  width: 56,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: on
+                        ? fg.withValues(alpha: dark ? 0.16 : 0.09)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: icon,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Icon ic(IconData d, int index) => Icon(
+      d,
+      size: 24,
+      color: index == active ? fg : fg.withValues(alpha: 0.7),
+    );
+
+    final bar = Container(
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border(top: BorderSide(color: divider, width: 0.6)),
+      ),
+      // pinta também a área dos botões/gestos do Android (edge-to-edge)
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SizedBox(
+        height: HomeBottomNav.androidHeight,
+        child: Row(
+          children: [
+            tab(
+              index: 0,
+              label: s.navHome,
+              icon: ic(LucideIcons.house, 0),
+              onTap: () => _go('/home'),
+            ),
+            tab(
+              index: 1,
+              label: s.navFeed,
+              icon: ic(LucideIcons.newspaper, 1),
+              onTap: () => _go('/feed'),
+            ),
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: s.navCreate,
+                child: InkResponse(
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    _showCreateOptions(context);
+                  },
+                  radius: 30,
+                  child: SizedBox(
+                    height: HomeBottomNav.androidHeight,
+                    child: Center(
+                      child: Container(
+                        width: 48,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: colors.accentPrimary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          LucideIcons.plus,
+                          color: colors.textOnAccent,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            tab(
+              index: 2,
+              label: s.navChatUnreadSemantics(unreadChats),
+              icon: UnreadBadge(
+                count: unreadChats,
+                semanticsLabel: s.navChatUnreadSemantics(unreadChats),
+                child: ic(LucideIcons.messageCircle, 2),
+              ),
+              onTap: () => _go('/chat'),
+            ),
+            tab(
+              index: 3,
+              label: s.navProfile,
+              icon: _AvatarIcon(
+                avatarUrl: user?.avatarUrl,
+                isSelected: active == 3,
+                accentColor: fg,
+              ),
+              onTap: () {
+                if (user?.id != null) _go('/profile/${user!.id}');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Botões do sistema com a cor certa sobre a barra (claro/escuro e vídeo)
+    final iconsLight = onVideo || dark;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: bg,
+        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarIconBrightness: iconsLight
+            ? Brightness.light
+            : Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: Material(type: MaterialType.transparency, child: bar),
     );
   }
 

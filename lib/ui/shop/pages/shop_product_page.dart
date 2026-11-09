@@ -576,6 +576,7 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
 
   void _showOptionsSheet(BuildContext context) {
     showModalBottomSheet(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -650,6 +651,7 @@ class _ShopProductPageState extends ConsumerState<ShopProductPage>
       ('other', s.profileReportReasonOther),
     ];
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -909,7 +911,7 @@ class _RecommendedProductCard extends StatelessWidget {
             Expanded(
               child: product.primaryImageUrl != null
                   ? Image.network(
-                    cacheWidth: context.decodeScreenFracPx(0.5),
+                      cacheWidth: context.decodeScreenFracPx(0.5),
                       product.primaryImageUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,

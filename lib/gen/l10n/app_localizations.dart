@@ -20996,6 +20996,720 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Comentário de @{username} no Brawe: “{text}”\n{url}'**
   String cmtShareCommentText(String username, String text, String url);
+
+  /// No description provided for @privacyRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get privacyRetry;
+
+  /// No description provided for @privacyErrorGeneric.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar agora. Confira sua conexão e tente de novo.'**
+  String get privacyErrorGeneric;
+
+  /// No description provided for @privacySectionAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get privacySectionAccount;
+
+  /// No description provided for @privacyPrivateAccount.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta privada'**
+  String get privacyPrivateAccount;
+
+  /// No description provided for @privacyPrivateUnavailable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Disponível só para conta Pessoal'**
+  String get privacyPrivateUnavailable;
+
+  /// No description provided for @privacyPrivateFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Com a conta privada, só quem você aprovar vê seus posts, stories e listas.'**
+  String get privacyPrivateFooter;
+
+  /// No description provided for @privacyPrivateUnavailableFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas de Artista, Empresa e Agência são sempre públicas, porque existem para ser encontradas. Para ter conta privada, use uma conta Pessoal.'**
+  String get privacyPrivateUnavailableFooter;
+
+  /// No description provided for @privacyPrivateOnTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tornar a conta privada?'**
+  String get privacyPrivateOnTitle;
+
+  /// No description provided for @privacyPrivateOn1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem já segue você continua seguindo.'**
+  String get privacyPrivateOn1;
+
+  /// No description provided for @privacyPrivateOn2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novas pessoas precisam enviar um pedido para seguir, e você aprova.'**
+  String get privacyPrivateOn2;
+
+  /// No description provided for @privacyPrivateOn3.
+  ///
+  /// In pt, this message translates to:
+  /// **'Posts, stories e listas ficam visíveis só para seus seguidores.'**
+  String get privacyPrivateOn3;
+
+  /// No description provided for @privacyPrivateOnConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tornar privada'**
+  String get privacyPrivateOnConfirm;
+
+  /// No description provided for @privacyPrivateOffTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tornar a conta pública?'**
+  String get privacyPrivateOffTitle;
+
+  /// No description provided for @privacyPrivateOff1.
+  ///
+  /// In pt, this message translates to:
+  /// **'Qualquer pessoa poderá ver seus posts, stories e listas.'**
+  String get privacyPrivateOff1;
+
+  /// No description provided for @privacyPrivateOff2.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os pedidos para seguir pendentes serão aceitos automaticamente.'**
+  String get privacyPrivateOff2;
+
+  /// No description provided for @privacyPrivateOffConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tornar pública'**
+  String get privacyPrivateOffConfirm;
+
+  /// No description provided for @privacySectionInteractions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Interações'**
+  String get privacySectionInteractions;
+
+  /// No description provided for @privacyComments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentários'**
+  String get privacyComments;
+
+  /// No description provided for @privacyCommentsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha quem pode comentar nos seus posts. Comentários de quem não pode não são enviados.'**
+  String get privacyCommentsDesc;
+
+  /// No description provided for @privacyMessages.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mensagens'**
+  String get privacyMessages;
+
+  /// No description provided for @privacyMessagesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha quem pode iniciar uma conversa com você.'**
+  String get privacyMessagesDesc;
+
+  /// No description provided for @privacyMentions.
+  ///
+  /// In pt, this message translates to:
+  /// **'Marcações (@)'**
+  String get privacyMentions;
+
+  /// No description provided for @privacyMentionsDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha quem pode marcar você em posts, comentários e stories.'**
+  String get privacyMentionsDesc;
+
+  /// No description provided for @privacyStoryReplies.
+  ///
+  /// In pt, this message translates to:
+  /// **'Respostas aos stories'**
+  String get privacyStoryReplies;
+
+  /// No description provided for @privacyStoryRepliesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha quem pode responder aos seus stories.'**
+  String get privacyStoryRepliesDesc;
+
+  /// No description provided for @privacyBattleInvites.
+  ///
+  /// In pt, this message translates to:
+  /// **'Convites para batalha e live'**
+  String get privacyBattleInvites;
+
+  /// No description provided for @privacyBattleInvitesDesc.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha quem pode convidar você para uma batalha ou live.'**
+  String get privacyBattleInvitesDesc;
+
+  /// No description provided for @privacyWhoEveryone.
+  ///
+  /// In pt, this message translates to:
+  /// **'Todos'**
+  String get privacyWhoEveryone;
+
+  /// No description provided for @privacyWhoFollowers.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem me segue'**
+  String get privacyWhoFollowers;
+
+  /// No description provided for @privacyWhoFollowing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem eu sigo'**
+  String get privacyWhoFollowing;
+
+  /// No description provided for @privacyWhoNobody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém'**
+  String get privacyWhoNobody;
+
+  /// No description provided for @privacyHiddenWords.
+  ///
+  /// In pt, this message translates to:
+  /// **'Palavras ocultas'**
+  String get privacyHiddenWords;
+
+  /// No description provided for @privacyHiddenWordsValue.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{1 palavra} other{{count} palavras}}'**
+  String privacyHiddenWordsValue(int count);
+
+  /// No description provided for @privacyFilterOffensive.
+  ///
+  /// In pt, this message translates to:
+  /// **'Filtrar ofensas'**
+  String get privacyFilterOffensive;
+
+  /// No description provided for @privacyFilterOffensiveHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentários ofensivos ficam ocultos para os outros; só quem escreveu continua vendo.'**
+  String get privacyFilterOffensiveHint;
+
+  /// No description provided for @privacyCustomWords.
+  ///
+  /// In pt, this message translates to:
+  /// **'Suas palavras'**
+  String get privacyCustomWords;
+
+  /// No description provided for @privacyCustomWordsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comentários com essas palavras ficam ocultos. Até {max} palavras.'**
+  String privacyCustomWordsHint(int max);
+
+  /// No description provided for @privacyAddWord.
+  ///
+  /// In pt, this message translates to:
+  /// **'Adicionar palavra'**
+  String get privacyAddWord;
+
+  /// No description provided for @privacyAddWordHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite uma palavra ou expressão'**
+  String get privacyAddWordHint;
+
+  /// No description provided for @privacyHiddenWordsMax.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já tem {max} palavras. Remova alguma para adicionar outra.'**
+  String privacyHiddenWordsMax(int max);
+
+  /// No description provided for @privacyLimit.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limitar interações'**
+  String get privacyLimit;
+
+  /// No description provided for @privacyLimitTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limitar interações'**
+  String get privacyLimitTitle;
+
+  /// No description provided for @privacyLimitExplain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só quem já segue você poderá comentar, enviar mensagens, marcar e responder stories.'**
+  String get privacyLimitExplain;
+
+  /// No description provided for @privacyLimitOff.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desligado'**
+  String get privacyLimitOff;
+
+  /// No description provided for @privacyLimit24h.
+  ///
+  /// In pt, this message translates to:
+  /// **'24 horas'**
+  String get privacyLimit24h;
+
+  /// No description provided for @privacyLimit3d.
+  ///
+  /// In pt, this message translates to:
+  /// **'3 dias'**
+  String get privacyLimit3d;
+
+  /// No description provided for @privacyLimit7d.
+  ///
+  /// In pt, this message translates to:
+  /// **'7 dias'**
+  String get privacyLimit7d;
+
+  /// No description provided for @privacyLimitLeftDays.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Falta 1 dia} other{Faltam {count} dias}}'**
+  String privacyLimitLeftDays(int count);
+
+  /// No description provided for @privacyLimitLeftHours.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =1{Falta 1 hora} other{Faltam {count} horas}}'**
+  String privacyLimitLeftHours(int count);
+
+  /// No description provided for @privacySectionShow.
+  ///
+  /// In pt, this message translates to:
+  /// **'O que eu mostro'**
+  String get privacySectionShow;
+
+  /// No description provided for @privacyHideLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esconder curtidas dos meus posts'**
+  String get privacyHideLikes;
+
+  /// No description provided for @privacyHideLikesHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outras pessoas não veem o número de curtidas; você continua vendo.'**
+  String get privacyHideLikesHint;
+
+  /// No description provided for @privacyHideOthersLikes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esconder curtidas dos outros'**
+  String get privacyHideOthersLikes;
+
+  /// No description provided for @privacyHideOthersLikesHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não mostra o número de curtidas nos posts que você vê.'**
+  String get privacyHideOthersLikesHint;
+
+  /// No description provided for @privacyActivityStatus.
+  ///
+  /// In pt, this message translates to:
+  /// **'Status de atividade'**
+  String get privacyActivityStatus;
+
+  /// No description provided for @privacyActivityStatusHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostra quando você está online. Se desligar, você também não vê o dos outros.'**
+  String get privacyActivityStatusHint;
+
+  /// No description provided for @privacyHideFollowLists.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esconder seguidores e seguindo'**
+  String get privacyHideFollowLists;
+
+  /// No description provided for @privacyHideFollowListsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só você vê quem te segue e quem você segue.'**
+  String get privacyHideFollowListsHint;
+
+  /// No description provided for @privacyShowInExplore.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparecer em Sugestões e Explorar'**
+  String get privacyShowInExplore;
+
+  /// No description provided for @privacyShowInExploreHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu perfil e seus posts podem ser recomendados a outras pessoas.'**
+  String get privacyShowInExploreHint;
+
+  /// No description provided for @privacyReadReceipts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmação de leitura'**
+  String get privacyReadReceipts;
+
+  /// No description provided for @privacyReadReceiptsHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostra quando você leu uma mensagem. Se desligar, você também não vê a dos outros.'**
+  String get privacyReadReceiptsHint;
+
+  /// No description provided for @privacySectionAccounts.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas'**
+  String get privacySectionAccounts;
+
+  /// No description provided for @privacyFollowRequests.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedidos para seguir'**
+  String get privacyFollowRequests;
+
+  /// No description provided for @privacyRestricted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas restritas'**
+  String get privacyRestricted;
+
+  /// No description provided for @privacyMuted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas silenciadas'**
+  String get privacyMuted;
+
+  /// No description provided for @privacyBlocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas bloqueadas'**
+  String get privacyBlocked;
+
+  /// No description provided for @privacySectionData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus dados'**
+  String get privacySectionData;
+
+  /// No description provided for @privacyExport.
+  ///
+  /// In pt, this message translates to:
+  /// **'Baixar meus dados'**
+  String get privacyExport;
+
+  /// No description provided for @privacyExportFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Gera um arquivo com as informações da sua conta para você guardar ou compartilhar.'**
+  String get privacyExportFooter;
+
+  /// No description provided for @privacyExportShareSubject.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meus dados do Brawe'**
+  String get privacyExportShareSubject;
+
+  /// No description provided for @privacySearchHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Buscar'**
+  String get privacySearchHint;
+
+  /// No description provided for @privacyNoResults.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma conta encontrada'**
+  String get privacyNoResults;
+
+  /// No description provided for @privacySince.
+  ///
+  /// In pt, this message translates to:
+  /// **'desde {date}'**
+  String privacySince(String date);
+
+  /// No description provided for @privacyUnblock.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desbloquear'**
+  String get privacyUnblock;
+
+  /// No description provided for @privacyUnmute.
+  ///
+  /// In pt, this message translates to:
+  /// **'Reativar'**
+  String get privacyUnmute;
+
+  /// No description provided for @privacyUnrestrict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover restrição'**
+  String get privacyUnrestrict;
+
+  /// No description provided for @privacyUndo.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desfazer'**
+  String get privacyUndo;
+
+  /// No description provided for @privacyUnblockedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} foi desbloqueado(a)'**
+  String privacyUnblockedSnack(String name);
+
+  /// No description provided for @privacyUnmutedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name} foi reativado(a)'**
+  String privacyUnmutedSnack(String name);
+
+  /// No description provided for @privacyUnrestrictedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restrição removida de {name}'**
+  String privacyUnrestrictedSnack(String name);
+
+  /// No description provided for @privacyEmptyBlockedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém bloqueado'**
+  String get privacyEmptyBlockedTitle;
+
+  /// No description provided for @privacyEmptyBlockedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quem você bloqueia não vê seu perfil nem fala com você. Para bloquear, abra o perfil da pessoa e toque em ⋯.'**
+  String get privacyEmptyBlockedBody;
+
+  /// No description provided for @privacyEmptyMutedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém silenciado'**
+  String get privacyEmptyMutedTitle;
+
+  /// No description provided for @privacyEmptyMutedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Contas silenciadas somem dos seus feeds sem que a pessoa saiba. Para silenciar, abra o perfil e toque em ⋯.'**
+  String get privacyEmptyMutedBody;
+
+  /// No description provided for @privacyEmptyRestrictedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ninguém restrito'**
+  String get privacyEmptyRestrictedTitle;
+
+  /// No description provided for @privacyEmptyRestrictedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os comentários de contas restritas ficam visíveis só para elas. Para restringir, abra o perfil e toque em ⋯.'**
+  String get privacyEmptyRestrictedBody;
+
+  /// No description provided for @privacyEmptyRequestsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhum pedido pendente'**
+  String get privacyEmptyRequestsTitle;
+
+  /// No description provided for @privacyEmptyRequestsBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Quando alguém pedir para seguir sua conta privada, o pedido aparece aqui.'**
+  String get privacyEmptyRequestsBody;
+
+  /// No description provided for @privacyConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar'**
+  String get privacyConfirm;
+
+  /// No description provided for @privacyConfirmAll.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar todos'**
+  String get privacyConfirmAll;
+
+  /// No description provided for @privacyDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir'**
+  String get privacyDelete;
+
+  /// No description provided for @privUxRestrict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restringir'**
+  String get privUxRestrict;
+
+  /// No description provided for @privUxUnrestrict.
+  ///
+  /// In pt, this message translates to:
+  /// **'Remover restrição'**
+  String get privUxUnrestrict;
+
+  /// No description provided for @privUxRestrictIntroTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restringir esta conta?'**
+  String get privUxRestrictIntroTitle;
+
+  /// No description provided for @privUxRestrictIntroBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os comentários dela ficam visíveis só para ela. Ela não é avisada.'**
+  String get privUxRestrictIntroBody;
+
+  /// No description provided for @privUxRestrictedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta restrita. Ela não é avisada.'**
+  String get privUxRestrictedSnack;
+
+  /// No description provided for @privUxUnrestrictedSnack.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restrição removida.'**
+  String get privUxUnrestrictedSnack;
+
+  /// No description provided for @privUxFollowListsHidden.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta conta não mostra a lista de seguidores e de quem ela segue.'**
+  String get privUxFollowListsHidden;
+
+  /// No description provided for @privUxRequested.
+  ///
+  /// In pt, this message translates to:
+  /// **'Solicitado'**
+  String get privUxRequested;
+
+  /// No description provided for @privUxMessagesNotAllowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta pessoa não recebe mensagens suas no momento.'**
+  String get privUxMessagesNotAllowed;
+
+  /// No description provided for @privUxCancelRequestTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar pedido?'**
+  String get privUxCancelRequestTitle;
+
+  /// No description provided for @privUxCancelRequestBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seu pedido para seguir será cancelado. Você pode pedir de novo quando quiser.'**
+  String get privUxCancelRequestBody;
+
+  /// No description provided for @privUxCancelRequestConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar pedido'**
+  String get privUxCancelRequestConfirm;
+
+  /// No description provided for @privUxKeepRequest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Manter pedido'**
+  String get privUxKeepRequest;
+
+  /// No description provided for @privUxAccountPrivate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta conta é privada'**
+  String get privUxAccountPrivate;
+
+  /// No description provided for @privUxFollowToSee.
+  ///
+  /// In pt, this message translates to:
+  /// **'Siga para ver as fotos e vídeos.'**
+  String get privUxFollowToSee;
+
+  /// No description provided for @privUxEnableComments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ativar comentários'**
+  String get privUxEnableComments;
+
+  /// No description provided for @privUxDisableComments.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desativar comentários'**
+  String get privUxDisableComments;
+
+  /// No description provided for @privUxCommentsDisabledLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os comentários estão desativados'**
+  String get privUxCommentsDisabledLine;
+
+  /// No description provided for @privUxCommentsRestrictedLine.
+  ///
+  /// In pt, this message translates to:
+  /// **'Só algumas pessoas podem comentar'**
+  String get privUxCommentsRestrictedLine;
+
+  /// No description provided for @privUxWantsToFollow.
+  ///
+  /// In pt, this message translates to:
+  /// **'quer seguir você'**
+  String get privUxWantsToFollow;
+
+  /// No description provided for @privUxAcceptedYourRequest.
+  ///
+  /// In pt, this message translates to:
+  /// **'aceitou seu pedido para seguir'**
+  String get privUxAcceptedYourRequest;
+
+  /// No description provided for @privUxConfirm.
+  ///
+  /// In pt, this message translates to:
+  /// **'Confirmar'**
+  String get privUxConfirm;
+
+  /// No description provided for @privUxDelete.
+  ///
+  /// In pt, this message translates to:
+  /// **'Excluir'**
+  String get privUxDelete;
+
+  /// No description provided for @privUxRequestAccepted.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido confirmado'**
+  String get privUxRequestAccepted;
+
+  /// No description provided for @privUxRequestDeclined.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedido excluído'**
+  String get privUxRequestDeclined;
+
+  /// No description provided for @privUxFollowRequestsEntry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pedidos para seguir ({count})'**
+  String privUxFollowRequestsEntry(int count);
+
+  /// No description provided for @privUxStoryRepliesNotAllowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta pessoa não recebe respostas e reações aos stories dela.'**
+  String get privUxStoryRepliesNotAllowed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -78,6 +78,9 @@ sealed class PostResponseDto with _$PostResponseDto {
     @JsonKey(fromJson: _pollFromJson, toJson: _pollToJson) PostPoll? poll,
     @JsonKey(fromJson: _locationFromJson, toJson: _locationToJson)
     PostLocation? location,
+    @JsonKey(name: 'comments_disabled') @Default(false) bool commentsDisabled,
+    @JsonKey(name: 'hide_like_count') @Default(false) bool hideLikeCount,
+    @JsonKey(name: 'can_comment') @Default(true) bool canComment,
   }) = _PostResponseDto;
 
   factory PostResponseDto.fromJson(Map<String, dynamic> json) =>
@@ -116,6 +119,9 @@ extension PostResponseDtoMapper on PostResponseDto {
       mediaType: mediaType,
       poll: poll,
       location: location,
+      commentsDisabled: commentsDisabled,
+      hideLikeCount: hideLikeCount,
+      canComment: canComment,
     );
   }
 }

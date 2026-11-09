@@ -13,6 +13,7 @@ import '../../../core/themes/brawe_colors.dart';
 /// Abre o seletor de GIFs (GIPHY) e devolve o GIF escolhido (ou null).
 Future<GifAttachment?> showGifPicker(BuildContext context) {
   return showModalBottomSheet<GifAttachment>(
+    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
@@ -24,7 +25,10 @@ Future<GifAttachment?> showGifPicker(BuildContext context) {
 enum _GifError { none, unavailable, generic }
 
 class GifPickerSheet extends ConsumerStatefulWidget {
-  const GifPickerSheet({super.key, this.debounce = const Duration(milliseconds: 350)});
+  const GifPickerSheet({
+    super.key,
+    this.debounce = const Duration(milliseconds: 350),
+  });
 
   final Duration debounce;
 
@@ -91,7 +95,12 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
   }
 
   Future<void> _load({required bool reset}) async {
-    if (!reset && (_loading || _loadingMore || _nextOffset == null || _error != _GifError.none)) return;
+    if (!reset &&
+        (_loading ||
+            _loadingMore ||
+            _nextOffset == null ||
+            _error != _GifError.none))
+      return;
     final id = ++_req;
     final service = ref.read(gifServiceProvider);
     final offset = reset ? 0 : _nextOffset!;
@@ -111,7 +120,12 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
     try {
       final page = q.isEmpty
           ? await service.trending(limit: _pageSize, offset: offset, lang: lang)
-          : await service.search(q, limit: _pageSize, offset: offset, lang: lang);
+          : await service.search(
+              q,
+              limit: _pageSize,
+              offset: offset,
+              lang: lang,
+            );
       if (!mounted || id != _req) return;
       setState(() {
         final seen = _items.map((e) => e.id).toSet();
@@ -161,7 +175,10 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
                     width: 40,
                     height: 4,
                     margin: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(color: c.border, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                      color: c.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
                 Padding(
@@ -174,13 +191,24 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
                     style: TextStyle(color: c.textPrimary),
                     decoration: InputDecoration(
                       hintText: s.gifSearchHint,
-                      hintStyle: TextStyle(color: c.textSecondary, fontSize: 14),
-                      prefixIcon: Icon(LucideIcons.search, size: 18, color: c.textSecondary),
+                      hintStyle: TextStyle(
+                        color: c.textSecondary,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: Icon(
+                        LucideIcons.search,
+                        size: 18,
+                        color: c.textSecondary,
+                      ),
                       suffixIcon: _search.text.isEmpty
                           ? null
                           : IconButton(
                               tooltip: s.gifClearSearch,
-                              icon: Icon(LucideIcons.x, size: 18, color: c.textSecondary),
+                              icon: Icon(
+                                LucideIcons.x,
+                                size: 18,
+                                color: c.textSecondary,
+                              ),
                               onPressed: () {
                                 _search.clear();
                                 _onChanged('');
@@ -189,19 +217,33 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
                       filled: true,
                       fillColor: c.surfaceHighest,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
                 Flexible(child: _body(context)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
                   child: Text(
                     // Atribuição exigida pelo GIPHY (nome da marca, não traduzir).
                     s.gifPoweredBy,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: c.textTertiary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+                    style: TextStyle(
+                      color: c.textTertiary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ],
@@ -225,7 +267,11 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
     }
     if (_loading) return const _Skeleton();
     if (_items.isEmpty) {
-      return _Message(icon: LucideIcons.searchX, title: s.gifEmptyTitle, subtitle: s.gifEmptyHint);
+      return _Message(
+        icon: LucideIcons.searchX,
+        title: s.gifEmptyTitle,
+        subtitle: s.gifEmptyHint,
+      );
     }
     return CustomScrollView(
       key: const Key('gif_grid'),
@@ -242,7 +288,10 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
               childAspectRatio: 1.15,
             ),
             delegate: SliverChildBuilderDelegate(
-              (ctx, i) => _Tile(item: _items[i], onTap: () => Navigator.of(ctx).pop(_items[i].toAttachment())),
+              (ctx, i) => _Tile(
+                item: _items[i],
+                onTap: () => Navigator.of(ctx).pop(_items[i].toAttachment()),
+              ),
               childCount: _items.length,
             ),
           ),
@@ -252,13 +301,23 @@ class _GifPickerSheetState extends ConsumerState<GifPickerSheet> {
             child: Padding(
               padding: EdgeInsets.all(12),
               child: Center(
-                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.braweBlue)),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.braweBlue,
+                  ),
+                ),
               ),
             ),
           ),
         if (_error != _GifError.none)
           SliverToBoxAdapter(
-            child: TextButton(onPressed: () => _load(reset: false), child: Text(s.gifRetry)),
+            child: TextButton(
+              onPressed: () => _load(reset: false),
+              child: Text(s.gifRetry),
+            ),
           ),
       ],
     );
@@ -287,7 +346,13 @@ class _Tile extends StatelessWidget {
               fit: BoxFit.cover,
               gaplessPlayback: true,
               excludeFromSemantics: true,
-              errorBuilder: (_, _, _) => Center(child: Icon(LucideIcons.imageOff, size: 20, color: c.textTertiary)),
+              errorBuilder: (_, _, _) => Center(
+                child: Icon(
+                  LucideIcons.imageOff,
+                  size: 20,
+                  color: c.textTertiary,
+                ),
+              ),
             ),
           ),
         ),
@@ -315,14 +380,23 @@ class _Skeleton extends StatelessWidget {
       ),
       itemCount: 8,
       itemBuilder: (_, i) => DecoratedBox(
-        decoration: BoxDecoration(color: c.shimmerBase, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: c.shimmerBase,
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
 }
 
 class _Message extends StatelessWidget {
-  const _Message({required this.icon, required this.title, this.subtitle, this.actionLabel, this.onAction});
+  const _Message({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.actionLabel,
+    this.onAction,
+  });
   final IconData icon;
   final String title;
   final String? subtitle;
@@ -339,10 +413,22 @@ class _Message extends StatelessWidget {
         children: [
           Icon(icon, size: 36, color: c.textTertiary),
           const SizedBox(height: 12),
-          Text(title, textAlign: TextAlign.center, style: TextStyle(color: c.textPrimary, fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: c.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (subtitle != null) ...[
             const SizedBox(height: 4),
-            Text(subtitle!, textAlign: TextAlign.center, style: TextStyle(color: c.textSecondary, fontSize: 13)),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: c.textSecondary, fontSize: 13),
+            ),
           ],
           if (actionLabel != null) ...[
             const SizedBox(height: 12),

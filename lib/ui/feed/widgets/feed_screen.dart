@@ -26,6 +26,7 @@ import '../../../data/repositories/post_repository.dart';
 import '../../../data/repositories/social_repository.dart';
 import '../../../data/services/feedback_service.dart';
 import '../../../data/services/social_actions_service.dart';
+import '../../../data/services/privacy_ux_service.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../chat/view_models/unread_count_provider.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
@@ -494,7 +495,11 @@ class _FeedTab extends ConsumerWidget {
               ),
             ],
             // folga para a barra flutuante (o feed passa por trás do vidro)
-            SliverToBoxAdapter(child: SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 24 + MediaQuery.paddingOf(context).bottom,
+              ),
+            ),
           ],
         ),
         loading: () => ListView.builder(
@@ -828,6 +833,7 @@ class _PostCardState extends ConsumerState<PostCard>
       userReposted: next.userReposted,
       repostsCount: next.repostsCount,
       commentsCount: next.commentsCount,
+      commentsDisabled: next.commentsDisabled,
     );
     ref.read(feedViewModelProvider.notifier).patchPost(next.id, patch);
     ref.read(followingFeedViewModelProvider.notifier).patchPost(next.id, patch);
@@ -1229,6 +1235,7 @@ class _PostCardState extends ConsumerState<PostCard>
                 onTap: () {
                   ref.read(feedbackServiceProvider).share();
                   showModalBottomSheet(
+                    useSafeArea: true,
                     context: context,
                     isScrollControlled: true,
                     useRootNavigator: true,
@@ -1291,7 +1298,11 @@ class _PostCardState extends ConsumerState<PostCard>
                   ),
                 ],
                 const Spacer(),
-                if (_canBoost(post)) _BoostLink(boosted: _isBoosted(post), onTap: () => _openBoost(post)),
+                if (_canBoost(post))
+                  _BoostLink(
+                    boosted: _isBoosted(post),
+                    onTap: () => _openBoost(post),
+                  ),
               ],
             ),
           )
@@ -1342,6 +1353,7 @@ class _PostCardState extends ConsumerState<PostCard>
         imageUrl != null && imageUrl.isNotEmpty && !_isVideoUrl(imageUrl);
 
     showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       useRootNavigator: true,
       backgroundColor: Colors.transparent,
@@ -1374,8 +1386,23 @@ class _PostCardState extends ConsumerState<PostCard>
         onMute: _muteAuthor,
         onReport: _reportPost,
         onDelete: _deletePost,
+        commentsDisabled: post.commentsDisabled,
+        onToggleComments: _toggleComments,
       ),
     );
+  }
+
+  Future<void> _toggleComments() async {
+    final disabled = !_post.commentsDisabled;
+    try {
+      final result = await ref
+          .read(privacyUxServiceProvider)
+          .setCommentsDisabled(_post.id, disabled);
+      ref.invalidate(postCommentRulesProvider(_post.id));
+      _applyLocal(_post.copyWith(commentsDisabled: result));
+    } catch (_) {
+      if (mounted) _showError(S.of(context).relActionError);
+    }
   }
 
   Future<bool?> _confirmDialog({
@@ -1497,6 +1524,7 @@ class _PostCardState extends ConsumerState<PostCard>
   Future<void> _reportPost() async {
     // Valores aceitos por POST /messages/reports — não traduzir.
     final reason = await showModalBottomSheet<String>(
+      useSafeArea: true,
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
@@ -1687,7 +1715,7 @@ class _ActionPill extends StatelessWidget {
 /// - Tap → toggle like
 /// - Long-press → abre [showReactionsBar] flutuante
 /// - Tap no número de curtidas → abre tela "Quem curtiu"
-class _LikeReactionPill extends StatelessWidget {
+class _LikeReactionPill extends ConsumerWidget {
   const _LikeReactionPill({
     required this.post,
     required this.onTap,
@@ -1706,8 +1734,13 @@ class _LikeReactionPill extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final liked = post.userLiked;
+    final hideCount = shouldHideLikeCount(
+      ref,
+      authorId: post.author.id,
+      postHides: post.hideLikeCount,
+    );
     // Detectar qual reação o usuário aplicou para exibir o emoji correto
     final reaction = liked
         ? BraweReaction.values.firstWhere(
@@ -1742,21 +1775,24 @@ class _LikeReactionPill extends StatelessWidget {
                   ),
           ),
         ),
-        InkWell(
-          onTap: onOpenLikers,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(2, 8, 8, 8),
-            child: Text(
-              _fmt(post.likesCount),
-              style: TextStyle(
-                color: color,
-                fontSize: 13,
-                fontWeight: liked ? FontWeight.w700 : FontWeight.w500,
+        if (hideCount)
+          const SizedBox(width: 8)
+        else
+          InkWell(
+            onTap: onOpenLikers,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(2, 8, 8, 8),
+              child: Text(
+                _fmt(post.likesCount),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 13,
+                  fontWeight: liked ? FontWeight.w700 : FontWeight.w500,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1799,7 +1835,11 @@ class _PostOptionsSheet extends StatelessWidget {
     required this.onReport,
     required this.onDelete,
     this.onBoost,
+    this.commentsDisabled = false,
+    this.onToggleComments,
   });
+  final bool commentsDisabled;
+  final VoidCallback? onToggleComments;
   final VoidCallback? onBoost;
   final bool isOwn;
   final bool canShareStory;
@@ -1842,6 +1882,16 @@ class _PostOptionsSheet extends StatelessWidget {
                 icon: LucideIcons.circlePlus,
                 label: s.feedShareAsStory,
                 onTap: onShareStory,
+              ),
+            if (isOwn && onToggleComments != null)
+              _SheetTile(
+                icon: commentsDisabled
+                    ? LucideIcons.messageCircle
+                    : LucideIcons.messageCircleOff,
+                label: commentsDisabled
+                    ? s.privUxEnableComments
+                    : s.privUxDisableComments,
+                onTap: onToggleComments!,
               ),
             if (!isOwn)
               _SheetTile(
@@ -2439,7 +2489,11 @@ class _BoostLink extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               boosted ? s.postBoostedSeeResults : s.postBoost,
-              style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: color,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),

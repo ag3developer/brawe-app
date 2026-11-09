@@ -103,14 +103,13 @@ class _CreatorApplicationFormScreenState
   bool get _step1Valid =>
       isValidCreatorHandle(_handle.text) && _followersValue >= 1;
   bool get _step2Valid =>
-      _motivation.text.trim().length >= kCreatorMotivationMin &&
-      _acceptedTerms;
+      _motivation.text.trim().length >= kCreatorMotivationMin && _acceptedTerms;
 
   bool get _currentStepValid => switch (_step) {
-        0 => _step0Valid,
-        1 => _step1Valid,
-        _ => _step2Valid,
-      };
+    0 => _step0Valid,
+    1 => _step1Valid,
+    _ => _step2Valid,
+  };
 
   bool get _allValid => _step0Valid && _step1Valid && _step2Valid;
 
@@ -118,10 +117,12 @@ class _CreatorApplicationFormScreenState
   /// (timeout, queda de rede após o servidor salvar). Confere no servidor.
   Future<bool> _savedOnServer() async {
     try {
-      final a =
-          await ref.read(creatorNetworkRepositoryProvider).getMyApplication();
+      final a = await ref
+          .read(creatorNetworkRepositoryProvider)
+          .getMyApplication();
       if (a == null) return false;
-      final recent = DateTime.now().difference(a.createdAt).inMinutes.abs() < 15;
+      final recent =
+          DateTime.now().difference(a.createdAt).inMinutes.abs() < 15;
       return recent && a.status == ApplicationStatus.pendingReview;
     } catch (_) {
       return false;
@@ -131,9 +132,9 @@ class _CreatorApplicationFormScreenState
   void _goSubmitted() {
     ref.invalidate(myCreatorApplicationProvider);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(S.of(context).creatorFormSuccess)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(S.of(context).creatorFormSuccess)));
     context.go('/creator/submitted');
   }
 
@@ -145,7 +146,9 @@ class _CreatorApplicationFormScreenState
     try {
       // Versão dos Termos vigente (cacheada). Se falhar, o backend usa a default.
       final termsVersion = await ref.read(creatorTermsVersionProvider.future);
-      await ref.read(creatorApplicationFormControllerProvider.notifier).submit(
+      await ref
+          .read(creatorApplicationFormControllerProvider.notifier)
+          .submit(
             country: _selectedCountry!.code,
             language: _language,
             niche: _niche!,
@@ -165,9 +168,9 @@ class _CreatorApplicationFormScreenState
       if (msg == null) {
         // 409: já existe inscrição ativa -> leva para o acompanhamento.
         ref.invalidate(myCreatorApplicationProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(s.creatorFormAlreadyExists)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(s.creatorFormAlreadyExists)));
         context.go('/creator/status');
       } else if (!_isRejection(e) && await _savedOnServer()) {
         // O servidor guardou a inscrição; só a resposta se perdeu.
@@ -206,10 +209,9 @@ class _CreatorApplicationFormScreenState
         final m = v.message ?? '';
         if (m.contains('creator_application_already_active')) return null;
         // 422 do Pydantic: "loc: [body, campo]" -> nomes dos campos com erro.
-        final fields = RegExp(r'loc:\s*\[body,\s*(?:social_links,\s*)?([a-z_]+)')
-            .allMatches(m)
-            .map((x) => _fieldLabel(s, x.group(1)!))
-            .toSet();
+        final fields = RegExp(
+          r'loc:\s*\[body,\s*(?:social_links,\s*)?([a-z_]+)',
+        ).allMatches(m).map((x) => _fieldLabel(s, x.group(1)!)).toSet();
         if (fields.isNotEmpty) {
           return s.creatorApplyErrFields(fields.join(', '));
         }
@@ -245,6 +247,8 @@ class _CreatorApplicationFormScreenState
     if (!mounted) return;
     final s = S.of(context);
     await showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: context.colors.background,
@@ -282,7 +286,9 @@ class _CreatorApplicationFormScreenState
                   if (version != null && version.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: context.colors.surfaceElevated,
                         borderRadius: BorderRadius.circular(8),
@@ -302,7 +308,11 @@ class _CreatorApplicationFormScreenState
             Expanded(child: SimpleMarkdownView(markdown: md)),
             Padding(
               padding: EdgeInsets.fromLTRB(
-                  16, 8, 16, MediaQuery.of(sheetContext).padding.bottom + 12),
+                16,
+                8,
+                16,
+                MediaQuery.of(sheetContext).padding.bottom + 12,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -393,10 +403,12 @@ class _CreatorApplicationFormScreenState
                       Expanded(
                         flex: 2,
                         child: OutlinedButton(
-                          onPressed:
-                              _submitting ? null : () => setState(() => _step--),
+                          onPressed: _submitting
+                              ? null
+                              : () => setState(() => _step--),
                           style: OutlinedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(52)),
+                            minimumSize: const Size.fromHeight(52),
+                          ),
                           child: Text(s.creatorApplyBack),
                         ),
                       ),
@@ -410,20 +422,28 @@ class _CreatorApplicationFormScreenState
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: c.textOnAccent))
+                                  strokeWidth: 2,
+                                  color: c.textOnAccent,
+                                ),
+                              )
                             : Icon(
-                                last ? LucideIcons.send : LucideIcons.arrowRight,
-                                size: 18),
-                        label: Text(_submitting
-                            ? s.creatorFormSubmitting
-                            : last
-                                ? s.creatorFormSubmit
-                                : s.creatorApplyNext),
+                                last
+                                    ? LucideIcons.send
+                                    : LucideIcons.arrowRight,
+                                size: 18,
+                              ),
+                        label: Text(
+                          _submitting
+                              ? s.creatorFormSubmitting
+                              : last
+                              ? s.creatorFormSubmit
+                              : s.creatorApplyNext,
+                        ),
                         onPressed: _submitting || !_currentStepValid
                             ? null
                             : last
-                                ? _submit
-                                : () => setState(() => _step++),
+                            ? _submit
+                            : () => setState(() => _step++),
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           backgroundColor: c.accentPrimary,
@@ -476,13 +496,16 @@ class _CreatorApplicationFormScreenState
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      color: c.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14.5),
+                    color: c.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14.5,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(s.creatorApplyAsAccount,
-                    style: TextStyle(color: c.textSecondary, fontSize: 12.5)),
+                Text(
+                  s.creatorApplyAsAccount,
+                  style: TextStyle(color: c.textSecondary, fontSize: 12.5),
+                ),
               ],
             ),
           ),
@@ -521,7 +544,10 @@ class _CreatorApplicationFormScreenState
         Text(
           '${s.creatorApplyStepOf(_step + 1, _stepCount)} · ${titles[_step]}',
           style: TextStyle(
-              color: c.textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+            color: c.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -530,8 +556,10 @@ class _CreatorApplicationFormScreenState
   List<Widget> _stepContent(S s) {
     final c = context.colors;
     return [
-      Text(s.creatorApplyTypeHint,
-          style: TextStyle(color: c.textSecondary, fontSize: 13)),
+      Text(
+        s.creatorApplyTypeHint,
+        style: TextStyle(color: c.textSecondary, fontSize: 13),
+      ),
       const SizedBox(height: 12),
       Wrap(
         spacing: 8,
@@ -546,12 +574,19 @@ class _CreatorApplicationFormScreenState
   List<Widget> _stepNetwork(S s) {
     final c = context.colors;
     return [
-      Text(s.creatorApplyHandleWhy,
-          style: TextStyle(color: c.textSecondary, fontSize: 13, height: 1.4)),
+      Text(
+        s.creatorApplyHandleWhy,
+        style: TextStyle(color: c.textSecondary, fontSize: 13, height: 1.4),
+      ),
       const SizedBox(height: 12),
-      Text(s.creatorApplyPlatformLabel,
-          style: TextStyle(
-              color: c.textPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
+      Text(
+        s.creatorApplyPlatformLabel,
+        style: TextStyle(
+          color: c.textPrimary,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+      ),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
@@ -571,7 +606,8 @@ class _CreatorApplicationFormScreenState
               selectedColor: c.accentPrimary,
               backgroundColor: c.surface,
               side: BorderSide(
-                  color: _platform == e.key ? c.accentPrimary : c.border),
+                color: _platform == e.key ? c.accentPrimary : c.border,
+              ),
               onSelected: (_) => setState(() => _platform = e.key),
             ),
         ],
@@ -584,7 +620,8 @@ class _CreatorApplicationFormScreenState
         prefix: '@',
         hint: s.creatorApplyInstagramHint,
         maxLength: 60,
-        validate: (v) => isValidCreatorHandle(v) ? null : s.creatorApplyErrHandle,
+        validate: (v) =>
+            isValidCreatorHandle(v) ? null : s.creatorApplyErrHandle,
       ),
       _field(
         _followers,
@@ -594,16 +631,17 @@ class _CreatorApplicationFormScreenState
         maxLength: 10,
         formatters: [FilteringTextInputFormatter.digitsOnly],
         action: TextInputAction.done,
-        validate: (v) => (int.tryParse(v) ?? 0) >= 1
-            ? null
-            : s.creatorApplyErrFollowersMin,
+        validate: (v) =>
+            (int.tryParse(v) ?? 0) >= 1 ? null : s.creatorApplyErrFollowersMin,
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
         value: _doesLive,
         onChanged: _submitting ? null : (v) => setState(() => _doesLive = v),
-        title: Text(s.creatorFormDoesLive,
-            style: TextStyle(color: c.textPrimary, fontSize: 14.5)),
+        title: Text(
+          s.creatorFormDoesLive,
+          style: TextStyle(color: c.textPrimary, fontSize: 14.5),
+        ),
         activeThumbColor: c.accentPrimary,
       ),
     ];
@@ -635,8 +673,11 @@ class _CreatorApplicationFormScreenState
       key: ValueKey('niche_${n.name}'),
       selected: sel,
       showCheckmark: false,
-      avatar: Icon(n.lucide,
-          size: 16, color: sel ? c.textOnAccent : c.textSecondary),
+      avatar: Icon(
+        n.lucide,
+        size: 16,
+        color: sel ? c.textOnAccent : c.textSecondary,
+      ),
       label: Text(n.label(s)),
       labelStyle: TextStyle(
         color: sel ? c.textOnAccent : c.textPrimary,
@@ -655,17 +696,17 @@ class _CreatorApplicationFormScreenState
   Widget _termsBox(S s) {
     final c = context.colors;
     TextSpan link(String text, VoidCallback onTap) => TextSpan(
-          text: text,
-          style: TextStyle(
-            color: c.accentPrimary,
-            fontWeight: FontWeight.w700,
-            decoration: TextDecoration.underline,
-          ),
-          recognizer: TapGestureRecognizer()..onTap = onTap,
-        );
+      text: text,
+      style: TextStyle(
+        color: c.accentPrimary,
+        fontWeight: FontWeight.w700,
+        decoration: TextDecoration.underline,
+      ),
+      recognizer: TapGestureRecognizer()..onTap = onTap,
+    );
     final borderColor = _acceptedTerms
-            ? c.accentPrimary.withValues(alpha: 0.5)
-            : c.border;
+        ? c.accentPrimary.withValues(alpha: 0.5)
+        : c.border;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -684,8 +725,8 @@ class _CreatorApplicationFormScreenState
                 onChanged: _submitting
                     ? null
                     : (v) => setState(() {
-                          _acceptedTerms = v ?? false;
-                        }),
+                        _acceptedTerms = v ?? false;
+                      }),
                 activeColor: c.accentPrimary,
               ),
               Expanded(
@@ -694,7 +735,10 @@ class _CreatorApplicationFormScreenState
                   child: Text.rich(
                     TextSpan(
                       style: TextStyle(
-                          color: c.textPrimary, fontSize: 13.5, height: 1.45),
+                        color: c.textPrimary,
+                        fontSize: 13.5,
+                        height: 1.45,
+                      ),
                       children: [
                         TextSpan(text: s.creatorFormTermsPrefix),
                         link(s.creatorFormTermsLink, _openTerms),
@@ -733,14 +777,19 @@ class _CreatorApplicationFormScreenState
             },
       child: InputDecorator(
         decoration: _decoration(s.creatorFormCountry).copyWith(
-          suffixIcon:
-              Icon(LucideIcons.chevronDown, size: 18, color: c.textSecondary),
+          suffixIcon: Icon(
+            LucideIcons.chevronDown,
+            size: 18,
+            color: c.textSecondary,
+          ),
         ),
         child: _selectedCountry != null
             ? Row(
                 children: [
-                  Text(_selectedCountry!.flag,
-                      style: const TextStyle(fontSize: 22)),
+                  Text(
+                    _selectedCountry!.flag,
+                    style: const TextStyle(fontSize: 22),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -775,16 +824,17 @@ class _CreatorApplicationFormScreenState
         key: fieldKey,
         controller: ctrl,
         enabled: !_submitting,
-        decoration: _decoration(label, hint: hint).copyWith(
-          prefixText: prefix,
-          counterText: lines > 1 ? null : '',
-        ),
+        decoration: _decoration(
+          label,
+          hint: hint,
+        ).copyWith(prefixText: prefix, counterText: lines > 1 ? null : ''),
         style: TextStyle(color: context.colors.textPrimary),
         minLines: lines,
         maxLines: lines,
         maxLength: maxLength,
         keyboardType: lines > 1 ? TextInputType.multiline : keyboard,
-        textInputAction: action ??
+        textInputAction:
+            action ??
             (lines > 1 ? TextInputAction.newline : TextInputAction.next),
         textCapitalization: capitalization,
         inputFormatters: formatters,
@@ -801,9 +851,9 @@ class _CreatorApplicationFormScreenState
   InputDecoration _decoration(String label, {String? hint}) {
     final c = context.colors;
     OutlineInputBorder b(Color color, [double w = 1]) => OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: color, width: w),
-        );
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: color, width: w),
+    );
     return InputDecoration(
       labelText: label,
       hintText: hint,

@@ -24,6 +24,7 @@ Future<void> showReportSheet(
   final s = S.of(context);
 
   final reason = await showModalBottomSheet<String>(
+    useSafeArea: true,
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,

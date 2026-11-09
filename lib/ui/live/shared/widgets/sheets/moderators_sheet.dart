@@ -16,6 +16,8 @@ class ModeratorsSheet extends ConsumerStatefulWidget {
   static Future<void> show(BuildContext context) {
     FocusManager.instance.primaryFocus?.unfocus();
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,

@@ -68,6 +68,8 @@ class _SoundsCatalogScreenState extends ConsumerState<SoundsCatalogScreen>
     // (`SoundsCatalogScreen`) via `Navigator.push<Sound>`, senão a música
     // escolhida nunca chega no create_post_sheet/story_composer.
     final selected = await showModalBottomSheet<Sound>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -309,7 +311,7 @@ class _SoundTile extends ConsumerWidget {
               height: 50,
               child: sound.coverUrl != null
                   ? CachedNetworkImage(
-                    memCacheWidth: context.decodePx(50),
+                      memCacheWidth: context.decodePx(50),
                       imageUrl: sound.coverUrl!,
                       fit: BoxFit.cover,
                     )
@@ -464,6 +466,8 @@ class _MiniPlayer extends ConsumerWidget {
         // `Sound` escolhido (senão o create_post_sheet/story_composer
         // nunca recebe a seleção).
         final selected = await showModalBottomSheet<Sound>(
+          useRootNavigator: true,
+          useSafeArea: true,
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
@@ -493,7 +497,7 @@ class _MiniPlayer extends ConsumerWidget {
                 height: 40,
                 child: sound.coverUrl != null
                     ? CachedNetworkImage(
-                      memCacheWidth: context.decodePx(40),
+                        memCacheWidth: context.decodePx(40),
                         imageUrl: sound.coverUrl!,
                         fit: BoxFit.cover,
                       )

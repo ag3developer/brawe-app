@@ -908,6 +908,7 @@ class _HowToEarnTile extends StatelessWidget {
   void _open(BuildContext context) {
     final s = S.of(context);
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       showDragHandle: true,
       backgroundColor: context.colors.surface,

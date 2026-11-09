@@ -10,6 +10,7 @@ sealed class Post with _$Post {
     required String id,
     required String content,
     String? imageUrl,
+
     /// HLS adaptativo (Bunny) — usar para TOCAR o vídeo quando presente.
     /// `imageUrl` segue com o arquivo original (download/repost no story).
     String? hlsUrl,
@@ -54,6 +55,11 @@ sealed class Post with _$Post {
     PostPoll? poll,
     // Cidade do post, ex.: "Recife, PE" (null = sem localização).
     PostLocation? location,
+    // Privacidade (contrato /privacy): comentários desativados pelo autor,
+    // contagem de curtidas oculta e se EU posso comentar neste post.
+    @Default(false) bool commentsDisabled,
+    @Default(false) bool hideLikeCount,
+    @Default(true) bool canComment,
   }) = _Post;
 
   const Post._();

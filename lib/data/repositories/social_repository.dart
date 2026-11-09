@@ -18,9 +18,13 @@ class SocialRepository {
 
   SocialRepository(this._socialService);
 
-  Future<void> followUser(String userId, {String? sourceRoomId}) async {
+  /// Devolve "following" ou "requested".
+  Future<String> followUser(String userId, {String? sourceRoomId}) async {
     try {
-      await _socialService.followUser(userId, sourceRoomId: sourceRoomId);
+      return await _socialService.followUser(
+        userId,
+        sourceRoomId: sourceRoomId,
+      );
     } on DioException catch (e) {
       throw _mapFailure(e);
     } catch (e) {
@@ -81,14 +85,17 @@ class SocialRepository {
     }
   }
 
-  
   Future<({List<FollowUser> items, int total})> getUserFollowers(
     String userId, {
     int page = 1,
     int limit = 30,
   }) async {
     try {
-      final res = await _socialService.getUserFollowers(userId, page: page, limit: limit);
+      final res = await _socialService.getUserFollowers(
+        userId,
+        page: page,
+        limit: limit,
+      );
       return (
         items: res.items.map(FollowUser.fromJson).toList(),
         total: res.total,
@@ -106,7 +113,11 @@ class SocialRepository {
     int limit = 30,
   }) async {
     try {
-      final res = await _socialService.getUserFollowing(userId, page: page, limit: limit);
+      final res = await _socialService.getUserFollowing(
+        userId,
+        page: page,
+        limit: limit,
+      );
       return (
         items: res.items.map(FollowUser.fromJson).toList(),
         total: res.total,

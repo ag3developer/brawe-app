@@ -66,6 +66,7 @@ class UserStatusNotifier extends _$UserStatusNotifier {
 // ─────────────────────────────────────────────────────────────────────────────
 void showUserStatusSheet(BuildContext context) {
   showModalBottomSheet(
+    useRootNavigator: true,
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: false,

@@ -4,6 +4,7 @@ import '../../domain/models/failure.dart';
 import '../../domain/models/sound_preview.dart';
 import '../../domain/models/story.dart';
 import '../../domain/models/story_active_status.dart';
+import '../services/privacy_ux_service.dart';
 import '../services/stories_service.dart';
 part 'stories_repository.g.dart';
 
@@ -46,10 +47,18 @@ class StoriesRepository {
     }
   }
 
+  void _throwIfRepliesBlocked(DioException e) {
+    final err = PrivacyApiError.from(e);
+    if (err?.code == 'story_replies_not_allowed') {
+      throw PrivacyBlockedException(err!.code!, err.message);
+    }
+  }
+
   Future<void> react(String storyId, {String reaction = '❤️'}) async {
     try {
       await _service.react(storyId, reactionType: reaction);
-    } on DioException catch (_) {
+    } on DioException catch (e) {
+      _throwIfRepliesBlocked(e);
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();
@@ -59,7 +68,8 @@ class StoriesRepository {
   Future<void> reply(String storyId, String message) async {
     try {
       await _service.reply(storyId, message);
-    } on DioException catch (_) {
+    } on DioException catch (e) {
+      _throwIfRepliesBlocked(e);
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();

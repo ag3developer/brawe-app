@@ -398,7 +398,13 @@ class _Avatar extends StatelessWidget {
         color: context.colors.accentPrimary.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         image: hasUrl
-            ? DecorationImage(image: ResizeImage(NetworkImage(url!), width: context.decodePx(size)), fit: BoxFit.cover)
+            ? DecorationImage(
+                image: ResizeImage(
+                  NetworkImage(url!),
+                  width: context.decodePx(size),
+                ),
+                fit: BoxFit.cover,
+              )
             : null,
       ),
       child: hasUrl
@@ -607,7 +613,10 @@ class _ErrorBox extends StatelessWidget {
           const Icon(LucideIcons.circleAlert, size: 18),
           const SizedBox(width: 8),
           Expanded(child: Text(message)),
-          TextButton(onPressed: onRetry, child: Text(S.of(context).commonRetry)),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(S.of(context).commonRetry),
+          ),
         ],
       ),
     );
@@ -633,6 +642,8 @@ class GifterDetailSheet extends ConsumerWidget {
     String direction = 'received',
   }) {
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
       isScrollControlled: true,
@@ -738,7 +749,9 @@ class GifterDetailSheet extends ConsumerWidget {
                     color: context.colors.accentPrimary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: context.colors.accentPrimary.withValues(alpha: 0.25),
+                      color: context.colors.accentPrimary.withValues(
+                        alpha: 0.25,
+                      ),
                     ),
                   ),
                   child: Row(

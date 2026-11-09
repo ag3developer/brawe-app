@@ -51,6 +51,7 @@ class StreamerIdentityBar extends ConsumerWidget {
 
   void _openQuickSheet(BuildContext context, WidgetRef ref, bool isFollowing) {
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.5),

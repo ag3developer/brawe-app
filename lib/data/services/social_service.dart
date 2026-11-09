@@ -16,12 +16,18 @@ class SocialService {
 
   /// [sourceRoomId]: live em que a pessoa clicou em seguir (relatório de
   /// "seguidores ganhos na live"). Opcional; o servidor ignora se inválido.
-  Future<void> followUser(String userId, {String? sourceRoomId}) async {
-    await _dio.post(
+  /// Devolve o `status` do servidor: "following" ou "requested" (conta privada).
+  Future<String> followUser(String userId, {String? sourceRoomId}) async {
+    final r = await _dio.post(
       '/social/follow/$userId',
-      queryParameters:
-          sourceRoomId == null ? null : {'source_room_id': sourceRoomId},
+      queryParameters: sourceRoomId == null
+          ? null
+          : {'source_room_id': sourceRoomId},
     );
+    final d = r.data;
+    return d is Map && d['status'] != null
+        ? d['status'].toString()
+        : 'following';
   }
 
   Future<void> unfollowUser(String userId) async {
@@ -38,25 +44,33 @@ class SocialService {
     return response.data['data'] ?? response.data;
   }
 
-  Future<List<Map<String, dynamic>>> getFollowers({int page = 1, int limit = 20}) async {
+  Future<List<Map<String, dynamic>>> getFollowers({
+    int page = 1,
+    int limit = 20,
+  }) async {
     final response = await _dio.get(
       '/social/followers',
       queryParameters: {'page': page, 'limit': limit},
     );
     final data = response.data['data'] ?? response.data;
     if (data is List) return List<Map<String, dynamic>>.from(data);
-    if (data is Map && data['items'] != null) return List<Map<String, dynamic>>.from(data['items']);
+    if (data is Map && data['items'] != null)
+      return List<Map<String, dynamic>>.from(data['items']);
     return [];
   }
 
-  Future<List<Map<String, dynamic>>> getFollowing({int page = 1, int limit = 20}) async {
+  Future<List<Map<String, dynamic>>> getFollowing({
+    int page = 1,
+    int limit = 20,
+  }) async {
     final response = await _dio.get(
       '/social/following',
       queryParameters: {'page': page, 'limit': limit},
     );
     final data = response.data['data'] ?? response.data;
     if (data is List) return List<Map<String, dynamic>>.from(data);
-    if (data is Map && data['items'] != null) return List<Map<String, dynamic>>.from(data['items']);
+    if (data is Map && data['items'] != null)
+      return List<Map<String, dynamic>>.from(data['items']);
     return [];
   }
 
@@ -109,7 +123,10 @@ class SocialService {
   }
 
   /// Busca pessoas por nome ou @usuário.
-  Future<List<Map<String, dynamic>>> searchUsers(String query, {int limit = 20}) async {
+  Future<List<Map<String, dynamic>>> searchUsers(
+    String query, {
+    int limit = 20,
+  }) async {
     final response = await _dio.get(
       '/social/users/search',
       queryParameters: {'q': query, 'limit': limit},

@@ -440,6 +440,7 @@ class _MyAdDetailScreenState extends ConsumerState<MyAdDetailScreen> {
     final cfg = await ref.read(adsRepositoryProvider).config();
     if (!mounted) return;
     final daily = await showModalBottomSheet<double>(
+      useSafeArea: true,
       context: context,
       useRootNavigator: true,
       showDragHandle: true,

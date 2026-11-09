@@ -124,9 +124,7 @@ class SettingsScreen extends ConsumerWidget {
                 _Row(
                   icon: LucideIcons.lock,
                   title: s.settingsPrivacy,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const _PrivacyPage()),
-                  ),
+                  onTap: () => context.push('/settings/privacy'),
                 ),
                 _Row(
                   icon: LucideIcons.sunMoon,
@@ -242,6 +240,7 @@ class SettingsScreen extends ConsumerWidget {
   void _showThemeSheet(BuildContext context, WidgetRef ref) {
     final s = S.of(context);
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       showDragHandle: true,
       builder: (ctx) => Consumer(
@@ -309,6 +308,8 @@ class SettingsScreen extends ConsumerWidget {
 
   void _showSupportSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
@@ -824,40 +825,6 @@ class _NotificationsPage extends ConsumerWidget {
 }
 
 /// Subpágina de privacidade.
-class _PrivacyPage extends ConsumerWidget {
-  const _PrivacyPage();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final s = S.of(context);
-    final settings = ref.watch(settingsViewModelProvider).value;
-    final vm = ref.read(settingsViewModelProvider.notifier);
-    return _SubPage(
-      title: s.settingsPrivacy,
-      children: settings == null
-          ? const []
-          : [
-              _Group(
-                children: [
-                  _SwitchTile(
-                    title: s.settingsPrivacyShowViewers,
-                    subtitle: s.settingsPrivacyShowViewersHint,
-                    value: settings.privacyShowViewers,
-                    onChanged: (v) => vm.setBool('privacy_show_viewers', v),
-                  ),
-                  _SwitchTile(
-                    title: s.settingsPrivacyShowEarnings,
-                    subtitle: s.settingsPrivacyShowEarningsHint,
-                    value: settings.privacyShowEarnings,
-                    onChanged: (v) => vm.setBool('privacy_show_earnings', v),
-                  ),
-                ],
-              ),
-            ],
-    );
-  }
-}
-
 class _SubPage extends StatelessWidget {
   const _SubPage({required this.title, required this.children});
   final String title;

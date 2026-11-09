@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../data/services/notification_navigation_service.dart';
+import '../../../data/services/privacy_ux_service.dart';
 import '../../../domain/models/app_notification.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
@@ -108,6 +109,52 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     unreadBy: unreadBy,
                     totalUnread: page.unreadCount,
                     onSelect: (f) => setState(() => _filter = f),
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final pending =
+                          ref.watch(pendingFollowRequestsProvider).value ?? 0;
+                      if (pending <= 0) return const SizedBox.shrink();
+                      return InkWell(
+                        onTap: () => context
+                            .push('/settings/privacy/follow-requests')
+                            .then(
+                              (_) =>
+                                  ref.invalidate(pendingFollowRequestsProvider),
+                            ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.userPlus,
+                                size: 20,
+                                color: colors.textPrimary,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  s.privUxFollowRequestsEntry(pending),
+                                  style: TextStyle(
+                                    color: colors.textPrimary,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                LucideIcons.chevronRight,
+                                size: 18,
+                                color: colors.textTertiary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   Expanded(
                     child: RefreshIndicator(

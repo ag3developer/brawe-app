@@ -721,6 +721,7 @@ class _ProtectTab extends ConsumerWidget {
 /// troca o token guardado e abre a troca de senha obrigatória.
 Future<void> showProtectAccountSheet(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
+    useRootNavigator: true,
     context: context,
     showDragHandle: true,
     isScrollControlled: true,

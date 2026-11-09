@@ -105,6 +105,7 @@ class _PinnedProductBarState extends ConsumerState<PinnedProductBar> {
     if (p == null) return;
     // TODO: substituir por sheet de checkout/produto real.
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: const Color(0xFF0A0B14),
       builder: (_) => SafeArea(

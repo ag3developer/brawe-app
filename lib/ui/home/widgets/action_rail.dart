@@ -19,7 +19,11 @@ class ActionRail extends StatelessWidget {
     this.onLikeCountTap,
     this.onShareLongPress,
     this.onRepost,
+    this.hideLikeCount = false,
   });
+
+  /// Esconde o número de curtidas (privacidade); fica só o coração.
+  final bool hideLikeCount;
 
   final FeedItem item;
   final VoidCallback onLike;
@@ -51,7 +55,9 @@ class ActionRail extends StatelessWidget {
         const SizedBox(height: 22),
         _RailButton(
           icon: item.userLiked ? Icons.favorite : Icons.favorite_border,
-          label: _format(item.likesCount + (item.userLiked ? 1 : 0)),
+          label: hideLikeCount
+              ? ''
+              : _format(item.likesCount + (item.userLiked ? 1 : 0)),
           color: item.userLiked ? Colors.red : Colors.white,
           onTap: onLike,
           onLongPress: onLikeLongPress,
@@ -137,7 +143,11 @@ class _AvatarFollow extends StatelessWidget {
               ),
               child: ClipOval(
                 child: author.avatarUrl != null
-                    ? Image.network(cacheWidth: context.decodePx(50), author.avatarUrl!, fit: BoxFit.cover)
+                    ? Image.network(
+                        cacheWidth: context.decodePx(50),
+                        author.avatarUrl!,
+                        fit: BoxFit.cover,
+                      )
                     : Container(
                         color: context.colors.surfaceElevated,
                         child: Center(
@@ -307,7 +317,11 @@ class _SpinningDiscState extends State<_SpinningDisc>
         ),
         child: ClipOval(
           child: widget.avatarUrl != null
-              ? Image.network(cacheWidth: context.decodePx(36), widget.avatarUrl!, fit: BoxFit.cover)
+              ? Image.network(
+                  cacheWidth: context.decodePx(36),
+                  widget.avatarUrl!,
+                  fit: BoxFit.cover,
+                )
               : Container(color: context.colors.surfaceElevated),
         ),
       ),

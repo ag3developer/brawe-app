@@ -6769,5 +6769,194 @@
         "type": "String"
       }
     }
-  }
+  },
+  "privacyRetry": "Tentar de novo",
+  "privacyErrorGeneric": "Não foi possível salvar agora. Confira sua conexão e tente de novo.",
+  "privacySectionAccount": "Conta",
+  "privacyPrivateAccount": "Conta privada",
+  "privacyPrivateUnavailable": "Disponível só para conta Pessoal",
+  "privacyPrivateFooter": "Com a conta privada, só quem você aprovar vê seus posts, stories e listas.",
+  "privacyPrivateUnavailableFooter": "Contas de Artista, Empresa e Agência são sempre públicas, porque existem para ser encontradas. Para ter conta privada, use uma conta Pessoal.",
+  "privacyPrivateOnTitle": "Tornar a conta privada?",
+  "privacyPrivateOn1": "Quem já segue você continua seguindo.",
+  "privacyPrivateOn2": "Novas pessoas precisam enviar um pedido para seguir, e você aprova.",
+  "privacyPrivateOn3": "Posts, stories e listas ficam visíveis só para seus seguidores.",
+  "privacyPrivateOnConfirm": "Tornar privada",
+  "privacyPrivateOffTitle": "Tornar a conta pública?",
+  "privacyPrivateOff1": "Qualquer pessoa poderá ver seus posts, stories e listas.",
+  "privacyPrivateOff2": "Os pedidos para seguir pendentes serão aceitos automaticamente.",
+  "privacyPrivateOffConfirm": "Tornar pública",
+  "privacySectionInteractions": "Interações",
+  "privacyComments": "Comentários",
+  "privacyCommentsDesc": "Escolha quem pode comentar nos seus posts. Comentários de quem não pode não são enviados.",
+  "privacyMessages": "Mensagens",
+  "privacyMessagesDesc": "Escolha quem pode iniciar uma conversa com você.",
+  "privacyMentions": "Marcações (@)",
+  "privacyMentionsDesc": "Escolha quem pode marcar você em posts, comentários e stories.",
+  "privacyStoryReplies": "Respostas aos stories",
+  "privacyStoryRepliesDesc": "Escolha quem pode responder aos seus stories.",
+  "privacyBattleInvites": "Convites para batalha e live",
+  "privacyBattleInvitesDesc": "Escolha quem pode convidar você para uma batalha ou live.",
+  "privacyWhoEveryone": "Todos",
+  "privacyWhoFollowers": "Quem me segue",
+  "privacyWhoFollowing": "Quem eu sigo",
+  "privacyWhoNobody": "Ninguém",
+  "privacyHiddenWords": "Palavras ocultas",
+  "privacyHiddenWordsValue": "{count, plural, =1{1 palavra} other{{count} palavras}}",
+  "@privacyHiddenWordsValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyFilterOffensive": "Filtrar ofensas",
+  "privacyFilterOffensiveHint": "Comentários ofensivos ficam ocultos para os outros; só quem escreveu continua vendo.",
+  "privacyCustomWords": "Suas palavras",
+  "privacyCustomWordsHint": "Comentários com essas palavras ficam ocultos. Até {max} palavras.",
+  "@privacyCustomWordsHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyAddWord": "Adicionar palavra",
+  "privacyAddWordHint": "Digite uma palavra ou expressão",
+  "privacyHiddenWordsMax": "Você já tem {max} palavras. Remova alguma para adicionar outra.",
+  "@privacyHiddenWordsMax": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyLimit": "Limitar interações",
+  "privacyLimitTitle": "Limitar interações",
+  "privacyLimitExplain": "Só quem já segue você poderá comentar, enviar mensagens, marcar e responder stories.",
+  "privacyLimitOff": "Desligado",
+  "privacyLimit24h": "24 horas",
+  "privacyLimit3d": "3 dias",
+  "privacyLimit7d": "7 dias",
+  "privacyLimitLeftDays": "{count, plural, =1{Falta 1 dia} other{Faltam {count} dias}}",
+  "@privacyLimitLeftDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacyLimitLeftHours": "{count, plural, =1{Falta 1 hora} other{Faltam {count} horas}}",
+  "@privacyLimitLeftHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privacySectionShow": "O que eu mostro",
+  "privacyHideLikes": "Esconder curtidas dos meus posts",
+  "privacyHideLikesHint": "Outras pessoas não veem o número de curtidas; você continua vendo.",
+  "privacyHideOthersLikes": "Esconder curtidas dos outros",
+  "privacyHideOthersLikesHint": "Não mostra o número de curtidas nos posts que você vê.",
+  "privacyActivityStatus": "Status de atividade",
+  "privacyActivityStatusHint": "Mostra quando você está online. Se desligar, você também não vê o dos outros.",
+  "privacyHideFollowLists": "Esconder seguidores e seguindo",
+  "privacyHideFollowListsHint": "Só você vê quem te segue e quem você segue.",
+  "privacyShowInExplore": "Aparecer em Sugestões e Explorar",
+  "privacyShowInExploreHint": "Seu perfil e seus posts podem ser recomendados a outras pessoas.",
+  "privacyReadReceipts": "Confirmação de leitura",
+  "privacyReadReceiptsHint": "Mostra quando você leu uma mensagem. Se desligar, você também não vê a dos outros.",
+  "privacySectionAccounts": "Contas",
+  "privacyFollowRequests": "Pedidos para seguir",
+  "privacyRestricted": "Contas restritas",
+  "privacyMuted": "Contas silenciadas",
+  "privacyBlocked": "Contas bloqueadas",
+  "privacySectionData": "Seus dados",
+  "privacyExport": "Baixar meus dados",
+  "privacyExportFooter": "Gera um arquivo com as informações da sua conta para você guardar ou compartilhar.",
+  "privacyExportShareSubject": "Meus dados do Brawe",
+  "privacySearchHint": "Buscar",
+  "privacyNoResults": "Nenhuma conta encontrada",
+  "privacySince": "desde {date}",
+  "@privacySince": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyUnblock": "Desbloquear",
+  "privacyUnmute": "Reativar",
+  "privacyUnrestrict": "Remover restrição",
+  "privacyUndo": "Desfazer",
+  "privacyUnblockedSnack": "{name} foi desbloqueado(a)",
+  "@privacyUnblockedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyUnmutedSnack": "{name} foi reativado(a)",
+  "@privacyUnmutedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyUnrestrictedSnack": "Restrição removida de {name}",
+  "@privacyUnrestrictedSnack": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "privacyEmptyBlockedTitle": "Ninguém bloqueado",
+  "privacyEmptyBlockedBody": "Quem você bloqueia não vê seu perfil nem fala com você. Para bloquear, abra o perfil da pessoa e toque em ⋯.",
+  "privacyEmptyMutedTitle": "Ninguém silenciado",
+  "privacyEmptyMutedBody": "Contas silenciadas somem dos seus feeds sem que a pessoa saiba. Para silenciar, abra o perfil e toque em ⋯.",
+  "privacyEmptyRestrictedTitle": "Ninguém restrito",
+  "privacyEmptyRestrictedBody": "Os comentários de contas restritas ficam visíveis só para elas. Para restringir, abra o perfil e toque em ⋯.",
+  "privacyEmptyRequestsTitle": "Nenhum pedido pendente",
+  "privacyEmptyRequestsBody": "Quando alguém pedir para seguir sua conta privada, o pedido aparece aqui.",
+  "privacyConfirm": "Confirmar",
+  "privacyConfirmAll": "Confirmar todos",
+  "privacyDelete": "Excluir",
+  "privUxRestrict": "Restringir",
+  "privUxUnrestrict": "Remover restrição",
+  "privUxRestrictIntroTitle": "Restringir esta conta?",
+  "privUxRestrictIntroBody": "Os comentários dela ficam visíveis só para ela. Ela não é avisada.",
+  "privUxRestrictedSnack": "Conta restrita. Ela não é avisada.",
+  "privUxUnrestrictedSnack": "Restrição removida.",
+  "privUxFollowListsHidden": "Esta conta não mostra a lista de seguidores e de quem ela segue.",
+  "privUxRequested": "Solicitado",
+  "privUxMessagesNotAllowed": "Esta pessoa não recebe mensagens suas no momento.",
+  "privUxCancelRequestTitle": "Cancelar pedido?",
+  "privUxCancelRequestBody": "Seu pedido para seguir será cancelado. Você pode pedir de novo quando quiser.",
+  "privUxCancelRequestConfirm": "Cancelar pedido",
+  "privUxKeepRequest": "Manter pedido",
+  "privUxAccountPrivate": "Esta conta é privada",
+  "privUxFollowToSee": "Siga para ver as fotos e vídeos.",
+  "privUxEnableComments": "Ativar comentários",
+  "privUxDisableComments": "Desativar comentários",
+  "privUxCommentsDisabledLine": "Os comentários estão desativados",
+  "privUxCommentsRestrictedLine": "Só algumas pessoas podem comentar",
+  "privUxWantsToFollow": "quer seguir você",
+  "privUxAcceptedYourRequest": "aceitou seu pedido para seguir",
+  "privUxConfirm": "Confirmar",
+  "privUxDelete": "Excluir",
+  "privUxRequestAccepted": "Pedido confirmado",
+  "privUxRequestDeclined": "Pedido excluído",
+  "privUxFollowRequestsEntry": "Pedidos para seguir ({count})",
+  "@privUxFollowRequestsEntry": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "privUxStoryRepliesNotAllowed": "Esta pessoa não recebe respostas e reações aos stories dela."
 }

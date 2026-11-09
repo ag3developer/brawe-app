@@ -62,6 +62,8 @@ class TopUpCoinsSheet extends ConsumerStatefulWidget {
       return;
     }
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -141,9 +143,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              S.of(context).walletIapSuccess(_fmtInt(offer.coins)),
-            ),
+            content: Text(S.of(context).walletIapSuccess(_fmtInt(offer.coins))),
             backgroundColor: context.colors.accentPrimary,
           ),
         );
@@ -175,8 +175,7 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final balance =
-        ref.watch(creditsViewModelProvider).value?.toInt() ?? 0;
+    final balance = ref.watch(creditsViewModelProvider).value?.toInt() ?? 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -233,7 +232,9 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: context.colors.surfaceHighest,
                       borderRadius: BorderRadius.circular(20),
@@ -261,7 +262,13 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
               if (_loadingProducts)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 28),
-                  child: Center(child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))),
+                  child: Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                 )
               else
                 GridView.builder(
@@ -279,10 +286,13 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                     return _TopUpPackageCard(
                       coins: offer.coins,
                       // o pacote do meio ganha destaque
-                      highlight: _offers.length >= 3 && i == _offers.length ~/ 2,
+                      highlight:
+                          _offers.length >= 3 && i == _offers.length ~/ 2,
                       priceLabel: offer.product.price,
                       enabled: !_purchasing,
-                      loading: _purchasing && _purchasingProductId == offer.product.id,
+                      loading:
+                          _purchasing &&
+                          _purchasingProductId == offer.product.id,
                       onTap: () => _buy(offer),
                     );
                   },
@@ -295,12 +305,16 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                     color: Colors.red.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.4)),
+                      color: Colors.red.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(LucideIcons.circleAlert,
-                          color: context.colors.danger, size: 16),
+                      Icon(
+                        LucideIcons.circleAlert,
+                        color: context.colors.danger,
+                        size: 16,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -328,7 +342,9 @@ class _TopUpCoinsSheetState extends ConsumerState<TopUpCoinsSheet> {
                   const SizedBox(width: 5),
                   Text(
                     // só a loja do aparelho (a Apple não aceita citar outra plataforma)
-                    Platform.isIOS ? s.topUpStoreDisclaimerApple : s.topUpStoreDisclaimerGoogle,
+                    Platform.isIOS
+                        ? s.topUpStoreDisclaimerApple
+                        : s.topUpStoreDisclaimerGoogle,
                     style: TextStyle(
                       color: context.colors.textTertiary,
                       fontSize: 10.5,
@@ -372,8 +388,7 @@ class _TopUpPackageCard extends StatelessWidget {
           onTap: enabled ? onTap : null,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(

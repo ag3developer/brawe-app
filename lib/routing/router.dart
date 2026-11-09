@@ -15,6 +15,11 @@ import '../ui/auth/widgets/signup_screen.dart';
 import '../ui/auth/widgets/welcome_screen.dart';
 import '../ui/auth/widgets/forgot_password_screen.dart';
 import '../ui/auth/widgets/reset_password_screen.dart';
+import '../data/repositories/privacy_repository.dart' show PrivacyList;
+import '../ui/settings/privacy/follow_requests_screen.dart';
+import '../ui/settings/privacy/hidden_words_screen.dart';
+import '../ui/settings/privacy/privacy_accounts_screen.dart';
+import '../ui/settings/privacy/privacy_hub_screen.dart';
 import '../ui/settings/widgets/change_password_screen.dart';
 import '../ui/settings/widgets/security_screen.dart';
 import '../ui/settings/widgets/account_suspended_screen.dart';
@@ -328,11 +333,26 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Conta: tipo de conta e verificação (tela cheia).
-      GoRoute(path: '/account/type', builder: (context, state) => const AccountTypeScreen()),
-      GoRoute(path: '/account/about', builder: (context, state) => const AboutYouScreen()),
-      GoRoute(path: '/account/verify', builder: (context, state) => const VerifyAccountScreen()),
-      GoRoute(path: '/account/verify/identity', builder: (context, state) => const VerifyIdentityScreen()),
-      GoRoute(path: '/account/verify/business', builder: (context, state) => const VerifyBusinessScreen()),
+      GoRoute(
+        path: '/account/type',
+        builder: (context, state) => const AccountTypeScreen(),
+      ),
+      GoRoute(
+        path: '/account/about',
+        builder: (context, state) => const AboutYouScreen(),
+      ),
+      GoRoute(
+        path: '/account/verify',
+        builder: (context, state) => const VerifyAccountScreen(),
+      ),
+      GoRoute(
+        path: '/account/verify/identity',
+        builder: (context, state) => const VerifyIdentityScreen(),
+      ),
+      GoRoute(
+        path: '/account/verify/business',
+        builder: (context, state) => const VerifyBusinessScreen(),
+      ),
       // Anúncios (impulsionar e Meus anúncios): tela cheia, sem o menu de baixo.
       GoRoute(
         path: '/ads/boost',
@@ -399,15 +419,22 @@ GoRouter router(Ref ref) {
             backgroundColor: Colors.transparent,
             // Barra flutuante: no Feed o conteúdo passa por trás do vidro (a lista tem folga no fim);
             // nas demais abas a altura fica reservada, então nada muda nelas.
-            extendBody: state.uri.path.startsWith('/feed'),
+            // Android: barra sólida colada embaixo, o conteúdo não passa por trás.
+            extendBody:
+                state.uri.path.startsWith('/feed') &&
+                defaultTargetPlatform == TargetPlatform.iOS,
             resizeToAvoidBottomInset: false,
             // O indicador de envio de vídeo vive no nível do app
             // (MaterialApp.builder em main.dart), visível em qualquer tela.
             body: NotificationListener<ScrollUpdateNotification>(
               // rolar para baixo compacta a barra; subir expande (qualquer lista vertical)
               onNotification: (n) {
-                if (n.metrics.axis == Axis.vertical && n.scrollDelta != null && n.dragDetails != null) {
-                  ref.read(navCompactProvider.notifier).onScroll(n.scrollDelta!, n.metrics.pixels);
+                if (n.metrics.axis == Axis.vertical &&
+                    n.scrollDelta != null &&
+                    n.dragDetails != null) {
+                  ref
+                      .read(navCompactProvider.notifier)
+                      .onScroll(n.scrollDelta!, n.metrics.pixels);
                 }
                 return false;
               },
@@ -418,9 +445,11 @@ GoRouter router(Ref ref) {
             bottomNavigationBar: ValueListenableBuilder<bool>(
               // comentários abertos no Para você: a barra sai (como no TikTok)
               valueListenable: navHiddenByMedia,
-              builder: (context, hiddenByMedia, _) => hiddenByMedia ||
+              builder: (context, hiddenByMedia, _) =>
+                  hiddenByMedia ||
                       HomeBottomNav.fullscreenMedia(state.uri.path) ||
-                      (HomeBottomNav.hiddenOn(state.uri.path) && GoRouter.of(context).canPop())
+                      (HomeBottomNav.hiddenOn(state.uri.path) &&
+                          GoRouter.of(context).canPop())
                   ? const SizedBox.shrink()
                   : HomeBottomNav(location: state.uri.path),
             ),
@@ -847,6 +876,45 @@ GoRouter router(Ref ref) {
           key: state.pageKey,
           child: ChangePasswordScreen(
             required: state.uri.queryParameters['required'] == '1',
+          ),
+        ),
+      ),
+      // Privacidade (hub e telas de lista) — tela cheia, sem a barra de baixo.
+      GoRoute(
+        path: '/settings/privacy',
+        pageBuilder: (context, state) =>
+            CupertinoPage(key: state.pageKey, child: const PrivacyHubScreen()),
+      ),
+      GoRoute(
+        path: '/settings/privacy/hidden-words',
+        pageBuilder: (context, state) =>
+            CupertinoPage(key: state.pageKey, child: const HiddenWordsScreen()),
+      ),
+      GoRoute(
+        path: '/settings/privacy/follow-requests',
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: const FollowRequestsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/settings/privacy/:kind',
+        redirect: (context, state) =>
+            const {
+              'blocked',
+              'muted',
+              'restricted',
+            }.contains(state.pathParameters['kind'])
+            ? null
+            : '/settings/privacy',
+        pageBuilder: (context, state) => CupertinoPage(
+          key: state.pageKey,
+          child: PrivacyAccountsScreen(
+            list: switch (state.pathParameters['kind']) {
+              'muted' => PrivacyList.muted,
+              'restricted' => PrivacyList.restricted,
+              _ => PrivacyList.blocked,
+            },
           ),
         ),
       ),

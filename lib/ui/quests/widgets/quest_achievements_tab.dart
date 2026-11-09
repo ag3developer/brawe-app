@@ -52,10 +52,12 @@ class _QuestAchievementsTabState extends ConsumerState<QuestAchievementsTab>
               index: 1,
               child: _Header(
                 title: S.of(context).questsBadgesTitle,
-                trailing: S.of(context).questsBadgesCount(
-                  j.stats.badgesUnlocked,
-                  j.stats.badgesTotal,
-                ),
+                trailing: S
+                    .of(context)
+                    .questsBadgesCount(
+                      j.stats.badgesUnlocked,
+                      j.stats.badgesTotal,
+                    ),
               ),
             ),
             const SizedBox(height: 12),
@@ -100,6 +102,7 @@ class _QuestAchievementsTabState extends ConsumerState<QuestAchievementsTab>
     );
     b.unlocked ? fb.questBadge() : fb.questTap();
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -122,10 +125,30 @@ class _StatsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final items = [
-      (s.questsStatQuests, stats.totalQuestsCompleted, 'assets/images/quests/stat_trophy.png', QuestTones.violet),
-      (s.questsStatXp, stats.totalXpEarned, 'assets/images/quests/stat_xp.png', QuestTones.cyan),
-      (s.questsStatCoins, stats.totalCoinsEarned, 'assets/images/quests/stat_coin.png', QuestTones.gold),
-      (s.questsStatBestStreak, stats.longestStreak, 'assets/images/quests/stat_streak.png', QuestTones.ember),
+      (
+        s.questsStatQuests,
+        stats.totalQuestsCompleted,
+        'assets/images/quests/stat_trophy.png',
+        QuestTones.violet,
+      ),
+      (
+        s.questsStatXp,
+        stats.totalXpEarned,
+        'assets/images/quests/stat_xp.png',
+        QuestTones.cyan,
+      ),
+      (
+        s.questsStatCoins,
+        stats.totalCoinsEarned,
+        'assets/images/quests/stat_coin.png',
+        QuestTones.gold,
+      ),
+      (
+        s.questsStatBestStreak,
+        stats.longestStreak,
+        'assets/images/quests/stat_streak.png',
+        QuestTones.ember,
+      ),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -309,7 +332,9 @@ class _BadgeShelf extends StatelessWidget {
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: b.unlocked ? colors.textPrimary : colors.textTertiary,
+                    color: b.unlocked
+                        ? colors.textPrimary
+                        : colors.textTertiary,
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
                     height: 1.15,
@@ -496,7 +521,10 @@ class QuestAwardTile extends StatelessWidget {
         boxShadow: active
             ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 14)]
             : null,
-        border: Border.all(color: QuestTones.onGradient.withValues(alpha: 0.6), width: 2),
+        border: Border.all(
+          color: QuestTones.onGradient.withValues(alpha: 0.6),
+          width: 2,
+        ),
       ),
       padding: const EdgeInsets.all(3),
       child: ClipOval(
@@ -506,10 +534,8 @@ class QuestAwardTile extends StatelessWidget {
                 imageUrl: award.award.badgeImageUrl!,
                 fit: BoxFit.cover,
                 memCacheWidth: context.decodePx(compact ? 46 : 62),
-                errorWidget: (_, _, _) => const Icon(
-                  LucideIcons.award,
-                  color: QuestTones.onGradient,
-                ),
+                errorWidget: (_, _, _) =>
+                    const Icon(LucideIcons.award, color: QuestTones.onGradient),
               ),
       ),
     );
@@ -684,9 +710,8 @@ class _JourneyLoading extends StatelessWidget {
         child: Image.asset(
           'assets/images/quests/reward_chest.png',
           width: 90,
-          errorBuilder: (_, _, _) => CircularProgressIndicator(
-            color: context.colors.accentPrimary,
-          ),
+          errorBuilder: (_, _, _) =>
+              CircularProgressIndicator(color: context.colors.accentPrimary),
         ),
       ),
     );

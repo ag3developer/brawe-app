@@ -36,6 +36,7 @@ class EventPageSheet extends ConsumerStatefulWidget {
     required LiveEvent event,
   }) {
     return showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,

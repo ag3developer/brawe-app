@@ -211,7 +211,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final reply = _replyingTo;
     ref
         .read(chatDetailViewModelProvider(widget.conversationId).notifier)
-        .sendMessage(text, replyTo: reply);
+        .sendMessage(text, replyTo: reply)
+        .then((ok) {
+          // Falhou (ex.: a pessoa não recebe mensagens): mantém o rascunho.
+          if (!ok && mounted && _messageCtrl.text.isEmpty) {
+            _messageCtrl.text = text;
+            _messageCtrl.selection = TextSelection.collapsed(
+              offset: text.length,
+            );
+          }
+        });
     _messageCtrl.clear();
     _isTyping = false;
     if (_replyingTo != null) setState(() => _replyingTo = null);
@@ -296,6 +305,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   void _showMoreMenu(BuildContext ctx) {
     showModalBottomSheet(
+      useRootNavigator: true,
       context: ctx,
       backgroundColor: ctx.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -1439,6 +1449,7 @@ class _MessageBubble extends ConsumerWidget {
   void _showMessageActions(BuildContext context, ChatDetailViewModel notifier) {
     if (message.id.startsWith('local-')) return;
     showModalBottomSheet(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -2699,6 +2710,8 @@ class _ComposerState extends ConsumerState<_Composer>
 
   void _showAttachSheet(BuildContext context) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(

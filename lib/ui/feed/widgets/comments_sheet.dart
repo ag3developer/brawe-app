@@ -18,6 +18,7 @@ import '../../core/themes/brawe_colors.dart';
 import '../../core/widgets/brawe_avatar.dart';
 import '../../core/widgets/report_sheet.dart';
 import '../view_models/comments_view_model.dart';
+import '../../../data/services/privacy_ux_service.dart';
 import 'share_sheet.dart';
 import 'story_ring_avatar.dart';
 import 'package:brawe_app/ui/core/ui/verified_badge.dart';
@@ -227,6 +228,9 @@ class _CommentsPanelState extends ConsumerState<CommentsPanel> {
     });
   }
 
+  /// Mensagem do 403 de privacidade ao comentar (substitui o campo).
+  String? _serverBlock;
+
   CommentsViewModel get _vm =>
       ref.read(commentsViewModelProvider(widget.postId).notifier);
 
@@ -243,6 +247,20 @@ class _CommentsPanelState extends ConsumerState<CommentsPanel> {
     try {
       await _vm.addComment(text, parentId: parentId, gif: gif);
       if (parentId != null && mounted) setState(() => _expanded.add(parentId));
+    } on CommentBlockedException catch (e) {
+      // 403 de privacidade: a mensagem do servidor vira o aviso do painel
+      // (o campo é trocado por ela) e o rascunho volta ao campo.
+      if (mounted) {
+        ref.invalidate(postCommentRulesProvider(widget.postId));
+        _controller.text = text;
+        setState(() {
+          _serverBlock = (e.message != null && e.message!.isNotEmpty)
+              ? e.message
+              : (e.code == 'comments_disabled'
+                    ? S.of(context).privUxCommentsDisabledLine
+                    : S.of(context).privUxCommentsRestrictedLine);
+        });
+      }
     } catch (_) {
       if (mounted) _flash(S.of(context).commentsErrorSend);
     }
@@ -395,6 +413,14 @@ class _CommentsPanelState extends ConsumerState<CommentsPanel> {
     _listController = scrollController;
     final me = ref.watch(authStateProvider).asData?.value;
     final sort = _vm.sort;
+    final rules = ref.watch(postCommentRulesProvider(widget.postId)).value;
+    final String? lockedText =
+        _serverBlock ??
+        (rules?.disabled == true
+            ? s.privUxCommentsDisabledLine
+            : rules?.canComment == false
+            ? s.privUxCommentsRestrictedLine
+            : null);
 
     final header = Column(
       mainAxisSize: MainAxisSize.min,
@@ -574,7 +600,7 @@ class _CommentsPanelState extends ConsumerState<CommentsPanel> {
             ),
 
           // Faixa "Respondendo a @nome ✕"
-          if (_replyingTo != null)
+          if (_replyingTo != null && lockedText == null)
             Container(
               color: colors.surfaceElevated,
               padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
@@ -657,120 +683,136 @@ class _CommentsPanelState extends ConsumerState<CommentsPanel> {
               ),
             ),
 
-          // Campo de envio
-          Container(
-            padding: EdgeInsets.fromLTRB(12, 8, 12, widget.bottomSafe + 10),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: colors.divider)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: BraweAvatar(
-                    avatarUrl: me?.avatarUrl,
-                    displayName: me?.name ?? '',
-                    size: 32,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.surfaceHighest,
-                      borderRadius: BorderRadius.circular(22),
+          // Comentários desativados / não permitidos: no lugar do campo.
+          if (lockedText != null)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(16, 14, 16, widget.bottomSafe + 14),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: colors.divider)),
+              ),
+              child: Text(
+                lockedText,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colors.textTertiary, fontSize: 14),
+              ),
+            )
+          else
+            // Campo de envio
+            Container(
+              padding: EdgeInsets.fromLTRB(12, 8, 12, widget.bottomSafe + 10),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: colors.divider)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: BraweAvatar(
+                      avatarUrl: me?.avatarUrl,
+                      displayName: me?.name ?? '',
+                      size: 32,
+                      fontSize: 13,
                     ),
-                    padding: const EdgeInsets.only(left: 14, right: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            textCapitalization: TextCapitalization.sentences,
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 15,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: s.cmtAddHint,
-                              hintStyle: TextStyle(
-                                color: colors.textTertiary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surfaceHighest,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      padding: const EdgeInsets.only(left: 14, right: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              textCapitalization: TextCapitalization.sentences,
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 15,
                               ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 11,
+                              decoration: InputDecoration(
+                                hintText: s.cmtAddHint,
+                                hintStyle: TextStyle(
+                                  color: colors.textTertiary,
+                                  fontSize: 15,
+                                ),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 11,
+                                ),
                               ),
+                              minLines: 1,
+                              maxLines: 4,
+                              textInputAction: TextInputAction.newline,
+                              onTap: () {
+                                if (_emojiOpen) {
+                                  setState(() => _emojiOpen = false);
+                                }
+                              },
                             ),
-                            minLines: 1,
-                            maxLines: 4,
-                            textInputAction: TextInputAction.newline,
+                          ),
+                          _FieldIcon(
+                            tooltip: s.gifButtonSemantics,
+                            icon: LucideIcons.imagePlay,
+                            onTap: _pickGif,
+                          ),
+                          _FieldIcon(
+                            tooltip: s.cmtEmojiTooltip,
+                            icon: LucideIcons.smile,
+                            active: _emojiOpen,
+                            onTap: () =>
+                                setState(() => _emojiOpen = !_emojiOpen),
+                          ),
+                          _FieldIcon(
+                            tooltip: s.cmtMentionTooltip,
+                            icon: LucideIcons.atSign,
                             onTap: () {
-                              if (_emojiOpen) {
-                                setState(() => _emojiOpen = false);
-                              }
+                              _insertAtCursor('@');
+                              _focusNode.requestFocus();
                             },
                           ),
-                        ),
-                        _FieldIcon(
-                          tooltip: s.gifButtonSemantics,
-                          icon: LucideIcons.imagePlay,
-                          onTap: _pickGif,
-                        ),
-                        _FieldIcon(
-                          tooltip: s.cmtEmojiTooltip,
-                          icon: LucideIcons.smile,
-                          active: _emojiOpen,
-                          onTap: () => setState(() => _emojiOpen = !_emojiOpen),
-                        ),
-                        _FieldIcon(
-                          tooltip: s.cmtMentionTooltip,
-                          icon: LucideIcons.atSign,
-                          onTap: () {
-                            _insertAtCursor('@');
-                            _focusNode.requestFocus();
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 150),
-                  alignment: Alignment.centerRight,
-                  child: (_hasText || _pendingGif != null)
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Tooltip(
-                            message: s.cmtSendTooltip,
-                            child: GestureDetector(
-                              onTap: _sendComment,
-                              child: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: colors.accentPrimary,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  LucideIcons.arrowUp,
-                                  color: colors.textOnAccent,
-                                  size: 20,
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 150),
+                    alignment: Alignment.centerRight,
+                    child: (_hasText || _pendingGif != null)
+                        ? Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Tooltip(
+                              message: s.cmtSendTooltip,
+                              child: GestureDetector(
+                                onTap: _sendComment,
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: colors.accentPrimary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    LucideIcons.arrowUp,
+                                    color: colors.textOnAccent,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

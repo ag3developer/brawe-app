@@ -49,6 +49,7 @@ class GifterRankingSheet extends ConsumerStatefulWidget {
     // de compartilhar, e não o escuro forçado da live.
     final rootContext = Navigator.of(context, rootNavigator: true).context;
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: rootContext,
       isScrollControlled: true,
       useSafeArea: true,

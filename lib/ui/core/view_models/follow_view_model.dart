@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../data/repositories/social_repository.dart';
+import '../../../data/services/privacy_ux_service.dart';
 
 part 'follow_view_model.g.dart';
 
@@ -13,7 +14,9 @@ class FollowViewModel extends _$FollowViewModel {
 
   Future<void> _initStatus() async {
     try {
-      final isFollowing = await ref.read(socialRepositoryProvider).isFollowing(userId);
+      final isFollowing = await ref
+          .read(socialRepositoryProvider)
+          .isFollowing(userId);
       state = AsyncValue.data(isFollowing);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -23,7 +26,8 @@ class FollowViewModel extends _$FollowViewModel {
   /// [sourceRoomId]: id da live onde o follow aconteceu (só ao seguir).
   Future<void> toggleFollow({String? sourceRoomId}) async {
     final isCurrentlyFollowing = state.value ?? false;
-    
+    final requestedProvider = followRequestedProvider(userId);
+
     // Optimistic UI update
     state = AsyncValue.data(!isCurrentlyFollowing);
 
@@ -31,9 +35,14 @@ class FollowViewModel extends _$FollowViewModel {
       if (isCurrentlyFollowing) {
         await ref.read(socialRepositoryProvider).unfollowUser(userId);
       } else {
-        await ref
+        final status = await ref
             .read(socialRepositoryProvider)
             .followUser(userId, sourceRoomId: sourceRoomId);
+        if (status == 'requested') {
+          // Conta privada: vira "Solicitado", ainda não segue.
+          state = const AsyncValue.data(false);
+          ref.read(requestedProvider.notifier).set(true);
+        }
       }
     } catch (e) {
       // Revert on error

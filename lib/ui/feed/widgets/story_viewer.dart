@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../data/services/privacy_ux_service.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/repositories/stories_repository.dart';
 import '../../../data/repositories/social_repository.dart';
@@ -1316,6 +1317,13 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       await ref
           .read(storiesRepositoryProvider)
           .react(_story.id, reaction: emoji);
+    } on PrivacyBlockedException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? S.of(context).privUxStoryRepliesNotAllowed),
+        ),
+      );
     } catch (_) {
       // silencioso
     }
@@ -1349,6 +1357,13 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(S.of(context).viewerReplySent)));
+    } on PrivacyBlockedException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? S.of(context).privUxStoryRepliesNotAllowed),
+        ),
+      );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1363,6 +1378,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _openViewers() async {
     _pause();
     await showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -1380,6 +1396,7 @@ class _StoryViewerState extends ConsumerState<StoryViewer>
   Future<void> _openSoundDetails(SoundPreview sound) async {
     _pause();
     await showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -1727,6 +1744,9 @@ class _StoryViewersSheetState extends ConsumerState<StoryViewersSheet> {
                     )
                   : ListView.builder(
                       controller: controller,
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.paddingOf(context).bottom,
+                      ),
                       itemCount: _viewers.length,
                       itemBuilder: (_, i) {
                         final v = _viewers[i];

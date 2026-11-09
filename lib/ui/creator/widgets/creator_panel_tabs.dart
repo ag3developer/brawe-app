@@ -30,7 +30,11 @@ Future<void> _refreshJourney(WidgetRef ref) async {
 
 /// Casca comum das abas baseadas na jornada: carregando / erro / dados.
 class _JourneyTab extends ConsumerWidget {
-  const _JourneyTab({required this.storageKey, required this.builder, this.extraRefresh});
+  const _JourneyTab({
+    required this.storageKey,
+    required this.builder,
+    this.extraRefresh,
+  });
   final String storageKey;
   final Widget Function(BuildContext, CreatorJourney) builder;
   final Future<void> Function(WidgetRef)? extraRefresh;
@@ -49,10 +53,15 @@ class _JourneyTab extends ConsumerWidget {
       onRefresh: refresh,
       slivers: [
         async.when(
-          loading: () => const SliverToBoxAdapter(child: AgencySkeleton(blocks: [72, 150, 140])),
+          loading: () => const SliverToBoxAdapter(
+            child: AgencySkeleton(blocks: [72, 150, 140]),
+          ),
           error: (_, _) => SliverFillRemaining(
             hasScrollBody: false,
-            child: CreatorErrorView(message: s.creatorDashErrorTitle, onRetry: refresh),
+            child: CreatorErrorView(
+              message: s.creatorDashErrorTitle,
+              onRetry: refresh,
+            ),
           ),
           data: (j) => SliverToBoxAdapter(child: builder(context, j)),
         ),
@@ -72,8 +81,15 @@ class PanelHomeTab extends StatelessWidget {
       storageKey: 'panel-home',
       extraRefresh: (ref) async => ref.invalidate(creatorAgencyProvider),
       builder: (context, j) => AgencyColumns(
-        left: [const PanelShortcuts(), PanelNextLevelCard(journey: j)],
-        right: [if (j.goals.isNotEmpty && j.nextTier != null) PanelGoalsCard(journey: j), const PanelAgenciesRow()],
+        left: [
+          const PanelShortcuts(),
+          PanelNextLevelCard(journey: j),
+        ],
+        right: [
+          if (j.goals.isNotEmpty && j.nextTier != null)
+            PanelGoalsCard(journey: j),
+          const PanelAgenciesRow(),
+        ],
       ),
     );
   }
@@ -87,45 +103,85 @@ class PanelShortcuts extends StatelessWidget {
     final s = S.of(context);
     final c = context.colors;
     final items = <(IconData, String, String, Color)>[
-      (LucideIcons.radio, s.creatorDashboardQuickGoLive, '/live/start', c.accentPink),
-      (LucideIcons.squarePen, s.creatorDashboardQuickCreatePost, '/feed', c.accentGold),
+      (
+        LucideIcons.radio,
+        s.creatorDashboardQuickGoLive,
+        '/live/start',
+        c.accentPink,
+      ),
+      (
+        LucideIcons.squarePen,
+        s.creatorDashboardQuickCreatePost,
+        '/feed',
+        c.accentGold,
+      ),
       // Monetização é uma aba deste mesmo painel: troca de aba em vez de abrir outra tela.
-      if (kEnableMonetization) (LucideIcons.gem, s.creatorPanelTabMonetization, '/creator/dashboard?tab=monetization', c.success),
-      (LucideIcons.chartColumn, s.creatorDashShortcutAnalytics, '/creator/analytics', c.accentPrimary),
+      if (kEnableMonetization)
+        (
+          LucideIcons.gem,
+          s.creatorPanelTabMonetization,
+          '/creator/dashboard?tab=monetization',
+          c.success,
+        ),
+      (
+        LucideIcons.chartColumn,
+        s.creatorDashShortcutAnalytics,
+        '/creator/analytics',
+        c.accentPrimary,
+      ),
     ];
     return AgencyBox(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        for (final it in items)
-          Expanded(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                final tab = Uri.parse(it.$3).queryParameters['tab'];
-                final select = CreatorPanelScope.selectTabOf(context);
-                if (tab != null && select != null && select(tab)) return;
-                context.push(it.$3);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(color: it.$4.withValues(alpha: 0.14), shape: BoxShape.circle),
-                    child: Icon(it.$1, size: 19, color: it.$4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final it in items)
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  final tab = Uri.parse(it.$3).queryParameters['tab'];
+                  final select = CreatorPanelScope.selectTabOf(context);
+                  if (tab != null && select != null && select(tab)) return;
+                  context.push(it.$3);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 2,
                   ),
-                  const SizedBox(height: 6),
-                  Text(it.$2,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: c.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.2)),
-                ]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: it.$4.withValues(alpha: 0.14),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(it.$1, size: 19, color: it.$4),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        it.$2,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: c.textPrimary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -154,39 +210,67 @@ class PanelNextLevelCard extends StatelessWidget {
 
     return AgencyBox(
       onTap: () => context.push('/creator/badge'),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(color: shown.color.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
-            child: Icon(shown.icon, size: 19, color: shown.color),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: shown.color.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(shown.icon, size: 19, color: shown.color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      next == null
+                          ? s.creatorDashCurrentLevel
+                          : s.creatorPanelNextLevel,
+                      style: AgencyText.caption(context),
+                    ),
+                    Text(
+                      shown.title(s),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AgencyText.title(context).copyWith(fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+              if (pct != null && next != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '$pct%',
+                  style: AgencyText.number(
+                    context,
+                    size: 20,
+                    color: shown.color,
+                  ),
+                ),
+              ],
+              const SizedBox(width: 4),
+              Icon(LucideIcons.chevronRight, size: 18, color: c.textTertiary),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(next == null ? s.creatorDashCurrentLevel : s.creatorPanelNextLevel, style: AgencyText.caption(context)),
-              Text(shown.title(s), maxLines: 1, overflow: TextOverflow.ellipsis, style: AgencyText.title(context).copyWith(fontSize: 16)),
-            ]),
-          ),
-          if (pct != null && next != null) ...[
-            const SizedBox(width: 8),
-            Text('$pct%', style: AgencyText.number(context, size: 20, color: shown.color)),
+          if (progress != null && next != null) ...[
+            const SizedBox(height: 12),
+            AgencyProgressBar(value: progress, color: shown.color),
           ],
-          const SizedBox(width: 4),
-          Icon(LucideIcons.chevronRight, size: 18, color: c.textTertiary),
-        ]),
-        if (progress != null && next != null) ...[
+          const SizedBox(height: 10),
+          Text(note, style: AgencyText.caption(context)),
           const SizedBox(height: 12),
-          AgencyProgressBar(value: progress, color: shown.color),
+          const AgencyDivider(),
+          const SizedBox(height: 12),
+          _CompactTrail(levels: journey.levels),
         ],
-        const SizedBox(height: 10),
-        Text(note, style: AgencyText.caption(context)),
-        const SizedBox(height: 12),
-        const AgencyDivider(),
-        const SizedBox(height: 12),
-        _CompactTrail(levels: journey.levels),
-      ]),
+      ),
     );
   }
 }
@@ -203,37 +287,69 @@ class _CompactTrail extends StatelessWidget {
     if (levels.isEmpty) return const SizedBox.shrink();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        for (var i = 0; i < levels.length; i++)
-          SizedBox(
-            width: 84,
-            child: Column(children: [
-              Row(children: [
-                Expanded(child: _line(i > 0 && _reached(levels[i]), c.accentPrimary, c.border, show: i > 0)),
-                _dot(levels[i], c),
-                Expanded(child: _line(_reached(levels[i]) && levels[i].status != JourneyLevelStatus.current, c.accentPrimary, c.border, show: i < levels.length - 1)),
-              ]),
-              const SizedBox(height: 6),
-              Text(levels[i].tier.title(s),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    height: 1.2,
-                    color: levels[i].status == JourneyLevelStatus.current ? c.textPrimary : c.textTertiary,
-                    fontSize: 11,
-                    fontWeight: levels[i].status == JourneyLevelStatus.current ? FontWeight.w800 : FontWeight.w600,
-                  )),
-            ]),
-          ),
-      ]),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < levels.length; i++)
+            SizedBox(
+              width: 84,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _line(
+                          i > 0 && _reached(levels[i]),
+                          c.accentPrimary,
+                          c.border,
+                          show: i > 0,
+                        ),
+                      ),
+                      _dot(levels[i], c),
+                      Expanded(
+                        child: _line(
+                          _reached(levels[i]) &&
+                              levels[i].status != JourneyLevelStatus.current,
+                          c.accentPrimary,
+                          c.border,
+                          show: i < levels.length - 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    levels[i].tier.title(s),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      height: 1.2,
+                      color: levels[i].status == JourneyLevelStatus.current
+                          ? c.textPrimary
+                          : c.textTertiary,
+                      fontSize: 11,
+                      fontWeight: levels[i].status == JourneyLevelStatus.current
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 
-  bool _reached(JourneyLevel l) => l.status == JourneyLevelStatus.achieved || l.status == JourneyLevelStatus.current;
+  bool _reached(JourneyLevel l) =>
+      l.status == JourneyLevelStatus.achieved ||
+      l.status == JourneyLevelStatus.current;
 
   Widget _line(bool on, Color onColor, Color offColor, {required bool show}) =>
-      show ? Container(height: 2, color: on ? onColor : offColor) : const SizedBox(height: 2);
+      show
+      ? Container(height: 2, color: on ? onColor : offColor)
+      : const SizedBox(height: 2);
 
   Widget _dot(JourneyLevel l, BraweColors c) {
     final color = l.tier.color;
@@ -249,19 +365,29 @@ class _CompactTrail extends StatelessWidget {
         return Container(
           width: 24,
           height: 24,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: color, width: 3), color: c.surface),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 3),
+            color: c.surface,
+          ),
         );
       case JourneyLevelStatus.next:
         return Container(
           width: 20,
           height: 20,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: color, width: 2)),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2),
+          ),
         );
       case JourneyLevelStatus.locked:
         return Container(
           width: 20,
           height: 20,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: c.surfaceHighest),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: c.surfaceHighest,
+          ),
           child: Icon(LucideIcons.lock, size: 10, color: c.textTertiary),
         );
     }
@@ -278,22 +404,35 @@ class PanelGoalsCard extends StatelessWidget {
     final c = context.colors;
     final next = journey.nextTier!;
     return AgencyBox(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        AgencyBoxTitle(icon: LucideIcons.target, text: s.creatorDashGoalsTitle(next.title(s))),
-        const SizedBox(height: 12),
-        for (var i = 0; i < journey.goals.length; i++) ...[
-          if (i > 0) const SizedBox(height: 14),
-          _GoalLine(goal: journey.goals[i]),
-        ],
-        if (journey.allGoalsDone) ...[
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AgencyBoxTitle(
+            icon: LucideIcons.target,
+            text: s.creatorDashGoalsTitle(next.title(s)),
+          ),
           const SizedBox(height: 12),
-          Row(children: [
-            Icon(LucideIcons.circleCheck, size: 15, color: c.success),
-            const SizedBox(width: 8),
-            Expanded(child: Text(s.creatorDashGoalsAllDone, style: AgencyText.caption(context))),
-          ]),
+          for (var i = 0; i < journey.goals.length; i++) ...[
+            if (i > 0) const SizedBox(height: 14),
+            _GoalLine(goal: journey.goals[i]),
+          ],
+          if (journey.allGoalsDone) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(LucideIcons.circleCheck, size: 15, color: c.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    s.creatorDashGoalsAllDone,
+                    style: AgencyText.caption(context),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -309,23 +448,57 @@ class _GoalLine extends StatelessWidget {
     final info = JourneyMetricInfo.of(goal.metric);
     final done = goal.done;
     final color = done ? c.success : info.color;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Icon(done ? LucideIcons.circleCheck : info.icon, size: 15, color: color),
-        const SizedBox(width: 8),
-        Expanded(child: Text(journeyMetricLabel(s, goal.metric), style: AgencyText.body(context).copyWith(fontWeight: FontWeight.w600))),
-        const SizedBox(width: 8),
-        Text(
-          s.creatorDashGoalOf(journeyCompact(goal.current > goal.target ? goal.target : goal.current), journeyCompact(goal.target)),
-          style: TextStyle(color: c.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w700, fontFeatures: kTabularFigures),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              done ? LucideIcons.circleCheck : info.icon,
+              size: 15,
+              color: color,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                journeyMetricLabel(s, goal.metric),
+                style: AgencyText.body(
+                  context,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              s.creatorDashGoalOf(
+                journeyCompact(
+                  goal.current > goal.target ? goal.target : goal.current,
+                ),
+                journeyCompact(goal.target),
+              ),
+              style: TextStyle(
+                color: c.textSecondary,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                fontFeatures: kTabularFigures,
+              ),
+            ),
+          ],
         ),
-      ]),
-      const SizedBox(height: 6),
-      AgencyProgressBar(value: goal.progress, color: color),
-      const SizedBox(height: 4),
-      Text(done ? s.creatorDashGoalDone : journeyRemaining(s, goal.metric, goal.remaining),
-          style: TextStyle(color: done ? c.success : c.textTertiary, fontSize: 11.5, fontWeight: FontWeight.w600)),
-    ]);
+        const SizedBox(height: 6),
+        AgencyProgressBar(value: goal.progress, color: color),
+        const SizedBox(height: 4),
+        Text(
+          done
+              ? s.creatorDashGoalDone
+              : journeyRemaining(s, goal.metric, goal.remaining),
+          style: TextStyle(
+            color: done ? c.success : c.textTertiary,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -364,26 +537,38 @@ class _PanelAgenciesRowState extends ConsumerState<PanelAgenciesRow> {
     final s = S.of(context);
     final c = context.colors;
     final state = ref.watch(creatorAgencyProvider).value;
-    if (state == null || state.link != null || state.pendingInvites.isNotEmpty) return const SizedBox.shrink();
+    if (state == null || state.link != null || state.pendingInvites.isNotEmpty)
+      return const SizedBox.shrink();
     final value = _local ?? state.openToAgencies;
     return AgencyBox(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      child: Row(children: [
-        Icon(LucideIcons.building2, size: 18, color: c.textSecondary),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s.creatorPanelAgenciesRow, style: AgencyText.title(context)),
-            Text(s.creatorPanelAgenciesOpen, style: AgencyText.caption(context)),
-          ]),
-        ),
-        IconButton(
-          tooltip: s.creatorPanelHowItWorks,
-          icon: Icon(LucideIcons.info, size: 18, color: c.textTertiary),
-          onPressed: () => showAgenciesHowSheet(context),
-        ),
-        Switch(value: value, onChanged: _busy ? null : _toggle),
-      ]),
+      child: Row(
+        children: [
+          Icon(LucideIcons.building2, size: 18, color: c.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.creatorPanelAgenciesRow,
+                  style: AgencyText.title(context),
+                ),
+                Text(
+                  s.creatorPanelAgenciesOpen,
+                  style: AgencyText.caption(context),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: s.creatorPanelHowItWorks,
+            icon: Icon(LucideIcons.info, size: 18, color: c.textTertiary),
+            onPressed: () => showAgenciesHowSheet(context),
+          ),
+          Switch(value: value, onChanged: _busy ? null : _toggle),
+        ],
+      ),
     );
   }
 }
@@ -401,25 +586,44 @@ Future<void> showAgenciesHowSheet(BuildContext context) {
     (LucideIcons.shieldCheck, s.agencyExitRuleAbuse),
   ];
   return showModalBottomSheet<void>(
+    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
     builder: (ctx) => SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(s.creatorPanelHowTitle, style: TextStyle(color: c.textPrimary, fontSize: 18, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 14),
-        for (final p in points)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(p.$1, size: 18, color: c.accentPrimary),
-              const SizedBox(width: 12),
-              Expanded(child: Text(p.$2, style: AgencyText.body(context))),
-            ]),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        0,
+        20,
+        24 + MediaQuery.paddingOf(ctx).bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            s.creatorPanelHowTitle,
+            style: TextStyle(
+              color: c.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-      ]),
+          const SizedBox(height: 14),
+          for (final p in points)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(p.$1, size: 18, color: c.accentPrimary),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(p.$2, style: AgencyText.body(context))),
+                ],
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -450,22 +654,34 @@ class PanelWeekCard extends StatelessWidget {
     final s = S.of(context);
     return AgencyBox(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        AgencyBoxTitle(icon: LucideIcons.gauge, text: s.creatorDashWeekTitle),
-        const SizedBox(height: 2),
-        Padding(
-          padding: const EdgeInsets.only(left: 24),
-          child: Text(s.creatorDashWeekSubtitle, style: AgencyText.caption(context)),
-        ),
-        const SizedBox(height: 6),
-        if (journey.week.isEmpty)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(s.agencyChartEmpty, style: AgencyText.caption(context)))
-        else
-          for (var i = 0; i < journey.week.length; i++) ...[
-            if (i > 0) const AgencyDivider(),
-            _WeekRow(metric: journey.week[i]),
-          ],
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AgencyBoxTitle(icon: LucideIcons.gauge, text: s.creatorDashWeekTitle),
+          const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.only(left: 24),
+            child: Text(
+              s.creatorDashWeekSubtitle,
+              style: AgencyText.caption(context),
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (journey.week.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                s.agencyChartEmpty,
+                style: AgencyText.caption(context),
+              ),
+            )
+          else
+            for (var i = 0; i < journey.week.length; i++) ...[
+              if (i > 0) const AgencyDivider(),
+              _WeekRow(metric: journey.week[i]),
+            ],
+        ],
+      ),
     );
   }
 }
@@ -481,9 +697,21 @@ class _WeekRow extends StatelessWidget {
     final info = JourneyMetricInfo.of(metric.metric);
     final route = journeyMetricRoute(metric.metric);
     final (IconData icon, Color col, String text) = switch (metric.trend) {
-      JourneyTrend.up => (LucideIcons.trendingUp, c.success, '+${journeyCompact(metric.delta.abs())}'),
-      JourneyTrend.down => (LucideIcons.trendingDown, c.danger, '-${journeyCompact(metric.delta.abs())}'),
-      JourneyTrend.flat => (LucideIcons.equal, c.textTertiary, s.creatorDashWeekSameShort),
+      JourneyTrend.up => (
+        LucideIcons.trendingUp,
+        c.success,
+        '+${journeyCompact(metric.delta.abs())}',
+      ),
+      JourneyTrend.down => (
+        LucideIcons.trendingDown,
+        c.danger,
+        '-${journeyCompact(metric.delta.abs())}',
+      ),
+      JourneyTrend.flat => (
+        LucideIcons.equal,
+        c.textTertiary,
+        s.creatorDashWeekSameShort,
+      ),
     };
     return InkWell(
       onTap: route == null ? null : () => context.push(route),
@@ -491,27 +719,47 @@ class _WeekRow extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 52),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(children: [
-            Icon(info.icon, size: 17, color: info.color),
-            const SizedBox(width: 10),
-            Expanded(child: Text(journeyMetricLabel(s, metric.metric, week: true), style: AgencyText.body(context))),
-            const SizedBox(width: 8),
-            Text(journeyCompact(metric.current), style: AgencyText.number(context, size: 17)),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 64,
-              child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-                Icon(icon, size: 13, color: col),
-                const SizedBox(width: 3),
-                Flexible(
-                  child: Text(text,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: col, fontSize: 12, fontWeight: FontWeight.w700, fontFeatures: kTabularFigures)),
+          child: Row(
+            children: [
+              Icon(info.icon, size: 17, color: info.color),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  journeyMetricLabel(s, metric.metric, week: true),
+                  style: AgencyText.body(context),
                 ),
-              ]),
-            ),
-          ]),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                journeyCompact(metric.current),
+                style: AgencyText.number(context, size: 17),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 64,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Icon(icon, size: 13, color: col),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: col,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: kTabularFigures,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -526,22 +774,40 @@ class PanelAnalyticsEntry extends StatelessWidget {
     final c = context.colors;
     return AgencyBox(
       onTap: () => context.push('/creator/analytics'),
-      child: Row(children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(color: c.accentPrimary.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(12)),
-          child: Icon(LucideIcons.chartColumn, size: 20, color: c.accentPrimary),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(s.creatorPanelAnalyticsTitle, style: AgencyText.title(context)),
-            Text(s.creatorPanelAnalyticsBody, style: AgencyText.caption(context)),
-          ]),
-        ),
-        Icon(LucideIcons.chevronRight, size: 18, color: c.textTertiary),
-      ]),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: c.accentPrimary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              LucideIcons.chartColumn,
+              size: 20,
+              color: c.accentPrimary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.creatorPanelAnalyticsTitle,
+                  style: AgencyText.title(context),
+                ),
+                Text(
+                  s.creatorPanelAnalyticsBody,
+                  style: AgencyText.caption(context),
+                ),
+              ],
+            ),
+          ),
+          Icon(LucideIcons.chevronRight, size: 18, color: c.textTertiary),
+        ],
+      ),
     );
   }
 }
@@ -555,7 +821,8 @@ class PanelBenefitsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return _JourneyTab(
       storageKey: 'panel-benefits',
-      builder: (context, j) => AgencyColumns(left: [JourneyBenefitsSection(journey: j)]),
+      builder: (context, j) =>
+          AgencyColumns(left: [JourneyBenefitsSection(journey: j)]),
     );
   }
 }

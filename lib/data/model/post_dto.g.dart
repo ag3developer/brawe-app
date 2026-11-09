@@ -60,6 +60,9 @@ _PostResponseDto _$PostResponseDtoFromJson(
   mediaType: json['media_type'] as String?,
   poll: _pollFromJson(json['poll']),
   location: _locationFromJson(json['location']),
+  commentsDisabled: json['comments_disabled'] as bool? ?? false,
+  hideLikeCount: json['hide_like_count'] as bool? ?? false,
+  canComment: json['can_comment'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
@@ -92,6 +95,9 @@ Map<String, dynamic> _$PostResponseDtoToJson(_PostResponseDto instance) =>
       'media_type': instance.mediaType,
       'poll': _pollToJson(instance.poll),
       'location': _locationToJson(instance.location),
+      'comments_disabled': instance.commentsDisabled,
+      'hide_like_count': instance.hideLikeCount,
+      'can_comment': instance.canComment,
     };
 
 _PostFeedResponseDto _$PostFeedResponseDtoFromJson(Map<String, dynamic> json) =>

@@ -271,6 +271,7 @@ class LiveGoalsSheet extends StatelessWidget {
   }) {
     final rootContext = Navigator.of(context, rootNavigator: true).context;
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: rootContext,
       isScrollControlled: true,
       useSafeArea: true,

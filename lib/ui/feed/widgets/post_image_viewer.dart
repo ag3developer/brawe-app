@@ -137,16 +137,25 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
     );
     _heartScale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 1.25).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 0.0,
+          end: 1.25,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.25, end: 1.0).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.25,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 20,
       ),
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 30),
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(
+          begin: 1.0,
+          end: 0.0,
+        ).chain(CurveTween(curve: Curves.easeIn)),
         weight: 20,
       ),
     ]).animate(_heartCtrl);
@@ -162,7 +171,10 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
     if (sound != null) {
       ref
           .read(soundPlayerViewModelProvider.notifier)
-          .play(sound.toPlayableSound(volume: widget.soundVolume), owner: _owner);
+          .play(
+            sound.toPlayableSound(volume: widget.soundVolume),
+            owner: _owner,
+          );
     }
   }
 
@@ -183,7 +195,10 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
           _pausedByLifecycle = false;
           ref
               .read(soundPlayerViewModelProvider.notifier)
-              .play(sound.toPlayableSound(volume: widget.soundVolume), owner: _owner);
+              .play(
+                sound.toPlayableSound(volume: widget.soundVolume),
+                owner: _owner,
+              );
         }
       case AppLifecycleState.detached:
         break;
@@ -240,7 +255,9 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
     widget.onLikeChanged(!wasLiked, nextCount);
     _syncFeeds(liked: !wasLiked, likes: nextCount);
     try {
-      await ref.read(postRepositoryProvider).toggleLike(widget.postId, wasLiked);
+      await ref
+          .read(postRepositoryProvider)
+          .toggleLike(widget.postId, wasLiked);
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -286,7 +303,10 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
           _commentsBase = total;
           return;
         }
-        final updated = (widget.commentsCount + (total - base)).clamp(0, 1 << 30);
+        final updated = (widget.commentsCount + (total - base)).clamp(
+          0,
+          1 << 30,
+        );
         if (updated != _commentsCount) {
           setState(() => _commentsCount = updated);
           widget.onCommentsCountChanged?.call(updated);
@@ -301,6 +321,7 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
     HapticFeedback.selectionClick();
     _watchComments();
     await showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -356,8 +377,8 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
     if (!wasDragging || _closing) return;
     _dragging = false;
     final vy = _velocity?.getVelocity().pixelsPerSecond.dy ?? 0;
-    final flick = vy.abs() > kPostViewerDismissVelocity &&
-        vy.sign == _drag.dy.sign;
+    final flick =
+        vy.abs() > kPostViewerDismissVelocity && vy.sign == _drag.dy.sign;
     if (_drag.dy.abs() > kPostViewerDismissDistance || flick) {
       _closing = true;
       Navigator.of(context).maybePop();
@@ -414,7 +435,11 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
               ),
             ),
             errorWidget: (_, _, _) => const Center(
-              child: Icon(LucideIcons.imageOff, color: Colors.white38, size: 64),
+              child: Icon(
+                LucideIcons.imageOff,
+                color: Colors.white38,
+                size: 64,
+              ),
             ),
           );
 
@@ -450,7 +475,8 @@ class _PostImageViewerState extends ConsumerState<PostImageViewer>
                         child: GestureDetector(
                           key: const Key('postViewerPhoto'),
                           behavior: HitTestBehavior.opaque,
-                          onDoubleTapDown: (d) => _lastTapDown = d.localPosition,
+                          onDoubleTapDown: (d) =>
+                              _lastTapDown = d.localPosition,
                           onDoubleTap: _doubleTapLike,
                           child: InteractiveViewer(
                             transformationController: _zoomCtrl,

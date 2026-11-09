@@ -9,6 +9,7 @@ import '../../../core/text/brawe_rich_text.dart';
 import '../../../domain/models/app_notification.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../../data/services/privacy_ux_service.dart';
 import '../../core/view_models/follow_view_model.dart';
 import '../notification_presentation.dart';
 
@@ -184,8 +185,15 @@ class NotificationTile extends StatelessWidget {
       color: colors.textPrimary,
     );
 
+    final isRequest =
+        NotifPresentation.followKind(n) == 'follow_request' &&
+        actors.isNotEmpty &&
+        actors.first.id.isNotEmpty;
+
     final Widget trailing;
-    if (followActor != null) {
+    if (isRequest) {
+      trailing = const SizedBox.shrink();
+    } else if (followActor != null) {
       trailing = _FollowBackButton(userId: followActor);
     } else if (xp != null && xp > 0) {
       trailing = Container(
@@ -271,7 +279,12 @@ class NotificationTile extends StatelessWidget {
                             height: 1.3,
                           ),
                         ),
-                        if (n.message.isNotEmpty) ...[
+                        if (isRequest)
+                          _FollowRequestActions(
+                            requesterId: actors.first.id,
+                            notificationId: n.id,
+                          ),
+                        if (n.message.isNotEmpty && !isRequest) ...[
                           const SizedBox(height: 2),
                           Text(
                             BraweRichText.humanize(
@@ -470,6 +483,84 @@ class _FollowBackButton extends ConsumerWidget {
       filled: !following,
       onTap: () =>
           ref.read(followViewModelProvider(userId).notifier).toggleFollow(),
+    );
+  }
+}
+
+/// Confirmar / Excluir um pedido para seguir, direto na linha.
+class _FollowRequestActions extends ConsumerStatefulWidget {
+  const _FollowRequestActions({
+    required this.requesterId,
+    required this.notificationId,
+  });
+
+  final String requesterId;
+  final String notificationId;
+
+  @override
+  ConsumerState<_FollowRequestActions> createState() =>
+      _FollowRequestActionsState();
+}
+
+class _FollowRequestActionsState extends ConsumerState<_FollowRequestActions> {
+  bool _busy = false;
+  bool? _accepted; // null = pendente
+
+  Future<void> _answer(bool accept) async {
+    if (_busy) return;
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _busy = true);
+    try {
+      final svc = ref.read(privacyUxServiceProvider);
+      if (accept) {
+        await svc.acceptRequest(widget.requesterId);
+      } else {
+        await svc.declineRequest(widget.requesterId);
+      }
+      ref.invalidate(pendingFollowRequestsProvider);
+      if (!mounted) return;
+      setState(() {
+        _accepted = accept;
+        _busy = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final colors = context.colors;
+    if (_accepted != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Text(
+          _accepted! ? s.privUxRequestAccepted : s.privUxRequestDeclined,
+          style: TextStyle(color: colors.textSecondary, fontSize: 13),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          _PillButton(
+            label: s.privUxConfirm,
+            filled: true,
+            onTap: _busy ? null : () => _answer(true),
+          ),
+          const SizedBox(width: 8),
+          _PillButton(
+            label: s.privUxDelete,
+            filled: false,
+            onTap: _busy ? null : () => _answer(false),
+          ),
+        ],
+      ),
     );
   }
 }

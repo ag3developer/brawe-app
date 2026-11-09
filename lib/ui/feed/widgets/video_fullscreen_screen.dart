@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../data/repositories/post_repository.dart';
 import '../../../data/services/feedback_service.dart';
+import '../../../data/services/privacy_ux_service.dart';
 import '../../../domain/models/failure.dart';
 import '../../../domain/models/post.dart';
 import '../../../domain/models/sound_preview.dart';
@@ -62,6 +63,7 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
           : const [DeviceOrientation.portraitUp],
     );
   }
+
   Post? _post;
 
   /// Painel de comentários embutido: o vídeo encolhe acima dele e segue tocando.
@@ -276,9 +278,9 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     // Sai da paisagem: o app é travado em retrato.
     if (_landscape) {
-      SystemChrome.setPreferredOrientations(
-        const [DeviceOrientation.portraitUp],
-      );
+      SystemChrome.setPreferredOrientations(const [
+        DeviceOrientation.portraitUp,
+      ]);
     }
     _syncTimer?.cancel();
     _comments.dispose();
@@ -367,6 +369,8 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
     // não deve haver correção de drift comparando contra um vídeo parado.
     _syncTimer?.cancel();
     await showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -456,7 +460,10 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
         if (!mounted || _post == null) return;
         Post patch(Post p) => p.copyWith(
           userReposted: reposted,
-          repostsCount: (p.repostsCount + (reposted ? 1 : -1)).clamp(0, 1 << 30),
+          repostsCount: (p.repostsCount + (reposted ? 1 : -1)).clamp(
+            0,
+            1 << 30,
+          ),
         );
         setState(() => _post = patch(_post!));
         _patchFeeds(patch);
@@ -672,7 +679,9 @@ class _VideoFullscreenScreenState extends ConsumerState<VideoFullscreenScreen>
                           color: Colors.white,
                           fontSize: 14,
                           height: 1.4,
-                          shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                          shadows: [
+                            Shadow(color: Colors.black54, blurRadius: 6),
+                          ],
                         ),
                       ),
                     if (_ctrl != null) ...[
@@ -738,7 +747,7 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
-class _VideoActionRail extends StatelessWidget {
+class _VideoActionRail extends ConsumerWidget {
   const _VideoActionRail({
     required this.post,
     required this.onLike,
@@ -758,7 +767,12 @@ class _VideoActionRail extends StatelessWidget {
   final VoidCallback onShare;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hideLikes = shouldHideLikeCount(
+      ref,
+      authorId: post.author.id,
+      postHides: post.hideLikeCount,
+    );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -766,7 +780,7 @@ class _VideoActionRail extends StatelessWidget {
           icon: post.userLiked
               ? Icons.favorite_rounded
               : Icons.favorite_outline_rounded,
-          label: _fmt(post.likesCount),
+          label: hideLikes ? '' : _fmt(post.likesCount),
           color: post.userLiked ? const Color(0xFFFF3B5C) : Colors.white,
           onTap: onLike,
           onLongPress: onLikeLongPress,

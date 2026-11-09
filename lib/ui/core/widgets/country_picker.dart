@@ -102,6 +102,8 @@ Future<Country?> showCountryPicker(
   String searchHint = 'Buscar país...',
 }) {
   return showModalBottomSheet<Country>(
+    useRootNavigator: true,
+    useSafeArea: true,
     context: context,
     isScrollControlled: true,
     backgroundColor: context.colors.background,
@@ -174,8 +176,10 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
                 hintText: widget.searchHint,
-                prefixIcon: Icon(Icons.search_rounded,
-                    color: context.colors.textSecondary),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: context.colors.textSecondary,
+                ),
                 filled: true,
                 fillColor: context.colors.surface,
                 hintStyle: TextStyle(color: context.colors.textTertiary),
@@ -196,7 +200,8 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
               // Edge-to-edge (Android 15): últimos países ficam acessíveis
               // acima do teclado e da barra de navegação.
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom +
+                bottom:
+                    MediaQuery.of(context).viewInsets.bottom +
                     MediaQuery.of(context).viewPadding.bottom,
               ),
               itemCount: filtered.length,
@@ -209,7 +214,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                     c.name,
                     style: TextStyle(
                       color: context.colors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                   ),
                   trailing: Text(
@@ -221,8 +228,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                     ),
                   ),
                   selected: isSelected,
-                  selectedTileColor:
-                      context.colors.accentPrimary.withValues(alpha: 0.08),
+                  selectedTileColor: context.colors.accentPrimary.withValues(
+                    alpha: 0.08,
+                  ),
                   onTap: () => Navigator.of(context).pop(c),
                 );
               },

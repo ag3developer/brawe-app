@@ -18,6 +18,8 @@ import '../../core/view_models/profile_view_model.dart';
 import '../../notifications/view_models/notifications_view_model.dart';
 import '../../../data/repositories/auth_state_provider.dart';
 import '../../../data/services/social_actions_service.dart';
+import '../../../data/services/privacy_ux_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/providers/marketplace_providers.dart';
 import '../../../domain/models/post.dart';
@@ -213,6 +215,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     final s = S.of(context);
     final colors = context.colors;
+    // Conta privada que eu não sigo: só o cabeçalho + bloco de cadeado.
+    final locked =
+        !isMe &&
+        !(ref.watch(userPrivacyProvider(widget.userId)).value?.canViewContent ??
+            true);
     final tabs = <Tab>[
       _iconTab(LucideIcons.layoutGrid, s.profileTabGrid),
       _iconTab(LucideIcons.clapperboard, s.profileTabVideos),
@@ -359,23 +366,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   onShare: () => _shareProfile(context),
                 ),
               ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _SliverAppBarDelegate(
-                  TabBar(
-                    controller: _tabController,
-                    indicatorColor: colors.textPrimary,
-                    indicatorWeight: 2,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    dividerColor: colors.divider,
-                    labelColor: colors.textPrimary,
-                    unselectedLabelColor: colors.textTertiary,
-                    splashFactory: NoSplash.splashFactory,
-                    tabs: tabs,
+              if (!locked)
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SliverAppBarDelegate(
+                    TabBar(
+                      controller: _tabController,
+                      indicatorColor: colors.textPrimary,
+                      indicatorWeight: 2,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      dividerColor: colors.divider,
+                      labelColor: colors.textPrimary,
+                      unselectedLabelColor: colors.textTertiary,
+                      splashFactory: NoSplash.splashFactory,
+                      tabs: tabs,
+                    ),
+                    colors.background,
                   ),
-                  colors.background,
                 ),
-              ),
             ],
             body: RefreshIndicator(
               onRefresh: () {
@@ -385,25 +393,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     .refresh();
               },
               color: colors.accentPrimary,
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  ProfileVideosGrid(
-                    userId: widget.userId,
-                    isMe: isMe,
-                    postsState: profileState.posts,
-                    videosOnly: false,
-                  ),
-                  ProfileVideosGrid(
-                    userId: widget.userId,
-                    isMe: isMe,
-                    postsState: profileState.posts,
-                  ),
-                  _TextPostsList(postsState: profileState.posts, isMe: isMe),
-                  _RepostsList(userId: widget.userId, isMe: isMe),
-                  ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
-                ],
-              ),
+              child: locked
+                  ? const _PrivateLockBlock()
+                  : TabBarView(
+                      controller: _tabController,
+                      children: [
+                        ProfileVideosGrid(
+                          userId: widget.userId,
+                          isMe: isMe,
+                          postsState: profileState.posts,
+                          videosOnly: false,
+                        ),
+                        ProfileVideosGrid(
+                          userId: widget.userId,
+                          isMe: isMe,
+                          postsState: profileState.posts,
+                        ),
+                        _TextPostsList(
+                          postsState: profileState.posts,
+                          isMe: isMe,
+                        ),
+                        _RepostsList(userId: widget.userId, isMe: isMe),
+                        ProfileGalleryGrid(userId: widget.userId, isMe: isMe),
+                      ],
+                    ),
             ),
           ),
         ),
@@ -539,6 +552,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     }
   }
 
+  Future<void> _toggleRestrict(BuildContext context, bool restricted) async {
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final service = ref.read(privacyUxServiceProvider);
+    if (!restricted) {
+      // Primeira vez: explica o que acontece antes de restringir.
+      var seen = false;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        seen = prefs.getBool('priv_restrict_intro_seen') ?? false;
+        if (!seen) {
+          if (!context.mounted) return;
+          final ok = await _showInfoSheet(
+            context,
+            icon: LucideIcons.userRoundMinus,
+            title: s.privUxRestrictIntroTitle,
+            body: s.privUxRestrictIntroBody,
+            confirm: s.privUxRestrict,
+            cancel: s.actionCancel,
+          );
+          if (ok != true) return;
+          await prefs.setBool('priv_restrict_intro_seen', true);
+        }
+      } catch (_) {}
+    }
+    try {
+      await service.setRestricted(widget.userId, !restricted);
+      ref.invalidate(userPrivacyProvider(widget.userId));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            restricted ? s.privUxUnrestrictedSnack : s.privUxRestrictedSnack,
+          ),
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
+    }
+  }
+
   void _showReportSheet(BuildContext context) {
     final s = S.of(context);
     final reasons = <(String, String)>[
@@ -549,6 +602,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       ('other', s.profileReportReasonOther),
     ];
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -612,6 +666,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   void _showOptions(BuildContext context, bool isMe) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: context.colors.surfaceElevated,
@@ -663,6 +719,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         title: muted ? s.relShowPosts : s.relHidePosts,
                         showChevron: false,
                         onTap: go(() => _toggleMute(context, muted)),
+                      );
+                    },
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final restricted =
+                          ref
+                              .watch(userPrivacyProvider(widget.userId))
+                              .value
+                              ?.isRestricted ??
+                          false;
+                      return ProfileMenuItem(
+                        icon: LucideIcons.userRoundMinus,
+                        color: context.colors.textSecondary,
+                        title: restricted ? s.privUxUnrestrict : s.privUxRestrict,
+                        showChevron: false,
+                        onTap: go(() => _toggleRestrict(context, restricted)),
                       );
                     },
                   ),
@@ -862,6 +935,19 @@ class _ProfileHeader extends ConsumerWidget {
     final colors = context.colors;
     final s = S.of(context);
     final stats = profileState.stats.asData?.value;
+    final privacy =
+        (!isMe ? ref.watch(userPrivacyProvider(userId)).value : null) ??
+        const UserPrivacy();
+    void openFollows(String tab) {
+      if (!isMe && !privacy.canViewFollowLists) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(s.privUxFollowListsHidden)));
+        return;
+      }
+      context.push('/follows/$userId?tab=$tab');
+    }
+
     final postsCount = profileState.posts.asData?.value.length;
     final joinedAt = _joinDate(context, profile);
     final handle = _realHandle(profile.username);
@@ -911,12 +997,12 @@ class _ProfileHeader extends ConsumerWidget {
                 _StatBlock(
                   value: stats == null ? '–' : _fmtCount(stats.followersCount),
                   label: s.profileStatFollowers,
-                  onTap: () => context.push('/follows/$userId?tab=followers'),
+                  onTap: () => openFollows('followers'),
                 ),
                 _StatBlock(
                   value: stats == null ? '–' : _fmtCount(stats.followingCount),
                   label: s.profileStatFollowing,
-                  onTap: () => context.push('/follows/$userId?tab=following'),
+                  onTap: () => openFollows('following'),
                 ),
               ],
             ),
@@ -1081,21 +1167,31 @@ class _ProfileHeader extends ConsumerWidget {
 
     final followState = ref.watch(followViewModelProvider(userId));
     final isFollowing = followState.asData?.value ?? false;
+    final requested =
+        !isFollowing && ref.watch(followRequestedProvider(userId));
     return Row(
       children: [
         Expanded(
           child: SizedBox(
             height: height,
             child: FilledButton(
-              style: isFollowing
+              style: (isFollowing || requested)
                   ? _tonalStyle(context)
                   : _primaryStyle(context),
               onPressed: followState.isLoading
                   ? null
+                  : requested
+                  ? () => _confirmCancelRequest(context, ref)
                   : () => ref
                         .read(followViewModelProvider(userId).notifier)
                         .toggleFollow(),
-              child: Text(isFollowing ? s.actionUnfollow : s.actionFollow),
+              child: Text(
+                isFollowing
+                    ? s.actionUnfollow
+                    : requested
+                    ? s.privUxRequested
+                    : s.actionFollow,
+              ),
             ),
           ),
         ),
@@ -1123,6 +1219,11 @@ class _ProfileHeader extends ConsumerWidget {
     // Captura antes do await: o aviso aparece nesta tela.
     final messenger = ScaffoldMessenger.of(context);
     final s = S.of(context);
+    final privacy = ref.read(userPrivacyProvider(userId)).value;
+    if (privacy != null && !privacy.canMessage) {
+      messenger.showSnackBar(SnackBar(content: Text(s.privUxMessagesNotAllowed)));
+      return;
+    }
     try {
       final convId = await ref
           .read(chatRepositoryProvider)
@@ -1138,9 +1239,34 @@ class _ProfileHeader extends ConsumerWidget {
         },
       );
     } catch (e) {
+      final server = PrivacyApiError.messageFor(e, {'messages_not_allowed'});
       messenger.showSnackBar(
-        SnackBar(content: Text(s.profileOpenConversationError(e))),
+        SnackBar(content: Text(server ?? s.profileOpenConversationError(e))),
       );
+    }
+  }
+
+  Future<void> _confirmCancelRequest(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final s = S.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await _showInfoSheet(
+      context,
+      icon: LucideIcons.userRoundX,
+      title: s.privUxCancelRequestTitle,
+      body: s.privUxCancelRequestBody,
+      confirm: s.privUxCancelRequestConfirm,
+      cancel: s.privUxKeepRequest,
+      destructive: true,
+    );
+    if (ok != true) return;
+    try {
+      await ref.read(privacyUxServiceProvider).cancelSentRequest(userId);
+      ref.read(followRequestedProvider(userId).notifier).set(false);
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(s.relActionError)));
     }
   }
 
@@ -1987,8 +2113,11 @@ class _OnlineIndicator extends ConsumerWidget {
     final presence = ref.watch(presenceCacheProvider);
     final userPresence = presence[userId];
     final isOnline = userPresence?.isOnline ?? false;
+    // A pessoa desligou o status de atividade: nunca mostra o ponto verde.
+    final showActivity =
+        ref.watch(userPrivacyProvider(userId)).value?.showActivity ?? true;
 
-    if (!isOnline) {
+    if (!isOnline || !showActivity) {
       return const SizedBox.shrink();
     }
 
@@ -2232,6 +2361,154 @@ class _AwardsSectionState extends State<_AwardsSection> {
                 ),
               ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Folha simples de confirmação/explicação (ícone, título, texto, 2 botões).
+Future<bool?> _showInfoSheet(
+  BuildContext context, {
+  required IconData icon,
+  required String title,
+  required String body,
+  required String confirm,
+  required String cancel,
+  bool destructive = false,
+}) {
+  return showModalBottomSheet<bool>(
+    context: context,
+    useRootNavigator: true,
+    backgroundColor: context.colors.surfaceElevated,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      final colors = ctx.colors;
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.surfaceHighest,
+                ),
+                child: Icon(icon, color: colors.textPrimary, size: 26),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                body,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: destructive
+                        ? colors.danger
+                        : colors.accentPrimary,
+                    foregroundColor: colors.textOnAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: Text(confirm),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: Text(
+                    cancel,
+                    style: TextStyle(color: colors.textSecondary),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+/// Conta privada que eu não sigo: no lugar das abas e da grade.
+class _PrivateLockBlock extends StatelessWidget {
+  const _PrivateLockBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final s = S.of(context);
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.textPrimary, width: 2),
+                  ),
+                  child: Icon(
+                    LucideIcons.lock,
+                    color: colors.textPrimary,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  s.privUxAccountPrivate,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  s.privUxFollowToSee,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colors.textSecondary, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

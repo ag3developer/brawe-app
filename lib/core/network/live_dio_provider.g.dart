@@ -47,4 +47,4 @@ final class LiveDioProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$liveDioHash() => r'3aed66776350f0b6b160449a255041336bb50873';
+String _$liveDioHash() => r'c2fdb38d5143e1ba8500196cec3b4136b1de4060';

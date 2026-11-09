@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../../data/repositories/post_repository.dart';
 import '../../../../../data/repositories/social_repository.dart';
 import '../../../../../data/services/feedback_service.dart';
+import '../../../../../data/services/privacy_ux_service.dart';
 import '../../../../../domain/models/feed_item.dart';
 import '../../../../../gen/l10n/app_localizations.dart';
 import '../../../../feed/widgets/comments_sheet.dart';
@@ -26,7 +27,11 @@ import '../../action_rail.dart';
 /// - Profile: navega para `/profile/{authorId}`.
 /// - Gift: gated por `kEnableMonetization` (v1.0 desativado → snackbar).
 class FeedActionsRail extends ConsumerStatefulWidget {
-  const FeedActionsRail({super.key, required this.item, this.commentsController});
+  const FeedActionsRail({
+    super.key,
+    required this.item,
+    this.commentsController,
+  });
   final FeedItem item;
 
   /// Quando informado, os comentários abrem EMBUTIDOS na tela (o vídeo
@@ -127,6 +132,7 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
       return;
     }
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -167,8 +173,10 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
           if (!mounted) return;
           setState(() {
             _reposted = reposted;
-            _repostsCount =
-                (_repostsCount + (reposted ? 1 : -1)).clamp(0, 1 << 30);
+            _repostsCount = (_repostsCount + (reposted ? 1 : -1)).clamp(
+              0,
+              1 << 30,
+            );
           });
         },
       );
@@ -253,6 +261,11 @@ class _FeedActionsRailState extends ConsumerState<FeedActionsRail> {
     final liveItem = _itemWithLocalState();
     return ActionRail(
       item: liveItem,
+      hideLikeCount: shouldHideLikeCount(
+        ref,
+        authorId: widget.item.author.id,
+        postHides: false,
+      ),
       onLike: _onLike,
       onComment: _onComment,
       onShare: _onShare,

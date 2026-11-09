@@ -64,6 +64,8 @@ class ChatUserSheet extends StatelessWidget {
     // quando o sheet fecha e o teclado reabre sozinho.
     FocusManager.instance.primaryFocus?.unfocus();
     return showModalBottomSheet<ChatUserAction>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.4),

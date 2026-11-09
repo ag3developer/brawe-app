@@ -22,6 +22,8 @@ class MoreSheet extends StatelessWidget {
     required VoidCallback onShare,
   }) {
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.55),

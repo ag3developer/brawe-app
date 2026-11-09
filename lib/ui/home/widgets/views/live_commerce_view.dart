@@ -21,6 +21,8 @@ class LiveCommerceView extends StatelessWidget {
 
   void _openCart(BuildContext context) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,

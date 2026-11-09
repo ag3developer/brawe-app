@@ -46,6 +46,8 @@ class SoundPreviewChip extends ConsumerWidget {
 
   void _openPlayer(BuildContext context) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,

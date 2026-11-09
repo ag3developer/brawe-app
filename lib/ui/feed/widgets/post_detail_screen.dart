@@ -64,6 +64,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       showModalBottomSheet(
+        useRootNavigator: true,
+        useSafeArea: true,
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,

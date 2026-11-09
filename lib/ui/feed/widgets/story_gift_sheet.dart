@@ -103,6 +103,7 @@ class StoryGiftSheet extends ConsumerStatefulWidget {
     ValueChanged<StoryGiftResult>? onSent,
   }) {
     return showModalBottomSheet<void>(
+      useSafeArea: true,
       context: context,
       isScrollControlled: true,
       useRootNavigator: true,
@@ -300,7 +301,9 @@ class _StoryGiftSheetState extends ConsumerState<StoryGiftSheet>
   Widget build(BuildContext context) {
     final c = context.colors;
     final catalog = ref.watch(giftCatalogViewModelProvider);
-    ref.watch(coinPurchaseOpenProvider); // mantém o catálogo da loja carregado enquanto aberto
+    ref.watch(
+      coinPurchaseOpenProvider,
+    ); // mantém o catálogo da loja carregado enquanto aberto
     ref.listen(creditsViewModelProvider, (_, next) {
       final v = next.value;
       if (v != null && !next.isLoading && mounted) {

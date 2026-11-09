@@ -919,12 +919,13 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   void _showQualitySelector() {
     _dismissKeyboard();
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _QualitySheet(
+      builder: (sheetCtx) => _QualitySheet(
         current: _quality,
         onSelect: (q) {
-          Navigator.pop(context);
+          Navigator.pop(sheetCtx);
           _changeQuality(q);
         },
       ),
@@ -1017,6 +1018,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final isFollowing =
         ref.read(followViewModelProvider(room.streamerId)).value ?? false;
     showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.5),
@@ -1947,7 +1949,12 @@ class _QualitySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+      margin: EdgeInsets.fromLTRB(
+        12,
+        0,
+        12,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(20),

@@ -20,6 +20,8 @@ import '../../view_models/chat_list_view_model.dart';
 /// Abre a edição de uma mensagem de texto. Devolve o texto novo (ou null).
 Future<String?> showEditMessageSheet(BuildContext context, String initial) {
   return showModalBottomSheet<String>(
+    useRootNavigator: true,
+    useSafeArea: true,
     context: context,
     isScrollControlled: true,
     backgroundColor: context.colors.surfaceElevated,
@@ -35,8 +37,9 @@ class _EditSheet extends StatefulWidget {
 }
 
 class _EditSheetState extends State<_EditSheet> {
-  late final TextEditingController _c =
-      TextEditingController(text: widget.initial);
+  late final TextEditingController _c = TextEditingController(
+    text: widget.initial,
+  );
 
   @override
   void dispose() {
@@ -51,9 +54,7 @@ class _EditSheetState extends State<_EditSheet> {
     final changed =
         _c.text.trim().isNotEmpty && _c.text.trim() != widget.initial.trim();
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -119,6 +120,8 @@ Future<void> showForwardSheet(
   required String currentConversationId,
 }) {
   return showModalBottomSheet<void>(
+    useRootNavigator: true,
+    useSafeArea: true,
     context: context,
     isScrollControlled: true,
     backgroundColor: context.colors.surfaceElevated,
@@ -152,7 +155,9 @@ class _ForwardSheetState extends ConsumerState<_ForwardSheet> {
     if (_sending.contains(c.id) || _sent.contains(c.id)) return;
     setState(() => _sending.add(c.id));
     try {
-      await ref.read(chatRepositoryProvider).sendRaw(
+      await ref
+          .read(chatRepositoryProvider)
+          .sendRaw(
             conversationId: c.id,
             content: widget.message.content,
             messageType: widget.message.messageType,
@@ -204,7 +209,9 @@ class _ForwardSheetState extends ConsumerState<_ForwardSheet> {
                   if (_sent.isNotEmpty)
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(MaterialLocalizations.of(context).okButtonLabel),
+                      child: Text(
+                        MaterialLocalizations.of(context).okButtonLabel,
+                      ),
                     ),
                 ],
               ),
@@ -230,11 +237,15 @@ class _ForwardSheetState extends ConsumerState<_ForwardSheet> {
                       leading: CircleAvatar(
                         radius: 20,
                         backgroundColor: colors.surfaceHighest,
-                        backgroundImage: (c.participantAvatarUrl != null &&
+                        backgroundImage:
+                            (c.participantAvatarUrl != null &&
                                 c.participantAvatarUrl!.isNotEmpty)
-                            ? CachedNetworkImageProvider(c.participantAvatarUrl!)
+                            ? CachedNetworkImageProvider(
+                                c.participantAvatarUrl!,
+                              )
                             : null,
-                        child: (c.participantAvatarUrl == null ||
+                        child:
+                            (c.participantAvatarUrl == null ||
                                 c.participantAvatarUrl!.isEmpty)
                             ? Text(
                                 c.participantName.isEmpty
@@ -257,18 +268,15 @@ class _ForwardSheetState extends ConsumerState<_ForwardSheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : sent
-                              ? Icon(
-                                  LucideIcons.check,
-                                  color: colors.accentPrimary,
-                                )
-                              : FilledButton(
-                                  onPressed: () => _send(c),
-                                  style: FilledButton.styleFrom(
-                                    minimumSize: const Size(0, 32),
-                                    shape: const StadiumBorder(),
-                                  ),
-                                  child: Text(s.chatSend),
-                                ),
+                          ? Icon(LucideIcons.check, color: colors.accentPrimary)
+                          : FilledButton(
+                              onPressed: () => _send(c),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(0, 32),
+                                shape: const StadiumBorder(),
+                              ),
+                              child: Text(s.chatSend),
+                            ),
                     );
                   },
                 ),
@@ -288,6 +296,8 @@ Future<void> showChatSearchSheet(
   required String conversationId,
 }) {
   return showModalBottomSheet<void>(
+    useRootNavigator: true,
+    useSafeArea: true,
     context: context,
     isScrollControlled: true,
     backgroundColor: context.colors.surfaceElevated,
@@ -416,9 +426,9 @@ class _SearchSheetState extends ConsumerState<_SearchSheet> {
   }
 
   Widget _hint(String text, BraweColors colors) => Padding(
-        padding: const EdgeInsets.all(32),
-        child: Text(text, style: TextStyle(color: colors.textSecondary)),
-      );
+    padding: const EdgeInsets.all(32),
+    child: Text(text, style: TextStyle(color: colors.textSecondary)),
+  );
 
   /// Destaca o termo buscado no texto.
   Widget _highlight(String text, String q, BraweColors colors) {
@@ -427,7 +437,12 @@ class _SearchSheetState extends ConsumerState<_SearchSheet> {
     final i = lower.indexOf(q.toLowerCase());
     final base = TextStyle(color: colors.textPrimary, fontSize: 14);
     if (i < 0) {
-      return Text(plain, maxLines: 2, overflow: TextOverflow.ellipsis, style: base);
+      return Text(
+        plain,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: base,
+      );
     }
     return Text.rich(
       TextSpan(

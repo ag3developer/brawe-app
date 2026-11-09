@@ -82,6 +82,7 @@ class LiveTopBar extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: GestureDetector(
                 onTap: () => showModalBottomSheet<void>(
+                  useRootNavigator: true,
                   context: context,
                   backgroundColor: Colors.transparent,
                   barrierColor: Colors.black.withValues(alpha: 0.5),

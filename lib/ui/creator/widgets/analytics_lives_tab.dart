@@ -32,8 +32,7 @@ class AnalyticsLivesBody extends ConsumerStatefulWidget {
   const AnalyticsLivesBody({super.key});
 
   @override
-  ConsumerState<AnalyticsLivesBody> createState() =>
-      _AnalyticsLivesBodyState();
+  ConsumerState<AnalyticsLivesBody> createState() => _AnalyticsLivesBodyState();
 }
 
 class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
@@ -152,7 +151,9 @@ class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
     }
 
     final isLives = _metric == 0;
-    final label = isLives ? s.analyticsLivesChartLives : s.analyticsLivesChartMinutes;
+    final label = isLives
+        ? s.analyticsLivesChartLives
+        : s.analyticsLivesChartMinutes;
     final color = isLives ? livesColor : minColor;
 
     return RefreshIndicator(
@@ -187,7 +188,9 @@ class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
                     isEmpty: (d) => d.emptyFor(second: !isLives),
                     emptyMessage: isLives
                         ? s.analyticsEmptyLives(analyticsRangeLabel(s, period))
-                        : s.analyticsEmptyMinutes(analyticsRangeLabel(s, period)),
+                        : s.analyticsEmptyMinutes(
+                            analyticsRangeLabel(s, period),
+                          ),
                     builder: (series) => isLives
                         ? seriesBarChart(
                             context,
@@ -208,8 +211,9 @@ class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
                             format: (v) => _duration(s, v),
                           ),
                   ),
-                  legendBuilder: (compare) =>
-                      seriesLegend(context, [(color: color, label: label)], compare),
+                  legendBuilder: (compare) => seriesLegend(context, [
+                    (color: color, label: label),
+                  ], compare),
                 ),
                 AnalyticsSectionTitle(title: s.analyticsLivesHistoryTitle),
               ]),
@@ -271,7 +275,10 @@ class _AnalyticsLivesBodyState extends ConsumerState<AnalyticsLivesBody> {
                         )
                       : const SizedBox.shrink();
                 }
-                return StaggerIn(index: i.clamp(0, 6), child: _LiveTile(item: allItems[i]));
+                return StaggerIn(
+                  index: i.clamp(0, 6),
+                  child: _LiveTile(item: allItems[i]),
+                );
               }, childCount: allItems.length + 1),
             ),
           ),
@@ -588,7 +595,12 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
         );
       }
     } catch (e) {
-      if (mounted) _showSnack(context, S.of(context).moneyLivesReplayFetchError, isError: true);
+      if (mounted)
+        _showSnack(
+          context,
+          S.of(context).moneyLivesReplayFetchError,
+          isError: true,
+        );
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -617,6 +629,7 @@ class _ReplayBadgeState extends ConsumerState<_ReplayBadge> {
 
   void _showDownloadSheet(BuildContext context, LiveHistoryItem item) {
     showModalBottomSheet(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
@@ -958,7 +971,9 @@ class _DownloadSheetState extends ConsumerState<_DownloadSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.item.title.isEmpty ? S.of(context).moneyLivesUntitled : widget.item.title,
+            widget.item.title.isEmpty
+                ? S.of(context).moneyLivesUntitled
+                : widget.item.title,
             style: TextStyle(color: textSec, fontSize: 13),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

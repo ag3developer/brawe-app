@@ -126,22 +126,30 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
     // Re-entrar na sala quando o socket reconectar (ex: servidor reiniciado)
     _reconnectSubscription = repo.watchReconnect().listen((_) {
-      debugPrint('ChatDetailViewModel: socket reconnected, re-joining $conversationId');
+      debugPrint(
+        'ChatDetailViewModel: socket reconnected, re-joining $conversationId',
+      );
       repo.joinConversation(conversationId);
     });
 
-    _messagesSubscription =
-        repo.watchMessages(conversationId).listen(_handleIncomingMessage);
-    _typingSubscription =
-        repo.watchTyping(conversationId).listen(_handleTypingIndicator);
-    _burnSubscription =
-        repo.watchBurns(conversationId).listen(_handleBurnEvent);
-    _reactionSubscription =
-        repo.reactionStream(conversationId).listen(_handleReactionUpdate);
-    _deletedSubscription =
-        repo.watchDeleted(conversationId).listen(_removeMessage);
-    _updateSubscription =
-        repo.watchUpdates(conversationId).listen(_handleUpdate);
+    _messagesSubscription = repo
+        .watchMessages(conversationId)
+        .listen(_handleIncomingMessage);
+    _typingSubscription = repo
+        .watchTyping(conversationId)
+        .listen(_handleTypingIndicator);
+    _burnSubscription = repo
+        .watchBurns(conversationId)
+        .listen(_handleBurnEvent);
+    _reactionSubscription = repo
+        .reactionStream(conversationId)
+        .listen(_handleReactionUpdate);
+    _deletedSubscription = repo
+        .watchDeleted(conversationId)
+        .listen(_removeMessage);
+    _updateSubscription = repo
+        .watchUpdates(conversationId)
+        .listen(_handleUpdate);
 
     await _loadInitial();
 
@@ -285,9 +293,10 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     }
   }
 
-  Future<void> sendMessage(String content, {ChatMessage? replyTo}) async {
+  /// Devolve false se o envio falhou (a tela devolve o rascunho ao campo).
+  Future<bool> sendMessage(String content, {ChatMessage? replyTo}) async {
     final trimmed = content.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty) return true;
 
     final optimisticMessage = await _buildOptimisticMessage(
       trimmed,
@@ -297,7 +306,9 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     state = state.copyWith(isSending: true, clearErrorMessage: true);
 
     try {
-      final sent = await ref.read(chatRepositoryProvider).sendMessage(
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .sendMessage(
             conversationId: _conversationId,
             message: trimmed,
             replyToMessageId: replyTo?.id,
@@ -311,18 +322,18 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       _replaceMessage(optimisticMessage.id, merged);
       state = state.copyWith(isSending: false);
       ref.read(chatSoundsServiceProvider).playSent();
+      return true;
     } on Failure catch (failure) {
       _removeMessage(optimisticMessage.id);
       state = state.copyWith(
         isSending: false,
         errorMessage: failure.toDisplayMessage(),
       );
+      return false;
     } catch (_) {
       _removeMessage(optimisticMessage.id);
-      state = state.copyWith(
-        isSending: false,
-        errorMessage: 'chat.err.send',
-      );
+      state = state.copyWith(isSending: false, errorMessage: 'chat.err.send');
+      return false;
     }
   }
 
@@ -370,9 +381,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     } catch (e) {
       // Reverter em caso de falha
       _patchMessage(messageId, (m) => m.copyWith(reactions: snapshot));
-      state = state.copyWith(
-        errorMessage: 'chat.err.react',
-      );
+      state = state.copyWith(errorMessage: 'chat.err.react');
     }
   }
 
@@ -430,8 +439,8 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
         content: replyTo.messageType == 'image'
             ? ''
             : (replyTo.content.length > 120
-                ? replyTo.content.substring(0, 120)
-                : replyTo.content),
+                  ? replyTo.content.substring(0, 120)
+                  : replyTo.content),
         messageType: replyTo.messageType,
         isBurned: replyTo.isBurned,
       );
@@ -458,31 +467,35 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   void _replaceMessage(String oldId, ChatMessage newMessage) {
     // Se o eco do socket já colocou a mensagem real na lista, só tira a
     // provisória (senão ficariam duas iguais).
-    final alreadyThere =
-        state.messages.any((m) => m.id == newMessage.id && m.id != oldId);
+    final alreadyThere = state.messages.any(
+      (m) => m.id == newMessage.id && m.id != oldId,
+    );
     state = state.copyWith(
       messages: alreadyThere
           ? state.messages.where((m) => m.id != oldId).toList(growable: false)
           : state.messages
-              .map((m) => m.id == oldId ? newMessage : m)
-              .toList(growable: false),
+                .map((m) => m.id == oldId ? newMessage : m)
+                .toList(growable: false),
     );
   }
 
   void _removeMessage(String messageId) {
     state = state.copyWith(
-      messages:
-          state.messages.where((m) => m.id != messageId).toList(growable: false),
+      messages: state.messages
+          .where((m) => m.id != messageId)
+          .toList(growable: false),
     );
   }
 
   void _handleUpdate(MessageUpdate u) {
     state = state.copyWith(
-      messages: state.messages.map((m) {
-        if (m.id != u.messageId) return m;
-        if (u.message != null) return u.message!;
-        return m.copyWith(content: u.content, editedAt: u.editedAt);
-      }).toList(growable: false),
+      messages: state.messages
+          .map((m) {
+            if (m.id != u.messageId) return m;
+            if (u.message != null) return u.message!;
+            return m.copyWith(content: u.content, editedAt: u.editedAt);
+          })
+          .toList(growable: false),
     );
   }
 
@@ -493,19 +506,24 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     final snapshot = state.messages;
     state = state.copyWith(
       messages: state.messages
-          .map((m) => m.id == messageId
-              ? m.copyWith(content: text, editedAt: DateTime.now())
-              : m)
+          .map(
+            (m) => m.id == messageId
+                ? m.copyWith(content: text, editedAt: DateTime.now())
+                : m,
+          )
           .toList(growable: false),
     );
     try {
-      final saved =
-          await ref.read(chatRepositoryProvider).editMessage(messageId, text);
-      _handleUpdate(MessageUpdate(
-        messageId: messageId,
-        content: saved.content,
-        editedAt: saved.editedAt ?? DateTime.now(),
-      ));
+      final saved = await ref
+          .read(chatRepositoryProvider)
+          .editMessage(messageId, text);
+      _handleUpdate(
+        MessageUpdate(
+          messageId: messageId,
+          content: saved.content,
+          editedAt: saved.editedAt ?? DateTime.now(),
+        ),
+      );
       return true;
     } catch (_) {
       state = state.copyWith(messages: snapshot, errorMessage: 'chat.err.edit');
@@ -516,8 +534,9 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   /// Abre o cofre de um presente de story. Devolve a mensagem atualizada.
   Future<ChatMessage?> openGift(String messageId) async {
     try {
-      final updated =
-          await ref.read(chatRepositoryProvider).openGift(messageId);
+      final updated = await ref
+          .read(chatRepositoryProvider)
+          .openGift(messageId);
       _handleUpdate(MessageUpdate(messageId: messageId, message: updated));
       return updated;
     } catch (_) {
@@ -528,27 +547,28 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
 
   /// Envia localização (`{"lat","lng","name"}`).
   Future<void> sendLocation(double lat, double lng, {String? name}) =>
-      _sendRich(
-        'location',
-        jsonEncode({'lat': lat, 'lng': lng, 'name': name}),
-      );
+      _sendRich('location', jsonEncode({'lat': lat, 'lng': lng, 'name': name}));
 
   /// Envia um arquivo (PDF, DOC, ZIP...).
   Future<void> sendFile(String path, {String? name}) async {
     final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
     final authState = ref.read(authStateProvider);
     final me = authState is AsyncData<User?> ? authState.value : null;
-    _appendMessage(ChatMessage(
-      id: optimisticId,
-      conversationId: _conversationId,
-      senderId: me?.id ?? 'current-user',
-      content: jsonEncode({'name': name ?? path.split('/').last, 'url': ''}),
-      timestamp: DateTime.now(),
-      isPending: true,
-      messageType: 'file',
-    ));
+    _appendMessage(
+      ChatMessage(
+        id: optimisticId,
+        conversationId: _conversationId,
+        senderId: me?.id ?? 'current-user',
+        content: jsonEncode({'name': name ?? path.split('/').last, 'url': ''}),
+        timestamp: DateTime.now(),
+        isPending: true,
+        messageType: 'file',
+      ),
+    );
     try {
-      final sent = await ref.read(chatRepositoryProvider).uploadFile(
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .uploadFile(
             conversationId: _conversationId,
             filePath: path,
             fileName: name,
@@ -564,22 +584,30 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   /// Envia um GIF (GIPHY): `content` = "GIF" (fallback p/ clientes antigos), dados em `meta`.
   Future<void> sendGif(GifAttachment gif) => _sendRich('gif', 'GIF', gif: gif);
 
-  Future<void> _sendRich(String type, String content, {GifAttachment? gif}) async {
+  Future<void> _sendRich(
+    String type,
+    String content, {
+    GifAttachment? gif,
+  }) async {
     final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
     final authState = ref.read(authStateProvider);
     final me = authState is AsyncData<User?> ? authState.value : null;
-    _appendMessage(ChatMessage(
-      id: optimisticId,
-      conversationId: _conversationId,
-      senderId: me?.id ?? 'current-user',
-      content: content,
-      timestamp: DateTime.now(),
-      isPending: true,
-      messageType: type,
-      meta: gif?.toJson(),
-    ));
+    _appendMessage(
+      ChatMessage(
+        id: optimisticId,
+        conversationId: _conversationId,
+        senderId: me?.id ?? 'current-user',
+        content: content,
+        timestamp: DateTime.now(),
+        isPending: true,
+        messageType: type,
+        meta: gif?.toJson(),
+      ),
+    );
     try {
-      final sent = await ref.read(chatRepositoryProvider).sendRaw(
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .sendRaw(
             conversationId: _conversationId,
             content: content,
             messageType: type,
@@ -596,18 +624,16 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   void _handleBurnEvent(String messageId) {
     state = state.copyWith(
       messages: state.messages
-          .map((m) => m.id == messageId
-              ? m.copyWith(isBurned: true, content: '')
-              : m)
+          .map(
+            (m) =>
+                m.id == messageId ? m.copyWith(isBurned: true, content: '') : m,
+          )
           .toList(growable: false),
     );
   }
 
   /// Envia um áudio gravado.
-  Future<void> sendAudio({
-    required String filePath,
-    int duration = 0,
-  }) async {
+  Future<void> sendAudio({required String filePath, int duration = 0}) async {
     final optimisticId = 'local-${DateTime.now().microsecondsSinceEpoch}';
     final authState = ref.read(authStateProvider);
     final currentUser = authState is AsyncData<User?> ? authState.value : null;
@@ -625,7 +651,9 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     state = state.copyWith(isSending: true, clearErrorMessage: true);
 
     try {
-      final sent = await ref.read(chatRepositoryProvider).uploadAudio(
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .uploadAudio(
             conversationId: _conversationId,
             filePath: filePath,
             duration: duration,
@@ -641,10 +669,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       );
     } catch (_) {
       _removeMessage(optimisticId);
-      state = state.copyWith(
-        isSending: false,
-        errorMessage: 'chat.err.audio',
-      );
+      state = state.copyWith(isSending: false, errorMessage: 'chat.err.audio');
     }
   }
 
@@ -670,7 +695,9 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
     state = state.copyWith(isSending: true, clearErrorMessage: true);
 
     try {
-      final sent = await ref.read(chatRepositoryProvider).uploadImage(
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .uploadImage(
             conversationId: _conversationId,
             filePath: filePath,
             viewOnce: viewOnce,
@@ -686,10 +713,7 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
       );
     } catch (_) {
       _removeMessage(optimisticId);
-      state = state.copyWith(
-        isSending: false,
-        errorMessage: 'chat.err.image',
-      );
+      state = state.copyWith(isSending: false, errorMessage: 'chat.err.image');
     }
   }
 
@@ -706,11 +730,16 @@ class ChatDetailViewModel extends _$ChatDetailViewModel {
   }
 
   /// Apaga a mensagem (soft delete por participante).
-  Future<void> deleteMessage(String messageId, {bool forEveryone = false}) async {
+  Future<void> deleteMessage(
+    String messageId, {
+    bool forEveryone = false,
+  }) async {
     final snapshot = state.messages;
     _removeMessage(messageId);
     try {
-      await ref.read(chatRepositoryProvider).deleteMessage(messageId, forEveryone: forEveryone);
+      await ref
+          .read(chatRepositoryProvider)
+          .deleteMessage(messageId, forEveryone: forEveryone);
     } on Failure catch (failure) {
       state = state.copyWith(
         messages: snapshot,

@@ -4,6 +4,7 @@ import '../../domain/models/failure.dart';
 import '../../domain/models/gif_item.dart';
 import '../../domain/models/post_comment.dart';
 import '../services/comment_service.dart';
+import '../services/privacy_ux_service.dart';
 
 part 'comment_repository.g.dart';
 
@@ -16,10 +17,19 @@ class CommentRepository {
   final CommentService _service;
   CommentRepository(this._service);
 
-  Future<List<PostComment>> getComments(String postId,
-      {int limit = 50, int offset = 0, String sort = 'top'}) async {
+  Future<List<PostComment>> getComments(
+    String postId, {
+    int limit = 50,
+    int offset = 0,
+    String sort = 'top',
+  }) async {
     try {
-      final dtos = await _service.getComments(postId, limit: limit, offset: offset, sort: sort);
+      final dtos = await _service.getComments(
+        postId,
+        limit: limit,
+        offset: offset,
+        sort: sort,
+      );
       return dtos.map(_mapDto).toList();
     } on DioException catch (_) {
       throw const Failure.network();
@@ -28,12 +38,26 @@ class CommentRepository {
     }
   }
 
-  Future<PostComment> addComment(String postId, String content,
-      {String? parentId, GifAttachment? gif}) async {
+  Future<PostComment> addComment(
+    String postId,
+    String content, {
+    String? parentId,
+    GifAttachment? gif,
+  }) async {
     try {
-      final dto = await _service.addComment(postId, content, parentId: parentId, gif: gif);
+      final dto = await _service.addComment(
+        postId,
+        content,
+        parentId: parentId,
+        gif: gif,
+      );
       return _mapDto(dto);
-    } on DioException catch (_) {
+    } on DioException catch (e) {
+      final err = PrivacyApiError.from(e);
+      if (err?.code == 'comments_disabled' ||
+          err?.code == 'comments_not_allowed') {
+        throw CommentBlockedException(err!.code!, err.message);
+      }
       throw const Failure.network();
     } catch (_) {
       throw const Failure.unknown();

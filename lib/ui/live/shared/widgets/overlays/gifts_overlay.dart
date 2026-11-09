@@ -58,6 +58,8 @@ class GiftsOverlay extends ConsumerStatefulWidget {
     String? preselectCollectionSlug,
   }) {
     showModalBottomSheet(
+      useRootNavigator: true,
+      useSafeArea: true,
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,

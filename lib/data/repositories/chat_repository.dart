@@ -9,6 +9,7 @@ import '../../domain/models/conversation.dart';
 import '../../domain/models/failure.dart';
 import '../../domain/models/gif_item.dart';
 import '../services/messages_service.dart';
+import '../services/privacy_ux_service.dart';
 import '../services/socket_service.dart';
 import '../services/storage_service.dart';
 
@@ -33,9 +34,9 @@ class ChatRepository {
     required SocketService socketService,
     required MessagesService messagesService,
     required StorageService storageService,
-  })  : _socketService = socketService,
-        _messagesService = messagesService,
-        _storageService = storageService;
+  }) : _socketService = socketService,
+       _messagesService = messagesService,
+       _storageService = storageService;
 
   final SocketService _socketService;
   final MessagesService _messagesService;
@@ -46,7 +47,8 @@ class ChatRepository {
   final StreamController<ChatMessage> _notificationController =
       StreamController<ChatMessage>.broadcast();
   final Map<String, StreamController<String>> _burnControllers = {};
-  final Map<String, StreamController<MessageReactionUpdate>> _reactionControllers = {};
+  final Map<String, StreamController<MessageReactionUpdate>>
+  _reactionControllers = {};
   final Map<String, StreamController<String>> _deletedControllers = {};
   final StreamController<void> _reconnectController =
       StreamController<void>.broadcast();
@@ -80,8 +82,10 @@ class ChatRepository {
       if (payload == null) return;
       final conversationId = payload['conversation_id']?.toString();
       if (conversationId == null || conversationId.isEmpty) return;
-      final message =
-          ChatMessage.fromApi(payload, fallbackConversationId: conversationId);
+      final message = ChatMessage.fromApi(
+        payload,
+        fallbackConversationId: conversationId,
+      );
       final controller = _messageControllers[conversationId];
       if (controller != null && !controller.isClosed) {
         controller.add(message);
@@ -146,17 +150,17 @@ class ChatRepository {
       if (rawReactions is Map) {
         rawReactions.forEach((k, v) {
           if (v is List) {
-            reactions[k.toString()] =
-                v.map((e) => e.toString()).toList(growable: false);
+            reactions[k.toString()] = v
+                .map((e) => e.toString())
+                .toList(growable: false);
           }
         });
       }
       final controller = _reactionControllers[conversationId];
       if (controller != null && !controller.isClosed) {
-        controller.add(MessageReactionUpdate(
-          messageId: messageId,
-          reactions: reactions,
-        ));
+        controller.add(
+          MessageReactionUpdate(messageId: messageId, reactions: reactions),
+        );
       }
     };
     _socketService.on(AppConstants.eventMessageReaction, _onMessageReaction!);
@@ -183,11 +187,15 @@ class ChatRepository {
       final conv = p['conversation_id']?.toString();
       final id = p['message_id']?.toString();
       if (conv == null || id == null) return;
-      _updateControllers[conv]?.add(MessageUpdate(
-        messageId: id,
-        content: p['content']?.toString(),
-        editedAt: DateTime.tryParse(p['edited_at']?.toString() ?? '')?.toLocal(),
-      ));
+      _updateControllers[conv]?.add(
+        MessageUpdate(
+          messageId: id,
+          content: p['content']?.toString(),
+          editedAt: DateTime.tryParse(
+            p['edited_at']?.toString() ?? '',
+          )?.toLocal(),
+        ),
+      );
     };
     _socketService.on('message_edited', _onMessageEdited!);
 
@@ -322,6 +330,12 @@ class ChatRepository {
     }
   }
 
+  /// 403 `messages_not_allowed`: a mensagem do servidor vira o erro da conversa.
+  Failure _sendFailure(DioException e) {
+    final msg = PrivacyApiError.messageFor(e, {'messages_not_allowed'});
+    return msg != null ? Failure.validation(msg) : _toFailure(e);
+  }
+
   Future<ChatMessage> sendMessage({
     required String conversationId,
     required String message,
@@ -338,7 +352,7 @@ class ChatRepository {
         replyToMessageId: replyToMessageId,
       );
     } on DioException catch (e) {
-      throw _toFailure(e);
+      throw _sendFailure(e);
     }
   }
 
@@ -394,7 +408,7 @@ class ChatRepository {
   }
 
   Future<({String conversationId, String otherUserId})>
-      getOrCreateConversationByUser(String slug) async {
+  getOrCreateConversationByUser(String slug) async {
     try {
       return await _messagesService.getOrCreateByUser(slug);
     } on DioException catch (e) {
@@ -460,7 +474,7 @@ class ChatRepository {
         gif: gif,
       );
     } on DioException catch (e) {
-      throw _toFailure(e);
+      throw _sendFailure(e);
     }
   }
 
@@ -540,7 +554,10 @@ class ChatRepository {
     }
   }
 
-  Future<void> deleteMessage(String messageId, {bool forEveryone = false}) async {
+  Future<void> deleteMessage(
+    String messageId, {
+    bool forEveryone = false,
+  }) async {
     try {
       await _messagesService.deleteMessage(messageId, forEveryone: forEveryone);
     } on DioException catch (e) {
@@ -672,7 +689,6 @@ class MessageReactionUpdate {
   final String messageId;
   final Map<String, List<String>> reactions;
 }
-
 
 /// Atualização de uma mensagem já exibida: edição (conteúdo + editedAt) ou a
 /// mensagem inteira nova (ex.: cofre aberto).

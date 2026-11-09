@@ -30,6 +30,7 @@ import 'package:brawe_app/core/media/media_utils.dart';
 /// Abre o criador de post (mesma folha do botão "+" da barra de navegação).
 void showProfileCreatePost(BuildContext context) {
   showModalBottomSheet<void>(
+    useRootNavigator: true,
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

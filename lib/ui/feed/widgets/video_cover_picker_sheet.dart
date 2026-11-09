@@ -67,6 +67,7 @@ class VideoCoverPickerSheet extends StatefulWidget {
     int initialMs = 0,
   }) {
     return showModalBottomSheet<CoverPickResult>(
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -193,7 +194,8 @@ class _VideoCoverPickerSheetState extends State<VideoCoverPickerSheet> {
     final custom = widget.frameExporter;
     if (custom != null) return custom(ms);
     final dir = await getTemporaryDirectory();
-    final out = '${dir.path}/cover_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final out =
+        '${dir.path}/cover_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final x = await VideoThumbnail.thumbnailFile(
       video: widget.videoPath,
       thumbnailPath: out,
@@ -281,9 +283,9 @@ class _VideoCoverPickerSheetState extends State<VideoCoverPickerSheet> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      S.of(context).videoPubCoverAt(
-                        VideoCoverTimeline.format(_timeMs),
-                      ),
+                      S
+                          .of(context)
+                          .videoPubCoverAt(VideoCoverTimeline.format(_timeMs)),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,

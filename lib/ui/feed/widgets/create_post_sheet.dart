@@ -282,18 +282,27 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 children: [
-                  Builder(builder: (context) {
-                    final avatar = ref.watch(authStateProvider).value?.avatarUrl;
-                    final has = avatar != null && avatar.isNotEmpty;
-                    return CircleAvatar(
-                      radius: 18,
-                      backgroundColor: context.colors.surfaceHighest,
-                      backgroundImage: has ? NetworkImage(avatar) : null,
-                      child: has
-                          ? null
-                          : Icon(LucideIcons.user, color: context.colors.textSecondary, size: 18),
-                    );
-                  }),
+                  Builder(
+                    builder: (context) {
+                      final avatar = ref
+                          .watch(authStateProvider)
+                          .value
+                          ?.avatarUrl;
+                      final has = avatar != null && avatar.isNotEmpty;
+                      return CircleAvatar(
+                        radius: 18,
+                        backgroundColor: context.colors.surfaceHighest,
+                        backgroundImage: has ? NetworkImage(avatar) : null,
+                        child: has
+                            ? null
+                            : Icon(
+                                LucideIcons.user,
+                                color: context.colors.textSecondary,
+                                size: 18,
+                              ),
+                      );
+                    },
+                  ),
                   const SizedBox(width: 12),
                   // Audience selector
                   GestureDetector(
@@ -575,12 +584,13 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
 
   void _showAudiencePicker() {
     showModalBottomSheet(
+      useRootNavigator: true,
       context: context,
       backgroundColor: context.colors.surfaceElevated,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
+      builder: (sheetCtx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -632,7 +642,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
                     : null,
                 onTap: () {
                   setState(() => _audience = option);
-                  Navigator.pop(context);
+                  Navigator.pop(sheetCtx);
                 },
               ),
             const SizedBox(height: 8),

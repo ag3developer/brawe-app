@@ -51,6 +51,7 @@ class SharedPostSheet extends ConsumerStatefulWidget {
 
   static Future<void> show(BuildContext context, String postId) {
     return showModalBottomSheet<void>(
+      useRootNavigator: true,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -114,6 +115,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
       ('angry', '😡'),
     ];
     final chosen = await showModalBottomSheet<String>(
+      useRootNavigator: true,
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
@@ -205,6 +207,7 @@ class _SharedPostSheetState extends ConsumerState<SharedPostSheet> {
     Navigator.of(context).pop();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showModalBottomSheet(
+        useRootNavigator: true,
         context: rootContext,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -474,7 +477,7 @@ class _SheetContent extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 + MediaQuery.paddingOf(context).bottom),
               // (Removido o CTA "Ver publicação": o sheet já É a publicação,
               // então o botão era redundante. Para acessar a thread completa
               // de comentários o usuário toca em "Comentar".)
