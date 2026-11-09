@@ -21710,6 +21710,324 @@ abstract class S {
   /// In pt, this message translates to:
   /// **'Esta pessoa não recebe respostas e reações aos stories dela.'**
   String get privUxStoryRepliesNotAllowed;
+
+  /// No description provided for @bizPageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil da empresa'**
+  String get bizPageTitle;
+
+  /// No description provided for @bizPageVerifiedSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Empresa verificada'**
+  String get bizPageVerifiedSection;
+
+  /// No description provided for @bizPageTradeName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome fantasia'**
+  String get bizPageTradeName;
+
+  /// No description provided for @bizPageLegalName.
+  ///
+  /// In pt, this message translates to:
+  /// **'Razão social'**
+  String get bizPageLegalName;
+
+  /// No description provided for @bizPageCityState.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cidade/UF'**
+  String get bizPageCityState;
+
+  /// No description provided for @bizPageVerifiedChip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificada'**
+  String get bizPageVerifiedChip;
+
+  /// No description provided for @bizPageVerifiedChipDate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificada em {date}'**
+  String bizPageVerifiedChipDate(String date);
+
+  /// No description provided for @bizPageVerifiedFooter.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esses dados vêm da verificação da empresa. Para alterar, fale com o suporte.'**
+  String get bizPageVerifiedFooter;
+
+  /// No description provided for @bizPagePendingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Seus dados estão em análise'**
+  String get bizPagePendingTitle;
+
+  /// No description provided for @bizPagePendingBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assim que a verificação for aprovada, você poderá configurar a página da sua empresa.'**
+  String get bizPagePendingBody;
+
+  /// No description provided for @bizPageRejectedTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificação recusada'**
+  String get bizPageRejectedTitle;
+
+  /// No description provided for @bizPageRejectedBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Envie os dados novamente para tentar de novo.'**
+  String get bizPageRejectedBody;
+
+  /// No description provided for @bizPageSendAgain.
+  ///
+  /// In pt, this message translates to:
+  /// **'Enviar de novo'**
+  String get bizPageSendAgain;
+
+  /// No description provided for @bizPageNoneTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sua empresa ainda não foi verificada'**
+  String get bizPageNoneTitle;
+
+  /// No description provided for @bizPageNoneBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verifique o CNPJ da empresa para liberar a página comercial com categoria e contatos.'**
+  String get bizPageNoneBody;
+
+  /// No description provided for @bizPageVerifyCta.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar empresa'**
+  String get bizPageVerifyCta;
+
+  /// No description provided for @bizPagePageSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Na sua página'**
+  String get bizPagePageSection;
+
+  /// No description provided for @bizPageCategory.
+  ///
+  /// In pt, this message translates to:
+  /// **'Categoria'**
+  String get bizPageCategory;
+
+  /// No description provided for @bizPageCategoryHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolher'**
+  String get bizPageCategoryHint;
+
+  /// No description provided for @bizPageEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail comercial'**
+  String get bizPageEmail;
+
+  /// No description provided for @bizPageWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'WhatsApp comercial'**
+  String get bizPageWhatsapp;
+
+  /// No description provided for @bizPageShowCity.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mostrar cidade no perfil'**
+  String get bizPageShowCity;
+
+  /// No description provided for @bizPageFooterHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nome, bio, foto e links ficam em Editar perfil.'**
+  String get bizPageFooterHint;
+
+  /// No description provided for @bizPageSaved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Página da empresa atualizada'**
+  String get bizPageSaved;
+
+  /// No description provided for @bizPageSaveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar. Tente de novo.'**
+  String get bizPageSaveError;
+
+  /// No description provided for @bizPageLoadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os dados da empresa.'**
+  String get bizPageLoadError;
+
+  /// No description provided for @bizPageRetry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar de novo'**
+  String get bizPageRetry;
+
+  /// No description provided for @bizPageRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Obrigatório'**
+  String get bizPageRequired;
+
+  /// No description provided for @bizPageEmailInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite um e-mail válido'**
+  String get bizPageEmailInvalid;
+
+  /// No description provided for @bizPagePhoneInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite o WhatsApp com DDD'**
+  String get bizPagePhoneInvalid;
+
+  /// No description provided for @bizPageContactEmail.
+  ///
+  /// In pt, this message translates to:
+  /// **'E-mail'**
+  String get bizPageContactEmail;
+
+  /// No description provided for @bizPageContactWhatsapp.
+  ///
+  /// In pt, this message translates to:
+  /// **'WhatsApp'**
+  String get bizPageContactWhatsapp;
+
+  /// No description provided for @bizPageCatFashionBeauty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moda e beleza'**
+  String get bizPageCatFashionBeauty;
+
+  /// No description provided for @bizPageCatTech.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tecnologia'**
+  String get bizPageCatTech;
+
+  /// No description provided for @bizPageCatFood.
+  ///
+  /// In pt, this message translates to:
+  /// **'Alimentação'**
+  String get bizPageCatFood;
+
+  /// No description provided for @bizPageCatEntertainment.
+  ///
+  /// In pt, this message translates to:
+  /// **'Entretenimento'**
+  String get bizPageCatEntertainment;
+
+  /// No description provided for @bizPageCatEducation.
+  ///
+  /// In pt, this message translates to:
+  /// **'Educação'**
+  String get bizPageCatEducation;
+
+  /// No description provided for @bizPageCatHealth.
+  ///
+  /// In pt, this message translates to:
+  /// **'Saúde'**
+  String get bizPageCatHealth;
+
+  /// No description provided for @bizPageCatFinance.
+  ///
+  /// In pt, this message translates to:
+  /// **'Finanças'**
+  String get bizPageCatFinance;
+
+  /// No description provided for @bizPageCatRetail.
+  ///
+  /// In pt, this message translates to:
+  /// **'Varejo'**
+  String get bizPageCatRetail;
+
+  /// No description provided for @bizPageCatMusic.
+  ///
+  /// In pt, this message translates to:
+  /// **'Música'**
+  String get bizPageCatMusic;
+
+  /// No description provided for @bizPageCatGames.
+  ///
+  /// In pt, this message translates to:
+  /// **'Games'**
+  String get bizPageCatGames;
+
+  /// No description provided for @bizPageCatSports.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esportes'**
+  String get bizPageCatSports;
+
+  /// No description provided for @bizPageCatRealEstate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Imobiliário'**
+  String get bizPageCatRealEstate;
+
+  /// No description provided for @bizPageCatAgro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Agronegócio'**
+  String get bizPageCatAgro;
+
+  /// No description provided for @bizPageCatServices.
+  ///
+  /// In pt, this message translates to:
+  /// **'Serviços'**
+  String get bizPageCatServices;
+
+  /// No description provided for @bizPageCatNgo.
+  ///
+  /// In pt, this message translates to:
+  /// **'ONG e causas'**
+  String get bizPageCatNgo;
+
+  /// No description provided for @bizPageCatOther.
+  ///
+  /// In pt, this message translates to:
+  /// **'Outros'**
+  String get bizPageCatOther;
+
+  /// No description provided for @artistPageTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Perfil de artista'**
+  String get artistPageTitle;
+
+  /// No description provided for @artistPageGenresRequired.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha ao menos um gênero.'**
+  String get artistPageGenresRequired;
+
+  /// No description provided for @artistPageMusicLink.
+  ///
+  /// In pt, this message translates to:
+  /// **'Link da sua música'**
+  String get artistPageMusicLink;
+
+  /// No description provided for @artistPageMusicLinkHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Spotify, Apple Music, YouTube, SoundCloud…'**
+  String get artistPageMusicLinkHint;
+
+  /// No description provided for @artistPageMusicLinkInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cole um link válido (ex.: open.spotify.com/artist/…)'**
+  String get artistPageMusicLinkInvalid;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../data/services/sound_service.dart' show musicLinkFrom;
 import '../../../data/repositories/sound_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
+import '../../account/about_you_screen.dart' show myAboutProvider;
 import '../../core/themes/brawe_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,8 +16,7 @@ import '../../core/themes/brawe_colors.dart';
 //  • Nome artístico, bio
 //  • País (seletor ISO) + cidade
 //  • Gêneros musicais (multi-select chips)
-//  • Links de plataformas (Spotify, Apple Music, YouTube, SoundCloud, Deezer)
-//  • Idioma nativo do artista
+//  • Link da sua música (qualquer plataforma) — obrigatório
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ArtistProfileScreen extends ConsumerStatefulWidget {
@@ -31,60 +32,42 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   final _artistNameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
-  final _spotifyCtrl = TextEditingController();
-  final _appleMusicCtrl = TextEditingController();
-  final _youtubeCtrl = TextEditingController();
-  final _soundcloudCtrl = TextEditingController();
-  final _deezerCtrl = TextEditingController();
+  final _musicLinkCtrl = TextEditingController();
 
   String? _selectedCountry;
-  String? _selectedLanguage;
+  bool _triedSave = false;
   final Set<String> _selectedGenres = {};
   bool _saving = false;
   bool _loaded = false;
 
-  // Países disponíveis (ISO 3166-1 alpha-2) + bandeira
+  // Países disponíveis (ISO 3166-1 alpha-2)
   static const _countries = [
-    ('BR', '🇧🇷'),
-    ('PT', '🇵🇹'),
-    ('US', '🇺🇸'),
-    ('AR', '🇦🇷'),
-    ('MX', '🇲🇽'),
-    ('CO', '🇨🇴'),
-    ('CL', '🇨🇱'),
-    ('PE', '🇵🇪'),
-    ('UY', '🇺🇾'),
-    ('PY', '🇵🇾'),
-    ('BO', '🇧🇴'),
-    ('EC', '🇪🇨'),
-    ('VE', '🇻🇪'),
-    ('ES', '🇪🇸'),
-    ('FR', '🇫🇷'),
-    ('DE', '🇩🇪'),
-    ('IT', '🇮🇹'),
-    ('GB', '🇬🇧'),
-    ('JP', '🇯🇵'),
-    ('KR', '🇰🇷'),
-    ('NG', '🇳🇬'),
-    ('GH', '🇬🇭'),
-    ('ZA', '🇿🇦'),
-    ('AO', '🇦🇴'),
-    ('MZ', '🇲🇿'),
-    ('CV', '🇨🇻'),
-  ];
-
-  // Idiomas (BCP-47)
-  static const _languages = [
-    ('pt', '🇧🇷 Português'),
-    ('es', '🇪🇸 Español'),
-    ('en', '🇺🇸 English'),
-    ('fr', '🇫🇷 Français'),
-    ('de', '🇩🇪 Deutsch'),
-    ('it', '🇮🇹 Italiano'),
-    ('ja', '🇯🇵 日本語'),
-    ('ko', '🇰🇷 한국어'),
-    ('yo', '🇳🇬 Yorùbá'),
-    ('sw', '🇰🇪 Kiswahili'),
+    'BR',
+    'PT',
+    'US',
+    'AR',
+    'MX',
+    'CO',
+    'CL',
+    'PE',
+    'UY',
+    'PY',
+    'BO',
+    'EC',
+    'VE',
+    'ES',
+    'FR',
+    'DE',
+    'IT',
+    'GB',
+    'JP',
+    'KR',
+    'NG',
+    'GH',
+    'ZA',
+    'AO',
+    'MZ',
+    'CV',
   ];
 
   // Gêneros musicais
@@ -125,8 +108,6 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedCountry = 'BR';
-    _selectedLanguage = 'pt';
     _loadExisting();
   }
 
@@ -140,13 +121,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
         _artistNameCtrl.text = (data['artist_name'] as String?) ?? '';
         _bioCtrl.text = (data['bio'] as String?) ?? '';
         _cityCtrl.text = (data['city'] as String?) ?? '';
-        _selectedCountry = (data['country_code'] as String?) ?? 'BR';
-        _selectedLanguage = (data['language'] as String?) ?? 'pt';
-        _spotifyCtrl.text = (data['spotify_url'] as String?) ?? '';
-        _appleMusicCtrl.text = (data['apple_music_url'] as String?) ?? '';
-        _youtubeCtrl.text = (data['youtube_url'] as String?) ?? '';
-        _soundcloudCtrl.text = (data['soundcloud_url'] as String?) ?? '';
-        _deezerCtrl.text = (data['deezer_url'] as String?) ?? '';
+        final cc = (data['country_code'] as String?)?.toUpperCase();
+        _selectedCountry = _countries.contains(cc) ? cc : null;
+        _musicLinkCtrl.text = musicLinkFrom(data);
         final genres = data['genres'];
         if (genres is List) {
           _selectedGenres.addAll(genres.cast<String>());
@@ -156,6 +133,24 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     } catch (_) {
       if (mounted) setState(() => _loaded = true);
     }
+    await _prefillFromAbout();
+  }
+
+  /// País e cidade vazios: usa os de "Sobre você".
+  Future<void> _prefillFromAbout() async {
+    try {
+      final me = await ref.read(myAboutProvider.future);
+      if (!mounted) return;
+      setState(() {
+        if (_selectedCountry == null) {
+          final cc = '${me['country'] ?? ''}'.toUpperCase();
+          if (_countries.contains(cc)) _selectedCountry = cc;
+        }
+        if (_cityCtrl.text.trim().isEmpty) {
+          _cityCtrl.text = '${me['city'] ?? ''}'.trim();
+        }
+      });
+    } catch (_) {}
   }
 
   @override
@@ -163,16 +158,14 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     _artistNameCtrl.dispose();
     _bioCtrl.dispose();
     _cityCtrl.dispose();
-    _spotifyCtrl.dispose();
-    _appleMusicCtrl.dispose();
-    _youtubeCtrl.dispose();
-    _soundcloudCtrl.dispose();
-    _deezerCtrl.dispose();
+    _musicLinkCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _onSave() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _triedSave = true);
+    final formOk = _formKey.currentState?.validate() ?? false;
+    if (!formOk || _selectedGenres.isEmpty) return;
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
     try {
@@ -180,15 +173,10 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
           .read(soundRepositoryProvider)
           .registerArtist(
             artistName: _artistNameCtrl.text.trim(),
-            bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
-            city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
-            countryCode: _selectedCountry ?? 'BR',
-            spotifyUrl: _spotifyCtrl.text.trim().isEmpty
-                ? null
-                : _spotifyCtrl.text.trim(),
-            appleMusicUrl: _appleMusicCtrl.text.trim().isEmpty
-                ? null
-                : _appleMusicCtrl.text.trim(),
+            bio: _bioCtrl.text.trim(),
+            city: _cityCtrl.text.trim(),
+            countryCode: _selectedCountry,
+            musicLink: _musicLinkCtrl.text.trim(),
             genres: _selectedGenres.toList(),
           );
       if (!mounted) return;
@@ -258,20 +246,13 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
           icon: const Icon(LucideIcons.chevronLeft, size: 22),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.music, size: 18, color: c.accentPrimary),
-            const SizedBox(width: 8),
-            Text(
-              'Brawe Sounds',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: context.colors.textPrimary,
-              ),
-            ),
-          ],
+        title: Text(
+          s.artistPageTitle,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: context.colors.textPrimary,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -351,6 +332,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           hint: s.artistProfBioHint,
                           maxLines: 3,
                           maxLength: 300,
+                          validator: _required(s),
                         ),
                       ),
                     ],
@@ -372,9 +354,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           items: _countries
                               .map(
                                 (e) => DropdownMenuItem(
-                                  value: e.$1,
+                                  value: e,
                                   child: Text(
-                                    '${e.$2} ${_countryName(s, e.$1)}',
+                                    _countryName(s, e),
                                     style: TextStyle(
                                       fontSize: 15,
                                       color: c.textPrimary,
@@ -386,6 +368,8 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           onChanged: (v) =>
                               setState(() => _selectedCountry = v),
                           hint: s.artistProfCountryHint,
+                          validator: (v) =>
+                              v == null ? s.artistProfRequired : null,
                         ),
                       ),
                       _divider(context),
@@ -397,33 +381,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                           context: context,
                           ctrl: _cityCtrl,
                           hint: s.artistProfCityHint,
-                        ),
-                      ),
-                      _divider(context),
-                      _field(
-                        context: context,
-                        icon: LucideIcons.languages,
-                        label: s.artistProfLanguage,
-                        child: _dropdownField<String>(
-                          context: context,
-                          value: _selectedLanguage,
-                          items: _languages
-                              .map(
-                                (l) => DropdownMenuItem(
-                                  value: l.$1,
-                                  child: Text(
-                                    l.$2,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: c.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedLanguage = v),
-                          hint: s.artistProfLanguageHint,
+                          validator: _required(s),
                         ),
                       ),
                     ],
@@ -489,6 +447,14 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       ),
                     ],
                   ),
+                  if (_triedSave && _selectedGenres.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Text(
+                        s.artistPageGenresRequired,
+                        style: TextStyle(color: c.danger, fontSize: 12.5),
+                      ),
+                    ),
                   const SizedBox(height: 20),
 
                   // Plataformas de streaming
@@ -499,41 +465,19 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
                       _platformRow(
                         context: context,
                         icon: LucideIcons.music,
-                        label: 'Spotify',
-                        ctrl: _spotifyCtrl,
-                        hint: 'spotify.com/artist/...',
-                      ),
-                      _divider(context),
-                      _platformRow(
-                        context: context,
-                        icon: LucideIcons.apple,
-                        label: 'Apple Music',
-                        ctrl: _appleMusicCtrl,
-                        hint: 'music.apple.com/...',
-                      ),
-                      _divider(context),
-                      _platformRow(
-                        context: context,
-                        icon: LucideIcons.globe,
-                        label: 'YouTube Music',
-                        ctrl: _youtubeCtrl,
-                        hint: 'youtube.com/@...',
-                      ),
-                      _divider(context),
-                      _platformRow(
-                        context: context,
-                        icon: LucideIcons.cloud,
-                        label: 'SoundCloud',
-                        ctrl: _soundcloudCtrl,
-                        hint: 'soundcloud.com/...',
-                      ),
-                      _divider(context),
-                      _platformRow(
-                        context: context,
-                        icon: LucideIcons.music2,
-                        label: 'Deezer',
-                        ctrl: _deezerCtrl,
-                        hint: 'deezer.com/artist/...',
+                        label: s.artistPageMusicLink,
+                        ctrl: _musicLinkCtrl,
+                        hint: s.artistPageMusicLinkHint,
+                        validator: (v) {
+                          final t = (v ?? '').trim();
+                          if (t.isEmpty) return s.artistProfRequired;
+                          final uri = Uri.tryParse(
+                            t.startsWith('http') ? t : 'https://$t',
+                          );
+                          return (uri == null || !uri.host.contains('.'))
+                              ? s.artistPageMusicLinkInvalid
+                              : null;
+                        },
                       ),
                     ],
                   ),
@@ -546,6 +490,9 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
+
+  String? Function(String?) _required(S s) =>
+      (v) => (v == null || v.trim().isEmpty) ? s.artistProfRequired : null;
 
   String _countryName(S s, String code) {
     switch (code) {
@@ -698,6 +645,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     required String label,
     required TextEditingController ctrl,
     required String hint,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -710,6 +658,7 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
               context: context,
               ctrl: ctrl,
               hint: hint,
+              validator: validator,
               prefixText: '$label · ',
             ),
           ),
@@ -768,12 +717,14 @@ class _ArtistProfileScreenState extends ConsumerState<ArtistProfileScreen> {
     required List<DropdownMenuItem<T>> items,
     required ValueChanged<T?> onChanged,
     required String hint,
+    String? Function(T?)? validator,
   }) {
     final c = context.colors;
     return DropdownButtonFormField<T>(
       value: value,
       items: items,
       onChanged: onChanged,
+      validator: validator,
       dropdownColor: c.surfaceElevated,
       style: TextStyle(fontSize: 15, color: c.textPrimary),
       decoration: InputDecoration(

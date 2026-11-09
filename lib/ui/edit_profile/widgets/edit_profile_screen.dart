@@ -236,7 +236,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
     return GroupedRow(
       key: const ValueKey('creator_badge_switch'),
       // tocar na linha inteira também liga/desliga
-      onTap: settings == null ? null : () => setState(() => _showBadge = !value),
+      onTap: settings == null
+          ? null
+          : () => setState(() => _showBadge = !value),
       icon: LucideIcons.sparkles,
       title: s.editProfileCreatorBadgeTitle,
       subtitle: s.editProfileCreatorBadgeHint,
@@ -372,6 +374,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
       context,
       kyc?.identity ?? 'none',
     );
+    final (bizLabel, bizColor) = kycStateLabel(
+      context,
+      kyc?.business ?? 'none',
+    );
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -488,6 +494,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen>
                             GroupedRow(
                               icon: LucideIcons.building2,
                               title: s.editProfileBusinessPage,
+                              value: bizLabel,
+                              valueColor: bizColor,
                               onTap: () => context.push('/business-profile'),
                             ),
                           if (type == AccountType.creator)

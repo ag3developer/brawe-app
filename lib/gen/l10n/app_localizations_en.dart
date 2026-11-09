@@ -12414,4 +12414,171 @@ class SEn extends S {
   @override
   String get privUxStoryRepliesNotAllowed =>
       'This person does not accept replies or reactions to their stories.';
+
+  @override
+  String get bizPageTitle => 'Business profile';
+
+  @override
+  String get bizPageVerifiedSection => 'Verified business';
+
+  @override
+  String get bizPageTradeName => 'Trade name';
+
+  @override
+  String get bizPageLegalName => 'Legal name';
+
+  @override
+  String get bizPageCityState => 'City/State';
+
+  @override
+  String get bizPageVerifiedChip => 'Verified';
+
+  @override
+  String bizPageVerifiedChipDate(String date) {
+    return 'Verified on $date';
+  }
+
+  @override
+  String get bizPageVerifiedFooter =>
+      'This information comes from your business verification. To change it, contact support.';
+
+  @override
+  String get bizPagePendingTitle => 'Your details are under review';
+
+  @override
+  String get bizPagePendingBody =>
+      'Once verification is approved, you can set up your business page.';
+
+  @override
+  String get bizPageRejectedTitle => 'Verification rejected';
+
+  @override
+  String get bizPageRejectedBody => 'Submit your details again to retry.';
+
+  @override
+  String get bizPageSendAgain => 'Submit again';
+
+  @override
+  String get bizPageNoneTitle => 'Your business isn\'t verified yet';
+
+  @override
+  String get bizPageNoneBody =>
+      'Verify your business tax ID to unlock the business page with category and contacts.';
+
+  @override
+  String get bizPageVerifyCta => 'Verify business';
+
+  @override
+  String get bizPagePageSection => 'On your page';
+
+  @override
+  String get bizPageCategory => 'Category';
+
+  @override
+  String get bizPageCategoryHint => 'Choose';
+
+  @override
+  String get bizPageEmail => 'Business email';
+
+  @override
+  String get bizPageWhatsapp => 'Business WhatsApp';
+
+  @override
+  String get bizPageShowCity => 'Show city on profile';
+
+  @override
+  String get bizPageFooterHint =>
+      'Name, bio, photo and links are in Edit profile.';
+
+  @override
+  String get bizPageSaved => 'Business page updated';
+
+  @override
+  String get bizPageSaveError => 'Couldn\'t save. Please try again.';
+
+  @override
+  String get bizPageLoadError => 'Couldn\'t load business details.';
+
+  @override
+  String get bizPageRetry => 'Try again';
+
+  @override
+  String get bizPageRequired => 'Required';
+
+  @override
+  String get bizPageEmailInvalid => 'Enter a valid email';
+
+  @override
+  String get bizPagePhoneInvalid => 'Enter the WhatsApp number with area code';
+
+  @override
+  String get bizPageContactEmail => 'Email';
+
+  @override
+  String get bizPageContactWhatsapp => 'WhatsApp';
+
+  @override
+  String get bizPageCatFashionBeauty => 'Fashion and beauty';
+
+  @override
+  String get bizPageCatTech => 'Technology';
+
+  @override
+  String get bizPageCatFood => 'Food';
+
+  @override
+  String get bizPageCatEntertainment => 'Entertainment';
+
+  @override
+  String get bizPageCatEducation => 'Education';
+
+  @override
+  String get bizPageCatHealth => 'Health';
+
+  @override
+  String get bizPageCatFinance => 'Finance';
+
+  @override
+  String get bizPageCatRetail => 'Retail';
+
+  @override
+  String get bizPageCatMusic => 'Music';
+
+  @override
+  String get bizPageCatGames => 'Games';
+
+  @override
+  String get bizPageCatSports => 'Sports';
+
+  @override
+  String get bizPageCatRealEstate => 'Real estate';
+
+  @override
+  String get bizPageCatAgro => 'Agribusiness';
+
+  @override
+  String get bizPageCatServices => 'Services';
+
+  @override
+  String get bizPageCatNgo => 'Nonprofit and causes';
+
+  @override
+  String get bizPageCatOther => 'Other';
+
+  @override
+  String get artistPageTitle => 'Artist profile';
+
+  @override
+  String get artistPageGenresRequired => 'Choose at least one genre.';
+
+  @override
+  String get artistPageMusicLink => 'Link to your music';
+
+  @override
+  String get artistPageMusicLinkHint =>
+      'Spotify, Apple Music, YouTube, SoundCloud…';
+
+  @override
+  String get artistPageMusicLinkInvalid =>
+      'Paste a valid link (e.g. open.spotify.com/artist/…)';
 }

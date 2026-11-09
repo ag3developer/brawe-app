@@ -26,6 +26,10 @@ import '../../../domain/models/post.dart';
 import '../../../domain/models/marketplace_models.dart' show Product;
 import '../../../domain/models/profile.dart';
 import 'profile_videos_grid.dart';
+import '../../../data/repositories/kyc_repository.dart'
+    show BusinessPublic, profileBusinessProvider;
+import '../../edit_profile/widgets/business_profile_screen.dart'
+    show businessCategoryLabel;
 import '../../../domain/models/profile_state.dart';
 import '../../feed/widgets/feed_screen.dart' show PostCard;
 import 'profile_gallery_grid.dart';
@@ -733,7 +737,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       return ProfileMenuItem(
                         icon: LucideIcons.userRoundMinus,
                         color: context.colors.textSecondary,
-                        title: restricted ? s.privUxUnrestrict : s.privUxRestrict,
+                        title: restricted
+                            ? s.privUxUnrestrict
+                            : s.privUxRestrict,
                         showChevron: false,
                         onTap: go(() => _toggleRestrict(context, restricted)),
                       );
@@ -952,6 +958,7 @@ class _ProfileHeader extends ConsumerWidget {
     final joinedAt = _joinDate(context, profile);
     final handle = _realHandle(profile.username);
     final bio = profile.bio?.trim() ?? '';
+    final business = ref.watch(profileBusinessProvider(userId)).value;
 
     final storiesAsync = ref.watch(userStoriesProvider(userId));
     final stories = storiesAsync.asData?.value ?? const <Story>[];
@@ -1083,6 +1090,9 @@ class _ProfileHeader extends ConsumerWidget {
                 ),
               ],
 
+              // ── Empresa: categoria e cidade (como o Instagram) ────────
+              if (business != null) _businessInfo(context, business),
+
               // ── Prêmios ativos ───────────────────────────────────────
               if (profile.activeAwards.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -1104,10 +1114,89 @@ class _ProfileHeader extends ConsumerWidget {
               // Nota: o badge "Parceiro verificado" NÃO aparece aqui — ele
               // pertence à página dedicada da vitrine (ShopVitrinePage).
               _buildActions(context, ref, profile),
+              if (business != null) _businessContacts(context, business),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _businessInfo(BuildContext context, BusinessPublic b) {
+    final colors = context.colors;
+    final s = S.of(context);
+    final category = b.category == null
+        ? null
+        : businessCategoryLabel(s, b.category!);
+    final place = b.place;
+    if (category == null && place == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (category != null)
+            Text(
+              category,
+              style: TextStyle(color: colors.textTertiary, fontSize: 13.5),
+            ),
+          if (place != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.mapPin,
+                    size: 14,
+                    color: colors.textTertiary,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      place,
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Botões de contato da empresa: E-mail e WhatsApp, abaixo dos botões principais.
+  Widget _businessContacts(BuildContext context, BusinessPublic b) {
+    final s = S.of(context);
+    final email = b.emailUri;
+    final wa = b.whatsappUri;
+    if (email == null && wa == null) return const SizedBox.shrink();
+    Widget btn(IconData icon, String label, Uri uri) => Expanded(
+      child: SizedBox(
+        height: 40,
+        child: FilledButton.icon(
+          style: _tonalStyle(context),
+          onPressed: () => launchUrl(uri, mode: LaunchMode.externalApplication),
+          icon: Icon(icon, size: 17),
+          label: Text(label),
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          if (email != null)
+            btn(LucideIcons.mail, s.bizPageContactEmail, email),
+          if (email != null && wa != null) const SizedBox(width: 8),
+          if (wa != null)
+            btn(LucideIcons.messageCircle, s.bizPageContactWhatsapp, wa),
+        ],
+      ),
     );
   }
 
@@ -1221,7 +1310,9 @@ class _ProfileHeader extends ConsumerWidget {
     final s = S.of(context);
     final privacy = ref.read(userPrivacyProvider(userId)).value;
     if (privacy != null && !privacy.canMessage) {
-      messenger.showSnackBar(SnackBar(content: Text(s.privUxMessagesNotAllowed)));
+      messenger.showSnackBar(
+        SnackBar(content: Text(s.privUxMessagesNotAllowed)),
+      );
       return;
     }
     try {

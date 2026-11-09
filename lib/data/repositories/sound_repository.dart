@@ -25,6 +25,7 @@ class SoundRepository {
     String? city,
     String? spotifyUrl,
     String? appleMusicUrl,
+    String? musicLink,
   }) async {
     try {
       final data = await _service.registerArtist(
@@ -35,6 +36,7 @@ class SoundRepository {
         city: city,
         spotifyUrl: spotifyUrl,
         appleMusicUrl: appleMusicUrl,
+        musicLink: musicLink,
       );
       return SoundArtist.fromJson(data);
     } on DioException catch (e) {

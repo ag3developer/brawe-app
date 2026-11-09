@@ -1,25 +1,18 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../data/repositories/profile_repository.dart';
+import '../../../data/repositories/kyc_repository.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/ui/grouped_list.dart';
+import '../../core/ui/mask_formatter.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BUSINESS PROFILE SCREEN
-// Formulário completo para tipo de conta Business:
-//  • Nome da empresa / marca
-//  • Setor de atuação (seletor)
-//  • País + cidade
-//  • Dados fiscais / CNPJ (fluxo de verificação separado)
-//  • Links: site, LinkedIn, WhatsApp Business, Instagram
-//  • Idioma de operação
-// ─────────────────────────────────────────────────────────────────────────────
-
+/// "Perfil da empresa": dados verificados (somente leitura) + o que aparece na página
+/// (categoria, e-mail e WhatsApp comerciais, mostrar cidade). Nome, bio, foto e links
+/// ficam em Editar perfil.
 class BusinessProfileScreen extends ConsumerStatefulWidget {
   const BusinessProfileScreen({super.key});
 
@@ -29,729 +22,522 @@ class BusinessProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _companyCtrl = TextEditingController();
-  final _bioCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController();
-  final _websiteCtrl = TextEditingController();
-  final _linkedinCtrl = TextEditingController();
-  final _whatsappCtrl = TextEditingController();
-  final _instagramCtrl = TextEditingController();
-
-  String? _selectedCountry;
-  String? _selectedLanguage;
-  String? _selectedSector;
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  String? _category;
+  bool _showCity = true;
+  bool _initialized = false;
   bool _saving = false;
+  BusinessPage? _initial;
+  final Map<String, String> _fieldErrors = {};
 
-  static const _countries = [
-    ('BR', '🇧🇷'),
-    ('PT', '🇵🇹'),
-    ('US', '🇺🇸'),
-    ('AR', '🇦🇷'),
-    ('MX', '🇲🇽'),
-    ('CO', '🇨🇴'),
-    ('CL', '🇨🇱'),
-    ('ES', '🇪🇸'),
-    ('DE', '🇩🇪'),
-    ('GB', '🇬🇧'),
-    ('AO', '🇦🇴'),
-    ('MZ', '🇲🇿'),
-  ];
-
-  static const _languages = [
-    ('pt', '🇧🇷 Português'),
-    ('es', '🇪🇸 Español'),
-    ('en', '🇺🇸 English'),
-    ('de', '🇩🇪 Deutsch'),
-    ('fr', '🇫🇷 Français'),
-  ];
-
-  static const _sectors = [
-    'FashionBeauty',
-    'Tech',
-    'Food',
-    'Entertainment',
-    'Education',
-    'Health',
-    'Finance',
-    'Retail',
-    'Music',
-    'Games',
-    'Sports',
-    'RealEstate',
-    'Agro',
-    'Services',
-    'Ngo',
-    'Other',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedCountry = 'BR';
-    _selectedLanguage = 'pt';
-  }
+  static final _emailRe = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   @override
   void dispose() {
-    _companyCtrl.dispose();
-    _bioCtrl.dispose();
-    _cityCtrl.dispose();
-    _websiteCtrl.dispose();
-    _linkedinCtrl.dispose();
-    _whatsappCtrl.dispose();
-    _instagramCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _onSave() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    FocusScope.of(context).unfocus();
-    setState(() => _saving = true);
-    try {
-      // Salva via socialLinks + campos de perfil
-      final socialLinks = <String, String>{};
-      if (_websiteCtrl.text.trim().isNotEmpty) {
-        socialLinks['website'] = _websiteCtrl.text.trim();
-      }
-      if (_linkedinCtrl.text.trim().isNotEmpty) {
-        socialLinks['linkedin'] = _linkedinCtrl.text.trim();
-      }
-      if (_instagramCtrl.text.trim().isNotEmpty) {
-        socialLinks['instagram'] = _instagramCtrl.text.trim();
-      }
-      if (_whatsappCtrl.text.trim().isNotEmpty) {
-        socialLinks['whatsapp'] = _whatsappCtrl.text.trim();
-      }
+  void _init(BusinessMe me) {
+    if (_initialized) return;
+    _initialized = true;
+    _initial = me.page;
+    _category = me.page.category;
+    _emailCtrl.text = me.page.email ?? '';
+    _phoneCtrl.text = DigitMask.phoneBr.apply(me.page.whatsapp ?? '');
+    _showCity = me.page.showCity;
+  }
 
+  String? _emailError(S s) {
+    final v = _emailCtrl.text.trim();
+    if (v.isEmpty) return s.bizPageRequired;
+    if (!_emailRe.hasMatch(v)) return s.bizPageEmailInvalid;
+    return null;
+  }
+
+  String? _phoneError(S s) {
+    final d = DigitMask.digits(_phoneCtrl.text);
+    if (d.isEmpty) return s.bizPageRequired;
+    if (d.length < 10) return s.bizPagePhoneInvalid;
+    return null;
+  }
+
+  bool get _valid =>
+      _category != null &&
+      _emailRe.hasMatch(_emailCtrl.text.trim()) &&
+      DigitMask.digits(_phoneCtrl.text).length >= 10;
+
+  bool get _changed {
+    final i = _initial;
+    if (i == null) return false;
+    return _category != i.category ||
+        _emailCtrl.text.trim() != (i.email ?? '') ||
+        DigitMask.digits(_phoneCtrl.text) !=
+            DigitMask.digits(i.whatsapp ?? '') ||
+        _showCity != i.showCity;
+  }
+
+  Future<void> _save() async {
+    FocusScope.of(context).unfocus();
+    final messenger = ScaffoldMessenger.of(context);
+    final s = S.of(context);
+    final colors = context.colors;
+    setState(() {
+      _saving = true;
+      _fieldErrors.clear();
+    });
+    try {
+      final email = _emailCtrl.text.trim();
+      final phone = DigitMask.digits(_phoneCtrl.text);
       await ref
-          .read(profileRepositoryProvider)
-          .updateMyProfile(
-            displayName: _companyCtrl.text.trim(),
-            bio: _bioCtrl.text.trim(),
-            socialLinks: socialLinks,
+          .read(kycRepositoryProvider)
+          .saveBusinessPage(
+            category: _category!,
+            contactEmail: email,
+            whatsapp: phone,
+            showCity: _showCity,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      setState(() {
+        _initial = BusinessPage(
+          category: _category,
+          email: email,
+          whatsapp: phone,
+          showCity: _showCity,
+        );
+      });
+      ref.invalidate(businessMeProvider);
+      messenger.showSnackBar(
         SnackBar(
-          content: Row(
+          content: Text(s.bizPageSaved),
+          backgroundColor: colors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final f = e is KycFailure ? e : null;
+      final msg = (f?.message.isNotEmpty ?? false)
+          ? f!.message
+          : s.bizPageSaveError;
+      if (f?.field != null && f!.field!.isNotEmpty) {
+        setState(() => _fieldErrors[f.field!] = msg);
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: colors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  String _categoryLabel(S s, String key) => businessCategoryLabel(s, key);
+
+  Future<void> _pickCategory(S s, List<String> cats) async {
+    final colors = context.colors;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: colors.surfaceElevated,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                LucideIcons.checkCircle,
-                color: context.colors.textOnAccent,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
+              const SizedBox(height: 14),
               Text(
-                S.of(context).editProfileSaved,
-                style: TextStyle(color: context.colors.textOnAccent),
+                s.bizPageCategory,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final c in cats)
+                      ListTile(
+                        title: Text(
+                          _categoryLabel(s, c),
+                          style: TextStyle(color: colors.textPrimary),
+                        ),
+                        trailing: c == _category
+                            ? Icon(
+                                LucideIcons.check,
+                                size: 18,
+                                color: colors.accentPrimary,
+                              )
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop(c),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
-          backgroundColor: context.colors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
         ),
-      );
-      Navigator.of(context).pop();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            S.of(context).bizProfSaveError(e.toString()),
-            style: TextStyle(color: context.colors.textOnAccent),
-          ),
-          backgroundColor: context.colors.danger,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _category = picked;
+        _fieldErrors.remove('category');
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final c = context.colors;
-    final accent = c.accentPrimary;
+    final colors = context.colors;
+    final async = ref.watch(businessMeProvider);
+    final me = async.value;
+    final approved = me?.verification?.status == 'approved';
+    if (me != null && approved) _init(me);
+    final canSave = approved && _valid && _changed && !_saving;
 
     return Scaffold(
-      backgroundColor: context.colors.background,
-      extendBodyBehindAppBar: true,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: context.colors.background.withValues(alpha: 0.85),
-        foregroundColor: context.colors.textPrimary,
-        elevation: 0,
-        flexibleSpace: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: const SizedBox.expand(),
-          ),
-        ),
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, size: 22),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.briefcase, size: 18, color: accent),
-            const SizedBox(width: 8),
-            Text(
-              'Business',
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: context.colors.textPrimary,
-              ),
-            ),
-          ],
-        ),
+        title: Text(s.bizPageTitle),
         centerTitle: true,
+        backgroundColor: colors.background,
+        surfaceTintColor: Colors.transparent,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton(
-              onPressed: _saving ? null : _onSave,
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: c.textOnAccent,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                minimumSize: Size.zero,
-              ),
+          if (approved)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
               child: _saving
-                  ? SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: c.textOnAccent,
+                  ? const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
                     )
-                  : Text(
-                      s.editProfileSave,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                  : TextButton(
+                      onPressed: canSave ? _save : null,
+                      child: Text(
+                        s.actionSave,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
             ),
-          ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + kToolbarHeight + 16,
-            bottom: MediaQuery.of(context).padding.bottom + 32,
-          ),
-          children: [
-            // Identidade da empresa
-            _section(
-              context: context,
-              title: s.bizProfSectionCompany,
-              children: [
-                _field(
-                  context: context,
-                  icon: LucideIcons.building,
-                  label: s.bizProfCompanyName,
-                  child: _textField(
-                    context: context,
-                    ctrl: _companyCtrl,
-                    hint: s.bizProfCompanyNameHint,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? s.bizProfRequired
-                        : null,
-                  ),
-                ),
-                _divider(context),
-                _field(
-                  context: context,
-                  icon: LucideIcons.alignLeft,
-                  label: s.bizProfAbout,
-                  child: _textField(
-                    context: context,
-                    ctrl: _bioCtrl,
-                    hint: s.bizProfAboutHint,
-                    maxLines: 3,
-                    maxLength: 300,
-                  ),
-                ),
-                _divider(context),
-                _field(
-                  context: context,
-                  icon: LucideIcons.layoutGrid,
-                  label: s.bizProfSector,
-                  child: _dropdown<String>(
-                    context: context,
-                    value: _selectedSector,
-                    hint: s.bizProfSectorHint,
-                    items: _sectors
-                        .map(
-                          (k) => DropdownMenuItem(
-                            value: k,
-                            child: Text(
-                              _sectorName(s, k),
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: c.textPrimary,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedSector = v),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Localização
-            _section(
-              context: context,
-              title: s.bizProfSectionLocation,
-              children: [
-                _field(
-                  context: context,
-                  icon: LucideIcons.globe,
-                  label: s.bizProfCountry,
-                  child: _dropdown<String>(
-                    context: context,
-                    value: _selectedCountry,
-                    hint: s.bizProfCountryHint,
-                    items: _countries
-                        .map(
-                          (e) => DropdownMenuItem(
-                            value: e.$1,
-                            child: Text(
-                              '${e.$2} ${_countryName(s, e.$1)}',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: c.textPrimary,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedCountry = v),
-                  ),
-                ),
-                _divider(context),
-                _field(
-                  context: context,
-                  icon: LucideIcons.building2,
-                  label: s.bizProfCity,
-                  child: _textField(
-                    context: context,
-                    ctrl: _cityCtrl,
-                    hint: s.bizProfCityHint,
-                  ),
-                ),
-                _divider(context),
-                _field(
-                  context: context,
-                  icon: LucideIcons.languages,
-                  label: s.bizProfLanguage,
-                  child: _dropdown<String>(
-                    context: context,
-                    value: _selectedLanguage,
-                    hint: s.bizProfLanguageHint,
-                    items: _languages
-                        .map(
-                          (l) => DropdownMenuItem(
-                            value: l.$1,
-                            child: Text(
-                              l.$2,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: c.textPrimary,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedLanguage = v),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Dados fiscais (CNPJ fica no fluxo de verificação)
-            _section(
-              context: context,
-              title: s.bizProfSectionFiscal,
-              children: [
-                InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => context.push('/account/verify/business'),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          LucideIcons.fileText,
-                          size: 16,
-                          color: c.textSecondary,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                s.bizProfFiscalRow,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: c.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                s.bizProfFiscalRowHint,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: c.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          LucideIcons.chevronRight,
-                          size: 16,
-                          color: c.textSecondary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Links
-            _section(
-              context: context,
-              title: s.bizProfSectionLinks,
-              children: [
-                _platformRow(
-                  context: context,
-                  icon: LucideIcons.globe,
-                  label: s.bizProfWebsite,
-                  ctrl: _websiteCtrl,
-                  hint: s.bizProfWebsiteHint,
-                ),
-                _divider(context),
-                _platformRow(
-                  context: context,
-                  icon: LucideIcons.link,
-                  label: 'LinkedIn',
-                  ctrl: _linkedinCtrl,
-                  hint: 'linkedin.com/company/...',
-                ),
-                _divider(context),
-                _platformRow(
-                  context: context,
-                  icon: LucideIcons.atSign,
-                  label: 'Instagram',
-                  ctrl: _instagramCtrl,
-                  hint: s.bizProfInstagramHint,
-                ),
-                _divider(context),
-                _platformRow(
-                  context: context,
-                  icon: LucideIcons.messageCircle,
-                  label: 'WhatsApp Business',
-                  ctrl: _whatsappCtrl,
-                  hint: s.bizProfWhatsappHint,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+      body: SafeArea(
+        child: me == null
+            ? (async.hasError
+                  ? _error(s)
+                  : Center(
+                      child: CircularProgressIndicator(
+                        color: colors.accentPrimary,
+                      ),
+                    ))
+            : RefreshIndicator.adaptive(
+                onRefresh: () async => ref.invalidate(businessMeProvider),
+                child: GroupedBody(children: _content(s, me)),
+              ),
       ),
     );
   }
 
-  // Helpers
+  Widget _error(S s) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            s.bizPageLoadError,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: context.colors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => ref.invalidate(businessMeProvider),
+            child: Text(s.bizPageRetry),
+          ),
+        ],
+      ),
+    ),
+  );
 
-  String _countryName(S s, String code) {
-    switch (code) {
-      case 'BR':
-        return s.bizProfCountryBR;
-      case 'PT':
-        return s.bizProfCountryPT;
-      case 'US':
-        return s.bizProfCountryUS;
-      case 'AR':
-        return s.bizProfCountryAR;
-      case 'MX':
-        return s.bizProfCountryMX;
-      case 'CO':
-        return s.bizProfCountryCO;
-      case 'CL':
-        return s.bizProfCountryCL;
-      case 'ES':
-        return s.bizProfCountryES;
-      case 'DE':
-        return s.bizProfCountryDE;
-      case 'GB':
-        return s.bizProfCountryGB;
-      case 'AO':
-        return s.bizProfCountryAO;
-      case 'MZ':
-        return s.bizProfCountryMZ;
-      default:
-        return code;
+  Widget _hint(String text) => Padding(
+    padding: const EdgeInsets.fromLTRB(14, 0, 14, 0),
+    child: Text(
+      text,
+      style: TextStyle(
+        color: context.colors.textTertiary,
+        fontSize: 12.5,
+        height: 1.35,
+      ),
+    ),
+  );
+
+  List<Widget> _content(S s, BusinessMe me) {
+    final colors = context.colors;
+    final v = me.verification;
+    final status = v?.status;
+
+    if (v == null) {
+      return [
+        _statusCard(
+          icon: LucideIcons.building2,
+          color: colors.textSecondary,
+          title: s.bizPageNoneTitle,
+          body: s.bizPageNoneBody,
+          action: s.bizPageVerifyCta,
+        ),
+      ];
     }
+    if (status == 'pending') {
+      return [
+        _statusCard(
+          icon: LucideIcons.clock,
+          color: colors.warning,
+          title: s.bizPagePendingTitle,
+          body: s.bizPagePendingBody,
+        ),
+      ];
+    }
+    if (status == 'rejected') {
+      return [
+        _statusCard(
+          icon: LucideIcons.circleAlert,
+          color: colors.danger,
+          title: s.bizPageRejectedTitle,
+          body: (v.reason?.isNotEmpty ?? false)
+              ? v.reason!
+              : s.bizPageRejectedBody,
+          action: s.bizPageSendAgain,
+        ),
+      ];
+    }
+
+    final date = v.reviewedAt == null
+        ? null
+        : MaterialLocalizations.of(context).formatShortDate(v.reviewedAt!);
+    final place = [
+      v.city,
+      v.state,
+    ].whereType<String>().where((e) => e.isNotEmpty).join('/');
+    return [
+      GroupedSection(
+        caption: s.bizPageVerifiedSection,
+        footer: s.bizPageVerifiedFooter,
+        indent: 16,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Icon(LucideIcons.badgeCheck, size: 18, color: colors.success),
+                const SizedBox(width: 8),
+                Text(
+                  date == null
+                      ? s.bizPageVerifiedChip
+                      : s.bizPageVerifiedChipDate(date),
+                  style: TextStyle(
+                    color: colors.success,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (v.tradeName != null)
+            GroupedRow(title: s.bizPageTradeName, value: v.tradeName),
+          if (v.legalName != null)
+            GroupedRow(title: s.bizPageLegalName, subtitle: v.legalName),
+          if (v.cnpj != null) GroupedRow(title: 'CNPJ', value: v.cnpj),
+          if (place.isNotEmpty)
+            GroupedRow(title: s.bizPageCityState, value: place),
+        ],
+      ),
+      GroupedSection(
+        caption: s.bizPagePageSection,
+        indent: 16,
+        children: [
+          GroupedRow(
+            title: s.bizPageCategory,
+            value: _category == null
+                ? s.bizPageCategoryHint
+                : _categoryLabel(s, _category!),
+            valueColor: _category == null ? colors.textTertiary : null,
+            onTap: () => _pickCategory(s, me.categories),
+          ),
+          GroupedField(
+            label: s.bizPageEmail,
+            child: TextField(
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              textCapitalization: TextCapitalization.none,
+              autocorrect: false,
+              style: TextStyle(color: colors.textPrimary, fontSize: 15.5),
+              decoration: groupedInput(
+                context,
+                hint: 'contato@empresa.com',
+              ).copyWith(errorText: _fieldErrors['contact_email']),
+              onChanged: (_) =>
+                  setState(() => _fieldErrors.remove('contact_email')),
+            ),
+          ),
+          GroupedField(
+            label: s.bizPageWhatsapp,
+            child: TextField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                DigitMask.phoneBr,
+                LengthLimitingTextInputFormatter(15),
+              ],
+              style: TextStyle(color: colors.textPrimary, fontSize: 15.5),
+              decoration: groupedInput(
+                context,
+                hint: '(00) 00000-0000',
+              ).copyWith(errorText: _fieldErrors['whatsapp']),
+              onChanged: (_) => setState(() => _fieldErrors.remove('whatsapp')),
+            ),
+          ),
+          GroupedRow(
+            title: s.bizPageShowCity,
+            trailing: Switch.adaptive(
+              value: _showCity,
+              onChanged: (b) => setState(() => _showCity = b),
+            ),
+          ),
+        ],
+      ),
+      if (_fieldErrors['category'] != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            _fieldErrors['category']!,
+            style: TextStyle(color: colors.danger, fontSize: 12.5),
+          ),
+        ),
+      _fieldHints(s),
+      _hint(s.bizPageFooterHint),
+    ];
   }
 
-  String _sectorName(S s, String key) {
-    switch (key) {
-      case 'FashionBeauty':
-        return s.bizProfSectorFashionBeauty;
-      case 'Tech':
-        return s.bizProfSectorTech;
-      case 'Food':
-        return s.bizProfSectorFood;
-      case 'Entertainment':
-        return s.bizProfSectorEntertainment;
-      case 'Education':
-        return s.bizProfSectorEducation;
-      case 'Health':
-        return s.bizProfSectorHealth;
-      case 'Finance':
-        return s.bizProfSectorFinance;
-      case 'Retail':
-        return s.bizProfSectorRetail;
-      case 'Music':
-        return s.bizProfSectorMusic;
-      case 'Games':
-        return s.bizProfSectorGames;
-      case 'Sports':
-        return s.bizProfSectorSports;
-      case 'RealEstate':
-        return s.bizProfSectorRealEstate;
-      case 'Agro':
-        return s.bizProfSectorAgro;
-      case 'Services':
-        return s.bizProfSectorServices;
-      case 'Ngo':
-        return s.bizProfSectorNgo;
-      case 'Other':
-        return s.bizProfSectorOther;
-      default:
-        return key;
-    }
-  }
-
-  Widget _section({
-    required BuildContext context,
-    required String title,
-    String? subtitle,
-    required List<Widget> children,
-  }) {
-    final c = context.colors;
+  /// Mensagens de validação dos campos já tocados (E-mail e WhatsApp).
+  Widget _fieldHints(S s) {
+    final errs = <String?>[
+      if (_emailCtrl.text.isNotEmpty) _emailError(s),
+      if (_phoneCtrl.text.isNotEmpty) _phoneError(s),
+    ].whereType<String>().toList();
+    if (errs.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: title.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                      color: c.textTertiary,
-                    ),
-                  ),
-                  if (subtitle != null)
-                    TextSpan(
-                      text: '  ·  $subtitle',
-                      style: TextStyle(fontSize: 11, color: c.textTertiary),
-                    ),
-                ],
-              ),
+          for (final e in errs)
+            Text(
+              e,
+              style: TextStyle(color: context.colors.danger, fontSize: 12.5),
             ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: c.surface,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(children: children),
-          ),
         ],
       ),
     );
   }
 
-  Widget _field({
-    required BuildContext context,
+  Widget _statusCard({
     required IconData icon,
-    required String label,
-    required Widget child,
+    required Color color,
+    required String title,
+    required String body,
+    String? action,
   }) {
-    final c = context.colors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Icon(icon, size: 16, color: c.textSecondary),
+          Icon(icon, size: 34, color: color),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: c.textSecondary,
+          const SizedBox(height: 6),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          if (action != null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.accentPrimary,
+                  foregroundColor: colors.textOnAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 2),
-                child,
-              ],
+                onPressed: () => context.push('/account/verify/business'),
+                child: Text(action),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
   }
-
-  Widget _platformRow({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required TextEditingController ctrl,
-    required String hint,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: context.colors.textSecondary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _textField(
-              context: context,
-              ctrl: ctrl,
-              hint: hint,
-              prefixText: '$label · ',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _textField({
-    required BuildContext context,
-    required TextEditingController ctrl,
-    required String hint,
-    int maxLines = 1,
-    int? maxLength,
-    String? prefixText,
-    String? Function(String?)? validator,
-  }) {
-    final c = context.colors;
-    return TextFormField(
-      // maiúscula automática só em texto livre; links ficam como digitados
-      textCapitalization: prefixText == null
-          ? TextCapitalization.sentences
-          : TextCapitalization.none,
-      controller: ctrl,
-      maxLines: maxLines,
-      maxLength: maxLength,
-      validator: validator,
-      style: TextStyle(fontSize: 15, color: c.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixText: prefixText,
-        prefixStyle: TextStyle(
-          fontSize: 14,
-          color: c.textTertiary,
-          fontWeight: FontWeight.w500,
-        ),
-        hintStyle: TextStyle(
-          fontSize: 15,
-          color: c.textTertiary.withValues(alpha: 0.6),
-        ),
-        counterText: '',
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        errorBorder: InputBorder.none,
-        errorStyle: const TextStyle(fontSize: 11),
-      ),
-    );
-  }
-
-  Widget _dropdown<T>({
-    required BuildContext context,
-    required T? value,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-    required String hint,
-  }) {
-    final c = context.colors;
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
-      onChanged: onChanged,
-      dropdownColor: c.surfaceElevated,
-      style: TextStyle(fontSize: 15, color: c.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(
-          fontSize: 15,
-          color: c.textTertiary.withValues(alpha: 0.6),
-        ),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-      ),
-      icon: Icon(LucideIcons.chevronDown, size: 16, color: c.textSecondary),
-    );
-  }
-
-  Widget _divider(BuildContext context) =>
-      Divider(height: 1, indent: 42, color: context.colors.divider);
 }
+
+/// Nome traduzido da categoria da empresa (chave do servidor).
+String businessCategoryLabel(S s, String key) => switch (key) {
+  'fashion_beauty' => s.bizPageCatFashionBeauty,
+  'tech' => s.bizPageCatTech,
+  'food' => s.bizPageCatFood,
+  'entertainment' => s.bizPageCatEntertainment,
+  'education' => s.bizPageCatEducation,
+  'health' => s.bizPageCatHealth,
+  'finance' => s.bizPageCatFinance,
+  'retail' => s.bizPageCatRetail,
+  'music' => s.bizPageCatMusic,
+  'games' => s.bizPageCatGames,
+  'sports' => s.bizPageCatSports,
+  'real_estate' => s.bizPageCatRealEstate,
+  'agro' => s.bizPageCatAgro,
+  'services' => s.bizPageCatServices,
+  'ngo' => s.bizPageCatNgo,
+  _ => s.bizPageCatOther,
+};

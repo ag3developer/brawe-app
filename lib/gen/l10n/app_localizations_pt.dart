@@ -12451,4 +12451,173 @@ class SPt extends S {
   @override
   String get privUxStoryRepliesNotAllowed =>
       'Esta pessoa não recebe respostas e reações aos stories dela.';
+
+  @override
+  String get bizPageTitle => 'Perfil da empresa';
+
+  @override
+  String get bizPageVerifiedSection => 'Empresa verificada';
+
+  @override
+  String get bizPageTradeName => 'Nome fantasia';
+
+  @override
+  String get bizPageLegalName => 'Razão social';
+
+  @override
+  String get bizPageCityState => 'Cidade/UF';
+
+  @override
+  String get bizPageVerifiedChip => 'Verificada';
+
+  @override
+  String bizPageVerifiedChipDate(String date) {
+    return 'Verificada em $date';
+  }
+
+  @override
+  String get bizPageVerifiedFooter =>
+      'Esses dados vêm da verificação da empresa. Para alterar, fale com o suporte.';
+
+  @override
+  String get bizPagePendingTitle => 'Seus dados estão em análise';
+
+  @override
+  String get bizPagePendingBody =>
+      'Assim que a verificação for aprovada, você poderá configurar a página da sua empresa.';
+
+  @override
+  String get bizPageRejectedTitle => 'Verificação recusada';
+
+  @override
+  String get bizPageRejectedBody =>
+      'Envie os dados novamente para tentar de novo.';
+
+  @override
+  String get bizPageSendAgain => 'Enviar de novo';
+
+  @override
+  String get bizPageNoneTitle => 'Sua empresa ainda não foi verificada';
+
+  @override
+  String get bizPageNoneBody =>
+      'Verifique o CNPJ da empresa para liberar a página comercial com categoria e contatos.';
+
+  @override
+  String get bizPageVerifyCta => 'Verificar empresa';
+
+  @override
+  String get bizPagePageSection => 'Na sua página';
+
+  @override
+  String get bizPageCategory => 'Categoria';
+
+  @override
+  String get bizPageCategoryHint => 'Escolher';
+
+  @override
+  String get bizPageEmail => 'E-mail comercial';
+
+  @override
+  String get bizPageWhatsapp => 'WhatsApp comercial';
+
+  @override
+  String get bizPageShowCity => 'Mostrar cidade no perfil';
+
+  @override
+  String get bizPageFooterHint =>
+      'Nome, bio, foto e links ficam em Editar perfil.';
+
+  @override
+  String get bizPageSaved => 'Página da empresa atualizada';
+
+  @override
+  String get bizPageSaveError => 'Não foi possível salvar. Tente de novo.';
+
+  @override
+  String get bizPageLoadError =>
+      'Não foi possível carregar os dados da empresa.';
+
+  @override
+  String get bizPageRetry => 'Tentar de novo';
+
+  @override
+  String get bizPageRequired => 'Obrigatório';
+
+  @override
+  String get bizPageEmailInvalid => 'Digite um e-mail válido';
+
+  @override
+  String get bizPagePhoneInvalid => 'Digite o WhatsApp com DDD';
+
+  @override
+  String get bizPageContactEmail => 'E-mail';
+
+  @override
+  String get bizPageContactWhatsapp => 'WhatsApp';
+
+  @override
+  String get bizPageCatFashionBeauty => 'Moda e beleza';
+
+  @override
+  String get bizPageCatTech => 'Tecnologia';
+
+  @override
+  String get bizPageCatFood => 'Alimentação';
+
+  @override
+  String get bizPageCatEntertainment => 'Entretenimento';
+
+  @override
+  String get bizPageCatEducation => 'Educação';
+
+  @override
+  String get bizPageCatHealth => 'Saúde';
+
+  @override
+  String get bizPageCatFinance => 'Finanças';
+
+  @override
+  String get bizPageCatRetail => 'Varejo';
+
+  @override
+  String get bizPageCatMusic => 'Música';
+
+  @override
+  String get bizPageCatGames => 'Games';
+
+  @override
+  String get bizPageCatSports => 'Esportes';
+
+  @override
+  String get bizPageCatRealEstate => 'Imobiliário';
+
+  @override
+  String get bizPageCatAgro => 'Agronegócio';
+
+  @override
+  String get bizPageCatServices => 'Serviços';
+
+  @override
+  String get bizPageCatNgo => 'ONG e causas';
+
+  @override
+  String get bizPageCatOther => 'Outros';
+
+  @override
+  String get artistPageTitle => 'Perfil de artista';
+
+  @override
+  String get artistPageGenresRequired => 'Escolha ao menos um gênero.';
+
+  @override
+  String get artistPageMusicLink => 'Link da sua música';
+
+  @override
+  String get artistPageMusicLinkHint =>
+      'Spotify, Apple Music, YouTube, SoundCloud…';
+
+  @override
+  String get artistPageMusicLinkInvalid =>
+      'Cole um link válido (ex.: open.spotify.com/artist/…)';
 }
