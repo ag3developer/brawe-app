@@ -52,6 +52,7 @@ import '../../live/shared/widgets/hud/live_gift_ticker.dart';
 import '../../live/shared/widgets/hud/live_event_chip.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
+import 'live_solo_video.dart';
 import '../battle/battle_hud.dart';
 import '../battle/battle_layout.dart';
 import '../battle/battle_hud_parts.dart';
@@ -1575,17 +1576,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _scheduleSoloPlayback(playing: true);
 
     // ── Modo SOLO (default) ──
+    // Em pé preenche a tela; deitado (OBS 16:9, jogo) aparece inteiro
+    // com fundo desfocado e botão de tela cheia — ver [LiveSoloVideo].
     if (_isInitialized && _controller != null) {
-      return SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: _controller!.value.size.width,
-            height: _controller!.value.size.height,
-            child: VideoPlayer(_controller!),
-          ),
-        ),
-      );
+      return LiveSoloVideo(controller: _controller!);
     }
     // Carregando: capa desfocada + "Conectando…" — deixa claro que o vídeo
     // está vindo (antes era só a capa parada, parecia travado).
