@@ -11,6 +11,7 @@ import '../../../../data/repositories/creator_payout_repository.dart';
 import '../../../../domain/models/creator_payout.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/brawe_colors.dart';
+import '../../../core/widgets/pix_logo.dart';
 import '../../../core/ui/grouped_list.dart';
 import '../agency/agency_widgets.dart';
 import 'monetization_account_screen.dart' show PayoutErrorBox;
@@ -354,6 +355,7 @@ class _MonetizationWithdrawScreenState extends ConsumerState<MonetizationWithdra
             icon: LucideIcons.landmark,
             title: acc.display,
             subtitle: [acc.holderName, ?payoutHolderTypeLabel(s, acc.holderType)].join(' · '),
+            trailing: acc.method == 'pix' ? const PixLogo(size: 24) : null,
           ),
           GroupedRow(icon: LucideIcons.clock, title: s.payoutWithdrawSla(_ov.rules.paymentDays)),
           if (acc.status == PayoutAccountStatus.pendingReview)

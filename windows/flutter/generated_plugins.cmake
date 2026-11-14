@@ -10,8 +10,10 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_remote_config
   flutter_secure_storage_windows
   flutter_volume_controller
+  flutter_webrtc
   gal
   geolocator_windows
+  livekit_client
   permission_handler_windows
   record_windows
   share_plus

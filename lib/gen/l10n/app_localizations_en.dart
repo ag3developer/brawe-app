@@ -4966,7 +4966,7 @@ class SEn extends S {
   String get shopCheckoutPaymentSection => 'Payment method';
 
   @override
-  String get shopCheckoutPaymentPix => 'PIX';
+  String get shopCheckoutPaymentPix => 'Pix';
 
   @override
   String get shopCheckoutPaymentCard => 'Card';
@@ -5038,7 +5038,7 @@ class SEn extends S {
   String get shopPaymentTotal => 'Total';
 
   @override
-  String get shopPaymentPixTitle => 'Pay with PIX';
+  String get shopPaymentPixTitle => 'Pay with Pix';
 
   @override
   String get shopPaymentPixInstructions =>

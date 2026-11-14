@@ -11,6 +11,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../data/providers/marketplace_payment_providers.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../core/themes/brawe_colors.dart';
+import '../../core/widgets/pix_logo.dart';
 
 /// Payment page that displays QR code for PIX payment.
 ///
@@ -148,13 +149,20 @@ class _ShopPaymentPageState extends ConsumerState<ShopPaymentPage> {
           icon: Icon(LucideIcons.x, color: context.colors.textPrimary),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          S.of(context).moneyPayTitle,
-          style: TextStyle(
-            color: context.colors.textPrimary,
-            fontWeight: FontWeight.w600,
-            fontSize: 17,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PixLogo(size: 24),
+            const SizedBox(width: 8),
+            Text(
+              S.of(context).moneyPayTitle,
+              style: TextStyle(
+                color: context.colors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 17,
+              ),
+            ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -538,13 +546,19 @@ class _CopyPasteField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          S.of(context).moneyPayCopyTitle,
-          style: TextStyle(
-            color: context.colors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          children: [
+            const PixLogo(size: 24),
+            const SizedBox(width: 8),
+            Text(
+              S.of(context).moneyPayCopyTitle,
+              style: TextStyle(
+                color: context.colors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Material(

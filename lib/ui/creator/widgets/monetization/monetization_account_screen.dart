@@ -9,6 +9,7 @@ import '../../../../data/repositories/creator_payout_repository.dart';
 import '../../../../domain/models/creator_payout.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/brawe_colors.dart';
+import '../../../core/widgets/pix_logo.dart';
 import '../agency/agency_widgets.dart';
 import 'monetization_l10n.dart';
 
@@ -159,6 +160,7 @@ class _MonetizationAccountScreenState extends ConsumerState<MonetizationAccountS
               Wrap(spacing: 8, runSpacing: 8, children: [
                 for (final m in _methods)
                   ChoiceChip(
+                    avatar: m == 'pix' ? const PixLogo(size: 24) : null,
                     label: Text(payoutMethodLabel(s, m)),
                     selected: _method == m,
                     onSelected: (_) => setState(() {

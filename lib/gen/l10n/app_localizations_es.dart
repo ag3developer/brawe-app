@@ -4991,7 +4991,7 @@ class SEs extends S {
   String get shopCheckoutPaymentSection => 'Método de pago';
 
   @override
-  String get shopCheckoutPaymentPix => 'PIX';
+  String get shopCheckoutPaymentPix => 'Pix';
 
   @override
   String get shopCheckoutPaymentCard => 'Tarjeta';
@@ -5062,7 +5062,7 @@ class SEs extends S {
   String get shopPaymentTotal => 'Total';
 
   @override
-  String get shopPaymentPixTitle => 'Pagar con PIX';
+  String get shopPaymentPixTitle => 'Pagar con Pix';
 
   @override
   String get shopPaymentPixInstructions =>

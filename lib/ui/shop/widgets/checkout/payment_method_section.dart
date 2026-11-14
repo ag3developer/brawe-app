@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/themes/brawe_colors.dart';
+import '../../../core/widgets/pix_logo.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 
 /// The 3 payment methods actually wired up in the app today (see
@@ -54,6 +55,7 @@ class PaymentMethodSection extends StatelessWidget {
           const SizedBox(height: 10),
           _PaymentOption(
             icon: LucideIcons.qrCode,
+            leading: const PixLogo(size: 24),
             label: s.shopCheckoutPaymentPix,
             selected: selected == CheckoutPaymentMethod.pix,
             onTap: () => onChanged(CheckoutPaymentMethod.pix),
@@ -80,12 +82,16 @@ class PaymentMethodSection extends StatelessWidget {
 
 class _PaymentOption extends StatelessWidget {
   final IconData icon;
+
+  /// Marca do meio de pagamento (ex.: logo do Pix); quando presente, substitui o [icon].
+  final Widget? leading;
   final String label;
   final bool selected;
   final VoidCallback onTap;
 
   const _PaymentOption({
     required this.icon,
+    this.leading,
     required this.label,
     required this.selected,
     required this.onTap,
@@ -114,13 +120,14 @@ class _PaymentOption extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: selected
-                    ? context.colors.accentPrimary
-                    : context.colors.textSecondary,
-              ),
+              leading ??
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: selected
+                        ? context.colors.accentPrimary
+                        : context.colors.textSecondary,
+                  ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

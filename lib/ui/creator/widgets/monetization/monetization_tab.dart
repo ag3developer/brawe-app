@@ -13,6 +13,7 @@ import '../../../../data/repositories/creator_payout_repository.dart';
 import '../../../../domain/models/creator_payout.dart';
 import '../../../../gen/l10n/app_localizations.dart';
 import '../../../core/themes/brawe_colors.dart';
+import '../../../core/widgets/pix_logo.dart';
 import '../../view_models/creator_payout_providers.dart';
 import '../agency/agency_widgets.dart';
 import '../creator_panel_scope.dart';
@@ -402,7 +403,10 @@ class _AccountCard extends ConsumerWidget {
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(acc.display, style: AgencyText.title(context)),
+                Row(children: [
+                  if (acc.method == 'pix') ...[const PixLogo(size: 24), const SizedBox(width: 8)],
+                  Flexible(child: Text(acc.display, style: AgencyText.title(context))),
+                ]),
                 const SizedBox(height: 2),
                 Text(
                   [acc.holderName, acc.holderTaxIdMasked, ?payoutHolderTypeLabel(s, acc.holderType)].join(' · '),

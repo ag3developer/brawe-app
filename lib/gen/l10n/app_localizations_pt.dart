@@ -4989,7 +4989,7 @@ class SPt extends S {
   String get shopCheckoutPaymentSection => 'Método de pagamento';
 
   @override
-  String get shopCheckoutPaymentPix => 'PIX';
+  String get shopCheckoutPaymentPix => 'Pix';
 
   @override
   String get shopCheckoutPaymentCard => 'Cartão';
@@ -5061,7 +5061,7 @@ class SPt extends S {
   String get shopPaymentTotal => 'Total';
 
   @override
-  String get shopPaymentPixTitle => 'Pague com PIX';
+  String get shopPaymentPixTitle => 'Pague com Pix';
 
   @override
   String get shopPaymentPixInstructions =>

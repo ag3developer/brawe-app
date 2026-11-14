@@ -2487,7 +2487,7 @@
   "shopCheckoutShippingStandard": "Padrão",
   "shopCheckoutShippingExpress": "Expresso",
   "shopCheckoutPaymentSection": "Método de pagamento",
-  "shopCheckoutPaymentPix": "PIX",
+  "shopCheckoutPaymentPix": "Pix",
   "shopCheckoutPaymentCard": "Cartão",
   "shopCheckoutPaymentCrypto": "Cripto",
   "shopCheckoutSummarySection": "Resumo do pedido",
@@ -2521,7 +2521,7 @@
     }
   },
   "shopPaymentTotal": "Total",
-  "shopPaymentPixTitle": "Pague com PIX",
+  "shopPaymentPixTitle": "Pague com Pix",
   "shopPaymentPixInstructions": "Escaneie o QR code no app do seu banco para concluir o pagamento.",
   "shopPaymentAlreadyPaid": "Já paguei",
   "shopPaymentCardTitle": "Pagamento com cartão",

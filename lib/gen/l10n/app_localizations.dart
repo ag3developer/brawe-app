@@ -9060,7 +9060,7 @@ abstract class S {
   /// No description provided for @shopCheckoutPaymentPix.
   ///
   /// In pt, this message translates to:
-  /// **'PIX'**
+  /// **'Pix'**
   String get shopCheckoutPaymentPix;
 
   /// No description provided for @shopCheckoutPaymentCard.
@@ -9180,7 +9180,7 @@ abstract class S {
   /// No description provided for @shopPaymentPixTitle.
   ///
   /// In pt, this message translates to:
-  /// **'Pague com PIX'**
+  /// **'Pague com Pix'**
   String get shopPaymentPixTitle;
 
   /// No description provided for @shopPaymentPixInstructions.
