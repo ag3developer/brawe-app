@@ -47,5 +47,8 @@ sealed class LiveRoom with _$LiveRoom {
     @Default(<LiveGoal>[]) List<LiveGoal> goals,
     // Evento com prazo (multiplicador de pontos); null = sem evento.
     LiveEvent? event,
+    // De onde vem o vídeo: 'web' = encoder externo (OBS, Streamlabs…),
+    // 'app' = câmera do app. Cenas do OBS não podem ter as bordas cortadas.
+    String? ingestSource,
   }) = _LiveRoom;
 }

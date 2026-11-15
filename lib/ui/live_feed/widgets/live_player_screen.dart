@@ -1579,7 +1579,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     // Em pé preenche a tela; deitado (OBS 16:9, jogo) aparece inteiro
     // com fundo desfocado e botão de tela cheia — ver [LiveSoloVideo].
     if (_isInitialized && _controller != null) {
-      return LiveSoloVideo(controller: _controller!);
+      return LiveSoloVideo(
+        controller: _controller!,
+        // OBS/encoder externo: cena montada pelo criador, sem cortar bordas.
+        keepEdges: widget.room.ingestSource == 'web',
+      );
     }
     // Carregando: capa desfocada + "Conectando…" — deixa claro que o vídeo
     // está vindo (antes era só a capa parada, parecia travado).

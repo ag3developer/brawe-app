@@ -9,7 +9,10 @@ import '../../home/widgets/views/landscape_video_page.dart';
 
 /// Vídeo da live solo que se adapta ao formato do sinal.
 ///
-/// - Sinal em pé (app, OBS 1080×1920): preenche a tela, como sempre.
+/// - Sinal em pé da câmera do app: preenche a tela, como sempre.
+/// - Sinal do OBS/encoder externo ([keepEdges]): nunca corta as bordas —
+///   uma cena 9:16 numa tela mais comprida (iPhone ≈ 19,5:9) perdia ~9% de
+///   cada lado (placar, HUD, nomes). Aparece inteira, com fundo desfocado.
 /// - Sinal deitado (OBS 1920×1080, jogo, tela do PC): o vídeo aparece
 ///   INTEIRO no centro, com o próprio vídeo ampliado e desfocado ao fundo,
 ///   e um botão para assistir deitado em tela cheia. Antes o `cover`
@@ -18,9 +21,17 @@ import '../../home/widgets/views/landscape_video_page.dart';
 /// Escuta o controller: se o criador trocar a resolução no meio da live,
 /// o layout acompanha.
 class LiveSoloVideo extends StatefulWidget {
-  const LiveSoloVideo({super.key, required this.controller});
+  const LiveSoloVideo({
+    super.key,
+    required this.controller,
+    this.keepEdges = false,
+  });
 
   final VideoPlayerController controller;
+
+  /// Mostrar o quadro inteiro (sem cortar bordas) mesmo em pé. Ligado para
+  /// lives vindas de encoder externo (`ingest_source == 'web'`).
+  final bool keepEdges;
 
   /// Proporção a partir da qual o sinal é tratado como deitado.
   static const double landscapeRatio = 1.1;
@@ -61,15 +72,23 @@ class _LiveSoloVideoState extends State<LiveSoloVideo> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      _SizedFrame(controller: widget.controller, size: _size);
+  Widget build(BuildContext context) => _SizedFrame(
+    controller: widget.controller,
+    size: _size,
+    keepEdges: widget.keepEdges,
+  );
 }
 
 class _SizedFrame extends StatelessWidget {
-  const _SizedFrame({required this.controller, required this.size});
+  const _SizedFrame({
+    required this.controller,
+    required this.size,
+    required this.keepEdges,
+  });
 
   final VideoPlayerController controller;
   final Size size;
+  final bool keepEdges;
 
   Widget _cover() => FittedBox(
     fit: BoxFit.cover,
@@ -84,14 +103,25 @@ class _SizedFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ratio = size.height > 0 ? size.width / size.height : 0.0;
-    if (ratio <= LiveSoloVideo.landscapeRatio) {
+    final landscape = ratio > LiveSoloVideo.landscapeRatio;
+    if (ratio <= 0 || (!landscape && !keepEdges)) {
       return SizedBox.expand(child: _cover());
     }
 
     return LayoutBuilder(
       builder: (context, box) {
-        final videoH = box.maxWidth / ratio;
+        final boxRatio = box.maxWidth / box.maxHeight;
+        // Quase do mesmo formato da tela: preencher não corta nada visível.
+        if (!landscape && (ratio - boxRatio).abs() < 0.02) {
+          return SizedBox.expand(child: _cover());
+        }
+        // Quadro inteiro: cabe pela largura (mais largo que a tela) ou pela
+        // altura (mais estreito), centralizado.
+        final fitWidth = ratio >= boxRatio;
+        final videoW = fitWidth ? box.maxWidth : box.maxHeight * ratio;
+        final videoH = fitWidth ? box.maxWidth / ratio : box.maxHeight;
         final top = (box.maxHeight - videoH) / 2;
+        final left = (box.maxWidth - videoW) / 2;
         return Stack(
           fit: StackFit.expand,
           children: [
@@ -105,21 +135,22 @@ class _SizedFrame extends StatelessWidget {
             const ColoredBox(color: Color(0x66000000)),
             // Vídeo inteiro, centralizado.
             Positioned(
-              left: 0,
-              right: 0,
+              left: left,
               top: top,
+              width: videoW,
               height: videoH,
               child: VideoPlayer(controller),
             ),
-            // Assistir deitado em tela cheia.
-            Positioned(
-              top: top + 8,
-              right: 8,
-              child: _FullscreenButton(
-                onTap: () =>
-                    LandscapeVideoPage.open(context, controller, live: true),
+            // Assistir deitado em tela cheia (só faz sentido com vídeo deitado).
+            if (landscape)
+              Positioned(
+                top: top + 8,
+                right: 8,
+                child: _FullscreenButton(
+                  onTap: () =>
+                      LandscapeVideoPage.open(context, controller, live: true),
+                ),
               ),
-            ),
           ],
         );
       },

@@ -35,6 +35,7 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'is_verified') @Default(false) bool isVerified,
     @JsonKey(name: 'ingest_url') String? ingestUrl,
     @JsonKey(name: 'started_at') String? startedAt,
+    @JsonKey(name: 'ingest_source') String? ingestSource,
     @JsonKey(name: 'created_at') String? createdAt,
     // ⚔️ Campos de batalha — presentes quando live_type = 'battle'
     @JsonKey(name: 'battle_id') String? battleId,
@@ -111,6 +112,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       rtmpUrl: streamConfig?.rtmpUrl ?? streamConfig?.ingestUrl ?? ingestUrl,
       streamKey: streamConfig?.streamKey,
       thumbnailUrl: thumbnailUrl,
+      ingestSource: ingestSource,
       streamerId: host?.id ?? streamerId ?? 'unknown',
       streamerName: host?.name ?? streamerName ?? 'Unknown Streamer',
       streamerAvatarUrl: host?.avatarUrl ?? streamerAvatar,
