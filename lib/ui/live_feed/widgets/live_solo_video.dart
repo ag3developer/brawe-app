@@ -223,10 +223,17 @@ class _CropVideo extends StatelessWidget {
 }
 
 class _FullscreenButton extends StatelessWidget {
-  const _FullscreenButton({required this.onTap, this.semanticLabel});
+  const _FullscreenButton({
+    required this.onTap,
+    this.semanticLabel,
+    this.compact = false,
+  });
 
   final VoidCallback onTap;
   final String? semanticLabel;
+
+  /// Só o ícone (44×44), para caber no canto da câmera.
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -244,20 +251,26 @@ class _FullscreenButton extends StatelessWidget {
           child: Container(
             height: 44,
             constraints: const BoxConstraints(minWidth: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 0 : 12),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.maximize, size: 16, color: kGamerInk),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: kGamerInk,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Icon(
+                  LucideIcons.maximize,
+                  size: compact ? 18 : 16,
+                  color: kGamerInk,
                 ),
+                if (!compact) const SizedBox(width: 6),
+                if (!compact)
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      color: kGamerInk,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
               ],
             ),
           ),
@@ -290,6 +303,15 @@ class _GamerFrame extends StatelessWidget {
         final g = GamerGeometry.of(
           Size(box.maxWidth, box.maxHeight),
           videoAspect: size.width / size.height,
+        );
+        void openFullscreen() =>
+            LandscapeVideoPage.open(context, controller, live: true);
+        // O botão só com o ícone (44×44) cabe dentro do canto da câmera?
+        final fsInMask = cam[2] * box.maxWidth >= 52 && cam[3] * g.gameH >= 52;
+        final fullscreen = _FullscreenButton(
+          semanticLabel: s.liveWatchGameFullscreen,
+          compact: fsInMask,
+          onTap: openFullscreen,
         );
         return ColoredBox(
           color: kGamerSurface,
@@ -390,18 +412,21 @@ class _GamerFrame extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       VideoPlayer(controller),
+                      // A câmera já aparece em cima: no jogo, o canto dela
+                      // vira um vidro desfocado (sem câmera dupla) e abriga o
+                      // botão de tela cheia, sem cobrir outra parte do jogo.
                       Positioned(
-                        right: 8,
-                        bottom: 8,
-                        child: _FullscreenButton(
-                          semanticLabel: s.liveWatchGameFullscreen,
-                          onTap: () => LandscapeVideoPage.open(
-                            context,
-                            controller,
-                            live: true,
-                          ),
+                        left: cam[0] * box.maxWidth,
+                        top: cam[1] * g.gameH,
+                        width: cam[2] * box.maxWidth,
+                        height: cam[3] * g.gameH,
+                        child: _CamMask(
+                          showMark: !fsInMask,
+                          child: fsInMask ? fullscreen : null,
                         ),
                       ),
+                      if (!fsInMask)
+                        Positioned(right: 8, bottom: 8, child: fullscreen),
                     ],
                   ),
                 ),
@@ -410,6 +435,43 @@ class _GamerFrame extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Cobre o canto da câmera dentro do quadro do jogo: vidro desfocado com o
+/// símbolo da Brawe.
+class _CamMask extends StatelessWidget {
+  const _CamMask({this.showMark = true, this.child});
+
+  final bool showMark;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: ColoredBox(
+          color: kGamerSurface.withValues(alpha: 0.55),
+          child: Center(
+            child:
+                child ??
+                (showMark
+                    ? Opacity(
+                        opacity: 0.9,
+                        child: Image.asset(
+                          'assets/images/brawe_mark.png',
+                          width: 22,
+                          height: 22,
+                          excludeFromSemantics: true,
+                        ),
+                      )
+                    : null),
+          ),
+        ),
+      ),
     );
   }
 }
