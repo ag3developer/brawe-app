@@ -9,6 +9,18 @@ class SEn extends S {
   SEn([String locale = 'en']) : super(locale);
 
   @override
+  String get liveCameraLabel => 'Camera';
+
+  @override
+  String get liveGoalShort => 'Goal';
+
+  @override
+  String get liveModeGamer => 'Gamer mode';
+
+  @override
+  String get liveWatchGameFullscreen => 'Watch the game full screen';
+
+  @override
   String get appName => 'Brawe';
 
   @override

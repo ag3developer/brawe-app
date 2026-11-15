@@ -8,6 +8,16 @@ import '../../domain/models/live_event.dart';
 part 'live_room_dto.freezed.dart';
 part 'live_room_dto.g.dart';
 
+/// `{x, y, w, h}` (0–1) → `[x, y, w, h]`; inválido → null.
+List<double>? parseLayoutCam(Object? raw) {
+  if (raw is! Map) return null;
+  final v = [raw['x'], raw['y'], raw['w'], raw['h']];
+  if (v.any((e) => e is! num)) return null;
+  final r = v.map((e) => (e as num).toDouble().clamp(0.0, 1.0)).toList();
+  if (r[2] < 0.03 || r[3] < 0.03) return null;
+  return r;
+}
+
 @freezed
 sealed class LiveRoomDto with _$LiveRoomDto {
   const factory LiveRoomDto({
@@ -36,6 +46,8 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'ingest_url') String? ingestUrl,
     @JsonKey(name: 'started_at') String? startedAt,
     @JsonKey(name: 'ingest_source') String? ingestSource,
+    @JsonKey(name: 'layout_theme') String? layoutTheme,
+    @JsonKey(name: 'layout_cam') Map<String, dynamic>? layoutCam,
     @JsonKey(name: 'created_at') String? createdAt,
     // ⚔️ Campos de batalha — presentes quando live_type = 'battle'
     @JsonKey(name: 'battle_id') String? battleId,
@@ -113,6 +125,8 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       streamKey: streamConfig?.streamKey,
       thumbnailUrl: thumbnailUrl,
       ingestSource: ingestSource,
+      layoutTheme: layoutTheme,
+      layoutCam: parseLayoutCam(layoutCam),
       streamerId: host?.id ?? streamerId ?? 'unknown',
       streamerName: host?.name ?? streamerName ?? 'Unknown Streamer',
       streamerAvatarUrl: host?.avatarUrl ?? streamerAvatar,

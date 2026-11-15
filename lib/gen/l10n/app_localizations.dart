@@ -99,6 +99,30 @@ abstract class S {
     Locale('pt'),
   ];
 
+  /// No description provided for @liveCameraLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Câmera'**
+  String get liveCameraLabel;
+
+  /// No description provided for @liveGoalShort.
+  ///
+  /// In pt, this message translates to:
+  /// **'Meta'**
+  String get liveGoalShort;
+
+  /// No description provided for @liveModeGamer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo Gamer'**
+  String get liveModeGamer;
+
+  /// No description provided for @liveWatchGameFullscreen.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ver o jogo em tela cheia'**
+  String get liveWatchGameFullscreen;
+
   /// No description provided for @appName.
   ///
   /// In pt, this message translates to:

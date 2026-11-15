@@ -9,6 +9,18 @@ class SEs extends S {
   SEs([String locale = 'es']) : super(locale);
 
   @override
+  String get liveCameraLabel => 'Cámara';
+
+  @override
+  String get liveGoalShort => 'Meta';
+
+  @override
+  String get liveModeGamer => 'Modo Gamer';
+
+  @override
+  String get liveWatchGameFullscreen => 'Ver el juego en pantalla completa';
+
+  @override
   String get appName => 'Brawe';
 
   @override

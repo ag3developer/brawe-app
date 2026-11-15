@@ -50,5 +50,9 @@ sealed class LiveRoom with _$LiveRoom {
     // De onde vem o vídeo: 'web' = encoder externo (OBS, Streamlabs…),
     // 'app' = câmera do app. Cenas do OBS não podem ter as bordas cortadas.
     String? ingestSource,
+    // Visual da live: 'camera' | 'gamer' | 'screen' | 'talk' e onde está a
+    // câmera na cena do OBS ([x, y, w, h] normalizado 0–1).
+    String? layoutTheme,
+    List<double>? layoutCam,
   }) = _LiveRoom;
 }

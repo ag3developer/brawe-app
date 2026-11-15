@@ -9,6 +9,18 @@ class SPt extends S {
   SPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get liveCameraLabel => 'Câmera';
+
+  @override
+  String get liveGoalShort => 'Meta';
+
+  @override
+  String get liveModeGamer => 'Modo Gamer';
+
+  @override
+  String get liveWatchGameFullscreen => 'Ver o jogo em tela cheia';
+
+  @override
   String get appName => 'Brawe';
 
   @override

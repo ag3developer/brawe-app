@@ -70,6 +70,8 @@ class AppConstants {
   static const String eventSendReaction = 'live_reaction';
   static const String eventLiveEnded = 'live_ended';
   static const String eventLivePaused = 'live_paused';
+  // Visual da live mudou (tema / câmera na cena do OBS)
+  static const String eventLayoutChanged = 'layout_changed';
   static const String eventLiveResumed = 'live_resumed';
   static const String eventLikeCountUpdate = 'like_count_update';
   static const String eventCommentCountUpdate = 'comment_count_update';

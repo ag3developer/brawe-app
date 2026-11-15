@@ -1,5 +1,9 @@
 {
   "@@locale": "es",
+  "liveCameraLabel": "Cámara",
+  "liveGoalShort": "Meta",
+  "liveModeGamer": "Modo Gamer",
+  "liveWatchGameFullscreen": "Ver el juego en pantalla completa",
   "appName": "Brawe",
   "navHome": "Inicio",
   "navFeed": "Feed",

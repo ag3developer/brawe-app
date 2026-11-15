@@ -53,6 +53,7 @@ import '../../live/shared/widgets/hud/live_event_chip.dart';
 import 'live_ended_view.dart';
 import 'dual_hls_player.dart';
 import 'live_solo_video.dart';
+import '../../../data/model/live_room_dto.dart' show parseLayoutCam;
 import '../battle/battle_hud.dart';
 import '../battle/battle_layout.dart';
 import '../battle/battle_hud_parts.dart';
@@ -123,6 +124,38 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
   /// Qualidade selecionada pelo usuário. Padrão: Auto.
   StreamQuality _quality = StreamQuality.auto;
+
+  /// Visual da live escolhido pelo criador na web (tema + câmera na cena).
+  /// Atualiza na hora pelo socket (`layout_changed`).
+  late String? _layoutTheme = widget.room.layoutTheme;
+  late List<double>? _layoutCam = widget.room.layoutCam;
+
+  /// Modo Gamer montado: só na live solo (batalha/conexão usam a tela
+  /// dividida do servidor), com o vídeo carregado e a câmera marcada.
+  bool get _gamer =>
+      !_split &&
+      _isInitialized &&
+      _controller != null &&
+      LiveSoloVideo.gamerActive(_layoutTheme, _layoutCam);
+
+  /// Y onde começa o chat no Modo Gamer (logo abaixo do jogo).
+  double _gamerChatTop(BuildContext context) {
+    final v = _controller?.value.size ?? Size.zero;
+    return GamerGeometry.of(
+      MediaQuery.sizeOf(context),
+      videoAspect: v.height > 0 ? v.width / v.height : 16 / 9,
+    ).chatTop;
+  }
+
+  void _onLayoutChanged(dynamic raw) {
+    if (!mounted) return;
+    final data = _parseSocketPayload(raw);
+    if (data == null || data['room_id'] != widget.room.id) return;
+    setState(() {
+      _layoutTheme = data['layout_theme']?.toString();
+      _layoutCam = parseLayoutCam(data['layout_cam']);
+    });
+  }
 
   // Reaction batching (TikTok-style: agrega N toques em 250ms)
   Timer? _reactionFlushTimer;
@@ -293,6 +326,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    socket.on(AppConstants.eventLayoutChanged, _onLayoutChanged);
     // 🔁 Re-anexar handler em reconexões (idêntico ao broadcaster).
     socket.addReconnectCallback(_reattachBattleHandlers);
     // Verifica se a live já está em batalha (viewer entrou mid-battle)
@@ -313,6 +347,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.off(AppConstants.eventLivePaused, _onLivePaused);
     socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
+    socket.off(AppConstants.eventLayoutChanged, _onLayoutChanged);
     socket.on(AppConstants.eventBattleCountdown, _onBattleCountdown);
     socket.on(AppConstants.eventBattleStarted, _onBattleStarted);
     socket.on(AppConstants.eventBattleCancelled, _onBattleCancelled);
@@ -323,6 +358,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     socket.on(AppConstants.eventLivePaused, _onLivePaused);
     socket.on(AppConstants.eventLiveResumed, _onLiveResumed);
     socket.on(AppConstants.eventLiveEnded, _onLiveEnded);
+    socket.on(AppConstants.eventLayoutChanged, _onLayoutChanged);
     // A live pode ter acabado durante a queda de conexão.
     _confirmStillLive();
     // Conexão (tela dupla) pode ter começado/terminado enquanto offline.
@@ -347,6 +383,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       socket.off(AppConstants.eventLivePaused, _onLivePaused);
       socket.off(AppConstants.eventLiveResumed, _onLiveResumed);
       socket.off(AppConstants.eventLiveEnded, _onLiveEnded);
+      socket.off(AppConstants.eventLayoutChanged, _onLayoutChanged);
       socket.removeReconnectCallback(_reattachBattleHandlers);
     } catch (_) {}
   }
@@ -1325,15 +1362,18 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: LiveGoalsPill(
-                    expand: true,
-                    roomId: widget.room.id,
-                    streamerId: widget.room.streamerId,
-                    initialGoals: widget.room.goals,
+                // Modo Gamer: a meta fica na faixa da marca, não aqui.
+                if (!_gamer) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: LiveGoalsPill(
+                      expand: true,
+                      roomId: widget.room.id,
+                      streamerId: widget.room.streamerId,
+                      initialGoals: widget.room.goals,
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(width: 8),
                 Expanded(
                   child: LiveGiftTicker(
@@ -1378,11 +1418,16 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
             left: 0,
             right: 0,
             bottom: 0,
-            top: _split ? _layout().rowsBottom : null,
+            // Batalha/conexão e Modo Gamer: o chat começa abaixo do vídeo.
+            top: _split
+                ? _layout().rowsBottom
+                : (_gamer ? _gamerChatTop(context) : null),
             child: BattleDockClip(
-              enabled: _split,
+              enabled: _split || _gamer,
               child: _ViewerChatDock(
-                battleChatTop: _split ? _layout().rowsBottom : null,
+                battleChatTop: _split
+                    ? _layout().rowsBottom
+                    : (_gamer ? _gamerChatTop(context) : null),
                 // Produto fixado/loja: exclusivos da live solo (somem na conexão/batalha).
                 pinnedProduct: _split
                     ? const SizedBox.shrink()
@@ -1583,6 +1628,18 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         controller: _controller!,
         // OBS/encoder externo: cena montada pelo criador, sem cortar bordas.
         keepEdges: widget.room.ingestSource == 'web',
+        theme: _layoutTheme,
+        cam: _layoutCam,
+        gamerStrip: GamerBrandStrip(
+          title: widget.room.title,
+          // No Modo Gamer a meta vai para a faixa da marca.
+          goal: LiveGoalsPill(
+            strip: true,
+            roomId: widget.room.id,
+            streamerId: widget.room.streamerId,
+            initialGoals: widget.room.goals,
+          ),
+        ),
       );
     }
     // Carregando: capa desfocada + "Conectando…" — deixa claro que o vídeo

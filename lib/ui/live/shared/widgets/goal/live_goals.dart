@@ -62,10 +62,15 @@ class LiveGoalsPill extends ConsumerStatefulWidget {
     this.isCreator = false,
     this.onEdit,
     this.expand = false,
+    this.strip = false,
   });
 
   /// Pílula de largura total (linha de 3 pílulas iguais), altura 30.
   final bool expand;
+
+  /// Versão da faixa da marca (Modo Gamer): "Meta 640 / 1.000" e barra
+  /// laranja, sem fundo. Mesmo dado, mesmo toque.
+  final bool strip;
   final String roomId;
   final String streamerId;
   final List<LiveGoal> initialGoals;
@@ -164,6 +169,66 @@ class LiveGoalsPillState extends ConsumerState<LiveGoalsPill> {
         ? _gold
         : (featured.isLikes ? _pink : _gold);
     final more = _goals.length - 1;
+
+    if (widget.strip) {
+      const orange = Color(0xFFFF8300);
+      return Semantics(
+        button: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _onTap,
+          child: AnimatedScale(
+            scale: _glow ? 1.06 : 1,
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutBack,
+            child: SizedBox(
+              width: 112,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        S.of(context).liveGoalShort,
+                        style: const TextStyle(
+                          color: orange,
+                          fontSize: 11,
+                          height: 14 / 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${fmtGap(featured.progress)} / ${fmtGap(featured.target)}',
+                        style: const TextStyle(
+                          color: Color(0xFFF4F6FA),
+                          fontSize: 11,
+                          height: 14 / 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: SizedBox(
+                      height: 6,
+                      child: LinearProgressIndicator(
+                        value: allDone ? 1 : featured.ratio,
+                        backgroundColor: const Color(0xFF262D3B),
+                        valueColor: const AlwaysStoppedAnimation(orange),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return GestureDetector(
       onTap: _onTap,
