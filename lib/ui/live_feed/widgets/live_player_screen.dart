@@ -136,7 +136,11 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       !_split &&
       _isInitialized &&
       _controller != null &&
-      LiveSoloVideo.gamerActive(_layoutTheme, _layoutCam);
+      LiveSoloVideo.gamerActive(
+        _layoutTheme,
+        _layoutCam,
+        _controller!.value.size,
+      );
 
   /// Y onde começa o chat no Modo Gamer (logo abaixo do jogo).
   double _gamerChatTop(BuildContext context) {

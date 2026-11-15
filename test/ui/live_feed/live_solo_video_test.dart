@@ -19,11 +19,20 @@ void main() {
     expect(g.chatTop, closeTo(585.375, 0.01));
   });
 
-  test('Modo Gamer só monta com tema gamer e câmera marcada', () {
-    expect(LiveSoloVideo.gamerActive('gamer', [0.7, 0.66, 0.28, 0.3]), isTrue);
-    expect(LiveSoloVideo.gamerActive('gamer', null), isFalse);
+  test('Modo Gamer só monta com tema gamer, câmera e cena deitada', () {
+    const wide = Size(1920, 1080);
+    const tall = Size(720, 1280);
     expect(
-      LiveSoloVideo.gamerActive('camera', [0.7, 0.66, 0.28, 0.3]),
+      LiveSoloVideo.gamerActive('gamer', [0.7, 0.66, 0.28, 0.3], wide),
+      isTrue,
+    );
+    expect(LiveSoloVideo.gamerActive('gamer', null, wide), isFalse);
+    expect(
+      LiveSoloVideo.gamerActive('gamer', [0, 0.1, 1, 0.32], tall),
+      isFalse,
+    );
+    expect(
+      LiveSoloVideo.gamerActive('camera', [0.7, 0.66, 0.28, 0.3], wide),
       isFalse,
     );
   });

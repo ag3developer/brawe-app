@@ -81,9 +81,14 @@ class LiveSoloVideo extends StatefulWidget {
   /// Proporção a partir da qual o sinal é tratado como deitado.
   static const double landscapeRatio = 1.1;
 
-  /// O Modo Gamer só monta com tema e câmera marcada.
-  static bool gamerActive(String? theme, List<double>? cam) =>
-      theme == 'gamer' && cam != null && cam.length == 4;
+  /// O Modo Gamer só monta com tema, câmera marcada e a cena DEITADA (16:9).
+  /// Cena em pé (o criador já montou câmera + jogo no OBS) aparece como vem.
+  static bool gamerActive(String? theme, List<double>? cam, Size video) =>
+      theme == 'gamer' &&
+      cam != null &&
+      cam.length == 4 &&
+      video.height > 0 &&
+      video.width / video.height > landscapeRatio;
 
   @override
   State<LiveSoloVideo> createState() => _LiveSoloVideoState();
@@ -125,7 +130,7 @@ class _LiveSoloVideoState extends State<LiveSoloVideo> {
     final c = widget.controller;
     final cam = widget.cam;
     final hasSize = _size.width > 0 && _size.height > 0;
-    if (hasSize && LiveSoloVideo.gamerActive(widget.theme, cam)) {
+    if (hasSize && LiveSoloVideo.gamerActive(widget.theme, cam, _size)) {
       return _GamerFrame(
         controller: c,
         size: _size,
@@ -133,7 +138,11 @@ class _LiveSoloVideoState extends State<LiveSoloVideo> {
         strip: widget.gamerStrip,
       );
     }
-    if (hasSize && widget.theme == 'screen' && cam != null && cam.length == 4) {
+    if (hasSize &&
+        widget.theme == 'screen' &&
+        cam != null &&
+        cam.length == 4 &&
+        _size.width / _size.height > LiveSoloVideo.landscapeRatio) {
       return _ScreenFrame(controller: c, size: _size, cam: cam);
     }
     return _SizedFrame(
