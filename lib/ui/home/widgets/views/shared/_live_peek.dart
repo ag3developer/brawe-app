@@ -634,30 +634,36 @@ class _WatchLiveButtonState extends State<WatchLiveButton>
           mainAxisSize: MainAxisSize.min,
           children: [
             // ── Ondas sonoras: 5 barras animadas ──
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_barCount, (i) {
-                return Padding(
-                  padding: EdgeInsets.only(right: i < _barCount - 1 ? 3 : 0),
-                  child: AnimatedBuilder(
-                    animation: _ctrls[i],
-                    builder: (_, _) {
-                      final h = 6 + _ctrls[i].value * 14;
-                      return Container(
-                        width: 3,
-                        height: h,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(
-                            alpha: 0.85 + _ctrls[i].value * 0.15,
+            // Altura fixa (a barra mais alta): sem isso o botão crescia e
+            // encolhia com a animação e o bloco inteiro acima (título, nome,
+            // AO VIVO) tremia, porque é ancorado na base da tela.
+            SizedBox(
+              height: 20,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(_barCount, (i) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: i < _barCount - 1 ? 3 : 0),
+                    child: AnimatedBuilder(
+                      animation: _ctrls[i],
+                      builder: (_, _) {
+                        final h = 6 + _ctrls[i].value * 14;
+                        return Container(
+                          width: 3,
+                          height: h,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(
+                              alpha: 0.85 + _ctrls[i].value * 0.15,
+                            ),
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }),
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
             ),
             const SizedBox(width: 10),
             Text(
