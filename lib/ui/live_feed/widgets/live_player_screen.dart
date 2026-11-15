@@ -129,6 +129,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
   /// Atualiza na hora pelo socket (`layout_changed`).
   late String? _layoutTheme = widget.room.layoutTheme;
   late List<double>? _layoutCam = widget.room.layoutCam;
+  late List<double>? _layoutGame = widget.room.layoutGame;
 
   /// Modo Gamer montado: só na live solo (batalha/conexão usam a tela
   /// dividida do servidor), com o vídeo carregado e a câmera marcada.
@@ -140,6 +141,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         _layoutTheme,
         _layoutCam,
         _controller!.value.size,
+        game: _layoutGame,
       );
 
   /// Y onde começa o chat no Modo Gamer (logo abaixo do jogo).
@@ -147,7 +149,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     final v = _controller?.value.size ?? Size.zero;
     return GamerGeometry.of(
       MediaQuery.sizeOf(context),
-      videoAspect: v.height > 0 ? v.width / v.height : 16 / 9,
+      gameAspect: GamerGeometry.aspectOf(v, _layoutGame),
     ).chatTop;
   }
 
@@ -158,6 +160,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     setState(() {
       _layoutTheme = data['layout_theme']?.toString();
       _layoutCam = parseLayoutCam(data['layout_cam']);
+      _layoutGame = parseLayoutCam(data['layout_game']);
     });
   }
 
@@ -1284,7 +1287,9 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
 
           // ── 2. Gradients para legibilidade ──
           const LiveTopGradient(),
-          const LiveBottomGradient(),
+          // Modo Gamer: o chat tem área escura própria; a sombra de baixo
+          // escurecia o jogo.
+          if (!_gamer) const LiveBottomGradient(),
 
           // ── 3. Top bar ──
           Positioned(
@@ -1634,6 +1639,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         keepEdges: widget.room.ingestSource == 'web',
         theme: _layoutTheme,
         cam: _layoutCam,
+        game: _layoutGame,
         gamerStrip: GamerBrandStrip(
           title: widget.room.title,
           // No Modo Gamer a meta vai para a faixa da marca.

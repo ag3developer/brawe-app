@@ -54,5 +54,7 @@ sealed class LiveRoom with _$LiveRoom {
     // câmera na cena do OBS ([x, y, w, h] normalizado 0–1).
     String? layoutTheme,
     List<double>? layoutCam,
+    // Onde está o jogo na cena (Modo Gamer); null = o quadro inteiro.
+    List<double>? layoutGame,
   }) = _LiveRoom;
 }

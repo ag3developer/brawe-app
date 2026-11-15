@@ -12,6 +12,11 @@ void main() {
 
   test('Modo Gamer segue a prévia aprovada (390×844)', () {
     final g = GamerGeometry.of(const Size(390, 844));
+    // Cena em pé (720×1280) com o jogo marcado numa faixa 16:9.
+    expect(
+      GamerGeometry.aspectOf(const Size(720, 1280), [0, 0.42, 1, 0.316]),
+      closeTo(1.78, 0.01),
+    );
     expect(g.camH, closeTo(318, 0.01));
     expect(g.stripH, 48);
     expect(g.gameH, closeTo(219.375, 0.01));

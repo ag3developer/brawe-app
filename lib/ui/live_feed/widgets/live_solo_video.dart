@@ -24,13 +24,25 @@ class GamerGeometry {
     required this.gameH,
   });
 
-  factory GamerGeometry.of(Size screen, {double videoAspect = 16 / 9}) {
-    final aspect = videoAspect > 0 ? videoAspect : 16 / 9;
+  /// [gameAspect]: largura/altura (em pixels) do trecho do jogo na cena.
+  factory GamerGeometry.of(Size screen, {double gameAspect = 16 / 9}) {
+    final aspect = gameAspect > 0 ? gameAspect : 16 / 9;
     return GamerGeometry(
       camH: screen.height * (318 / 844),
       stripH: 48,
-      gameH: screen.width / aspect,
+      // Jogo na largura toda; nunca passa de 45% da tela (o chat precisa
+      // de espaço embaixo).
+      gameH: (screen.width / aspect).clamp(0.0, screen.height * 0.45),
     );
+  }
+
+  /// Proporção em pixels do trecho [game] ([x, y, w, h] 0–1) de um vídeo
+  /// [video]. Sem trecho = o quadro inteiro.
+  static double aspectOf(Size video, List<double>? game) {
+    if (video.height <= 0) return 16 / 9;
+    final g = game ?? const [0.0, 0.0, 1.0, 1.0];
+    final h = g[3] * video.height;
+    return h <= 0 ? 16 / 9 : (g[2] * video.width) / h;
   }
 
   final double camH;
@@ -60,6 +72,7 @@ class LiveSoloVideo extends StatefulWidget {
     this.keepEdges = false,
     this.theme,
     this.cam,
+    this.game,
     this.gamerStrip,
   });
 
@@ -75,20 +88,30 @@ class LiveSoloVideo extends StatefulWidget {
   /// Onde está a câmera na cena: [x, y, w, h] normalizado (0–1).
   final List<double>? cam;
 
+  /// Onde está o jogo na cena (Modo Gamer); null = o quadro inteiro.
+  final List<double>? game;
+
   /// Conteúdo da faixa da marca no Modo Gamer.
   final Widget? gamerStrip;
 
   /// Proporção a partir da qual o sinal é tratado como deitado.
   static const double landscapeRatio = 1.1;
 
-  /// O Modo Gamer só monta com tema, câmera marcada e a cena DEITADA (16:9).
-  /// Cena em pé (o criador já montou câmera + jogo no OBS) aparece como vem.
-  static bool gamerActive(String? theme, List<double>? cam, Size video) =>
+  /// O Modo Gamer monta com o tema, a câmera marcada e o jogo: cena deitada
+  /// (o jogo é o quadro inteiro, se não marcado) ou cena em pé com o jogo
+  /// marcado. Cena em pé sem saber onde está o jogo aparece como vem.
+  static bool gamerActive(
+    String? theme,
+    List<double>? cam,
+    Size video, {
+    List<double>? game,
+  }) =>
       theme == 'gamer' &&
       cam != null &&
       cam.length == 4 &&
       video.height > 0 &&
-      video.width / video.height > landscapeRatio;
+      ((game != null && game.length == 4) ||
+          video.width / video.height > landscapeRatio);
 
   @override
   State<LiveSoloVideo> createState() => _LiveSoloVideoState();
@@ -130,11 +153,18 @@ class _LiveSoloVideoState extends State<LiveSoloVideo> {
     final c = widget.controller;
     final cam = widget.cam;
     final hasSize = _size.width > 0 && _size.height > 0;
-    if (hasSize && LiveSoloVideo.gamerActive(widget.theme, cam, _size)) {
+    if (hasSize &&
+        LiveSoloVideo.gamerActive(
+          widget.theme,
+          cam,
+          _size,
+          game: widget.game,
+        )) {
       return _GamerFrame(
         controller: c,
         size: _size,
         cam: cam!,
+        game: widget.game ?? const [0.0, 0.0, 1.0, 1.0],
         strip: widget.gamerStrip,
       );
     }
@@ -287,12 +317,16 @@ class _GamerFrame extends StatelessWidget {
     required this.controller,
     required this.size,
     required this.cam,
+    required this.game,
     this.strip,
   });
 
   final VideoPlayerController controller;
   final Size size;
   final List<double> cam;
+
+  /// Trecho do jogo na cena ([x, y, w, h] 0–1).
+  final List<double> game;
   final Widget? strip;
 
   @override
@@ -302,12 +336,21 @@ class _GamerFrame extends StatelessWidget {
       builder: (context, box) {
         final g = GamerGeometry.of(
           Size(box.maxWidth, box.maxHeight),
-          videoAspect: size.width / size.height,
+          gameAspect: GamerGeometry.aspectOf(size, game),
         );
+        // A câmera dentro do trecho do jogo (posição no quadro do jogo).
+        final mx0 = ((cam[0] - game[0]) / game[2]).clamp(0.0, 1.0);
+        final my0 = ((cam[1] - game[1]) / game[3]).clamp(0.0, 1.0);
+        final mx1 = ((cam[0] + cam[2] - game[0]) / game[2]).clamp(0.0, 1.0);
+        final my1 = ((cam[1] + cam[3] - game[1]) / game[3]).clamp(0.0, 1.0);
+        final camInGame = mx1 - mx0 > 0.02 && my1 - my0 > 0.02;
         void openFullscreen() =>
             LandscapeVideoPage.open(context, controller, live: true);
         // O botão só com o ícone (44×44) cabe dentro do canto da câmera?
-        final fsInMask = cam[2] * box.maxWidth >= 52 && cam[3] * g.gameH >= 52;
+        final fsInMask =
+            camInGame &&
+            (mx1 - mx0) * box.maxWidth >= 52 &&
+            (my1 - my0) * g.gameH >= 52;
         final fullscreen = _FullscreenButton(
           semanticLabel: s.liveWatchGameFullscreen,
           compact: fsInMask,
@@ -411,20 +454,21 @@ class _GamerFrame extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      VideoPlayer(controller),
+                      _CropVideo(controller: controller, size: size, cam: game),
                       // A câmera já aparece em cima: no jogo, o canto dela
                       // vira um vidro desfocado (sem câmera dupla) e abriga o
                       // botão de tela cheia, sem cobrir outra parte do jogo.
-                      Positioned(
-                        left: cam[0] * box.maxWidth,
-                        top: cam[1] * g.gameH,
-                        width: cam[2] * box.maxWidth,
-                        height: cam[3] * g.gameH,
-                        child: _CamMask(
-                          showMark: !fsInMask,
-                          child: fsInMask ? fullscreen : null,
+                      if (camInGame)
+                        Positioned(
+                          left: mx0 * box.maxWidth,
+                          top: my0 * g.gameH,
+                          width: (mx1 - mx0) * box.maxWidth,
+                          height: (my1 - my0) * g.gameH,
+                          child: _CamMask(
+                            showMark: !fsInMask,
+                            child: fsInMask ? fullscreen : null,
+                          ),
                         ),
-                      ),
                       if (!fsInMask)
                         Positioned(right: 8, bottom: 8, child: fullscreen),
                     ],

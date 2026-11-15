@@ -48,6 +48,7 @@ sealed class LiveRoomDto with _$LiveRoomDto {
     @JsonKey(name: 'ingest_source') String? ingestSource,
     @JsonKey(name: 'layout_theme') String? layoutTheme,
     @JsonKey(name: 'layout_cam') Map<String, dynamic>? layoutCam,
+    @JsonKey(name: 'layout_game') Map<String, dynamic>? layoutGame,
     @JsonKey(name: 'created_at') String? createdAt,
     // ⚔️ Campos de batalha — presentes quando live_type = 'battle'
     @JsonKey(name: 'battle_id') String? battleId,
@@ -127,6 +128,7 @@ extension LiveRoomDtoMapper on LiveRoomDto {
       ingestSource: ingestSource,
       layoutTheme: layoutTheme,
       layoutCam: parseLayoutCam(layoutCam),
+      layoutGame: parseLayoutCam(layoutGame),
       streamerId: host?.id ?? streamerId ?? 'unknown',
       streamerName: host?.name ?? streamerName ?? 'Unknown Streamer',
       streamerAvatarUrl: host?.avatarUrl ?? streamerAvatar,
