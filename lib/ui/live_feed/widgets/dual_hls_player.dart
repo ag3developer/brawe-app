@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/live_video.dart';
 import 'package:video_player/video_player.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -101,7 +102,7 @@ class _DualHlsPlayerState extends State<DualHlsPlayer> {
       await controller.initialize();
       if (!mounted) return;
       controller
-        ..play()
+        ..playLive()
         ..setLooping(false)
         // Áudio: lado ativo = 1.0, outro = 0.0
         ..setVolume(_audioSide == (isA ? 'A' : 'B') ? 1.0 : 0.0);

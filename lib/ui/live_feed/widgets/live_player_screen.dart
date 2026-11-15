@@ -13,6 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:brawe_app/data/services/iap_service.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/utils/live_video.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../feed/widgets/share_sheet.dart';
@@ -757,7 +758,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       setState(() => _isInitialized = true);
       controller
         ..addListener(_watchPlayerHealth)
-        ..play()
+        ..playLive()
         // Live HLS NÃO faz loop — é stream contínuo.
         ..setLooping(false)
         ..setVolume(1.0);
@@ -813,7 +814,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
     _stallTimer?.cancel();
     _stallTicks = 0;
     _stallLastPos = _controller?.value.position ?? Duration.zero;
-    _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+    _stallTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       final c = _controller;
       if (!mounted || _ended || _swapping) return;
       if (c == null || !c.value.isInitialized) return;
@@ -825,7 +826,10 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
         _stallLastPos = c.value.position;
         return;
       }
-      final pos = c.value.position;
+      // Posição real do player: a do pacote fica travada numa live (ver
+      // LiveVideoController) e trocava o player a cada ~8 s sem motivo.
+      final pos = await c.livePosition();
+      if (!mounted || _controller != c) return;
       if (pos != _stallLastPos) {
         _stallLastPos = pos;
         _stallTicks = 0;
@@ -911,7 +915,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       });
       next
         ..addListener(_watchPlayerHealth)
-        ..play()
+        ..playLive()
         ..setLooping(false)
         ..setVolume(1.0);
       Future.delayed(const Duration(milliseconds: 300), old.dispose);
@@ -1717,7 +1721,7 @@ class _LivePlayerScreenState extends ConsumerState<LivePlayerScreen> {
       }
       if (playing) {
         c
-          ..play()
+          ..playLive()
           ..setVolume(1.0);
       } else {
         c

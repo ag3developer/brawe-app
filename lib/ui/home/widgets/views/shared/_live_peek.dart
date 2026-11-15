@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../../core/utils/live_video.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../../../data/repositories/live_repository.dart';
@@ -84,6 +85,9 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
 
   bool get _active => widget.isActive && _routeVisible;
 
+  /// Quando a prévia foi pausada (para reabrir no ao vivo se passou muito).
+  DateTime? _pausedAt;
+
   @override
   void initState() {
     super.initState();
@@ -138,13 +142,23 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
         _bootPlayer();
         return;
       }
-      // Volta para o "ao vivo" (a pausa deixou o player atrasado).
-      final duration = c.value.duration;
-      if (duration > Duration.zero) c.seekTo(duration);
+      // Pausada por muito tempo: o trecho antigo já saiu da live — abre de
+      // novo direto no ao vivo (antes voltava para um ponto velho e pulava).
+      final pausedAt = _pausedAt;
+      _pausedAt = null;
+      if (pausedAt != null &&
+          DateTime.now().difference(pausedAt) > const Duration(seconds: 10)) {
+        _ctrl = null;
+        _ready = false;
+        Future.microtask(c.dispose);
+        _bootPlayer();
+        return;
+      }
       c
         ..setVolume(_targetVolume)
-        ..play();
+        ..playLive();
     } else {
+      if (c != null && c.value.isPlaying) _pausedAt = DateTime.now();
       c
         ?..setVolume(0)
         ..pause();
@@ -181,7 +195,7 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
       final duration = ctrl.value.duration;
       if (duration > Duration.zero) await ctrl.seekTo(duration);
       await ctrl.setVolume(_targetVolume);
-      if (_active) await ctrl.play();
+      if (_active) await ctrl.playLive();
       if (!mounted) {
         await ctrl.dispose();
         return;
@@ -274,8 +288,15 @@ class _LivePeekBackgroundState extends ConsumerState<LivePeekBackground> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0x55000000), Color(0x00000000), Color(0xCC000000)],
-              stops: [0.0, 0.4, 1.0],
+              // Mais leve: só o topo (abas) e a base (nome e botão) escurecem;
+              // antes ia a 80% de preto e apagava o vídeo.
+              colors: [
+                Color(0x40000000),
+                Color(0x00000000),
+                Color(0x00000000),
+                Color(0xB3000000),
+              ],
+              stops: [0.0, 0.22, 0.6, 1.0],
             ),
           ),
         ),
@@ -716,7 +737,10 @@ class StreamerIdentity extends ConsumerWidget {
               radius: 18,
               backgroundColor: AppColors.slate,
               backgroundImage: effectiveAvatar.isNotEmpty
-                  ? ResizeImage(NetworkImage(effectiveAvatar), width: context.decodePx(36))
+                  ? ResizeImage(
+                      NetworkImage(effectiveAvatar),
+                      width: context.decodePx(36),
+                    )
                   : null,
               child: effectiveAvatar.isEmpty
                   ? const Icon(Icons.person, color: Colors.white, size: 18)
@@ -747,7 +771,8 @@ class StreamerIdentity extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    if (effectiveVerified) const VerifiedBadge(size: 15, gap: 4),
+                    if (effectiveVerified)
+                      const VerifiedBadge(size: 15, gap: 4),
                   ],
                 ),
                 if (effectiveUsername.isNotEmpty)
